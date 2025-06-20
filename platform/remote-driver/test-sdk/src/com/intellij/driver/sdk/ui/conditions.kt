@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JComboBoxUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
@@ -101,6 +102,12 @@ fun JComboBoxUiComponent.selectedValueShouldBeEqualTo(expected: String, message:
   return should(message ?: "selected value should be equal to $expected", timeout, { "expected: $expected, but found: $lastSelectedValue" }) {
     lastSelectedValue = getSelectedItem()
     lastSelectedValue == expected
+  }
+}
+
+fun JEditorUiComponent.shouldContainText(expectedText: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): JEditorUiComponent {
+  return should(message ?: "Editor should contain text: $expectedText", timeout) {
+    text.contains(expectedText)
   }
 }
 
