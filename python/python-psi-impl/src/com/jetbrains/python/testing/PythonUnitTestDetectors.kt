@@ -11,10 +11,26 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
- * Any "test_" function could be used as test by pytest.
+ * Any "test_" function could be used as a test by pytest.
  * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
-fun isTestFunction(function: PyFunction) = function.name?.startsWith("test") == true
+fun isTestFunction(function: PyFunction): Boolean {
+  // Check if the function name starts with "test"
+  val isTestNamed = function.name?.startsWith("test") == true
+  if (!isTestNamed) return false
+
+  // Get the list of decorators, if any, otherwise consider this a test function
+  val decoratorList = function.decoratorList?.decorators ?: return true
+
+  // Determine if any decorator matches known pytest fixture names
+  val isPytestFixture = decoratorList.any { decorator ->
+    val decoratorName = decorator.callee?.text
+    decoratorName in com.jetbrains.python.testing.pyTestFixtures.TEST_FIXTURE_DECORATOR_NAMES
+  }
+
+  // A test function must not be a pytest fixture
+  return !isPytestFixture
+}
 
 /**
  * Inheritor of TestCase class is always test for unittest and could also be launched with pytest.
