@@ -274,16 +274,17 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   final override fun getProjectSdk(): Sdk? {
-    if (projectSdkName == null) {
+    val sdkName = projectSdkName
+    if (sdkName == null) {
       return null
     }
 
     val projectJdkTable = ProjectJdkTable.getInstance(project)
-    if (projectSdkType == null) {
-      return projectJdkTable.findJdk(projectSdkName!!)
-    }
-    else {
-      return projectJdkTable.findJdk(projectSdkName!!, projectSdkType!!)
+    val sdkType = projectSdkType
+    return if (sdkType == null) {
+      projectJdkTable.findJdk(sdkName)
+    } else {
+      projectJdkTable.findJdk(sdkName, sdkType)
     }
   }
 

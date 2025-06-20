@@ -83,9 +83,14 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
   override fun getFiles(rootType: OrderRootType): Array<VirtualFile> {
     val customName = rootType.customName
-    return sdkEntityBuilder.roots.filter { it.type.name == customName }
-      .mapNotNull { it.url.virtualFile }
-      .toTypedArray()
+    val roots = sdkEntityBuilder.roots
+    val result = ArrayList<VirtualFile>(roots.size)
+    for (root in roots) {
+      if (root.type.name == customName) {
+        root.url.virtualFile?.let { result += it }
+      }
+    }
+    return result.toTypedArray()
   }
 
 
