@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -376,7 +377,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testAmbiguousModuleImportWithPackageImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.MODULE_IMPORT_DECLARATIONS.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, ()->{
       prepareAmbiguousModuleTests();
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.checkHighlighting();

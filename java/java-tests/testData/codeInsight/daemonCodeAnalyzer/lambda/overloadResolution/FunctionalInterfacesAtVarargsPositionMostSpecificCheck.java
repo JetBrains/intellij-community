@@ -9,7 +9,7 @@ class Test {
     System.out.println(objs);
   }
 
-  public static void main(String[] args) {
+  public static void main() {
     test(String.class, new Runnable[1]);
   }
 }

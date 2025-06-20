@@ -18,11 +18,13 @@ public class ConfusingMainMethodInspectionTest extends LightJavaInspectionTestCa
   }
 
   public void testConfusingMainMethod() {
-    doTest();
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      doTest();
+    });
   }
 
   public void testConfusingMainMethodInImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
       doTest();
     });
   }

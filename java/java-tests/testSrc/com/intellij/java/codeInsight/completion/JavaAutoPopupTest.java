@@ -37,10 +37,12 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -1515,11 +1517,13 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   }
 
   public void testQuickBackspaceEnter() {
-    myFixture.configureByText("a.java", "<caret>");
-    type("cl");
-    assertEquals(myFixture.getLookupElementStrings(), List.of("class"));
-    myFixture.type("\b\n");
-    myFixture.checkResult("class <caret>");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByText("a.java", "<caret>");
+      type("cl");
+      assertEquals(myFixture.getLookupElementStrings(), List.of("class"));
+      myFixture.type("\b\n");
+      myFixture.checkResult("class <caret>");
+    });
   }
 
   public void test_new_primitive_array_in_Object_variable() {
