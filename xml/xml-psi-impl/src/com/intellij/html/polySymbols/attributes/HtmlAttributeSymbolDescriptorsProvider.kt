@@ -68,7 +68,7 @@ class HtmlAttributeSymbolDescriptorsProvider : XmlAttributeDescriptorsProvider {
 
   private fun PolySymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: PolySymbolQueryExecutor) =
     this
-      .asSafely<HtmlSymbolQueryScopeContributor.HtmlAttributeDescriptorBasedSymbol>()
+      .asSafely<HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor
     ?: HtmlAttributeSymbolInfo.create(attributeName, registry, this, context)
       .toAttributeDescriptor(context)
