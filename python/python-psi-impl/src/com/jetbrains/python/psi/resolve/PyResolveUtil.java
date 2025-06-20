@@ -109,26 +109,17 @@ public final class PyResolveUtil {
                                   @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
     while (scopeOwner != null) {
       final Scope scope = ControlFlowCache.getScope(scopeOwner);
+      final Collection<PsiNamedElement> namedElements;
       if (name != null) {
         final boolean includeNestedGlobals = scopeOwner instanceof PyFile;
-        for (PsiNamedElement resolved : scope.getNamedElements(name, includeNestedGlobals)) {
-          if (isClassLevelDefinitionInvisibleToReference(resolved, scopeOwner, originalScopeOwner)) continue;
-          if (!processor.execute(resolved, ResolveState.initial())) {
-            return;
-          }
-        }
+        namedElements = scope.getNamedElements(name, includeNestedGlobals);
       }
       else {
-        for (PsiNamedElement element : scope.getNamedElements()) {
-          if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
-          if (!processor.execute(element, ResolveState.initial())) {
-            return;
-          }
-        }
+        namedElements = scope.getNamedElements();
       }
-      for (PyImportedNameDefiner definer : scope.getImportedNameDefiners()) {
-        if (isClassLevelDefinitionInvisibleToReference(definer, scopeOwner, originalScopeOwner)) continue;
-        if (!processor.execute(definer, ResolveState.initial())) {
+      for (PsiElement element : ContainerUtil.concat(namedElements, scope.getImportedNameDefiners())) {
+        if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
+        if (!processor.execute(element, ResolveState.initial())) {
           return;
         }
       }
