@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.shared
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.starters.JavaStartersBundle
@@ -28,7 +29,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -62,8 +62,9 @@ abstract class CommonStarterInitialStep(
     .bindStorage(GROUP_ID_PROPERTY_NAME)
 
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
-  protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }
-  protected val sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?> = propertyGraph.lazyProperty { null }
+  protected val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?> = propertyGraph.lazyProperty { null }
+  @Deprecated("Use jdkIntentProperty instead")
+  protected val sdkProperty: GraphProperty<Sdk?> = SdkPropertyBridge(propertyGraph, jdkIntentProperty)
 
   protected val languageProperty: GraphProperty<StarterLanguage> = propertyGraph.lazyProperty { starterContext.language }
   protected val projectTypeProperty: GraphProperty<StarterProjectType> = propertyGraph.lazyProperty {
@@ -143,10 +144,9 @@ abstract class CommonStarterInitialStep(
   protected fun Panel.addSdkUi() {
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(
-        this, sdkProperty, sdkDownloadTaskProperty,
+        this,
         locationProperty,
-        null,
-        { sdk -> wizardContext.projectJdk = sdk },
+        jdkIntentProperty,
         wizardContext.disposable,
         wizardContext.projectJdk,
         { sdk -> moduleBuilder.isSuitableSdkType(sdk.sdkType) }
@@ -154,7 +154,7 @@ abstract class CommonStarterInitialStep(
 
       moduleBuilder.addListener(object : ModuleBuilderListener {
         override fun moduleCreated(module: Module) {
-          val downloadTask = sdkDownloadTaskProperty.get() ?: return
+          val downloadTask = jdkIntentProperty.get()?.downloadTask ?: return
           val downloadService = module.project.service<JdkDownloadService>()
           val jdk = downloadService.setupInstallableSdk(downloadTask)
           if (wizardContext.isCreatingNewProject) {

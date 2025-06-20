@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.CommonBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -29,9 +30,7 @@ import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
@@ -79,13 +78,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null)
-  final override val sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?> = propertyGraph.property(null)
+  final override val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?> = propertyGraph.property(null)
   final override val gradleDslProperty: GraphProperty<GradleDsl> = propertyGraph.property(GradleDsl.KOTLIN)
     .bindEnumStorage("NewProjectWizard.gradleDslState")
 
-  final override var sdk: Sdk? by sdkProperty
-  final override var sdkDownloadTask: SdkDownloadTask? by sdkDownloadTaskProperty
+  final override var jdkIntent: ProjectWizardJdkIntent? by jdkIntentProperty
   final override var gradleDsl: GradleDsl by gradleDslProperty
 
   private val distributionTypeProperty = propertyGraph.lazyProperty { suggestDistributionType() }
@@ -102,10 +99,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   private var updateDefaultProjectSettings by updateDefaultProjectSettingsProperty
 
   init {
-    gradleVersionProperty.dependsOn(sdkProperty, deleteWhenModified = false) {
-      if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
-    }
-    gradleVersionProperty.dependsOn(sdkDownloadTaskProperty, deleteWhenModified = false) {
+    gradleVersionProperty.dependsOn(jdkIntentProperty, deleteWhenModified = false) {
       if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
     }
     gradleVersionProperty.dependsOn(autoSelectGradleVersionProperty, deleteWhenModified = false) {
@@ -114,10 +108,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     gradleVersionProperty.dependsOn(updateDefaultProjectSettingsProperty, deleteWhenModified = false) {
       if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
     }
-    gradleVersionsProperty.dependsOn(sdkProperty, deleteWhenModified = false) {
-      suggestGradleVersions()
-    }
-    gradleVersionsProperty.dependsOn(sdkDownloadTaskProperty, deleteWhenModified = false) {
+    gradleVersionsProperty.dependsOn(jdkIntentProperty, deleteWhenModified = false) {
       suggestGradleVersions()
     }
   }
@@ -128,11 +119,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      projectWizardJdkComboBox(this, sdkProperty, sdkDownloadTaskProperty)
+      projectWizardJdkComboBox(this, jdkIntentProperty)
         .validationOnInput { validateJavaSdk(withDialog = false) }
         .validationOnApply { validateJavaSdk(withDialog = true) }
-        .whenItemSelectedFromUi { logSdkChanged(sdk) }
-        .onApply { logSdkFinished(sdk) }
+        .whenItemSelectedFromUi { jdkIntent?.javaVersion?.let { logSdkChanged(it.feature) } }
+        .onApply { jdkIntent?.javaVersion?.let { logSdkFinished(it.feature) } }
     }.bottomGap(BottomGap.SMALL)
   }
 
@@ -425,9 +416,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun getJdkVersion(): JavaVersion? {
-    val versionString = sdk?.versionString
-    val plannedVersion = sdkDownloadTask?.plannedVersion
-    return JavaVersion.tryParse(versionString ?: plannedVersion)
+    return JavaVersion.tryParse(jdkIntent?.versionString)
   }
 
   private fun suggestDistributionType(): DistributionTypeItem {
@@ -467,7 +456,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun startJdkDownloadIfNeeded(module: Module) {
-    val sdkDownloadTask = sdkDownloadTask
+    val sdkDownloadTask = jdkIntent?.downloadTask
     if (sdkDownloadTask is JdkDownloadTask) {
       // Download the SDK on project creation
       module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
@@ -504,8 +493,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   fun setupProjectFromBuilder(project: Project) {
     val builder = object : AbstractGradleModuleBuilder() {}
 
-    builder.moduleJdk = sdk
-    builder.sdkDownloadTask = sdkDownloadTask
+    builder.moduleJdk = jdkIntent?.prepareJdk()
+    builder.sdkDownloadTask = jdkIntent?.downloadTask
 
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name

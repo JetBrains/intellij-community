@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.CommonBundle
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
@@ -159,27 +160,46 @@ fun validateJavaVersion(sdkProperty: ObservableProperty<Sdk?>, javaVersion: Stri
     if (wizardVersion != null && javaVersion != null) {
       val selectedVersion = JavaSdkVersion.fromVersionString(javaVersion)
       if (selectedVersion != null && !wizardVersion.isAtLeast(selectedVersion)) {
-        val message = if (technologyName == null) {
-          JavaStartersBundle.message("message.java.version.not.supported.by.sdk",
-            selectedVersion.description,
-            sdk.name)
-        }
-        else {
-          JavaStartersBundle.message("message.java.version.not.supported.by.sdk.for.technology",
-            technologyName,
-            selectedVersion.description,
-            sdk.name,
-            wizardVersion.description)
-        }
-
-        Messages.showErrorDialog(message, JavaStartersBundle.message("message.title.error"))
-
+        showUnsupportedJavaVersionError(technologyName, selectedVersion, sdk.name, wizardVersion.description)
         return false
       }
     }
   }
-
   return true
+}
+
+fun validateJdkIntentVersion(jdkIntentProperty: ObservableProperty<ProjectWizardJdkIntent?>, javaVersion: String?, technologyName: String? = null): Boolean {
+  val intent = jdkIntentProperty.get()
+  if (intent != null && javaVersion != null) {
+    val selectedVersion = JavaSdkVersion.fromVersionString(javaVersion)
+    val (name, version) = intent.name to intent.versionString
+    if (selectedVersion != null && !intent.isAtLeast(selectedVersion.ordinal) && name != null && version != null) {
+      showUnsupportedJavaVersionError(technologyName, selectedVersion, name, version)
+      return false
+    }
+  }
+  return true
+}
+
+private fun showUnsupportedJavaVersionError(
+  technologyName: String?,
+  minProjectSupportedVersion: JavaSdkVersion,
+  jdkName: String,
+  lastJdkSupportedVersion: String,
+) {
+  val message = if (technologyName == null) {
+    JavaStartersBundle.message("message.java.version.not.supported.by.sdk",
+                               minProjectSupportedVersion.description,
+                               jdkName)
+  }
+  else {
+    JavaStartersBundle.message("message.java.version.not.supported.by.sdk.for.technology",
+                               technologyName,
+                               minProjectSupportedVersion.description,
+                               jdkName,
+                               lastJdkSupportedVersion)
+  }
+  Messages.showErrorDialog(message, JavaStartersBundle.message("message.title.error"))
 }
 
 fun setupNewModuleJdk(modifiableRootModel: ModifiableRootModel, selectedJdk: Sdk?, isCreatingNewProject: Boolean): Sdk? {
