@@ -9,6 +9,9 @@
                  description="Use Rhizome DB for inline completion implementation in RemDev"
                  restartRequired="true"
                  defaultValue="true"/>
+
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.inline.completion.InlineCompletionTypedHandler"
+                        id="inline.completion" order="after lookup"/>
   </extensions>
 
   <extensionPoints>
