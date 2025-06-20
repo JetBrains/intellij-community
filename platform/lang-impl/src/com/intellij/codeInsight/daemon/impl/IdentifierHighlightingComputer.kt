@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -35,11 +36,11 @@ import org.jetbrains.annotations.ApiStatus
  * Computes identifier highlighting ranges by doing find usages/calling [com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase.computeUsages]
  */
 @ApiStatus.Internal
-class IdentifierHighlightingComputer (
+class IdentifierHighlightingComputer(
   private val myPsiFile: PsiFile,
   private val myEditor: Editor,
   private val myVisibleRange: ProperTextRange,
-  private val myCaretOffset:Int
+  private val myCaretOffset: Int,
 ) {
   private val myEnabled: Boolean
 
@@ -132,12 +133,13 @@ class IdentifierHighlightingComputer (
    */
   private fun collectCodeBlockMarkerRanges(
     myMarkupInfos: MutableCollection<in IdentifierOccurrence>,
-    myTargets: MutableCollection<in TextRange>
+    myTargets: MutableCollection<in TextRange>,
   ) {
-    val contextElement = myPsiFile.findElementAt(
-      TargetElementUtil.adjustOffset(myPsiFile, myEditor.getDocument(), myCaretOffset))
+    val contextElement = myPsiFile.findElementAt(TargetElementUtil.adjustOffset(myPsiFile, myEditor.getDocument(), myCaretOffset))
     if (contextElement != null) {
-      myTargets.add(contextElement.getTextRange())
+      if (isCacheableTarget(contextElement)) {
+        myTargets.add(contextElement.getTextRange())
+      }
       val manager = InjectedLanguageManager.getInstance(myPsiFile.getProject())
       for (range in CodeBlockSupportHandler.findMarkersRanges(contextElement)) {
         myMarkupInfos.add(IdentifierOccurrence(manager.injectedToHost(contextElement, range), HighlightInfoType.ELEMENT_UNDER_CARET_STRUCTURAL))
@@ -145,9 +147,33 @@ class IdentifierHighlightingComputer (
     }
   }
 
+  /**
+   * true if the [contextElement] can be an identifier highlighting target, i.e. if the caret is inside this element then myMarkupInfos should be added to the editor markup
+   *
+   * it just checks that the symbols under all offsets in this identifier are the same
+   */
+  private fun isCacheableTarget(contextElement: PsiElement): Boolean {
+    val textRange = contextElement.textRange
+    var reference: PsiReference? = null
+    var symbols:Collection<Symbol>? = null
+    for (offset in textRange.startOffset..< textRange.endOffset) {
+      val smb = targetSymbols(myPsiFile, offset)
+      if (symbols != null && symbols != smb) {
+        return false
+      }
+      symbols = smb
+      val ref = TargetElementUtil.findReference(myEditor, offset)
+      if (reference != null && ref != reference) {
+        return false
+      }
+      reference = ref
+    }
+    return true
+  }
+
   private fun highlightReferencesAndDeclarations(
     myMarkupInfos: MutableCollection<in IdentifierOccurrence>,
-    myTargets: MutableCollection<in Segment>
+    myTargets: MutableCollection<in Segment>,
   ) {
     val targetSymbols = getTargetSymbols()
     for (symbol in targetSymbols) {
@@ -159,7 +185,7 @@ class IdentifierHighlightingComputer (
     target: Symbol,
     myMarkupInfos: MutableCollection<in IdentifierOccurrence>,
     myTargets: MutableCollection<in Segment>,
-    myPsiFile: PsiFile
+    myPsiFile: PsiFile,
   ) {
     try {
       AstLoadingFilter.disallowTreeLoading<RuntimeException?>(ThrowableRunnable {
@@ -240,7 +266,7 @@ class IdentifierHighlightingComputer (
       psiElement: PsiElement,
       withDeclarations: Boolean,
       readRanges: MutableCollection<in TextRange>,
-      writeRanges: MutableCollection<in TextRange>
+      writeRanges: MutableCollection<in TextRange>,
     ) {
       getUsages(target, psiElement, withDeclarations, true, readRanges, writeRanges)
     }
@@ -263,7 +289,7 @@ class IdentifierHighlightingComputer (
       withDeclarations: Boolean,
       detectAccess: Boolean,
       readRanges: MutableCollection<in TextRange>,
-      writeRanges: MutableCollection<in TextRange>
+      writeRanges: MutableCollection<in TextRange>,
     ) {
       val detector = if (detectAccess) ReadWriteAccessDetector.findDetector(target) else null
       val findUsagesManager = (FindManager.getInstance(target.getProject()) as FindManagerImpl).findUsagesManager
