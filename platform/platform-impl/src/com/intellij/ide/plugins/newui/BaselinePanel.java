@@ -266,15 +266,6 @@ public final class BaselinePanel extends NonOpaquePanel {
     doLayout();
   }
 
-  public void hideProgress() {
-    if (myProgressComponent == null) {
-      return;
-    }
-    remove(myProgressComponent);
-    myProgressComponent = null;
-    doLayout();
-  }
-
   public void removeProgressComponent() {
     if (myProgressComponent == null) {
       return;
