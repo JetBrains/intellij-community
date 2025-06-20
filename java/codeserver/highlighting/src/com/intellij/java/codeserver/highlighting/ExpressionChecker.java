@@ -95,9 +95,25 @@ final class ExpressionChecker {
   void checkCreateInnerClassFromStaticContext(@NotNull PsiElement element,
                                               @NotNull PsiElement placeToSearchEnclosingFrom,
                                               @NotNull PsiClass aClass) {
-    if (!PsiUtil.isInnerClass(aClass)) return;
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return;
     PsiClass outerClass = aClass.getContainingClass();
-    if (outerClass == null) return;
+    if (outerClass == null) {
+      if (!(aClass.getParent() instanceof PsiDeclarationStatement)) return;
+      PsiMember scope = PsiTreeUtil.getParentOfType(aClass, PsiMember.class); // local class
+      if (scope == null) return;
+      if (scope.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(element, null);
+        assert enclosingStaticElement != null;
+        if (enclosingStaticElement != scope) {
+          JavaErrorKinds.LocalClassInstantiationErrorContext context =
+            new JavaErrorKinds.LocalClassInstantiationErrorContext(aClass, enclosingStaticElement);
+          myVisitor.report(JavaErrorKinds.LOCAL_CLASS_INSTANTIATED_FROM_DIFFERENT_STATIC_CONTEXT.create(element, context));
+        }
+        return;
+      }
+      outerClass = scope.getContainingClass();
+      if (outerClass == null) return;
+    }
 
     if (outerClass instanceof PsiSyntheticClass ||
         InheritanceUtil.hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true, false)) {

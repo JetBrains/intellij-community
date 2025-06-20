@@ -967,6 +967,8 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
     fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, makeInnerStatic);
     fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, 
         error -> removeModifierFix(requireNonNull(error.context().enclosingStaticElement()), PsiModifier.STATIC));
+    fix(LOCAL_CLASS_INSTANTIATED_FROM_DIFFERENT_STATIC_CONTEXT,
+        error -> removeModifierFix(requireNonNull(error.context().enclosingStaticElement()), PsiModifier.STATIC));
     fix(CLASS_GENERIC_EXTENDS_EXCEPTION, error -> {
       PsiJavaCodeReferenceElement ref = error.psi();
       PsiMember owner = PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiMethod.class);
