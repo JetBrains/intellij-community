@@ -309,6 +309,16 @@ public final class LoadTextUtil {
       setCharsetAutoDetectionReason(file, AutoDetectionReason.FROM_BOM);
     }
 
+    //TODO RC: this method could be called with 'partial' content (i.e. length < file.length). In this case charset
+    //         detection is not reliable, and charset shouldn't be updated. Otherwise it could lead to incorrect
+    //         detection of the charset (which is a source of errors by itself), and re-detection of correct charset
+    //         later, with consequent WA and property change notification (see VirtualFileManager.notifyPropertyChanged)
+    //         See IJPL-173099 as an example of incorrect behaviour.
+    //         Unfortunately, the method is called from too many places already, and it is quite hard to validate when
+    //         it is called with partial or not partial content. Maybe it is worth trying to detect (length != file.length())
+    //         and skip .setCharset() then? -- not sure how well it'll go with call-sites there partial content is
+    //         used, but call-site still expects the charset to be updated.
+
     file.setCharset(charset);
 
     Charset result = charset;
@@ -336,6 +346,8 @@ public final class LoadTextUtil {
 
   private static final boolean GUESS_UTF = Boolean.parseBoolean(System.getProperty("idea.guess.utf.encoding", "true"));
 
+  //TODO RC: this method should NOT be used with partial content, i.e. when length < content.length -- because partial
+  //         content may lead to incorrect charset detection (e.g. some non-UTF8 symbols are at the end of the file)
   private static @NotNull DetectResult guessFromContent(@NotNull VirtualFile virtualFile, byte @NotNull [] content, int length) {
     AutoDetectionReason detectedFromBytes = null;
     try {
