@@ -18,12 +18,12 @@ import kotlin.reflect.KMutableProperty0
  *
  * This class acts as a state machine to track sequences of user typing events.
  *
- * It works by attaching a [InlineCompletionTypingSession] to an [Editor] instance and transitioning it
+ * It works by attaching a [TypingSession] to an [Editor] instance and transitioning it
  * through various [InlineCompletionTypingState] states in response to editor events. All public methods
  * require execution on the Event Dispatch Thread (EDT) for thread-safe editor access.
  *
  * @see InlineCompletionTypingState
- * @see InlineCompletionTypingSession
+ * @see TypingSession
  * @see TypingSessionCaretListener
  */
 @ApiStatus.Internal
@@ -47,11 +47,11 @@ class InlineCompletionTypingSessionTracker(
   @RequiresEdt
   fun startTypingSession(editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
-    val context = InlineCompletionTypingSession.TypingSessionStateContext(sendEvent) {
+    val context = TypingSession.TypingSessionStateContext(sendEvent) {
       invalidateOnUnknownChange()
       endTypingSession(editor)
     }
-    editor.putUserData(TYPING_SESSION_KEY, InlineCompletionTypingSession(context))
+    editor.putUserData(TYPING_SESSION_KEY, TypingSession(context))
   }
 
 
@@ -134,7 +134,7 @@ class InlineCompletionTypingSessionTracker(
    * completes all follow-ups (auto-pairs, spaces, caret moves,
    * additional symbol insertion e.g., paredEnclosure or space after colon in JSON).
    */
-  internal class InlineCompletionTypingSession(private val typingContext: TypingSessionStateContext) {
+  internal class TypingSession(private val typingContext: TypingSessionStateContext) {
     var state: InlineCompletionTypingState = InlineCompletionTypingState.AwaitInitialEvent
 
     @RequiresEdt
@@ -162,8 +162,8 @@ class InlineCompletionTypingSessionTracker(
   }
 
   /**
-   * A global caret listener that forwards caret events to the active [InlineCompletionTypingSession]
-   * to check if caret movement during [InlineCompletionTypingSession] is expected.
+   * A global caret listener that forwards caret events to the active [TypingSession]
+   * to check if caret movement during [TypingSession] is expected.
    */
   internal class TypingSessionCaretListener : CaretListener {
     override fun caretPositionChanged(event: CaretEvent) {
@@ -172,6 +172,6 @@ class InlineCompletionTypingSessionTracker(
   }
 
   companion object {
-    private val TYPING_SESSION_KEY = Key.create<InlineCompletionTypingSession>("inline.completion.typing.session.typingContext")
+    private val TYPING_SESSION_KEY = Key.create<TypingSession>("inline.completion.typing.session.typingContext")
   }
 }
