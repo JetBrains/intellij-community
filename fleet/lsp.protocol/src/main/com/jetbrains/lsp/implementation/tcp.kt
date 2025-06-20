@@ -9,18 +9,18 @@ import kotlinx.coroutines.*
 
 suspend fun tcpServer(config: TcpConnectionConfig.Server, server: suspend CoroutineScope.(LspConnection) -> Unit) {
   SelectorManager(Dispatchers.IO).use { selectorManager ->
-    aSocket(selectorManager).tcp().bind(port = config.port).use { serverSocket ->
-      LOG.info("Server is listening on port ${serverSocket.localAddress}")
+    aSocket(selectorManager).tcp().bind(config.host, config.port).use { serverSocket ->
+      LOG.info("Server is listening on ${serverSocket.localAddress}")
 
       supervisorScope {
         var hadClient = false
-        fun shouldAccept() = !hadClient || config.isMulticlient
+        fun shouldAccept() = !hadClient || config.isMultiClient
 
         while (shouldAccept()) {
           val client = serverSocket.accept()
           val clientAddress = client.remoteAddress
           hadClient = true
-          LOG.info("A new client connected ${clientAddress}")
+          LOG.info("A new client connected at ${clientAddress}")
           launch(start = CoroutineStart.ATOMIC) {
             try {
               client.use { clientSocket ->
@@ -41,7 +41,7 @@ suspend fun tcpServer(config: TcpConnectionConfig.Server, server: suspend Corout
 suspend fun tcpClient(config: TcpConnectionConfig.Client, body: suspend CoroutineScope.(LspConnection) -> Unit) {
   SelectorManager(Dispatchers.IO).use { selectorManager ->
     try {
-      aSocket(selectorManager).tcp().connect("localhost", config.port).use { server ->
+      aSocket(selectorManager).tcp().connect(config.host, config.port).use { server ->
         LOG.info("Client is connected to server ${server.remoteAddress}")
         coroutineScope { body(KtorSocketConnection(server)) }
       }
@@ -61,15 +61,23 @@ suspend fun tcpConnection(config: TcpConnectionConfig, body: suspend CoroutineSc
 }
 
 sealed interface TcpConnectionConfig {
+  val host: String
   val port: Int
 
-  val isMulticlient: Boolean
+  val isMultiClient: Boolean
 
-  data class Client(override val port: Int) : TcpConnectionConfig {
-    override val isMulticlient: Boolean = false
+  data class Client(
+    override val host: String,
+    override val port: Int,
+  ) : TcpConnectionConfig {
+    override val isMultiClient: Boolean = false
   }
 
-  data class Server(override val port: Int, override val isMulticlient: Boolean) : TcpConnectionConfig
+  data class Server(
+    override val host: String,
+    override val port: Int,
+    override val isMultiClient: Boolean,
+  ) : TcpConnectionConfig
 }
 
 class KtorSocketConnection(private val socket: Socket) : LspConnection {
