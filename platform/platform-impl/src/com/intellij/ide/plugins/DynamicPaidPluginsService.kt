@@ -27,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.nio.file.FileVisitResult
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.measureTimedValue
 
 @Service(Service.Level.APP)
 class DynamicPaidPluginsService(private val cs: CoroutineScope) {
@@ -131,14 +132,15 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     progressTitle: @Nls String? = null,
   ) {
     logger.info("Plugins to enable: [${descriptors.joinToString(separator = ", ") { it.pluginId.idString }}]")
-    val result =
+    val (result, elapsedTime) = measureTimedValue {
       if (pluginEnabler is DynamicPluginEnabler) {
         pluginEnabler.enable(descriptors, progressTitle, project)
       }
       else {
         pluginEnabler.enable(descriptors)
       }
-    logger.debug("Plugins enabled: $result")
+    }
+    logger.info("Loaded ${descriptors.size} plugins in ${elapsedTime.inWholeMilliseconds} ms. Enabled: $result. Restart requested: $restart")
 
     if (restart) {
       ApplicationManagerEx.getApplicationEx().restart(true)
