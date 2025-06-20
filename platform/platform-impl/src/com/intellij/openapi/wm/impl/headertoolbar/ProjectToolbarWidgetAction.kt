@@ -161,12 +161,19 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
       application.messageBus.connect(result).subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
         override fun change() {
+          updateChildGroupAvailability(result)
+
           result.list.repaint()
         }
       })
     }
 
     return result
+  }
+
+  private fun updateChildGroupAvailability(listPopup: ListPopupImpl) {
+    val popupStep = listPopup.listStep as? ActionPopupStep ?: return
+    popupStep.updateStepItems(listPopup.list)
   }
 
   private fun createActionGroup(initEvent: AnActionEvent): ActionGroup {
