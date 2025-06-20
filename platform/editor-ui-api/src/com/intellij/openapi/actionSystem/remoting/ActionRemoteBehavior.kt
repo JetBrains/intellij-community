@@ -2,8 +2,8 @@
 package com.intellij.openapi.actionSystem.remoting
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -85,17 +85,14 @@ interface ActionRemoteBehaviorSpecification {
 
 
   companion object {
-    val REMOTE_UPDATE_KEY = Key.create<Boolean>("REMOTE_UPDATE_KEY")
-
     fun AnAction.getActionBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior? {
       val behavior = (this as? ActionRemoteBehaviorSpecification)?.getBehavior()
-      val isRiderOrCLion = PlatformUtils.isRider() || PlatformUtils.isCLion()
-      return when {
-        useDeclaredBehaviour || !isRiderOrCLion -> behavior
-        templatePresentation.getClientProperty(REMOTE_UPDATE_KEY) == true -> ActionRemoteBehavior.FrontendThenBackend
-        behavior == ActionRemoteBehavior.BackendOnly -> ActionRemoteBehavior.FrontendOnly
-        behavior == ActionRemoteBehavior.Disabled -> ActionRemoteBehavior.FrontendOnly
-        else -> behavior
+
+      return if (useDeclaredBehaviour) {
+        behavior
+      }
+      else {
+        service<ActionRemoteBehaviorCustomizer>().customiseActionUpdateBehavior(this, behavior)
       }
     }
   }
