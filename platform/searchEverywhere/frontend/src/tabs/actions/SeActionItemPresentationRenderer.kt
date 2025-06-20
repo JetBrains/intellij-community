@@ -143,10 +143,11 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
     else presentation.commonData.location?.let { location ->
       val groupLabel = JLabel(location)
       groupLabel.border = eastBorder
-      groupLabel.foreground = groupForeground
 
       text(location) {
         align = LcrInitParams.Align.RIGHT
+        foreground = if (selected) NamedColorUtil.getListSelectionForeground(true)
+        else NamedColorUtil.getInactiveTextColor()
       }
     }
   }
