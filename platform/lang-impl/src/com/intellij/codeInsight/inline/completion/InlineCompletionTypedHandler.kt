@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.actionSystem.TypedActionHandler
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
 
-internal class InlineCompletionTypedHandler(originalHandler: TypedActionHandler) : TypedActionHandlerBase(originalHandler) {
+internal class InlineCompletionTypedHandler(originalHandler: TypedActionHandler?) : TypedActionHandlerBase(originalHandler) {
 
   /**
    * Executes the original handler and starts a typing session if the editor is in the correct state.
@@ -28,7 +28,7 @@ internal class InlineCompletionTypedHandler(originalHandler: TypedActionHandler)
       return
     }
 
-    if (editor.getUserData(InlineCompletionTemplateListener.Companion.TEMPLATE_IN_PROGRESS_KEY) != null) {
+    if (editor.getUserData(InlineCompletionTemplateListener.TEMPLATE_IN_PROGRESS_KEY) != null) {
       myOriginalHandler?.execute(editor, charTyped, dataContext)
       return // ML-1684 Do now show inline completion while refactoring
     }
@@ -38,11 +38,12 @@ internal class InlineCompletionTypedHandler(originalHandler: TypedActionHandler)
     }
     val typingSessionTracker = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
 
-    //before typing execution
-    typingSessionTracker?.startTypingSession(editor)
-    //execution
-    myOriginalHandler?.execute(editor, charTyped, dataContext)
-    //after typing execution
-    typingSessionTracker?.endTypingSession(editor)
+    try {
+      typingSessionTracker?.startTypingSession(editor)
+      myOriginalHandler?.execute(editor, charTyped, dataContext)
+    }
+    finally {
+      typingSessionTracker?.endTypingSession(editor)
+    }
   }
 }

@@ -66,7 +66,7 @@ object InlineCompletion {
     editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
     editor.selectionModel.addSelectionListener(InlineCompletionSelectionListener(), disposable)
-    editor.caretModel.addCaretListener(InlineCompletionTypingSessionTracker.InlineCompletionTypingSessionCaretListener(), disposable)
+    editor.caretModel.addCaretListener(InlineCompletionTypingSessionTracker.TypingSessionCaretListener(), disposable)
 
     application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerInstalled(editor, handler)
 

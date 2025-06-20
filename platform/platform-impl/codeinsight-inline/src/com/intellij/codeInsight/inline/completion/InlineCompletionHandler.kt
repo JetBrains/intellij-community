@@ -244,12 +244,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     }
   }
 
-  //internal val documentChangesTracker = InlineCompletionDocumentChangesTrackerImpl(
-  //  parentDisposable,
-  //  sendEvent = ::invokeEvent,
-  //  invalidateOnUnknownChange = { sessionManager.invalidate(UpdateSessionResult.Invalidated.Reason.UnclassifiedDocumentChange) }
-  //)
-
   @ApiStatus.Internal
   val typingSessionTracker: InlineCompletionTypingSessionTracker = InlineCompletionTypingSessionTracker(
     sendEvent = ::invokeEvent,
@@ -540,7 +534,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
         get() = if (typingSessionTracker.ignoreCaretMovements) Mode.ADAPTIVE else Mode.PROHIBIT_MOVEMENT
 
       override val isTypingSessionInProgress: Boolean
-        get() = typingSessionTracker.isAlive(editor)
+        get() = typingSessionTracker.isTypingInProgress(editor)
 
       override fun cancel() {
         if (!context.isDisposed) hide(context, FinishType.CARET_CHANGED)

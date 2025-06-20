@@ -19,12 +19,12 @@ import kotlin.reflect.KMutableProperty0
  * This class acts as a state machine to track sequences of user typing events.
  *
  * It works by attaching a [InlineCompletionTypingSession] to an [Editor] instance and transitioning it
- * through various [InlineCompletionTypingStage] states in response to editor events. All public methods
+ * through various [InlineCompletionTypingState] states in response to editor events. All public methods
  * require execution on the Event Dispatch Thread (EDT) for thread-safe editor access.
  *
- * @see InlineCompletionTypingStage
+ * @see InlineCompletionTypingState
  * @see InlineCompletionTypingSession
- * @see InlineCompletionTypingSessionCaretListener
+ * @see TypingSessionCaretListener
  */
 @ApiStatus.Internal
 class InlineCompletionTypingSessionTracker(
@@ -44,23 +44,17 @@ class InlineCompletionTypingSessionTracker(
       field = value
     }
 
-  /**
-   * Starts a new typing session for the given editor.
-   * A [InlineCompletionTypingSession] object is created and stored in the editor's user data.
-   */
   @RequiresEdt
   fun startTypingSession(editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
-    val context = InlineCompletionTypingSession.InlineCompletionTypingSessionStageContext(sendEvent) {
+    val context = InlineCompletionTypingSession.TypingSessionStateContext(sendEvent) {
       invalidateOnUnknownChange()
       endTypingSession(editor)
     }
     editor.putUserData(TYPING_SESSION_KEY, InlineCompletionTypingSession(context))
   }
 
-  /**
-   * Forwards a document change event to the active typing session, if one exists.
-   */
+
   @RequiresEdt
   fun collectTypedCharOrInvalidateSession(documentEvent: DocumentEvent, editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -75,28 +69,20 @@ class InlineCompletionTypingSessionTracker(
   }
 
   /**
-   * Notifies the active session that the next document change is expected to be
-   * the insertion of a paired enclosure character (e.g., `)` or `}`).
+   * In the case of a paired enclosure inserted, it will be processed differently than just a regular typed char.
    */
   @RequiresEdt
-  fun expectPairedEnclosure(editor: Editor, excpectedEnclosure: String) {
+  fun expectPairedEnclosure(editor: Editor, expectedEnclosure: String) {
     ThreadingAssertions.assertEventDispatchThread()
-    editor.getUserData(TYPING_SESSION_KEY)?.handlePairedEnclosure(excpectedEnclosure)
+    editor.getUserData(TYPING_SESSION_KEY)?.handlePairedEnclosure(expectedEnclosure)
   }
 
-  /**
-   * Terminates the typing session for the editor.
-   *
-   * If the session was in a state other than the initial one ([AwaitInitialEvent]),
-   * it implies an unfinished or unexpected sequence of events, so the
-   * [com.intellij.codeInsight.inline.completion.session.InlineCompletionSession] is invalidated.
-   */
   @RequiresEdt
   fun endTypingSession(editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
     val session = editor.getUserData(TYPING_SESSION_KEY) ?: return
 
-    if (session.stage != InlineCompletionTypingStage.AwaitInitialEvent) {
+    if (session.state != InlineCompletionTypingState.AwaitInitialEvent) {
       invalidateOnUnknownChange()
     }
 
@@ -104,7 +90,7 @@ class InlineCompletionTypingSessionTracker(
   }
 
   @RequiresEdt
-  fun isAlive(editor: Editor): Boolean {
+  fun isTypingInProgress(editor: Editor): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
     return editor.getUserData(TYPING_SESSION_KEY) != null
   }
@@ -142,41 +128,44 @@ class InlineCompletionTypingSessionTracker(
   }
 
   /**
-   * A class representing an active session. It holds the current state
-   * of the state machine and delegates incoming events to it.
+   * Holds the current state of the state machine and delegates incoming events to it.
+   *
+   * Typing session lasts from start handling user typing until the editor
+   * completes all follow-ups (auto-pairs, spaces, caret moves,
+   * additional symbol insertion e.g., paredEnclosure or space after colon in JSON).
    */
-  internal class InlineCompletionTypingSession(private val typingContext: InlineCompletionTypingSessionStageContext) {
-    var stage: InlineCompletionTypingStage = InlineCompletionTypingStage.AwaitInitialEvent
+  internal class InlineCompletionTypingSession(private val typingContext: TypingSessionStateContext) {
+    var state: InlineCompletionTypingState = InlineCompletionTypingState.AwaitInitialEvent
 
+    @RequiresEdt
     fun handleDocumentChange(event: DocumentEvent, editor: Editor) {
-      stage = stage.onDocumentChange(typingContext, event, editor)
+      state = state.onDocumentChange(typingContext, event, editor)
     }
 
+    @RequiresEdt
     fun handlePairedEnclosure(expectedEnclosure: String) {
-      stage = stage.onPairedEnclosure(typingContext, expectedEnclosure)
+      state = state.onPairedEnclosure(typingContext, expectedEnclosure)
     }
 
+    @RequiresEdt
     fun handleCaretMove(event: CaretEvent, editor: Editor) {
-      stage = stage.onCaretMove(typingContext, event, editor)
+      state = state.onCaretMove(typingContext, event, editor)
     }
 
     /**
-     * A context for the typing session state machine.
-     * It contains the necessary logic for sending events and invalidating the session.
-     * [InlineCompletionTypingSessionStageContext.invalidateOnUnknownChange] may end the [com.intellij.codeInsight.inline.completion.session.InlineCompletionSession]
-     * and invalidate the [com.intellij.codeInsight.inline.completion.session.InlineCompletionSession]
+     * Used for passing the necessary function to the state machine.
      */
-    data class InlineCompletionTypingSessionStageContext(
+    internal data class TypingSessionStateContext(
       val sendEvent: (InlineCompletionEvent) -> Unit,
       val invalidateOnUnknownChange: () -> Unit,
     )
   }
 
   /**
-   * A global caret listener that forwards caret changes to the active [InlineCompletionTypingSession]
-   * for the corresponding editor.
+   * A global caret listener that forwards caret events to the active [InlineCompletionTypingSession]
+   * to check if caret movement during [InlineCompletionTypingSession] is expected.
    */
-  internal class InlineCompletionTypingSessionCaretListener : CaretListener {
+  internal class TypingSessionCaretListener : CaretListener {
     override fun caretPositionChanged(event: CaretEvent) {
       event.editor.getUserData(TYPING_SESSION_KEY)?.handleCaretMove(event, event.editor)
     }
