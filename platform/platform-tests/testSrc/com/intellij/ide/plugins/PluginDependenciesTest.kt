@@ -11,6 +11,7 @@ import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.nio.file.FileVisitResult
 
 internal class PluginDependenciesTest {
   init {
@@ -39,6 +40,7 @@ internal class PluginDependenciesTest {
     `foo depends bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    assertNonOptionalDependenciesIds(pluginSet, "foo", "bar")
   }
 
   @Test
@@ -49,6 +51,7 @@ internal class PluginDependenciesTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
     assertThat(foo).hasDirectParentClassloaders(bar)
+    assertNonOptionalDependenciesIds(pluginSet, "foo")
   }
 
   @Test
@@ -149,6 +152,34 @@ internal class PluginDependenciesTest {
     val result = buildPluginSet()
     assertThat(result).doesNotHaveEnabledPlugins()
     assertFirstErrorContains("sample.plugin", "requires plugin", "unknown")
+  }
+  
+  @Test
+  fun `plugin is not loaded if required module depends on disabled plugin`() {
+    bar()
+    plugin("sample.plugin") {
+      content {
+        module("required.module", ModuleLoadingRule.REQUIRED) {
+          packagePrefix = "required"
+          dependencies {
+            plugin("bar")
+          }
+        }
+      }
+    }.buildDir(pluginDirPath.resolve("sample-plugin"))
+    val result = buildPluginSet(disabledPluginIds = arrayOf("bar"))
+    assertThat(result).doesNotHaveEnabledPlugins()
+    assertFirstErrorContains("sample.plugin", "requires plugin", "bar")
+    assertNonOptionalDependenciesIds(result, "sample.plugin", "bar")
+  }
+
+  private fun assertNonOptionalDependenciesIds(result: PluginSet, pluginId: String, vararg dependencyPluginId: String) {
+    val actualDependencies = HashSet<String>() 
+    PluginManagerCore.processAllNonOptionalDependencyIds(result.getPlugin(pluginId), result.buildPluginIdMap()) {
+      actualDependencies.add(it.idString)
+      FileVisitResult.CONTINUE
+    }
+    assertThat(actualDependencies).containsExactlyInAnyOrder(*dependencyPluginId)
   }
 
   private fun assertFirstErrorContains(vararg messagePart: String) {

@@ -809,6 +809,15 @@ object PluginManagerCore {
     for (plugin in descriptor.moduleDependencies.plugins) {
       dependencies.add(plugin.id)
     }
+    if (descriptor is PluginMainDescriptor) {
+      for (contentModule in descriptor.contentModules) {
+        if (contentModule.moduleLoadingRule.required) {
+          for (contentModuleDependency in contentModule.moduleDependencies.plugins) {
+            dependencies.add(contentModuleDependency.id)
+          }
+        }
+      }
+    }
     return dependencies
   }
 
