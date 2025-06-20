@@ -54,6 +54,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import com.intellij.lang.injection.general.Injection as GeneralInjection
 
@@ -333,13 +334,14 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         for (reference in callee.references) {
             ProgressManager.checkCanceled()
+            when (val resolvedTo = resolveReference(reference)) {
+                is PsiMethod ->
+                    injectionForJavaMethod(argument, resolvedTo, configuration)
+                        ?.let { return it }
 
-            val resolvedTo = resolveReference(reference)
-            if (resolvedTo is PsiMethod) {
-                val injectionForJavaMethod = injectionForJavaMethod(argument, resolvedTo, configuration)
-                injectionForJavaMethod?.let { return it }
-            } else if (resolvedTo is KtFunction) {
-                injectionForKotlinCall(argument, resolvedTo, reference, configuration)?.let { return it }
+                is KtFunction ->
+                    injectionForKotlinCall(argument, resolvedTo, reference, configuration)
+                        ?.let { return it }
             }
         }
 
@@ -637,25 +639,35 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     }
 
     private fun appendJavaPlaceTargetCallableNames(place: InjectionPlace, classNames: MutableCollection<String>, methodNames: MutableCollection<String>) {
+        if (!place.isEnabled) return
+
+        // intentionally imperative way is used to avoid intermediate objects on filter/flatMap etc to reduce GC pressure
         val patternConditions = place.elementPattern.condition.conditions
-
-        patternConditions
-            .filter { it.debugMethodName == "ofMethod" }
-            .mapNotNull { it as? PatternConditionPlus<*, *> }
-            .flatMap { it.valuePattern.condition.conditions }
-            .filterIsInstance<PsiNamePatternCondition<*>>()
-            .flatMap { it.valuePattern.condition.conditions }
-            .filterIsInstance<ValuePatternCondition<String>>()
-            .forEach { methodNames += it.values }
-
-        val classCondition = patternConditions.firstOrNull { it.debugMethodName == "definedInClass" }
-                as? PatternConditionPlus<*, *> ?: return
-        val psiClassNamePatternCondition =
-            classCondition.valuePattern.condition.conditions.firstIsInstanceOrNull<PsiClassNamePatternCondition>() ?: return
-        val valuePatternCondition =
-            psiClassNamePatternCondition.namePattern.condition.conditions.firstIsInstanceOrNull<ValuePatternCondition<String>>()
-                ?: return
-        valuePatternCondition.values.forEach { classNames.add(StringUtilRt.getShortName(it)) }
+        for (condition in patternConditions) {
+            val conditionPlus = condition as? PatternConditionPlus<*, *> ?: continue
+            val methodName = condition.debugMethodName
+            when(methodName) {
+                "ofMethod" -> {
+                    for (patternCondition in conditionPlus.valuePattern.condition.conditions) {
+                        val namePatternCondition = patternCondition as? PsiNamePatternCondition<*> ?: continue
+                        for (item in namePatternCondition.valuePattern.condition.conditions) {
+                            val condition = item as? ValuePatternCondition<*> ?: continue
+                            condition.values.forEach {
+                                methodNames.addIfNotNull(it as? String)
+                            }
+                        }
+                    }
+                }
+                "definedInClass" -> {
+                    val psiClassNamePatternCondition =
+                        conditionPlus.valuePattern.condition.conditions.firstIsInstanceOrNull<PsiClassNamePatternCondition>() ?: return
+                    val valuePatternCondition =
+                        psiClassNamePatternCondition.namePattern.condition.conditions.firstIsInstanceOrNull<ValuePatternCondition<String>>()
+                            ?: return
+                    valuePatternCondition.values.forEach { classNames.add(StringUtilRt.getShortName(it)) }
+                }
+            }
+        }
     }
 
     private fun appendKotlinPlaceTargetClassShortNames(place: InjectionPlace, classNames: MutableCollection<String>) {
