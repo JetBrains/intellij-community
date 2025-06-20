@@ -11,7 +11,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
@@ -29,11 +32,10 @@ import javax.swing.JComponent
 import kotlin.coroutines.coroutineContext
 import kotlin.properties.Delegates.observable
 
-class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, private val changesViewHost: ChangesViewPanel)
-  : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
-
-  private val changesView get() = changesViewHost.changesView
-
+class ChangesViewCommitPanel @ApiStatus.Internal constructor(
+  project: Project,
+  private val changesView: ChangesListView,
+) : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
   private val progressPanel = ChangesViewCommitProgressPanel(project, this, commitMessage.editorField)
 
   private var isHideToolWindowOnCommit = false
