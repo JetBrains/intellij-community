@@ -3,7 +3,10 @@ import numpy as np
 import pandas as pd
 import typing
 from collections import OrderedDict
-from collections.abc import Iterable
+if sys.version_info < (3, 0):
+    from collections import Iterable
+else:
+    from collections.abc import Iterable
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
