@@ -50,6 +50,7 @@ enum class JvmBuilderFlags {
   JVM_DEFAULT,
   INLINE_CLASSES,
   CONTEXT_RECEIVERS,
+  CONTEXT_PARAMETERS,
 
   WARN,
 
@@ -132,6 +133,9 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
 
   if (args.boolFlag(JvmBuilderFlags.CONTEXT_RECEIVERS)) {
     kotlinArgs.contextReceivers = true
+  }
+  if (args.boolFlag(JvmBuilderFlags.CONTEXT_PARAMETERS)) {
+    kotlinArgs.contextParameters = true
   }
   configHash.putBoolean(kotlinArgs.contextReceivers)
 

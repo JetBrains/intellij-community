@@ -839,6 +839,9 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   if (mergedCompilerArguments.contextReceivers) {
     options.put("context_receivers", true)
   }
+  if (mergedCompilerArguments.contextParameters) {
+    options.put("context_parameters", true)
+  }
   if (mergedCompilerArguments.whenGuards) {
     options.put("when_guards", true)
   }
