@@ -15,9 +15,6 @@
 {'count': 4, 'mean': Timestamp('2013-01-02 12:00:00+0100', tz='CET'), 'min': Timestamp('2013-01-01 00:00:00+0100', tz='CET'), '5%': Timestamp('2013-01-01 03:36:00+0100', tz='CET'), '25%': Timestamp('2013-01-01 18:00:00+0100', tz='CET'), '50%': Timestamp('2013-01-02 12:00:00+0100', tz='CET'), '75%': Timestamp('2013-01-03 06:00:00+0100', tz='CET'), '95%': Timestamp('2013-01-03 20:24:00+0100', tz='CET'), 'max': Timestamp('2013-01-04 00:00:00+0100', tz='CET')}
 {'count': 4, 'unique': 1, 'top': Period('2012-01-01', 'D'), 'freq': 4}
 {'count': 4, 'unique': 4, 'top': 'A', 'freq': 1}
-{'count': 4, 'unique': 3, 'top': [1, 2], 'freq': 2}
-{'count': 4, 'unique': 3, 'top': {1: 2}, 'freq': 2}
-{'count': 4, 'unique': 3, 'top': (1, 2), 'freq': 2}
 {'count': 4}
 {'count': 4}
 {'count': 4}
