@@ -409,6 +409,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStatementWithExpression() { doTest(false); }
   public void testReturnFromConstructor() { doTest(false); }
   public void testInheritFromFinalLocalClass() { doTest(false); }
+  public void testLocalClassInstantiation() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> doTest(false)); }
 
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
