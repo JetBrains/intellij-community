@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.ProperTextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 

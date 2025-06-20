@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Service for obtaining ranges and attributes for [com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass], which is calling this service on every caret move.
- * It's up to the implementation if it should cache the result, or try to compute if possible (e.g. via [com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass.computeRanges])
+ * It's up to the implementation if it should cache the result, or try to compute if possible (e.g. via [com.intellij.codeInsight.daemon.impl.IdentifierHighlightingComputer.computeRanges])
  */
 @ApiStatus.Internal
 @Rpc
@@ -44,7 +44,7 @@ interface IdentifierHighlightingRemoteApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): IdentifierHighlightingRemoteApi {
-      return RemoteApiProviderService.Companion.resolve(remoteApiDescriptor<IdentifierHighlightingRemoteApi>())
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<IdentifierHighlightingRemoteApi>())
     }
   }
   @Serializable

@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface IdentifierHighlightingManager {
-
   suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult
 
   companion object {

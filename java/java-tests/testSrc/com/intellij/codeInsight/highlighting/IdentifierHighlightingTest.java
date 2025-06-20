@@ -120,12 +120,12 @@ public class IdentifierHighlightingTest extends LightDaemonAnalyzerTestCase {
     MarkupModelEx markupModel = (MarkupModelEx)getEditor().getMarkupModel();
     DaemonCodeAnalyzerEx.processHighlights(markupModel, getProject(), null, 0, getEditor().getDocument().getTextLength(),
                                            Processors.cancelableCollectProcessor(infos));
-    List<HighlightInfo> idents = ContainerUtil.filter(infos, info -> info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY);
+    List<HighlightInfo> identInfos = ContainerUtil.filter(infos, info -> info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY);
     IdentifierHighlightingComputer computer = new IdentifierHighlightingComputer(getFile(), getEditor(), new ProperTextRange(getFile().getTextRange()), offset);
     IdentifierHighlightingResult result = computer.computeRanges();
     Collection<IdentifierOccurrence> occurrences = result.occurrences();
     if (IdentifierHighlighterUpdater.Companion.shouldShowIdentifierHighlightingResult(result, getEditor())) {
-      assertEqualOccurrences(occurrences, idents, "offset:" + offset + "; infos:" + idents + "; result:" + result + "; text:\n----\n" +
+      assertEqualOccurrences(occurrences, identInfos, "offset:" + offset + "; infos:" + identInfos + "; result:" + result + "; text:\n----\n" +
                                                   StringUtil.first(getEditor().getDocument().getText().substring(offset), 100, true)+"\n----");
     }
   }
