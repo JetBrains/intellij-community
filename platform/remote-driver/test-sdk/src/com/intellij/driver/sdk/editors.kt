@@ -40,6 +40,7 @@ interface VisualPosition {
 interface Document {
   fun getText(): String
   fun setText(text: String)
+  fun getLineNumber(offset: Int): Int
 }
 
 @Remote("com.intellij.openapi.editor.CaretModel")
