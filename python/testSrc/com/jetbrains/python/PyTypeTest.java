@@ -2075,6 +2075,21 @@ public class PyTypeTest extends PyTestCase {
                      global s
                      expr = s # 's' is unbound
              """);
+
+    // PY-82115
+    doTest("int",
+           """
+             def outer():
+                 s = "aba"
+             
+                 def inner1():
+                     global s
+                     s = 1
+             
+                 def inner2():
+                     global s
+                     expr = s
+             """);
   }
 
   // PY-21906
