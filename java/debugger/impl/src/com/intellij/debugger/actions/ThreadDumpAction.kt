@@ -224,29 +224,36 @@ private fun threadName(threadReference: ThreadReference): String =
 private fun threadName(threadNameRaw: String, threadReference: ObjectReference): String =
   threadNameRaw + "@" + threadReference.uniqueID()
 
-private inline fun <reified T : Type> findThreadFieldImpl(fieldName: String, typeToSearch: ReferenceType): Field? {
-  val field = DebuggerUtils.findField(typeToSearch, fieldName)
-  if (field == null) {
-    return null
-  }
-  if (field.type() !is T) {
+private inline fun <reified T : Type> findThreadFieldImpl(fieldNames: List<String>, typeToSearch: ReferenceType): Field? {
+  val wellNamedFields = fieldNames.mapNotNull { DebuggerUtils.findField(typeToSearch, it) }
+  if (wellNamedFields.isEmpty()) return null
+
+  val wellTypedFields = wellNamedFields.filter { it.type() is T }
+  if (wellTypedFields.isEmpty()) {
     val vm = typeToSearch.virtualMachine()
     logger<ThreadDumpAction>().error(
-      "$typeToSearch has field '$fieldName' with an unexpected type ${field.type()}, skipping it. " +
+      "$typeToSearch has following fields ${wellNamedFields.map { it.name() }} with unexpected types ${wellNamedFields.map { it.type() }}, skipping it. " +
       "VM: ${vm.name()}, ${vm.version()}.")
     return null
   }
 
-  return field
+  if (wellTypedFields.size > 1) {
+    val vm = typeToSearch.virtualMachine()
+    logger<ThreadDumpAction>().error(
+      "$typeToSearch has ambiguous list of fields ${wellTypedFields.map { it.name() }}, taking the first one. " +
+      "VM: ${vm.name()}, ${vm.version()}.")
+  }
+
+  return wellTypedFields.first()
 }
 
-private inline fun <reified T : Type> findThreadField(fieldName: String, jlThreadType: ReferenceType, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? {
-  findThreadFieldImpl<T>(fieldName, jlThreadType)?.let {
+private inline fun <reified T : Type> findThreadField(fieldNames: List<String>, jlThreadType: ReferenceType, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? {
+  findThreadFieldImpl<T>(fieldNames, jlThreadType)?.let {
     return it
   }
 
   if (fieldHolderType != null) {
-    findThreadFieldImpl<T>(fieldName, fieldHolderType)?.let {
+    findThreadFieldImpl<T>(fieldNames, fieldHolderType)?.let {
       return it
     }
   }
@@ -259,12 +266,15 @@ private inline fun <reified T : Type> findThreadField(fieldName: String, jlThrea
       } else {
         "$jlThreadType has "
       } +
-      "no field '$fieldName'. " +
+      "none of fields $fieldNames. " +
       "VM: ${vm.name()}, ${vm.version()}.")
   }
 
   return null
 }
+
+private inline fun <reified T : Type> findThreadField(fieldName: String, jlThreadType: ReferenceType, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? =
+  findThreadField<T>(listOf(fieldName), jlThreadType, fieldHolderType, optional)
 
 private fun buildThreadStates(
   vmProxy: VirtualMachineProxyImpl,
@@ -284,7 +294,7 @@ private fun buildThreadStates(
   val holderField = findThreadField<ClassType>("holder", jlThreadType, null, optional = true)
 
   val fieldHolderType = holderField?.type()?.let { it as ClassType }
-  val daemonField = findThreadField<BooleanType>("daemon", jlThreadType, fieldHolderType)
+  val daemonField = findThreadField<BooleanType>(listOf("daemon", "isDaemon"), jlThreadType, fieldHolderType)
   val priorityField = findThreadField<IntegerType>("priority", jlThreadType, fieldHolderType)
   val tidField = findThreadField<LongType>("tid", jlThreadType, fieldHolderType)
 
