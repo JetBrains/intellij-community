@@ -125,12 +125,12 @@ public class KotlinCompilerRunner implements CompilerRunner {
       }
       K2JVMCompilerArguments kotlinArgs = buildKotlinCompilerArguments(myContext, sources);
       KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, filter(flat(deletedSources, sources), KotlinCompilerRunner::isKotlinSource), myModuleEntryPath, myLastGoodModuleEntryContent);
-      OutputFileSystem outputFileSystem = new OutputFileSystem(new KotlinVirtualFileProvider(out));
-      Services services = buildServices(kotlinArgs.getModuleName(), incCache, outputFileSystem.root);
+      OutputVirtualFile outputFileSystemRoot = new OutputFileSystem(new KotlinVirtualFileProvider(out)).root;
+      Services services = buildServices(kotlinArgs.getModuleName(), incCache, outputFileSystemRoot);
       MessageCollector messageCollector = new KotlinMessageCollector(diagnostic, this);
       // todo: make sure if we really need to process generated outputs after the compilation and not "in place"
       List<GeneratedClass> generatedClasses = new ArrayList<>();
-      AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline(out, outputFileSystem.root, generatedFile -> {
+      AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline(out, outputFileSystemRoot, generatedFile -> {
         String jvmClassName = null;
         if (generatedFile instanceof KotlinJvmGeneratedFile jvmClass) {
           jvmClassName = jvmClass.getOutputClass().getClassName().getInternalName();
@@ -284,14 +284,14 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline(OutputSink out, VirtualFile outputRoot, Consumer<GeneratedFile> outputItemCollector) throws IOException {
-    return new BazelJvmCliPipeline(createCompilerConfigurationUpdater(outputRoot), createOutputConsumer(out, outputItemCollector));
+    return new BazelJvmCliPipeline(createCompilerConfigurationUpdater(out, outputRoot), createOutputConsumer(out, outputItemCollector));
   }
 
-  private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(VirtualFile outputRoot) throws IOException {
+  private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(OutputSink out, VirtualFile outputRoot) throws IOException {
     var abiConsumer = createAbiOutputConsumer(myStorageManager.getAbiOutputBuilder());
     return configuration -> {
       configuration.add(CLIConfigurationKeys.CONTENT_ROOTS, new VirtualJvmClasspathRoot(outputRoot, false, true));
-      configurePlugins(myPluginIdToPluginClasspath, myContext.getBaseDir(), abiConsumer, registeredPluginInfo -> {
+      configurePlugins(myPluginIdToPluginClasspath, myContext.getBaseDir(), abiConsumer, out, myStorageManager, registeredPluginInfo -> {
         CompilerPluginRegistrar registrar = Objects.requireNonNull(registeredPluginInfo.getCompilerPluginRegistrar());
         configuration.add(CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(), registrar);
         List<CliOptionValue> pluginOptions = registeredPluginInfo.getPluginOptions();
