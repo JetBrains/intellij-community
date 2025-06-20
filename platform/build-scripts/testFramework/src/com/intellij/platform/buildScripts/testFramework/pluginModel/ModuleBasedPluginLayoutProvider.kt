@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.RuntimeModuleId
-import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
+import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
@@ -37,12 +39,21 @@ private class ModuleBasedPluginLayoutProvider(
 
   init {
     val projectOutputDir = JpsPathUtil.urlToNioPath(JpsJavaExtensionService.getInstance().getProjectExtension(project)!!.outputUrl)
-    val runtimeModuleRepositoryPath = projectOutputDir.resolve("module-descriptors.jar")
+    val runtimeModuleRepositoryPath: Path
+    val mapping = PathManager.getArchivedCompiledClassesMapping()
+    if (mapping != null) {
+      runtimeModuleRepositoryPath = mapping.entries.firstOrNull { it.key.endsWith("module-descriptors.jar") }?.value?.let { Path.of(it) }
+                                    ?: error("Cannot find module-descriptors.jar in the mapping")
+    }
+    else {
+      runtimeModuleRepositoryPath = projectOutputDir.resolve("module-descriptors.jar")
+    }
     assert(runtimeModuleRepositoryPath.exists()) {
       """|$runtimeModuleRepositoryPath doesn't exists; it should be generated during compilation by DevKit plugin for JPS process,
          |so check that DevKit plugin is enabled.""".trimMargin()
     }
-    val runtimeModuleRepository = RuntimeModuleRepository.create(runtimeModuleRepositoryPath)
+    val data = RuntimeModuleRepositorySerialization.loadFromJar(runtimeModuleRepositoryPath)
+    val runtimeModuleRepository = RuntimeModuleRepositoryImpl(runtimeModuleRepositoryPath, data)
     val productRootModule = project.findModuleByName(productRootModuleName) ?: error("Cannot find module '$productRootModuleName'")
     val productModulesPath = productRootModule.findProductionFile("META-INF/$productRootModuleName/product-modules.xml")
                              ?: error("Cannot find product-modules.xml in '$productRootModuleName' module")
