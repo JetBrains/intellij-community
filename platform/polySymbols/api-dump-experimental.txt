@@ -647,6 +647,12 @@
 - s:valueOf(java.lang.String):com.intellij.polySymbols.js.JsSymbolSymbolKind
 - s:values():com.intellij.polySymbols.js.JsSymbolSymbolKind[]
 *Fa:com.intellij.polySymbols.patterns.PolySymbolPattern
+*:com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProvider
+- a:getScopes(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):java.util.List
+*:com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
+- a:contributeScopeProvider(com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProvider):V
+- a:inContext(java.util.function.Predicate):com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
+- a:withResolveRequired():com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
 *:com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 - com.intellij.polySymbols.query.PolySymbolQueryParams
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams$Companion
@@ -708,7 +714,7 @@
 - a:inFiles(java.util.Collection):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 - a:inFiles(com.intellij.patterns.PsiFilePattern[]):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 - a:inFiles(java.lang.Class[]):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
-- a:withoutResolve():com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:withResolveRequired():com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 *:com.intellij.polySymbols.query.PolySymbolMatch
 - com.intellij.polySymbols.CompositePolySymbol
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolMatch$Companion
@@ -798,19 +804,12 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.polySymbols.query.PolySymbolNamesProvider$Target
 - s:values():com.intellij.polySymbols.query.PolySymbolNamesProvider$Target[]
-*:com.intellij.polySymbols.query.PolySymbolProjectQueryScopeProvider
-- a:getScopes(com.intellij.openapi.project.Project):java.util.List
-*:com.intellij.polySymbols.query.PolySymbolProjectQueryScopeProviderRegistrar
-- a:contributeScopeProvider(com.intellij.polySymbols.query.PolySymbolProjectQueryScopeProvider):V
-- a:inContext(java.util.function.Predicate):com.intellij.polySymbols.query.PolySymbolProjectQueryScopeProviderRegistrar
-- a:withoutResolve():com.intellij.polySymbols.query.PolySymbolProjectQueryScopeProviderRegistrar
 *:com.intellij.polySymbols.query.PolySymbolQueryConfigurator
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryConfigurator$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - beforeQueryExecutorCreation(com.intellij.openapi.project.Project):V
 - getContextRulesProviders(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
 - getNameConversionRulesProviders(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext):java.util.List
-- getScope(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext,Z):java.util.List
 *f:com.intellij.polySymbols.query.PolySymbolQueryConfigurator$Companion
 *:com.intellij.polySymbols.query.PolySymbolQueryExecutor
 - com.intellij.openapi.util.ModificationTracker
@@ -918,23 +917,23 @@
 *f:com.intellij.polySymbols.query.PolySymbolQueryScopeContributor$Companion
 *:com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
 - com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
-- a:forProject():com.intellij.polySymbols.query.PolySymbolProjectQueryScopeProviderRegistrar
+- a:forAnywhere():com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
 - a:inContext(java.util.function.Predicate):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
 - a:inFile(com.intellij.patterns.PsiFilePattern):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
 - a:inFile(java.lang.Class):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
 - a:inFiles(java.util.Collection):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
 - a:inFiles(com.intellij.patterns.PsiFilePattern[]):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
 - a:inFiles(java.lang.Class[]):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
-- a:withoutResolve():com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
+- a:withResolveRequired():com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
 *:com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
-- a:forAnyPsiLocation():com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:forAnyPsiLocationInFile():com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 - a:forPsiLocation(com.intellij.patterns.PsiElementPattern):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 - a:forPsiLocation(java.lang.Class):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 - a:forPsiLocations(java.util.Collection):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 - a:forPsiLocations(com.intellij.patterns.PsiElementPattern[]):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 - a:forPsiLocations(java.lang.Class[]):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 - a:inContext(java.util.function.Predicate):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
-- a:withoutResolve():com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:withResolveRequired():com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
 *f:com.intellij.polySymbols.query.PolySymbolQueryStack
 - <init>():V
 - <init>(java.util.Collection):V

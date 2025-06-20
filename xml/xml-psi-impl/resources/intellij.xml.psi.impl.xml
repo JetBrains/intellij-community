@@ -104,11 +104,11 @@
     <polySymbols.highlightingCustomizer
       id="html"
       implementation="com.intellij.html.polySymbols.HtmlSymbolHighlightingCustomizer"/>
-    <polySymbols.queryConfigurator
-      implementation="com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator"/>
+    <polySymbols.queryScopeContributor
+      implementation="com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor"/>
     <polySymbols.codeCompletionItemCustomizer
       id="html"
-      implementation="com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator$HtmlCodeCompletionItemCustomizer"/>
+      implementation="com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor$HtmlCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
       implementation="com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolDescriptorsProvider"/>
     <xml.elementDescriptorProvider

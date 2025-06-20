@@ -6,7 +6,6 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
@@ -41,25 +40,7 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
 
     val scopeList = mutableListOf<PolySymbolScope>()
     getCustomScope(location).forEach(scopeList::add)
-    val internalMode = ApplicationManager.getApplication().isInternal
     val originalLocation = location?.originalElement
-    scopeList.addAll(PolySymbolQueryConfigurator.EP_NAME.extensionList.flatMap { queryConfigurator ->
-      queryConfigurator.getScope(project, originalLocation, context, allowResolve)
-        .also {
-          // check configurator
-          if (internalMode && Math.random() < 0.2) {
-            val newScope = queryConfigurator.getScope(project, originalLocation, context, allowResolve)
-            if (newScope != it) {
-              logger<PolySymbolQueryExecutorFactory>().error(
-                "Query configurator $queryConfigurator should provide scope, which is the same (by equals()), when called with the same arguments: $it != $newScope")
-            }
-            if (newScope.hashCode() != it.hashCode()) {
-              logger<PolySymbolQueryExecutorFactory>().error(
-                "Query configurator $queryConfigurator should provide scope, which has the same hashCode(), when called with the same arguments: $it != $newScope")
-            }
-          }
-        }
-    })
     scopeList.addAll(
       application.service<PolySymbolQueryScopeService>()
         .buildScope(project, originalLocation, context, allowResolve)

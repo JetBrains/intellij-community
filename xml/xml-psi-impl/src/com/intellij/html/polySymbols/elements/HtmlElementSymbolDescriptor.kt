@@ -4,8 +4,8 @@ package com.intellij.html.polySymbols.elements
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
 import com.intellij.html.polySymbols.HtmlFrameworkSymbolsSupport
-import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator.HtmlElementDescriptorBasedSymbol
-import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator.StandardHtmlSymbol
+import com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor.HtmlElementDescriptorBasedSymbol
+import com.intellij.html.polySymbols.StandardHtmlSymbol
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier

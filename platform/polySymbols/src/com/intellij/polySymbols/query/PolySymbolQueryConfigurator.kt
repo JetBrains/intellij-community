@@ -11,9 +11,6 @@ import org.jetbrains.annotations.TestOnly
 
 interface PolySymbolQueryConfigurator {
 
-  fun getScope(project: Project, location: PsiElement?, context: PolyContext, allowResolve: Boolean): List<PolySymbolScope> =
-    emptyList()
-
   fun getContextRulesProviders(project: Project, dir: VirtualFile): List<PolyContextRulesProvider> =
     emptyList()
 

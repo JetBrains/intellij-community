@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.polySymbols.attributes
 
-import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator
+import com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor
 import com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolDescriptor.Companion.toAttributeDescriptor
 import com.intellij.html.polySymbols.elements.HtmlElementSymbolDescriptor
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbols
@@ -27,7 +27,7 @@ class HtmlAttributeSymbolDescriptorsProvider : XmlAttributeDescriptorsProvider {
       XmlAttributeDescriptor.EMPTY
     else {
       val queryExecutor = PolySymbolQueryExecutorFactory.create(context)
-      val additionalScope = listOf(HtmlSymbolQueryConfigurator.HtmlContextualSymbolScope(context.firstChild))
+      val additionalScope = listOf(HtmlSymbolQueryScopeContributor.HtmlContextualSymbolScope(context.firstChild))
       queryExecutor
         .listSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true)
         .exclude(PolySymbolModifier.ABSTRACT, PolySymbolModifier.VIRTUAL)
@@ -50,7 +50,7 @@ class HtmlAttributeSymbolDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val additionalScope = if (attribute != null)
         emptyList()
       else
-        listOf(HtmlSymbolQueryConfigurator.HtmlContextualSymbolScope(context.firstChild))
+        listOf(HtmlSymbolQueryScopeContributor.HtmlContextualSymbolScope(context.firstChild))
 
       queryExecutor
         .nameMatchQuery(HTML_ATTRIBUTES, attributeName)
@@ -68,7 +68,7 @@ class HtmlAttributeSymbolDescriptorsProvider : XmlAttributeDescriptorsProvider {
 
   private fun PolySymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: PolySymbolQueryExecutor) =
     this
-      .asSafely<HtmlSymbolQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
+      .asSafely<HtmlSymbolQueryScopeContributor.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor
     ?: HtmlAttributeSymbolInfo.create(attributeName, registry, this, context)
       .toAttributeDescriptor(context)
