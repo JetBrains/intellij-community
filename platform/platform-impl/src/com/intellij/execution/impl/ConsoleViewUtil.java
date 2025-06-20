@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -300,7 +301,11 @@ public final class ConsoleViewUtil {
         throw e;
       }
       catch (Exception e) {
-        LOG.error("An exception occurred when trying to get console filters, this provider will be unavailable: " + eachProvider, e);
+        LOG.error(PluginException.createByClass(
+          "An exception occurred when trying to get console filters, this provider will be unavailable: " + eachProvider,
+          e,
+          eachProvider.getClass()
+        ));
       }
     }
     return result;
