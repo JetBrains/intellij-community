@@ -93,12 +93,12 @@ public class IdentifierHighlightingTest extends LightPlatformCodeInsightFixture4
 
   private void assertIdentifierHighlightingManagerCachingWorksForOffset(int offset) {
     List<HighlightInfo> infos = myFixture.doHighlighting();
-    List<HighlightInfo> idents = ContainerUtil.filter(infos, info -> info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY);
+    List<HighlightInfo> identInfos = ContainerUtil.filter(infos, info -> info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY);
     IdentifierHighlightingComputer computer = new IdentifierHighlightingComputer(myFixture.getFile(), myFixture.getEditor(), new ProperTextRange(myFixture.getFile().getTextRange()), offset);
     IdentifierHighlightingResult result = computer.computeRanges();
     Collection<IdentifierOccurrence> occurrences = result.occurrences();
     if (IdentifierHighlighterUpdater.Companion.shouldShowIdentifierHighlightingResult(result, myFixture.getEditor())) {
-      assertEqualOccurrences(occurrences, idents, "offset:" + offset + "; infos:" + idents + "; result:" + result);
+      assertEqualOccurrences(occurrences, identInfos, "offset:" + offset + "; infos:" + identInfos + "; result:" + result);
     }
   }
 

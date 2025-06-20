@@ -318,11 +318,10 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     fun createPass(newPsiFile: PsiFile, hostEditor: Editor, newEditor: Editor): IdentifierHighlighterUpdater? {
       if (newPsiFile.isValid) {
         val textLength = newPsiFile.textLength
-        val factory = IdentifierHighlighterPassFactory()
         val project = newPsiFile.project
         val hostPsiFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(newPsiFile)
         // sometimes some crazy stuff is returned (EA-248725)
-        if (textLength != -1 && !hostEditor.isDisposed && factory.shouldHighlightingIdentifiers(newPsiFile, newEditor) && hostPsiFile != null) {
+        if (textLength != -1 && !hostEditor.isDisposed && IdentifierHighlighterPassFactory.shouldHighlightIdentifiers(newPsiFile, newEditor) && hostPsiFile != null) {
           val context = EditorContextManager.getEditorContext(newEditor, project)
           val pass = IdentifierHighlighterUpdater(newPsiFile, newEditor, context, hostPsiFile)
           return pass

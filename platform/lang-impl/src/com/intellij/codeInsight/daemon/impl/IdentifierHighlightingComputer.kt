@@ -74,7 +74,7 @@ class IdentifierHighlightingComputer (
       val readUsages = highlightUsagesHandler.readUsages
       for (readUsage in readUsages) {
         @Suppress("SENSELESS_COMPARISON")
-        LOG.assertTrue(readUsage != null, "null text range from " + highlightUsagesHandler)
+        LOG.assertTrue(readUsage != null, "null text range from $highlightUsagesHandler")
       }
       myInfos.addAll(readUsages.map { u: TextRange ->
         IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_READ)
@@ -163,10 +163,7 @@ class IdentifierHighlightingComputer (
   ) {
     try {
       AstLoadingFilter.disallowTreeLoading<RuntimeException?>(ThrowableRunnable {
-        val hostRanges = getUsageRanges(myPsiFile, target)
-        if (hostRanges == null) {
-          return@ThrowableRunnable
-        }
+        val hostRanges = getUsageRanges(myPsiFile, target) ?: return@ThrowableRunnable
         val reads = hostRanges.readRanges.map { u: TextRange ->
           IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_READ)
         }
@@ -187,11 +184,11 @@ class IdentifierHighlightingComputer (
         myTargets.addAll(readDecls.map { o -> o.range })
         myTargets.addAll(writes.map { o -> o.range })
         myTargets.addAll(writeDecls.map { o -> o.range })
-      }, {
+      }) {
         "Currently highlighted file: \n" +
         "psi file: " + myPsiFile + ";\n" +
         "virtual file: " + myPsiFile.getVirtualFile()
-      })
+      }
     }
     catch (e: IndexNotReadyException) {
       Logger.getInstance(IdentifierHighlightingComputer::class.java).trace(e)
@@ -269,10 +266,7 @@ class IdentifierHighlightingComputer (
       val findUsagesManager = (FindManager.getInstance(target.getProject()) as FindManagerImpl).findUsagesManager
       val findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true)
       val scope = LocalSearchScope(scopeElement)
-      val refs = if (findUsagesHandler == null)
-        ReferencesSearch.search(target, scope).findAll()
-      else
-        findUsagesHandler.findReferencesToHighlight(target, scope)
+      val refs = findUsagesHandler?.findReferencesToHighlight(target, scope) ?: ReferencesSearch.search(target, scope).findAll()
       for (psiReference in refs) {
         if (psiReference == null) {
           LOG.error("Null reference returned, findUsagesHandler=" + findUsagesHandler + "; target=" + target + " of " + target.javaClass)
