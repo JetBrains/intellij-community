@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
+import com.intellij.accessibility.TextFieldWithListAccessibleContext
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
@@ -62,6 +63,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.event.*
 import java.util.function.Supplier
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.text.Document
@@ -82,7 +84,14 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.ShowInFindToolWindowAction(onShowFindToolWindow)
   )
 
-  private val textField: SeTextField = SeTextField()
+  private val textField: SeTextField = object : SeTextField() {
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = TextFieldWithListAccessibleContext(this, resultList.getAccessibleContext())
+      }
+      return accessibleContext
+    }
+  }
 
   private val resultListModel = SeResultListModel { resultList.selectionModel }
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
