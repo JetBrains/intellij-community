@@ -4080,76 +4080,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "ktor-client",
-  exports = [
-    ":ktor-client-core-jvm-3_0_3_http_import",
-    ":ktor-http-jvm-3_0_3_http_import",
-    ":ktor-utils-jvm-3_0_3_http_import",
-    ":ktor-io-jvm-3_0_3_http_import",
-    ":ktor-events-jvm-3_0_3_http_import",
-    ":ktor-websocket-serialization-jvm-3_0_3_http_import",
-    ":ktor-serialization-jvm-3_0_3_http_import",
-    ":ktor-websockets-jvm-3_0_3_http_import",
-    ":ktor-sse-jvm-3_0_3_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "ktor-client-core-jvm-3_0_3_http_import",
-  jar = "@ktor-client-core-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-core-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "ktor-http-jvm-3_0_3_http_import",
-  jar = "@ktor-http-jvm-3_0_3_http//file",
-  source_jar = "@ktor-http-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "ktor-utils-jvm-3_0_3_http_import",
-  jar = "@ktor-utils-jvm-3_0_3_http//file",
-  source_jar = "@ktor-utils-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "ktor-io-jvm-3_0_3_http_import",
-  jar = "@ktor-io-jvm-3_0_3_http//file",
-  source_jar = "@ktor-io-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "ktor-events-jvm-3_0_3_http_import",
-  jar = "@ktor-events-jvm-3_0_3_http//file",
-  source_jar = "@ktor-events-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "ktor-websocket-serialization-jvm-3_0_3_http_import",
-  jar = "@ktor-websocket-serialization-jvm-3_0_3_http//file",
-  source_jar = "@ktor-websocket-serialization-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "ktor-serialization-jvm-3_0_3_http_import",
-  jar = "@ktor-serialization-jvm-3_0_3_http//file",
-  source_jar = "@ktor-serialization-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "ktor-websockets-jvm-3_0_3_http_import",
-  jar = "@ktor-websockets-jvm-3_0_3_http//file",
-  source_jar = "@ktor-websockets-jvm-3_0_3-sources_http//file"
-)
-
-jvm_import(
-  name = "ktor-sse-jvm-3_0_3_http_import",
-  jar = "@ktor-sse-jvm-3_0_3_http//file",
-  source_jar = "@ktor-sse-jvm-3_0_3-sources_http//file"
-)
-
 jvm_import(
   name = "ktor-client-auth",
   jar = "@ktor-client-auth-jvm-3_0_3_http//file",
@@ -4184,6 +4114,42 @@ jvm_import(
 )
 
 jvm_import(
+  name = "ktor-client-core-jvm-3_0_3_http_import",
+  jar = "@ktor-client-core-jvm-3_0_3_http//file",
+  source_jar = "@ktor-client-core-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ktor-http-jvm-3_0_3_http_import",
+  jar = "@ktor-http-jvm-3_0_3_http//file",
+  source_jar = "@ktor-http-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ktor-events-jvm-3_0_3_http_import",
+  jar = "@ktor-events-jvm-3_0_3_http//file",
+  source_jar = "@ktor-events-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ktor-websocket-serialization-jvm-3_0_3_http_import",
+  jar = "@ktor-websocket-serialization-jvm-3_0_3_http//file",
+  source_jar = "@ktor-websocket-serialization-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ktor-serialization-jvm-3_0_3_http_import",
+  jar = "@ktor-serialization-jvm-3_0_3_http//file",
+  source_jar = "@ktor-serialization-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ktor-sse-jvm-3_0_3_http_import",
+  jar = "@ktor-sse-jvm-3_0_3_http//file",
+  source_jar = "@ktor-sse-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
   name = "ktor-http-cio-jvm-3_0_3_http_import",
   jar = "@ktor-http-cio-jvm-3_0_3_http//file",
   source_jar = "@ktor-http-cio-jvm-3_0_3-sources_http//file"
@@ -4196,9 +4162,27 @@ jvm_import(
 )
 
 jvm_import(
+  name = "ktor-io-jvm-3_0_3_http_import",
+  jar = "@ktor-io-jvm-3_0_3_http//file",
+  source_jar = "@ktor-io-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ktor-websockets-jvm-3_0_3_http_import",
+  jar = "@ktor-websockets-jvm-3_0_3_http//file",
+  source_jar = "@ktor-websockets-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
   name = "ktor-network-tls-jvm-3_0_3_http_import",
   jar = "@ktor-network-tls-jvm-3_0_3_http//file",
   source_jar = "@ktor-network-tls-jvm-3_0_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ktor-utils-jvm-3_0_3_http_import",
+  jar = "@ktor-utils-jvm-3_0_3_http//file",
+  source_jar = "@ktor-utils-jvm-3_0_3-sources_http//file"
 )
 
 jvm_import(
