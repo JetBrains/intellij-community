@@ -87,7 +87,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         val names = superParameters.map { it.name.asString() }.toMutableList()
         val substitutedTypes = superParameters.map { superParam ->
             val returnType = superParam.returnType
-            (substitutor?.substitute(returnType) ?: returnType).approximateToSubPublicDenotableOrSelf(false)
+            (substitutor?.substitute(returnType) ?: returnType).approximateToDenotableSubtypeOrSelf()
         }.toMutableList()
 
         // Parameters in superFunction, which are matched in new function signature:

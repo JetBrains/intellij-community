@@ -468,7 +468,7 @@ internal open class FirCallableCompletionContributor(
             ?: return@sequence
         if (smartCastInfo.isStable) return@sequence
         val smartCastType = smartCastInfo.smartCastType
-        val explicitReceiverTypeHint = smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null }
+        val explicitReceiverTypeHint = smartCastType.takeIf { it.isDenotable }
 
         // Collect members available from unstable smartcast as well.
         val callablesWithMetadataFromUnstableSmartCast = collectDotCompletionForCallableReceiver(
