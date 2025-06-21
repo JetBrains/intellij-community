@@ -141,7 +141,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         withContext(Dispatchers.EDT) {
           resultListModel.reset()
         }
-        it.searchResults
+        it.searchResults.filterNotNull()
       }.collectLatest { throttledResultEventFlow ->
         coroutineScope {
           withContext(Dispatchers.EDT) {
@@ -164,18 +164,18 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               resultListModel.removeLoadingItem()
 
+              if (!resultListModel.isValid) {
+                if (!textField.text.isEmpty() &&
+                    (vm.currentTab.getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(true) ?: false) {
+                  return@withContext
+                }
+              }
+
               if (!resultListModel.isValid) resultListModel.reset()
 
               if (resultListModel.isEmpty) {
                 textField.setSearchInProgress(false)
                 updateEmptyStatus()
-              }
-            }
-          }.onEmpty {
-            withContext(Dispatchers.EDT) {
-              val action = vm.currentTab.getSearchEverywhereToggleAction()
-              if (!textField.text.isEmpty() && (action as? AutoToggleAction)?.autoToggle(true) ?: false) {
-                headerPane.updateToolbarActions()
               }
             }
           }.collect { event ->

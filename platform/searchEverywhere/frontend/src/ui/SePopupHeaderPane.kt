@@ -130,10 +130,6 @@ class SePopupHeaderPane(
     }
   }
 
-  fun updateToolbarActions() {
-    toolbar.updateActionsAsync()
-  }
-
   class Tab(val name: @Nls String, val id: String, val reportableId: String) {
     constructor(tabVm: SeTabVm) : this(tabVm.name, tabVm.tabId, tabVm.reportableTabId)
   }

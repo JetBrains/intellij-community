@@ -37,7 +37,7 @@ class SeTabVm(
   private val tab: SeTab,
   private val searchPattern: StateFlow<String>,
 ) {
-  val searchResults: StateFlow<Flow<ThrottledItems<SeResultEvent>>> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<Flow<ThrottledItems<SeResultEvent>>?> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val tabId: String get() = tab.id
@@ -52,7 +52,7 @@ class SeTabVm(
       shouldLoadMoreFlow.value = value
     }
 
-  private val _searchResults: MutableStateFlow<Flow<ThrottledItems<SeResultEvent>>> = MutableStateFlow(emptyFlow())
+  private val _searchResults: MutableStateFlow<Flow<ThrottledItems<SeResultEvent>>?> = MutableStateFlow(null)
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
   private val dumbModeStateFlow =
@@ -76,7 +76,10 @@ class SeTabVm(
       isActiveFlow.combine(dumbModeStateFlow) { isActive, _ ->
         isActive
       }.collectLatest { isActive ->
-        if (!isActive) return@collectLatest
+        if (!isActive) {
+          _searchResults.value = null
+          return@collectLatest
+        }
 
         val searchPatternWithAutoToggle = searchPattern.onEach {
           withContext(Dispatchers.EDT) {
@@ -102,6 +105,7 @@ class SeTabVm(
           shouldThrottle.store(true)
           resultsFlow
         }.collect {
+          if (!isActiveFlow.value) return@collect
           _searchResults.value = it
         }
       }
