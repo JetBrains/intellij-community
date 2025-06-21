@@ -60,7 +60,6 @@ class SePopupVm(
   init {
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
 
-    val activeTab = tabVms.first()
     currentTabFlow = currentTabIndex.map {
       tabVms[it.coerceIn(tabVms.indices)]
     }.withPrevious().map { (prev, next) ->
@@ -68,7 +67,6 @@ class SePopupVm(
       next.setActive(true)
       next
     }
-    activeTab.setActive(true)
 
     searchPattern.value = initialSearchPattern ?: run {
       // History could be suppressed by the user for some reason (creating promo video, conference demo etc.)
