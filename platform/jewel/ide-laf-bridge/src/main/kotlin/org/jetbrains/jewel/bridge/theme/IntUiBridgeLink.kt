@@ -4,7 +4,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.bridge.retrieveArcAsCornerSizeOrDefault
+import org.jetbrains.jewel.bridge.retrieveArcAsNonNegativeCornerSizeOrDefault
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.ui.component.styling.LinkColors
 import org.jetbrains.jewel.ui.component.styling.LinkIcons
@@ -46,7 +46,7 @@ internal fun readLinkStyle(): LinkStyle {
         metrics =
             LinkMetrics(
                 focusHaloCornerSize =
-                    retrieveArcAsCornerSizeOrDefault(
+                    retrieveArcAsNonNegativeCornerSizeOrDefault(
                         key = "ide.link.button.focus.round.arc",
                         default = CornerSize(4.dp),
                     ),
