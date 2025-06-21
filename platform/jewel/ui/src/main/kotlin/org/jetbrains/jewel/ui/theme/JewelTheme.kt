@@ -173,9 +173,26 @@ public val JewelTheme.Companion.iconButtonStyle: IconButtonStyle
 public val JewelTheme.Companion.sliderStyle: SliderStyle
     @Composable @ReadOnlyComposable get() = LocalSliderStyle.current
 
+// Alias for BaseJewelTheme
+@Composable
+public fun BaseComposeTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {
+    BaseJewelTheme(theme, styling, content)
+}
+
 @Composable
 public fun BaseJewelTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {
     BaseJewelTheme(theme, styling, swingCompatMode = false, content)
+}
+
+// Alias for BaseJewelTheme
+@Composable
+public fun BaseComposeTheme(
+    theme: ThemeDefinition,
+    styling: ComponentStyling,
+    swingCompatMode: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    BaseJewelTheme(theme, styling, swingCompatMode, content)
 }
 
 @Composable

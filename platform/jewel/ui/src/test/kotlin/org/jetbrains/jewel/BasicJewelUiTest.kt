@@ -6,6 +6,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 
+public typealias BasicComposeUiTest = BasicJewelUiTest
+
 public open class BasicJewelUiTest {
     @get:Rule public val composeRule: ComposeContentTestRule = createComposeRule()
 

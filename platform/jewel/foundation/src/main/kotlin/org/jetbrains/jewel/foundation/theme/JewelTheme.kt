@@ -16,6 +16,8 @@ import org.jetbrains.jewel.foundation.LocalDisabledAppearanceValues
 import org.jetbrains.jewel.foundation.LocalGlobalColors
 import org.jetbrains.jewel.foundation.LocalGlobalMetrics
 
+public typealias ComposeTheme = JewelTheme
+
 public interface JewelTheme {
     public companion object {
         public val name: String
@@ -53,8 +55,18 @@ public interface JewelTheme {
 }
 
 @Composable
+public fun ComposeTheme(theme: ThemeDefinition, swingCompatMode: Boolean, content: @Composable () -> Unit) {
+    JewelTheme(theme, swingCompatMode, content)
+}
+
+@Composable
 public fun JewelTheme(theme: ThemeDefinition, swingCompatMode: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalSwingCompatMode provides swingCompatMode) { JewelTheme(theme, content) }
+}
+
+@Composable
+public fun ComposeTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
+    JewelTheme(theme, content)
 }
 
 @Composable
