@@ -761,43 +761,43 @@ jvm_import(
 
 jvm_import(
   name = "bouncy-castle-pgp",
-  jar = "@bcpg-jdk18on-1_80_http//file",
-  source_jar = "@bcpg-jdk18on-1_80-sources_http//file",
+  jar = "@bcpg-jdk18on-1_81_http//file",
+  source_jar = "@bcpg-jdk18on-1_81-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "bouncy-castle-provider",
   exports = [
-    ":bcpkix-jdk18on-1_80_http_import",
-    ":bcutil-jdk18on-1_80_http_import",
-    ":bcprov-jdk18on-1_80_http_import",
+    ":bcpkix-jdk18on-1_81_http_import",
+    ":bcutil-jdk18on-1_81_http_import",
+    ":bcprov-jdk18on-1_81_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "bcpkix-jdk18on-1_80_http_import",
-  jar = "@bcpkix-jdk18on-1_80_http//file",
-  source_jar = "@bcpkix-jdk18on-1_80-sources_http//file"
+  name = "bcpkix-jdk18on-1_81_http_import",
+  jar = "@bcpkix-jdk18on-1_81_http//file",
+  source_jar = "@bcpkix-jdk18on-1_81-sources_http//file"
 )
 
 jvm_import(
-  name = "bcutil-jdk18on-1_80_http_import",
-  jar = "@bcutil-jdk18on-1_80_http//file",
-  source_jar = "@bcutil-jdk18on-1_80-sources_http//file"
+  name = "bcutil-jdk18on-1_81_http_import",
+  jar = "@bcutil-jdk18on-1_81_http//file",
+  source_jar = "@bcutil-jdk18on-1_81-sources_http//file"
 )
 
 jvm_import(
-  name = "bcprov-jdk18on-1_80_http_import",
-  jar = "@bcprov-jdk18on-1_80_http//file",
-  source_jar = "@bcprov-jdk18on-1_80-sources_http//file"
+  name = "bcprov-jdk18on-1_81_http_import",
+  jar = "@bcprov-jdk18on-1_81_http//file",
+  source_jar = "@bcprov-jdk18on-1_81-sources_http//file"
 )
 
 jvm_import(
   name = "caffeine",
-  jar = "@caffeine-3_2_0_http//file",
-  source_jar = "@caffeine-3_2_0-sources_http//file",
+  jar = "@caffeine-3_2_1_http//file",
+  source_jar = "@caffeine-3_2_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
