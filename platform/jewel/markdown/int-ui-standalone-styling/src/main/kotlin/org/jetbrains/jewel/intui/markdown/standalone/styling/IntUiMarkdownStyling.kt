@@ -36,6 +36,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
@@ -420,12 +421,18 @@ public fun List.Companion.dark(
 @ExperimentalJewelApi
 public fun Ordered.Companion.light(
     numberStyle: TextStyle = defaultTextStyle,
-    numberContentGap: Dp = 8.dp,
+    numberContentGap: Dp = 4.dp,
     numberMinWidth: Dp = 16.dp,
     numberTextAlign: TextAlign = TextAlign.End,
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
-    padding: PaddingValues = PaddingValues(start = 16.dp),
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+    numberFormatStyles: Ordered.NumberFormatStyles =
+        Ordered.NumberFormatStyles(
+            firstLevel = NumberFormatStyle.Decimal,
+            secondLevel = NumberFormatStyle.Roman,
+            thirdLevel = NumberFormatStyle.Alphabetical,
+        ),
 ): Ordered =
     Ordered(
         numberStyle,
@@ -435,17 +442,24 @@ public fun Ordered.Companion.light(
         itemVerticalSpacing,
         itemVerticalSpacingTight,
         padding,
+        numberFormatStyles,
     )
 
 @ExperimentalJewelApi
 public fun Ordered.Companion.dark(
     numberStyle: TextStyle = defaultTextStyle,
-    numberContentGap: Dp = 8.dp,
+    numberContentGap: Dp = 4.dp,
     numberMinWidth: Dp = 16.dp,
     numberTextAlign: TextAlign = TextAlign.End,
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
-    padding: PaddingValues = PaddingValues(start = 16.dp),
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+    numberFormatStyles: Ordered.NumberFormatStyles =
+        Ordered.NumberFormatStyles(
+            firstLevel = NumberFormatStyle.Decimal,
+            secondLevel = NumberFormatStyle.Roman,
+            thirdLevel = NumberFormatStyle.Alphabetical,
+        ),
 ): Ordered =
     Ordered(
         numberStyle,
@@ -455,27 +469,54 @@ public fun Ordered.Companion.dark(
         itemVerticalSpacing,
         itemVerticalSpacingTight,
         padding,
+        numberFormatStyles,
     )
 
 @ExperimentalJewelApi
 public fun Unordered.Companion.light(
     bullet: Char? = '•',
     bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
-    bulletContentGap: Dp = 16.dp,
+    bulletContentGap: Dp = 4.dp,
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
-    padding: PaddingValues = PaddingValues(start = 16.dp),
-): Unordered = Unordered(bullet, bulletStyle, bulletContentGap, itemVerticalSpacing, itemVerticalSpacingTight, padding)
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+    markerMinWidth: Dp = 16.dp,
+    bulletCharStyles: Unordered.BulletCharStyles? =
+        Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
+): Unordered =
+    Unordered(
+        bullet,
+        bulletStyle,
+        bulletContentGap,
+        itemVerticalSpacing,
+        itemVerticalSpacingTight,
+        padding,
+        markerMinWidth,
+        bulletCharStyles,
+    )
 
 @ExperimentalJewelApi
 public fun Unordered.Companion.dark(
     bullet: Char? = '•',
     bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
-    bulletContentGap: Dp = 16.dp,
+    bulletContentGap: Dp = 4.dp,
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
-    padding: PaddingValues = PaddingValues(start = 16.dp),
-): Unordered = Unordered(bullet, bulletStyle, bulletContentGap, itemVerticalSpacing, itemVerticalSpacingTight, padding)
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+    markerMinWidth: Dp = 16.dp,
+    bulletCharStyles: Unordered.BulletCharStyles? =
+        Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
+): Unordered =
+    Unordered(
+        bullet,
+        bulletStyle,
+        bulletContentGap,
+        itemVerticalSpacing,
+        itemVerticalSpacingTight,
+        padding,
+        markerMinWidth,
+        bulletCharStyles,
+    )
 
 @ExperimentalJewelApi
 public fun Code.Companion.light(
