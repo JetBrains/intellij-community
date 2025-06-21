@@ -10,8 +10,8 @@ import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 internal class ReportingExternalDependenciesResolver(
-  private val delegate: ExternalDependenciesResolver,
-  private val configurationProvider: MainKtsScriptConfigurationProvider,
+    private val delegate: ExternalDependenciesResolver,
+    private val configurationProvider: MainKtsScriptConfigurationProvider,
 ) : ExternalDependenciesResolver {
 
     override fun acceptsArtifact(artifactCoordinates: String): Boolean =
@@ -21,18 +21,25 @@ internal class ReportingExternalDependenciesResolver(
         delegate.acceptsRepository(repositoryCoordinates)
 
     override fun addRepository(
-      repositoryCoordinates: RepositoryCoordinates,
-      options: ExternalDependenciesResolver.Options,
-      sourceCodeLocation: SourceCode.LocationWithId?
+        repositoryCoordinates: RepositoryCoordinates,
+        options: ExternalDependenciesResolver.Options,
+        sourceCodeLocation: SourceCode.LocationWithId?
     ): ResultWithDiagnostics<Boolean> =
         delegate.addRepository(repositoryCoordinates, options, sourceCodeLocation)
 
     override suspend fun resolve(
-      artifactCoordinates: String,
-      options: ExternalDependenciesResolver.Options,
-      sourceCodeLocation: SourceCode.LocationWithId?
+        artifactCoordinates: String,
+        options: ExternalDependenciesResolver.Options,
+        sourceCodeLocation: SourceCode.LocationWithId?
     ): ResultWithDiagnostics<List<File>> {
-        configurationProvider.reporter?.indeterminateStep(KotlinBaseScriptingBundle.message("progress.text.resolving", artifactCoordinates))
-        return delegate.resolve(artifactCoordinates, options, sourceCodeLocation)
+        return configurationProvider.reporter?.indeterminateStep(
+            KotlinBaseScriptingBundle.message(
+                "progress.text.resolving",
+                artifactCoordinates
+            )
+        ) {
+            delegate.resolve(artifactCoordinates, options, sourceCodeLocation)
+        } ?: delegate.resolve(artifactCoordinates, options, sourceCodeLocation)
+
     }
 }
