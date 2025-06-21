@@ -10,11 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -27,8 +25,8 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
-import kotlin.script.experimental.api.*
-import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
+import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
+import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.util.PropertiesCollection
 
 fun indexSourceRootsEagerly(): Boolean = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
@@ -89,47 +87,13 @@ val ROOT_COMPARATOR: Comparator<LibraryRoot> = Comparator { o1, o2 ->
     }
 }
 
-@ApiStatus.Internal
-fun MutableEntityStorage.getOrCreateDefinitionDependency(
-    definition: ScriptDefinition, project: Project, entitySource: EntitySource
-): LibraryDependency {
-    val libraryId = LibraryId(".${definition.fileExtension} definition dependencies", LibraryTableId.ProjectLibraryTableId)
-    if (!this.contains(libraryId)) {
-        val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-
-        val classes = definition.compilationConfiguration[ScriptCompilationConfiguration.dependencies]
-            .toClassPathOrEmpty()
-            .mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
-            .sortedBy { it.name }
-
-        val sources = definition.compilationConfiguration[ScriptCompilationConfiguration.ide.dependenciesSources]
-            .toClassPathOrEmpty()
-            .mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
-            .sortedBy { it.name }
-
-        val classRoots = classes.map {
-            LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.COMPILED)
-        }
-
-        val sourceRoots = sources.map {
-            LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.SOURCES)
-        }
-
-        addEntity(
-            LibraryEntity(libraryId.name, libraryId.tableId, classRoots + sourceRoots, entitySource)
-        )
-    }
-
-    return LibraryDependency(libraryId, false, DependencyScope.COMPILE)
-}
-
 inline fun <reified T : ScriptDefinitionsSource> Project.scriptDefinitionsSourceOfType(): T? =
     SCRIPT_DEFINITIONS_SOURCES.getExtensions(this).filterIsInstance<T>().firstOrNull().safeAs<T>()
 
 val SCRIPT_DEFINITIONS_SOURCES: ProjectExtensionPointName<ScriptDefinitionsSource> =
     ProjectExtensionPointName("org.jetbrains.kotlin.scriptDefinitionsSource")
 
-@set: TestOnly
+@set:TestOnly
 var Application.isScriptChangesNotifierDisabled: Boolean by NotNullableUserDataProperty(
     Key.create("SCRIPT_CHANGES_NOTIFIER_DISABLED"), true
 )

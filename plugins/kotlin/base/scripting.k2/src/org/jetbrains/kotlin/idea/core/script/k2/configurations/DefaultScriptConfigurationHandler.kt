@@ -18,10 +18,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.ScriptClassPathUtil.Companion.findVirtualFiles
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
-import org.jetbrains.kotlin.idea.core.script.compiledLibraryRoot
-import org.jetbrains.kotlin.idea.core.script.getOrCreateLibrary
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
@@ -29,8 +26,6 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.jdkHome
@@ -99,15 +94,15 @@ open class DefaultScriptConfigurationHandler(
             val source = DefaultScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
             val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
-            val libraryDependencies = wrapper.configuration?.get(ScriptCompilationConfiguration.dependencies).findVirtualFiles()
-                .map { result.getOrCreateLibrary(it.name, listOf(it.compiledLibraryRoot(project)), source) }
+            val locationName = project.scriptModuleRelativeLocation(scriptFile)
+            val libraryDependencies = result.addDependencies(wrapper, source, definition, locationName, project)
 
             val allDependencies = buildList {
                 addIfNotNull(sdkDependency)
                 addAll(libraryDependencies)
             }
 
-            result.addEntity(ModuleEntity.Companion(moduleId.name, allDependencies, source))
+            result addEntity ModuleEntity(moduleId.name, allDependencies, source)
         }
 
         return result
