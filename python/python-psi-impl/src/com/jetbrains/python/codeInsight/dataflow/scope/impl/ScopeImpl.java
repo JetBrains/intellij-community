@@ -112,14 +112,6 @@ public class ScopeImpl implements Scope {
     return myNonlocals.contains(name);
   }
 
-  @Override
-  public boolean hasNestedScopes() {
-    if (myNestedScopes == null) {
-      collectDeclarations();
-    }
-    return !myNestedScopes.isEmpty();
-  }
-
   private boolean isAugAssignment(final String name) {
     if (myAugAssignments == null || myNestedScopes == null) {
       collectDeclarations();

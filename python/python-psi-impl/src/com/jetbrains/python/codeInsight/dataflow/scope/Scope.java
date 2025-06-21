@@ -48,7 +48,6 @@ public interface Scope {
   boolean hasNonLocals();
   boolean isNonlocal(String name);
 
-  boolean hasNestedScopes();
   boolean containsDeclaration(String name);
 
   @NotNull
