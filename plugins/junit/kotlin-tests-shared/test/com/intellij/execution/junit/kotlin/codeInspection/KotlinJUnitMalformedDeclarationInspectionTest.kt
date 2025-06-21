@@ -633,6 +633,28 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         }
       }
       
+      class MultiSourceTest: MyMethodSourceInterface {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("jdks")
+        fun test(jdk: String) {}
+
+        companion object {
+          @JvmStatic
+          fun jdks() : Array<org.junit.jupiter.params.provider.Arguments> =
+            arrayOf(org.junit.jupiter.params.provider.Arguments.of("1.8"), 
+                    org.junit.jupiter.params.provider.Arguments.of("9"))
+        }
+      }
+
+      interface MyMethodSourceInterface {
+        companion object {
+          @JvmStatic
+          fun jdks() : Array<org.junit.jupiter.params.provider.Arguments> =
+            arrayOf(org.junit.jupiter.params.provider.Arguments.of("11"),
+                    org.junit.jupiter.params.provider.Arguments.of("17"))
+        }
+      }
+      
       @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
       class TestWithMethodSource {
         @org.junit.jupiter.params.ParameterizedTest

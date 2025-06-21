@@ -681,6 +681,21 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         static java.util.stream.IntStream intStreamProvider() { return null; }
       }
       
+      interface MyMethodSourceInterface {
+        static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> jdks() {
+          return java.util.stream.Stream.of("11", "17").map(org.junit.jupiter.params.provider.Arguments::of);
+        }
+      }
+      
+      class MultiSourceTest implements MyMethodSourceInterface {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("jdks")
+        public void test(String jdk) {}
+        public static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> jdks() {
+          return java.util.stream.Stream.of("1.8", "9").map(org.junit.jupiter.params.provider.Arguments::of);
+        }
+      }
+      
       @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
       class TestWithMethodSource {
         @org.junit.jupiter.params.ParameterizedTest
