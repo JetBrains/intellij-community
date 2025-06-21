@@ -18,19 +18,19 @@ import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.*
-import org.jetbrains.kotlin.idea.core.script.ScriptClassPathUtil.Companion.findVirtualFiles
+import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRIPTS_MODULE_NAME
+import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.valueOrNull
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
@@ -137,7 +137,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
 
             val source = MainKtsKotlinScriptEntitySource(scriptFile.toVirtualFileUrl(virtualFileManager))
             val locationName = project.scriptModuleRelativeLocation(scriptFile)
-            val libraryDependencies = storageToUpdate.getDependencies(configuration, source, definition, locationName)
+            val libraryDependencies = storageToUpdate.addDependencies(configuration, source, definition, locationName, project)
 
             val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
             val allDependencies = listOfNotNull(sdkDependency) + libraryDependencies
@@ -156,49 +156,6 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         }
 
         return storageToUpdate
-    }
-
-    private fun MutableEntityStorage.getDependencies(
-        wrapper: ScriptCompilationConfigurationWrapper, source: KotlinScriptEntitySource, definition: ScriptDefinition, locationName: String
-    ): List<LibraryDependency> {
-        val definitionDependency = getOrCreateDefinitionDependency(definition, project, source)
-        val storage = this
-
-        return buildList {
-            if (wrapper.isUberDependencyAllowed()) {
-                val classes = wrapper.configuration?.get(ScriptCompilationConfiguration.dependencies).findVirtualFiles()
-                val sources =
-                    wrapper.configuration?.get(ScriptCompilationConfiguration.ide.dependenciesSources).findVirtualFiles()
-
-                addIfNotNull(storage.createUberDependency(locationName, classes, sources, source))
-            } else {
-                add(definitionDependency)
-
-                val classes = wrapper.configuration?.get(ScriptCompilationConfiguration.dependencies)?.drop(1).findVirtualFiles()
-                addAll(
-                    classes.map {
-                        getOrCreateLibrary(it.name, listOf(it.compiledLibraryRoot(project)), source)
-                    })
-            }
-        }
-    }
-
-    private fun MutableEntityStorage.createUberDependency(
-        locationName: String,
-        classes: List<VirtualFile>,
-        sources: List<VirtualFile>,
-        source: KotlinScriptEntitySource,
-    ): LibraryDependency? {
-        if (classes.isEmpty() && sources.isEmpty()) return null
-
-        val classRoots = classes.map { it.compiledLibraryRoot(project) }
-        val sourceRoots = sources.map { it.sourceLibraryRoot(project) }
-
-        return createOrUpdateLibrary("$locationName dependencies", classRoots + sourceRoots, source)
-    }
-
-    private fun ScriptCompilationConfigurationWrapper.isUberDependencyAllowed(): Boolean {
-        return dependenciesSources.size + dependenciesClassPath.size < 20
     }
 
     companion object {

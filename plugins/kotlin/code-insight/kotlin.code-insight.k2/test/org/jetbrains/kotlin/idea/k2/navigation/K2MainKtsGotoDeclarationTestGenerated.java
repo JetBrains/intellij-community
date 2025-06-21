@@ -31,6 +31,11 @@ public class K2MainKtsGotoDeclarationTestGenerated extends AbstractScriptGotoDec
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("gotoKtsStdlibSources.test")
+    public void testGotoKtsStdlibSources() throws Exception {
+        runTest("../../idea/tests/testData/mainKts/navigation/gotoDeclaration/gotoKtsStdlibSources.test");
+    }
+
     @TestMetadata("gotoMainKtsImportedScript.test")
     public void testGotoMainKtsImportedScript() throws Exception {
         runTest("../../idea/tests/testData/mainKts/navigation/gotoDeclaration/gotoMainKtsImportedScript.test");
