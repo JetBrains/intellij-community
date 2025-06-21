@@ -218,7 +218,7 @@ public final class WSLUtil {
    * <li>Windows 10</li>
    * It's available since Windows 10 Insider Preview Build 21354.
    * <a href="https://blogs.windows.com/windows-insider/2021/04/07/announcing-windows-10-insider-preview-build-21354/"></a>
-   * This preview was included in Windows 10 Version 21H2 (November 2021 Update).
+   * This preview was included in Windows 10 Version 21H2 (November 2021 Update), OS Build 19044.*
    */
   static final String DEFAULT_UNC_PREFIX = "\\\\wsl.localhost\\";
 }
