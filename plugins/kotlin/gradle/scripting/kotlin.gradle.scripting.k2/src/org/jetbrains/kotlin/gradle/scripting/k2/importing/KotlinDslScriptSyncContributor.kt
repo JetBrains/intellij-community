@@ -51,7 +51,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
       if (sync == null || sync.models.isEmpty()) return
 
-        GradleScriptDefinitionsStorage.getInstance(project).loadDefinitionsFromDisk(
+        GradleScriptDefinitionsStorage.getInstance(project).loadDefinitions(
             sync.workingDir,
             sync.gradleHome,
             sync.javaHome,

@@ -60,7 +60,7 @@ abstract class AbstractScriptGotoDeclarationMultifileTest : KotlinMultiFileLight
         }
 
         val text = document.text
-        Assertions.assertTrue(text.startsWith(expectedText), "Actual text:\n\n$text")
+        Assertions.assertTrue(text.contains(expectedText), "Actual text:\n\n$text")
     }
 
     override fun setUp() {

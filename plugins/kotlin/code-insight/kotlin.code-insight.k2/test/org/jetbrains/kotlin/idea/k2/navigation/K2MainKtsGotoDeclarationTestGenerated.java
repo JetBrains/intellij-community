@@ -35,4 +35,19 @@ public class K2MainKtsGotoDeclarationTestGenerated extends AbstractScriptGotoDec
     public void testGotoMainKtsImportedScript() throws Exception {
         runTest("../../idea/tests/testData/mainKts/navigation/gotoDeclaration/gotoMainKtsImportedScript.test");
     }
+
+    @TestMetadata("gotoMainKtsImportedScriptSymbols.test")
+    public void testGotoMainKtsImportedScriptSymbols() throws Exception {
+        runTest("../../idea/tests/testData/mainKts/navigation/gotoDeclaration/gotoMainKtsImportedScriptSymbols.test");
+    }
+
+    @TestMetadata("gotoMainKtsImportedScriptTransitiveSymbols.test")
+    public void testGotoMainKtsImportedScriptTransitiveSymbols() throws Exception {
+        runTest("../../idea/tests/testData/mainKts/navigation/gotoDeclaration/gotoMainKtsImportedScriptTransitiveSymbols.test");
+    }
+
+    @TestMetadata("gotoMainKtsStdlibSources.test")
+    public void testGotoMainKtsStdlibSources() throws Exception {
+        runTest("../../idea/tests/testData/mainKts/navigation/gotoDeclaration/gotoMainKtsStdlibSources.test");
+    }
 }
