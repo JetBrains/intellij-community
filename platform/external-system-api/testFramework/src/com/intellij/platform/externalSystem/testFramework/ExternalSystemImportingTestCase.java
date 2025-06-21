@@ -560,7 +560,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected ImportSpec createImportSpec() {
     ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(myProject, getExternalSystemId())
-      .use(ProgressExecutionMode.MODAL_SYNC);
+      .withProgressExecutionMode(ProgressExecutionMode.MODAL_SYNC);
     return importSpecBuilder.build();
   }
 

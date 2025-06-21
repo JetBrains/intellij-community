@@ -97,7 +97,7 @@ public final class ImportSpecImpl implements ImportSpec {
   }
 
   /**
-   * @deprecated use {@link ImportSpecBuilder#use} instead
+   * @deprecated use {@link ImportSpecBuilder#withProgressExecutionMode} instead
    */
   @Deprecated
   public void setProgressExecutionMode(@NotNull ProgressExecutionMode progressExecutionMode) {
@@ -146,7 +146,7 @@ public final class ImportSpecImpl implements ImportSpec {
   }
 
   /**
-   * @deprecated use {@link ImportSpecBuilder#createDirectoriesForEmptyContentRoots} instead
+   * @deprecated use {@link ImportSpecBuilder#withCreateDirectoriesForEmptyContentRoots} instead
    */
   @Deprecated
   public void setCreateDirectoriesForEmptyContentRoots(boolean createDirectoriesForEmptyContentRoots) {
@@ -185,7 +185,7 @@ public final class ImportSpecImpl implements ImportSpec {
   }
 
   /**
-   * @deprecated use {@link ImportSpecBuilder#navigateToError} instead
+   * @deprecated use {@link ImportSpecBuilder#withNavigateToError} instead
    */
   @Deprecated
   public void setNavigateToError(@NotNull ThreeState navigateToError) {
@@ -224,7 +224,7 @@ public final class ImportSpecImpl implements ImportSpec {
   }
 
   /**
-   * @deprecated use {@link ImportSpecBuilder#projectResolverPolicy} instead
+   * @deprecated use {@link ImportSpecBuilder#withProjectResolverPolicy} instead
    */
   @Deprecated
   void setProjectResolverPolicy(@Nullable ProjectResolverPolicy projectResolverPolicy) {
