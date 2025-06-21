@@ -26,12 +26,12 @@ class GradleScriptDefinitionsSource(val project: Project) : ScriptDefinitionsSou
 class GradleScriptDefinitionsStorage(val project: Project) :
     SerializablePersistentStateComponent<GradleScriptDefinitionsStorage.State>(State()) {
 
-    private val definitions: AtomicReference<List<ScriptDefinition>> = AtomicReference(listOf())
+    private val _definitions: AtomicReference<List<ScriptDefinition>> = AtomicReference(listOf())
     private val initialized = AtomicReference(false)
 
     fun getDefinitions(): Sequence<ScriptDefinition> {
         initializeIfNeeded()
-        return definitions.get()?.asSequence() ?: emptySequence()
+        return _definitions.get()?.asSequence() ?: emptySequence()
     }
 
     private fun initializeIfNeeded() {
@@ -41,18 +41,16 @@ class GradleScriptDefinitionsStorage(val project: Project) :
             if (!initialized.get()) {
                 val state = state
                 if (state.workingDir != null) {
-                    loadAndWrapDefinitions(state.workingDir, state.gradleHome, state.javaHome, state.gradleVersion).let {
-                        definitions.set(it)
-                    }
+                    loadDefinitions(state.workingDir, state.gradleHome, state.javaHome, state.gradleVersion)
                 }
-
                 initialized.set(true)
             }
         }
     }
 
-    fun loadDefinitionsFromDisk(workingDir: String, gradleHome: String?, javaHome: String?, gradleVersion: String?) {
-        definitions.set(loadAndWrapDefinitions(workingDir, gradleHome, javaHome, gradleVersion))
+    fun loadDefinitions(workingDir: String, gradleHome: String?, javaHome: String?, gradleVersion: String?) {
+        _definitions.set(loadAndWrapDefinitions(workingDir, gradleHome, javaHome, gradleVersion))
+        initialized.set(true)
         updateState {
             it.copy(workingDir = workingDir, gradleHome = gradleHome, javaHome = javaHome, gradleVersion = gradleVersion)
         }
