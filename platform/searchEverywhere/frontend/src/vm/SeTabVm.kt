@@ -78,11 +78,9 @@ class SeTabVm(
       }.collectLatest { isActive ->
         if (!isActive) return@collectLatest
 
-        val searchPatternWithAutoToggle = searchPattern.withNewValueSideEffect { old, new ->
-          if (!new.startsWith(old)) {
-            withContext(Dispatchers.EDT) {
-              (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
-            }
+        val searchPatternWithAutoToggle = searchPattern.onEach {
+          withContext(Dispatchers.EDT) {
+            (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
           }
         }
 
@@ -167,12 +165,4 @@ class SeTabVm(
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
   }
-
-  private fun StateFlow<String>.withNewValueSideEffect(sideEffect: suspend (String, String) -> Unit): Flow<String> =
-    scan(Pair("", "")) { acc, new -> Pair(acc.second, new) }
-      .drop(1)
-      .map { (old, new) ->
-        sideEffect(old, new)
-        new
-      }
 }
