@@ -67,6 +67,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/tables/GitHubT
 	public fun <init> (Lorg/jetbrains/jewel/markdown/extensions/github/tables/GfmTableStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;)V
 	public fun getBlockRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension;
 	public fun getDelimitedInlineRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineRendererExtension;
+	public fun getImageRendererExtension ()Lorg/jetbrains/jewel/markdown/extensions/ImageRendererExtension;
 }
 
 public final class org/jetbrains/jewel/markdown/extensions/github/tables/RowBackgroundStyle : java/lang/Enum {
