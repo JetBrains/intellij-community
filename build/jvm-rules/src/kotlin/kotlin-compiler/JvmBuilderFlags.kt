@@ -11,14 +11,14 @@ import java.util.regex.Pattern
 
 private val FLAG_FILE_RE: Regex = Pattern.compile("""^--flagfile=((.*)-(\d+).params)$""").toRegex()
 
-fun parseArgs(args: Array<String>): ArgMap<JvmBuilderFlags> {
+fun parseArgs(args: Array<String>, baseDir: Path): ArgMap<JvmBuilderFlags> {
   check(args.isNotEmpty()) {
     "expected at least a single arg got: ${args.joinToString(" ")}"
   }
 
   return createArgMap(
     args = FLAG_FILE_RE.matchEntire(args[0])?.groups?.get(1)?.let {
-      Files.readAllLines(Path.of(it.value))
+      Files.readAllLines(baseDir.resolve(it.value))
     } ?: args.asList(),
     enumClass = JvmBuilderFlags::class.java,
   )
