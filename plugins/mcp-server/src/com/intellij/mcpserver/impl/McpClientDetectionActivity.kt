@@ -1,10 +1,7 @@
 package com.intellij.mcpserver.impl
 
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.clientConfiguration.ClaudeMcpClient
-import com.intellij.mcpserver.clientConfiguration.CursorClient
 import com.intellij.mcpserver.clientConfiguration.McpClient
-import com.intellij.mcpserver.clientConfiguration.WindsurfClient
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.settings.McpServerSettingsConfigurable
 import com.intellij.notification.NotificationGroupManager
@@ -16,15 +13,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.containers.addIfNotNull
-import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.io.path.exists
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.readText
 
 @Service(Service.Level.PROJECT)
 @State(name = "McpServerSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)],)
@@ -41,7 +30,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
     if (Registry.`is`("mcp.server.detect.mcp.clients")) {
       val mcpClientDetectionSettings = project.service<McpClientDetectionSettings>()
 
-      val detectedClients = detectMcpClients(project)
+      val detectedClients = McpClientDetector.detectMcpClients(project)
       if (McpServerSettings.getInstance().state.enableMcpServer) {
         showUnconfiguredNotificationIfNeeded(mcpClientDetectionSettings, detectedClients, project)
         return
@@ -69,120 +58,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
     }
   }
 
-  private fun detectMcpClients(project: Project): List<McpClient> {
-    val detectedClients = mutableListOf<McpClient>()
 
-    detectedClients.addAll(detectGlobalMcpClients())
-    
-    detectedClients.addAll(detectProjectMcpClients(project))
-
-    return detectedClients
-  }
-
-  private fun detectGlobalMcpClients(): List<McpClient> {
-    val globalClients = mutableListOf<McpClient>()
-
-    runCatching {
-      globalClients.addIfNotNull(detectClaudeDesktop())
-    }
-    runCatching {
-      globalClients.addIfNotNull(detectCursorGlobal())
-    }
-    runCatching {
-      globalClients.addIfNotNull(detectWindsurf())
-    }
-
-    return globalClients
-  }
-
-  private fun detectProjectMcpClients(project: Project): List<McpClient> {
-    val projectClients = mutableListOf<McpClient>()
-
-    runCatching {
-      projectClients.addIfNotNull(detectVSCode(project))
-    }
-    runCatching {
-      projectClients.addIfNotNull(detectCursorProject(project))
-    }
-    runCatching {
-      projectClients.addIfNotNull(detectClaudeCode(project))
-    }
-
-    return projectClients
-  }
-
-  private fun looksLikeMcpJson(file: Path): Boolean {
-    if (file.exists() && file.isRegularFile()) {
-      val content = runCatching { file.readText() }.getOrElse { "" }
-      return content.contains("mcpServers")
-    }
-    return false
-  }
-
-  private fun detectClaudeDesktop(): McpClient? {
-    val configPath = when {
-      SystemInfo.isMac -> "~/Library/Application Support/Claude/claude_desktop_config.json"
-      SystemInfo.isWindows -> System.getenv("APPDATA")?.let { "$it/Claude/claude_desktop_config.json" }
-      SystemInfo.isLinux -> "~/.config/Claude/claude_desktop_config.json"
-      else -> null
-    }
-    if (configPath == null) return null
-    val expandedPath = FileUtil.expandUserHome(configPath)
-    val path = Paths.get(expandedPath)
-
-    if (looksLikeMcpJson(path)) {
-      return ClaudeMcpClient("Claude Desktop (Global)", path)
-    }
-    return null
-  }
-
-  private fun detectCursorGlobal(): McpClient? {
-    val path = Paths.get(FileUtil.expandUserHome("~/.cursor/mcp.json"))
-    if (looksLikeMcpJson(path)) {
-      return CursorClient("Cursor (Global)", path)
-    }
-    return null
-  }
-
-  private fun detectWindsurf(): McpClient? {
-    val path = Paths.get("~/.codeium/windsurf/mcp_config.json")
-    if (looksLikeMcpJson(path)) {
-      return WindsurfClient("Windsurf (Global)", path)
-    }
-    return null
-  }
-
-  private fun detectProjectLevelClient(project: Project, configDirName: String, clientName: String): McpClient? {
-    val projectBasePath = project.basePath ?: return null
-    val vscodeConfigPath = Paths.get(projectBasePath, configDirName, "mcp.json")
-
-    if (looksLikeMcpJson(vscodeConfigPath)) {
-      return McpClient("$clientName (Project)", vscodeConfigPath)
-    }
-    return null
-  }
-
-  private fun detectVSCode(project: Project): McpClient? {
-    val configDirName = ".vscode"
-    val clientName = "VSCode"
-    return detectProjectLevelClient(project, configDirName, clientName)
-  }
-
-  private fun detectCursorProject(project: Project): McpClient? {
-    val configDirName = ".cursor"
-    val clientName = "Cursor"
-    return detectProjectLevelClient(project, configDirName, clientName)
-  }
-
-  private fun detectClaudeCode(project: Project): McpClient? {
-    val projectBasePath = project.basePath ?: return null
-    val claudeCodeConfigPath = Paths.get(projectBasePath, ".mcp.json")
-
-    if (looksLikeMcpJson(claudeCodeConfigPath)) {
-      return McpClient("Claude Code (Project)", claudeCodeConfigPath)
-    }
-    return null
-  }
 
   private fun showMcpServerAutomaticConfigurationNotification(project: Project, unconfiguredClients: List<McpClient>) {
     val notification = NotificationGroupManager.getInstance()
@@ -192,16 +68,23 @@ internal class McpClientDetectionActivity : ProjectActivity {
         McpServerBundle.message("mcp.unconfigured.clients.detected.notification.message", unconfiguredClients),
         NotificationType.INFORMATION
       )
-    notification.addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")) {
-      override fun actionPerformed(e: AnActionEvent) {
-        unconfiguredClients.forEach { it.configure() }
-        notification.expire()
-      }
-    }).addAction(object : AnAction(McpServerBundle.message("mcp.clients.detected.action.dont.show")) {
-      override fun actionPerformed(e: AnActionEvent) {
-        project.service<McpClientDetectionSettings>().state.doNotShowUnconfiguredAgain = true
-        notification.expire()
-      }
+    notification
+      .addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          unconfiguredClients.forEach { it.configure() }
+          notification.expire()
+        }
+      })
+      .addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.settings.json")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
+        }
+      })
+      .addAction(object : AnAction(McpServerBundle.message("mcp.clients.detected.action.dont.show")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          project.service<McpClientDetectionSettings>().state.doNotShowUnconfiguredAgain = true
+          notification.expire()
+        }
     }).notify(project)
   }
 
