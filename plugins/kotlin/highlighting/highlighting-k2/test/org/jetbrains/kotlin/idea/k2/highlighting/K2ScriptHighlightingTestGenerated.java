@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/mainKts/highlighting")
-public class K2MainKtsHighlightingTestGenerated extends AbstractK2MainKtsHighlightingTest {
+public class K2ScriptHighlightingTestGenerated extends AbstractK2ScriptHighlightingTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -38,5 +38,10 @@ public class K2MainKtsHighlightingTestGenerated extends AbstractK2MainKtsHighlig
     @TestMetadata("fileName.main.kts")
     public void testFileName() throws Exception {
         runTest("../../idea/tests/testData/mainKts/highlighting/fileName.main.kts");
+    }
+
+    @TestMetadata("importedScripts.main.kts")
+    public void testImportedScripts() throws Exception {
+        runTest("../../idea/tests/testData/mainKts/highlighting/importedScripts.main.kts");
     }
 }
