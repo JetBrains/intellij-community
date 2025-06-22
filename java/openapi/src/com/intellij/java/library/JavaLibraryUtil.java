@@ -102,7 +102,7 @@ public final class JavaLibraryUtil {
   public static boolean hasLibraryClass(@Nullable Project project, @NotNull String classFqn) {
     if (project == null || project.isDisposed()) return false;
     if (project.isDefault()) return false; // EA-396106
-    return getLibraryClassMap(project).getOrDefault(classFqn, false);
+    return getLibraryClassMap(project).getOrDefault(classFqn, Boolean.FALSE);
   }
 
   /**
@@ -113,7 +113,7 @@ public final class JavaLibraryUtil {
   public static boolean hasLibraryClass(@Nullable Module module, @NotNull String classFqn) {
     if (module == null || module.isDisposed()) return false;
     if (module.getProject().isDefault()) return false; // EA-396106
-    return getLibraryClassMap(module).getOrDefault(classFqn, false);
+    return getLibraryClassMap(module).getOrDefault(classFqn, Boolean.FALSE);
   }
 
   private static Map<String, Boolean> getLibraryClassMap(@NotNull Project project) {
@@ -121,7 +121,8 @@ public final class JavaLibraryUtil {
 
     return CachedValuesManager.getManager(project).getCachedValue(project, LIBRARY_CLASSES_PRESENCE_KEY, () -> {
       ConcurrentMap<String, Boolean> map = ConcurrentFactoryMap.createMap(classFqn -> {
-        return JavaPsiFacade.getInstance(project).hasClass(classFqn, allScope(project));
+        boolean hasClass = JavaPsiFacade.getInstance(project).hasClass(classFqn, allScope(project));
+        return Boolean.valueOf(hasClass);
       });
       return createResultWithDependencies(map, project);
     }, false);
@@ -133,7 +134,8 @@ public final class JavaLibraryUtil {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, LIBRARY_CLASSES_PRESENCE_KEY, () -> {
       Project project = module.getProject();
       ConcurrentMap<String, Boolean> map = ConcurrentFactoryMap.createMap(classFqn -> {
-        return JavaPsiFacade.getInstance(project).hasClass(classFqn, moduleWithDependenciesAndLibrariesScope(module));
+        boolean hasClass = JavaPsiFacade.getInstance(project).hasClass(classFqn, moduleWithDependenciesAndLibrariesScope(module));
+        return Boolean.valueOf(hasClass);
       });
       return createResultWithDependencies(map, project);
     }, false);
@@ -309,27 +311,29 @@ public final class JavaLibraryUtil {
 
         jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
 
-        String[] nameParts = nameWithoutExtension.split("-");
-        StringBuilder nameBuilder = new StringBuilder();
-
-        for (int i = 0; i < nameParts.length; i++) {
-          String part = nameParts[i];
-          if (!part.isEmpty() && isDecimalDigit(part.charAt(0))) {
-            break;
-          }
-
-          if (i > 0) {
-            nameBuilder.append("-");
-          }
-          nameBuilder.append(part);
-        }
-
-        String indexNamePart = nameBuilder.toString();
+        String indexNamePart = baseName(nameWithoutExtension);
         if (!indexNamePart.equals(nameWithoutExtension)) {
           jarLibrariesIndex.put(indexNamePart, intern(nameWithoutExtension));
         }
       }
     }
+  }
+
+  /**
+   * @return the base name of a library out of the versioned library file name.
+   * e.g. `common-tools` out of `common-tools-1.2.3-alpha`
+   */
+  private static @NotNull String baseName(String name) {
+    int index = -1;
+    int length = name.length();
+
+    do {
+      index = name.indexOf('-', index + 1);
+      if (index < 0) break;
+      if (index + 1 < length && isDecimalDigit(name.charAt(index + 1))) break;
+    } while (index < length);
+
+    return index < 0 ? name : name.substring(0, index);
   }
 
   private static final List<String> BAZEL_PREFIXES = List.of("processed_", "header_");
