@@ -20,9 +20,9 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.eel.EelFileWatcher;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public final class WslFileWatcher extends PluggableFileWatcher {
   private static Logger logger(@Nullable String vm) {
     return vm == null ? Logger.getInstance(WslFileWatcher.class) : Logger.getInstance('#' + WslFileWatcher.class.getName() + '.' + vm);
@@ -58,7 +59,7 @@ public final class WslFileWatcher extends PluggableFileWatcher {
   private volatile boolean myTestStarted = false;
 
   @Override
-  public void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink) {
+  public void initialize(@NotNull FileWatcherNotificationSink notificationSink) {
     if (EelFileWatcher.Companion.useEelFileWatcher()) {
       myExecutable = null;
       return;

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -13,7 +12,7 @@ public abstract class PluggableFileWatcher {
   public static final ExtensionPointName<PluggableFileWatcher> EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.pluggableFileWatcher");
 
-  public abstract void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink);
+  public abstract void initialize(@NotNull FileWatcherNotificationSink notificationSink);
 
   public abstract void dispose();
 

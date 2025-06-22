@@ -724,7 +724,7 @@ a:com.intellij.openapi.vfs.local.PluggableFileWatcher
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:dispose():V
-- a:initialize(com.intellij.openapi.vfs.newvfs.ManagingFS,com.intellij.openapi.vfs.local.FileWatcherNotificationSink):V
+- a:initialize(com.intellij.openapi.vfs.local.FileWatcherNotificationSink):V
 - a:isOperational():Z
 - a:isSettingRoots():Z
 - resetChangedPaths():V
