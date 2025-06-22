@@ -34,8 +34,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   class BothRunning(val activeManagedStepping: Boolean = false) : State
   class ResumeLowResumeStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
   object ResumeLowRunHighResumeStarted : State
-  class ResumeLowStoppedAfterRunWhileHighResuming(val low: XSuspendContext) : State
-  class WaitingForHighProcessPositionReached(val threadInitiatedStopId : Long?) : State
+  class WaitingForHighProcessPositionReached(val lowLevelSuspendContext : XSuspendContext) : State
   object LeaveHighRunningWaitingForLowStop : State
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
@@ -117,7 +116,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is PauseRequested -> {
         when (currentState) {
           is BothRunning -> {
-            handlePauseEventWhenBothRunning()
+            TODO()
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -125,6 +124,9 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
 
       is HighLevelPositionReached -> {
         when (currentState) {
+          is WaitingForHighProcessPositionReached -> {
+            changeState(BothStopped(currentState.lowLevelSuspendContext, event.suspendContext))
+          }
           is WaitingForHighProcessPositionReached, is BothRunning -> {
             //val stopThreadId = (currentState as? WaitingForHighProcessPositionReached)?.threadInitiatedStopId
             //                   ?: highExtension.getStoppedThreadId(event.suspendContext)
@@ -149,32 +151,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
             changeState(BothStopped(lowLevelContext, highLevelSuspendContext))
           }
           is BothRunning, is MixedStepIntoStartedHighDebuggerResumed -> {
-            val newState = run {
-              return@run WaitingForHighProcessPositionReached(null)
-              if (currentState is MixedStepIntoStartedHighDebuggerResumed) {
-                lowExtension.finishMixedStepInto()
-              }
-              else {
-                // The low-level debug process is stopped, we need to ensure that we will be able to stop the managed one at this position
-                val canStopHere = highExtension.canStopHere(event.suspendContext)
-                if (!canStopHere)
-                  return@run createStoppedStateWhenHighCantStop(event.suspendContext)
-              }
-
-              val eventThreadId = lowExtension.getStoppedThreadId(event.suspendContext)
-              lowExtension.continueAllThreads(setOf(eventThreadId), silent = true)
-
-              if (currentState is BothRunning && currentState.activeManagedStepping) {
-                logger.info("Aborting the active managed step when we're in BothRunning state with an active breakpoint")
-                highExtension.abortHighLevelStepping()
-              }
-
-              // please keep don't await it, it will break the status change logic
-              highExtension.pauseMixedModeSession(eventThreadId)
-              return@run WaitingForHighProcessPositionReached(eventThreadId) // If we are stopping on a breakpoint, we need to show the thread on which the breakpoint was hit
-            }
-
-            changeState(newState)
+            changeState(WaitingForHighProcessPositionReached(event.suspendContext))
           }
           is OnlyHighStopped -> {
             changeState(BothStopped(event.suspendContext, requireNotNull(currentState.highSuspendContext)))
@@ -195,23 +172,6 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
             val lowSuspendCtx = event.suspendContext
             changeState(BothStopped(lowSuspendCtx, requireNotNull(highSuspendCtx)))
           }
-          is ResumeLowRunHighResumeStarted, is HighLevelRunToAddressStartedLowRun, is ManagedStepStarted -> {
-            // if we are here one of the threads hit a stop event while we were waiting for a mono process to be resumed by managed debugger
-            // if the stop event happened on a native, not mono thread, we can just wait for the managed debugger to resume the process and suspend it
-            // if it's a mono thread, the mono thread either was resumed and stopped right or was executing native code
-            // So, in all situations we need to:
-            // 1. resume all threads except stopped one
-            // 2. wait until managed resume is finished
-            // 3. pause the process
-            // TODO: need to handle new breakpoints hits, that may happen while we have the threads resumed
-            lowExtension.continueAllThreads(setOf(lowExtension.getStoppedThreadId(event.suspendContext)), silent = true)
-            if (currentState is ManagedStepStarted) {
-              logger.info("Aborting the active managed step when the managed step just has been started")
-              highExtension.abortHighLevelStepping()
-            }
-
-            changeState(ResumeLowStoppedAfterRunWhileHighResuming(event.suspendContext))
-          }
           LeaveHighRunningWaitingForLowStop -> {
             changeState(BothStopped(event.suspendContext, nullObjectHighLevelSuspendContext))
           }
@@ -231,19 +191,8 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
 
       is LowRun -> {
         when (currentState) {
-          is WaitingForLowLevelProcessResumeForStep -> {
-            changeState(ManagedStepStarted(currentState.low))
-            when (currentState.stepType) {
-              StepType.Over -> {
-                high.startStepOver(currentState.high)
-              }
-              StepType.Into -> {
-                high.startStepInto(currentState.high)
-              }
-              StepType.Out -> {
-                high.startStepOut(currentState.high)
-              }
-            }
+          is ManagedStepStarted -> {
+            changeState(BothRunning(true))
           }
           is ResumeLowResumeStarted, is LowLevelRunToAddressStarted -> {
             if (currentState.high == nullObjectHighLevelSuspendContext) {
@@ -252,7 +201,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
               changeState(BothRunning())
             }
             else {
-              high.resume(currentState.high)
+              //high.resume(currentState.high)
               changeState(ResumeLowRunHighResumeStarted)
             }
           }
@@ -275,6 +224,18 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is HighLevelDebuggerStepRequested -> {
         when (currentState) {
           is BothStopped -> {
+            when (event.stepType) {
+              StepType.Over -> {
+                high.startStepOver(currentState.high)
+              }
+              StepType.Into -> {
+                high.startStepInto(currentState.high)
+              }
+              StepType.Out -> {
+                high.startStepOut(currentState.high)
+              }
+            }
+
             //changeState(ManagedStepStarted(currentState.low))
             changeState(WaitingForLowLevelProcessResumeForStep(currentState.low, event.highSuspendContext, event.stepType))
             //lowExtension.continueAllThreads(exceptThreads = emptySet(), silent = true)
@@ -328,8 +289,11 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       }
       is HighRun -> {
         when (currentState) {
-          is OnlyHighStopped, is ResumeLowRunHighResumeStarted, is HighLevelRunToAddressStartedLowRun, is ManagedStepStarted -> {
-            changeState(BothRunning(currentState is ManagedStepStarted))
+          is WaitingForLowLevelProcessResumeForStep -> {
+            changeState(ManagedStepStarted(currentState.high))
+          }
+          is OnlyHighStopped, is ResumeLowRunHighResumeStarted, is HighLevelRunToAddressStartedLowRun -> {
+            changeState(BothRunning(false))
           }
           is MixedStepIntoStartedWaitingForHighDebuggerToBeResumed -> {
             // Now run all threads letting the stepping thread reach its destination
@@ -337,22 +301,6 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
               lowExtension.continueAllThreads(exceptThreads = emptySet(), silent = true)
             }
             changeState(MixedStepIntoStartedHighDebuggerResumed())
-          }
-          is ResumeLowStoppedAfterRunWhileHighResuming -> {
-            logger.info("We've met a native stop (breakpoint or other kind) while resuming. Now managed resume is completed, " +
-                        "but the event thread is stopped by a low level debugger. Need to pause the process completely if that's possible")
-
-            val threadIdInitiatedStop = lowExtension.getStoppedThreadId(currentState.low)
-            val canStopHere = highExtension.canStopHere(currentState.low)
-            if (canStopHere)
-              handlePauseEventWhenBothRunning(threadIdInitiatedStop)
-            else {
-              logger.info("High-level debug process can't stop here. Will leave it running and pause the low-level process")
-              // we have recovered the high-level debug process from being blocked trying to resume,
-              // now we need to stop the low-debug process
-              lowExtension.pauseMixedModeSession(threadIdInitiatedStop)
-              changeState(LeaveHighRunningWaitingForLowStop)
-            }
           }
           is HighLevelSetStatementStarted -> {
             // Technically thread may not run (it's not necessary for this operation),
@@ -393,11 +341,6 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
         changeState(Exited)
       }
     }
-  }
-
-  private suspend fun handlePauseEventWhenBothRunning(threadToSelect : Long? = null) {
-    highExtension.pauseMixedModeSession(threadToSelect)
-    changeState(WaitingForHighProcessPositionReached(threadToSelect))
   }
 
   private suspend fun changeState(newState: State) {
