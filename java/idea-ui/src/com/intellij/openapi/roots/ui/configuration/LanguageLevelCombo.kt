@@ -74,7 +74,7 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
            }) {
         if (value is LanguageLevel && value.isUnsupported) {
           attributes = SimpleTextAttributes.ERROR_ATTRIBUTES
-        } else if (value is LanguageLevel && LTS.contains(value)) {
+        } else if (value is LanguageLevel && LTS.contains(value) && value <= highestLanguageLevel) {
           attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, null, null, null)
         }
       }
