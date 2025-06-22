@@ -64,7 +64,7 @@ data class Rete internal constructor(
   override val key: CoroutineContext.Key<*> = Rete
 }
 
-class ReteEntity(override val eid: EID) : Entity {
+data class ReteEntity(override val eid: EID) : Entity {
   companion object : EntityType<ReteEntity>(ReteEntity::class, ::ReteEntity) {
     internal val ReteAttr = requiredTransient<Rete>("rete")
     internal val TransactorAttr = requiredTransient<Transactor>("kernel", Indexing.UNIQUE)
