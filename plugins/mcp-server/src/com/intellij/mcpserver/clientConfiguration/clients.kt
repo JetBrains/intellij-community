@@ -6,6 +6,7 @@ import com.intellij.mcpserver.createStdioMcpServerCommandLine
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PORT
 import com.intellij.mcpserver.stdio.main
+import com.intellij.openapi.util.NlsContexts
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
 import java.nio.file.Path
@@ -16,7 +17,7 @@ import kotlin.io.path.outputStream
 import kotlin.reflect.jvm.javaMethod
 
 open class McpClient(
-  val name: String,
+  @NlsContexts.BorderTitle val name: String,
   val configPath: Path,
 ) {
 
@@ -24,16 +25,22 @@ open class McpClient(
     return name
   }
 
-  private val json = Json {
-    allowComments = true
-    allowTrailingComma = true
-    prettyPrint = true
-    prettyPrintIndent = "  "
-    classDiscriminatorMode = ClassDiscriminatorMode.NONE
+  val json by lazy {
+    Json {
+      allowComments = true
+      allowTrailingComma = true
+      prettyPrint = true
+      prettyPrintIndent = "  "
+      classDiscriminatorMode = ClassDiscriminatorMode.NONE
+    }
   }
+
+  protected val sseUrl by lazy { "http://localhost:${McpServerService.getInstance().port}/sse" }
 
   open fun isConfigured(): Boolean = true
   open fun configure() = configureStdIO()
+
+  open fun isSSESupported(): Boolean = true
 
   open fun mcpServersKey() = "mcpServers"
 
@@ -94,36 +101,30 @@ open class McpClient(
     }
   }
 
-  protected fun getSSEUrl() = "http://localhost:${McpServerService.getInstance().port}/sse"
 
-  protected fun configureStdIO() {
+  fun configureStdIO() = updateServerConfig(getStdioConfig())
+
+  open fun getSSEConfig(): ServerConfig? = null
+
+  fun getStdioConfig(): ServerConfig {
     val cmd = createStdioMcpServerCommandLine(McpServerService.getInstance().port, null)
-    val serverEntry = STDIOServerConfig(command = cmd.exePath, args = cmd.parametersList.parameters, env = cmd.environment)
-    updateServerConfig(serverEntry)
+    return STDIOServerConfig(command = cmd.exePath, args = cmd.parametersList.parameters, env = cmd.environment)
   }
 }
 
 class ClaudeMcpClient(name: String, configPath: Path) : McpClient(name, configPath) {
   override fun isConfigured(): Boolean = isStdIOConfigured()
+  override fun isSSESupported(): Boolean = false
 }
 
 class CursorClient(name: String, configPath: Path) : McpClient(name, configPath) {
   override fun isConfigured(): Boolean = isStdIOConfigured() || isSSEConfigured()
-
-  private fun configureSSE() {
-    val serverEntry = CursorSSEConfig(url = getSSEUrl())
-    updateServerConfig(serverEntry)
-  }
-
-  override fun configure() = configureSSE()
+  override fun getSSEConfig(): ServerConfig = CursorSSEConfig(url = sseUrl)
+  override fun configure() = updateServerConfig(getSSEConfig())
 }
 
 class WindsurfClient(name: String, configPath: Path) : McpClient(name, configPath) {
   override fun isConfigured(): Boolean = isStdIOConfigured() || isSSEConfigured()
-  private fun configureSSE() {
-    val serverEntry = WindsurfSSEConfig(serverUrl = getSSEUrl())
-    updateServerConfig(serverEntry)
-  }
-
-  override fun configure() = configureSSE()
+  override fun getSSEConfig(): ServerConfig = WindsurfSSEConfig(serverUrl = sseUrl)
+  override fun configure() = updateServerConfig(getSSEConfig())
 }
