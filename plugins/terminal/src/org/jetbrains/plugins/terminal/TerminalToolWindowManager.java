@@ -261,56 +261,18 @@ public final class TerminalToolWindowManager implements Disposable {
     }
   }
 
-  public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner) {
-    createNewSession(terminalRunner, null);
-  }
-
-  public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState) {
-    createNewSession(terminalRunner, tabState, true);
-  }
-
-  @ApiStatus.Internal
-  public void createNewSession(@NotNull TerminalStartupFusInfo startupFusInfo) {
-    createNewSession(myTerminalRunner, null, null, startupFusInfo, true, true);
-  }
-
-  @ApiStatus.Internal
-  public void createNewSession(@NotNull TerminalTabState tabState, @NotNull TerminalStartupFusInfo startupFusInfo) {
-    createNewSession(myTerminalRunner, tabState, null, startupFusInfo, true, true);
-  }
+  //------------ Terminal tab creation API methods start ------------------------------------
 
   public @NotNull TerminalWidget createNewSession() {
     return createNewSession(myTerminalRunner, null, null, null, true, true);
   }
 
-  /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
-    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, true, true));
+  public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner) {
+    createNewSession(terminalRunner, null, null, null, true, true);
   }
 
-  /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
-                                                             @Nullable @Nls String tabName,
-                                                             boolean requestFocus) {
-    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, requestFocus, true));
-  }
-
-  /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
-                                                             @Nullable @Nls String tabName,
-                                                             boolean requestFocus,
-                                                             boolean deferSessionStartUntilUiShown) {
-    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(
-      createShellWidget(workingDirectory, tabName, requestFocus, deferSessionStartUntilUiShown));
+  public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState) {
+    createNewSession(terminalRunner, tabState, null, null, true, true);
   }
 
   public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
@@ -319,6 +281,20 @@ public final class TerminalToolWindowManager implements Disposable {
                                                    boolean deferSessionStartUntilUiShown) {
     return createNewSession(workingDirectory, tabName, null, requestFocus, deferSessionStartUntilUiShown);
   }
+
+  public @NotNull Content newTab(@NotNull ToolWindow toolWindow, @Nullable TerminalWidget terminalWidget) {
+    return createNewTab(terminalWidget, myTerminalRunner, toolWindow, null, null, null, true, true);
+  }
+
+  public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
+    TerminalTabState state = new TerminalTabState();
+    if (fileToOpen != null) {
+      state.myWorkingDirectory = fileToOpen.getPath();
+    }
+    createNewSession(myTerminalRunner, state, null, null, true, true);
+  }
+
+  //------------ Terminal tab creation API methods end --------------------------------------
 
   @ApiStatus.Internal
   public @NotNull TerminalWidget createNewSession(@Nullable String workingDirectory,
@@ -333,10 +309,14 @@ public final class TerminalToolWindowManager implements Disposable {
     return createNewSession(myTerminalRunner, tabState, null, null, requestFocus, deferSessionStartUntilUiShown);
   }
 
-  private void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
-                                @Nullable TerminalTabState tabState,
-                                boolean requestFocus) {
-    createNewSession(terminalRunner, tabState, null, null, requestFocus, true);
+  @ApiStatus.Internal
+  public void createNewSession(@NotNull TerminalStartupFusInfo startupFusInfo) {
+    createNewSession(myTerminalRunner, null, null, startupFusInfo, true, true);
+  }
+
+  @ApiStatus.Internal
+  public void createNewSession(@NotNull TerminalTabState tabState, @NotNull TerminalStartupFusInfo startupFusInfo) {
+    createNewSession(myTerminalRunner, tabState, null, startupFusInfo, true, true);
   }
 
   private @NotNull TerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
@@ -358,10 +338,6 @@ public final class TerminalToolWindowManager implements Disposable {
       LOG.assertTrue(toolWindow == myToolWindow);
     }
     return toolWindow;
-  }
-
-  public @NotNull Content newTab(@NotNull ToolWindow toolWindow, @Nullable TerminalWidget terminalWidget) {
-    return createNewTab(terminalWidget, myTerminalRunner, toolWindow, null, null, null, true, true);
   }
 
   private @NotNull Content createNewTab(@Nullable TerminalWidget terminalWidget,
@@ -693,14 +669,6 @@ public final class TerminalToolWindowManager implements Disposable {
     }
   }
 
-  public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
-    TerminalTabState state = new TerminalTabState();
-    if (fileToOpen != null) {
-      state.myWorkingDirectory = fileToOpen.getPath();
-    }
-    createNewSession(myTerminalRunner, state);
-  }
-
   private @NotNull TerminalWidget startShellTerminalWidget(@NotNull Content content,
                                                            @NotNull AbstractTerminalRunner<?> terminalRunner,
                                                            @NotNull ShellStartupOptions startupOptions,
@@ -846,6 +814,36 @@ public final class TerminalToolWindowManager implements Disposable {
     public boolean isDisposeWhenEmpty() {
       return false;
     }
+  }
+
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, true, true));
+  }
+
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
+                                                             @Nullable @Nls String tabName,
+                                                             boolean requestFocus) {
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(createShellWidget(workingDirectory, tabName, requestFocus, true));
+  }
+
+  /**
+   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
+                                                             @Nullable @Nls String tabName,
+                                                             boolean requestFocus,
+                                                             boolean deferSessionStartUntilUiShown) {
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(
+      createShellWidget(workingDirectory, tabName, requestFocus, deferSessionStartUntilUiShown));
   }
 }
 
