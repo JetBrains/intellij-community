@@ -15,11 +15,13 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointHighlighterRange
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XLineBreakpointInfo
+import com.intellij.xdebugger.impl.rpc.XLineBreakpointTextRange
 import com.intellij.xdebugger.impl.rpc.toTextRange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -106,7 +108,10 @@ internal class FrontendXLineBreakpointProxy(
     val oldLine = getLine()
     if (oldLine != line) {
       // TODO IJPL-185322 support type.lineShouldBeChanged()
-      val requestId = updateLineBreakpointState { it.copy(line = line) }
+      val requestId = updateLineBreakpointState {
+        val newRange = if (it.highlightingRange == null) null else UNAVAILABLE_RANGE
+        it.copy(line = line, highlightingRange = newRange)
+      }
       lineSourcePosition = null
       if (visualLineMightBeChanged) {
         visualRepresentation.removeHighlighter()
@@ -132,8 +137,10 @@ internal class FrontendXLineBreakpointProxy(
     }
   }
 
-  override fun getHighlightRange(): TextRange? {
-    return lineBreakpointInfo.highlightingRange?.toTextRange()
+  override fun getHighlightRange(): XLineBreakpointHighlighterRange {
+    val range = lineBreakpointInfo.highlightingRange
+    if (range == UNAVAILABLE_RANGE) return XLineBreakpointHighlighterRange.Unavailable
+    return XLineBreakpointHighlighterRange.Available(range?.toTextRange())
   }
 
   override fun updatePosition() {
@@ -174,3 +181,5 @@ internal class FrontendXLineBreakpointProxy(
     return this::class.simpleName + "(id=$id, type=${type.id}, line=${getLine()}, file=${getFileUrl()})"
   }
 }
+
+private val UNAVAILABLE_RANGE = XLineBreakpointTextRange(-1, -1)
