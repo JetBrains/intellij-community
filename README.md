@@ -22,7 +22,7 @@ This section will guide you to get the project source faster, avoid common issue
 #### Prerequisites
 - Git installed
 - ~2GB free disk space
-- Install [IntelliJ IDEA 2023.2](https://www.jetbrains.com/idea/download) or higher. Yes, IDEA to build IDEA. 
+- Install [IntelliJ IDEA 2023.2](https://www.jetbrains.com/idea/download) or higher.
 - For Windows set these git config to avoid common issues during cloning:
   ```bash
   git config --global core.longpaths true
