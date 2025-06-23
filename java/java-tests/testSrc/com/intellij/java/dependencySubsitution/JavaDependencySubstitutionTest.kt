@@ -40,4 +40,38 @@ class JavaDependencySubstitutionTest {
       DependencyAssertions.assertModuleDependency(module, "lib-module")
     }
   }
+
+  @Test
+  fun `test add library substitution for different libraries with same coordinates`() {
+    val storage = MutableEntityStorage.create()
+
+    storage addEntity LibraryEntity("library1", LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource) {
+      mavenCoordinates = LibraryMavenCoordinateEntity(MavenCoordinates("org.example", "library", "1.0"), NonPersistentEntitySource)
+    }
+    storage addEntity LibraryEntity("library2", LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource) {
+      mavenCoordinates = LibraryMavenCoordinateEntity(MavenCoordinates("org.example", "library", "1.0"), NonPersistentEntitySource)
+    }
+    storage addEntity ModuleEntity("app-module1", emptyList(), NonPersistentEntitySource) {
+      mavenCoordinates = ModuleMavenCoordinateEntity(MavenCoordinates("org.example", "app-module", "1.0"), NonPersistentEntitySource)
+      dependencies += LibraryDependency(LibraryId("library1", LibraryTableId.ProjectLibraryTableId), false, COMPILE)
+    }
+    storage addEntity ModuleEntity("app-module2", emptyList(), NonPersistentEntitySource) {
+      mavenCoordinates = ModuleMavenCoordinateEntity(MavenCoordinates("org.example", "app-module", "1.0"), NonPersistentEntitySource)
+      dependencies += LibraryDependency(LibraryId("library2", LibraryTableId.ProjectLibraryTableId), false, COMPILE)
+    }
+    storage addEntity ModuleEntity("lib-module", emptyList(), NonPersistentEntitySource) {
+      mavenCoordinates = ModuleMavenCoordinateEntity(MavenCoordinates("org.example", "library", "1.0"), NonPersistentEntitySource)
+    }
+
+    DependencySubstitutionUtil.updateDependencySubstitutions(storage)
+
+    ModuleAssertions.assertModuleEntity(storage, "app-module1") { module ->
+      DependencyAssertions.assertDependencies(module, "lib-module")
+      DependencyAssertions.assertModuleDependency(module, "lib-module")
+    }
+    ModuleAssertions.assertModuleEntity(storage, "app-module2") { module ->
+      DependencyAssertions.assertDependencies(module, "lib-module")
+      DependencyAssertions.assertModuleDependency(module, "lib-module")
+    }
+  }
 }

@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.dependencySubstitution
 
 import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionExtension
-import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionUtil.intersect
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -21,11 +20,14 @@ abstract class DependencySubstitutionTestCase {
     val libraries = HashMap<String, String>()
 
     override fun buildLibraryToModuleMap(storage: EntityStorage): Map<LibraryId, ModuleId> {
-      val libraries = storage.entities<LibraryEntity>()
-        .associate { libraries[it.name] to it.symbolicId }
       val modules = storage.entities<ModuleEntity>()
         .associate { modules[it.name] to it.symbolicId }
-      return libraries.intersect(modules)
+      val result = HashMap<LibraryId, ModuleId>()
+      for (library in storage.entities<LibraryEntity>()) {
+        val libraryCoordinates = libraries[library.name] ?: continue
+        result[library.symbolicId] = modules[libraryCoordinates] ?: continue
+      }
+      return result
     }
   }
 }
