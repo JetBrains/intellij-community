@@ -2390,6 +2390,7 @@ public class JavaDocInfoGenerator {
   private @Nullable PsiElement getRefElement(PsiElement[] tagElements) {
     for (PsiElement element : tagElements) {
       if (element instanceof PsiWhiteSpace) { continue; }
+      if (element instanceof PsiDocToken && element.getText().isBlank())  { continue; }
       if (isRefElement(element)) return element;
       break;
     }

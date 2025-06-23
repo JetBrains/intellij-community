@@ -125,6 +125,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testLegacySpacesInLiteral() { useJava7(); verifyJavaDoc(getTestClass()); }
   public void testLinkWithModule() { doTestClass(); }
   public void testLinkToModule() { doTestClass(); }
+  public void testLinkWithLineBreak() { doTestClass(); }
   public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForUncheckedExceptionsInSupers() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForGetterByField() { doTestAtCaret(); }
