@@ -59,8 +59,7 @@ abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
 
     // don't provide line markers for the places where Android Jetpack Compose plugin is supposed to work
     // i.e., Android modules with an available Android Facet
-    if (hasAndroidComposeColorLineMarkerProviderDescriptorAvailable(element.project)
-        && isAndroidFacetConfiguredInModule(module)) return null
+    if (hasAndroidComposeColorLineMarkerProviderDescriptorAvailable(element.project) && isAndroidModule(module)) return null
 
     val callExpression = element.parent.parent as? KtCallExpression ?: return null
     if (!callExpression.isColorCall()) return null

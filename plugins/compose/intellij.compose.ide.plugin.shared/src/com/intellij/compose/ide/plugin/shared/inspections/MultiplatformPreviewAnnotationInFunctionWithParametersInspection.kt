@@ -4,11 +4,8 @@ package com.intellij.compose.ide.plugin.shared.inspections
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
-import com.intellij.compose.ide.plugin.shared.JETPACK_PREVIEW_PARAMETER_CLASS_ID
-import com.intellij.compose.ide.plugin.shared.MULTIPLATFORM_PREVIEW_PARAMETER_CLASS_ID
-import com.intellij.compose.ide.plugin.shared.classIdMatches
+import com.intellij.compose.ide.plugin.shared.isPreviewParameterAnnotation
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -52,10 +49,5 @@ internal class MultiplatformPreviewAnnotationInFunctionWithParametersInspection 
    * This will return true if the parameter has a default value or a value provider.
    */
   private fun isAcceptableForPreview(parameter: KtParameter): Boolean =
-    parameter.hasDefaultValue() || parameter.annotationEntries.any { isPreviewParameter(it) }
-
-  private fun isPreviewParameter(annotation: KtAnnotationEntry): Boolean = analyze(annotation) {
-    classIdMatches(annotation, MULTIPLATFORM_PREVIEW_PARAMETER_CLASS_ID) ||
-    classIdMatches(annotation, JETPACK_PREVIEW_PARAMETER_CLASS_ID)
-  }
+    parameter.hasDefaultValue() || parameter.annotationEntries.any { it.isPreviewParameterAnnotation() }
 }
