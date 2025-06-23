@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Weighted
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
@@ -232,7 +231,7 @@ open class EditorComposite internal constructor(
 
         span("Artificially wait if the skeleton has been set recently to avoid flickering") {
           compositePanel.skeleton?.let { editorSkeleton ->
-            val hasBeenShownFor = System.currentTimeMillis() - editorSkeleton.initialTime
+            val hasBeenShownFor = System.currentTimeMillis() - editorSkeleton.initialTime.get()
             if (hasBeenShownFor < SKELETON_DELAY) {
               delay(SKELETON_DELAY - hasBeenShownFor)
             }
@@ -858,9 +857,10 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   var focusComponent: () -> JComponent? = { null }
     private set
 
-  private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
+  val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
   var skeleton: EditorSkeleton? = null
     private set
+  private var skeletonJob: Job?
 
   init {
     addFocusListener(object : FocusAdapter() {
@@ -890,17 +890,20 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     isFocusCycleRoot = true
 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
-      skeletonScope.launch(Dispatchers.UI) {
-        delay(SKELETON_DELAY)
-        // show skeleton if editor is not added after [SKELETON_DELAY]
-        if (components.isEmpty()) {
-          skeleton = EditorSkeleton(skeletonScope)
-          add(skeleton, BorderLayout.CENTER)
-        }
+      skeletonJob = skeletonScope.launch(Dispatchers.UI) {
+        setNewSkeleton(EditorCompositeSkeletonFactory.getInstance(composite.project).createSkeleton(skeletonScope), cancelDelayJob = false)
       }
     }
     else {
+      skeletonJob = null
       skeletonScope.cancel()
+    }
+  }
+
+  fun setNewSkeleton(skeleton: EditorSkeleton, cancelDelayJob: Boolean = true) {
+    this.skeleton = skeleton
+    if (components.isEmpty()) {
+      add(skeleton, BorderLayout.CENTER)
     }
   }
 
@@ -1112,7 +1115,3 @@ private fun stateToElement(state: FileEditorState, provider: FileEditorProvider,
   }
   return null
 }
-
-
-private val SKELETON_DELAY
-  get() = Registry.intValue("editor.skeleton.delay.ms", 300).toLong()
