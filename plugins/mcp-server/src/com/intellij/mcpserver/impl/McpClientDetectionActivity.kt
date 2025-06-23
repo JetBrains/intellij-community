@@ -65,7 +65,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
       .getNotificationGroup("MCP Server")
       .createNotification(
         McpServerBundle.message("mcp.unconfigured.clients.detected.notification.title"),
-        McpServerBundle.message("mcp.unconfigured.clients.detected.notification.message", unconfiguredClients),
+        McpServerBundle.message("mcp.unconfigured.clients.detected.notification.message", unconfiguredClients.joinToString(", ") { it.name }),
         NotificationType.INFORMATION
       )
     notification
