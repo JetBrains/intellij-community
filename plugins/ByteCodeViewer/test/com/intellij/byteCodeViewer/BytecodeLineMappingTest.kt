@@ -21,7 +21,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     bytecodeWithDebugInfo: String,
     bytecodeWithoutDebugInfo: String,
     expectedBytecodeSelection: String,
-    stripDebugInfo: Boolean = false,
+    showDebugInfo: Boolean = true,
   ) {
     val (startLine, endLine) = bootstrapAndGetSelection(source)
 
@@ -29,14 +29,14 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       bytecodeWithDebugInfo = bytecodeWithDebugInfo,
       sourceStartLine = startLine,
       sourceEndLine = endLine,
-      stripDebugInfo = stripDebugInfo,
+      showDebugInfo = showDebugInfo,
     )
     val bytecodeSelectionStart = linesRange.first
     var bytecodeSelectionEnd = linesRange.last
     bytecodeSelectionEnd++ // because most substring() functions use exclusive indexing for "end"
     bytecodeSelectionEnd++ // because string operations are 0-indexed but the editor is 1-indexed
 
-    assertEquals(expectedBytecodeSelection, (if (stripDebugInfo) bytecodeWithoutDebugInfo else bytecodeWithDebugInfo).lines().subList(bytecodeSelectionStart, bytecodeSelectionEnd).joinToString("\n"))
+    assertEquals(expectedBytecodeSelection, (if (showDebugInfo) bytecodeWithDebugInfo else bytecodeWithoutDebugInfo).lines().subList(bytecodeSelectionStart, bytecodeSelectionEnd).joinToString("\n"))
   }
 
   fun `test removeDebugInfo`() {
@@ -265,7 +265,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     """.trimMargin("|"))
   }
 
-  fun `test (strip debug info) simple 1 method body - single line selected`() {
+  fun `test (no show debug info) simple 1 method body - single line selected`() {
     val source = """
       package simple1;
       
@@ -282,10 +282,10 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       |    LDC "hello world"
       |    INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
       |   L1
-    """.trimMargin("|"), stripDebugInfo = true)
+    """.trimMargin("|"), showDebugInfo = false)
   }
 
-  fun `test (strip debug info) simple 1 method body - from brace to brace`() {
+  fun `test (no show debug info) simple 1 method body - from brace to brace`() {
     val source = """
       package simple1;
       
@@ -304,10 +304,10 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       |   L1
       |    RETURN
       |   L2
-    """.trimMargin("|"), stripDebugInfo = true)
+    """.trimMargin("|"), showDebugInfo = false)
   }
 
-  fun `test (strip debug info) simple 4 - works fine in presence of jumps (1)`() {
+  fun `test (no show debug info) simple 4 - works fine in presence of jumps (1)`() {
     val source = """
       package simple4;
       
@@ -356,10 +356,10 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       |    LDC "bar"
       |    ARETURN
       |   L1
-    """.trimMargin("|"), stripDebugInfo = true)
+    """.trimMargin("|"), showDebugInfo = false)
   }
 
-  fun `test (strip debug info) simple 4 - works fine in presence of jumps (2)`() {
+  fun `test (no show debug info) simple 4 - works fine in presence of jumps (2)`() {
     val source = """
       package simple4;
       
@@ -410,7 +410,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       |    LDC "foo"
       |    ARETURN
       |   L1
-    """.trimMargin("|"), stripDebugInfo = true)
+    """.trimMargin("|"), showDebugInfo = false)
   }
 
   /**

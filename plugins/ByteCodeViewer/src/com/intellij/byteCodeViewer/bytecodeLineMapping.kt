@@ -33,7 +33,7 @@ internal fun removeDebugInfo(bytecodeWithDebugInfo: String): String = bytecodeWi
  * @return A pair where the first element is the start line number in the bytecode, and the second element is the end line number in the bytecode. Returns (0, 0) if no valid mapping
  *  is found.
  */
-internal fun mapLines(bytecodeWithDebugInfo: String, sourceStartLine: Int, sourceEndLine: Int, stripDebugInfo: Boolean = false): IntRange {
+internal fun mapLines(bytecodeWithDebugInfo: String, sourceStartLine: Int, sourceEndLine: Int, showDebugInfo: Boolean = true): IntRange {
   var sourceStartLine = sourceStartLine // + 1 // editor selection is 0-indexed
   var currentBytecodeLine = 0
   var bytecodeStartLine = -1
@@ -90,7 +90,7 @@ internal fun mapLines(bytecodeWithDebugInfo: String, sourceStartLine: Int, sourc
     currentBytecodeLine++
   }
 
-  if (stripDebugInfo) {
+  if (!showDebugInfo) {
     bytecodeStartLine -= linesToSkipBeforeStartLine
     bytecodeEndLine -= linesToSkipBeforeEndLine
   }
