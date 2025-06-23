@@ -863,7 +863,11 @@ class _NewThreadStartupWithTrace:
             ret = self.original_func(*self.args, **self.kwargs)
         finally:
             if thread_id is not None:
-                global_debugger.notify_thread_not_alive(thread_id)
+                if global_debugger is not None:
+                    # At thread shutdown we only have pydevd-related code running (which shouldn't
+                    # be tracked).
+                    global_debugger.disable_tracing()
+                    global_debugger.notify_thread_not_alive(thread_id)
         
         return ret
 
