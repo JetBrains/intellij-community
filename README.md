@@ -27,7 +27,7 @@ This section will guide you to get the project source faster, avoid common issue
   ```bash
   git config --global core.longpaths true
   git config --global core.autocrlf input
-  ``
+  ```
 
 #### Clone Main Repository
 
@@ -66,7 +66,7 @@ Version `2023.2` or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ul
 for the IntelliJ Platform.
 
 ##### Opening the IntelliJ Source Code in the IDE
-Using the latest IntelliJ IDEA IDE , click **File | Open**, select the `<IDEA_HOME>` directory. 
+Using the latest IntelliJ IDEA IDE , click `File | Open`, select the `<IDEA_HOME>` directory. 
 If IntelliJ IDEA displays an message about a missing or out of date required plugin (e.g. Kotlin),
   [enable, upgrade, or install that plugin](https://www.jetbrains.com/help/idea/managing-plugins.html) and restart IntelliJ IDEA.
 
@@ -75,12 +75,12 @@ If IntelliJ IDEA displays an message about a missing or out of date required plu
    1. **JDK Setup**
       - Use JetBrains Runtime 17 (without JCEF) to compile
       - IDE will prompt to download it on first build
-> **Important:** JetBrains Runtime without JCEF is required. If `jbr-17` SDK points to JCEF version,change it to the non-JCEF version:
-> 1. Add `idea.is.internal=true` to `idea.properties`
-> 2. Go to Project Structure | SDKs
-> 4. Click 'Browse' → 'Download...'
-> 5. Select version 17 and vendor 'JetBrains Runtime'
-> 6. To confirm if the JDK is correct, navigate to the SDK page with jbr-17 selected. Search for `jcef`, it should **_not_** yield a result.
+> **Important:** JetBrains Runtime **without** JCEF is required. If `jbr-17` SDK points to JCEF version,change it to the non-JCEF version:
+> - Add `idea.is.internal=true` to `idea.properties`
+> - Go to `Project Structure | SDKs`
+> - Click 'Browse' → 'Download...'
+> - Select version 17 and vendor 'JetBrains Runtime'
+> - To confirm if the JDK is correct, navigate to the SDK page with jbr-17 selected. Search for `jcef`, it should **_not_** yield a result.
 
    2. **Maven Configuration**
       - If Maven plugin is disabled, add path variable "MAVEN_REPOSITORY"
@@ -94,9 +94,9 @@ If IntelliJ IDEA displays an message about a missing or out of date required plu
 
 ### Building the IntelliJ Application from Source
 
-**To build IntelliJ IDEA Community Edition from source**, choose **Build | Build Project** from the main menu.
+**To build IntelliJ IDEA Community Edition from source**, choose `Build | Build Project` from the main menu.
 
-**To build installation packages**, run the `installers.cmd` command in `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
+**To build installation packages**, run the [installers.cmd](installers.cmd) script in `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
 Options to build installers are passed as system properties to `installers.cmd` command.
 You may find the list of available properties in [BuildOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/BuildOptions.kt)
 
@@ -127,15 +127,15 @@ To reuse the existing Maven cache from the host system, add the following option
 
 ---
 ## Running IntelliJ IDEA
-To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration `IDEA`.
+To run the IntelliJ IDEA built from source, choose `Run | Run` from the main menu. This will use the preconfigured run configuration `IDEA`.
 
-To run tests on the build, apply these setting to the **Run | Edit Configurations... | Templates | JUnit** configuration tab:
+To run tests on the build, apply these setting to the `Run | Edit Configurations... | Templates | JUnit` configuration tab:
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 
  
 
-##### Running IntelliJ IDEA in CI/CD environment
+#### Running IntelliJ IDEA in CI/CD environment
 
 To run tests outside of IntelliJ IDEA, run the `tests.cmd` command in `<IDEA_HOME>` directory.`tests.cmd` can be used in both Windows and Unix systems.
 Options to run tests are passed as system properties to `tests.cmd` command.
