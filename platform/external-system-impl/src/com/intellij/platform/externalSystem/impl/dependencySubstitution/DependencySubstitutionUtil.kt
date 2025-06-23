@@ -92,13 +92,4 @@ object DependencySubstitutionUtil {
       return result
     }
   }
-
-  @ApiStatus.Internal
-  fun <K: Any?, V1, V2> Map<K, V1>.intersect(other: Map<K, V2>): Map<V1, V2> {
-    val result = HashMap<V1, V2>()
-    for ((key, value1) in this) {
-      result[value1] = other[key ?: continue] ?: continue
-    }
-    return result
-  }
 }
