@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -78,6 +80,14 @@ internal class BytecodeToolWindowPanel(
     else {
       add(bytecodeEditor.getComponent())
       setEditorText()
+      EditorFactory.getInstance().getEventMulticaster().addCaretListener(object : CaretListener {
+        override fun caretPositionChanged(event: CaretEvent) {
+          val sourceEditor = selectedMatchingEditor
+          if (event.editor != sourceEditor) return
+          updateBytecodeSelection(sourceEditor, bytecodeEditor)
+        }
+      }, this@BytecodeToolWindowPanel)
+
       EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
         override fun selectionChanged(e: SelectionEvent) {
           val sourceEditor = selectedMatchingEditor
