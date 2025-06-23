@@ -13,42 +13,83 @@ import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPanel
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.util.Textifier
 import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor
 import java.awt.BorderLayout
+import java.awt.GridLayout
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 import kotlin.math.min
 
+/**
+ * Displays JVM bytecode in a tool window.
+ *
+ * It has 2 states:
+ * - there is bytecode: display a non-editable editor with source<->bytecode line matching
+ * - there is no bytecode: display a label instructing the user to build the project first.
+ */
 internal class BytecodeToolWindowPanel(
   private val project: Project,
   private val psiClass: PsiClass,
-  private val classFile: VirtualFile,
-) : JPanel(BorderLayout()), Disposable {
+  private val classFile: VirtualFile?,
+) : JBPanel<Nothing>(BorderLayout()), Disposable {
   private val bytecodeEditor: Editor = EditorFactory.getInstance()
     .createEditor(EditorFactory.getInstance().createDocument(""), project, JavaClassFileType.INSTANCE, true)
 
   init {
-    add(bytecodeEditor.getComponent())
-    setBorder(null)
+    if (classFile == null) {
+      val labelsPanel = JPanel(GridLayout(0, 1))
+      labelsPanel.setBorder(JBUI.Borders.empty())
 
-    setEditorText()
-    EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
-      override fun selectionChanged(e: SelectionEvent) {
-        val sourceEditor = selectedMatchingEditor()
-        if (e.editor != sourceEditor) return
-        updateBytecodeSelection(sourceEditor)
+      val className = psiClass.name
+      val message = if (className != null) BytecodeViewerBundle.message("bytecode.not.found.for.class", className)
+      else BytecodeViewerBundle.message("bytecode.not.found")
+
+      JBLabel(wrapWithHtml(message), SwingConstants.CENTER).apply {
+        foreground = UIUtil.getLabelDisabledForeground()
+        setBorder(JBUI.Borders.empty(2, 0))
+        labelsPanel.add(this)
       }
-    }, this@BytecodeToolWindowPanel)
+
+      JBLabel(wrapWithHtml(BytecodeViewerBundle.message("please.build.project")), SwingConstants.CENTER).apply {
+        foreground = UIUtil.getLabelDisabledForeground()
+        setBorder(JBUI.Borders.empty(2, 0))
+        labelsPanel.add(this)
+      }
+
+      val centerPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.MIDDLE))
+      centerPanel.add(labelsPanel)
+
+      add(centerPanel, BorderLayout.CENTER)
+    }
+    else {
+      add(bytecodeEditor.getComponent())
+      setEditorText()
+      EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
+        override fun selectionChanged(e: SelectionEvent) {
+          val sourceEditor = selectedMatchingEditor()
+          if (e.editor != sourceEditor) return
+          updateBytecodeSelection(sourceEditor)
+        }
+      }, this@BytecodeToolWindowPanel)
+    }
   }
 
   fun setEditorText() {
+    if (classFile == null) throw IllegalStateException("Class file must not be null at this point")
     val byteCodeText = deserializeBytecode()
     bytecodeEditor.document.putUserData(BYTECODE_WITH_DEBUG_INFO, byteCodeText) // include debug info for selection matching
     runWriteAction {
@@ -115,6 +156,7 @@ internal class BytecodeToolWindowPanel(
   }
 
   private fun deserializeBytecode(): String {
+    if (classFile == null) throw IllegalStateException("Class file must not be null at this point")
     try {
       val bytes = classFile.contentsToByteArray(false)
       val stringWriter = StringWriter()
@@ -139,5 +181,13 @@ internal class BytecodeToolWindowPanel(
     private val LOG = Logger.getInstance(BytecodeToolWindowPanel::class.java)
 
     private val BYTECODE_WITH_DEBUG_INFO = Key.create<String>("BYTECODE_WITH_DEBUG_INFO")
+
+    /**
+     * Wrapping with HTML tags ensures the text wraps and is not cut off when the tool window becomes too narrow.
+     */
+    @NlsContexts.Label
+    private fun wrapWithHtml(@NlsContexts.Label text: String): String {
+      return "<html>$text</html>"
+    }
   }
 }
