@@ -80,9 +80,9 @@ internal class BytecodeToolWindowPanel(
       setEditorText()
       EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
         override fun selectionChanged(e: SelectionEvent) {
-          val sourceEditor = selectedMatchingEditor()
+          val sourceEditor = selectedMatchingEditor
           if (e.editor != sourceEditor) return
-          updateBytecodeSelection(sourceEditor)
+          updateBytecodeSelection(sourceEditor, bytecodeEditor)
         }
       }, this@BytecodeToolWindowPanel)
     }
@@ -90,86 +90,26 @@ internal class BytecodeToolWindowPanel(
 
   fun setEditorText() {
     if (classFile == null) throw IllegalStateException("Class file must not be null at this point")
-    val byteCodeText = deserializeBytecode()
+    val byteCodeText = deserializeBytecode(classFile)
     bytecodeEditor.document.putUserData(BYTECODE_WITH_DEBUG_INFO, byteCodeText) // include debug info for selection matching
     runWriteAction {
       val byteCodeToShow = if (BytecodeViewerSettings.getInstance().state.showDebugInfo) byteCodeText else removeDebugInfo(byteCodeText)
       bytecodeEditor.document.setText(byteCodeToShow)
     }
 
-    val sourceEditor = selectedMatchingEditor() ?: return
-    updateBytecodeSelection(sourceEditor)
+    val sourceEditor = selectedMatchingEditor ?: return
+    updateBytecodeSelection(sourceEditor, bytecodeEditor)
   }
 
-  private fun selectedMatchingEditor(): Editor? {
-    return FileEditorManager.getInstance(project).getSelectedTextEditor()?.takeIf { editor ->
+  /**
+   * If the editor in which `psiClass` is edited is selected, returns it. Otherwise returns null.
+   */
+  private val selectedMatchingEditor: Editor?
+    get() = FileEditorManager.getInstance(project).getSelectedTextEditor()?.takeIf { editor ->
       val document = editor.getDocument()
       val virtualFile = FileDocumentManager.getInstance().getFile(document)
       virtualFile == psiClass.containingFile.virtualFile
     }
-  }
-
-  private fun updateBytecodeSelection(sourceEditor: Editor) {
-    if (sourceEditor.getCaretModel().getCaretCount() != 1) return
-
-    val sourceStartOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionStart()
-    val sourceEndOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionEnd()
-    val sourceDocument = sourceEditor.getDocument()
-
-    val sourceStartLine = sourceDocument.getLineNumber(sourceStartOffset)
-    var sourceEndLine = sourceDocument.getLineNumber(sourceEndOffset)
-    if (sourceEndLine > sourceStartLine && sourceEndOffset > 0 && sourceDocument.charsSequence[sourceEndOffset - 1] == '\n') {
-      sourceEndLine--
-    }
-
-    val bytecodeDocument = bytecodeEditor.getDocument()
-
-    val bytecodeWithDebugInfo = bytecodeDocument.getUserData<String?>(BYTECODE_WITH_DEBUG_INFO)
-    if (bytecodeWithDebugInfo == null) {
-      LOG.warn("Bytecode with debug information is null. Ensure the bytecode has been generated correctly.")
-      return
-    }
-
-    val linesRange = mapLines(bytecodeWithDebugInfo, sourceStartLine, sourceEndLine, true)
-
-    if (linesRange == IntRange(0, 0) || linesRange.first < 0 || linesRange.last < 0) {
-      bytecodeEditor.getSelectionModel().removeSelection()
-      return
-    }
-
-    val endSelectionLineIndex = min((linesRange.last + 1), bytecodeDocument.getLineCount())
-
-    val startOffset = bytecodeDocument.getLineStartOffset(linesRange.first)
-    val endOffset = min(bytecodeDocument.getLineEndOffset(endSelectionLineIndex), bytecodeDocument.textLength)
-
-    if (bytecodeDocument.textLength <= startOffset || bytecodeDocument.textLength <= endOffset) {
-      return
-    }
-
-    bytecodeEditor.getCaretModel().moveToOffset(endOffset)
-    bytecodeEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE)
-
-    bytecodeEditor.getCaretModel().moveToOffset(startOffset)
-    bytecodeEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE)
-
-    bytecodeEditor.getSelectionModel().setSelection(startOffset, endOffset)
-  }
-
-  private fun deserializeBytecode(): String {
-    if (classFile == null) throw IllegalStateException("Class file must not be null at this point")
-    try {
-      val bytes = classFile.contentsToByteArray(false)
-      val stringWriter = StringWriter()
-      PrintWriter(stringWriter).use { printWriter ->
-        ClassReader(bytes).accept(TraceClassVisitor(null, Textifier(), printWriter), ClassReader.SKIP_FRAMES)
-      }
-      return stringWriter.toString()
-    }
-    catch (e: IOException) {
-      LOG.warn(e)
-      return BytecodeViewerBundle.message("deserialization.error")
-    }
-  }
 
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(bytecodeEditor)
@@ -188,6 +128,67 @@ internal class BytecodeToolWindowPanel(
     @NlsContexts.Label
     private fun wrapWithHtml(@NlsContexts.Label text: String): String {
       return "<html>$text</html>"
+    }
+
+    private fun updateBytecodeSelection(sourceEditor: Editor, bytecodeEditor: Editor) {
+      if (sourceEditor.getCaretModel().getCaretCount() != 1) return
+
+      val sourceStartOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionStart()
+      val sourceEndOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionEnd()
+      val sourceDocument = sourceEditor.getDocument()
+
+      val sourceStartLine = sourceDocument.getLineNumber(sourceStartOffset)
+      var sourceEndLine = sourceDocument.getLineNumber(sourceEndOffset)
+      if (sourceEndLine > sourceStartLine && sourceEndOffset > 0 && sourceDocument.charsSequence[sourceEndOffset - 1] == '\n') {
+        sourceEndLine--
+      }
+
+      val bytecodeDocument = bytecodeEditor.getDocument()
+
+      val bytecodeWithDebugInfo = bytecodeDocument.getUserData(BYTECODE_WITH_DEBUG_INFO)
+      if (bytecodeWithDebugInfo == null) {
+        LOG.warn("Bytecode with debug information is null. Ensure the bytecode has been generated correctly.")
+        return
+      }
+
+      val linesRange = mapLines(bytecodeWithDebugInfo, sourceStartLine, sourceEndLine, true)
+
+      if (linesRange == IntRange(0, 0) || linesRange.first < 0 || linesRange.last < 0) {
+        bytecodeEditor.getSelectionModel().removeSelection()
+        return
+      }
+
+      val endSelectionLineIndex = min((linesRange.last + 1), bytecodeDocument.getLineCount())
+
+      val startOffset = bytecodeDocument.getLineStartOffset(linesRange.first)
+      val endOffset = min(bytecodeDocument.getLineEndOffset(endSelectionLineIndex), bytecodeDocument.textLength)
+
+      if (bytecodeDocument.textLength <= startOffset || bytecodeDocument.textLength <= endOffset) {
+        return
+      }
+
+      bytecodeEditor.getCaretModel().moveToOffset(endOffset)
+      bytecodeEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE)
+
+      bytecodeEditor.getCaretModel().moveToOffset(startOffset)
+      bytecodeEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE)
+
+      bytecodeEditor.getSelectionModel().setSelection(startOffset, endOffset)
+    }
+
+    private fun deserializeBytecode(classFile: VirtualFile): String {
+      try {
+        val bytes = classFile.contentsToByteArray(false)
+        val stringWriter = StringWriter()
+        PrintWriter(stringWriter).use { printWriter ->
+          ClassReader(bytes).accept(TraceClassVisitor(null, Textifier(), printWriter), ClassReader.SKIP_FRAMES)
+        }
+        return stringWriter.toString()
+      }
+      catch (e: IOException) {
+        LOG.warn(e)
+        return BytecodeViewerBundle.message("deserialization.error")
+      }
     }
   }
 }
