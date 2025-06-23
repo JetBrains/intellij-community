@@ -1,17 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
+import com.intellij.maven.server.m40.compat.CompatResidentMavenInvoker;
+import com.intellij.maven.server.m40.InvokerWithoutCoreExtensions;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.cling.invoker.LookupContext;
 import org.apache.maven.cling.invoker.ProtoLookup;
 import org.apache.maven.cling.invoker.mvn.MavenContext;
 import org.apache.maven.cling.invoker.mvn.MavenInvoker;
-import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenInvoker;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
-public class Maven40Invoker extends ResidentMavenInvoker {
+public class Maven40Invoker extends CompatResidentMavenInvoker {
   MavenContext myContext = null;
 
   public Maven40Invoker(ProtoLookup protoLookup) {
@@ -28,10 +29,11 @@ public class Maven40Invoker extends ResidentMavenInvoker {
     activateLogging(context);
     helpOrVersionAndMayExit(context);
     preCommands(context);
+    //noinspection CastToIncompatibleInterface
     tryRunAndRetryOnFailure(
       "container",
       () -> container(context),
-      () -> ((Maven40InvokerRequest)context.invokerRequest).disableCoreExtensions()
+      () -> ((InvokerWithoutCoreExtensions)context.invokerRequest).disableCoreExtensions()
     );
     postContainer(context);
     pushUserProperties(context); // after PropertyContributor SPI

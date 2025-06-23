@@ -1,16 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40;
 
+import com.intellij.maven.server.m40.compat.Maven40InvokerRequestFactory;
 import com.intellij.maven.server.m40.utils.*;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.apache.maven.*;
 import org.apache.maven.api.*;
+import org.apache.maven.api.annotations.Nonnull;
 import org.apache.maven.api.cli.InvokerException;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.api.cli.Logger;
 import org.apache.maven.api.cli.ParserRequest;
-import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
 import org.apache.maven.api.services.Lookup;
@@ -21,7 +22,6 @@ import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cling.invoker.ProtoLookup;
-import org.apache.maven.cling.invoker.mvn.MavenInvokerRequest;
 import org.apache.maven.cling.invoker.mvn.MavenParser;
 import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
@@ -61,6 +61,7 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -71,7 +72,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
-import static org.apache.maven.cling.invoker.Utils.getCanonicalPath;
+import static java.util.Objects.requireNonNull;
 
 public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private final @NotNull Maven40Invoker myMavenInvoker;
@@ -172,22 +173,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     MavenParser mavenParser = new MavenParser() {
       @Override
-      public MavenInvokerRequest getInvokerRequest(LocalContext context) {
-        return new Maven40InvokerRequest(
-          context.parserRequest,
-          context.parsingFailed,
-          context.cwd,
-          context.installationDirectory,
-          context.userHomeDirectory,
-          context.userProperties,
-          context.systemProperties,
-          context.topDirectory,
-          context.rootDirectory,
-          context.extensions,
-          (MavenOptions)context.options);
-      }
-
-      @Override
       public Path getRootDirectory(LocalContext context) {
         Path rootDir = super.getRootDirectory(context);
         if (null == rootDir) {
@@ -201,7 +186,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     InvokerRequest invokerRequest;
     List<Logger.Entry> entries = new ArrayList<>();
     try {
-      invokerRequest = mavenParser.parseInvocation(parserRequest);
+      invokerRequest = Maven40InvokerRequestFactory.createProxy(mavenParser.parseInvocation(parserRequest));
       entries.addAll(invokerRequest.parserRequest().logger().drain());
       myContainer = myMavenInvoker.invokeAndGetContext(invokerRequest).lookup;
     }
@@ -217,6 +202,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+    if(myContainer == null) throw new IllegalStateException("Cannot create maven container");
 
     myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
 
@@ -1133,6 +1119,17 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @Nonnull
+  public static Path getCanonicalPath(Path path) {
+    requireNonNull(path, "path");
+    try {
+      return path.toRealPath();
+    }
+    catch (IOException e) {
+      return getCanonicalPath(path.getParent()).resolve(path.getFileName());
     }
   }
 }
