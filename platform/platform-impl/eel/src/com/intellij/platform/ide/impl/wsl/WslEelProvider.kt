@@ -65,6 +65,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
       return null
     }
 
+    @MultiRoutingFileSystemPath
     val wslRoot: String
     val distributionId: String
 
@@ -146,7 +147,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
     }
   }
 
-  override fun getCustomRoots(): Collection<String> {
+  override fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String> {
     // TODO Describe why it's fine to return local paths here.
     // TODO Speed up.
     return WslDistributionManager.getInstance().installedDistributions.flatMap { it.roots }
@@ -187,7 +188,7 @@ class WslEelProvider : EelProvider {
     else
       null
 
-  override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<String>? =
+  override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>? =
     (eelDescriptor as? WslEelDescriptor)?.distribution?.roots
 
   override fun getEelDescriptorByInternalName(internalName: String): EelDescriptor? =
@@ -196,7 +197,7 @@ class WslEelProvider : EelProvider {
     else
       null
 
-  override suspend fun tryInitialize(path: String) {
+  override suspend fun tryInitialize(@MultiRoutingFileSystemPath path: String) {
     if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
       return
     }

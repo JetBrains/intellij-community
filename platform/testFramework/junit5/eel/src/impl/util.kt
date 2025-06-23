@@ -79,7 +79,7 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
         else
           null
 
-      override fun getCustomRoots(): Collection<String> =
+      override fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String> =
         fakeLocalFileSystem.rootDirectories.map { it.toString() }
 
       override fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> =

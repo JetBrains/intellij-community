@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
@@ -27,7 +28,7 @@ interface MultiRoutingFileSystemBackend {
    */
   fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem?
 
-  fun getCustomRoots(): Collection<String>
+  fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String>
 
   fun getCustomFileStores(localFS: FileSystem): Collection<FileStore>
 }

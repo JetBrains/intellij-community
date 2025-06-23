@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
@@ -68,7 +69,7 @@ fun CoroutineScope.registerIjentNioFs(
         else
           null
 
-      override fun getCustomRoots(): Collection<String> =
+      override fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String> =
         listOf(root)
 
       override fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> =
@@ -79,11 +80,11 @@ fun CoroutineScope.registerIjentNioFs(
 
   EelProvider.EP_NAME.point.registerExtension(
     object : EelProvider {
-      override suspend fun tryInitialize(path: String) {
+      override suspend fun tryInitialize(@MultiRoutingFileSystemPath path: String) {
         // Nothing.
       }
 
-      override fun getEelDescriptor(path: Path): EelDescriptor? =
+      override fun getEelDescriptor(@MultiRoutingFileSystemPath path: Path): EelDescriptor? =
         if (path.startsWith(nioRoot)) ijent.descriptor
         else null
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +28,7 @@ import java.nio.file.Path
  */
 @Throws(IllegalArgumentException::class)
 @ApiStatus.Internal
-fun EelPath.asNioPath(): Path =
+fun EelPath.asNioPath(): @MultiRoutingFileSystemPath Path =
   asNioPath(null)
 
 /**
@@ -50,7 +51,7 @@ fun EelPath.asNioPath(): Path =
  */
 @Throws(IllegalArgumentException::class)
 @ApiStatus.Internal
-fun EelPath.asNioPath(project: Project?): Path {
+fun EelPath.asNioPath(project: Project?): @MultiRoutingFileSystemPath Path {
   return asNioPathOrNull(project)
          ?: throw IllegalArgumentException("Could not convert $this to NIO path, descriptor is $descriptor")
 }
@@ -58,13 +59,13 @@ fun EelPath.asNioPath(project: Project?): Path {
 /** See docs for [asNioPath] */
 @Deprecated("It never returns null anymore")
 @ApiStatus.Internal
-fun EelPath.asNioPathOrNull(): Path? =
+fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? =
   asNioPathOrNull(null)
 
 /** See docs for [asNioPath] */
 @Deprecated("It never returns null anymore")
 @ApiStatus.Internal
-fun EelPath.asNioPathOrNull(project: Project?): Path? {
+fun EelPath.asNioPathOrNull(project: Project?): @MultiRoutingFileSystemPath Path? {
   if (descriptor === LocalEelDescriptor) {
     return Path.of(toString())
   }
@@ -92,6 +93,7 @@ fun EelPath.asNioPathOrNull(project: Project?): Path? {
 
   val eelRoot: Path = asNioPathOrNullImpl(projectBasePathNio, eelRoots, this)
 
+  @MultiRoutingFileSystemPath
   val result = parts.fold(eelRoot, Path::resolve)
   LOG.trace {
     "asNioPathOrNull(): path=$this project=$project result=$result"
