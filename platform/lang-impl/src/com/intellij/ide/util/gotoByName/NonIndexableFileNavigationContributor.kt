@@ -94,7 +94,8 @@ private fun VirtualFile.isIndexedOrExcluded(workspaceFileIndex: WorkspaceFileInd
   return workspaceFileIndex.isIndexable(this) || !workspaceFileIndex.isInWorkspace(this)
 }
 
-private fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
+@ApiStatus.Internal
+fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
   val roots = mutableSetOf<VirtualFile>()
   visitFileSets { fileSet, _ ->
     val root = fileSet.root

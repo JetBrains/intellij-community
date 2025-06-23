@@ -61,6 +61,7 @@ import com.intellij.util.indexing.roots.kind.ContentOrigin;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.EDT;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +74,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
+import static com.intellij.find.impl.NonIndexableFilesDequeKt.nonIndexableFiles;
 import static com.intellij.openapi.roots.impl.FilesScanExecutor.processOnAllThreadsInReadActionWithRetries;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 
@@ -441,6 +443,7 @@ final class FindInProjectTask {
     //wrap into concurrent deque for multi-threaded processing
     ConcurrentLinkedDeque<Object> searchItemsDeque = new ConcurrentLinkedDeque<>(searchItems);
     ConcurrentBitSet visitedFileIds = ConcurrentBitSet.create();
+    final var workspaceFileIndex = WorkspaceFileIndex.getInstance(project);
     processOnAllThreadsInReadActionWithRetries(
       searchItemsDeque,
 
@@ -458,6 +461,15 @@ final class FindInProjectTask {
             }, VirtualFileFilter.ALL);
           }
 
+          return true;
+        }
+        else if (searchItem instanceof FilesDequeue filesDeque) {
+          for (var file = filesDeque.computeNext(); file != null; file = filesDeque.computeNext()) {
+            if (!file.isDirectory()) {
+              searchItemsDeque.add(file);
+            }
+            ProgressManager.checkCanceled();
+          }
           return true;
         }
         else if (searchItem instanceof FindModelExtension findModelExtension) {
@@ -502,7 +514,7 @@ final class FindInProjectTask {
             return true;
           }
 
-          if (hasReliableSearchers) {
+          if (hasReliableSearchers && workspaceFileIndex.isIndexable(file)) {
             for (int i = 0; i < searchers.length; i++) {
               FindInProjectSearcher searcher = searchers[i];
               if (isSearcherReliable[i] && searcher.isCovered(file)) {
@@ -574,6 +586,7 @@ final class FindInProjectTask {
     }
 
     searchItems.addAll(FindModelExtension.EP_NAME.getExtensionList());
+    searchItems.add(ReadAction.nonBlocking( () -> nonIndexableFiles(project)).executeSynchronously());
 
     return searchItems;
   }
