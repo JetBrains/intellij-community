@@ -18,6 +18,9 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.ValueComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.not
 import com.intellij.util.ui.TextTransferable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
@@ -60,18 +63,20 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         }
 
         McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
+          val isConfigured = ValueComponentPredicate(mcpClient.isConfigured())
+          val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
           val json = mcpClient.json
           group(mcpClient.name) {
             row {
-              if (mcpClient.isConfigured() && mcpClient.isPortCorrect()) {
-                text(McpServerBundle.message("mcp.server.configured"))
-              }
-              if(mcpClient.isConfigured() && !mcpClient.isPortCorrect()) {
-                text(McpServerBundle.message("mcp.server.configured.port.invalid"))
-              }
+              text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect))
+              text(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
             }
             row {
-              button(McpServerBundle.message("autoconfigure.mcp.server"), { mcpClient.configure() })
+              button(McpServerBundle.message("autoconfigure.mcp.server"), {
+                mcpClient.configure()
+                isConfigured.set(true)
+                isPortCorrect.set(true)
+              })
               button(McpServerBundle.message("open.settings.json"), { openFileInEditor(mcpClient.configPath) })
               button(McpServerBundle.message("copy.mcp.server.stdio.configuration"), {
                 CopyPasteManager.getInstance().setContents(TextTransferable(json.encodeToString(buildJsonObject {
