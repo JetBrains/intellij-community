@@ -62,6 +62,8 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
           }
         }
 
+
+
         McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
           val isConfigured = ValueComponentPredicate(mcpClient.isConfigured())
           val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
@@ -72,11 +74,17 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
               text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect))
               text(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
             }
+            val autoconfiguredPressed = ValueComponentPredicate(false)
+            row {
+              icon(AllIcons.General.Information)
+              comment(McpServerBundle.message("mcp.server.client.restart.info"))
+            }.visibleIf(autoconfiguredPressed)
             row {
               button(McpServerBundle.message("autoconfigure.mcp.server"), {
                 mcpClient.configure()
                 isConfigured.set(true)
                 isPortCorrect.set(true)
+                autoconfiguredPressed.set(true)
               })
               button(McpServerBundle.message("open.settings.json"), { openFileInEditor(mcpClient.configPath) })
               button(McpServerBundle.message("copy.mcp.server.configuration"), {
