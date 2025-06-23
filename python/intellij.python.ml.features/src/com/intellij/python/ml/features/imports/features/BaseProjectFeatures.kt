@@ -1,6 +1,6 @@
 // Optimized and improved Kotlin code
 
-package com.jetbrains.python.codeInsight.imports.mlapi.features
+package com.intellij.python.ml.features.imports.features
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -12,8 +12,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.ml.api.feature.*
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContextFeatures
 import com.jetbrains.python.psi.*
 
 private val interestingClasses = arrayOf(
@@ -39,14 +37,14 @@ object BaseProjectFeatures : ImportRankingContextFeatures() {
       "The estimated amount of files in the project (by a power of 2)"
     }.nullable()
     val PSI_PARENT_OF_ORIG: List<FeatureDeclaration<Class<*>?>> = (1..5).map { i -> FeatureDeclaration.aClass("psi_parent_of_orig_$i") { "PSI parent of original element #$i" }.nullable() }
-    val FILE_EXTENSION_TYPE: FeatureDeclaration<FileExtensionType?> = FeatureDeclaration.enum<FileExtensionType>("file_extension_type") { "extension of the original python file" }.nullable()
+    val FILE_EXTENSION_TYPE: FeatureDeclaration<Enum<*>?> = FeatureDeclaration.enum<FileExtensionType>("file_extension_type") { "extension of the original python file" }.nullable()
   }
 
   override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(true, true)
 
   override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
 
-  override suspend fun computeNamespaceFeatures(instance: ImportRankingContext, filter: FeatureFilter): List<Feature> = buildList {
+  override suspend fun computeNamespaceFeatures(instance: ImportRankingContext, filter: FeatureSet): List<Feature> = buildList {
     val candidates = instance.candidates
     if (candidates.isEmpty()) return@buildList
 

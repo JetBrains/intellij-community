@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.codeInsight.imports.mlapi.features
+package com.intellij.python.ml.features.imports.features
 
 import com.jetbrains.ml.api.feature.*
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
 
 
 object PrimitiveImportFeatures : ImportCandidateFeatures() {
@@ -22,7 +20,7 @@ object PrimitiveImportFeatures : ImportCandidateFeatures() {
 
   override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(tolerateRedundantFeatures = true, putNullImplicitly = true)
 
-  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
+  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureSet): List<Feature> = buildList {
     add(Features.RELEVANCE with instance.candidate.relevance)
     add(Features.COMPONENT_COUNT with instance.candidate.path?.componentCount)
   }
