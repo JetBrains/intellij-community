@@ -249,6 +249,7 @@ public /* sealed */ interface NullabilitySource {
     for (NullabilitySource source : sources) {
       if (source instanceof MultiSource) {
         set.addAll(((MultiSource)source).sources());
+        continue;
       }
       if (source == Standard.NONE) continue;
       set.add(source);
