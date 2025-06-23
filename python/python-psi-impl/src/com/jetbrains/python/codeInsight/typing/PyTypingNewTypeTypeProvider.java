@@ -16,7 +16,9 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
   public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,
                                            @NotNull PyCallSiteExpression callSite,
                                            @NotNull TypeEvalContext context) {
-    return callSite instanceof PyCallExpression && PyTypingTypeProvider.NEW_TYPE.equals(function.getQualifiedName())
+    PyClass aClass = PyUtil.turnConstructorIntoClass(function);
+    PyQualifiedNameOwner qualifiedNameOwner = aClass != null ? aClass : function;
+    return callSite instanceof PyCallExpression && PyTypingTypeProvider.NEW_TYPE.equals(qualifiedNameOwner.getQualifiedName())
            ? PyTypeUtil.notNullToRef(getNewTypeFromAST((PyCallExpression)callSite, context))
            : null;
   }

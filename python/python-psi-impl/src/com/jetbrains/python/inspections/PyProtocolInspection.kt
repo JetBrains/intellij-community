@@ -13,7 +13,6 @@ import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecorator.*
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
 
@@ -107,12 +106,10 @@ class PyProtocolInspection : PyInspection() {
     }
 
     private fun checkNewTypeWithProtocols(node: PyCallExpression) {
-      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
-
-      node
-        .multiResolveCalleeFunction(resolveContext)
-        .firstOrNull { it.qualifiedName == PyTypingTypeProvider.NEW_TYPE }
-        ?.let {
+      val callee = node.callee as? PyReferenceExpression ?: return
+      val resolved = callee.followAssignmentsChain(resolveContext).element ?: return
+      val isNewTypeCall = resolved is PyQualifiedNameOwner && resolved.qualifiedName == PyTypingTypeProvider.NEW_TYPE
+      if (isNewTypeCall) {
           val base = node.arguments.getOrNull(1)
           if (base != null) {
             val type = myTypeEvalContext.getType(base)
