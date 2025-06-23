@@ -4,12 +4,11 @@ package com.intellij.util.indexing.events;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,12 +20,17 @@ import java.util.Set;
 @Internal
 public class FilesToUpdateCollector {
   private static final Logger LOG = Logger.getInstance(FilesToUpdateCollector.class);
-  private final NotNullLazyValue<FileBasedIndexImpl> myFileBasedIndex = NotNullLazyValue.createValue(() -> (FileBasedIndexImpl)FileBasedIndex.getInstance());
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
   private final IntObjectMap<FileIndexingRequest> myFilesToUpdate = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
-  public void scheduleForUpdate(@NotNull FileIndexingRequest request, @NotNull Set<Project> containingProjects, @NotNull Collection<? extends Project> dirtyQueueProjects) {
+  public void scheduleForUpdate(@NotNull FileIndexingRequest request,
+                                @NotNull Set<Project> containingProjects,
+                                @NotNull Collection<? extends Project> dirtyQueueProjects) {
+    if (!request.isDeleteRequest() && request.getFile().isDirectory()) {
+      THROTTLED_LOG.warn("Directory was passed for indexing unexpectedly: " + request.getFile().getPath(), new Throwable());
+    }
     VirtualFile file = request.getFile();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (!request.isDeleteRequest() && containingProjects.isEmpty()) {
