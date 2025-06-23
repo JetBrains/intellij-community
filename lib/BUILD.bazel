@@ -2840,13 +2840,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "jetbrains-ml-models-python-imports-ranking-model",
-  jar = "@python-imports-ranking-model-nebulous-albatross_http//file",
-  source_jar = "@python-imports-ranking-model-nebulous-albatross-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "jetbrains-mlapi-catboost-shadow-need-slf4j",
   jar = "@catboost-shadow-need-slf4j-1_2_5_http//file",
   visibility = ["//visibility:public"]
@@ -2854,22 +2847,15 @@ jvm_import(
 
 jvm_import(
   name = "jetbrains-mlapi-ml-api",
-  jar = "@ml-api-86_http//file",
-  source_jar = "@ml-api-86-sources_http//file",
+  jar = "@ml-api-0_1_94_http//file",
+  source_jar = "@ml-api-0_1_94-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jetbrains-mlapi-ml-tools",
-  jar = "@ml-tools-86_http//file",
-  source_jar = "@ml-tools-86-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jetbrains-mlapi-ml-tools-suspendable",
-  jar = "@ml-tools-suspendable-76_http//file",
-  source_jar = "@ml-tools-suspendable-76-sources_http//file",
+  jar = "@ml-tools-0_1_94_http//file",
+  source_jar = "@ml-tools-0_1_94-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8585,6 +8571,13 @@ jvm_import(
   name = "byte-buddy-agent-1_17_4_http_import",
   jar = "@byte-buddy-agent-1_17_4_http//file",
   source_jar = "@byte-buddy-agent-1_17_4-sources_http//file"
+)
+
+jvm_import(
+  name = "python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
+  jar = "@python-imports-ranking-model-coral-panda-republished-4_http//file",
+  source_jar = "@python-imports-ranking-model-coral-panda-republished-4-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(

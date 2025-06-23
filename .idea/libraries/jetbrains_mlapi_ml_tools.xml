@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="jetbrains.mlapi.ml.tools" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:ml-tools:86">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:ml-tools:0.1.94">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/86/ml-tools-86.jar">
-          <sha256sum>1fd34e39c77dad83957882a7b6ccf99c1d49403b4643efc85a4b041aa1108a13</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/0.1.94/ml-tools-0.1.94.jar">
+          <sha256sum>b2d36677ba73f2f7974199823b5f4323b2a16ea718ed506297402c6a7605af1c</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,13 +11,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/86/ml-tools-86.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/0.1.94/ml-tools-0.1.94.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/86/ml-tools-86-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/0.1.94/ml-tools-0.1.94-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/86/ml-tools-86-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/0.1.94/ml-tools-0.1.94-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

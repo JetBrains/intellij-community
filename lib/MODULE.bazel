@@ -3898,20 +3898,6 @@ http_file(
 )
 
 http_file(
-  name = "python-imports-ranking-model-nebulous-albatross_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross.jar",
-  sha256 = "5c5e1cc5fae2d8379a586b87ca580c677e65bdc4538ee0e0773cce141dc61b6a",
-  downloaded_file_path = "python-imports-ranking-model-nebulous-albatross.jar"
-)
-
-http_file(
-  name = "python-imports-ranking-model-nebulous-albatross-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross-sources.jar",
-  sha256 = "45f0027b5a3ed622fb77830f7f98caaa53aed34ba3a8c7d32c85c0c39223d612",
-  downloaded_file_path = "python-imports-ranking-model-nebulous-albatross-sources.jar"
-)
-
-http_file(
   name = "catboost-shadow-need-slf4j-1_2_5_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/catboost-shadow-need-slf4j/1.2.5/catboost-shadow-need-slf4j-1.2.5.jar",
   sha256 = "94a06c3fdd4aa638df59c8c783a379ca43a5b933187760e219e09e84f1633d76",
@@ -3919,45 +3905,31 @@ http_file(
 )
 
 http_file(
-  name = "ml-api-86_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/86/ml-api-86.jar",
-  sha256 = "a52b66fc6cafd0f9f8e295e9748de49903ad662d0d1bebb9d6df60e672e4d4cb",
-  downloaded_file_path = "ml-api-86.jar"
+  name = "ml-api-0_1_94_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/0.1.94/ml-api-0.1.94.jar",
+  sha256 = "1050f9b58c8d71833d075ae7302881cb9d905dcda4025a21c59657ac823ac105",
+  downloaded_file_path = "ml-api-0.1.94.jar"
 )
 
 http_file(
-  name = "ml-api-86-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/86/ml-api-86-sources.jar",
-  sha256 = "71001504fe5e7f21d83b717fa689bf6a2f3818428626eb4c0ff09eef688e03f6",
-  downloaded_file_path = "ml-api-86-sources.jar"
+  name = "ml-api-0_1_94-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/0.1.94/ml-api-0.1.94-sources.jar",
+  sha256 = "79eb26365ce9f536733d96fc16e40e7e89e1daba9312a8d06449718430d7d499",
+  downloaded_file_path = "ml-api-0.1.94-sources.jar"
 )
 
 http_file(
-  name = "ml-tools-86_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/86/ml-tools-86.jar",
-  sha256 = "1fd34e39c77dad83957882a7b6ccf99c1d49403b4643efc85a4b041aa1108a13",
-  downloaded_file_path = "ml-tools-86.jar"
+  name = "ml-tools-0_1_94_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/0.1.94/ml-tools-0.1.94.jar",
+  sha256 = "b2d36677ba73f2f7974199823b5f4323b2a16ea718ed506297402c6a7605af1c",
+  downloaded_file_path = "ml-tools-0.1.94.jar"
 )
 
 http_file(
-  name = "ml-tools-86-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/86/ml-tools-86-sources.jar",
-  sha256 = "3780b7e4c6fad6945812f4729b661d54acc85068fd7a4b106e972bbd7d4dd0b1",
-  downloaded_file_path = "ml-tools-86-sources.jar"
-)
-
-http_file(
-  name = "ml-tools-suspendable-76_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools-suspendable/76/ml-tools-suspendable-76.jar",
-  sha256 = "98be4a00226838f7afc9dd054ee40ed03e1379672b343258480b8b72f1b25e0f",
-  downloaded_file_path = "ml-tools-suspendable-76.jar"
-)
-
-http_file(
-  name = "ml-tools-suspendable-76-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools-suspendable/76/ml-tools-suspendable-76-sources.jar",
-  sha256 = "11b562e584a7b01596dc9fd14ca7c710a27f48c242b597a90af9ff32f663ace8",
-  downloaded_file_path = "ml-tools-suspendable-76-sources.jar"
+  name = "ml-tools-0_1_94-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/0.1.94/ml-tools-0.1.94-sources.jar",
+  sha256 = "8c5b021724a9b8dab25e33b09812aadbd160cf8e64e89a3dd17c40449dbdedae",
+  downloaded_file_path = "ml-tools-0.1.94-sources.jar"
 )
 
 http_file(
@@ -12323,6 +12295,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4-sources.jar",
   sha256 = "57b0ee93eab8caa3cfc424aa24616462543bb2a7f13848cbb537c225314dffaf",
   downloaded_file_path = "byte-buddy-agent-1.17.4-sources.jar"
+)
+
+http_file(
+  name = "python-imports-ranking-model-coral-panda-republished-4_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4.jar",
+  sha256 = "cff0591184b48356a622f7635c6de1399fdbeb161f98d68206d09807c83fa98c",
+  downloaded_file_path = "python-imports-ranking-model-coral-panda-republished-4.jar"
+)
+
+http_file(
+  name = "python-imports-ranking-model-coral-panda-republished-4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4-sources.jar",
+  sha256 = "4aecfba9498dff7e199c7db2a718b53c77834347daf8b96cafc8b02b392c5e6c",
+  downloaded_file_path = "python-imports-ranking-model-coral-panda-republished-4-sources.jar"
 )
 
 http_file(

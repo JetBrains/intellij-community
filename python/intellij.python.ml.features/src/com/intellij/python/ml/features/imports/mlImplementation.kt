@@ -6,14 +6,17 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.python.ml.features.imports.features.FeaturesRegistry
+import com.intellij.python.ml.features.imports.features.ImportCandidateContext
+import com.intellij.python.ml.features.imports.features.ImportRankingContext
 import com.intellij.util.application
 import com.jetbrains.ml.api.feature.Feature
+import com.jetbrains.ml.api.feature.FeatureDeclaration
 import com.jetbrains.ml.api.logs.EventPair
-import com.jetbrains.ml.api.model.MLModel
 import com.jetbrains.ml.tools.logs.MLLogsTree
+import com.jetbrains.ml.tools.model.MLModel
+import com.jetbrains.ml.tools.model.catboost.prediction.CatBoostRegressionResult
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContext
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
@@ -39,23 +42,23 @@ private class ExperimentalMLRanker(
   contextFeatures: MutableList<Feature>,
   contextAnalysis: MutableList<EventPair<*>>,
   timestampStarted: Long,
-  private val mlModel: MLModel<Double>,
+  private val mlModel: MLModel<CatBoostRegressionResult>,
 ) : FinalCandidatesRanker(contextFeatures, contextAnalysis, timestampStarted) {
 
   override val mlEnabled = true
 
   override fun launchMLRanking(initialCandidatesOrder: MutableList<out ImportCandidateHolder>, displayResult: (RateableRankingResult) -> Unit) {
     service<MLApiComputations>().coroutineScope.launch(Dispatchers.Default) {
-      contextFeatures.addAll(FeaturesRegistry.computeContextFeatures(ImportRankingContext(initialCandidatesOrder), mlModel.knownFeatures))
+      contextFeatures.addAll(FeaturesRegistry.computeContextFeatures(ImportRankingContext(initialCandidatesOrder), mlModel.inputFeatures))
 
       val importCandidatesFeatures = initialCandidatesOrder.associateWith { candidate ->
-        async { FeaturesRegistry.computeCandidateFeatures(ImportCandidateContext(initialCandidatesOrder, candidate), mlModel.knownFeatures) }
+        async { FeaturesRegistry.computeCandidateFeatures(ImportCandidateContext(initialCandidatesOrder, candidate), mlModel.inputFeatures) }
       }.mapValues { it.value.await() }
 
-      val scoreByCandidate = mlModel.predictBatch(contextFeatures, importCandidatesFeatures)
+      val scoreByCandidate = mlModel.predictBatch(contextFeatures + fillTypingFeatures(), importCandidatesFeatures)
 
       val relevanceCandidateOrder = scoreByCandidate.toList()
-        .sortedByDescending { it.second }
+        .sortedByDescending { it.second.logit }
         .map { it.first }
 
       logger<ExperimentalMLRanker>().debug {
@@ -174,4 +177,22 @@ internal class RateableRankingResult(
       LoggingOption.SKIP -> Unit
     }
   }
+}
+
+private object TypingFeatures {
+  val SINCE_LAST_TYPING = FeatureDeclaration.int("typing_speed_tracker_time_since_last_typing") { "Deprecated" }
+  val TYPING_SPEED_1S = FeatureDeclaration.double("typing_speed_tracker_typing_speed_1s") { "Deprecated" }
+  val TYPING_SPEED_2S = FeatureDeclaration.double("typing_speed_tracker_typing_speed_2s") { "Deprecated" }
+  val TYPING_SPEED_5S = FeatureDeclaration.double("typing_speed_tracker_typing_speed_5s") { "Deprecated" }
+  val TYPING_SPEED_30S = FeatureDeclaration.double("typing_speed_tracker_typing_speed_30s") { "Deprecated" }
+}
+
+private fun fillTypingFeatures(): List<Feature> {
+  return listOf(
+    TypingFeatures.SINCE_LAST_TYPING with 1,
+    TypingFeatures.TYPING_SPEED_2S with 0.0,
+    TypingFeatures.TYPING_SPEED_30S with 0.0,
+    TypingFeatures.TYPING_SPEED_5S with 0.0,
+    TypingFeatures.TYPING_SPEED_1S with 0.0,
+  )
 }

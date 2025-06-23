@@ -8,11 +8,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
   reason: <- intellij.python.community.impl
-- name: lib/jetbrains.ml.models.python.imports.ranking.model.jar
-  library: jetbrains.ml.models.python.imports.ranking.model
-  files:
-  - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross.jar
-  reason: <- intellij.python.ml.features
 - name: lib/jsr305.jar
   library: jsr305
   files:
@@ -35,6 +30,12 @@
   module: intellij.python.community.impl
   files:
   - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
+- name: lib/modules/intellij.python.ml.features.jar
+  contentModules:
+  - name: intellij.python.ml.features
+    libraries:
+      jetbrains.ml.models.python.imports.ranking.model:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4.jar
 - name: lib/python-ce-frontend.jar
   contentModules:
   - name: intellij.python.parser
@@ -75,7 +76,6 @@
   - name: intellij.python.grazie
   - name: intellij.python.langInjection
   - name: intellij.python.markdown
-  - name: intellij.python.ml.features
   - name: intellij.python.terminal
 - name: lib/tuweni-toml.jar
   library: tuweni-toml

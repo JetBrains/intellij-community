@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.codeInsight.imports.mlapi.features
+package com.intellij.python.ml.features.imports.features
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleUtilCore
@@ -7,8 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.ml.api.feature.*
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
 import com.jetbrains.python.sdk.PythonSdkUtil
 
 enum class UnderscoresType {
@@ -32,15 +30,15 @@ enum class ModuleSourceType {
 object RelevanceEvaluationFeatures : ImportCandidateFeatures() {
   object Features {
     val UNDERSCORES_IN_PATH: FeatureDeclaration<Int?> = FeatureDeclaration.int("underscores_in_path") { "number of prefix and suffix underscores in path" }.nullable()
-    val MODULE_SOURCE_TYPE: FeatureDeclaration<ModuleSourceType?> = FeatureDeclaration.enum<ModuleSourceType>("module_source_type") { "info about lib being std, local, or external" }.nullable()
-    val UNDERSCORES_TYPES_OF_PACKAGES: List<FeatureDeclaration<UnderscoresType?>> = (1..4).map { i -> FeatureDeclaration.enum<UnderscoresType>("underscores_types_of_package_$i") { "underscores types of package #$i" }.nullable() }
+    val MODULE_SOURCE_TYPE: FeatureDeclaration<Enum<*>?> = FeatureDeclaration.enum<ModuleSourceType>("module_source_type") { "info about lib being std, local, or external" }.nullable()
+    val UNDERSCORES_TYPES_OF_PACKAGES: List<FeatureDeclaration<Enum<*>?>> = (1..4).map { i -> FeatureDeclaration.enum<UnderscoresType>("underscores_types_of_package_$i") { "underscores types of package #$i" }.nullable() }
   }
 
   override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(true, true)
 
   override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
 
-  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
+  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureSet): List<Feature> = buildList {
     val importCandidate = instance.candidate
     add(Features.UNDERSCORES_IN_PATH with countBoundaryUnderscores(importCandidate.path))
     readAction {

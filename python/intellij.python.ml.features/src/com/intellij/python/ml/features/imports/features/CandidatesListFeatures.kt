@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.codeInsight.imports.mlapi.features
+package com.intellij.python.ml.features.imports.features
 
 import com.jetbrains.ml.api.feature.*
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContextFeatures
 
 object CandidatesListFeatures : ImportRankingContextFeatures() {
   object Features {
@@ -19,7 +17,7 @@ object CandidatesListFeatures : ImportRankingContextFeatures() {
 
   override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(tolerateRedundantFeatures = true, putNullImplicitly = true)
 
-  override suspend fun computeNamespaceFeatures(instance: ImportRankingContext, filter: FeatureFilter): List<Feature> = buildList {
+  override suspend fun computeNamespaceFeatures(instance: ImportRankingContext, filter: FeatureSet): List<Feature> = buildList {
     add(Features.LENGTH with instance.candidates.size)
     add(Features.HIGHEST_OLD_RELEVANCE with instance.candidates.maxOfOrNull { it.relevance })
   }

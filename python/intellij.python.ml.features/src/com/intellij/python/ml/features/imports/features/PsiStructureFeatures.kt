@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.codeInsight.imports.mlapi.features
+package com.intellij.python.ml.features.imports.features
 
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiElement
 import com.jetbrains.ml.api.feature.*
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
 
 
 object PsiStructureFeatures : ImportCandidateFeatures() {
@@ -18,7 +16,7 @@ object PsiStructureFeatures : ImportCandidateFeatures() {
 
   override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(tolerateRedundantFeatures = true, putNullImplicitly = true)
 
-  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
+  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureSet): List<Feature> = buildList {
     readAction {
       add(Features.PSI_CLASS with (instance.candidate.importable?.javaClass))
       Features.PSI_PARENT.withIndex().forEach { (i, featureDeclaration) ->

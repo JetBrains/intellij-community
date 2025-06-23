@@ -18,9 +18,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "@lib//:jetbrains-annotations",
-    "@lib//:jetbrains-mlapi-ml-api",
   ],
-  exports = ["@lib//:jetbrains-mlapi-ml-api"],
   runtime_deps = [":ml_resources"]
 )
 ### auto-generated section `build intellij.platform.ml` end

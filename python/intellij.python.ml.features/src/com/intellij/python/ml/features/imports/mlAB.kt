@@ -5,9 +5,9 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.impl.logs.MLEventLoggerProvider.Companion.ML_RECORDER_ID
 import com.intellij.python.ml.features.imports.FinalImportRankingStatusService.RegistryOption
-import com.jetbrains.ml.api.model.MLModel
+import com.jetbrains.ml.tools.model.MLModel
+import com.jetbrains.ml.tools.model.catboost.prediction.CatBoostRegressionResult
 
 @Service
 internal class FinalImportRankingStatusService {
@@ -20,9 +20,7 @@ internal class FinalImportRankingStatusService {
   }
 
   private val bucket: Int
-    by lazy { service<EventLogConfiguration>().getOrCreate(ML_RECORDER_ID,
-                                                           // ids between ML and FUS recorders should match
-                                                           "FUS").bucket }
+    by lazy { service<EventLogConfiguration>().getOrCreate("ML").bucket }
 
   private val mlEnabledOnBucket: Boolean
     by lazy { bucket % 2 == 0 }
@@ -31,7 +29,7 @@ internal class FinalImportRankingStatusService {
 
   val status: FinalImportRankingStatus
     get() {
-      val mlModel = service<ImportsRankingModelService>().getModelOwnership()
+      val mlModel = service<ImportsRankingModelService>().model
       val registryOption = getRegistryOption()
       val registryOptionAllowsEnabling = registryOption == RegistryOption.ENABLED || (registryOption == RegistryOption.IN_EXPERIMENT && mlEnabledOnBucket)
       return if (mlModel != null && registryOptionAllowsEnabling)
@@ -49,6 +47,6 @@ internal sealed class FinalImportRankingStatus(
   val mlModelUnavailable: Boolean,
   val registryOption: RegistryOption,
 ) {
-  class Enabled(val mlModel: MLModel<Double>, registryOption: RegistryOption) : FinalImportRankingStatus(true, false, registryOption)
+  class Enabled(val mlModel: MLModel<CatBoostRegressionResult>, registryOption: RegistryOption) : FinalImportRankingStatus(true, false, registryOption)
   class Disabled(mlModelUnavailable: Boolean, registryOption: RegistryOption) : FinalImportRankingStatus(false, mlModelUnavailable, registryOption)
 }

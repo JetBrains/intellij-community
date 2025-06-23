@@ -10,6 +10,7 @@
     <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.tasks.impl"/>
     <module name="intellij.platform.ml.impl"/>
+    <module name="intellij.platform.ml.logs"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.platform.compose"/>

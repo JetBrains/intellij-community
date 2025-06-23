@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.codeInsight.imports.mlapi.features
+package com.intellij.python.ml.features.imports.features
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiManager
 import com.jetbrains.ml.api.feature.*
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
 import com.jetbrains.python.psi.PyFile
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -25,7 +23,7 @@ object OpenFilesImportsFeatures : ImportCandidateFeatures() {
 
   override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
 
-  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = coroutineScope  {
+  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureSet): List<Feature> = coroutineScope  {
     val importCandidate = instance.candidate
     if (importCandidate.path == null) {
       return@coroutineScope emptyList()
