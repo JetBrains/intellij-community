@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeDeclarationTypeReference
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 
@@ -81,7 +81,8 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
         visitTargetElement(it, holder, isOnTheFly)
     }
 
-    override fun getApplicableRanges(element: KtProperty): List<TextRange> = ApplicabilityRange.single(element) { it.typeReference }
+    override fun getApplicableRanges(element: KtProperty): List<TextRange> =
+        ApplicabilityRanges.typeReference(element)
 
     override fun getProblemDescription(element: KtProperty, context: Unit): String =
         KotlinBundle.message("explicitly.given.type.is.redundant.here")
