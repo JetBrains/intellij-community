@@ -1035,7 +1035,6 @@ public final class PluginManagerConfigurable
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
         myInstalledPanel.startLoading();
-        PluginLogo.startBatchMode();
         PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
           try {
             PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
@@ -1129,7 +1128,6 @@ public final class PluginManagerConfigurable
             });
           }
           finally {
-            PluginLogo.endBatchMode();
             myInstalledPanel.stopLoading();
           }
           return null;
