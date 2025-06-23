@@ -88,7 +88,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentNotUsedChildUsed() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleC/Sql.java", """
           package my.source.moduleC;
@@ -111,7 +111,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentNotUsedChildUsedDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleC/Sql.java", """
           package my.source.moduleC;
@@ -134,7 +134,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildNotUsed() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -157,7 +157,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildNotUsedDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -180,7 +180,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsed() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -208,7 +208,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -236,7 +236,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedGrandChildUsed() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -270,7 +270,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedGrandChildUsedDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -304,7 +304,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testOneUsed() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -326,7 +326,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testOneUsedDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -348,7 +348,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testNoOneUsed() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         doTest("""
           import module my.source.moduleB;
@@ -365,7 +365,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testNoOneUsedDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         doTest("""
           import module my.source.moduleB;/*unused*/
@@ -382,7 +382,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentNotUsedChildNotUsed() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         doTest("""
           import module my.source.moduleB;
@@ -400,7 +400,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentNotUsedChildNotUsedDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         doTest("""
           import module my.source.moduleB;/*unused*/
@@ -418,7 +418,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedParentCovered() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -448,7 +448,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedParentCoveredDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -478,7 +478,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedChildCovered() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -508,7 +508,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedChildCoveredDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -538,7 +538,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedChildCoveredParentCovered() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
@@ -569,7 +569,7 @@ public class UnusedImportGlobalWithModulesInspectionTest extends LightJava9Modul
 
   public void testParentUsedChildUsedChildCoveredParentCoveredDeleteUnused() {
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
         JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;

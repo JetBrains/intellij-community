@@ -58,7 +58,7 @@ public class ImplicitToExplicitClassBackwardMigrationInspectionTest extends Ligh
   }
 
   public void testConflictModuleImportDemandOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("""
                            package test;
                            public class List {}
