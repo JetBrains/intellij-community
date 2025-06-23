@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.openapi.application.EDT
@@ -62,13 +63,19 @@ object PluginManagerPanelFactory {
   @ApiStatus.Internal
   fun createInstalledPanel(cs: CoroutineScope, myPluginModel: MyPluginModel, callback: (CreateInstalledPanelModel) -> Unit) {
     cs.launch {
-      val pluginManager = UiPluginManager.getInstance()
-      val installedPlugins = pluginManager.getInstalledPlugins()
-      val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
-      val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
-      val errors = myPluginModel.getErrors(errorCheckResults)
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins, errors))
+      try {
+        PluginLogo.startBatchMode()
+
+        val pluginManager = UiPluginManager.getInstance()
+        val installedPlugins = pluginManager.getInstalledPlugins()
+        val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
+        val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
+        val errors = myPluginModel.getErrors(errorCheckResults)
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins, errors))
+        }
+      } finally {
+        PluginLogo.endBatchMode()
       }
     }
   }

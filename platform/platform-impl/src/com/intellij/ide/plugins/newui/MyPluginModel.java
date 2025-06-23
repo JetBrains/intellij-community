@@ -420,7 +420,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
       myTopController.showProgress(true);
     }
-    myInstallingWithUpdatesPlugins.add(descriptor.getPluginId());
+    myInstallingWithUpdatesPlugins.add(pluginId);
     if (info.install) {
       myInstallingPlugins.add(descriptor);
     }
@@ -586,7 +586,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   static void addProgress(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicatorEx indicator) {
-    myInstallingInfos.get(descriptor.getPluginId()).indicator.addStateDelegate(indicator);
+    InstallPluginInfo info = myInstallingInfos.get(descriptor.getPluginId());
+    if(info == null) return;
+    info.indicator.addStateDelegate(indicator);
   }
 
   static void removeProgress(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicatorEx indicator) {
