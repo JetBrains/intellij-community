@@ -73,7 +73,7 @@ class EelMavenServerRemoteProcessSupport(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  override fun publishPort(port: Int): Int {
+  override fun publishPort(port: Int, target: Any): Int {
     myProject.service<CoroutineService>().coroutineScope.launch {
       forwardLocalPort(eel.tunnels, port, EelTunnelsApi.HostAddress.Builder(port.toUShort()).hostname(remoteHost).build())
     }

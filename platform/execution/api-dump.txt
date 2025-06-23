@@ -182,6 +182,8 @@ com.intellij.execution.filters.Filter
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EMPTY_ARRAY:com.intellij.execution.filters.Filter[]
 - a:applyFilter(java.lang.String,I):com.intellij.execution.filters.Filter$Result
+a:com.intellij.execution.rmi.RemoteProcessSupport
+- p:publishPort(I,java.lang.Object):I
 com.intellij.execution.runners.ProcessProxy
 - a:attach(com.intellij.execution.process.ProcessHandler):V
 - canSendBreak():Z
