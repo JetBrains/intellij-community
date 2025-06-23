@@ -13,7 +13,6 @@ import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.ide.rpc.throttledWithAccumulation
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
@@ -59,16 +58,14 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           }.collect { throttledItems ->
             when (throttledItems) {
               is ThrottledOneItem -> {
-                val usage = readAction {
-                  UsageInfoModel.createUsageInfoModel(project, throttledItems.item)
-                }
+                val usage = UsageInfoModel.createUsageInfoModel(project, throttledItems.item, coroutineScope)
                 onResult(usage)
               }
               is ThrottledAccumulatedItems -> {
-                val usages = readAction {
-                  throttledItems.items.map{UsageInfoModel.createUsageInfoModel(project, it) }
+                throttledItems.items.forEach {
+                  val usage = UsageInfoModel.createUsageInfoModel(project, it, coroutineScope)
+                  onResult(usage)
                 }
-                usages.forEach { onResult(it) }
               }
             }
 
