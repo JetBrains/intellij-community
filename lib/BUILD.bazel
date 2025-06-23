@@ -3223,8 +3223,8 @@ java_library(
 
 jvm_import(
   name = "jvm-native-trusted-roots",
-  jar = "@jvm-native-trusted-roots-1_0_24_http//file",
-  source_jar = "@jvm-native-trusted-roots-1_0_24-sources_http//file",
+  jar = "@jvm-native-trusted-roots-1_1_7_http//file",
+  source_jar = "@jvm-native-trusted-roots-1_1_7-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
