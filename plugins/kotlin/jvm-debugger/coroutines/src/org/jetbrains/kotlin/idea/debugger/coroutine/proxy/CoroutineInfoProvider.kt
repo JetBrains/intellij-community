@@ -40,13 +40,13 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
         }
 
         val coroutinesInfoAsJsonString = arrayValues[0].safeAs<StringReference>()?.value()
-            ?: error("The first element of the result array must be a string")
+            ?: error("The 1st element of the result array must be a string")
         val lastObservedThreadRefs = arrayValues[1].safeAs<ArrayReference>()?.toTypedList<ThreadReference?>()
-            ?: error("The second element of the result array must be an array")
+            ?: error("The 2nd element of the result array must be an array")
         val lastObservedFrameRefs = arrayValues[2].safeAs<ArrayReference>()?.toTypedList<ObjectReference?>()
-            ?: error("The third element of the result array must be an array")
+            ?: error("The 3rd element of the result array must be an array")
         val coroutineInfoRefs = arrayValues[3].safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
-            ?: error("The fourth element of the result array must be an array")
+            ?: error("The 4th element of the result array must be an array")
         val coroutinesInfo = Gson().fromJson(coroutinesInfoAsJsonString, Array<CoroutineInfoFromJson>::class.java)
 
         if (coroutineInfoRefs.size != lastObservedFrameRefs.size ||
@@ -55,7 +55,7 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
             error("Arrays must have equal sizes")
         }
 
-        return calculateCoroutineInfoData(coroutinesInfo, coroutineInfoRefs, lastObservedThreadRefs, lastObservedFrameRefs)
+        return calculateCoroutineInfoData(coroutinesInfo, coroutineInfoRefs, lastObservedThreadRefs, lastObservedFrameRefs, null)
     }
 
     fun dumpCoroutinesWithStacktraces(): List<CoroutineInfoData>? {
@@ -63,18 +63,20 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
 
         val arrayValues = (array as? ArrayReference)?.values ?: return null
 
-        if (arrayValues.size != 4) {
-            error("The result array of 'dumpCoroutinesWithStacktracesAsJson' should be of size 4")
+        if (arrayValues.size != 5) {
+            error("The result array of 'dumpCoroutinesWithStacktracesAsJson' should be of size 5")
         }
 
         val coroutinesInfoAsJsonString = arrayValues[0].safeAs<StringReference>()?.value()
-            ?: error("The first element of the result array must be a string")
+            ?: error("The 1st element of the result array must be a string")
         val lastObservedThreadRefs = arrayValues[1].safeAs<ArrayReference>()?.toTypedList<ThreadReference?>()
-            ?: error("The second element of the result array must be an array")
+            ?: error("The 2nd element of the result array must be an array")
         val lastObservedFrameRefs = arrayValues[2].safeAs<ArrayReference>()?.toTypedList<ObjectReference?>()
-            ?: error("The third element of the result array must be an array")
-        val lastObservedStackTraceJsons = arrayValues[3].safeAs<ArrayReference>()?.toTypedList<StringReference>()
-            ?: error("The fourth element of the result array must be an array")
+            ?: error("The 3rd element of the result array must be an array")
+        val coroutineInfoRefs = arrayValues[3].safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
+            ?: error("The 4th element of the result array must be an array")
+        val lastObservedStackTraceJsons = arrayValues[4].safeAs<ArrayReference>()?.toTypedList<StringReference>()
+            ?: error("The 5th element of the result array must be an array")
 
         val coroutinesInfo = Gson().fromJson(coroutinesInfoAsJsonString, Array<CoroutineInfoFromJson>::class.java)
         val lastObservedStackTraces: List<List<Location>> = lastObservedStackTraceJsons.map {
@@ -85,11 +87,12 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
 
         if (lastObservedStackTraces.size != lastObservedFrameRefs.size ||
             lastObservedFrameRefs.size != coroutinesInfo.size ||
+            coroutineInfoRefs.size != coroutinesInfo.size ||
             coroutinesInfo.size != lastObservedThreadRefs.size) {
             error("Arrays must have equal sizes")
         }
 
-        return calculateCoroutineInfoDataWithStacktraces(coroutinesInfo, lastObservedThreadRefs, lastObservedFrameRefs, lastObservedStackTraces)
+        return calculateCoroutineInfoData(coroutinesInfo, coroutineInfoRefs, lastObservedThreadRefs, lastObservedFrameRefs, lastObservedStackTraces)
     }
 
     private fun fallbackToOldMirrorDump(executionContext: DefaultExecutionContext): ArrayReference? {
@@ -103,7 +106,8 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
         coroutineInfos: Array<CoroutineInfoFromJson>,
         coroutineInfoRefs: List<ObjectReference>,
         lastObservedThreadRefs: List<ThreadReference?>,
-        lastObservedFrameRefs: List<ObjectReference?>
+        lastObservedFrameRefs: List<ObjectReference?>,
+        lastObservedStackTraces: List<List<Location>>?
     ): List<CoroutineInfoData> {
         return coroutineInfoRefs.mapIndexed { i, ref ->
             val info = coroutineInfos[i]
@@ -115,28 +119,8 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
                 lastObservedFrame = lastObservedFrameRefs[i],
                 lastObservedThread = lastObservedThreadRefs[i],
                 debugCoroutineInfoRef = ref,
-                stackFrameProvider = stackFramesProvider
-            )
-        }
-    }
-
-    private fun calculateCoroutineInfoDataWithStacktraces(
-        coroutineInfos: Array<CoroutineInfoFromJson>,
-        lastObservedThreadRefs: List<ThreadReference?>,
-        lastObservedFrameRefs: List<ObjectReference?>,
-        lastObservedStackTraces: List<List<Location>>
-    ): List<CoroutineInfoData> {
-        return coroutineInfos.mapIndexed { i, info ->
-            CoroutineInfoData(
-                name = info.name,
-                id = info.sequenceNumber,
-                state = info.state,
-                dispatcher = info.dispatcher,
-                lastObservedFrame = lastObservedFrameRefs[i],
-                lastObservedThread = lastObservedThreadRefs[i],
-                debugCoroutineInfoRef = null,
-                stackFrameProvider = null,
-                lastObservedStackTrace = lastObservedStackTraces[i]
+                stackFrameProvider = stackFramesProvider,
+                lastObservedStackTrace = lastObservedStackTraces?.get(i) ?: emptyList()
             )
         }
     }
