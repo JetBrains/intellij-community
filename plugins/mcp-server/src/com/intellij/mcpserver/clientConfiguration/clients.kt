@@ -69,6 +69,30 @@ open class McpClient(
     return false
   }
 
+  fun isPortCorrect(): Boolean {
+    val currentPort = McpServerService.getInstance().port
+    runCatching {
+      json.decodeFromStream<McpServers>(configPath.inputStream()).mcpServers.forEach { mcpServer ->
+        mcpServer.value.url?.let { url ->
+          val urlRegex = Regex("""http://localhost:(\d+)/sse""")
+          val matchResult = urlRegex.find(url)
+          if (matchResult != null) {
+            val configuredPort = matchResult.groupValues[1].toIntOrNull()
+            return configuredPort == currentPort
+          }
+        }
+
+        if (mcpServer.value.command?.contains("java") == true &&
+            mcpServer.value.args?.contains(::main.javaMethod!!.declaringClass.name) == true) {
+          val configuredPort = mcpServer.value.env?.get(::IJ_MCP_SERVER_PORT.name)?.toIntOrNull()
+          return configuredPort == currentPort
+        }
+      }
+    }.getOrElse { return true }
+
+    return true
+  }
+
   protected fun updateServerConfig(serverEntry: ServerConfig) {
     val existingJson = if (configPath.exists()) {
       json.decodeFromStream<JsonObject>(configPath.inputStream())
