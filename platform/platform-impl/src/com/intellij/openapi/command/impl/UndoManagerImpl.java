@@ -276,9 +276,8 @@ public class UndoManagerImpl extends UndoManager {
     mySharedRedoStacksHolder.clearDocumentReferences(document);
   }
 
-  // TODO: remove public
   @ApiStatus.Internal
-  public void clearStacks(@Nullable FileEditor editor) {
+  protected void clearStacks(@Nullable FileEditor editor) {
     for (UndoClientState state : getAllClientStates()) {
       state.clearStacks(editor);
     }

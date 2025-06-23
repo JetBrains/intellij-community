@@ -2307,8 +2307,8 @@ f:com.intellij.ide.actions.UndoAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - <init>():V
 a:com.intellij.ide.actions.UndoRedoAction
-- com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.project.DumbAwareAction
+- com.intellij.ide.lightEdit.LightEditCompatible
 - sf:IGNORE_SWING_UNDO_MANAGER:com.intellij.openapi.util.Key
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
