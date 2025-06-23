@@ -70,6 +70,8 @@ jvm_library(
     "@lib//:ktor-client-cio",
     "//platform/statistics",
     "//platform/util/concurrency",
+    "//plugins/terminal/backend",
+    "//plugins/sh/core",
   ],
   runtime_deps = [":mcpserver_resources"]
 )
@@ -149,6 +151,9 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//plugins/terminal/backend",
+    "//plugins/terminal/backend:backend_test_lib",
+    "//plugins/sh/core",
   ],
   runtime_deps = [
     ":mcpserver_resources",
