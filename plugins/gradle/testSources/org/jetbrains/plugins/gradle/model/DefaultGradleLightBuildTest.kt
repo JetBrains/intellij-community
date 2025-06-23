@@ -5,9 +5,12 @@ import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.BASE_GRADLE_VERSION
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertIterableEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.mockito.kotlin.mock
@@ -20,37 +23,54 @@ class DefaultGradleLightBuildTest {
   fun `test DefaultGradleLightBuild#convertGradleBuilds`() {
     // GIVEN
     val rootBuildPath = "rootBuild"
-    val includedBuildPath = "rootBuild/includedBuild"
-    val subIncludedBuildPath = "rootBuild/includedBuild/subIncludedBuild"
+    val rootIdentityPath = ":rootBuild"
+    val gradleRootBuild = mockBuildWithProjectAndSubproject(rootBuildPath, rootIdentityPath)
 
-    val gradleRootBuild = mockBuildWithProjectAndSubproject(rootBuildPath)
-    val gradleIncludedBuild = mockBuildWithProjectAndSubproject(includedBuildPath, parent = gradleRootBuild)
-    val gradleSubIncludedBuild = mockBuildWithProjectAndSubproject(subIncludedBuildPath, parent = gradleIncludedBuild)
+    val includedBuildPath = "rootBuild/includedBuild"
+    val includedIdentityPath = ":rootBuild:includedBuild"
+    val gradleIncludedBuild = mockBuildWithProjectAndSubproject(includedBuildPath, includedIdentityPath, parent = gradleRootBuild)
+
+    val deepIncludedBuildPath = "rootBuild/includedBuild/deepIncludedBuild"
+    val deepIncludedIdentityPath = ":rootBuild:includedBuild:deepIncludedBuild"
+    val gradleSubIncludedBuild = mockBuildWithProjectAndSubproject(deepIncludedBuildPath, deepIncludedIdentityPath, parent = gradleIncludedBuild)
+
     val gradleBuilds = listOf(gradleRootBuild, gradleIncludedBuild, gradleSubIncludedBuild)
     // WHEN
-    val convertedBuilds = DefaultGradleLightBuild.convertGradleBuilds(gradleBuilds)
+    val convertedBuilds = DefaultGradleLightBuild.convertGradleBuilds(gradleBuilds, GradleVersion.version(BASE_GRADLE_VERSION))
     // THEN
-    Assertions.assertIterableEquals(gradleBuilds.map { it.buildIdentifier.rootDir.name },
-                                    convertedBuilds.map { it.buildIdentifier.rootDir.name },
-                                    "The order of builds in `DefaultGradleLightBuild.convertGradleBuilds` should be the same as in the input")
+    assertIterableEquals(gradleBuilds.map { it.buildIdentifier.rootDir.name },
+                         convertedBuilds.map { it.buildIdentifier.rootDir.name },
+                         "The order of builds in `DefaultGradleLightBuild.convertGradleBuilds` should be the same as in the input")
     val rootBuild = convertedBuilds[0]
-    verifyBuildRootProjectAndSubproject(rootBuild, rootBuildPath)
-
+    verifyBuildRootProjectAndSubproject(rootBuild,
+                                        rootBuildPath,
+                                        identityPath = rootIdentityPath)
     val includedBuild = convertedBuilds[1]
-    verifyBuildRootProjectAndSubproject(includedBuild, includedBuildPath, parentBuild = rootBuild)
-
-    val subIncluded = convertedBuilds[2]
-    verifyBuildRootProjectAndSubproject(subIncluded, subIncludedBuildPath, parentBuild = includedBuild)
+    verifyBuildRootProjectAndSubproject(includedBuild,
+                                        includedBuildPath,
+                                        identityPath = includedIdentityPath,
+                                        parentBuild = rootBuild)
+    val deepIncludedBuild = convertedBuilds[2]
+    verifyBuildRootProjectAndSubproject(deepIncludedBuild,
+                                        deepIncludedBuildPath,
+                                        identityPath = deepIncludedIdentityPath,
+                                        parentBuild = includedBuild)
   }
 
-  private fun mockBuildWithProjectAndSubproject(path: String, parent: GradleBuild? = null): GradleBuild {
+  private fun mockBuildWithProjectAndSubproject(
+    path: String,
+    identityPath: String,
+    parent: GradleBuild? = null,
+  ): GradleBuild {
     val buildDir = File(path)
     val rootProject = mockGradleProject(name = buildDir.name,
                                         path = ":",
+                                        buildTreePath = identityPath,
                                         buildDir = buildDir,
                                         projectDir = buildDir)
     val subproject = mockGradleProject(name = "subproject",
                                        path = ":subproject",
+                                       buildTreePath = "$identityPath:subproject",
                                        buildDir = buildDir,
                                        projectDir = File("$path/subproject"),
                                        parent = rootProject)
@@ -64,6 +84,7 @@ class DefaultGradleLightBuildTest {
   private fun mockGradleProject(
     name: String,
     path: String,
+    buildTreePath: String,
     buildDir: File,
     projectDir: File? = null,
     parent: BasicGradleProject? = null,
@@ -76,7 +97,7 @@ class DefaultGradleLightBuildTest {
       whenever(it.projectDirectory).thenReturn(projectDir ?: buildDir)
       whenever(it.parent).thenReturn(parent)
       whenever(it.children).thenReturn(ImmutableDomainObjectSet(emptyList()))
-      whenever(it.buildTreePath).thenThrow(NotMockedMemberError::class.java)
+      whenever(it.buildTreePath).thenReturn(buildTreePath)
 
       if (parent != null) {
         whenever(parent.children).thenReturn(ImmutableDomainObjectSet(listOf(it)))
@@ -89,37 +110,40 @@ class DefaultGradleLightBuildTest {
       whenever(it.rootProject).thenReturn(projects.first())
       whenever(it.projects).thenReturn(ImmutableDomainObjectSet(projects))
       whenever(it.includedBuilds).thenReturn(ImmutableDomainObjectSet(emptyList()))
-      whenever(it.editableBuilds).thenThrow(NotMockedMemberError::class.java)
+      whenever(it.editableBuilds).thenThrow(NotMockedMemberError())
     }
 
   private fun verifyBuildRootProjectAndSubproject(
     build: DefaultGradleLightBuild,
     buildPath: String,
+    identityPath: String,
     parentBuild: DefaultGradleLightBuild? = null,
   ) {
     val buildDir = File(buildPath)
     val buildName = buildDir.name
 
-    Assertions.assertEquals(buildName, build.name)
-    Assertions.assertEquals(buildDir.absolutePath, build.buildIdentifier.rootDir.absolutePath)
-    Assertions.assertEquals(parentBuild, build.parentBuild)
+    assertEquals(buildName, build.name)
+    assertEquals(buildDir.absolutePath, build.buildIdentifier.rootDir.absolutePath)
+    assertEquals(parentBuild, build.parentBuild)
 
-    Assertions.assertEquals(2, build.projects.count())
+    assertEquals(2, build.projects.count())
     // The order of elements in `DefaultGradleLightBuild.getProjects` is random
     val rootProject = build.projects.find { it.name == buildName }
-      .also { Assertions.assertEquals(build.rootProject, it) }!!
+      .also { assertEquals(build.rootProject, it) }!!
     val subproject = build.projects.find { it.name == "subproject" }
       .also { assertNotNull(it) }!!
 
     verifyProject(project = rootProject,
                   name = buildName,
                   path = ":",
+                  identityPath = identityPath,
                   build = build,
                   projectDir = buildDir,
                   subprojects = listOf(subproject))
     verifyProject(project = subproject,
                   name = "subproject",
                   path = ":subproject",
+                  identityPath = "$identityPath:subproject",
                   build = build,
                   projectDir = File("$buildPath/subproject"))
   }
@@ -128,18 +152,18 @@ class DefaultGradleLightBuildTest {
     project: DefaultGradleLightProject,
     name: String,
     path: String,
+    identityPath: String,
     build: DefaultGradleLightBuild,
     projectDir: File,
     subprojects: List<DefaultGradleLightProject>? = emptyList(),
   ) {
-    Assertions.assertEquals(build, project.build)
-    Assertions.assertEquals(name, project.name)
-    Assertions.assertEquals(path, project.path)
-    Assertions.assertEquals(projectDir.absolutePath, project.projectDirectory.absolutePath)
-    Assertions.assertEquals(build.buildIdentifier.rootDir.absolutePath, project.projectIdentifier.buildIdentifier.rootDir.absolutePath)
-    Assertions.assertEquals(path, project.projectIdentifier.projectPath)
-    Assertions.assertIterableEquals(subprojects, project.childProjects)
+    assertEquals(build, project.build)
+    assertEquals(name, project.name)
+    assertEquals(path, project.path)
+    assertEquals(identityPath, project.identityPath)
+    assertEquals(projectDir.absolutePath, project.projectDirectory.absolutePath)
+    assertEquals(build.buildIdentifier.rootDir.absolutePath, project.projectIdentifier.buildIdentifier.rootDir.absolutePath)
+    assertEquals(path, project.projectIdentifier.projectPath)
+    assertIterableEquals(subprojects, project.childProjects)
   }
-
-  private class NotMockedMemberError : IllegalStateException("The accessed member is not mocked. Please mock it in the test.")
 }

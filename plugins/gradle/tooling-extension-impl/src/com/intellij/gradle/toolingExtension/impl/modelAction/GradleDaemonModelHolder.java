@@ -70,7 +70,7 @@ public class GradleDaemonModelHolder {
       List<GradleBuild> gradleBuilds = new ArrayList<>();
       gradleBuilds.add(myRootGradleBuild);
       gradleBuilds.addAll(myNestedGradleBuilds);
-      return convertGradleBuilds(gradleBuilds);
+      return convertGradleBuilds(gradleBuilds, myGradleVersion);
     });
   }
 

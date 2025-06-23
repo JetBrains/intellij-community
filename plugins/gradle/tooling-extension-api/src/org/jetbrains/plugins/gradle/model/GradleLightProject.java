@@ -30,6 +30,9 @@ public interface GradleLightProject extends ProjectModel {
   String getPath();
 
   @NotNull
+  String getIdentityPath();
+
+  @NotNull
   File getProjectDirectory();
 
   @Override

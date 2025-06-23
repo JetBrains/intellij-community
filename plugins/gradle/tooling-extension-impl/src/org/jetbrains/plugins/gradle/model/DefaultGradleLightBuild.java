@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,13 +26,13 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
 
   private @Nullable DefaultGradleLightBuild myParentBuild = null;
 
-  public DefaultGradleLightBuild(@NotNull GradleBuild gradleBuild) {
+  public DefaultGradleLightBuild(@NotNull GradleBuild gradleBuild, @NotNull GradleVersion gradleVersion) {
     BasicGradleProject rootGradleProject = gradleBuild.getRootProject();
     myName = rootGradleProject.getName();
     myBuildIdentifier = new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir());
 
     Map<BasicGradleProject, DefaultGradleLightProject> projects = gradleBuild.getProjects().stream()
-      .map(it -> new Pair<>(it, new DefaultGradleLightProject(this, it)))
+      .map(it -> new Pair<>(it, new DefaultGradleLightProject(this, it, gradleVersion)))
       .collect(Collectors.toMap(it -> it.getFirst(), it -> it.getSecond()));
 
     replicateModelHierarchy(
@@ -118,13 +119,14 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
    * then the first element of returned list is also a root build.
    */
   public static @NotNull List<DefaultGradleLightBuild> convertGradleBuilds(
-    @NotNull Collection<? extends GradleBuild> gradleBuilds
+    @NotNull Collection<? extends GradleBuild> gradleBuilds,
+    @NotNull GradleVersion gradleVersion
   ) {
     Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted = new HashMap<>();
     List<DefaultGradleLightBuild> convertedBuilds = new ArrayList<>();
     // TODO traverse builds via graph to avoid separated parent build field initialization
     for (GradleBuild gradleBuild : gradleBuilds) {
-      DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild);
+      DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleVersion);
       gradleBuildsToConverted.put(gradleBuild, build);
       convertedBuilds.add(build);
     }
