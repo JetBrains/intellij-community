@@ -70,7 +70,7 @@ sealed interface JpmsModuleInfo {
      */
     @JvmStatic
     fun findTargetModuleInfos(targetPackageName: String, targetFile: PsiFile?, place: PsiFile): List<TargetModuleInfo>? {
-      val originalTargetFile = targetFile?.originalFile
+      val originalTargetFile = targetFile?.navigationElement
       if (!PsiUtil.isAvailable(JavaFeature.MODULES, place)) return null
 
       val useVFile = place.virtualFile
