@@ -14,6 +14,7 @@ import com.jetbrains.python.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
+import kotlin.time.Duration.Companion.minutes
 
 class HatchRuntime(
   val hatchBinary: Path,
@@ -64,8 +65,11 @@ class HatchRuntime(
 
   internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {
     val pythonVersion = pythonHomePath.takeIf { it.isDirectory() }?.resolvePythonBinary()?.let { pythonBinaryPath ->
-      execService.execGetStdout(pythonBinaryPath, listOf("--version")).getOr { return it }.trim()
+      execService.execGetStdout(pythonBinaryPath, listOf("--version"),
+                                ExecOptions(timeout = 20.minutes),
+                                procListener = null).getOr { return it }.trim()
     }
+
     val pythonVirtualEnvironment = when {
       pythonVersion == null -> PythonVirtualEnvironment.NotExisting(pythonHomePath)
       else -> PythonVirtualEnvironment.Existing(pythonHomePath, pythonVersion)

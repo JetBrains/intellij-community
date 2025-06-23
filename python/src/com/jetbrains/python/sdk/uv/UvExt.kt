@@ -1,13 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.createSdk
@@ -35,15 +33,13 @@ internal fun suggestedSdkName(basePath: Path): @NlsSafe String {
 
 val UV_ICON: Icon = PythonIcons.UV
 
-suspend fun setupNewUvSdkAndEnvUnderProgress(
+suspend fun setupNewUvSdkAndEnvWithProgressReport(
   project: Project,
   workingDir: Path,
   existingSdks: List<Sdk>,
   basePython: Path?,
 ): PyResult<Sdk> {
-  return withBackgroundProgress(project, PyBundle.message("python.sdk.dialog.title.setting.up.uv.environment"), true) {
-    setupNewUvSdkAndEnv(workingDir, existingSdks, basePython)
-  }
+  return setupNewUvSdkAndEnv(workingDir, existingSdks, basePython)
 }
 
 suspend fun setupNewUvSdkAndEnv(

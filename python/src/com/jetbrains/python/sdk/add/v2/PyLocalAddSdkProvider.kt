@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
@@ -10,7 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle
@@ -89,12 +89,13 @@ class V3AddSdkPanel(val project: Project, val module: Module?, val projectPath: 
 
   override fun getOrCreateSdk(): Sdk? {
     val moduleOrProject = if (module != null) ModuleOrProject.ModuleAndProject(module) else ModuleOrProject.ProjectOnly(project)
-    val sdk = runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.sdk")) {
-      dialogPanel.apply()
-      val sdkManager = mainPanel.currentSdkManager
-      sdkManager.getOrCreateSdk(moduleOrProject).getOr {
+
+    dialogPanel.apply()
+    val sdkManager = mainPanel.currentSdkManager
+    val sdk = runBlockingMaybeCancellable {
+      sdkManager.getOrCreateSdkWithModal(moduleOrProject).getOr {
         errorSink.emit(it.error)
-        return@runWithModalProgressBlocking null
+        return@runBlockingMaybeCancellable null
       }.also {
         val isPreviouslyConfigured = sdkManager.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
         PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, isPreviouslyConfigured)

@@ -8,8 +8,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.basePath
@@ -79,7 +77,7 @@ suspend fun getPipEnvExecutable(): PyResult<Path> =
  * @return the SDK for pipenv, not stored in the SDK table yet.
  */
 @Internal
-suspend fun setupPipEnvSdkUnderProgress(
+suspend fun setupPipEnvSdkWithProgressReport(
   project: Project?,
   module: Module?,
   existingSdks: List<Sdk>,
@@ -91,9 +89,7 @@ suspend fun setupPipEnvSdkUnderProgress(
                     ?: return PyResult.localizedError("Can't find path to project or module")
   val actualProject = project ?: module?.project
   val pythonExecutablePath = if (actualProject != null) {
-    withBackgroundProgress(actualProject, PyBundle.message("python.sdk.setting.up.pipenv.title"), true) {
-      setUpPipEnv(projectPath, python, installPackages)
-    }
+    setUpPipEnv(projectPath, python, installPackages)
   }
   else {
     setUpPipEnv(projectPath, python, installPackages)

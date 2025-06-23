@@ -139,8 +139,8 @@ class PyAddNewPoetryPanel(
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().poetryPath = poetryPathField.text.nullize()
     return pyModalBlocking {
-      setupPoetrySdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
-                                  baseSdkField.selectedSdk.homePath, installPackagesCheckBox.isSelected).onSuccess {
+      setupPoetrySdkWithProgressReport(project, selectedModule, existingSdks, newProjectPath,
+                                       baseSdkField.selectedSdk.homePath, installPackagesCheckBox.isSelected).onSuccess {
         PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk.homePath
       }
     }.getOrNull()

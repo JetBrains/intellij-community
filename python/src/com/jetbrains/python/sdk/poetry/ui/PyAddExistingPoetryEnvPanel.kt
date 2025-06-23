@@ -10,13 +10,15 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
+import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addInterpretersAsync
+import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.ui.pyMayBeModalBlocking
-import com.jetbrains.python.ui.pyModalBlocking
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import java.awt.BorderLayout
 import java.util.concurrent.ConcurrentHashMap
@@ -74,8 +76,8 @@ class PyAddExistingPoetryEnvPanel(
       is PyDetectedSdk -> {
         val mappedModule = sdkToModule[sdk.name] ?: module
         runWithModalBlockingOrInBackground(project, msg = PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment")) {
-          setupPoetrySdkUnderProgress(project, mappedModule, existingSdks, newProjectPath,
-                                      getPythonExecutable(sdk.name), false, sdk.name).onSuccess {
+          setupPoetrySdkWithProgressReport(project, mappedModule, existingSdks, newProjectPath,
+                                           getPythonExecutable(sdk.name), false, sdk.name).onSuccess {
             PySdkSettings.instance.preferredVirtualEnvBaseSdk = getPythonExecutable(sdk.name)
           }
         }.getOrNull()

@@ -18,6 +18,10 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
@@ -34,6 +38,7 @@ import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
@@ -53,6 +58,24 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
   abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
+
+  @ApiStatus.Internal
+  suspend fun getOrCreateSdkWithModal(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    return withModalProgress(ModalTaskOwner.guess(),
+                             message("python.sdk.progress.setting.up.environment"),
+                             TaskCancellation.cancellable()) {
+      getOrCreateSdk(moduleOrProject)
+    }
+  }
+
+  @ApiStatus.Internal
+  suspend fun getOrCreateSdkWithBackground(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    return withBackgroundProgress(moduleOrProject.project,
+                                  message("python.sdk.progress.setting.up.environment"),
+                                  TaskCancellation.nonCancellable()) {
+      getOrCreateSdk(moduleOrProject)
+    }
+  }
 
   open suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> = Result.success(Unit)
 

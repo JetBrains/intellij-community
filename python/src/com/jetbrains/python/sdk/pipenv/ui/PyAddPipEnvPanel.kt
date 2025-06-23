@@ -22,22 +22,13 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.getOrNull
+import com.jetbrains.python.*
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
-import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
-import com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable
-import com.jetbrains.python.sdk.pipenv.isPipEnv
-import com.jetbrains.python.sdk.pipenv.pipEnvPath
-import com.jetbrains.python.sdk.pipenv.pipFile
-import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkUnderProgress
+import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
@@ -141,8 +132,8 @@ class PyAddPipEnvPanel(
     val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, selectedModule, existingSdks, context).getOrLogException(LOGGER)?.homePath
 
     return runWithModalProgressBlocking(ModalTaskOwner.guess(), PyBundle.message("python.sdk.setting.up.pipenv.title")) {
-      setupPipEnvSdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
-                                  baseSdk, installPackagesCheckBox.isSelected).onSuccess {
+      setupPipEnvSdkWithProgressReport(project, selectedModule, existingSdks, newProjectPath,
+                                       baseSdk, installPackagesCheckBox.isSelected).onSuccess {
         PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdk
       }
     }.getOrNull()
