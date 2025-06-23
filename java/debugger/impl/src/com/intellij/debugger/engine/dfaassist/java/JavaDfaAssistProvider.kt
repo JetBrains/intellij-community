@@ -179,7 +179,7 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
         if (name != null) {
           val type = ContainerUtil.getOnlyItem(proxy.getVirtualMachine().classesByName(name))
           if (type != null && type.isPrepared) {
-            val field = DebuggerUtils.findField(type, psi.getName())
+            val field = DebuggerUtils.findField(type, readAction { psi.getName() })
             if (field != null && field.isStatic) {
               return wrap(type.getValue(field))
             }
