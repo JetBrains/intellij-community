@@ -79,7 +79,7 @@ internal class BytecodeToolWindowPanel(
     }
     else {
       add(bytecodeEditor.getComponent())
-      setEditorText()
+      updateTextInEditor()
       EditorFactory.getInstance().getEventMulticaster().addCaretListener(object : CaretListener {
         override fun caretPositionChanged(event: CaretEvent) {
           val sourceEditor = selectedMatchingEditor
@@ -98,7 +98,7 @@ internal class BytecodeToolWindowPanel(
     }
   }
 
-  fun setEditorText() {
+  fun updateTextInEditor() {
     if (classFile == null) throw IllegalStateException("Class file must not be null at this point")
     val byteCodeText = deserializeBytecode(classFile)
     bytecodeEditor.document.putUserData(BYTECODE_WITH_DEBUG_INFO, byteCodeText) // include debug info for selection matching

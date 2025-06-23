@@ -65,7 +65,7 @@ internal class ShowBytecodeAction : AnAction() {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(BytecodeToolWindowPanel.TOOL_WINDOW_ID) ?: return
         toolWindow.contentManager.contents.forEach {
           val panel = it.component as? BytecodeToolWindowPanel ?: return@forEach
-          panel.setEditorText()
+          panel.updateTextInEditor()
         }
       }
     }
