@@ -95,6 +95,11 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
           }
         }
       }
+
+      if (VariableAccessUtils.getVariableReferences(variable).isEmpty()) {
+        return; // such variables are unnecessary but the warning is already handled by UnusedDeclarationInspection
+      }
+
       if (VariableAccessUtils.isLocalVariableCopy(variable)) {
         registerVariableError(variable);
       }

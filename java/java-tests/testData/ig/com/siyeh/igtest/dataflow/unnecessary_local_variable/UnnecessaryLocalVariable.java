@@ -101,7 +101,11 @@ class UnnecessaryLocalVariable {
   }
 
   void parenthesized3(int i) {
-    int <warning descr="Local variable 'j' is redundant">j</warning> = (i);
+    int j = (i);
+  }
+
+  void unusedString() {
+    String str = "i";
   }
 
   void parenthesized4(int k) {
