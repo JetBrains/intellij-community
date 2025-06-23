@@ -82,7 +82,7 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   }
 
   public void testWithImportConflictDemandsOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
        myFixture.addClass(
          """
            package p;

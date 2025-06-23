@@ -189,7 +189,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testImportStatic() { doTest(1, "static"); }
 
   public void testImportModule() {
-    setLanguageLevel(JavaFeature.MODULE_IMPORT_DECLARATIONS.getMinimumLevel());
+    setLanguageLevel(JavaFeature.MODULE_IMPORT_DECLARATIONS.getStandardLevel());
     doTest(2, "static", "module");
   }
   public void testAbstractInInterface() { doTest(1, "abstract"); }

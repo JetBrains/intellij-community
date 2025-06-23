@@ -358,7 +358,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testImportModuleWithRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
                              doTest("""
                                       import module java.base;
@@ -374,7 +374,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testImportImplicitModuleWithRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
                              doTest("""
                                       /*Unused import 'import java.util.*;'*/import java.util.*;/**/
@@ -388,7 +388,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
 
 
   public void testRedundantImportModuleWithNotRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
                              JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
                              myFixture.addClass("""
@@ -411,7 +411,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testNotShowRedundantImportModuleWithNotRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
                              JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
                              myFixture.addClass("""
@@ -434,7 +434,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testDuplicatedRedundantImportModuleWithNotRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
                              JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
                              myFixture.addClass("""
