@@ -246,6 +246,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   }
 
   fun createPluginSetWithEnabledModulesMap(): PluginSet {
+    //TODO pass proper list of incomplete plugins to ensure that this information isn't lost after enabling/disabling a plugin dynamically
     val incompletePlugins = emptyList<PluginMainDescriptor>()
     computeEnabledModuleMap(incompletePlugins = incompletePlugins)
     return createPluginSet(incompletePlugins = incompletePlugins)
