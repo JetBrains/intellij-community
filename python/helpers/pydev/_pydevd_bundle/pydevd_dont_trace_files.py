@@ -8,6 +8,45 @@ from _pydevd_bundle.pydevd_constants import IS_PY3K
 LIB_FILE = 1
 PYDEV_FILE = 2
 
+DONT_TRACE_DIRS = {
+    '_pydev_bundle': PYDEV_FILE,
+    '_pydev_comm': PYDEV_FILE,
+    '_pydev_imps': PYDEV_FILE,
+    '_pydev_runfiles': PYDEV_FILE,
+    '_pydevd_bundle': PYDEV_FILE,
+    '_pydevd_frame_eval': PYDEV_FILE,
+    '_pydev_console': PYDEV_FILE,
+    'pydev_ipython': LIB_FILE,
+    'test_pydevd_reload': PYDEV_FILE,
+    'pydev_tests': PYDEV_FILE,
+    'pydev_tests_mainloop': PYDEV_FILE,
+    'pydev_tests_python': PYDEV_FILE,
+    'pydev_test_tables': PYDEV_FILE,
+    'pydevd_attach_to_process': PYDEV_FILE,
+    'pydevd_concurrency_analyser': PYDEV_FILE,
+    'pydevd_plugins': PYDEV_FILE,
+}
+
+LIB_FILES_IN_DONT_TRACE_DIRS = {
+    '__init__.py',
+    'inputhook.py',
+    'inputhookglut.py',
+    'inputhookgtk.py',
+    'inputhookgtk3.py',
+    'inputhookpyglet.py',
+    'inputhookqt4.py',
+    'inputhookqt5.py',
+    'inputhookqt6.py',
+    'inputhooktk.py',
+    'inputhookwx.py',
+    'matplotlibtools.py',
+    'qt.py',
+    'qt_for_kernel.py',
+    'qt_loaders.py',
+    'version.py',
+}
+
+
 DONT_TRACE = {
     # commonly used things from the stdlib that we don't want to trace
     'Queue.py':LIB_FILE,
@@ -32,6 +71,7 @@ DONT_TRACE = {
     '_pydev_jy_imports_tipper.py': PYDEV_FILE,
     '_pydev_log.py': PYDEV_FILE,
     '_pydev_pkgutil_old.py': PYDEV_FILE,
+    '_pydev_saved_modules.py': PYDEV_FILE,
     '_pydev_saved_modules.py': PYDEV_FILE,
     '_pydev_sys_patch.py': PYDEV_FILE,
     '_pydev_tipper_common.py': PYDEV_FILE,
@@ -87,6 +127,7 @@ DONT_TRACE = {
     'pydevd_constants.py': PYDEV_FILE,
     'pydevd_custom_frames.py': PYDEV_FILE,
     'pydevd_cython_wrapper.py': PYDEV_FILE,
+    'pydevd_daemon_thread.py': PYDEV_FILE,
     'pydevd_dataset.py': PYDEV_FILE,
     'pydevd_dont_trace.py': PYDEV_FILE,
     'pydevd_dont_trace_files.py': PYDEV_FILE,
@@ -102,6 +143,7 @@ DONT_TRACE = {
     'pydevd_frame_type_handler.py': PYDEV_FILE,
     'pydevd_frame_utils.py': PYDEV_FILE,
     'pydevd_helpers.py': PYDEV_FILE,
+    'pydevd_image_loader.py': PYDEV_FILE,
     'pydevd_import_class.py': PYDEV_FILE,
     'pydevd_io.py': PYDEV_FILE,
     'pydevd_ipython_console_output.py': PYDEV_FILE,
@@ -132,6 +174,7 @@ DONT_TRACE = {
     'pydevd_smart_step_into_util.py': PYDEV_FILE,
     'pydevd_stackless.py': PYDEV_FILE,
     'pydevd_tables.py': PYDEV_FILE,
+    'pydevd_thread_lifecycle.py': PYDEV_FILE,
     'pydevd_thread_wrappers.py': PYDEV_FILE,
     'pydevd_thrift.py': PYDEV_FILE,
     'pydevd_trace_api.py': PYDEV_FILE,
@@ -146,16 +189,15 @@ DONT_TRACE = {
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
     'test_pydev_common.py': PYDEV_FILE,
-    'test_pandas_internal_pydev.py': PYDEV_FILE,
+    'test_pydev_dataset.py': PYDEV_FILE,
     'test_pydev_numpy_with_pandas.py': PYDEV_FILE,
     'test_pydev_numpy_without_pandas.py': PYDEV_FILE,
     'test_pydev_pandas.py': PYDEV_FILE,
     'test_pydev_polars.py': PYDEV_FILE,
     'test_pydev_tensorflow_with_pandas.py': PYDEV_FILE,
-    'test_pydev_torch_with_pandas.py': PYDEV_FILE,
     'test_pydev_tensorflow_without_pandas.py': PYDEV_FILE,
+    'test_pydev_torch_with_pandas.py': PYDEV_FILE,
     'test_pydev_torch_without_pandas.py': PYDEV_FILE,
-    'test_pydev_dataset.py': PYDEV_FILE,
 }
 
 DONT_TRACE['pydev_jupyter_plugin.py'] = PYDEV_FILE

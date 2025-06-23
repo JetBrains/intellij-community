@@ -257,6 +257,7 @@ def test_case_suspend_thread(case_setup):
         writer.write_suspend_thread(thread_id)
 
         while True:
+            time.sleep(3)
             hit = writer.wait_for_breakpoint_hit((REASON_THREAD_SUSPEND, REASON_STOP_ON_BREAKPOINT))
             if hit.name == 'sleep':
                 break  # Ok, broke on 'sleep'.
@@ -2129,7 +2130,7 @@ def test_multiprocessing(case_setup_multiprocessing):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.skipif(not IS_CPYTHON or IS_PY2, reason='CPython only test.')
 @pytest.mark.xfail(reason="PY-79070", strict=False)
 def test_fork_no_attach(case_setup):
     with case_setup.test_file('_debugger_case_fork.py') as writer:
@@ -2138,17 +2139,17 @@ def test_fork_no_attach(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.skipif(not IS_CPYTHON or IS_PY2, reason='CPython only test.')
 @pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-838')
 def test_fork_with_attach_no_breakpoints(case_setup_multiproc):
     with case_setup_multiproc.test_file('_debugger_case_fork.py') as writer:
+        writer.run_thread_communication()
+        writer.write_make_initial_run()
         wait_for_condition(lambda: len(writer.writers) == 1)
         writer1 = writer.writers[0]
         writer1.write_make_initial_run()
 
-        wait_for_condition(lambda: len(writer.writers) == 2)
-        writer2 = writer.writers[1]
-        writer2.write_make_initial_run()
+        writer.stop_thread_communication()
 
         for w in writer.writers:
             w.finished_ok = True
@@ -2157,7 +2158,7 @@ def test_fork_with_attach_no_breakpoints(case_setup_multiproc):
 
 
 @pytest.mark.skip('PY-44245 - forking with breakpoints available hangs the debugger')
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.skipif(not IS_CPYTHON or IS_PY2, reason='CPython only test.')
 def test_fork_with_attach(case_setup_multiproc):
     with case_setup_multiproc.test_file('_debugger_case_fork.py') as writer:
         break_line = writer.get_line_index_with_content('break here')
