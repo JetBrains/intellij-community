@@ -1,4 +1,4 @@
-<error descr="Compact source files contains no 'main' method">public class SameNameInnerClass {
+<error descr="Compact source file contains no 'main' method">public class SameNameInnerClass {
 
 }
 
