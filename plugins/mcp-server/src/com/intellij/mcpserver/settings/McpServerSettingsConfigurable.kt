@@ -68,6 +68,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
           val json = mcpClient.json
           group(mcpClient.name) {
             row {
+              text(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
               text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect))
               text(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
             }
