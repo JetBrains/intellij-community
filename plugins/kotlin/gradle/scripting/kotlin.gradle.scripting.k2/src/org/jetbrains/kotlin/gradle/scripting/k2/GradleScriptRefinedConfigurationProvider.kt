@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import kotlin.script.experimental.api.*
@@ -44,17 +43,16 @@ class GradleScriptRefinedConfigurationProvider(
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data.get()[virtualFile]
 
     suspend fun processScripts(scriptsData: GradleScriptModelData, storageToUpdate: MutableEntityStorage? = null) {
+        val sdk = scriptsData.javaHome.resolveSdk()
+        val javaHomePath = sdk?.homePath?.let { File(it) }
+
         val configurations = scriptsData.models.associate { gradleScript: GradleScriptModel ->
             val sourceCode = VirtualFileScriptSource(gradleScript.virtualFile)
             val definition = findScriptDefinition(project, sourceCode)
 
-            val sdk = scriptsData.javaHome.resolveSdk()
-
-            val javaHomePath = sdk?.homePath?.let { Path.of(it) }
-
             val configuration = definition.compilationConfiguration.with {
-                javaHomePath?.let {
-                    jvm.jdkHome(it.toFile())
+                if (javaHomePath != null) {
+                    jvm.jdkHome(javaHomePath)
                 }
                 defaultImports(gradleScript.imports)
                 dependencies(JvmDependency(gradleScript.classPath.map { File(it) }))
