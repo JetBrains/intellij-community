@@ -30,10 +30,9 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * Animation lasts while [cs] is active.
  */
-internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
+internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong) : JComponent() {
   private val withAnimation = Registry.`is`("editor.skeleton.animation.enabled", true)
   private val currentTime = AtomicLong(System.currentTimeMillis())
-  val initialTime = currentTime.get()
 
   init {
     if (withAnimation) {
@@ -185,7 +184,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
       return BACKGROUND_COLOR
     }
 
-    val elapsed = currentTime.get() - initialTime
+    val elapsed = currentTime.get() - initialTime.get()
     val t = (elapsed % ANIMATION_DURATION_MS).toDouble() / ANIMATION_DURATION_MS.toDouble()
     val opacity = 0.3 + 0.3 * sin(2 * Math.PI * t)
     return ColorUtil.withAlpha(BACKGROUND_COLOR, opacity)
