@@ -5,7 +5,7 @@ import java.util.*
 
 
 /**
- * This method the following debugging information from `bytecode`:
+ * This method removes the following debugging information from `bytecode`:
  *  - `LINENUMBER`
  *  - `LOCALVARIABLE`
  *
@@ -18,7 +18,6 @@ import java.util.*
  * This is bad because labels are often targets of conditional jumps.
  * Also, we do want to display labels.
  * They're useful.
- *
  */
 internal fun removeDebugInfo(bytecodeWithDebugInfo: String): String = bytecodeWithDebugInfo.lines()
   .filter { line -> !isDebugLine(line.trim()) }
@@ -100,7 +99,7 @@ internal fun mapLines(bytecodeWithDebugInfo: String, sourceStartLine: Int, sourc
 }
 
 /**
- * Returns true if `line` is considered to be part of debug info, i.e. not actual bytecode.
+ * Returns true if `line` is considered to be part of debug info, i.e., not actual bytecode.
  */
 private fun isDebugLine(line: String): Boolean {
   if (line.startsWith("LINENUMBER")) return true
