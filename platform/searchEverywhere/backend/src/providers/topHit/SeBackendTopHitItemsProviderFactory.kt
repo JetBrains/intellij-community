@@ -9,5 +9,5 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 class SeBackendTopHitItemsProviderFactory : SeTopHitItemsProviderFactory() {
   override val isHost: Boolean get() = true
-  override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.top.hit.host")
+  override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.top.hit")
 }
