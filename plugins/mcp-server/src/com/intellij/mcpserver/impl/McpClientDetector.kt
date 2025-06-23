@@ -91,7 +91,7 @@ object McpClientDetector {
   }
 
   private fun detectWindsurf(): McpClient? {
-    val path = Paths.get("~/.codeium/windsurf/mcp_config.json")
+    val path = Paths.get(FileUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
     if (looksLikeMcpJson(path)) {
       return WindsurfClient("Windsurf (Global)", path)
     }
