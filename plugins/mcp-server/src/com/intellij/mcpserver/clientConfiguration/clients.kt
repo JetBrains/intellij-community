@@ -45,13 +45,12 @@ open class McpClient(
   open fun isConfigured(): Boolean = true
   open fun isSSESupported(): Boolean = true
   open fun mcpServersKey() = "mcpServers"
+  fun configure() = updateServerConfig(getConfig())
+  fun getConfig(): ServerConfig = getSSEConfig() ?: getStdioConfig()
 
-  open fun configure() = configureStdIO()
-  private fun configureStdIO() = updateServerConfig(getStdioConfig())
+  protected open fun getSSEConfig(): ServerConfig? = null
 
-  open fun getSSEConfig(): ServerConfig? = null
-
-  fun getStdioConfig(): ServerConfig {
+  private fun getStdioConfig(): ServerConfig {
     val cmd = createStdioMcpServerCommandLine(McpServerService.getInstance().port, null)
     return STDIOServerConfig(command = cmd.exePath, args = cmd.parametersList.parameters, env = cmd.environment)
   }
@@ -152,11 +151,9 @@ class ClaudeMcpClient(name: String, configPath: Path) : McpClient(name, configPa
 class CursorClient(name: String, configPath: Path) : McpClient(name, configPath) {
   override fun isConfigured(): Boolean = isStdIOConfigured() || isSSEConfigured()
   override fun getSSEConfig(): ServerConfig = CursorSSEConfig(url = sseUrl)
-  override fun configure() = updateServerConfig(getSSEConfig())
 }
 
 class WindsurfClient(name: String, configPath: Path) : McpClient(name, configPath) {
   override fun isConfigured(): Boolean = isStdIOConfigured() || isSSEConfigured()
   override fun getSSEConfig(): ServerConfig = WindsurfSSEConfig(serverUrl = sseUrl)
-  override fun configure() = updateServerConfig(getSSEConfig())
 }

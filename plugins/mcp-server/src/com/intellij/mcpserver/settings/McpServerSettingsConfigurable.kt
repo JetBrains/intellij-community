@@ -79,20 +79,12 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
                 isPortCorrect.set(true)
               })
               button(McpServerBundle.message("open.settings.json"), { openFileInEditor(mcpClient.configPath) })
-              button(McpServerBundle.message("copy.mcp.server.stdio.configuration"), {
+              button(McpServerBundle.message("copy.mcp.server.configuration"), {
                 CopyPasteManager.getInstance().setContents(TextTransferable(json.encodeToString(buildJsonObject {
-                  put("jetbrains", json.encodeToJsonElement(mcpClient.getStdioConfig()))
+                  put("jetbrains", json.encodeToJsonElement(mcpClient.getConfig()))
                 }) as CharSequence))
                 showCopiedBallon(it)
               })
-              if (mcpClient.isSSESupported()) {
-                button(McpServerBundle.message("copy.mcp.server.sse.configuration"), {
-                  CopyPasteManager.getInstance().setContents(TextTransferable(json.encodeToString(buildJsonObject {
-                    put("jetbrains", json.encodeToJsonElement(mcpClient.getSSEConfig()))
-                  }) as CharSequence))
-                  showCopiedBallon(it)
-                })
-              }
             }
           }
         }
