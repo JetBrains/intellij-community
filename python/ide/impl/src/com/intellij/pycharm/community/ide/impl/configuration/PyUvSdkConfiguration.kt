@@ -18,7 +18,7 @@ import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
-import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvWithProgressReport
+import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -63,7 +63,7 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
       return PyResult.failure(MessageError("Can't determine working dir for the module"))
     }
 
-    val sdk = setupNewUvSdkAndEnvWithProgressReport(module.project, workingDir, ProjectJdkTable.getInstance().allJdks.toList(), null)
+    val sdk = setupNewUvSdkAndEnv(workingDir, ProjectJdkTable.getInstance().allJdks.toList(), null)
     sdk.onSuccess {
       withContext(Dispatchers.EDT) {
         SdkConfigurationUtil.addSdk(it)

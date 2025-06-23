@@ -72,7 +72,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
   suspend fun getOrCreateSdkWithBackground(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     return withBackgroundProgress(moduleOrProject.project,
                                   message("python.sdk.progress.setting.up.environment"),
-                                  TaskCancellation.nonCancellable()) {
+                                  TaskCancellation.cancellable()) {
       getOrCreateSdk(moduleOrProject)
     }
   }

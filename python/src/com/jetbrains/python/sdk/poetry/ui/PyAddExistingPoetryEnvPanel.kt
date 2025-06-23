@@ -76,8 +76,8 @@ class PyAddExistingPoetryEnvPanel(
       is PyDetectedSdk -> {
         val mappedModule = sdkToModule[sdk.name] ?: module
         runWithModalBlockingOrInBackground(project, msg = PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment")) {
-          setupPoetrySdkWithProgressReport(project, mappedModule, existingSdks, newProjectPath,
-                                           getPythonExecutable(sdk.name), false, sdk.name).onSuccess {
+          setupPoetrySdk(project, mappedModule, existingSdks, newProjectPath,
+                         getPythonExecutable(sdk.name), false, sdk.name).onSuccess {
             PySdkSettings.instance.preferredVirtualEnvBaseSdk = getPythonExecutable(sdk.name)
           }
         }.getOrNull()

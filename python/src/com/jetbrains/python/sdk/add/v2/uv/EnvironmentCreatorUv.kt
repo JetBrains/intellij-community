@@ -17,7 +17,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
-import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvWithProgressReport
+import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.CoroutineScope
@@ -74,7 +74,7 @@ internal class EnvironmentCreatorUv(
     }
 
     val python = homePath?.let { Path.of(it) }
-    return setupNewUvSdkAndEnvWithProgressReport(project, workingDir, baseSdks, python)
+    return setupNewUvSdkAndEnv(workingDir, baseSdks, python)
   }
 
   override suspend fun detectExecutable() {

@@ -32,7 +32,7 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPythonVersionsService
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.poetryToml
-import com.jetbrains.python.sdk.poetry.setupPoetrySdkWithProgressReport
+import com.jetbrains.python.sdk.poetry.setupPoetrySdk
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -115,7 +115,7 @@ internal class EnvironmentCreatorPoetry(
 
   override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> {
     module?.let { service<PoetryConfigService>().setInProjectEnv(it) }
-    return setupPoetrySdkWithProgressReport(project, module, baseSdks, projectPath, homePath, installPackages)
+    return setupPoetrySdk(project, module, baseSdks, projectPath, homePath, installPackages)
   }
 
   override suspend fun detectExecutable() {

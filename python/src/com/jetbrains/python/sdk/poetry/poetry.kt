@@ -40,7 +40,7 @@ fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getF
  * @return the SDK for poetry, not stored in the SDK table yet.
  */
 @Internal
-suspend fun setupPoetrySdkWithProgressReport(
+suspend fun setupPoetrySdk(
   project: Project?,
   module: Module?,
   existingSdks: List<Sdk>,
