@@ -277,8 +277,8 @@ public final class Maven40ApiModelConverter {
   public static MavenArtifact convertArtifactAndPath(Artifact artifact, Path artifactPath, File localRepository) {
     return new MavenArtifact(artifact.getGroupId(),
                              artifact.getArtifactId(),
-                             artifact.getVersion().asString(),
-                             artifact.getVersion().asString(),
+                             artifact.getVersion().toString(),
+                             artifact.getVersion().toString(),
                              "", //artifact.getType(),
                              artifact.getClassifier(),
 
