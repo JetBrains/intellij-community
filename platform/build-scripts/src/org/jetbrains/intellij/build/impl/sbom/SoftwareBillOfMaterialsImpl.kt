@@ -6,8 +6,6 @@ package org.jetbrains.intellij.build.impl.sbom
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.io.DigestUtil.sha1Hex
 import com.intellij.util.io.sha256Hex
-import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.base.utils.outputStream
 import io.ktor.client.plugins.ClientRequestException
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -95,8 +93,10 @@ import java.util.Date
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.outputStream
 
 @ApiStatus.Internal
 class SoftwareBillOfMaterialsImpl(

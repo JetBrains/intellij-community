@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.impl.logging.jps
 
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -16,10 +15,14 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.MessageHandler
-import org.jetbrains.jps.incremental.messages.*
+import org.jetbrains.jps.incremental.messages.BuildMessage
+import org.jetbrains.jps.incremental.messages.BuilderStatisticsMessage
+import org.jetbrains.jps.incremental.messages.BuildingTargetProgressMessage
+import org.jetbrains.jps.incremental.messages.CompilerMessage
+import org.jetbrains.jps.incremental.messages.ProgressMessage
 import java.beans.Introspector
 import java.nio.file.Files
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -159,7 +162,8 @@ internal class JpsMessageHandler(private val context: CompilationContext, privat
       return
     }
 
-    val csvPath = context.paths.logDir.resolve("compilation-time.csv").also { it.createParentDirs() }
+    val csvPath = context.paths.logDir.resolve("compilation-time.csv")
+    Files.createDirectories(context.paths.logDir)
     Files.newBufferedWriter(csvPath).use { out ->
       compilationFinishTimeForTarget.forEach(BiConsumer { k, v ->
         val startTime = compilationStartTimeForTarget.getValue(k) - compilationStart

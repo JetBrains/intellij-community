@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.lang.UrlClassLoader
-import com.jetbrains.plugin.structure.base.utils.isFile
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -1132,7 +1131,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     classpath.forEach { classPathFile ->
       val cpf = Path.of(classPathFile)
-      if (cpf.isFile) {
+      if (cpf.isRegularFile()) {
         //copy the original classpath entry to the directory, which is already included in the resulting classpath above
         cpf.copyTo(muslClassPath.resolve(cpf.fileName.toString()), overwrite = true)
       } else {

@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.productRunner
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.xml.dom.readXmlAsModel
-import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
@@ -15,13 +14,13 @@ import org.jetbrains.intellij.build.impl.getCommandLineArgumentsForOpenPackages
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.io.runJava
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
-import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.walk
 import kotlin.time.Duration

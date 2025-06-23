@@ -12,7 +12,6 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
-import com.jetbrains.plugin.structure.base.utils.inputStream
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.findFileInModuleSources
@@ -20,6 +19,7 @@ import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.inputStream
 import kotlin.io.path.pathString
 
 internal class OriginalModuleRepositoryImpl(private val context: CompilationContext) : OriginalModuleRepository {
