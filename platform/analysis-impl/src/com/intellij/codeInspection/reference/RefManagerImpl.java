@@ -503,7 +503,17 @@ public class RefManagerImpl extends RefManager {
   }
 
   private void runTask(ProgressIndicator progressIndicator, @Async.Execute Runnable task) {
-    ReadAction.nonBlocking(task)
+    ReadAction.nonBlocking(() -> {
+        try {
+          task.run();
+        }
+        catch (CancellationException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      })
       .inSmartMode(myProject)
       .wrapProgress(progressIndicator)
       .submit(myExecutor)
