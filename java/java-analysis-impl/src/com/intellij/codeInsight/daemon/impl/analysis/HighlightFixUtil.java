@@ -25,6 +25,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -1114,6 +1115,19 @@ public final class HighlightFixUtil {
       .append(StreamEx.of(missingClasses).map(PsiClass::getQualifiedName))
       .distinct()
       .toList();
+  }
+
+  static @Nullable CommonIntentionAction createVariableTypeFix(PsiJavaCodeReferenceElement ref) {
+    if (!(ref.getParent() instanceof PsiTypeElement typeElement)) return null;
+    if (!(typeElement.getParent() instanceof PsiLocalVariable localVariable)) return null;
+    PsiExpression initializer = localVariable.getInitializer();
+    if (initializer == null) return null;
+    PsiType type = initializer.getType();
+    if (type == null || !PsiTypesUtil.isDenotableType(type, localVariable)) return null;
+    if (PsiTypes.voidType().equals(type) || PsiTypes.nullType().equals(type)) return null;
+    if (IncompleteModelUtil.hasUnresolvedComponent(type)) return null;
+    return PriorityIntentionActionWrapper.highPriority(
+      QuickFixFactory.getInstance().createSetVariableTypeFix(localVariable, type));
   }
 
   private static final class ReturnModel {

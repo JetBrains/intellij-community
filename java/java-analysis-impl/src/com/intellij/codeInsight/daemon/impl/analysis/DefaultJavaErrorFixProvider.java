@@ -656,6 +656,7 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
     fixes(EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD, (error, sink) ->
       QualifySuperArgumentFix.registerQuickFixAction(error.context(), sink));
     fix(REFERENCE_UNRESOLVED, error -> HighlightFixUtil.createUnresolvedReferenceFix(error.psi()));
+    fix(REFERENCE_UNRESOLVED, error -> HighlightFixUtil.createVariableTypeFix(error.psi()));
     fix(REFERENCE_QUALIFIER_PRIMITIVE,
         error -> error.psi() instanceof PsiReferenceExpression ref ? myFactory.createRenameWrongRefFix(ref) : null);
     fix(CAST_INTERSECTION_NOT_INTERFACE, error -> {
