@@ -57,8 +57,8 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
                 if (diagnostics.any { it.severity == KaSeverity.ERROR }) return
 
                 val fixes = mutableListOf<LocalQuickFix>()
-                if (ChangeTypeToMutableFix.isApplicable(property)) {
-                    fixes.add(ChangeTypeToMutableFix(leftType.classId))
+                if (MutableCollectionsConversionUtils.canConvertPropertyType(property)) {
+                    fixes += ChangeTypeToMutableFix(leftType.classId)
                 }
                 if (ReplaceWithFilterFix.run { isApplicable(binaryExpression, leftType) }) {
                     fixes.add(ReplaceWithFilterFix())
@@ -81,27 +81,29 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             }
         })
 
-    private class ChangeTypeToMutableFix(private val type: ClassId) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
-        override fun getName() = KotlinBundle.message("change.type.to.mutable.fix.text")
+    private class ChangeTypeToMutableFix(private val immutableCollectionClassId: ClassId) :
+        KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
 
-        override fun getFamilyName() = name
+        override fun getFamilyName(): @IntentionFamilyName String =
+            KotlinBundle.message("change.type.to.mutable.fix.text")
 
-        override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
-            val operationReference = element
-            val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
+        override fun applyFix(
+            project: Project,
+            element: KtOperationReferenceExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val binaryExpression = element.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val property = left.mainReference?.resolve() as? KtProperty ?: return
-            analyze(property) {
-                MutableCollectionsConversionUtils.run { convertPropertyTypeToMutable(property, type) }
-            }
-            property.valOrVarKeyword.replace(KtPsiFactory(project).createValKeyword())
-            updater.moveCaretTo(property.endOffset)
-        }
 
-        companion object {
-            fun isApplicable(property: KtProperty): Boolean {
-                return MutableCollectionsConversionUtils.canConvertPropertyType(property)
+            val psiFactory = KtPsiFactory(project)
+            analyze(property) {
+                MutableCollectionsConversionUtils.run {
+                    convertPropertyTypeToMutable(property, immutableCollectionClassId, psiFactory)
+                }
             }
+            property.valOrVarKeyword.replace(psiFactory.createValKeyword())
+            updater.moveCaretTo(property.endOffset)
         }
     }
 
