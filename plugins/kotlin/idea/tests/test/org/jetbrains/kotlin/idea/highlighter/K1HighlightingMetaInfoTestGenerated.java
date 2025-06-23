@@ -299,6 +299,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/smartCasts/kt77707.kt");
         }
 
+        @TestMetadata("Redundant.kt")
+        public void testRedundant() throws Exception {
+            runTest("testData/highlighterMetaInfo/smartCasts/Redundant.kt");
+        }
+
         @TestMetadata("Unstable_explicitReceiver.kt")
         public void testUnstable_explicitReceiver() throws Exception {
             runTest("testData/highlighterMetaInfo/smartCasts/Unstable_explicitReceiver.kt");
