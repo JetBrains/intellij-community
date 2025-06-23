@@ -36,10 +36,14 @@ def init_altair_render():
             return "pycharm-altair-image", body
 
     def pycharm_renderer(spec):
-        current_renderer = alt.renderers.active
-        image_str = None # do we really need it here?
-        if current_renderer == 'png' or current_renderer == 'svg':
-            image_str = current_renderer(spec)
+        image_str = None
+        try:
+            alt.renderers.enable("png")
+            png_renderer = alt.renderers.get()
+            image_bytes = png_renderer(spec)[0]['image/png']
+            image_str = base64.b64encode(image_bytes).decode("utf8")
+        except:
+            debug("Failed to render image")
         alt.renderers.enable("html")
         html_renderer = alt.renderers.get()
         html_str = html_renderer(spec)['text/html']
