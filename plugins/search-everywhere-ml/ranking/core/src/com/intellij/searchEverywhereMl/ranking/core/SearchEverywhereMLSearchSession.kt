@@ -44,8 +44,6 @@ internal class SearchEverywhereMLSearchSession(
   // context features are calculated once per Search Everywhere session
   val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
 
-  private val loggingRandomisation = FeaturesLoggingRandomisation()
-
   // search state is updated on each typing, tab or setting change
   // element features & ML score are also re-calculated on each typing because some of them might change, e.g. matching degree
   private val currentSearchState: AtomicReference<SearchEverywhereMlSearchState?> = AtomicReference<SearchEverywhereMlSearchState?>()
@@ -84,9 +82,8 @@ internal class SearchEverywhereMLSearchSession(
     }
 
     if (prevState != null && prevState.tab.isLoggingEnabled()) {
-      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(prevState.tab)
       logger.onSearchRestarted(
-        project, sessionId, shouldLogFeatures,
+        project, sessionId,
         itemIdProvider, cachedContextInfo, prevState, featureCache,
         prevTimeToResult, mixedListInfo, previousElementsProvider
       )
@@ -111,9 +108,8 @@ internal class SearchEverywhereMLSearchSession(
         }
       }
 
-      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tab)
       logger.onItemSelected(
-        project, sessionId, shouldLogFeatures, itemIdProvider,
+        project, sessionId, itemIdProvider,
         state, featureCache, indexes, selectedItems, closePopup,
         performanceTracker.timeElapsed, mixedListInfo,
         elementsProvider
@@ -131,9 +127,8 @@ internal class SearchEverywhereMLSearchSession(
   ) {
     val state = getCurrentSearchState()
     if (state != null && state.tab.isLoggingEnabled()) {
-      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tab)
       logger.onSearchFinished(
-        project, sessionId, shouldLogFeatures, itemIdProvider,
+        project, sessionId, itemIdProvider,
         state, featureCache, performanceTracker.timeElapsed, mixedListInfo,
         elementsProvider
       )
