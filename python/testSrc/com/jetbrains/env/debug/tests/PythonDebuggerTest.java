@@ -738,4 +738,49 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testGetattrOutput() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_getattr_output.py") {
+
+      @Override
+      public void before() { toggleBreakpoint(getScriptName(), 7); }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        assertFalse("Output shouldn't contain unexpected prints from __getattr__ function", output().contains("shape") || output().contains("dtype"));
+        resume();
+        waitForTerminate();
+        assertTrue("Output should contain a print from __getattr__ function", output().contains("foo"));
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
+    });
+  }
+
+  @Test
+  public void testPropertyAccess() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_property_output.py") {
+
+      @Override
+      public void before() { toggleBreakpoint(getScriptName(), 11); }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        assertFalse("Output shouldn't contain unexpected prints from @property", output().contains("called property"));
+        resume();
+        waitForTerminate();
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
+    });
+  }
 }

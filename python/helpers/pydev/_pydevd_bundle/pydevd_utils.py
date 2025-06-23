@@ -642,10 +642,13 @@ def is_safe_to_access(obj, attr_name):
     `inspect` module, facilitating attribute retrieval without triggering any
     descriptor functionality.
     """
+    if "__getattr__" in dir(obj):
+        return False
+
     attr = inspect.getattr_static(obj, attr_name, None)
 
     # Should we check for other descriptor types here?
-    if inspect.isgetsetdescriptor(attr):
+    if inspect.isgetsetdescriptor(attr) or isinstance(attr, property):
         return False
 
     return True
