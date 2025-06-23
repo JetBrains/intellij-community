@@ -42,11 +42,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
-import com.intellij.openapi.vfs.FileIdAdapter
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileWithoutContent
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame

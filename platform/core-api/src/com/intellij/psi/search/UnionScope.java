@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.core.CoreBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -104,7 +105,10 @@ final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerati
 
   @Override
   public boolean contains(final @NotNull VirtualFile file) {
-    return ContainerUtil.find(myScopes, scope -> scope.contains(file)) != null;
+    return ContainerUtil.find(myScopes, scope -> {
+      ProgressManager.checkCanceled();
+      return scope.contains(file);
+    }) != null;
   }
 
   @Override

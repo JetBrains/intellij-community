@@ -136,7 +136,6 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `plugin is not loaded if required module is not available`() {
-    PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
     plugin("sample.plugin") {
       content {
         module("required.module", ModuleLoadingRule.REQUIRED) {
@@ -149,9 +148,13 @@ internal class PluginDependenciesTest {
     }.buildDir(pluginDirPath.resolve("sample-plugin"))
     val result = buildPluginSet()
     assertThat(result).doesNotHaveEnabledPlugins()
+    assertFirstErrorContains("sample.plugin", "requires plugin", "unknown")
+  }
+
+  private fun assertFirstErrorContains(vararg messagePart: String) {
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).isNotEmpty
-    assertThat(errors.first().get().toString()).contains("sample.plugin", "requires plugin", "unknown")
+    assertThat(errors.first().get().toString()).contains(*messagePart)
   }
 
   @Test
@@ -207,7 +210,6 @@ internal class PluginDependenciesTest {
   
   @Test
   fun `required content module with unresolved dependency in the core plugin`() {
-    PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
     val corePluginDir = pluginDirPath.resolve("core")
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
@@ -218,9 +220,7 @@ internal class PluginDependenciesTest {
       }
     }.buildDir(corePluginDir)
     buildPluginSet()
-    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
-    assertThat(errors).isNotEmpty
-    assertThat(errors.first().get().toString()).contains("requires plugin", "unresolved")
+    assertFirstErrorContains("requires plugin", "unresolved")
   }
 
   @Test
@@ -335,6 +335,32 @@ internal class PluginDependenciesTest {
     bar()
     val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("bar"))
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
+  }
+
+  @Test
+  fun `plugin is not loaded when it depends on module from disabled plugin`() {
+    `bar-plugin with module bar`()
+    `foo module-dependency bar`()
+    val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("bar-plugin"))
+    assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    assertFirstErrorContains("foo", "requires plugin", "bar-plugin", "to be enabled")
+  }
+  
+  @Test
+  fun `plugin is not loaded when it depends on module from expired plugin`() {
+    `bar-plugin with module bar`()
+    `foo module-dependency bar`()
+    val pluginSet = buildPluginSet(expiredPluginIds = arrayOf("bar-plugin"))
+    assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    assertFirstErrorContains("foo", "requires plugin", "bar-plugin", "to be installed")
+  }
+  
+  @Test
+  fun `plugin is not loaded when it depends on unknown module`() {
+    `foo module-dependency bar`()
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    assertFirstErrorContains("foo", "requires plugin", "bar", "to be installed")
   }
 
   @Test
@@ -716,6 +742,12 @@ internal class PluginDependenciesTest {
   private fun `foo module-dependency bar`() = plugin("foo") {
     dependencies { module("bar") }
   }.buildDir(pluginDirPath.resolve("foo"))
+  private fun `bar-plugin with module bar`() = plugin("bar-plugin") {
+    content {
+      module("bar") {}
+    }
+  }.buildDir(pluginDirPath.resolve("bar-plugin"))
+
 
   private fun bar() = plugin("bar") {}.buildDir(pluginDirPath.resolve("bar"))
   private fun `bar with optional module`() = plugin("bar") {

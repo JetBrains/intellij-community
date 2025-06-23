@@ -35,7 +35,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
@@ -209,6 +208,7 @@ class EditorTabbedContainer internal constructor(
     indexToInsert: Int,
     selectedEditor: FileEditor?,
     parentDisposable: Disposable,
+    holderCreator: (TabInfo) -> TabInfoIconHolder,
   ): TabInfo {
     editorTabs.findInfo(file)?.let {
       return it
@@ -224,7 +224,7 @@ class EditorTabbedContainer internal constructor(
         it.setText(file.presentableName)
         it.setTooltipText(tooltip)
         if (UISettings.getInstance().showFileIconInTabs) {
-          it.setIcon(icon)
+          it.setIconHolder(holderCreator(it)).setIcon(icon)
         }
         InternalUICustomization.getInstance()?.aiComponentMarker?.markAiComponent(it.component, file)
       }

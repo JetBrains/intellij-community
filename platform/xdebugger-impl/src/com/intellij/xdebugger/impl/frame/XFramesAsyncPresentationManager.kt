@@ -9,7 +9,8 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
-import fleet.multiplatform.shims.ConcurrentHashMap
+import com.intellij.xdebugger.impl.util.identityConcurrentHashMap
+import com.intellij.xdebugger.impl.util.identityWrapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -31,14 +32,14 @@ class XFramesAsyncPresentationManager(private val cs: CoroutineScope) {
 
 class XFramesAsyncPresentationHandler(private val framesList: XDebuggerFramesList, private val cs: CoroutineScope) {
 
-  private val cache = ConcurrentHashMap<XStackFrame, XStackFrameUiPresentationContainer>()
+  private val cache = identityConcurrentHashMap<XStackFrame, XStackFrameUiPresentationContainer>()
   private val repaintRequests = MutableSharedFlow<Unit>()
 
   fun scheduleForFrames(stackFrames: List<XStackFrame>) {
     for (stackFrame in stackFrames) {
       cs.launch(Dispatchers.Default) {
         stackFrame.customizePresentation().collectLatest { newPresentation ->
-          cache += stackFrame to newPresentation
+          cache += stackFrame.identityWrapper() to newPresentation
           repaintRequests.emit(Unit)
           withContext(Dispatchers.EDT) {
             // TODO cooldown period to reduce invocations count
@@ -52,7 +53,7 @@ class XFramesAsyncPresentationHandler(private val framesList: XDebuggerFramesLis
   fun clear(): Unit = cache.clear()
 
   fun customizePresentation(stackFrame: XStackFrame, container: ColoredTextContainer) {
-    cache[stackFrame]?.customizePresentation(container)
+    cache[stackFrame.identityWrapper()]?.customizePresentation(container)
   }
 
   fun sessionStopped() {

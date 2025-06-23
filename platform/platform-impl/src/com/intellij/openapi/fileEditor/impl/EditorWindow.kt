@@ -18,6 +18,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
@@ -357,7 +358,7 @@ class EditorWindow internal constructor(
         indexToInsert = indexToInsert,
         selectedEditor = composite.selectedEditor,
         parentDisposable = composite,
-      )
+      ) { CompositeTabIconHolderCreator.getInstance().createTabIconHolder(composite, it) }
 
       watchForTabActions(composite = composite, tab = tab)
 

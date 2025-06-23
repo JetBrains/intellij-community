@@ -502,6 +502,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.coroutine"
                      enabledByDefault="false"
+                     isInternal="true"
                      level="WARNING"
                      language="kotlin"
                      key="inspection.suspicious.implicit.coroutine.scope.receiver.display.name" bundle="messages.KotlinBundle"/>

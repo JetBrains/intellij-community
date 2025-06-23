@@ -74,7 +74,7 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
            }) {
         if (value is LanguageLevel && value.isUnsupported) {
           attributes = SimpleTextAttributes.ERROR_ATTRIBUTES
-        } else if (value is LanguageLevel && LTS.contains(value)) {
+        } else if (value is LanguageLevel && LTS.contains(value) && value <= highestLanguageLevel) {
           attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, null, null, null)
         }
       }
@@ -160,6 +160,6 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
   }
 
   companion object {
-    private val LTS = arrayOf(LanguageLevel.JDK_21, LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8)
+    private val LTS = arrayOf(LanguageLevel.JDK_25, LanguageLevel.JDK_21, LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8)
   }
 }

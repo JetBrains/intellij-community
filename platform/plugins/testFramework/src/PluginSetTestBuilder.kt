@@ -101,6 +101,9 @@ class PluginSetTestBuilder private constructor(
   }
 
   fun build(): PluginSet {
+    //clear errors, which may be registered by other tests
+    PluginManagerCore.getAndClearPluginLoadingErrors()
+    
     val initContext = buildInitContext()
     val (loadingContext, loadingResult) = buildLoadingResult(initContext)
     return PluginManagerCore.initializePlugins(

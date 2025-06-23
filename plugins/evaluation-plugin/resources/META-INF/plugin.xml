@@ -3,6 +3,7 @@
   <!--suppress PluginXmlValidity -->
   <name>Evaluation Plugin</name>
   <vendor>JetBrains</vendor>
+  <category>Platform Development</category>
   <!--suppress PluginXmlValidity -->
   <idea-version since-build="211"/>
   <description><![CDATA[

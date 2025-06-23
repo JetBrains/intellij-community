@@ -866,6 +866,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/macro/intellij.platform.macro.iml" filepath="$PROJECT_DIR$/platform/macro/intellij.platform.macro.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/main/intellij.platform.main/intellij.platform.main.iml" filepath="$PROJECT_DIR$/platform/main/intellij.platform.main/intellij.platform.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/managed-cache/managed.cache/intellij.platform.managed.cache.iml" filepath="$PROJECT_DIR$/platform/managed-cache/managed.cache/intellij.platform.managed.cache.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/managed-cache/managed.cache.backend/intellij.platform.managed.cache.backend.iml" filepath="$PROJECT_DIR$/platform/managed-cache/managed.cache.backend/intellij.platform.managed.cache.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" filepath="$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" filepath="$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" filepath="$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" />

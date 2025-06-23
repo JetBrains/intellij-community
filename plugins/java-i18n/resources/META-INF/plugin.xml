@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>com.intellij.java-i18n</id>
   <name>Java Internationalization</name>
-  <category>Other Tools</category>
+  <category>JVM Tools</category>
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>

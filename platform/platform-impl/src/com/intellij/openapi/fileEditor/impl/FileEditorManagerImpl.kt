@@ -2214,6 +2214,10 @@ open class FileEditorManagerImpl(
           composite.isPreview = true
         }
       }
+      val customizer = { tab: TabInfo ->
+        tab.setIconHolder(CompositeTabIconHolderCreator.getInstance().createTabIconHolder(composite, tab))
+        item.customizer(tab)
+      }
 
       tabs.add(createTabInfo(
         component = composite.component,
@@ -2221,7 +2225,7 @@ open class FileEditorManagerImpl(
         parentDisposable = composite,
         window = window,
         editorActionGroup = editorActionGroup,
-        customizer = item.customizer,
+        customizer = customizer,
       ))
 
       val editorCompositeEntry = EditorCompositeEntry(composite = composite, delayedState = fileEntry)
