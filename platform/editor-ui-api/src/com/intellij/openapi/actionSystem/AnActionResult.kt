@@ -1,44 +1,53 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.actionSystem;
+package com.intellij.openapi.actionSystem
 
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus
 
-public final class AnActionResult {
+/**
+ * A result of an action update or perform calls.
+ * It provides a sealed hierarchy to describe
+ * whether the action was really [Performed], [Ignored], or [Failed].
+ */
+sealed class AnActionResult {
+  val isPerformed: Boolean
+    get() = this is Performed
 
-  @ApiStatus.Internal
-  public static final AnActionResult IGNORED = new AnActionResult(null);
-  @ApiStatus.Internal
-  public static final AnActionResult PERFORMED = new AnActionResult(null);
-  @ApiStatus.Internal
-  public static @NotNull AnActionResult failed(@NotNull Throwable cause) {
-    return new AnActionResult(cause);
-  }
+  val isIgnored: Boolean
+    get() = this is Ignored
 
-  private final Throwable myFailureCause;
+  val isFailed: Boolean
+    get() = this is Failed
 
-  AnActionResult(@Nullable Throwable failureCause) {
-    myFailureCause = failureCause;
-  }
+  class Performed @ApiStatus.Internal constructor() : AnActionResult()
 
-  public boolean isPerformed() {
-    return this == PERFORMED;
-  }
+  class Ignored @ApiStatus.Internal constructor(
+    val reason: String,
+  ) : AnActionResult()
 
-  public boolean isIgnored() {
-    return this == IGNORED;
-  }
-
-  public boolean isFailed() {
-    return myFailureCause != null;
-  }
+  class Failed @ApiStatus.Internal constructor(
+    val cause: Throwable,
+  ) : AnActionResult()
 
   @ApiStatus.Internal
-  public @NotNull Throwable getFailureCause() {
-    if (myFailureCause == null) {
-      throw new AssertionError("not a failure");
+  companion object {
+    @JvmField
+    @ApiStatus.Internal
+    val IGNORED: AnActionResult = Ignored("unknown reason")
+
+    @JvmField
+    @ApiStatus.Internal
+    val PERFORMED: AnActionResult = Performed()
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun failed(cause: Throwable): AnActionResult {
+      return Failed(cause)
     }
-    return myFailureCause;
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun ignored(reason: String): AnActionResult {
+      return Ignored(reason)
+    }
   }
 }

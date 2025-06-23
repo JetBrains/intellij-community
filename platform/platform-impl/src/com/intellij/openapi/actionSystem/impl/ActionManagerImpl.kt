@@ -1175,19 +1175,24 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       fireAfterActionPerformed(action, event, result)
     }
     catch (ex: Throwable) {
-      if (result.isPerformed) throw ex
-      else result.failureCause.addSuppressed(ex)
+      if (result is AnActionResult.Performed) throw ex
+      else (result as? AnActionResult.Failed)?.cause?.addSuppressed(ex)
     }
-    when {
-      result.isPerformed -> Unit
-      result.failureCause is IndexNotReadyException -> {
-        LOG.info(result.failureCause)
-        if (project != null) {
-          DumbService.getInstance(project)
-            .showDumbModeNotificationForFailedAction(getActionUnavailableMessage(event.presentation.text), getId(action))
+    when (result) {
+      is AnActionResult.Performed -> Unit
+      is AnActionResult.Failed -> {
+        if (result.cause is IndexNotReadyException) {
+          LOG.info(result.cause)
+          if (project != null) {
+            DumbService.getInstance(project)
+              .showDumbModeNotificationForFailedAction(getActionUnavailableMessage(event.presentation.text), getId(action))
+          }
+        }
+        else {
+          throw result.cause
         }
       }
-      else -> throw result.failureCause
+      is AnActionResult.Ignored -> Unit
     }
     return result
   }

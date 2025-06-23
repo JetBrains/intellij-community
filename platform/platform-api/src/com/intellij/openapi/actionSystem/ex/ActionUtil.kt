@@ -232,7 +232,7 @@ object ActionUtil {
       return false
     }
     val result = updateAction(action, e)
-    return if (result.isFailed) result.failureCause is IndexNotReadyException else false
+    return (result as? AnActionResult.Failed)?.cause is IndexNotReadyException
   }
 
   /**
