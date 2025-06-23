@@ -64,6 +64,7 @@ data class XBreakpointDtoState(
   val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
   val customPresentation: XBreakpointCustomPresentationDto?,
   val lineBreakpointInfo: XLineBreakpointInfo?,
+  val requestId: Long,
 )
 
 @ApiStatus.Internal
@@ -174,7 +175,8 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugS
       timestamp = timeStamp,
       currentSessionCustomPresentation = currentSession?.getBreakpointPresentation(breakpoint)?.toRpc(),
       customPresentation = breakpoint.customizedPresentation?.toRpc(),
-      lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() }
+      lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() },
+      requestId = breakpoint.requestId,
     )
   }
 }
