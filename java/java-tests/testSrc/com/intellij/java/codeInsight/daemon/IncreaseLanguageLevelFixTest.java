@@ -27,6 +27,10 @@ public abstract class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTe
     public void testStatementBeforeSuper() {
       IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> doTest(LanguageLevel.JDK_25));
     }
+
+    public void testModuleImportStatement() {
+      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> doTest(LanguageLevel.JDK_25));
+    }
   }
 
   public static class IncreaseLanguageLevel23FixTest extends IncreaseLanguageLevelFixTest {

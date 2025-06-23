@@ -171,11 +171,11 @@ enum class JavaFeature {
    * @see PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS
    * @see TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
    */
-  MODULE_IMPORT_DECLARATIONS(LanguageLevel.JDK_23_PREVIEW, "feature.module.import.declarations") {  //jep 776
+  MODULE_IMPORT_DECLARATIONS(LanguageLevel.JDK_23_PREVIEW, "feature.module.import.declarations") {  //
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
-      return super.isSufficient(useSiteLevel) ||
-             useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
-             LanguageLevel.JDK_24_PREVIEW == useSiteLevel //jep 494
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel || //jep 494
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel //jep 776
     }
 
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
@@ -192,10 +192,11 @@ enum class JavaFeature {
    * @see MODULE_IMPORT_DECLARATIONS
    * @see TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
    */
-  PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_24_PREVIEW, "feature.package.import.shadow.module.import") { //jep 494
+  PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_24_PREVIEW, "feature.package.import.shadow.module.import") {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
       return super.isSufficient(useSiteLevel) ||
-             useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
+             useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel; //jep 494
     }
 
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
@@ -208,8 +209,8 @@ enum class JavaFeature {
    */
   TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_24_PREVIEW, "feature.package.transitive.dependency.on.java.base") { //jep 494
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
-      return super.isSufficient(useSiteLevel) ||
-             useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel//jep 494
     }
 
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
