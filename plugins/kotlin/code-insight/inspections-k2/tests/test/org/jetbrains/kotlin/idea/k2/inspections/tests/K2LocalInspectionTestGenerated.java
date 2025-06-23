@@ -17182,6 +17182,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiver.kt");
         }
 
+        @TestMetadata("valueDeclarationWithReceiverInClasses.kt")
+        public void testValueDeclarationWithReceiverInClasses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverInClasses.kt");
+        }
+
         @TestMetadata("variableString.kt")
         public void testVariableString() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/variableString.kt");
