@@ -108,8 +108,10 @@ class XBreakpointVisualRepresentation(
       }
       return
     }
-    val range = myBreakpoint.getHighlightRange()
     withContext(Dispatchers.EDT) {
+      val highlightRange = myBreakpoint.getHighlightRangeSuspend()
+      if (highlightRange !is XLineBreakpointHighlighterRange.Available) return@withContext
+      val range = highlightRange.range
       if (rangeMarker != null && rangeMarker !is RangeHighlighter) {
         removeHighlighter()
         assert(highlighter == null)
