@@ -6,6 +6,10 @@
 
 ### --- ###
 
+### NOTE on --experimental_sibling_repository_layout
+### The option was removed due to https://github.com/bazelbuild/bazel/issues/26361
+### One experimental option less and also it looks like it won't enabled by default in the future
+
 common --@rules_jvm//:jvm-builder=@community//:monorepo-jvm-builder
 common --@rules_jvm//:default-kotlinc-opts=@community//:k17
 common --@rules_jvm//:resource-packager=@rules_jvm//src/misc:worker-jvm
@@ -30,7 +34,7 @@ common:windows --lockfile_mode=off  # todo: https://youtrack.jetbrains.com/issue
 
 common --noenable_workspace
 
-common --nolegacy_external_runfiles --experimental_sibling_repository_layout
+common --nolegacy_external_runfiles
 
 # https://bazel.build/docs/bazel-and-java#config-build-tools-java
 # A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
@@ -40,6 +44,7 @@ common --tool_java_language_version=17
 common --tool_java_runtime_version=remotejdk_17
 
 # make sure you don't need to open file to read compilation errors
+common --experimental_ui_max_stdouterr_bytes=-1
 common --experimental_ui_max_stdouterr_bytes=-1
 
 # IDEA do not handle symlinks efficiently (freeze due to modal non-cancellable dialog) and no way to exclude directories by pattern bazel-

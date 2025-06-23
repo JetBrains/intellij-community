@@ -1,5 +1,5 @@
 build --nobuild_runfile_links
-common --nolegacy_external_runfiles --experimental_sibling_repository_layout
+common --nolegacy_external_runfiles
 
 # Without it it fails in Windows Sandbox with:
 # ERROR: C:/users/wdagutilityaccount/desktop/bazel/BUILD.bazel:24:15: JdepsMerge //:jps_to_bazel-lib { jdeps: 1 } failed: Worker process did not return a WorkResponse:

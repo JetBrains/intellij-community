@@ -51,11 +51,11 @@ internal data class CustomModuleDescription(
 
 internal val customModules: Map<String, CustomModuleDescription> = listOf(
   CustomModuleDescription(moduleName = "intellij.idea.community.build.zip", bazelPackage = "@rules_jvm//zip", bazelTargetName = "zip",
-                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/zip"),
+                          outputDirectory = "out/bazel-bin/external/rules_jvm+/zip"),
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@rules_jvm//dependency-graph", bazelTargetName = "dependency-graph",
-                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/dependency-graph"),
+                          outputDirectory = "out/bazel-bin/external/rules_jvm+/dependency-graph"),
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt", bazelPackage = "@rules_jvm//jps-builders-6", bazelTargetName = "build-javac-rt",
-                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/jps-builders-6"),
+                          outputDirectory = "out/bazel-bin/external/rules_jvm+/jps-builders-6"),
 ).associateBy { it.moduleName }
 
 @Suppress("ReplaceGetOrSet")
@@ -520,7 +520,7 @@ internal class BazelBuildFileGenerator(
 
     val jarOutputDirectory = when {
       customModule != null -> customModule.outputDirectory
-      moduleDescriptor.isCommunity -> "out/bazel-out/community+/\${CONF}/bin/$bazelModuleRelativePath"
+      moduleDescriptor.isCommunity -> "out/bazel-bin/external/community+/$bazelModuleRelativePath"
       else -> "out/bazel-bin/$bazelModuleRelativePath"
     }
 
@@ -531,7 +531,7 @@ internal class BazelBuildFileGenerator(
       // full target name instead of just jar for intellij.dotenv.*
       // like @community//plugins/env-files-support:dotenv-go_resources
       jarName.startsWith("@community//") ->
-        "out/bazel-out/community+/\${CONF}/bin/${jarName.substringAfter("@community//").replace(':', '/')}.jar"
+        "out/bazel-bin/external/community+/${jarName.substringAfter("@community//").replace(':', '/')}.jar"
       else -> "$jarOutputDirectory/$jarName.jar"
     }
 
