@@ -315,7 +315,7 @@ open class FileEditorManagerImpl(
       })
     }
     else {
-      initJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      initJob = coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
         val component = EditorsSplitters(manager = this@FileEditorManagerImpl, coroutineScope = coroutineScope)
         component.isFocusable = false
         InternalUICustomization.getInstance()?.configureEditorsSplitters(component)

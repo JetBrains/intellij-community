@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -52,7 +52,7 @@ internal class IdeProjectFrameHelper(
       return
     }
 
-    val northPanel = withContext(Dispatchers.EDT) {
+    val northPanel = withContext(Dispatchers.UI) {
       JBBox.createVerticalBox().also {
         contentPane.add(it, BorderLayout.NORTH)
         northPanel = it
@@ -65,7 +65,7 @@ internal class IdeProjectFrameHelper(
       if (flow != null) {
         coroutineScope.launch(ModalityState.any().asContextElement()) {
           flow.collect(FlowCollector { component ->
-            withContext(Dispatchers.EDT) {
+            withContext(Dispatchers.UI) {
               if (component == null) {
                 val count = northPanel.componentCount
                 for (i in count - 1 downTo 0) {
@@ -86,7 +86,7 @@ internal class IdeProjectFrameHelper(
         continue
       }
 
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.UI) {
         extension.createComponent(project, isDocked = false)?.let {
           ClientProperty.put(it, EXTENSION_KEY, key)
           northPanel.add(it)
