@@ -52,7 +52,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
     project: Project,
   ) {
     if (mcpClientDetectionSettings.state.doNotShowUnconfiguredAgain) return
-    val unconfiguredClients = detectedClients.filter { !it.isConfigured() }
+    val unconfiguredClients = detectedClients.filter { it.isConfigured()?.not() ?: false }
     if (unconfiguredClients.isNotEmpty()) {
       showMcpServerAutomaticConfigurationNotification(project, unconfiguredClients)
     }
