@@ -427,9 +427,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (isBootstrapSuiteDefault && !isRunningInBatchMode) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
       val testFrameworkCoreModule = context.findRequiredModule("intellij.platform.testFramework.core")
-      val testFrameworkCoreModuleOutputRoots = runBlocking(Dispatchers.Default) {
-        context.getModuleOutputRoots(testFrameworkCoreModule).map(Path::toFile)
-      }
+      val testFrameworkCoreModuleOutputRoots = context
+        .getModuleOutputRoots(testFrameworkCoreModule)
+        .map(Path::toFile)
       for (testFrameworkOutput in testFrameworkCoreModuleOutputRoots) {
         if (!testRoots.contains(testFrameworkOutput)) {
           testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map(::File))
