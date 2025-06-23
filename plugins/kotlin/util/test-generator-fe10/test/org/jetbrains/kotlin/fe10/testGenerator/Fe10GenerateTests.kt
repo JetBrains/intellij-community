@@ -300,6 +300,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             }
         }
 
+        listOf(AbstractCoroutineViewJobHierarchyTest::class, AbstractK1IdeK2CoroutineViewTest::class).forEach {
+            testClass(it) {
+                model("coroutinesView")
+            }
+        }
+
         testClass<AbstractIrSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }

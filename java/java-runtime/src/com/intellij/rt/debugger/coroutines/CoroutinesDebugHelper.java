@@ -177,7 +177,8 @@ public final class CoroutinesDebugHelper {
       for (int i = 0; i < coroutineInfos.length; i++) {
         lastObservedStackTraces[i] = lastObservedStackTrace(coroutineInfos[i]);
       }
-      dump[3] = lastObservedStackTraces;
+      dump = Arrays.copyOf(dump, dump.length + 1);
+      dump[4] = lastObservedStackTraces;
       return dump;
     } catch (Throwable e) {
       return null;
