@@ -131,8 +131,7 @@ To run the IntelliJ IDEA built from source, choose `Run | Run` from the main men
 
 To run tests on the build, apply these setting to the `Run | Edit Configurations... | Templates | JUnit` configuration tab:
   * Working dir: `<IDEA_HOME>/bin`
-  * VM options: 
-    * `-ea` 
+  * VM options:  `-ea` 
  
 
 #### Running IntelliJ IDEA in CI/CD environment
