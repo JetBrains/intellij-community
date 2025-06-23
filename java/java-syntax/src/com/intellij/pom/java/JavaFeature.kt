@@ -143,6 +143,8 @@ enum class JavaFeature {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
       return super.isSufficient(useSiteLevel) || useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
     }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
   },
   /**
    * Was a preview feature in Java 20 Preview.
