@@ -76,20 +76,22 @@ internal class SharedConfigFolderNioListener(private val root: Path, private val
 
       val fileSpec = getSpecFor(eventPath)
       if (fileSpec != null) {
-        if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-          if (!configFilesUpdatedByThisProcess.wasDeleted(fileSpec)) {
-            deleted.add(fileSpec)
+        when (kind) {
+          StandardWatchEventKinds.ENTRY_DELETE -> {
+            if (!configFilesUpdatedByThisProcess.wasDeleted(fileSpec)) {
+              deleted.add(fileSpec)
+            }
+            else {
+              LOG.trace { "skipped deleted file $fileName because it was deleted by this process" }
+            }
           }
-          else {
-            LOG.trace { "skipped deleted file $fileName because it was deleted by this process" }
-          }
-        }
-        else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-          if (!configFilesUpdatedByThisProcess.wasWritten(fileSpec, eventPath)) {
-            modified.add(fileSpec)
-          }
-          else {
-            LOG.trace { "skipped modified file $fileName because it was written by this process" }
+          StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_CREATE -> {
+            if (!configFilesUpdatedByThisProcess.wasWritten(fileSpec, eventPath)) {
+              modified.add(fileSpec)
+            }
+            else {
+              LOG.trace { "skipped modified file $fileName because it was written by this process" }
+            }
           }
         }
       }
