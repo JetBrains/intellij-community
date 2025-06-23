@@ -13,21 +13,30 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 @Internal
 public class UndoRemoteBehaviorService {
 
-  public static boolean isExperimentalFrontendUndoEnabled() {
+  public static boolean isSpeculativeUndoEnabled() {
     if (!Registry.is("ide.undo.frontend.if.possible", true) ||
         PlatformUtils.isRider()) {
       return false;
     }
     var service = ApplicationManager.getApplication().getService(UndoRemoteBehaviorService.class);
-    return service.isSpeculativeUndoEnabled();
+    return service.isSpeculativeUndoAvailable();
+  }
+
+  public static boolean isBackendFallbackEnabled() {
+    if (!isSpeculativeUndoEnabled()) {
+      throw new IllegalStateException("speculative undo is disabled");
+    }
+    return Registry.is("ide.undo.backend.fallback.if.broken", true);
   }
 
   public static boolean debugExperimentalFrontendUndo() {
-    return isExperimentalFrontendUndoEnabled() &&
-           Registry.is("ide.undo.frontend.if.possible.debug", true);
+    if (!isSpeculativeUndoEnabled()) {
+      throw new IllegalStateException("speculative undo is disabled");
+    }
+    return Registry.is("ide.undo.frontend.if.possible.debug", true);
   }
 
-  protected boolean isSpeculativeUndoEnabled() {
+  protected boolean isSpeculativeUndoAvailable() {
     return false;
   }
 }
