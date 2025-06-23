@@ -7,16 +7,16 @@ from typing_extensions import Self
 
 if sys.version_info >= (3, 10):
     from collections.abc import (
-        Callable,
-        ItemsView,
-        Iterable,
-        Iterator,
-        KeysView,
-        Mapping,
-        MutableMapping,
-        MutableSequence,
-        Sequence,
-        ValuesView,
+        Callable as Callable,
+        ItemsView as ItemsView,
+        Iterable as Iterable,
+        Iterator as Iterator,
+        KeysView as KeysView,
+        Mapping as Mapping,
+        MutableMapping as MutableMapping,
+        MutableSequence as MutableSequence,
+        Sequence as Sequence,
+        ValuesView as ValuesView,
     )
 else:
     from _collections_abc import *
