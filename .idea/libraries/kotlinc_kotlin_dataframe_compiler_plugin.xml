@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-dataframe-compiler-plugin">
+  <library name="kotlinc.kotlin-dataframe-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dataframe-compiler-plugin-for-ide:2.2.20-dev-6511">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-6511/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-6511.jar">
+          <sha256sum>e824b359b522eb487f99c2f2c5c351b0bab1d0c7918bf09161065955a047d4bf</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.255-dev-255/kotlin-dataframe-compiler-plugin-for-ide-2.2.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-6511/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-6511.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.255-dev-255/kotlin-dataframe-compiler-plugin-for-ide-2.2.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-6511/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
