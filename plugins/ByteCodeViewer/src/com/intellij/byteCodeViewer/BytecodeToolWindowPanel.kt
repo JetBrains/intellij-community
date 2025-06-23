@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -28,7 +29,7 @@ import kotlin.math.min
 internal class BytecodeToolWindowPanel(
   private val project: Project,
   private val psiClass: PsiClass,
-  private val classFile: VirtualFile
+  private val classFile: VirtualFile,
 ) : JPanel(BorderLayout()), Disposable {
   private val bytecodeEditor: Editor = EditorFactory.getInstance()
     .createEditor(EditorFactory.getInstance().createDocument(""), project, JavaClassFileType.INSTANCE, true)
@@ -60,8 +61,10 @@ internal class BytecodeToolWindowPanel(
   }
 
   private fun selectedMatchingEditor(): Editor? {
-    return FileEditorManager.getInstance(project).getSelectedTextEditor()?.takeIf {
-      it.virtualFile == psiClass.containingFile.virtualFile
+    return FileEditorManager.getInstance(project).getSelectedTextEditor()?.takeIf { editor ->
+      val document = editor.getDocument()
+      val virtualFile = FileDocumentManager.getInstance().getFile(document)
+      virtualFile == psiClass.containingFile.virtualFile
     }
   }
 
