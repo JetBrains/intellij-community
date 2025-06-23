@@ -684,51 +684,65 @@ public final class TerminalToolWindowManager implements Disposable {
         ExperimentalUI.isNewUI() &&
         terminalRunner == myTerminalRunner &&
         terminalRunner.isGenTwoTerminalEnabled()) {
-      widget = provider.createTerminalWidget(myProject, startupFusInfo, parentDisposable);
-
-      Disposer.register(widget, new Disposable() {
-        @Override
-        public void dispose() {
-          // Backend terminal session tab lifecycle is not directly bound to the Tool Window tab lifecycle.
-          // We need to close the backend tab when the tool window tab is closed explicitly.
-          // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
-          // So we send close event only if the tab is closed explicitly: backend will close it on its termination.
-          // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
-          Integer sessionTabId = getTabIdByWidget(widget);
-          boolean isProjectClosing = myToolWindow.getContentManager().isDisposed();
-          if (sessionTabId != null && !isProjectClosing) {
-            FrontendTerminalTabsApi.getInstance(myProject).closeTerminalTab(sessionTabId);
-            bindTabIdToWidget(widget, null);
-          }
-        }
-      });
-
-      Consumer<TerminalSessionTab> bindTabIdAndStartSession = (TerminalSessionTab tab) -> {
-        bindTabIdToWidget(widget, tab.getId());
-        if (updateTabTitleOnBackend) {
-          // Update the tab title on backend because all previous updates were ignored since we didn't have a tab ID.
-          updateTabTitle(widget, myToolWindow, content);
-        }
-        FrontendTerminalTabsApi
-          .getInstance(myProject)
-          .startTerminalSessionForWidget(widget, startupOptions, tab, deferSessionStartUntilUiShown);
-      };
-
-      if (existingTab != null) {
-        bindTabIdAndStartSession.accept(existingTab);
-      }
-      else {
-        FrontendTerminalTabsApi.getInstance(myProject).createNewTerminalTab().thenAccept((tab) -> {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!myProject.isDisposed()) {
-              bindTabIdAndStartSession.accept(tab);
-            }
-          }, ModalityState.any());
-        });
-      }
+      widget = startReworkedShellTerminalWidget(provider, content, startupOptions, existingTab, startupFusInfo,
+                                                deferSessionStartUntilUiShown, updateTabTitleOnBackend, parentDisposable);
     }
     else {
       widget = terminalRunner.startShellTerminalWidget(parentDisposable, startupOptions, deferSessionStartUntilUiShown);
+    }
+
+    return widget;
+  }
+
+  private @NotNull TerminalWidget startReworkedShellTerminalWidget(@NotNull TerminalWidgetProvider provider,
+                                                                   @NotNull Content content,
+                                                                   @NotNull ShellStartupOptions startupOptions,
+                                                                   @Nullable TerminalSessionTab existingTab,
+                                                                   @Nullable TerminalStartupFusInfo startupFusInfo,
+                                                                   boolean deferSessionStartUntilUiShown,
+                                                                   boolean updateTabTitleOnBackend,
+                                                                   @NotNull Disposable parentDisposable) {
+    TerminalWidget widget = provider.createTerminalWidget(myProject, startupFusInfo, parentDisposable);
+
+    Disposer.register(widget, new Disposable() {
+      @Override
+      public void dispose() {
+        // Backend terminal session tab lifecycle is not directly bound to the Tool Window tab lifecycle.
+        // We need to close the backend tab when the tool window tab is closed explicitly.
+        // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
+        // So we send close event only if the tab is closed explicitly: backend will close it on its termination.
+        // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
+        Integer sessionTabId = getTabIdByWidget(widget);
+        boolean isProjectClosing = myToolWindow.getContentManager().isDisposed();
+        if (sessionTabId != null && !isProjectClosing) {
+          FrontendTerminalTabsApi.getInstance(myProject).closeTerminalTab(sessionTabId);
+          bindTabIdToWidget(widget, null);
+        }
+      }
+    });
+
+    Consumer<TerminalSessionTab> bindTabIdAndStartSession = (TerminalSessionTab tab) -> {
+      bindTabIdToWidget(widget, tab.getId());
+      if (updateTabTitleOnBackend) {
+        // Update the tab title on backend because all previous updates were ignored since we didn't have a tab ID.
+        updateTabTitle(widget, myToolWindow, content);
+      }
+      FrontendTerminalTabsApi
+        .getInstance(myProject)
+        .startTerminalSessionForWidget(widget, startupOptions, tab, deferSessionStartUntilUiShown);
+    };
+
+    if (existingTab != null) {
+      bindTabIdAndStartSession.accept(existingTab);
+    }
+    else {
+      FrontendTerminalTabsApi.getInstance(myProject).createNewTerminalTab().thenAccept((tab) -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!myProject.isDisposed()) {
+            bindTabIdAndStartSession.accept(tab);
+          }
+        }, ModalityState.any());
+      });
     }
 
     return widget;
