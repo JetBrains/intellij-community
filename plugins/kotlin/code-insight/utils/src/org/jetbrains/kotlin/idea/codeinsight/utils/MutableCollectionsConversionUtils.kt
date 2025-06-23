@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -60,12 +61,7 @@ object MutableCollectionsConversionUtils {
                 ?.replaced(psiFactory.createExpression(mutableCallableName))
                 ?: return
         } else {
-            val toMutable = when (immutableCollectionClassId) {
-                StandardClassIds.List -> "toMutableList"
-                StandardClassIds.Set -> "toMutableSet"
-                StandardClassIds.Map -> "toMutableMap"
-                else -> null
-            } ?: return
+            val toMutable = toMutableCollectionCallableName(immutableCollectionClassId) ?: return
             val dotQualifiedExpression = defaultValue.replaced(
                 psiFactory.createExpressionByPattern("($0).$1()", defaultValue, toMutable)
             ) as KtDotQualifiedExpression
@@ -80,6 +76,14 @@ object MutableCollectionsConversionUtils {
             typeReference.replace(psiFactory.createType("Mutable${typeReference.text}"))
         }
     }
+
+    fun toMutableCollectionCallableName(immutableCollectionClassId: ClassId): @NonNls String? =
+        when (immutableCollectionClassId) {
+            StandardClassIds.List -> "toMutableList"
+            StandardClassIds.Set -> "toMutableSet"
+            StandardClassIds.Map -> "toMutableMap"
+            else -> null
+        }
 
     private const val COLLECTIONS: String = "kotlin.collections"
 
