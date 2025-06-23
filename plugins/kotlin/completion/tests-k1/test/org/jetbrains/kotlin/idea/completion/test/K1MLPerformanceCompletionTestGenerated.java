@@ -655,6 +655,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative3.kt");
             }
 
+            @TestMetadata("NestedClass.kt")
+            public void testNestedClass() throws Exception {
+                runTest("../testData/basic/common/callableReference/NestedClass.kt");
+            }
+
             @TestMetadata("NonEmptyQualifier.kt")
             public void testNonEmptyQualifier() throws Exception {
                 runTest("../testData/basic/common/callableReference/NonEmptyQualifier.kt");
