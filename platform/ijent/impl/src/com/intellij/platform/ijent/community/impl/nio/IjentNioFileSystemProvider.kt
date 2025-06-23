@@ -355,6 +355,12 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             .getOrThrowFileSystemException()
 
           if (ijentFs.user.uid == 0) {
+            val executable = fileInfo.permissions.run {
+              ownerCanExecute || groupCanExecute || otherCanExecute
+            }
+            if (!executable && AccessMode.EXECUTE in modes) {
+              EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: execute").throwFileSystemException()
+            }
             return@fsBlocking
           }
 
