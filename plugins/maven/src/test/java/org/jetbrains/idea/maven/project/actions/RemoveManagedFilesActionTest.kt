@@ -29,8 +29,8 @@ class RemoveManagedFilesActionTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
 
     val action = RemoveManagedFilesAction()
-    val parentActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(parentFile)))
-    val m1ActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(m1File)))
+    val parentActionVisible = action.isAvailable(TestActionEvent.createTestEvent(action, createTestDataContext(parentFile)))
+    val m1ActionVisible = action.isAvailable(TestActionEvent.createTestEvent(action, createTestDataContext(m1File)))
 
     assertTrue(parentActionVisible)
     assertFalse(m1ActionVisible)
