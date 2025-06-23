@@ -161,7 +161,7 @@ internal class BytecodeToolWindowPanel(
         return
       }
 
-      val linesRange = mapLines(bytecodeWithDebugInfo, sourceStartLine, sourceEndLine, showDebugInfo = false)
+      val linesRange = mapLines(bytecodeWithDebugInfo, sourceStartLine, sourceEndLine, showDebugInfo = BytecodeViewerSettings.getInstance().state.showDebugInfo)
 
       if (linesRange == IntRange(0, 0) || linesRange.first < 0 || linesRange.last < 0) {
         bytecodeEditor.getSelectionModel().removeSelection()
