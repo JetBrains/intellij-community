@@ -73,6 +73,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     """.trimMargin("|")
 
     assertEquals(expectedStrippedBytecode, actualStrippedBytecode)
+    assertEquals(expectedStrippedBytecode, sampleBytecode_1_noDebugInfo)
   }
 
   fun `test simple 1 method body start`() {
@@ -413,12 +414,9 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
   }
 
   /**
-   * Bytecode was compiled using javac 23.
+   * Bytecode fixtures, as compiled with javac 23.
    *
-   * Human-readable sample bytecode was read with ASM ClassReader, with flags applied: SKIP_FRAMES
-   *
-   * NOT-TRUE: Human-readable sample bytecode without debug info was read with ASM ClassReader, with flags applied: SKIP_FRAMES, SKIP_DEBUG
-   * Actually, it was created with [BytecodeLineMapping.removeDebugInfo].
+   * Human-readable sample bytecode without debug info was created with [removeDebugInfo].
    */
   companion object Fixtures {
 
