@@ -136,7 +136,6 @@ public final class TypeNullability {
       TypeNullability::nullability, Collectors.mapping(TypeNullability::source, Collectors.toSet())));
     Set<NullabilitySource> sources = map.get(Nullability.NOT_NULL);
     if (sources != null) {
-      //todo?
       return new TypeNullability(Nullability.NOT_NULL, NullabilitySource.multiSource(sources));
     }
     sources = map.get(Nullability.NULLABLE);
