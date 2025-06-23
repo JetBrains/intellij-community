@@ -75,7 +75,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val editorsProvider = session.debugProcess.editorsProvider
     return withContext(Dispatchers.EDT) {
       val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
-      backendDocument.bindToFrontend(frontendDocumentId)
+      backendDocument.bindToFrontend(frontendDocumentId, project)
     }
   }
 
