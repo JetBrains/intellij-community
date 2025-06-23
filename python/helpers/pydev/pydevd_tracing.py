@@ -107,7 +107,6 @@ def load_python_helper_lib():
         pydev_log.info('Helper lib to set tracing to all threads not loaded: ctypes not found')
         return None
 
-
     if IS_WINDOWS:
         if IS_64BIT_PROCESS:
             suffix = 'amd64'
