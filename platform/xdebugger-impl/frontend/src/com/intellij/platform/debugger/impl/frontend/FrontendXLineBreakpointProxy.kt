@@ -13,13 +13,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.breakpoints.*
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XLineBreakpointInfo
 import com.intellij.xdebugger.impl.rpc.toTextRange
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
 
@@ -32,15 +34,15 @@ internal class FrontendXLineBreakpointProxy(
   parentCs: CoroutineScope,
   dto: XBreakpointDto,
   override val type: XLineBreakpointTypeProxy,
-  manager: XBreakpointManagerProxy,
+  manager: FrontendXBreakpointManager,
   onBreakpointChange: (XBreakpointProxy) -> Unit,
-) : FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange), XLineBreakpointProxy {
+) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager, onBreakpointChange), XLineBreakpointProxy {
   private var lineSourcePosition: XSourcePosition? = null
 
   private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeLineBreakpointProxy(), manager)
 
   private val lineBreakpointInfo: XLineBreakpointInfo
-    get() = _state.value.lineBreakpointInfo!!
+    get() = currentState.lineBreakpointInfo!!
 
   internal val registrationInLineManagerStatus = AtomicReference(RegistrationStatus.NOT_STARTED)
 
@@ -161,7 +163,7 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   private fun updateLineBreakpointState(update: (XLineBreakpointInfo) -> XLineBreakpointInfo) {
-    _state.update { it.copy(lineBreakpointInfo = update(it.lineBreakpointInfo!!)) }
+    updateState { it.copy(lineBreakpointInfo = update(it.lineBreakpointInfo!!)) }
   }
 
   override fun createBreakpointDraggableObject(): GutterDraggableObject? {
