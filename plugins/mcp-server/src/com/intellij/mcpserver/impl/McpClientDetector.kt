@@ -90,7 +90,7 @@ object McpClientDetector {
     if (configPath == null) return null
     val path = Paths.get(FileUtil.expandUserHome(configPath))
 
-    if (path.exists() && path.isRegularFile()) {
+    if (path.parent.exists() && path.parent.toFile().isDirectory()) {
       return ClaudeMcpClient("Claude Desktop (Global)", path)
     }
     return null
@@ -98,7 +98,7 @@ object McpClientDetector {
 
   private fun detectCursorGlobal(): McpClient? {
     val path = Paths.get(FileUtil.expandUserHome("~/.cursor/mcp.json"))
-    if (path.exists() && path.isRegularFile()) {
+    if (path.parent.exists() && path.parent.toFile().isDirectory()) {
       return CursorClient("Cursor (Global)", path)
     }
     return null
@@ -106,7 +106,7 @@ object McpClientDetector {
 
   private fun detectWindsurf(): McpClient? {
     val path = Paths.get(FileUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
-    if (path.exists() && path.isRegularFile()) {
+    if (path.parent.exists() && path.parent.toFile().isDirectory()) {
       return WindsurfClient("Windsurf (Global)", path)
     }
     return null
