@@ -69,7 +69,15 @@ public abstract class XStackFrame extends XValueContainer {
    * Otherwise, override {@link #customizePresentation()} to provide (asynchronous) presentation update.
    */
   public void customizePresentation(@NotNull ColoredTextContainer component) {
-    customizeTextPresentation(component);
+    XSourcePosition position = getSourcePosition();
+    if (position != null) {
+      component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append(":" + (position.getLine() + 1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.setIcon(AllIcons.Debugger.Frame);
+    }
+    else {
+      component.append(XDebuggerBundle.message("invalid.frame"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+    }
   }
 
   /**
@@ -96,14 +104,6 @@ public abstract class XStackFrame extends XValueContainer {
    * not as a visible UI component. "Copy Stack" is one of the prominent examples.
    */
   public void customizeTextPresentation(@NotNull ColoredTextContainer component) {
-    XSourcePosition position = getSourcePosition();
-    if (position != null) {
-      component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      component.append(":" + (position.getLine() + 1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      component.setIcon(AllIcons.Debugger.Frame);
-    }
-    else {
-      component.append(XDebuggerBundle.message("invalid.frame"), SimpleTextAttributes.ERROR_ATTRIBUTES);
-    }
+    customizePresentation(component);
   }
 }
