@@ -97,11 +97,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val property = left.mainReference?.resolve() as? KtProperty ?: return
 
             val psiFactory = KtPsiFactory(project)
-            analyze(property) {
-                MutableCollectionsConversionUtils.run {
-                    convertPropertyTypeToMutable(property, immutableCollectionClassId, psiFactory)
-                }
-            }
+            MutableCollectionsConversionUtils.convertPropertyTypeToMutable(property, immutableCollectionClassId, psiFactory)
             property.valOrVarKeyword.replace(psiFactory.createValKeyword())
             updater.moveCaretTo(property.endOffset)
         }

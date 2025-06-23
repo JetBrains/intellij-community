@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -27,21 +27,32 @@ object MutableCollectionsConversionUtils {
         return property.isLocal && property.initializer != null
     }
 
-    fun KaSession.convertPropertyTypeToMutable(
+    private fun mutableCallableName(
+        initializer: KtExpression,
+    ): String? {
+        val fqName = analyze(initializer) {
+            initializer.resolveToCall()
+                ?.singleFunctionCallOrNull()
+                ?.symbol
+                ?.callableId
+        }?.asSingleFqName()
+
+        return mutableConversionMap[fqName?.asString()]
+    }
+
+    fun convertPropertyTypeToMutable(
         property: KtDeclarationWithInitializer,
         immutableCollectionClassId: ClassId,
         psiFactory: KtPsiFactory = KtPsiFactory(property.project),
     ) {
         val initializer = property.initializer ?: return
-        val fqName = initializer.resolveToCall()
-            ?.singleFunctionCallOrNull()
-            ?.symbol
-            ?.callableId
-            ?.asSingleFqName()
-            ?.asString()
-        val mutableOf = mutableConversionMap[fqName]
-        if (mutableOf != null) {
-            (initializer as? KtCallExpression)?.calleeExpression?.replaced(psiFactory.createExpression(mutableOf)) ?: return
+
+        val mutableCallableName = mutableCallableName(initializer)
+        if (mutableCallableName != null) {
+            (initializer as? KtCallExpression)
+                ?.calleeExpression
+                ?.replaced(psiFactory.createExpression(mutableCallableName))
+                ?: return
         } else {
             val toMutable = when (immutableCollectionClassId) {
                 StandardClassIds.List -> "toMutableList"

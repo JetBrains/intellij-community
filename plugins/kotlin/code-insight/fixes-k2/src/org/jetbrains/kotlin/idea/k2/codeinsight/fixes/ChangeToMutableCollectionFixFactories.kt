@@ -7,7 +7,6 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -72,15 +71,12 @@ object ChangeToMutableCollectionFixFactories {
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            val initializer = element.initializer ?: return
-            analyze(initializer) {
-                MutableCollectionsConversionUtils.run {
-                    convertPropertyTypeToMutable(
-                        property = element,
-                        immutableCollectionClassId = elementContext.immutableCollectionClassId,
-                    )
-                }
-            }
+            element.initializer ?: return
+
+            MutableCollectionsConversionUtils.convertPropertyTypeToMutable(
+                property = element,
+                immutableCollectionClassId = elementContext.immutableCollectionClassId,
+            )
             updater.moveCaretTo(element.endOffset)
         }
     }
