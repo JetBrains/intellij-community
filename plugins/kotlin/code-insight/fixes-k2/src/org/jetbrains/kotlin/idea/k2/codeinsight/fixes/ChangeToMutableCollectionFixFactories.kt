@@ -26,7 +26,7 @@ internal object ChangeToMutableCollectionFixFactories {
         val element = diagnostic.psi
         val arrayExpr = element.arrayExpression ?: return emptyList()
         val type = arrayExpr.expressionType as? KaClassType ?: return emptyList()
-        if (!MutableCollectionsConversionUtils.run { isReadOnlyListOrMap(type) }) return emptyList()
+        if (!MutableCollectionsConversionUtils.isReadOnlyListOrMap(type.classId)) return emptyList()
 
         val property = arrayExpr.mainReference?.resolve() as? KtProperty ?: return emptyList()
         if (!MutableCollectionsConversionUtils.canConvertPropertyType(property)) return emptyList()

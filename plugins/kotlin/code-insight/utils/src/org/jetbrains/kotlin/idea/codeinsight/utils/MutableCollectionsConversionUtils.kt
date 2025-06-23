@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -26,12 +25,9 @@ object MutableCollectionsConversionUtils {
      * N.B. This check intentionally ignores `Set` type, because there are no
      * `set` operator on a `Set` - hence, no `NO_SET_METHOD` diagnostic ever reported.
      */
-    fun KaSession.isReadOnlyListOrMap(type: KaClassType): Boolean {
-        return type.classId in listOf(
-            StandardClassIds.List,
-            StandardClassIds.Map,
-        )
-    }
+    fun isReadOnlyListOrMap(classId: ClassId): Boolean =
+        classId == StandardClassIds.List
+                || classId == StandardClassIds.Map
 
     fun canConvertPropertyType(property: KtProperty): Boolean {
         return property.isLocal && property.initializer != null
