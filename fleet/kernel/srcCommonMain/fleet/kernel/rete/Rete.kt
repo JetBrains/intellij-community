@@ -500,9 +500,9 @@ private val CoroutineContext.rete: Rete
   get() = requireNotNull(this[Rete]) { "no Rete on context $this" }
 
 /**
- * Accepts only single-valued queries, runs [body] with which ever value is current, cancels it when it is retracted
+ * Accepts only optional-valued queries, runs [body] if there is a match, fails if there is none, cancels when it is retracted
  * */
-suspend fun <T, U> Query<*, T>.withCurrentMatch(body: suspend CoroutineScope.(T) -> U): WithMatchResult<U> =
+suspend fun <T, U> Query<Maybe, T>.withCurrentMatchIfAny(body: suspend CoroutineScope.(T) -> U): WithMatchResult<U> =
   tokenSetsFlow().map { ts ->
     when (val currentMatch = ts.asserted.singleOrNullOrThrow()) {
       null -> WithMatchResult.Failure(CancellationReason("condition invalidated", null))
@@ -515,4 +515,4 @@ suspend fun <T, U> Query<*, T>.withCurrentMatch(body: suspend CoroutineScope.(T)
  * if match is retracted before [body] succeeds, [body] is cancelled and [WithMatchResult.Failure] returned to a caller
  * */
 suspend fun <T> PredicateQuery.withPredicate(body: suspend CoroutineScope.() -> T): WithMatchResult<T> =
-  withCurrentMatch { body() }
+  withCurrentMatchIfAny { body() }
