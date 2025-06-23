@@ -65,7 +65,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
 
         McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
-          val isConfigured = ValueComponentPredicate(mcpClient.isConfigured())
+          val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
           val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
           val json = mcpClient.json
           group(mcpClient.name) {

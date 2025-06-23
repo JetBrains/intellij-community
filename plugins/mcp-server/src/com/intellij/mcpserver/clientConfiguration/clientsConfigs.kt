@@ -18,6 +18,9 @@ class CursorSSEConfig(val url: String) : ServerConfig()
 class WindsurfSSEConfig(val serverUrl: String) : ServerConfig()
 
 @Serializable
+class VSCodeSSEConfig(val url: String, val type: String) : ServerConfig()
+
+@Serializable
 class STDIOServerConfig(
   val command: String? = null,
   val args: List<String>? = null,
@@ -27,12 +30,14 @@ class STDIOServerConfig(
 // used for reading existing configs
 
 @Serializable
+@JsonIgnoreUnknownKeys
 class ExistingConfig(
   val command: String? = null,
   val args: List<String>? = null,
   val env: Map<String, String>? = null,
   @JsonNames("url", "serverUrl")
   val url: String? = null,
+  val type: String? = null,
 )
 
 @JsonIgnoreUnknownKeys
@@ -40,4 +45,16 @@ class ExistingConfig(
 data class McpServers(
   @JsonNames("servers", "mcpServers")
   val mcpServers: Map<String, ExistingConfig>,
+)
+
+@JsonIgnoreUnknownKeys
+@Serializable
+data class VSCodeConfig(
+  val mcp: VSCodeMcp? = null
+)
+
+@JsonIgnoreUnknownKeys
+@Serializable 
+data class VSCodeMcp(
+  val servers: Map<String, ExistingConfig>? = null
 )

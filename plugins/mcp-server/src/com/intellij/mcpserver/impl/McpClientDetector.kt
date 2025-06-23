@@ -1,9 +1,6 @@
 package com.intellij.mcpserver.impl
 
-import com.intellij.mcpserver.clientConfiguration.ClaudeMcpClient
-import com.intellij.mcpserver.clientConfiguration.CursorClient
-import com.intellij.mcpserver.clientConfiguration.McpClient
-import com.intellij.mcpserver.clientConfiguration.WindsurfClient
+import com.intellij.mcpserver.clientConfiguration.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -37,6 +34,9 @@ object McpClientDetector {
     runCatching {
       globalClients.addIfNotNull(detectWindsurf())
     }
+    runCatching {
+      globalClients.addIfNotNull(detectVSCode())
+    }
 
     return globalClients
   }
@@ -65,6 +65,21 @@ object McpClientDetector {
     return false
   }
 
+  private fun detectVSCode(): McpClient? {
+    val configPath = when {
+      SystemInfo.isMac -> "~/Library/Application Support/Code/User/settings.json"
+      SystemInfo.isWindows -> System.getenv("APPDATA")?.let { "$it/Code/User/settings.json" }
+      SystemInfo.isLinux -> "~/.config/Code/User/settings.json"
+      else -> null
+    }
+    if (configPath == null) return null
+    val path = Paths.get(FileUtil.expandUserHome(configPath))
+    if (path.exists() && path.isRegularFile()) {
+      return VSCodeClient("VSCode (Global)", path)
+    }
+    return null
+  }
+
   private fun detectClaudeDesktop(): McpClient? {
     val configPath = when {
       SystemInfo.isMac -> "~/Library/Application Support/Claude/claude_desktop_config.json"
@@ -73,10 +88,9 @@ object McpClientDetector {
       else -> null
     }
     if (configPath == null) return null
-    val expandedPath = FileUtil.expandUserHome(configPath)
-    val path = Paths.get(expandedPath)
+    val path = Paths.get(FileUtil.expandUserHome(configPath))
 
-    if (looksLikeMcpJson(path)) {
+    if (path.exists() && path.isRegularFile()) {
       return ClaudeMcpClient("Claude Desktop (Global)", path)
     }
     return null
@@ -84,7 +98,7 @@ object McpClientDetector {
 
   private fun detectCursorGlobal(): McpClient? {
     val path = Paths.get(FileUtil.expandUserHome("~/.cursor/mcp.json"))
-    if (looksLikeMcpJson(path)) {
+    if (path.exists() && path.isRegularFile()) {
       return CursorClient("Cursor (Global)", path)
     }
     return null
@@ -92,7 +106,7 @@ object McpClientDetector {
 
   private fun detectWindsurf(): McpClient? {
     val path = Paths.get(FileUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
-    if (looksLikeMcpJson(path)) {
+    if (path.exists() && path.isRegularFile()) {
       return WindsurfClient("Windsurf (Global)", path)
     }
     return null
