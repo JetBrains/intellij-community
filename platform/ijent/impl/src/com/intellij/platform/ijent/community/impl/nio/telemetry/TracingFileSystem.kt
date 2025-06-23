@@ -3,13 +3,14 @@ package com.intellij.platform.ijent.community.impl.nio.telemetry
 
 import com.intellij.platform.core.nio.fs.DelegatingFileSystem
 import com.intellij.platform.ijent.community.impl.nio.telemetry.Measurer.Operation.*
-import java.nio.file.*
+import java.nio.file.FileSystem
+import java.nio.file.WatchService
 
 class TracingFileSystem(
   private val provider: TracingFileSystemProvider,
   private val delegate: FileSystem,
 ) : DelegatingFileSystem<TracingFileSystemProvider>() {
-  override fun getDelegate(): FileSystem = delegate
+  public override fun getDelegate(): FileSystem = delegate
 
   override fun getDelegate(root: String): FileSystem = delegate
 
