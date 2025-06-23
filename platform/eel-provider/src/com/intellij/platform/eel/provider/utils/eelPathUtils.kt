@@ -268,12 +268,24 @@ object EelPathUtils {
 
   @Service
   private class TransferredContentHolder(private val scope: CoroutineScope) {
+
+    data class CacheKey(
+      val descriptor: EelDescriptor,
+      val sourcePathString: String,
+      val fileAttributesStrategy: FileTransferAttributesStrategy,
+    )
+    data class CacheValue(
+      val sourceHash: String,
+      val transferredFilePath: Path
+    )
+    private class Cache: ConcurrentHashMap<CacheKey, Deferred<CacheValue>>()
+
     // eel descriptor -> source path string ->> source hash -> transferred file
-    private val cache = ConcurrentHashMap<Pair<EelDescriptor, String>, Deferred<Pair<String, Path>>>()
+    private val cache = Cache()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun transferIfNeeded(eel: EelApi, source: Path, fileAttributesStrategy: FileTransferAttributesStrategy): Path {
-      return cache.compute(eel.descriptor to source.toString()) { _, deferred ->
+      return cache.compute(CacheKey(eel.descriptor, source.toString(), fileAttributesStrategy)) { _, deferred ->
         val sourceHash by lazy { calculateFileHashUsingMetadata(source) }
 
         if (deferred != null) {
@@ -291,9 +303,9 @@ object EelPathUtils {
         scope.async {
           val temp = eel.createTempFor(source, true)
           walkingTransfer(source, temp, false, fileAttributesStrategy)
-          sourceHash to temp
+          CacheValue(sourceHash, temp)
         }
-      }!!.await().second
+      }!!.await().transferredFilePath
     }
   }
 
