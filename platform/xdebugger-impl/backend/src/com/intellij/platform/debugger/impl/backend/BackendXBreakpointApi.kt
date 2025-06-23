@@ -129,7 +129,7 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     val editorsProvider = getEditorsProvider(breakpoint.type, breakpoint, breakpoint.project) ?: return null
     return withContext(Dispatchers.EDT) {
       val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
-      backendDocument.bindToFrontend(frontendDocumentId)
+      backendDocument.bindToFrontend(frontendDocumentId, project)
     }
   }
 }
