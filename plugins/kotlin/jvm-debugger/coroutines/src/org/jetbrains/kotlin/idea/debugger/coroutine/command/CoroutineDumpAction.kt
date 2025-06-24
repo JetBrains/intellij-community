@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfo
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
 
+@Deprecated("Coroutine dump is provided by ThreadDumpAction along with the regular Java thread dump, see IDEA-355724")
 class CoroutineDumpAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
