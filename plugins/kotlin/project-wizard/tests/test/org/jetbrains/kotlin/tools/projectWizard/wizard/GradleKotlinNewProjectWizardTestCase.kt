@@ -64,7 +64,7 @@ abstract class GradleKotlinNewProjectWizardTestCase : GradleNewProjectWizardTest
     }
 
     fun ModuleInfo.Builder.withKotlinBuildFile(
-        kotlinJvmPluginVersion: String? = "2.1.21",
+        kotlinJvmPluginVersion: String? = "2.2.0",
         configure: GradleBuildScriptBuilder<*>.() -> Unit = {}
     ) {
         withBuildFile {
