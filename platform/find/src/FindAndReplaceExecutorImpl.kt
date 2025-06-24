@@ -16,6 +16,7 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
@@ -45,9 +46,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     onFinish: () -> Unit?,
   ) {
     if (FindKey.isEnabled) {
-      if (findUsagesJob?.isActive == true) {
-        findUsagesJob?.cancel("new find request is started")
-      }
+      findUsagesJob?.cancel("new find request is started")
       findUsagesJob = coroutineScope.launch {
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
 
@@ -58,12 +57,12 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
           }.collect { throttledItems ->
             when (throttledItems) {
               is ThrottledOneItem -> {
-                val usage = UsageInfoModel.createUsageInfoModel(project, throttledItems.item, coroutineScope)
+                val usage = UsageInfoModel.createUsageInfoModel(project, throttledItems.item, this.childScope("UsageInfoModel.init"))
                 onResult(usage)
               }
               is ThrottledAccumulatedItems -> {
                 throttledItems.items.forEach {
-                  val usage = UsageInfoModel.createUsageInfoModel(project, it, coroutineScope)
+                  val usage = UsageInfoModel.createUsageInfoModel(project, it, this.childScope("UsageInfoModel.init"))
                   onResult(usage)
                 }
               }
