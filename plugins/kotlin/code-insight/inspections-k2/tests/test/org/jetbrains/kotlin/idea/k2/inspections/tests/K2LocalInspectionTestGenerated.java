@@ -14319,6 +14319,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnReturn.kt");
         }
 
+        @TestMetadata("returnReturnAndStatement.kt")
+        public void testReturnReturnAndStatement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnReturnAndStatement.kt");
+        }
+
         @TestMetadata("returnTryReturn.kt")
         public void testReturnTryReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnTryReturn.kt");
