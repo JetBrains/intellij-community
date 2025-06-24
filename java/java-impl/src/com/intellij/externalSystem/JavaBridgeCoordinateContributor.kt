@@ -35,7 +35,8 @@ fun IdeModifiableModelsProvider.setLibraryCoordinates(library: Library, libraryD
   }
 }
 
-private fun ProjectCoordinate.toMavenCoordinates(): MavenCoordinates? {
+@ApiStatus.Internal
+fun ProjectCoordinate.toMavenCoordinates(): MavenCoordinates? {
   val groupId = groupId ?: return null
   val artifactId = artifactId ?: return null
   val version = version ?: return null
