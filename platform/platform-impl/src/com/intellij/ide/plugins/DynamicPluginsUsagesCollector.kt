@@ -2,9 +2,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.LongEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.time.Duration
 
 @Internal
 internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
@@ -13,7 +16,7 @@ internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
 
   private val GROUP = EventLogGroup(
     id = "plugins.dynamic",
-    version = 3,
+    version = 4,
   )
 
   private val LOAD_SUCCESS_EVENT = GROUP.registerEvent(
@@ -31,6 +34,13 @@ internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
     eventField1 = EventFields.PluginInfoByDescriptor,
   )
 
+  private val LOAD_PAID_PLUGINS_EVENT = GROUP.registerEvent(
+    eventId = "load.paid",
+    eventField1 = LongEventField(name = "duration_s", description = "Paid plugins loading duration in whole seconds"),
+    eventField2 = EventFields.Count,
+    eventField3 = BooleanEventField("restart_required"),
+  )
+
   @Internal
   internal fun logDescriptorLoad(
     descriptor: IdeaPluginDescriptor,
@@ -45,5 +55,14 @@ internal object DynamicPluginsUsagesCollector : CounterUsagesCollector() {
   ) {
     (if (success) UNLOAD_SUCCESS_EVENT else UNLOAD_FAIL_EVENT)
       .log(descriptor)
+  }
+
+  @Internal
+  internal fun logPaidPluginsLoaded(
+    duration: Duration,
+    count: Int,
+    restartRequired: Boolean,
+  ) {
+    LOAD_PAID_PLUGINS_EVENT.log(duration.inWholeSeconds, count, restartRequired)
   }
 }
