@@ -15,7 +15,9 @@ public class UndoRemoteBehaviorService {
 
   public static boolean isSpeculativeUndoEnabled() {
     if (!Registry.is("ide.undo.frontend.if.possible", true) ||
-        PlatformUtils.isRider()) {
+        PlatformUtils.isRider() ||
+        PlatformUtils.isCLion() ||
+        PlatformUtils.isAppCode()) {
       return false;
     }
     var service = ApplicationManager.getApplication().getService(UndoRemoteBehaviorService.class);
