@@ -1348,7 +1348,9 @@ public class HighlightInfo implements Segment {
     }
     List<LazyFixDescription> newPairs = ContainerUtil.map(pairs, desc -> {
       Future<? extends List<IntentionActionDescriptor>> future = desc.future();
-      if (future == null) {
+      if (future == null || !future.isDone()) {
+        // if the existing fixture computation is not ready yet
+        // it's under another progress and cancellation won't work
         Consumer<? super QuickFixActionRegistrar> computer = desc.fixesComputer();
         future = CompletableFuture.completedFuture(doComputeLazyQuickFixes(document, psiFile.getProject(), desc.psiModificationStamp(), computer));
         return new LazyFixDescription(computer, desc.psiModificationStamp(), future);
