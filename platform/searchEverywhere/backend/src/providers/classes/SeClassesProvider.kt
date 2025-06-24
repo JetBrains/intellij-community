@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.backend.providers.classes
 
 import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
@@ -36,7 +37,7 @@ class SeClassesProvider(private val contributorWrapper: SeAsyncWeightedContribut
     Disposer.dispose(contributorWrapper)
   }
 
-  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.getSearchScopesInfo()
+  override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetsProviderDelegate.getSearchScopesInfo()
 
   override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
     targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>(index)

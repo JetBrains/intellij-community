@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -143,7 +144,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
     isAllTab: Boolean,
-  ): Map<SeProviderId, SeSearchScopesInfo> {
+  ): Map<SeProviderId, SearchScopesInfo> {
     return providerIds.mapNotNull { providerId ->
       val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, isAllTab)
       provider?.getSearchScopesInfo()?.let {

@@ -13,6 +13,9 @@
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>
 
+    <module name="intellij.platform.scopes"/>
+    <module name="intellij.platform.scopes.backend"/>
+
     <!-- todo navbar is not essential-->
     <module name="intellij.platform.navbar"/>
     <module name="intellij.platform.navbar.backend"/>

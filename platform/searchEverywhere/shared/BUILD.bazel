@@ -30,6 +30,7 @@ jvm_library(
     "//platform/usageView",
     "//platform/execution-impl",
     "//platform/statistics",
+    "//platform/scopes",
   ],
   exports = [
     "//platform/lang-impl",

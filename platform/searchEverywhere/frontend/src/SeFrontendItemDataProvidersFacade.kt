@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -68,7 +69,7 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText, isAllTab = isAllTab)
   }
 
-  suspend fun getSearchScopesInfos(): Map<SeProviderId, SeSearchScopesInfo> =
+  suspend fun getSearchScopesInfos(): Map<SeProviderId, SearchScopesInfo> =
     SeRemoteApi.getInstance().getSearchScopesInfoForProviders(
       projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab
     )
