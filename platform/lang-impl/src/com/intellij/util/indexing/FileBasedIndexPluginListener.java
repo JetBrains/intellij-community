@@ -15,7 +15,7 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
   }
 
   @Override
-  public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+  public void beforePluginsLoaded() {
     beforePluginSetChanged();
   }
 
@@ -25,7 +25,7 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
   }
 
   @Override
-  public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+  public void pluginsLoaded() {
     afterPluginSetChanged();
   }
 

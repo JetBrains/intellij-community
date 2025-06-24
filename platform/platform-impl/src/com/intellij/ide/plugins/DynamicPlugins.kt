@@ -55,6 +55,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
+import com.intellij.openapi.progress.util.TitledIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -80,6 +81,7 @@ import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
 import com.intellij.util.messages.impl.MessageBusEx
@@ -125,11 +127,28 @@ object DynamicPlugins {
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
   fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
+    if (descriptors.isEmpty()) {
+      return true
+    }
     return runProcess {
-      descriptors.forEach { check(it is PluginMainDescriptor) { it } }
       @Suppress("UNCHECKED_CAST") (descriptors as Collection<PluginMainDescriptor>)
-      updateDescriptorsWithoutRestart(descriptors, load = true) {
-        doLoadPlugin(it, project)
+      val descriptors = getDescriptorsToUpdateWithoutRestart(descriptors, load = true)
+      if (descriptors.isEmpty()) {
+        return@runProcess false
+      }
+      withPotemkinProgress(project, IdeBundle.message("plugins.progress.loading.plugins.for.current.project.title")) { indicator ->
+        publishingPluginsLoadedEvent {
+          for (descriptor in descriptors) {
+            indicator.title = IdeBundle.message("plugins.progress.loading.plugin.title", descriptor.name)
+            descriptor.isMarkedForLoading = true
+            if (!doLoadPlugin(descriptor)) {
+              LOG.info("Failed to load: $descriptor, restart required")
+              InstalledPluginsState.getInstance().isRestartRequired = true
+              return@publishingPluginsLoadedEvent false
+            }
+          }
+          return@publishingPluginsLoadedEvent true
+        }
       }
     }
   }
@@ -143,12 +162,25 @@ object DynamicPlugins {
     parentComponent: JComponent? = null,
     options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
   ): Boolean {
+    if (descriptors.isEmpty()) {
+      return true
+    }
     return runProcess {
       descriptors.forEach { check(it is PluginMainDescriptor) { it } }
       @Suppress("UNCHECKED_CAST") (descriptors as Collection<PluginMainDescriptor>)
-      updateDescriptorsWithoutRestart(descriptors, load = false) {
-        doUnloadPluginWithProgress(project, parentComponent, it, options)
+      val descriptors = getDescriptorsToUpdateWithoutRestart(descriptors, load = false)
+      if (descriptors.isEmpty()) {
+        return@runProcess false
       }
+      for (descriptor in descriptors) {
+        descriptor.isMarkedForLoading = false
+        if (!doUnloadPluginWithProgress(project, parentComponent, descriptor, options)) {
+          LOG.info("Failed to unload: $descriptor, restart required")
+          InstalledPluginsState.getInstance().isRestartRequired = true
+          return@runProcess false
+        }
+      }
+      return@runProcess true
     }
   }
 
@@ -182,15 +214,7 @@ object DynamicPlugins {
     }
   }
 
-  private fun updateDescriptorsWithoutRestart(
-    plugins: Collection<PluginMainDescriptor>,
-    load: Boolean,
-    executor: (PluginMainDescriptor) -> Boolean,
-  ): Boolean {
-    if (plugins.isEmpty()) {
-      return true
-    }
-
+  private fun getDescriptorsToUpdateWithoutRestart(plugins: Collection<PluginMainDescriptor>, load: Boolean): List<PluginMainDescriptor> {
     val pluginSet = PluginManagerCore.getPluginSet()
     val descriptors = plugins
       .asSequence()
@@ -203,7 +227,7 @@ object DynamicPlugins {
     LOG.info(message)
 
     if (!descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) }) {
-      return false
+      return emptyList()
     }
 
     // todo plugin installation should be done not in this method
@@ -224,16 +248,8 @@ object DynamicPlugins {
     if (!load) {
       comparator = comparator.reversed()
     }
-    for (descriptor in descriptors.sortedWith(comparator)) {
-      descriptor.isMarkedForLoading = load
-      if (!executor.invoke(descriptor)) {
-        LOG.info("Failed to $operationText: $descriptor, restart required")
-        InstalledPluginsState.getInstance().isRestartRequired = true
-        return false
-      }
-    }
 
-    return true
+    return descriptors.sortedWith(comparator)
   }
 
   fun checkCanUnloadWithoutRestart(module: IdeaPluginDescriptorImpl): String? {
@@ -900,13 +916,41 @@ object DynamicPlugins {
   @JvmOverloads
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
     return runProcess {
-      doLoadPlugin(pluginDescriptor, project)
+      withPotemkinProgress(project, IdeBundle.message("plugins.progress.loading.plugin.title", pluginDescriptor.name)) {
+        publishingPluginsLoadedEvent {
+          doLoadPlugin(pluginDescriptor)
+        }
+      }
     }
   }
 
-  private fun doLoadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
-    var result = false
+  @RequiresEdt
+  private fun <T> publishingPluginsLoadedEvent(action: () -> T): T {
+    val app = ApplicationManager.getApplication() as ApplicationImpl
+    app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginsLoaded()
+    try {
+      return action()
+    }
+    finally {
+      app.runWriteAction {
+        app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsLoaded()
+      }
+    }
+  }
 
+  private fun withPotemkinProgress(project: Project?, title: @NlsContexts.ModalProgressTitle String, action: (TitledIndicator) -> Boolean): Boolean {
+    var result = false
+    val indicator = PotemkinProgress(title, project, null, null)
+
+    indicator.runInSwingThread {
+      result = action(indicator)
+      indicator.title = title
+    }
+    return result
+  }
+
+  @RequiresEdt
+  private fun doLoadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
     val isVetoed = VETOER_EP_NAME.findFirstSafe {
       it.vetoPluginLoad(pluginDescriptor)
     } != null
@@ -915,14 +959,7 @@ object DynamicPlugins {
       return false
     }
 
-    val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.loading.plugin.title", pluginDescriptor.name),
-                                     project,
-                                     null,
-                                     null)
-    indicator.runInSwingThread {
-      result = loadPluginWithoutProgress(pluginDescriptor, checkImplementationDetailDependencies = true)
-    }
-    return result
+    return loadPluginWithoutProgress(pluginDescriptor, checkImplementationDetailDependencies = true)
   }
 
   private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
