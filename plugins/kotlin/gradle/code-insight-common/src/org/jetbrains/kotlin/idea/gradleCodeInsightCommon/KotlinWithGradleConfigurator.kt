@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
@@ -756,13 +757,15 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
 
         private fun showErrorMessage(project: Project, @Nls message: String?) {
-            Messages.showErrorDialog(
-                project,
-                "<html>" + KotlinIdeaGradleBundle.message("text.couldn.t.configure.kotlin.gradle.plugin.automatically") + "<br/>" +
-                        (if (message != null) "$message<br/>" else "") +
-                        "<br/>${KotlinIdeaGradleBundle.message("text.see.manual.installation.instructions")}</html>",
-                KotlinIdeaGradleBundle.message("title.configure.kotlin.gradle.plugin")
-            )
+            ApplicationManager.getApplication().invokeLater(Runnable {
+                Messages.showErrorDialog(
+                    project,
+                    "<html>" + KotlinIdeaGradleBundle.message("text.couldn.t.configure.kotlin.gradle.plugin.automatically") + "<br/>" +
+                            (if (message != null) "$message<br/>" else "") +
+                            "<br/>${KotlinIdeaGradleBundle.message("text.see.manual.installation.instructions")}</html>",
+                    KotlinIdeaGradleBundle.message("title.configure.kotlin.gradle.plugin")
+                )
+            })
         }
 
         fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", true)
