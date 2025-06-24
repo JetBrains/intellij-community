@@ -19,13 +19,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
-import com.intellij.platform.searchEverywhere.frontend.SeFrontendService.Companion.POPUP_LOCATION_SETTINGS_KEY
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
@@ -66,7 +64,10 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
-class SePopupContentPane(private val project: Project?, private val vm: SePopupVm, private val resizePopupHandler: (Dimension) -> Unit, onShowFindToolWindow: () -> Unit) : JPanel(), Disposable, UiDataProvider {
+class SePopupContentPane(private val project: Project?, private val vm: SePopupVm,
+                         private val resizePopupHandler: (Dimension) -> Unit,
+                         initPopupExtendedSize: Dimension?,
+                         onShowFindToolWindow: () -> Unit) : JPanel(), Disposable, UiDataProvider {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
@@ -96,10 +97,9 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   private val isSearchCompleted: AtomicBoolean = AtomicBoolean(false)
 
-  var popupViewMode: PopupViewMode = PopupViewMode.COMPACT
+  var isCompactViewMode: Boolean = true
     private set
-  var popupExtendedSize: Dimension? = (project?.let { WindowStateService.getInstance(it) }
-                                       ?: WindowStateService.getInstance()).getSize(POPUP_LOCATION_SETTINGS_KEY)
+  var popupExtendedSize: Dimension? = initPopupExtendedSize
 
   init {
     layout = GridLayout()
@@ -138,7 +138,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       .row().cell(extendedInfoContainer, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
 
     // hide resultsScrollPane and extendedInfoContainer
-    switchViewMode()
+    updateViewMode()
 
     textField.launchOnShow("Search Everywhere text field text binding") {
       withContext(Dispatchers.EDT) {
@@ -194,7 +194,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
                 updateEmptyStatus()
               }
 
-              switchViewMode()
+              updateViewMode()
             }
           }.collect { event ->
             withContext(Dispatchers.EDT) {
@@ -212,7 +212,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
                 resultList.selectedIndex = 0
               }
 
-              switchViewMode()
+              updateViewMode()
             }
           }
         }
@@ -265,6 +265,13 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
 
     WindowMoveListener(this).installTo(headerPane)
+    addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        if (project != null && !isCompactViewMode) {
+          popupExtendedSize = size
+        }
+      }
+    })
 
     DumbAwareAction.create { vm.getHistoryItem(true)?.let { textField.text = it; textField.selectAll() } }
       .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, this)
@@ -628,41 +635,41 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
   }
 
-  private fun switchViewMode() {
+  private fun updateViewMode() {
     if (textField.text.isEmpty() && resultList.isEmpty) {
-      switchViewMode(true)
+      updateViewMode(true)
     }
     else {
-      switchViewMode(false)
+      updateViewMode(false)
     }
   }
 
-  private fun switchViewMode(compact: Boolean) {
-    if (compact == (popupViewMode == PopupViewMode.COMPACT)) return
-    popupViewMode = if (compact) PopupViewMode.COMPACT else PopupViewMode.EXPANDED
-
-    resizePopupHandler(calcPreferredSize(popupViewMode))
-
+  private fun updateViewMode(compact: Boolean) {
     extendedInfoContainer.isVisible = !compact && isExtendedInfoEnabled()
     resultsScrollPane.isVisible = !compact
+
+    if (compact == isCompactViewMode) return
+    isCompactViewMode = compact
+
+    resizePopupHandler(calcPreferredSize(isCompactViewMode))
   }
 
   fun getExpandedSize(): Dimension {
-    return calcPreferredSize(PopupViewMode.EXPANDED)
+    return calcPreferredSize(false)
   }
 
   override fun getPreferredSize(): Dimension {
-    return calcPreferredSize(popupViewMode)
+    return calcPreferredSize(isCompactViewMode)
   }
 
-  private fun calcPreferredSize(popupViewMode: PopupViewMode): Dimension {
-    val preferredHeight = when (popupViewMode) {
-      PopupViewMode.COMPACT ->
-        headerPane.preferredSize.height + textField.preferredSize.height
-      PopupViewMode.EXPANDED ->
-        popupExtendedSize?.height ?: JBUI.CurrentTheme.BigPopup.maxListHeight()
+  private fun calcPreferredSize(compact: Boolean): Dimension {
+    val preferredHeight = if (compact) {
+      headerPane.preferredSize.height + textField.preferredSize.height
     }
-    return Dimension(popupExtendedSize?.width ?: 670, preferredHeight)
+    else {
+      popupExtendedSize?.height ?: JBUI.CurrentTheme.BigPopup.maxListHeight()
+    }
+    return Dimension(popupExtendedSize?.width ?: resultsScrollPane.preferredSize.width, preferredHeight)
   }
 
   private fun logTabSwitchedEvent(e: AnActionEvent) {
@@ -674,11 +681,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.PREDEFINED_TEXT] = textField.text
-  }
-
-  enum class PopupViewMode {
-    COMPACT,
-    EXPANDED
   }
 
   /**
