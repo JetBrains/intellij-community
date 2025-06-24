@@ -13,6 +13,7 @@ import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -48,7 +49,7 @@ import kotlin.time.Duration.Companion.minutes
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
-private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("pyproject.toml", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
+private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("$PY_PROJECT_TOML", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
 private val poetryNotFoundException: @Nls String = PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message")
 private val VERSION_2 = "2.0.0".toVersion()
 

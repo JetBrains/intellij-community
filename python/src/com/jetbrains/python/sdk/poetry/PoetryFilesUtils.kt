@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiElementFilter
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.PythonSdkUpdater
@@ -41,7 +42,6 @@ import java.util.concurrent.ConcurrentMap
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-const val PY_PROJECT_TOML: String = "pyproject.toml"
 const val POETRY_LOCK: String = "poetry.lock"
 const val POETRY_TOML: String = "poetry.toml"
 

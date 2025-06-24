@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.workspaceModel.ide.toPath
 import com.jetbrains.python.projectModel.uv.UvProjectAware.CoroutineScopeService.Companion.coroutineScope
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +54,7 @@ class UvProjectAware(
       .entities<ContentRootEntity>()
       .filter { it.entitySource == source }
       .map { it.url.toPath() }
-      .map { it.resolve(UvConstants.PYPROJECT_TOML) }
+      .map { it.resolve(PY_PROJECT_TOML) }
       .map { it.toCanonicalPath() }
       .toSet()
   }

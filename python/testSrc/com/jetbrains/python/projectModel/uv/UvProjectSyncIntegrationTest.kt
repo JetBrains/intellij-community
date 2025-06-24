@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -36,7 +37,7 @@ class UvProjectSyncIntegrationTest {
 
   @Test
   fun `src directory is mapped to module source root`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
       dependencies = []
@@ -57,7 +58,7 @@ class UvProjectSyncIntegrationTest {
 
   @Test
   fun `root dot venv directory is automatically excluded`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
       dependencies = []
@@ -86,7 +87,7 @@ class UvProjectSyncIntegrationTest {
 
   @Test
   fun `projects inside dot venv are skipped`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
     """.trimIndent())
@@ -104,7 +105,7 @@ class UvProjectSyncIntegrationTest {
 
   @Test
   fun `workspace project with a path dependency`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
       dependencies = [

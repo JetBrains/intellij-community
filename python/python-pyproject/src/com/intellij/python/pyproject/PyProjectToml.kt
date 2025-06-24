@@ -20,6 +20,15 @@ import java.io.InputStream
 @Internal
 const val PY_PROJECT_TOML: String = "pyproject.toml"
 
+@Internal
+const val PY_PROJECT_TOML_PROJECT: String = "project"
+
+@Internal
+const val PY_PROJECT_TOML_BUILD_SYSTEM: String = "build-system"
+
+@Internal
+const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool."
+
 /**
  * Represents an issue that could occur in [PyProjectToml.parse].
  */
@@ -110,7 +119,7 @@ data class PyProjectToml(
         return Result.failure(toml.errors())
       }
 
-      val projectTable = toml.safeGet<TomlTable>("project").getOrIssue(issues)
+      val projectTable = toml.safeGet<TomlTable>(PY_PROJECT_TOML_PROJECT).getOrIssue(issues)
 
       if (projectTable == null) {
         return success(PyProjectToml(null, issues, toml))

@@ -14,6 +14,7 @@ import com.intellij.python.hatch.cli.HatchEnvironments
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.python.hatch.runtime.createHatchRuntime
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -65,7 +66,7 @@ internal class CliBasedHatchService private constructor(
       when {
         workingDirectoryPath.resolve("hatch.toml").exists() -> true
         else -> {
-          val pyProjectTomlPath = workingDirectoryPath.resolve("pyproject.toml").takeIf { it.isRegularFile() }
+          val pyProjectTomlPath = workingDirectoryPath.resolve(PY_PROJECT_TOML).takeIf { it.isRegularFile() }
           val hatchRegex = """^\[tool\.hatch\..+]$""".toRegex(RegexOption.MULTILINE)
           pyProjectTomlPath?.readText()?.contains(hatchRegex) == true
         }

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase

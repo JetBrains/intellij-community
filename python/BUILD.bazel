@@ -450,6 +450,8 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//python/impl.helperLocator:community-helpersLocator",
+    "//python/python-pyproject:pyproject",
+    "//python/python-pyproject:pyproject_test_lib",
   ],
   runtime_deps = [
     ":python-community-tests_test_resources",
