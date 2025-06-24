@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -61,6 +61,12 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
           myHolder.registerProblem(regExpSimpleClass,
                                    RegExpBundle.message("warning.duplicate.predefined.character.class.0.inside.character.class", text),
                                    new DuplicateCharacterInClassFix(regExpSimpleClass));
+        }
+      }
+      else if (element instanceof RegExpIntersection intersection) {
+        final HashSet<Object> visited = new HashSet<>();
+        for (RegExpClassElement operand : intersection.getOperands()) {
+          checkForDuplicates(operand, visited);
         }
       }
     }
