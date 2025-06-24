@@ -461,6 +461,8 @@ def create_warn_multiproc(original_name):
 
     return new_warn_multiproc
 
+def patch_path(path, args):
+    return args[0] if is_python(path) and args[0] == sys.executable else path
 
 def create_execl(original_name):
     def new_execl(path, *args):
@@ -473,6 +475,7 @@ def create_execl(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
+            path = patch_path(path, args)
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, *args)
     return new_execl
@@ -487,6 +490,7 @@ def create_execv(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
+            path = patch_path(path, args)
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, args)
     return new_execv
@@ -501,6 +505,7 @@ def create_execve(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
+            path = patch_path(path, args)
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, args, env)
     return new_execve
