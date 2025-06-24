@@ -40,16 +40,19 @@ internal class IslandsFeedback : ProjectActivity {
       return if (oneIsland) "https://surveys.jetbrains.com/s3/JetBrains-EAP-UI-Feedback-Survey" else "https://surveys.jetbrains.com/s3/Feedback-Survey-About-UI-EAP"
     }
 
-    private var myFirstProject = !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI() &&
-                                 !ApplicationManager.getApplication().isUnitTestMode &&
-                                 !ApplicationManager.getApplication().isHeadlessEnvironment &&
-                                 !AppMode.isRemoteDevHost()
+    private var myFirstProject = true
   }
 
   override suspend fun execute(project: Project) {
     if (myFirstProject) {
       myFirstProject = false
-      handleFeedback(project)
+
+      if (!ApplicationManager.getApplication().isUnitTestMode &&
+          !ApplicationManager.getApplication().isHeadlessEnvironment &&
+          !AppMode.isRemoteDevHost() &&
+          !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI()) {
+        handleFeedback(project)
+      }
     }
   }
 
