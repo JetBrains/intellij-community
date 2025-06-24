@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.LocalTimeCounter;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
@@ -67,7 +68,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     static final int IS_WRITABLE_FLAG = 0x0100_0000;
     static final int IS_HIDDEN_FLAG = 0x0200_0000;
     static final int IS_OFFLINE = 0x0400_0000;
-    /** {@code true} if the line separator for this file was detected to be equal to {@link com.intellij.util.LineSeparator#getSystemLineSeparator()}. */
+    /** {@code true} if the line separator for this file was detected to be equal to {@link LineSeparator#getSystemLineSeparator()}. */
     static final int SYSTEM_LINE_SEPARATOR_DETECTED = 0x0800_0000; // applicable only to non-directory files
     /** The case-sensitivity of the directory children is known, so the value of {@link #CHILDREN_CASE_SENSITIVE} is actual. */
     static final int CHILDREN_CASE_SENSITIVITY_CACHED = SYSTEM_LINE_SEPARATOR_DETECTED; // applicable only to directories
@@ -537,12 +538,21 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean equals(Object o) {
-    return this == o || o instanceof VirtualFileSystemEntry && id == ((VirtualFileSystemEntry)o).id;
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+
+    if (!(o instanceof VirtualFileWithId)) {
+      return false;
+    }
+
+    //untrivial equals implementation: all VirtualFileWithId implementations are considered comparable -- even if they
+    // are completely different implementation classes
+
+    return ((VirtualFileWithId)o).getId() == id;
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return id;
   }
 

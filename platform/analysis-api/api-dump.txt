@@ -718,32 +718,16 @@ com.intellij.openapi.vfs.LocalFileOperationsHandler
 com.intellij.openapi.vfs.LocalFileSystem$WatchRequest
 - a:getRootPath():java.lang.String
 - a:isToWatchRecursively():Z
-com.intellij.openapi.vfs.newvfs.FileSystemInterface
-- sf:DEFAULT_LENGTH:J
-- sf:DEFAULT_TIMESTAMP:J
-- a:contentsToByteArray(com.intellij.openapi.vfs.VirtualFile):B[]
-- a:copyFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFile
-- a:createChildDirectory(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFile
-- a:createChildFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFile
-- a:deleteFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile):V
-- a:exists(com.intellij.openapi.vfs.VirtualFile):Z
-- findCachedFilesForPath(java.lang.String):java.lang.Iterable
-- a:getInputStream(com.intellij.openapi.vfs.VirtualFile):java.io.InputStream
-- a:getLength(com.intellij.openapi.vfs.VirtualFile):J
-- a:getOutputStream(com.intellij.openapi.vfs.VirtualFile,java.lang.Object,J,J):java.io.OutputStream
-- a:getTimeStamp(com.intellij.openapi.vfs.VirtualFile):J
-- a:isDirectory(com.intellij.openapi.vfs.VirtualFile):Z
-- a:isSymLink(com.intellij.openapi.vfs.VirtualFile):Z
-- a:isWritable(com.intellij.openapi.vfs.VirtualFile):Z
-- a:list(com.intellij.openapi.vfs.VirtualFile):java.lang.String[]
-- a:moveFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):V
-- a:renameFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
-- a:resolveSymLink(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- a:setTimeStamp(com.intellij.openapi.vfs.VirtualFile,J):V
-- a:setWritable(com.intellij.openapi.vfs.VirtualFile,Z):V
 a:com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 - s:findCachedFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.util.Pair
 - ps:findFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
+a:com.intellij.openapi.vfs.newvfs.RefreshQueue
+- sf:Companion:com.intellij.openapi.vfs.newvfs.RefreshQueue$Companion
+- sf:getInstance():com.intellij.openapi.vfs.newvfs.RefreshQueue
+f:com.intellij.openapi.vfs.newvfs.RefreshQueue$Companion
+- f:getInstance():com.intellij.openapi.vfs.newvfs.RefreshQueue
+a:com.intellij.openapi.vfs.newvfs.RefreshSession
+- f:addAllFiles(com.intellij.openapi.vfs.VirtualFile[]):V
 f:com.intellij.openapi.vfs.newvfs.VfsImplUtil
 - s:findFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - s:findFileByPathIfCached(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile

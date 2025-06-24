@@ -2,9 +2,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +40,29 @@ public interface FileSystemInterface {
     return Collections.emptyList();
   }
 
+  /**
+   * Resolves the path to {@link VirtualFile}, but does not cache anything _new_ during the resolution process.
+   * <p>
+   * Contrary to {@link com.intellij.openapi.vfs.VirtualFileSystem#findFileByPath(String)} this method wraps an already
+   * cached {@link VirtualFile}, if such a file is already cached for a path, but if there is no file cached yet for the
+   * path -- this method returns a 'transient' {@link VirtualFile} instance without putting it into VFS cache.
+   * <p>
+   * In <b>both</b> cases returned {@link VirtualFile} implements {@link CacheAvoidingVirtualFile} interface, and does NOT
+   * cache any data about it. So this method uses already cached data, but never caches _new_ data during its execution.
+   * Also, returned {@link VirtualFile} instance avoids caching during {@link VirtualFile#getChildren()} calls -- so the
+   * in-depth tree walking starting from this file is cache-less.
+   *
+   * @return {@link VirtualFile} for the path, if it is already resolved and cached, transient file otherwise
+   * @see com.intellij.openapi.vfs.VirtualFileManager#findFileByUrlWithoutCaching(String)
+   * @see CacheAvoidingVirtualFile
+   * @see com.intellij.openapi.vfs.newvfs.TransientVirtualFileImpl
+   * @see com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFileWrapper
+   */
+  @ApiStatus.Internal
+  default @Nullable VirtualFile findFileByPathWithoutCaching(@NotNull @NonNls String path) {
+    throw new UnsupportedOperationException("Method not implemented");
+  }
+
   @NotNull VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir)
     throws IOException;
 
@@ -69,7 +90,7 @@ public interface FileSystemInterface {
 
   /** Does NOT add the BOM to the beginning of the stream, unlike the {@link VirtualFile#getOutputStream(Object)} */
   @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException;
-
+  
   /** @return length of the given file, in bytes, or 0 if the file is not a regular file */
   long getLength(@NotNull VirtualFile file);
 }

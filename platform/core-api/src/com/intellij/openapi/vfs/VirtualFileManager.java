@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
@@ -92,6 +94,46 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   public @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
     return null;
+  }
+
+  /**
+   * Resolves url to {@link VirtualFile}, but does not cache anything.
+   * Difference with {@link #findFileByUrl(String)} is that this method finds an already cached {@link VirtualFile}, if such a
+   * file was already cached, but if there is no file cached yet for the url -- this method returns a {@link CacheAvoidingVirtualFile}
+   * instance, and does NOT cache any data about it.
+   * So this method uses already cached data, but never caches _new_ data during its execution.
+   * <p/>
+   * This method is intended to deal with file-trees outside the main project tree: regular {@link #findFileByUrl(String)}
+   * pushes data into the underlying VFS cache (both in-memory and persistent) -- to provide faster access, but also
+   * to satisfy some {@link VirtualFile}'s contract statements about equality and {@link com.intellij.openapi.util.UserDataHolder}, etc.
+   * Such caching makes sense for +/- frequently accessed files, but makes little sense for rarely accessed files -- while
+   * the cached data could grow large and expensive to maintain if there are really a lot of such files.
+   * <p/>
+   * There are tasks where we'd prefer to use the {@link VirtualFile} VFS API, but we don't want to clutter the VFS cache
+   * with the data of all the files accessed -- e.g. because this is a big, but rarely accessed file-tree. This implementation
+   * is an experimental approach to deal with such cases -- by sacrificing part of the {@link VirtualFile} contract.
+   *
+   * @see CacheAvoidingVirtualFile
+   * @see com.intellij.openapi.vfs.newvfs.TransientVirtualFileImpl
+   */
+  @ApiStatus.Internal
+  public @Nullable VirtualFile findFileByUrlWithoutCaching(@NotNull String url) {
+    int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
+    VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
+    if (fileSystem == null) {
+      return null;
+    }
+
+    if (!(fileSystem instanceof FileSystemInterface)) {
+      //MAYBE RC: return null, as in a branch above, there fileSystem is not found at all?
+      throw new UnsupportedOperationException(
+        ".findFileByUrlWithoutCaching(" + url + ") is supported only for fileSystems implementing FileSystemInterface, " +
+        "but " + fileSystem + " doesn't"
+      );
+    }
+
+    String path = url.substring(protocolSepIndex + URLUtil.SCHEME_SEPARATOR.length());
+    return ((FileSystemInterface)fileSystem).findFileByPathWithoutCaching(path);
   }
 
   /**

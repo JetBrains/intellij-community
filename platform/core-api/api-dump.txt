@@ -918,6 +918,29 @@ com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider
 com.intellij.openapi.vfs.newvfs.BulkFileListener
 - after(java.util.List):V
 - before(java.util.List):V
+com.intellij.openapi.vfs.newvfs.FileSystemInterface
+- sf:DEFAULT_LENGTH:J
+- sf:DEFAULT_TIMESTAMP:J
+- a:contentsToByteArray(com.intellij.openapi.vfs.VirtualFile):B[]
+- a:copyFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- a:createChildDirectory(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- a:createChildFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- a:deleteFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile):V
+- a:exists(com.intellij.openapi.vfs.VirtualFile):Z
+- findCachedFilesForPath(java.lang.String):java.lang.Iterable
+- a:getInputStream(com.intellij.openapi.vfs.VirtualFile):java.io.InputStream
+- a:getLength(com.intellij.openapi.vfs.VirtualFile):J
+- a:getOutputStream(com.intellij.openapi.vfs.VirtualFile,java.lang.Object,J,J):java.io.OutputStream
+- a:getTimeStamp(com.intellij.openapi.vfs.VirtualFile):J
+- a:isDirectory(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isSymLink(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isWritable(com.intellij.openapi.vfs.VirtualFile):Z
+- a:list(com.intellij.openapi.vfs.VirtualFile):java.lang.String[]
+- a:moveFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):V
+- a:renameFile(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- a:resolveSymLink(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:setTimeStamp(com.intellij.openapi.vfs.VirtualFile,J):V
+- a:setWritable(com.intellij.openapi.vfs.VirtualFile,Z):V
 com.intellij.openapi.vfs.pointers.VirtualFilePointer
 - sf:EMPTY_ARRAY:com.intellij.openapi.vfs.pointers.VirtualFilePointer[]
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
