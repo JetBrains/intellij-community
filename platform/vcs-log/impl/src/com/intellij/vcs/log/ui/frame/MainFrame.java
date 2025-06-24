@@ -65,6 +65,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
 
   private final @NotNull VcsLogFilterUiEx myFilterUi;
 
+  private final @NotNull VcsLogAsyncChangesTreeModel myChangesTreeModel;
   private final @NotNull VcsLogChangesBrowser myChangesBrowser;
   private final @NotNull Splitter myChangesBrowserSplitter;
 
@@ -106,10 +107,8 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
       new VcsLogCommitSelectionListenerForDetails(logData, colorManager, myDetailsPanel, this);
     commitDetailsLoader.addListener(listenerForDetails);
 
-    myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
-      int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
-      return myLogData.getMiniDetailsGetter().getCachedDataOrPlaceholder(index);
-    }, this);
+    myChangesTreeModel = new VcsLogAsyncChangesTreeModel(logData, myUiProperties, this);
+    myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myChangesTreeModel, this);
     myChangesBrowser.setShowDiffActionPreview(withEditorDiffPreview ? new VcsLogEditorDiffPreview(myChangesBrowser) : null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
@@ -125,7 +124,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
 
     VcsLogCommitSelectionListenerForDiff commitSelectionListener =
-      new VcsLogCommitSelectionListenerForDiff(changesLoadingPane, myChangesBrowser) {
+      new VcsLogCommitSelectionListenerForDiff(changesLoadingPane, myChangesTreeModel) {
         @Override
         public void onLoadingStopped() {
           super.onLoadingStopped();
@@ -211,7 +210,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-    myChangesBrowser.setAffectedPaths(VcsLogUtil.getAffectedPaths(dataPack));
+    myChangesTreeModel.setAffectedPaths(VcsLogUtil.getAffectedPaths(dataPack));
   }
 
   public @NotNull VcsLogGraphTable getGraphTable() {
@@ -228,7 +227,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    Change[] changes = myChangesBrowser.getDirectChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
+    Change[] changes = myChangesTreeModel.getChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
     sink.set(VcsDataKeys.CHANGES, changes);
     sink.set(VcsDataKeys.SELECTED_CHANGES, changes);
     VcsLogComponents.collectLogKeys(sink, myUiProperties, myGraphTable, myHistory, myFilterUi, myToolbar, this);
