@@ -25,7 +25,7 @@ internal abstract class GHPRViewedStateAction(
 
     if (!vm.isOnLatest) return
 
-    e.presentation.isEnabledAndVisible = vm.isViewedStateForAllChanges(changes, !isViewed)
+    e.presentation.isEnabledAndVisible = !vm.isViewedStateForAllChanges(changes, isViewed)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
