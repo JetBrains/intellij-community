@@ -28,6 +28,7 @@ import java.util.EnumSet
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.copyTo
+import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -133,7 +134,7 @@ internal class HashMismatchException(message: String) : IOException(message)
 internal fun unpackCompilationPartArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
   if (item.output.name in COMPILATION_PARTS_SPECIAL_FILES) {
     // no unpack needed, just copy
-    item.file.copyTo(item.output, overwrite = true)
+    item.file.copyTo(item.output.createParentDirectories(), overwrite = true)
     if (saveHash) {
       // save actual hash
       Files.writeString(item.output.resolveSibling(item.output.name + ".hash"), item.hash)
