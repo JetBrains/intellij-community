@@ -5,7 +5,6 @@ import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.SearchEverywhereItem;
-import com.intellij.find.impl.TextSearchRightActionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -37,7 +36,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -67,7 +65,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -1906,129 +1903,4 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
   };
 
-  private static final class HintHelper {
-
-    private final ExtendableTextField myTextField;
-
-    private final TextIcon myHintTextIcon = new TextIcon("", JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), Gray.TRANSPARENT, 0);
-    private final RowIcon myWarnIcon = new RowIcon(2, com.intellij.ui.icons.RowIcon.Alignment.BOTTOM);
-    private final ExtendableTextComponent.Extension myHintExtension = createExtension(myHintTextIcon);
-    private final ExtendableTextComponent.Extension mySearchProcessExtension = createExtension(AnimatedIcon.Default.INSTANCE);
-    private final ExtendableTextComponent.Extension myWarningExtension;
-    private final List<ExtendableTextComponent.Extension> myRightExtensions = new ArrayList<>();
-
-    private HintHelper(ExtendableTextField field) {
-      myTextField = field;
-      myHintTextIcon.setFont(myTextField.getFont());
-      myHintTextIcon.setFontTransform(FontInfo.getFontRenderContext(myTextField).getTransform());
-      // Try aligning hint by baseline with the text field
-      myHintTextIcon.setInsets(JBUIScale.scale(3), 0, 0, 0);
-
-      myWarnIcon.setIcon(AllIcons.General.Warning, 0);
-      myWarnIcon.setIcon(myHintTextIcon, 1);
-      myWarningExtension = createExtension(myWarnIcon);
-    }
-
-    public void setHint(String hintText) {
-      myTextField.removeExtension(myHintExtension);
-      myTextField.removeExtension(myWarningExtension);
-      if (StringUtil.isNotEmpty(hintText)) {
-        myHintTextIcon.setText(hintText);
-        addExtensionAsLast(myHintExtension);
-      }
-    }
-
-    public void setWarning(String warnText) {
-      myTextField.removeExtension(myHintExtension);
-      myTextField.removeExtension(myWarningExtension);
-      if (StringUtil.isNotEmpty(warnText)) {
-        myHintTextIcon.setText(warnText);
-        myWarnIcon.setIcon(myHintTextIcon, 1);
-        addExtensionAsLast(myWarningExtension);
-      }
-    }
-
-    public void setSearchInProgress(boolean inProgress) {
-      myTextField.removeExtension(mySearchProcessExtension);
-      if (inProgress) myTextField.addExtension(mySearchProcessExtension);
-    }
-
-    //set extension which should be shown last
-    private void addExtensionAsLast(ExtendableTextComponent.Extension ext) {
-      ArrayList<ExtendableTextComponent.Extension> extensions = new ArrayList<>(myTextField.getExtensions());
-      extensions.add(0, ext);
-      myTextField.setExtensions(extensions);
-    }
-
-    private static @NotNull ExtendableTextComponent.Extension createExtension(Icon icon) {
-      return new ExtendableTextComponent.Extension() {
-        @Override
-        public Icon getIcon(boolean hovered) {
-          return icon;
-        }
-      };
-    }
-
-    private void setRightExtensions(@NotNull List<? extends AnAction> actions) {
-      myTextField.removeExtension(myHintExtension);
-      myTextField.removeExtension(myWarningExtension);
-      actions.stream().map(HintHelper::createRightActionExtension).forEach(it -> {
-        addExtensionAsLast(it);
-        myRightExtensions.add(it);
-      });
-    }
-
-    private void removeRightExtensions() {
-      myRightExtensions.forEach(myTextField::removeExtension);
-    }
-
-    private static @NotNull ExtendableTextComponent.Extension createRightActionExtension(@NotNull AnAction action) {
-      return new ExtendableTextComponent.Extension() {
-        @Override
-        public Icon getIcon(boolean hovered) {
-          Presentation presentation = action.getTemplatePresentation();
-          if (!(action instanceof TextSearchRightActionAction)) return presentation.getIcon();
-
-          if (((TextSearchRightActionAction)action).isSelected()) {
-            return presentation.getSelectedIcon();
-          }
-          else if (hovered) {
-            return presentation.getHoveredIcon();
-          }
-          else {
-            return presentation.getIcon();
-          }
-        }
-
-        @Override
-        public String getTooltip() {
-          return action instanceof TextSearchRightActionAction
-                 ? ((TextSearchRightActionAction)action).getTooltip()
-                 : action.getTemplatePresentation().getDescription();
-        }
-
-        @Override
-        public boolean isSelected() {
-          return action instanceof ToggleAction toggleAction && toggleAction.isSelected(createActionEvent());
-        }
-
-        @Override
-        public Dimension getButtonSize() {
-          return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
-        }
-
-        @Override
-        public Runnable getActionOnClick() {
-          return () -> {
-            action.actionPerformed(createActionEvent());
-          };
-        }
-
-        private AnActionEvent createActionEvent() {
-          return AnActionEvent.createFromDataContext(ActionPlaces.POPUP, action.getTemplatePresentation().clone(),
-                                                     DataContext.EMPTY_CONTEXT);
-        }
-      };
-    }
-  }
 }

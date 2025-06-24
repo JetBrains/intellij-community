@@ -16,6 +16,7 @@ interface SeTab : Disposable {
   val name: @Nls String
   val shortName: @Nls String
   val id: String
+  val isIndexingDependent: Boolean get() = false
 
   /**
    * Retrieves a flow of search result events based on the provided parameters.
