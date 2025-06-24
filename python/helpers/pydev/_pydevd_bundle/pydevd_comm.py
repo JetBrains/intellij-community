@@ -1428,7 +1428,7 @@ class InternalTableImageStartCommand(InternalTableImageCommandBase):
 
 class InternalTableImageChunkCommand(InternalTableImageCommandBase):
     def __init__(self, sequence, thread_id, frame_id, init_command, command_type, offset, image_id):
-        InternalTableImageCommandBase.__init__(sequence, thread_id, frame_id, init_command, command_type)
+        InternalTableImageCommandBase.__init__(self, sequence, thread_id, frame_id, init_command, command_type)
         self._offset = offset
         self._image_id = image_id
 
