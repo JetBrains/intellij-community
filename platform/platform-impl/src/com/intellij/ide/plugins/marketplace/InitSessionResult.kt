@@ -5,17 +5,16 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import kotlin.collections.ifEmpty
 
 @Serializable
 @ApiStatus.Internal
-class InstallPluginResult {
-  var installedDescriptor: PluginDto? = null
-  var success: Boolean = true
-  var cancel: Boolean = false
-  var showErrors: Boolean = true
-  var restartRequired: Boolean = true
-  var dynamicRestartRequired = false
-  var pluginsToDisable: Set<PluginId> = emptySet()
-  var errors: Map<PluginId, CheckErrorsResult> = emptyMap()
+data class InitSessionResult(
+  @Transient val visiblePlugins: List<PluginUiModel> = emptyList(),
+  val pluginStates: Map<PluginId, Boolean> = emptyMap(),
+  val visiblePluginDtos: List<PluginDto> = visiblePlugins.map(PluginDto::fromModel),
+) {
+  fun getVisiblePluginsList(): List<PluginUiModel> = visiblePlugins.ifEmpty { visiblePluginDtos }
 }

@@ -545,6 +545,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                                                        updateModel,
                                                                                        modalityState) ?: return
 
+
   }
 
   private fun updateAdditionalText() {
@@ -1403,7 +1404,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                 false,
                                 false,
                                 true,
-                                Collections.emptyList())
+                                Collections.emptyMap())
     }
   }
 

@@ -41,7 +41,7 @@ object PluginManagerPanelFactory {
       )
 
       val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
-      val errors = myPluginModel.getErrors(errorCheckResults)
+      val errors = MyPluginModel.getErrors(errorCheckResults)
       try {
         for (query in queries) {
           val result = pluginManager.executeMarketplaceQuery(query, 18, false)
@@ -63,19 +63,19 @@ object PluginManagerPanelFactory {
   @ApiStatus.Internal
   fun createInstalledPanel(cs: CoroutineScope, myPluginModel: MyPluginModel, callback: (CreateInstalledPanelModel) -> Unit) {
     cs.launch {
-      try {
-        PluginLogo.startBatchMode()
-
-        val pluginManager = UiPluginManager.getInstance()
-        val installedPlugins = pluginManager.getInstalledPlugins()
-        val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
-        val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
-        val errors = myPluginModel.getErrors(errorCheckResults)
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val pluginManager = UiPluginManager.getInstance()
+      val installedPlugins = pluginManager.getInstalledPlugins()
+      val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
+      val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
+      val errors = MyPluginModel.getErrors(errorCheckResults)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        try {
+          PluginLogo.startBatchMode()
           callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins, errors))
         }
-      } finally {
-        PluginLogo.endBatchMode()
+        finally {
+          PluginLogo.endBatchMode()
+        }
       }
     }
   }

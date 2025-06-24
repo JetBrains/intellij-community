@@ -69,6 +69,12 @@ public final class InstalledPluginsState {
     }
   }
 
+  public @NotNull Collection<PluginId> getInstalledWithoutRestartPlugins() {
+    synchronized (myLock) {
+      return Collections.unmodifiableCollection(myInstalledWithoutRestartPlugins);
+    }
+  }
+
   public @NotNull Collection<PluginId> getUpdatedPlugins() {
     synchronized (myLock) {
       return Collections.unmodifiableCollection(myUpdatedPlugins);

@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -62,9 +63,10 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun disposeUpdaterService(sessionId: String)
   suspend fun notifyUpdateFinished(sessionId: String)
   suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
-  suspend fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState>
+  suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(plugin: PluginDto): Boolean
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
+  suspend fun initSession(sessionId: String): InitSessionResult
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

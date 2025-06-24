@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
@@ -39,6 +40,10 @@ class UiPluginManager {
 
   fun closeSession(uuid: UUID) {
     getController().closeSession(uuid.toString())
+  }
+
+  fun initSession(uuid: UUID): InitSessionResult {
+    return getController().initSession(uuid.toString())
   }
 
   fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): PluginSearchResult {
