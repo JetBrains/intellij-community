@@ -84,7 +84,7 @@ class KotlinScriptingSettingsImpl(private val project: Project) : PersistentStat
         }
     }
 
-    fun setOrder(scriptDefinition: ScriptDefinition, order: Int) {
+    override fun setOrder(scriptDefinition: ScriptDefinition, order: Int) {
         scriptDefinitions[scriptDefinition.toKey()] =
             scriptDefinitions[scriptDefinition.toKey()]?.copy(order = order) ?: KotlinScriptDefinitionValue(order)
     }
@@ -107,11 +107,11 @@ class KotlinScriptingSettingsImpl(private val project: Project) : PersistentStat
                 )
     }
 
-    fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int {
+    override fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int {
         return scriptDefinitions[scriptDefinition.toKey()]?.order ?: KotlinScriptDefinitionValue.DEFAULT.order
     }
 
-    fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean {
+    override fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean {
         return scriptDefinitions[scriptDefinition.toKey()]?.isEnabled ?: KotlinScriptDefinitionValue.DEFAULT.isEnabled
     }
 

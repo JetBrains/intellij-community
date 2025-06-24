@@ -99,7 +99,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project, val cor
     override fun apply() {
         if (isScriptDefinitionsChanged()) {
             val settings = model.items.mapIndexed { index, item ->
-                ScriptDefinitionSetting(
+                ScriptDefinitionPersistentSettings.ScriptDefinitionSetting(
                     item.definition.definitionId,
                     item.isEnabled
                 )
