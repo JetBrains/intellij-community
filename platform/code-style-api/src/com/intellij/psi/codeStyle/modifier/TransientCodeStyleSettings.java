@@ -73,11 +73,15 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
 
   @Override
   public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project,
-                                                       @Nullable VirtualFile file,
+                                                       @NotNull VirtualFile file,
                                                        @Nullable TextRange formatRange,
                                                        boolean ignoreDocOptions,
                                                        @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
-    if (file != null && file.isValid()) {
+    if (myModifier != null && myModifier.acceptsFileIndentOptionsProviders()) {
+      return super.getIndentOptionsByFile(project, file, formatRange, ignoreDocOptions, providerProcessor);
+    }
+    
+    if (file.isValid()) {
       FileType fileType = file.getFileType();
       return getIndentOptions(fileType);
     }
