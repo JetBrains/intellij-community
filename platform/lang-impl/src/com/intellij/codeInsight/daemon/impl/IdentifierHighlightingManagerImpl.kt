@@ -20,11 +20,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ProperTextRange
-import com.intellij.openapi.util.Segment
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.TextRangeScalarUtil
+import com.intellij.openapi.util.*
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.util.PsiUtilBase
@@ -49,7 +45,11 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   init {
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
-        clearCache(event.editor.getDocument()) // to avoid leaks
+        val virtualFile = event.editor.virtualFile
+        // clear document cache only when the last editor for this document (out of several possible splits) is closed
+        if (virtualFile == null || FileEditorManager.getInstance(myProject).getAllEditors(virtualFile).isEmpty()) {
+          clearCache(event.editor.getDocument()) // to avoid leaks
+        }
       }
     }, this)
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(object : DocumentListener {
