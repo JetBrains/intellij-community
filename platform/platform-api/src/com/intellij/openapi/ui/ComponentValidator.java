@@ -204,6 +204,10 @@ public class ComponentValidator {
 
     hidePopup(true);
 
+    if (popupAnnouncementAlarm != null) {
+      popupAnnouncementAlarm.cancel();
+    }
+
     popupBuilder = null;
     tipComponent = null;
     popupLocation = null;
@@ -374,12 +378,14 @@ public class ComponentValidator {
         if (popupAnnouncementAlarm == null) {
           popupAnnouncementAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
         }
-        // Announce after a small delay because otherwise the announcement will be interrupted by reading the focused component.
+        // Announce after a small delay because otherwise, the announcement will be interrupted by reading the focused component.
         popupAnnouncementAlarm.cancelAndRequest(200, () -> {
-          String message =
-            UIBundle.message(validationInfo.warning ? "validation.info.warning.with.prefix" : "validation.info.error.with.prefix",
-                             validationInfo.message);
-          AccessibleAnnouncerUtil.announce(a, message, false);
+          if (validationInfo != null) {
+            String message =
+              UIBundle.message(validationInfo.warning ? "validation.info.warning.with.prefix" : "validation.info.error.with.prefix",
+                               validationInfo.message);
+            AccessibleAnnouncerUtil.announce(a, message, false);
+          }
         });
       }
     }
