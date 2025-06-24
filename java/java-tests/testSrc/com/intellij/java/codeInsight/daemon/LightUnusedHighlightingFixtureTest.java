@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNamedElement;
@@ -60,6 +61,20 @@ public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixt
 
   public void testBrokenClassToImplicitClass() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+    });
+  }
+
+  public void testSeveralMainMethods() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, ()->{
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+    });
+  }
+
+  public void testMainMethodInInterface() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, ()->{
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.checkHighlighting();
     });

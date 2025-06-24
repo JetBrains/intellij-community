@@ -300,6 +300,13 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     });
   }
 
+  public void testSeveralMainMethods() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myTool.ADD_MAINS_TO_ENTRIES = true;
+      doTest();
+    });
+  }
+
   private void doTest5() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest());
   }

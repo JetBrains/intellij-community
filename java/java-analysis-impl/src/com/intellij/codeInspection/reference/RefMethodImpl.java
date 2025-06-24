@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -134,7 +135,9 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   }
 
   private static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {
-    if ("main".equals(psiMethod.getName()) && PsiMethodUtil.isMainMethod(psiMethod)) return true;
+    if ("main".equals(psiMethod.getName()) && PsiClassImplUtil.isMainOrPremainMethod(psiMethod)) {
+      return true;
+    }
 
     if (!refMethod.isStatic()) return false;
     if (!PsiTypes.voidType().equals(psiMethod.getReturnType())) return false;
