@@ -7,7 +7,7 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.css.PROP_CSS_ARGUMENTS
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
+import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.js.PROP_JS_SYMBOL_KIND
@@ -19,6 +19,7 @@ import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
+import com.intellij.util.asSafely
 import java.util.*
 
 open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
@@ -83,10 +84,13 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "type", source.origin.typeSupport?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.htmlAttributeValue)
       printProperty(level, "complete", source.completeMatch)
-      if (source is PolySymbolWithDocumentation) {
-        printProperty(level, "description", source.description?.ellipsis(45))
-        printProperty(level, "docUrl", source.docUrl)
-        printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
+      val documentation = source.getDocumentationTarget(null)
+        .asSafely<PolySymbolDocumentationTarget>()
+        ?.documentation
+      if (documentation != null) {
+        printProperty(level, "description", documentation.description?.ellipsis(45))
+        printProperty(level, "docUrl", documentation.docUrl)
+        printProperty(level, "descriptionSections", documentation.descriptionSections.takeIf { it.isNotEmpty() })
       }
       printProperty(level, "modifiers", source.modifiers.takeIf { it.isNotEmpty() }
         ?.toSortedSet { a, b -> a.name.compareTo(b.name) })

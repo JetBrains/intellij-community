@@ -3,21 +3,24 @@ package com.intellij.polySymbols.webTypes
 
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
+import com.intellij.polySymbols.documentation.PolySymbolDocumentation
+import com.intellij.polySymbols.documentation.PolySymbolDocumentationProvider
+import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.merge
+import com.intellij.polySymbols.webTypes.WebTypesSymbol.Companion.PROP_NO_DOC
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.wrap
 import com.intellij.polySymbols.webTypes.json.*
 import com.intellij.psi.PsiElement
-import com.intellij.util.asSafely
 import javax.swing.Icon
 
 open class WebTypesSymbolBase : WebTypesSymbol {
@@ -131,24 +134,11 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override val name: String
     get() = if (base is WebTypesJsonContributionAdapter.Pattern) base.contributionName else base.name
 
-  final override val description: String?
-    get() = base.contribution.description
-              ?.let { base.jsonOrigin.renderDescription(base.contribution.description) }
-            ?: superContributions.asSequence()
-              .mapNotNull { it.asSafely<PolySymbolWithDocumentation>()?.description }
-              .firstOrNull()
-
-  final override val descriptionSections: Map<String, String>
-    get() = (base.contribution.descriptionSections?.additionalProperties?.asSequence() ?: emptySequence())
-      .plus(superContributions.asSequence().flatMap {
-        it.asSafely<PolySymbolWithDocumentation>()?.descriptionSections?.asSequence() ?: emptySequence()
-      })
-      .distinctBy { it.key }
-      .associateBy({ it.key }, { base.jsonOrigin.renderDescription(it.value) })
-
-  final override val docUrl: String?
-    get() = base.contribution.docUrl
-            ?: superContributions.asSequence().mapNotNull { it.asSafely<PolySymbolWithDocumentation>()?.docUrl }.firstOrNull()
+  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
+    if (this[PROP_NO_DOC] != true)
+      PolySymbolDocumentationTarget.create(this, location, WebTypesSymbolDocumentationProvider)
+    else
+      null
 
   final override val icon: Icon?
     get() = base.icon ?: superContributions.asSequence().mapNotNull { it.icon }.firstOrNull()
@@ -195,12 +185,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     get() = (base.contribution as? GenericContribution)?.required
             ?: (base.contribution as? HtmlAttribute)?.required
 
-  final override val defaultValue: String?
-    get() = (base.contribution as? GenericContribution)?.default
-            ?: (base.contribution as? HtmlAttribute)?.default
-            ?: superContributions.firstNotNullOfOrNull { it.asSafely<PolySymbolWithDocumentation>()?.defaultValue }
-            ?: attributeValue?.default
-
   final override val queryScope: List<PolySymbolScope>
     get() = superContributions.asSequence()
       .flatMap { it.queryScope }
@@ -235,6 +219,40 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     override val langType: Any?
       get() = value.type?.toLangType()
         ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
+
+  }
+
+  private object WebTypesSymbolDocumentationProvider : PolySymbolDocumentationProvider<WebTypesSymbolBase> {
+
+    override fun createDocumentation(symbol: WebTypesSymbolBase, location: PsiElement?): PolySymbolDocumentation {
+      val superContributionDocs = symbol.superContributions
+        .mapNotNull { (it.getDocumentationTarget(location) as? PolySymbolDocumentationTarget)?.documentation }
+
+      return PolySymbolDocumentation.builder(symbol, location)
+        .description(
+          symbol.base.contribution.description
+            ?.let { symbol.base.jsonOrigin.renderDescription(symbol.base.contribution.description) }
+          ?: superContributionDocs.firstNotNullOfOrNull { it.description }
+        )
+        .defaultValue(
+          (symbol.base.contribution as? GenericContribution)?.default
+          ?: (symbol.base.contribution as? HtmlAttribute)?.default
+          ?: superContributionDocs.firstNotNullOfOrNull { it.defaultValue }
+          ?: symbol.attributeValue?.default
+        )
+        .docUrl(symbol.base.contribution.docUrl
+                ?: superContributionDocs.firstNotNullOfOrNull { it.docUrl }
+        )
+        .descriptionSections(
+          (symbol.base.contribution.descriptionSections?.additionalProperties?.asSequence() ?: emptySequence())
+            .plus(superContributionDocs.asSequence().flatMap {
+              it.descriptionSections.asSequence()
+            })
+            .distinctBy { it.key }
+            .associateBy({ it.key }, { symbol.base.jsonOrigin.renderDescription(it.value) })
+        )
+        .build()
+    }
 
   }
 }

@@ -5,8 +5,8 @@ import com.intellij.model.Pointer
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.utils.PolySymbolDelegate
 import com.intellij.polySymbols.utils.PsiSourcedPolySymbolDelegate
@@ -60,12 +60,12 @@ class PsiSourcedCodeCompletionPolySymbolWithDocumentation(
 
 }
 
-private class PolySymbolEmptyDocumentationTarget(override val symbol: PolySymbol) : PolySymbolDocumentationTarget {
-
-  override val location: PsiElement?
-    get() = null
+private class PolySymbolEmptyDocumentationTarget(private val symbol: PolySymbol) : DocumentationTarget {
 
   override fun computeDocumentation(): DocumentationResult? = null
+
+  override fun computePresentation(): TargetPresentation =
+    TargetPresentation.builder(symbol.name).icon(symbol.icon).presentation()
 
   override fun createPointer(): Pointer<out DocumentationTarget> {
     val delegatePtr = symbol.createPointer()

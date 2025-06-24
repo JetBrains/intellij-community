@@ -9,8 +9,7 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.PolySymbol.Priority
-import com.intellij.polySymbols.documentation.PolySymbolDocumentation
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
+import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolMatchBuilder
@@ -128,38 +127,6 @@ private class PsiSourcedPolySymbolMatch(
 
 }
 
-private class PsiSourcedPolySymbolMatchWithDocumentation(
-  matchedName: String,
-  nameSegments: List<PolySymbolNameSegment>,
-  qualifiedKind: PolySymbolQualifiedKind,
-  origin: PolySymbolOrigin,
-  explicitPriority: Priority?,
-  explicitProximity: Int?,
-  additionalProperties: Map<String, Any>,
-) : PolySymbolMatchBase(matchedName, nameSegments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties),
-    PsiSourcedPolySymbolMatchMixin, PolySymbolMatchWithDocumentationMixin {
-
-  override fun createPointer(): Pointer<PsiSourcedPolySymbolMatchWithDocumentation> =
-    PolySymbolMatchPointer<PsiSourcedPolySymbolMatchWithDocumentation>(this, ::PsiSourcedPolySymbolMatchWithDocumentation)
-
-}
-
-private class PolySymbolMatchWithDocumentation(
-  matchedName: String,
-  nameSegments: List<PolySymbolNameSegment>,
-  qualifiedKind: PolySymbolQualifiedKind,
-  origin: PolySymbolOrigin,
-  explicitPriority: Priority?,
-  explicitProximity: Int?,
-  additionalProperties: Map<String, Any>,
-) : PolySymbolMatchBase(matchedName, nameSegments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties),
-    PolySymbolMatchWithDocumentationMixin {
-
-  override fun createPointer(): Pointer<PolySymbolMatchWithDocumentation> =
-    PolySymbolMatchPointer<PolySymbolMatchWithDocumentation>(this, ::PolySymbolMatchWithDocumentation)
-
-}
-
 private fun create(
   matchedName: String,
   nameSegments: List<PolySymbolNameSegment>,
@@ -170,27 +137,13 @@ private fun create(
   additionalProperties: Map<String, Any>,
 ): PolySymbolMatch {
   val psiSourcedMixin = nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedPolySymbol }) }
-  val withDocumentationMixin = nameSegments.any { it.symbols.any { symbol -> symbol is PolySymbolWithDocumentation } }
-
   return if (psiSourcedMixin) {
-    if (withDocumentationMixin) {
-      PsiSourcedPolySymbolMatchWithDocumentation(matchedName, nameSegments, qualifiedKind, origin,
-                                                 explicitPriority, explicitProximity, additionalProperties)
-    }
-    else {
-      PsiSourcedPolySymbolMatch(matchedName, nameSegments, qualifiedKind, origin,
-                                explicitPriority, explicitProximity, additionalProperties)
-    }
+    PsiSourcedPolySymbolMatch(matchedName, nameSegments, qualifiedKind, origin,
+                              explicitPriority, explicitProximity, additionalProperties)
   }
   else {
-    if (withDocumentationMixin) {
-      PolySymbolMatchWithDocumentation(matchedName, nameSegments, qualifiedKind, origin,
-                                       explicitPriority, explicitProximity, additionalProperties)
-    }
-    else {
-      PolySymbolMatchBase(matchedName, nameSegments, qualifiedKind, origin,
-                          explicitPriority, explicitProximity, additionalProperties)
-    }
+    PolySymbolMatchBase(matchedName, nameSegments, qualifiedKind, origin,
+                        explicitPriority, explicitProximity, additionalProperties)
   }
 }
 
@@ -253,9 +206,8 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
         if (it === this) null
         else it.getDocumentationTarget(location)
       }
-      .filter { it !is PolySymbolDocumentationTargetImpl || it.symbol.createDocumentation(location)?.isNotEmpty() == true }
+      .filter { it !is PolySymbolDocumentationTarget || it.documentation.isNotEmpty() }
       .firstOrNull()
-    ?: if (this is PolySymbolWithDocumentation) PolySymbolDocumentationTargetImpl(this, location) else null
 
   override fun isEquivalentTo(symbol: Symbol): Boolean =
     super<PolySymbolMatch>.isEquivalentTo(symbol)
@@ -282,34 +234,6 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
       ?.takeIf { it.size == 1 }
       ?.get(0)
       ?.renameTarget
-
-}
-
-
-private interface PolySymbolMatchWithDocumentationMixin : PolySymbolMatchMixin, PolySymbolWithDocumentation {
-
-  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
-    super<PolySymbolMatchMixin>.getDocumentationTarget(location)
-
-  override fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
-    reversedSegments().flatMap { it.symbols.asSequence() }
-      .firstNotNullOfOrNull { (it as? PolySymbolWithDocumentation)?.createDocumentation(location) }
-
-  override val description: String?
-    get() = nameSegments.takeIf { it.size == 1 }
-      ?.get(0)?.symbols?.asSequence()?.mapNotNull { (it as? PolySymbolWithDocumentation)?.description }?.firstOrNull()
-
-  override val docUrl: String?
-    get() = nameSegments.takeIf { it.size == 1 }
-      ?.get(0)?.symbols?.asSequence()?.mapNotNull { (it as? PolySymbolWithDocumentation)?.docUrl }?.firstOrNull()
-
-  override val descriptionSections: Map<String, String>
-    get() = nameSegments.takeIf { it.size == 1 }
-              ?.get(0)?.symbols?.asSequence()
-              ?.flatMap { (it as? PolySymbolWithDocumentation)?.descriptionSections?.asSequence() ?: emptySequence() }
-              ?.distinct()
-              ?.associateBy({ it.key }, { it.value })
-            ?: emptyMap()
 
 }
 
