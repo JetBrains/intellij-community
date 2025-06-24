@@ -28,6 +28,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.SwingUndoUtil.getUndoManager
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -105,7 +106,6 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
   private val expandedPaths = HashSet<TreePath>()
 
   protected val am = ActionManager.getInstance()
-  private val findKeyStroke = KeymapUtil.getKeyStroke(am.getAction("Find").shortcutSet)
 
   private val searchPatternStateFlow = MutableStateFlow<String?>(null)
 
@@ -114,7 +114,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
     minimumSize = if (isNewUI) JBDimension(375, 300) else JBDimension(300, 200)
     this.dimensionServiceKey = if (isNestedPopup()) null else dimensionServiceKey
     userResized = !isNestedPopup() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
-    installShortcutActions(step.treeModel)
+    closePopupOnTopLevelActionsShortcuts(step.treeModel)
     if (!isNestedPopup()) {
       setSpeedSearchAlwaysShown()
       if (!isNewUI) installTitleToolbar()
@@ -313,9 +313,35 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
     for (action in group.getChildren(am)) {
       registerShortcutAction(action, closePopup = false, dataContext = speedSearchDataContext, afterActionPerformed = updateSpeedSearch)
     }
+
+    registerUndoRedo(updateSpeedSearch)
   }
 
-  private fun installShortcutActions(model: TreeModel) {
+  private fun registerUndoRedo(updateSpeedSearch: () -> Unit) {
+    val undo = am.getAction(IdeActions.ACTION_UNDO)
+    registerAction(IdeActions.ACTION_UNDO, KeymapUtil.getKeyStroke(undo.shortcutSet), object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        val undoManager = getUndoManager(mySpeedSearchPatternField.textEditor) ?: return
+        if (undoManager.canUndo()) {
+          undoManager.undo()
+          updateSpeedSearch()
+        }
+      }
+    })
+
+    val redo = am.getAction(IdeActions.ACTION_REDO)
+    registerAction(IdeActions.ACTION_REDO, KeymapUtil.getKeyStroke(redo.shortcutSet), object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        val undoManager = getUndoManager(mySpeedSearchPatternField.textEditor) ?: return
+        if (undoManager.canRedo()) {
+          undoManager.redo()
+          updateSpeedSearch()
+        }
+      }
+    })
+  }
+
+  private fun closePopupOnTopLevelActionsShortcuts(model: TreeModel) {
     val dataContext = createShortcutActionDataContext()
     TreeUtil.nodeChildren(model.root, model).forEach { child ->
       val actionItem = child as? PopupFactoryImpl.ActionItem ?: return@forEach
@@ -334,15 +360,24 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
   abstract fun getHeaderToolbar(): ActionToolbar?
 
+  /**
+   * Intercepts [action] when the associated shortcut is pressed, passing explicitly specified [dataContext]
+   * and invoking [afterActionPerformed] callback.
+   *
+   * Note that a check if the action is disabled is not performed.
+   */
   private fun registerShortcutAction(
     action: AnAction,
     closePopup: Boolean,
     dataContext: DataContext,
     afterActionPerformed: (() -> Unit)? = null,
   ) {
+    val keyStroke = KeymapUtil.getKeyStroke(action.shortcutSet) ?: return
+
     val actionPlace =
       if (isNestedPopup()) GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE
       else GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE
+
     val wrappedAction = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
         if (closePopup) {
@@ -353,7 +388,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
       }
     }
 
-    registerAction(am.getId(action), KeymapUtil.getKeyStroke(action.shortcutSet), wrappedAction)
+    registerAction(am.getId(action), keyStroke, wrappedAction)
   }
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
@@ -454,7 +489,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
       Character.isWhitespace(e.keyChar) -> {
         e.consume()
       }
-      findKeyStroke == KeyStroke.getKeyStroke(e.keyCode, e.modifiersEx, e.id == KeyEvent.KEY_RELEASED) -> {
+      KeymapUtil.isEventForAction(e, IdeActions.ACTION_FIND) -> {
         mySpeedSearchPatternField.textEditor.requestFocus()
         e.consume()
       }
