@@ -122,7 +122,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       fixture = simple1,
       showDebugInfo = true,
       expectedBytecodeSelection = """
-      |    LINENUMBER 5 L0
+      |   L0
     """.trimMargin("|"),
     )
   }
@@ -168,12 +168,12 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     doTest(
       sourceWithSelection = source, fixture = simple1, showDebugInfo = true,
       expectedBytecodeSelection = """
+      |   L0
       |    LINENUMBER 5 L0
       |    GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
       |    LDC "hello world"
       |    INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
       |   L1
-      |    LINENUMBER 6 L1
     """.trimMargin("|"),
     )
   }
@@ -219,6 +219,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     doTest(
       sourceWithSelection = source, fixture = simple1, showDebugInfo = true,
       expectedBytecodeSelection = """
+      |   L0
       |    LINENUMBER 5 L0
       |    GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
       |    LDC "hello world"
@@ -227,7 +228,6 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       |    LINENUMBER 6 L1
       |    RETURN
       |   L2
-      |    LOCALVARIABLE args [Ljava/lang/String; L0 L2 0
     """.trimMargin("|"),
     )
   }
@@ -270,10 +270,10 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     doTest(
       sourceWithSelection = source, fixture = simple1, showDebugInfo = true,
       expectedBytecodeSelection = """
+      |   L1
       |    LINENUMBER 6 L1
       |    RETURN
       |   L2
-      |    LOCALVARIABLE args [Ljava/lang/String; L0 L2 0
     """.trimMargin("|"),
     )
   }
@@ -317,12 +317,12 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     doTest(
       sourceWithSelection = source, fixture = simple1, showDebugInfo = true,
       expectedBytecodeSelection = """
+      |   L0
       |    LINENUMBER 3 L0
       |    ALOAD 0
       |    INVOKESPECIAL java/lang/Object.<init> ()V
       |    RETURN
       |   L1
-      |    LOCALVARIABLE this Lsimple1/Main; L0 L1 0
     """.trimMargin("|"),
     )
   }
@@ -376,11 +376,11 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     doTest(
       sourceWithSelection = source, fixture = simple2, showDebugInfo = true,
       expectedBytecodeSelection = """
+      |   L0
       |    LINENUMBER 4 L0
       |    LDC "Charlie"
       |    PUTSTATIC simple2/Main.name : Ljava/lang/String;
       |   L1
-      |    LINENUMBER 5 L1
     """.trimMargin("|"),
     )
   }
@@ -439,6 +439,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     doTest(
       sourceWithSelection = source, fixture = simple2, showDebugInfo = true,
       expectedBytecodeSelection = """
+      |   L0
       |    LINENUMBER 4 L0
       |    LDC "Charlie"
       |    PUTSTATIC simple2/Main.name : Ljava/lang/String;
@@ -449,7 +450,6 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       |    INVOKESPECIAL java/lang/Object.<init> ()V
       |    PUTSTATIC simple2/Main.obj : Ljava/lang/Object;
       |    RETURN
-      |    MAXSTACK = 2
     """.trimMargin("|"),
     )
   }
@@ -508,6 +508,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     doTest(
       sourceWithSelection = source, fixture = simple2, showDebugInfo = true,
       expectedBytecodeSelection = """
+      |   L0
       |    LINENUMBER 8 L0
       |    GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
       |    LDC "hello world"
@@ -518,7 +519,6 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       |    ARRAYLENGTH
       |    ISTORE 1
       |   L2
-      |    LINENUMBER 10 L2
     """.trimMargin("|"),
     )
   }
@@ -622,6 +622,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     doTest(
       sourceWithSelection = source, fixture = simple3, showDebugInfo = true,
       expectedBytecodeSelection = """
+      |   L0
       |    LINENUMBER 12 L0
       |    ILOAD 1
       |    GETSTATIC java/lang/Boolean.TRUE : Ljava/lang/Boolean;
@@ -632,7 +633,6 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
       |    LDC "bar"
       |    ARETURN
       |   L1
-      |    LINENUMBER 15 L1
     """.trimMargin("|"),
     )
   }
