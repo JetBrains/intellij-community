@@ -150,11 +150,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myRequestId.get();
   }
 
-  protected void setRequestCompleted(long requestId) {
+  protected boolean setRequestCompleted(long requestId) {
     while (true) {
       long current = myRequestId.get();
-      if (requestId <= current) return;
-      if (myRequestId.compareAndSet(current, requestId)) return;
+      if (requestId <= current) return false;
+      if (myRequestId.compareAndSet(current, requestId)) return true;
     }
   }
 

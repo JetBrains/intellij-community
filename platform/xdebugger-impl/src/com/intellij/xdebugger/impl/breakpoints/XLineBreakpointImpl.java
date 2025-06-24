@@ -128,8 +128,15 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
 
-  public void resetSourcePosition() {
+  void resetSourcePosition() {
+    resetSourcePosition(-1);
+  }
+
+  public void resetSourcePosition(long requestId) {
     mySourcePosition = null;
+    if (setRequestCompleted(requestId)) {
+      fireBreakpointChanged();
+    }
   }
 
   public void setFileUrl(final String newUrl) {

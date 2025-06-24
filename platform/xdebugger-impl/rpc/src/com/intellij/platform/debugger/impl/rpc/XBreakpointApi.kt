@@ -41,7 +41,7 @@ interface XBreakpointApi : RemoteApi<Unit> {
 
   suspend fun setUserDescription(breakpointId: XBreakpointId, requestId: Long, description: String?)
 
-  suspend fun updatePosition(breakpointId: XBreakpointId)
+  suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long)
   suspend fun setFileUrl(breakpointId: XBreakpointId, requestId: Long, fileUrl: String?)
   suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int)
 
