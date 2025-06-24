@@ -37,12 +37,12 @@ private fun Path.toOriginalPath(): Path = toIjentPathOrNull() ?: this
  */
 @Suppress("NAME_SHADOWING")
 internal class IjentEphemeralRootAwarePath(
+  private val fileSystem: IjentEphemeralRootAwareFileSystem,
   val rootPath: Path,
   val originalPath: IjentNioPath,
 ) : Path, BasicFileAttributesHolder2.Impl(originalPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded()) {
-  override fun getFileSystem(): FileSystem {
-    return originalPath.fileSystem
-  }
+  override fun getFileSystem(): FileSystem =
+    fileSystem
 
   val actualPath = EelPathUtils.getActualPath(originalPath)
 
@@ -56,7 +56,7 @@ internal class IjentEphemeralRootAwarePath(
   }
 
   override fun getRoot(): Path? {
-    return originalPath.root?.let { IjentEphemeralRootAwarePath(rootPath, it) }
+    return originalPath.root?.let { IjentEphemeralRootAwarePath(fileSystem, rootPath, it) }
   }
 
   override fun getFileName(): Path? {
@@ -65,7 +65,7 @@ internal class IjentEphemeralRootAwarePath(
 
   override fun getParent(): Path? {
     val parent = originalPath.parent ?: return null
-    return IjentEphemeralRootAwarePath(rootPath, parent)
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, parent)
   }
 
   override fun getNameCount(): Int {
@@ -77,7 +77,7 @@ internal class IjentEphemeralRootAwarePath(
   }
 
   override fun subpath(beginIndex: Int, endIndex: Int): Path {
-    return IjentEphemeralRootAwarePath(rootPath, originalPath.subpath(beginIndex, endIndex))
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, originalPath.subpath(beginIndex, endIndex))
   }
 
   override fun startsWith(other: Path): Boolean {
@@ -91,17 +91,17 @@ internal class IjentEphemeralRootAwarePath(
   }
 
   override fun normalize(): Path {
-    return IjentEphemeralRootAwarePath(rootPath, originalPath.normalize())
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, originalPath.normalize())
   }
 
   override fun resolve(other: Path): Path {
     val other = other.unwrap()
-    return IjentEphemeralRootAwarePath(rootPath, originalPath.resolve(if (other is IjentEphemeralRootAwarePath) other.originalPath else other))
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, originalPath.resolve(if (other is IjentEphemeralRootAwarePath) other.originalPath else other))
   }
 
   override fun relativize(other: Path): Path {
     val other = other.unwrap()
-    return IjentEphemeralRootAwarePath(rootPath, originalPath.relativize(if (other is IjentEphemeralRootAwarePath) other.originalPath else other))
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, originalPath.relativize(if (other is IjentEphemeralRootAwarePath) other.originalPath else other))
   }
 
   override fun toUri(): URI {
@@ -109,7 +109,7 @@ internal class IjentEphemeralRootAwarePath(
   }
 
   override fun toAbsolutePath(): Path {
-    return IjentEphemeralRootAwarePath(rootPath, originalPath.toAbsolutePath())
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, originalPath.toAbsolutePath())
   }
 
   override fun toRealPath(vararg options: LinkOption): Path {
@@ -129,7 +129,7 @@ internal class IjentEphemeralRootAwarePath(
       originalPath.toRealPath(*options)
     }
 
-    return IjentEphemeralRootAwarePath(rootPath, ijentNioRealPath)
+    return IjentEphemeralRootAwarePath(fileSystem, rootPath, ijentNioRealPath)
   }
 
   override fun register(watcher: WatchService, events: Array<out WatchEvent.Kind<*>>, vararg modifiers: WatchEvent.Modifier?): WatchKey {
@@ -248,7 +248,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
     if (delegatePath == null) return null
 
     if (delegatePath is IjentNioPath) {
-      return IjentEphemeralRootAwarePath(root, delegatePath)
+      return IjentEphemeralRootAwarePath(wrapDelegateFileSystem(delegatePath.fileSystem), root, delegatePath)
     }
 
     return delegatePath
@@ -326,7 +326,7 @@ class IjentEphemeralRootAwareFileSystem(
     if (isPathUnderRoot(first)) {
       val parts = more.flatMap { it.split(root.fileSystem.separator) }.filter(String::isNotEmpty).toTypedArray()
       val ijentNioPath = ijentFs.getPath(relativizeToRoot(first), *parts) as IjentNioPath
-      return IjentEphemeralRootAwarePath(root, ijentNioPath)
+      return IjentEphemeralRootAwarePath(this,root, ijentNioPath)
     }
 
     return super.getPath(first, *more)
