@@ -42,6 +42,22 @@ class TestCase(unittest.TestCase):
 
     def test_str_to_args_windows(self):
         self.assertEqual(['a', 'b'], pydev_monkey.str_to_args_windows('a "b"'))
+        self.assertEqual(['foo', 'bar'], pydev_monkey.str_to_args_windows('foo bar'))
+        self.assertEqual(['foo bar'], pydev_monkey.str_to_args_windows('"foo bar"'))
+        self.assertEqual(['foo"bar'], pydev_monkey.str_to_args_windows('"foo""bar"'))
+        self.assertEqual(['foo\\"bar'],
+                         pydev_monkey.str_to_args_windows('"foo\\\\\\"bar"'))
+        self.assertEqual(['foo\\bar'], pydev_monkey.str_to_args_windows('foo\\bar'))
+        self.assertEqual(['arg one', 'arg two'],
+                         pydev_monkey.str_to_args_windows('"arg one" "arg two"'))
+        # A string surrounded by double quote marks is interpreted as a single argument, whether it contains whitespace characters or not
+        # self.assertEqual([''], pydev_monkey.str_to_args_windows('""'))
+        self.assertEqual(['arg'], pydev_monkey.str_to_args_windows('   "arg"   '))
+        self.assertEqual(['one', 'two three', 'four'],
+                         pydev_monkey.str_to_args_windows('one "two three" four'))
+        # The double quote mark is interpreted as an escape sequence by the remaining backslash, causing a literal double quote mark (") to be placed in argv.
+        # Within a quoted string, a pair of double quote marks is interpreted as a single escaped double quote mark.
+        # self.assertEqual(['a"b"c'], pydev_monkey.str_to_args_windows('"a""b""c"'))
 
     def test_monkey_patch_args_indc(self):
         SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
