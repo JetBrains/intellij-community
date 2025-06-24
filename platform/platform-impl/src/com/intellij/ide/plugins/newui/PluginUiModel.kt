@@ -55,6 +55,8 @@ interface PluginUiModel {
   @get:NlsSafe
   val productCode: String?
 
+  val releaseDate: Long?
+
   @get:NlsSafe
   val size: String?
   val releaseVersion: Int

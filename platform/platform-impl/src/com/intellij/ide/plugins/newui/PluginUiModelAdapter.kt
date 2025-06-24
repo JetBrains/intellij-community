@@ -66,6 +66,8 @@ class PluginUiModelAdapter(
 
   override val productCode: String?
     get() = pluginDescriptor.productCode
+  override val releaseDate: Long?
+    get() = pluginDescriptor.releaseDate?.toInstant()?.toEpochMilli()
   override val size: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.size else null
   override val releaseVersion: Int
@@ -124,7 +126,7 @@ class PluginUiModelAdapter(
       }
     }
   override var vendorDetails: PluginNodeVendorDetails?
-    get() = if(pluginDescriptor is PluginNode) pluginDescriptor.vendorDetails else null
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.vendorDetails else null
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.vendorDetails = value
