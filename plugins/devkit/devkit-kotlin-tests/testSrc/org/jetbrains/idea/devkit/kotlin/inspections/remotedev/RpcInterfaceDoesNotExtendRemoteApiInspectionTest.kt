@@ -92,6 +92,26 @@ class RpcInterfaceDoesNotExtendRemoteApiInspectionTest : LightJavaCodeInsightFix
     )
   }
 
+  fun `test does not report an non-@Rpc-annotated interface`() {
+    testHighlighting(
+      """
+      interface NonRpcInterface {
+        fun any()
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun `test does not report an non-@Rpc-annotated class`() {
+    testHighlighting(
+      """
+      class NonRpcClass {
+        fun any() {}
+      }
+      """.trimIndent()
+    )
+  }
+
   private fun testHighlighting(@Language("kotlin") code: String) {
     myFixture.testHighlighting(true, true, true, myFixture.addKotlinFile("RpcInterface.kt", code).virtualFile)
   }

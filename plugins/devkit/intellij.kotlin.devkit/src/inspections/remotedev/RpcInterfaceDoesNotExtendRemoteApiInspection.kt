@@ -11,15 +11,19 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 class RpcInterfaceDoesNotExtendRemoteApiInspection : LocalInspectionTool() {
 
+  private val rpcAnnotationFqn = FqName("fleet.rpc.Rpc")
+
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!DevKitInspectionUtil.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
     return object : KtVisitorVoid() {
       override fun visitClass(klass: KtClass) {
+        if (!klass.isAnnotatedWithRpc()) return
         analyze(klass) {
           val symbol = klass.symbol
           if (symbol is KaClassSymbol) {
@@ -29,6 +33,13 @@ class RpcInterfaceDoesNotExtendRemoteApiInspection : LocalInspectionTool() {
               holder.registerProblem(classNameElement, message("inspection.remote.dev.rpc.interface.does.not.extend.remote.api.name"))
             }
           }
+        }
+      }
+
+      private fun KtClass.isAnnotatedWithRpc(): Boolean {
+        val declaration = this
+        return analyze(declaration) {
+          declaration.symbol.annotations.any { it.classId?.asSingleFqName() == rpcAnnotationFqn }
         }
       }
 
