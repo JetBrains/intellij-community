@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.PlatformUtils;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -566,6 +567,7 @@ public class PyDebugValue extends XNamedValue {
   private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
     try {
       return Registry.get("actions.show.as.image.visibility").asBoolean()
+             && !PlatformUtils.isPyCharmCommunity()
              && checkAndEnableViewAsImageVisibility(debugValue);
     } catch (MissingResourceException e) {
       return false;
