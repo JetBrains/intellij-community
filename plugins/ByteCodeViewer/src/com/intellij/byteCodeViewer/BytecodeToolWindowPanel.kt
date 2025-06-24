@@ -86,6 +86,18 @@ internal class BytecodeToolWindowPanel(
           if (event.editor != sourceEditor) return
           updateBytecodeSelection(sourceEditor, bytecodeEditor)
         }
+
+        override fun caretAdded(event: CaretEvent) {
+          val sourceEditor = selectedMatchingEditor
+          if (event.editor != sourceEditor) return
+          updateBytecodeSelection(sourceEditor, bytecodeEditor)
+        }
+
+        override fun caretRemoved(event: CaretEvent) {
+          val sourceEditor = selectedMatchingEditor
+          if (event.editor != sourceEditor) return
+          updateBytecodeSelection(sourceEditor, bytecodeEditor)
+        }
       }, this@BytecodeToolWindowPanel)
 
       EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
@@ -141,7 +153,10 @@ internal class BytecodeToolWindowPanel(
     }
 
     private fun updateBytecodeSelection(sourceEditor: Editor, bytecodeEditor: Editor) {
-      if (sourceEditor.getCaretModel().getCaretCount() != 1) return
+      if (sourceEditor.getCaretModel().getCaretCount() != 1) {
+        bytecodeEditor.getSelectionModel().removeSelection()
+        return
+      }
 
       val sourceStartOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionStart()
       val sourceEndOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionEnd()
