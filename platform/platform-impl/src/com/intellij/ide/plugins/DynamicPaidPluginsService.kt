@@ -141,7 +141,9 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
         pluginEnabler.enable(descriptors)
       }
     }
-    logger.info("Loaded ${descriptors.size} plugins in ${elapsedTime.inWholeMilliseconds} ms. Enabled: $result. Restart requested: $restart")
+    val pluginsCount = descriptors.size
+    DynamicPluginsUsagesCollector.logPaidPluginsLoaded(elapsedTime, pluginsCount, restart)
+    logger.info("Loaded $pluginsCount plugins in ${elapsedTime.inWholeMilliseconds} ms. Enabled: $result. Restart requested: $restart")
 
     if (restart) {
       ApplicationManagerEx.getApplicationEx().restart(true)
