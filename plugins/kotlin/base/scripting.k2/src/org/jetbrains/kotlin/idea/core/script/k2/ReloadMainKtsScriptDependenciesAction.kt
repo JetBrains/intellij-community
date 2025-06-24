@@ -21,8 +21,9 @@ internal class ReloadMainKtsScriptDependenciesAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-        val ktFile = getKotlinScriptFile(editor) ?: return
+        val ktFile = e.getData(CommonDataKeys.EDITOR)?.let {
+            getKotlinScriptFile(it)
+        } ?: e.getData(CommonDataKeys.PSI_FILE) as? KtFile ?: return
 
         MainKtsScriptConfigurationProvider.getInstance(project).removeConfiguration(ktFile.alwaysVirtualFile)
         DefaultScriptResolutionStrategy.getInstance(project).execute(ktFile)

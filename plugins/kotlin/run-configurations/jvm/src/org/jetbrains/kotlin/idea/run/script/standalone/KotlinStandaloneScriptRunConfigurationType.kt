@@ -21,11 +21,10 @@ class KotlinStandaloneScriptRunConfigurationType : SimpleConfigurationType(
     "KotlinStandaloneScriptRunConfigurationType",
     KotlinRunConfigurationsBundle.message("name.kotlin.script"),
     KotlinRunConfigurationsBundle.message("run.kotlin.script"),
-    NotNullLazyValue.createValue { KotlinIcons.SMALL_LOGO }
+    NotNullLazyValue.createValue { KotlinIcons.SCRIPT }
 ) {
-    override fun createTemplateConfiguration(project: Project): RunConfiguration {
-        return KotlinStandaloneScriptRunConfiguration(project, this, "")
-    }
+    override fun createTemplateConfiguration(project: Project): RunConfiguration =
+        KotlinStandaloneScriptRunConfiguration(project, this, "")
 
     override fun getOptionsClass() = JvmMainMethodRunConfigurationOptions::class.java
 

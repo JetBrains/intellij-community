@@ -69,6 +69,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptAfterRunCallbackProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
+
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingKaModuleFactory"/>
     <scriptDefinitionsSource
             id="StandardScriptDefinitionContributor"
