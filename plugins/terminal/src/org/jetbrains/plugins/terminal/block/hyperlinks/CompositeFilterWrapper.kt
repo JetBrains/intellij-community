@@ -19,11 +19,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
 private data class ComputedFilter(
-  val filter: CompositeFilter?,
+  val filter: CompositeFilter,
   val listenersFired: Boolean,
 )
-
-private val NULL_RESULT = ComputedFilter(null, false)
 
 internal class CompositeFilterWrapper(private val project: Project, coroutineScope: CoroutineScope) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
@@ -37,19 +35,20 @@ internal class CompositeFilterWrapper(private val project: Project, coroutineSco
     onBufferOverflow = BufferOverflow.DROP_OLDEST, // ensures non-blocking tryEmit that always succeeds
   )
 
-  private val filterFlow = MutableStateFlow(NULL_RESULT)
+  private val filterFlow = MutableStateFlow<ComputedFilter?>(null)
 
   init {
     ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener(coroutineScope, ::rescheduleFilterComputation)
     coroutineScope.launch { 
       filterComputationRequests.collectLatest { 
-        filterFlow.value = NULL_RESULT // tell the clients the value is being computed
-        filterFlow.value = ComputedFilter(computeFilter(), false)
+        filterFlow.value = null // tell the clients the value is being computed
+        val newValue = ComputedFilter(computeFilter(), false)
+        filterFlow.value = newValue
         // Using UiDispatcherKind.RELAX because the listeners interact with the editor and its document,
         // so they need to take locks, and therefore the strict dispatcher won't do.
         withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
-          filterFlow.update { it.copy(listenersFired = true) }
+          filterFlow.value = newValue.copy(listenersFired = true)
         }
       }
     }
@@ -84,7 +83,7 @@ internal class CompositeFilterWrapper(private val project: Project, coroutineSco
    *         when filters are ready, `filtersUpdated` event will be fired.
    */
   fun getFilter(): CompositeFilter? {
-    filterFlow.value.filter?.let {
+    filterFlow.value?.filter?.let {
       return it
     }
     ensureComputationInitialized()
@@ -110,6 +109,6 @@ internal class CompositeFilterWrapper(private val project: Project, coroutineSco
   @TestOnly
   internal suspend fun awaitFiltersComputed() {
     ensureComputationInitialized()
-    filterFlow.first { it.filter != null && it.listenersFired }
+    filterFlow.first { it != null && it.listenersFired }
   }
 }
