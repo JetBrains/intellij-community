@@ -2,11 +2,15 @@
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -17,6 +21,11 @@ import static org.junit.Assert.*;
 public final class WslDistributionManagerTest {
   @Rule
   public final TestFixtureRule myTestFixtureRule = new TestFixtureRule();
+
+  @Before
+  public void setUp() throws Exception {
+    Assume.assumeTrue(SystemInfoRt.isWindows);
+  }
 
   @Test
   public void caseInsensitiveDistributionName() {
