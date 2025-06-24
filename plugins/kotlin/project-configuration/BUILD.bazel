@@ -57,6 +57,8 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:maven-resolver-provider",
     "//platform/util",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/scripting",
   ],
   runtime_deps = [":project-configuration_resources"]
 )
