@@ -13,24 +13,24 @@ if USE_LOW_IMPACT_MONITORING:
 
 
 class PyDBDaemonThread(threading.Thread):
-    def __init__(self, py_db, target_and_args=None):
+    def __init__(self, py_db=None, target_and_args=None):
         """
         :param target_and_args:
             tuple(func, args, kwargs) if this should be a function and args to run.
             -- Note: use through run_as_pydevd_daemon_thread().
         """
         threading.Thread.__init__(self)
-        self._py_db = weakref.ref(py_db)
+        self._py_db = weakref.ref(py_db) if py_db is not None else None
         self._kill_received = False
         mark_as_pydevd_daemon_thread(self)
         self._target_and_args = target_and_args
 
     @property
     def py_db(self):
-        return self._py_db()
+        return self._py_db() if self._py_db is not None else None
 
     def run(self):
-        created_pydb_daemon = self.py_db.created_pydb_daemon_threads
+        created_pydb_daemon = self.py_db.created_pydb_daemon_threads if self.py_db is not None else {}
         created_pydb_daemon[self] = 1
         try:
             try:
