@@ -4335,7 +4335,7 @@ jvm_import(
 
 jvm_import(
   name = "layoutlib",
-  jar = "@layoutlib-15_2_2_http//file",
+  jar = "@layoutlib-15_2_3_http//file",
   visibility = ["//visibility:public"]
 )
 
