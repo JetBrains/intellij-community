@@ -29,8 +29,9 @@ class LicenseDialogUi(data: ComponentData) : UiComponent(data) {
   val startTrialButton = x("//div[@class!='SegmentedButton' and @accessiblename='Start Free 30-Day Trial']")
   val continueButton = x { byAccessibleName("Continue") }
   val removeLicenseButton: UiComponent = x { or(contains(byAccessibleName("Remove License")), contains(byAccessibleName("Deactivate Subscription"))) }
-  val closeButton = x { byAccessibleName("Close") }
+  val closeButton = x { byAccessibleName("Close") and byClass("JButton") }
   val optionsButton = x { byAccessibleName("Options") }
+  val closeErrorBannerButton = x { byAccessibleName("Close") and contains(byClass("InplaceButton")) }
 
   val exitButton: UiComponent = x { byAccessibleName("Quit ${driver.fullProductName}") }
 }
