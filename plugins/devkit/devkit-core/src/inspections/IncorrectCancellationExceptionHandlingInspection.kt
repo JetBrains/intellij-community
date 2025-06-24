@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -20,8 +20,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-// "CE" stands for "cancellation exception", without a specific type meaning
-private val ceClassNames = listOf("com.intellij.openapi.progress.ProcessCanceledException")
+private const val PCE_CLASS_NAME = "com.intellij.openapi.progress.ProcessCanceledException"
 
 internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInspectionBase() {
 
@@ -41,7 +40,7 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
       }
 
       private fun findSuspiciousCeCaughtParam(catchParameters: List<UParameter>): CaughtCeInfo? {
-        val ceClasses = findCeClasses(holder.file.resolveScope) ?: return null
+        val pceClass = findPceClass(holder.file.resolveScope) ?: return null
         for (catchParameter in catchParameters) {
           // language-specific check:
           val checker = cancellationExceptionHandlingChecker(catchParameter.lang)
@@ -53,10 +52,9 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
           val type = catchParameter.type
           val caughtExceptionTypes = (if (type is PsiDisjunctionType) type.disjunctions else listOf(type)).filterIsInstance<PsiClassType>()
           for (caughtExceptionType in caughtExceptionTypes) {
-            val baseCeClass = ceClasses.firstOrNull { caughtExceptionType.isInheritorOrSelf(it) }
-            if (baseCeClass != null) {
+            if (caughtExceptionType.isInheritorOrSelf(pceClass)) {
               return CaughtCeInfo(
-                baseCeClass.qualifiedName!!,
+                PCE_CLASS_NAME,
                 !caughtExceptionType.isCancellationExceptionClass(),
                 catchParameter
               )
@@ -66,14 +64,12 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         return null
       }
 
-      private fun findCeClasses(resolveScope: GlobalSearchScope): List<PsiClass>? {
-        return ceClassNames
-          .mapNotNull { JavaPsiFacade.getInstance(holder.project).findClass(it, resolveScope) }
-          .takeIf { it.isNotEmpty() }
+      private fun findPceClass(resolveScope: GlobalSearchScope): PsiClass? {
+        return JavaPsiFacade.getInstance(holder.project).findClass(PCE_CLASS_NAME, resolveScope)
       }
 
       private fun PsiType.isCancellationExceptionClass(): Boolean {
-        return ceClassNames.any { it == (this as? PsiClassType)?.resolve()?.qualifiedName }
+        return PCE_CLASS_NAME == (this as? PsiClassType)?.resolve()?.qualifiedName
       }
 
       private fun PsiType.isInheritorOrSelf(ceClass: PsiClass): Boolean {
@@ -147,18 +143,17 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         var caughtCeInfo: CaughtCeInfo? = null
         val tryClause = tryExpression.tryClause
         val resolveScope = tryClause.sourcePsi?.resolveScope ?: return null
-        val ceClasses = findCeClasses(resolveScope) ?: return null
+        val pceClass = findPceClass(resolveScope) ?: return null
         tryClause.accept(object : AbstractUastVisitor() {
           override fun visitCallExpression(node: UCallExpression): Boolean {
             if (caughtCeInfo == null) {
               val calledMethod = node.resolveToUElementOfType<UMethod>() ?: return super.visitCallExpression(node)
               for (throwsType in calledMethod.javaPsi.throwsTypes) {
                 val throwsClassType = throwsType as? PsiClassType ?: continue
-                val baseThrowsCeClass = ceClasses.firstOrNull { throwsClassType.isInheritorOrSelf(it) }
-                if (baseThrowsCeClass != null) {
+                if (throwsClassType.isInheritorOrSelf(pceClass)) {
                   if (!isInNestedTryCatchBlock(node, tryExpression, throwsClassType)) {
                     caughtCeInfo = CaughtCeInfo(
-                      baseThrowsCeClass.qualifiedName!!,
+                      PCE_CLASS_NAME,
                       !throwsClassType.isCancellationExceptionClass(),
                       caughtGenericThrowableParam,
                       node.methodName
