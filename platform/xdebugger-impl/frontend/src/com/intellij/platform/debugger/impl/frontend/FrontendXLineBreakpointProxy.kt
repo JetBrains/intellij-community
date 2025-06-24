@@ -33,7 +33,7 @@ internal class FrontendXLineBreakpointProxy(
   override val type: XLineBreakpointTypeProxy,
   manager: FrontendXBreakpointManager,
   onBreakpointChange: (XBreakpointProxy) -> Unit,
-) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager, onBreakpointChange), XLineBreakpointProxy {
+) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter, onBreakpointChange), XLineBreakpointProxy {
   private var lineSourcePosition: XSourcePosition? = null
 
   private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeLineBreakpointProxy(), manager)
