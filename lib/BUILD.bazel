@@ -408,6 +408,38 @@ jvm_import(
 )
 
 java_library(
+  name = "android-artwork-compose-jewel-ide-laf-bridge-243",
+  exports = [
+    ":jewel-ide-laf-bridge-243-0_27_0_http_import",
+    ":jewel-ui-243-0_27_0_http_import",
+    ":jewel-foundation-243-0_27_0_http_import",
+    ":foundation-desktop-1_7_1_http_import",
+    ":annotation-jvm-1_8_0_http_import",
+    ":collection-jvm-1_4_0_http_import",
+    ":animation-desktop-1_7_1_http_import",
+    ":animation-core-desktop-1_7_1_http_import",
+    ":ui-geometry-desktop-1_7_1_http_import",
+    ":foundation-layout-desktop-1_7_1_http_import",
+    ":ui-desktop-1_7_1_http_import",
+    ":lifecycle-common-jvm-2_8_5_http_import",
+    ":lifecycle-runtime-desktop-2_8_5_http_import",
+    ":core-common-2_2_0_http_import",
+    ":lifecycle-viewmodel-desktop-2_8_5_http_import",
+    ":lifecycle-runtime-compose-desktop-2_8_4_http_import",
+    ":annotation-1_8_0_http_import",
+    ":runtime-saveable-desktop-1_7_1_http_import",
+    ":ui-graphics-desktop-1_7_1_http_import",
+    ":ui-unit-desktop-1_7_1_http_import",
+    ":ui-text-desktop-1_7_1_http_import",
+    ":ui-util-desktop-1_7_1_http_import",
+    ":skiko-awt-0_8_18_http_import",
+    ":components-resources-desktop-1_7_1_http_import",
+    ":runtime-desktop-1_7_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
   name = "android-nav-editor-eclipse-layout-kernel",
   exports = [
     ":org_eclipse_elk_alg_layered-0_3_0_http_import",
