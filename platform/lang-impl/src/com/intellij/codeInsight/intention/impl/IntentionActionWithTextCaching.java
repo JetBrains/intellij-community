@@ -174,9 +174,9 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
   }
 
   public void suggestionShown(Project project, Editor editor, PsiFile psiFile) {
-    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
-    if (action instanceof EventTrackingIntentionAction et) {
-      et.suggestionShown(project, editor, psiFile);
+    EventTrackingIntentionAction action = EventTrackingIntentionAction.unwrap(IntentionActionDelegate.unwrap(getDelegate()));
+    if (action != null) {
+      action.suggestionShown(project, editor, psiFile);
     }
   }
 
