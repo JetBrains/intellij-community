@@ -8,6 +8,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
@@ -95,11 +96,17 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
         HighlightingSettingsPerFile.getInstance(project).incModificationCount()
 
+        val filesInEditors = readAction {
+            FileEditorManager.getInstance(project).allEditors.mapTo(hashSetOf(), FileEditor::getFile)
+        }
+
         if (project.isOpen && !project.isDisposed) {
-            val focusedFile = readAction { FileEditorManager.getInstance(project).focusedEditor?.file }
-            definitionByFile.keys.firstOrNull { it.alwaysVirtualFile == focusedFile }?.let {
-                readAction {
-                    DaemonCodeAnalyzer.getInstance(project).restart(it)
+            for (ktFile in definitionByFile.keys) {
+                if (ktFile.alwaysVirtualFile !in filesInEditors) continue
+                if (project.isOpen && !project.isDisposed) {
+                    readAction {
+                        DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                    }
                 }
             }
         }
