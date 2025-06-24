@@ -33,7 +33,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean PRIVATE_GIST = true;
     public int CONNECTION_TIMEOUT = 5000;
     public boolean CLONE_GIT_USING_SSH = false;
-    public boolean AUTOMATICALLY_MARK_AS_VIEWED = true;
+    public boolean AUTOMATICALLY_MARK_AS_VIEWED = false;
     public boolean IS_UNREAD_MARKERS_ENABLED = true;
   }
 
