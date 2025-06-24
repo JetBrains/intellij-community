@@ -7,4 +7,4 @@ fun main() {
 
 fun foo() = listOf(1, 2, 3)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeToMutableCollectionFixFactories$ChangeToMutableCollectionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.collections.ChangeToMutableCollectionFix
