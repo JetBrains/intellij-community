@@ -40,6 +40,7 @@ class PluginDto(
   override var organization: String? = null
   override var changeNotes: String? = null
   override var productCode: String? = null
+  override var releaseDate: Long? = null
   override var size: String? = null
   override var downloadUrl: String? = null
 
@@ -144,6 +145,7 @@ class PluginDto(
         category = model.category
         sinceBuild = model.sinceBuild
         untilBuild = model.untilBuild
+        releaseDate = model.releaseDate
       }
     }
   }

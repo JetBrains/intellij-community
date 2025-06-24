@@ -5,6 +5,7 @@ import com.intellij.ide.externalComponents.ExternalComponentSource
 import com.intellij.ide.externalComponents.UpdatableExternalComponent
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.util.BuildNumber
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -52,7 +53,7 @@ data class PluginUpdates @JvmOverloads @VisibleForTesting constructor(
 @ApiStatus.Internal
 data class InternalPluginResults @JvmOverloads @VisibleForTesting constructor(
   val pluginUpdates: PluginUpdates,
-  val pluginNods: Collection<PluginNode> = emptyList(),
+  val pluginNods: Collection<PluginUiModel> = emptyList(),
   val errors: Map<String?, Exception> = emptyMap(),
 )
 

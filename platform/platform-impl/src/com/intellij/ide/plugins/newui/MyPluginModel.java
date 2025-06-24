@@ -1092,9 +1092,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     setStatesByIds(pluginsToEnable, true);
   }
 
-  protected @NotNull Collection<PluginNode> getCustomRepoPlugins() {
-    return ContainerUtil.map(CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins(),
-                             it -> (PluginNode)it.getDescriptor());
+  protected @NotNull Collection<PluginUiModel> getCustomRepoPlugins() {
+    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
   }
 
   public static @Unmodifiable @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
