@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
@@ -14,7 +15,7 @@ public class GrSuppressionTest extends GroovyLatestTest implements HighlightingT
     fixture.enableInspections(SpellCheckingInspection.class);
     configureByText(before);
     fixture.checkHighlighting();
-    fixture.launchAction(fixture.findSingleIntention(AnalysisBundle.message("suppress.inspection.file")));
+    fixture.launchAction(fixture.getAvailableIntention(AnalysisBundle.message("suppress.inspection.file")));
     fixture.checkResult(after);
   }
 

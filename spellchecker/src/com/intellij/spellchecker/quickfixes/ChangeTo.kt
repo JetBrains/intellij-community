@@ -67,6 +67,10 @@ internal class ChangeTo(
 
     override fun getFamilyName(): String = fixName
 
+    override fun isShowSubmenu(): Boolean {
+      return true
+    }
+
     override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile): Boolean {
       val suggestions = getSuggestions(project)
       if (suggestions.size <= index) return false
