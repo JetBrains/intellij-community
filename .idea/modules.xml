@@ -17,7 +17,6 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/util/logging/api/fleet.util.logging.api.iml" filepath="$PROJECT_DIR$/fleet/util/logging/api/fleet.util.logging.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/logging/slf4j/fleet.util.logging.slf4j.iml" filepath="$PROJECT_DIR$/fleet/util/logging/slf4j/fleet.util.logging.slf4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" filepath="$PROJECT_DIR$/fleet/util/multiplatform/fleet.util.multiplatform.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/intellij-integration/intellij-integration-tests.iml" filepath="$PROJECT_DIR$/android/intellij-integration/intellij-integration-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.testUtil.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.testUtil.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" />
@@ -171,6 +170,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/inspectors-common/api/intellij.android.inspectors-common.api.iml" filepath="$PROJECT_DIR$/android/inspectors-common/api/intellij.android.inspectors-common.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/inspectors-common/api-ide/intellij.android.inspectors-common.api-ide.iml" filepath="$PROJECT_DIR$/android/inspectors-common/api-ide/intellij.android.inspectors-common.api-ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/inspectors-common/ui/intellij.android.inspectors-common.ui.iml" filepath="$PROJECT_DIR$/android/inspectors-common/ui/intellij.android.inspectors-common.ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/intellij-integration/intellij.android.intellij-integration-tests.iml" filepath="$PROJECT_DIR$/android/intellij-integration/intellij.android.intellij-integration-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-model/intellij.android.jps.model.iml" filepath="$PROJECT_DIR$/android/jps-model/intellij.android.jps.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/kotlin-integration/intellij.android.kotlin-integration-tests.iml" filepath="$PROJECT_DIR$/android/kotlin-integration/intellij.android.kotlin-integration-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" filepath="$PROJECT_DIR$/android/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" />
