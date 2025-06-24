@@ -47,7 +47,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   PsiChangeHandler(@NotNull Project project, @NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Disposable parentDisposable) {
     myProject = project;
     myFileStatusMap = daemonCodeAnalyzerEx.getFileStatusMap();
-    DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocument(document));
+    DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocument(daemonCodeAnalyzerEx, document));
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
@@ -57,15 +57,17 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     myUpdateFileStatusAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
-  private void updateChangesForDocument(@NotNull Document document) {
+  private void updateChangesForDocument(@NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Document document) {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();// to prevent changedElements corruption
     if (myProject.isDisposed()) {
       return;
     }
-    // even though there maybe no PSI events, we need to re-highlight the changed range
-    // e.g. when the user backspace-d and the quickly re-typed back, or modified and then quickly undid
-    addChangesFromCompositeDirtyRange(document, UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document));
+    if (daemonCodeAnalyzerEx instanceof DaemonCodeAnalyzerImpl impl && impl.isUpdateByTimerEnabled()) {
+      // even though there maybe no PSI events, we need to re-highlight the changed range
+      // e.g. when the user backspace-d and the quickly re-typed back, or modified and then quickly undid
+      addChangesFromCompositeDirtyRange(document, UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document));
+    }
     synchronized (changedElements) {
       List<Change> toUpdate = changedElements.get(document);
       if (toUpdate == null) {
