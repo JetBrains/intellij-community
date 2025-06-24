@@ -11,7 +11,6 @@ import com.intellij.polySymbols.customElements.CustomElementsSymbol
 import com.intellij.polySymbols.customElements.json.CustomElementClassOrMixinDeclaration
 import com.intellij.polySymbols.customElements.json.resolve
 import com.intellij.polySymbols.customElements.json.toApiStatus
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
@@ -81,7 +80,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
       get() = (base.declaration.description?.takeIf { it.isNotBlank() } ?: base.declaration.summary)
                 ?.let { origin.renderDescription(it) }
               ?: superContributions.asSequence()
-                .mapNotNull { (it as? PolySymbolWithDocumentation)?.description }
+                .mapNotNull { (it as? CustomElementsSymbol)?.description }
                 .firstOrNull()
 
     override val apiStatus: PolySymbolApiStatus

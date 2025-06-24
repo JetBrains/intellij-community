@@ -3,25 +3,15 @@ package com.intellij.polySymbols.webTypes
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.polySymbols.js.JS_PROPERTIES
 import com.intellij.polySymbols.js.JS_STRING_LITERALS
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
-import com.intellij.psi.PsiElement
 
-interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolWithDocumentation, PolySymbolScope {
+interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolScope {
 
   val location: Location?
-
-  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
-    if (this[PROP_NO_DOC] != true)
-      PolySymbolDocumentationTargetImpl(this, location)
-    else
-      null
 
   override fun createPointer(): Pointer<out WebTypesSymbol>
 

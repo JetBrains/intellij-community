@@ -8,7 +8,6 @@ import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -20,18 +19,17 @@ internal class PolySymbolDocumentationBuilderImpl(
   override var name: String = symbol.name
   override var definition: String = Strings.escapeXmlEntities(symbol.name)
   override var definitionDetails: String? = null
-  override var description: @Nls String? = (symbol as? PolySymbolWithDocumentation)?.description
-  override var docUrl: String? = (symbol as? PolySymbolWithDocumentation)?.docUrl
+  override var description: @Nls String? = null
+  override var docUrl: String? = null
   override var apiStatus: PolySymbolApiStatus? = symbol.apiStatus
-  override var defaultValue: String? = (symbol as? PolySymbolWithDocumentation)?.defaultValue
+  override var defaultValue: String? = null
   override var library: String? = symbol.origin.takeIf { it.library != null }
     ?.let { context ->
       context.library +
       if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
     }
   override var icon: Icon? = symbol.icon
-  override var descriptionSections: MutableMap<@Nls String, @Nls String> = (symbol as? PolySymbolWithDocumentation)?.descriptionSections?.toMutableMap()
-                                                                           ?: mutableMapOf()
+  override var descriptionSections: MutableMap<@Nls String, @Nls String> = mutableMapOf()
   override var footnote: @Nls String? = null
   override var header: @Nls String? = null
 
