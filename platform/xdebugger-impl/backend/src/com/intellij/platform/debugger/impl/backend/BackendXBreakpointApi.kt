@@ -73,10 +73,10 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
-  override suspend fun updatePosition(breakpointId: XBreakpointId) {
+  override suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long) {
     val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
     edtWriteAction {
-      breakpoint.resetSourcePosition()
+      breakpoint.resetSourcePosition(requestId)
     }
   }
 
