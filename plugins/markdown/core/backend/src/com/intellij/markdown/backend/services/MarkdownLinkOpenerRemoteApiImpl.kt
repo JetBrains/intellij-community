@@ -72,7 +72,6 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
 
   override suspend fun fetchLinkNavigationData(link: String, virtualFileId: VirtualFileId?): MarkdownLinkNavigationData {
     val file = resolveLinkAsFile(link, virtualFileId)
-               ?: virtualFileId?.virtualFile()
                ?: return MarkdownLinkNavigationData(link, null, null, null)
 
     var path = file.url
