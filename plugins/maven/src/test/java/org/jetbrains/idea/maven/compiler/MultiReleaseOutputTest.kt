@@ -10,7 +10,7 @@ import org.junit.Test
 class MultiReleaseOutputTest : MavenCompilingTestCase() {
   override fun setUp() {
     super.setUp()
-    Registry.get("maven.sync.compileSourceRoots.and.multiReleaseOutput").setValue("true", testRootDisposable)
+    Registry.get("maven.import.separate.main.and.test.modules.when.multiReleaseOutput").setValue("true", testRootDisposable)
   }
 
   @Test

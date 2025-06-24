@@ -163,13 +163,12 @@ object MavenImportUtil {
            )
   }
 
-  internal fun multiReleaseOutputSyncEnabled(): Boolean {
-    return `is`("maven.sync.compileSourceRoots.and.multiReleaseOutput")
+  private fun multiReleaseOutputSyncEnabled(): Boolean {
+    return `is`("maven.import.separate.main.and.test.modules.when.multiReleaseOutput")
   }
 
   private fun compilerExecutions(project: MavenProject): List<MavenPlugin.Execution> {
-    val plugin = project.findCompilerPlugin() ?: return emptyList()
-    return plugin.executions ?: return emptyList()
+    return project.findCompilerPlugin()?.executions ?: return emptyList()
   }
 
   internal fun getNonDefaultCompilerExecutions(project: MavenProject): List<String> {

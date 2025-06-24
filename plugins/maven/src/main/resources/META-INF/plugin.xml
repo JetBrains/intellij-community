@@ -352,7 +352,16 @@
                  description="Skip update local gav index in unit tests"/>
 
     <registryKey key="maven.import.separate.main.and.test.modules.when.needed" defaultValue="true"
-                 description="In order to support different 'testSource' and 'testTarget' compiler options, IntelliJ IDEA will create separate modules for such projects (IDEA-85478).\nAvailable only when Import using IntelliJ Workspace API is enabled."/>
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when needed."/>
+
+    <registryKey key="maven.import.separate.main.and.test.modules.when.lang.level" defaultValue="true"
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when main and test Java language levels differ."/>
+
+    <registryKey key="maven.import.separate.main.and.test.modules.when.compiler.args" defaultValue="true"
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when main and test compiler arguments differ."/>
+
+    <registryKey key="maven.import.separate.main.and.test.modules.when.multiReleaseOutput" defaultValue="true"
+                 description="IntelliJ IDEA will create multiple modules for a Maven project when multiReleaseOutput or compileSourceRoots are used."/>
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
@@ -421,9 +430,6 @@
 
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
                  description="During incremental sync, resolve dependencies incrementally"/>
-
-    <registryKey key="maven.sync.compileSourceRoots.and.multiReleaseOutput" defaultValue="true"
-                 description="Create source roots corresponding to compileSourceRoots and multireleaseOutput during Maven sync"/>
 
     <registryKey key="maven.delegate.trust.ssl.to.ide" defaultValue="true"
                  description="Use IDEA confirming trust manager for maven importer"/>
