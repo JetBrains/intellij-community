@@ -347,7 +347,7 @@
     </context>
   </template>
 
-  <template name="sts" value="try (final var scope = java.util.concurrent.StructuredTaskScope.open()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}&#10;"
+  <template name="sts" value="try (var scope = java.util.concurrent.StructuredTaskScope.open()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}&#10;"
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stss" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
