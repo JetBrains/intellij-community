@@ -10,7 +10,6 @@ import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
@@ -26,43 +25,32 @@ import kotlin.time.Duration
 internal suspend fun <R> suspendAllAndEvaluate(
   context: DebuggerContextImpl,
   timeToSuspend: Duration,
-  action: suspend (SuspendContextImpl) -> R
+  action: suspend (SuspendContextImpl) -> R,
 ): R {
+  DebuggerManagerThreadImpl.assertIsManagerThread()
   val process = context.debugProcess!!
   val suspendContext = context.suspendContext
-  return if (suspendContext == null) {
-    // Not suspended at all.
-    tryToBreakOnAnyMethodAndEvaluate(context, process, null, timeToSuspend, action)
-  }
-  else if (process.isEvaluationPossible(suspendContext)) {
-    if (suspendContext.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD) {
-      // We are on Suspend Thread breakpoint, suspend all threads first, then evaluate.
-      tryToBreakOnAnyMethodAndEvaluate(context,  process, null, timeToSuspend, action)
-    } else {
-      // We are on a Suspend All breakpoint, we can evaluate right here.
-      val result = CompletableDeferred<R>()
-
-      // We have to evaluate inside SuspendContextCommandImpl, so we just start a new command.
-      // TODO: are there any better ways to do this? Should we create proper command above?
-      executeOnDMT(suspendContext) {
-        result.completeWith(runCatching { action(suspendContext) })
-      }
-
-      result.await()
+  return if (suspendContext != null
+             && process.isEvaluationPossible(suspendContext)
+             && suspendContext.suspendPolicy == EventRequest.SUSPEND_ALL) {
+    // We are on a Suspend All breakpoint, we can evaluate right here.
+    withDebugContext(suspendContext) {
+      action(suspendContext)
     }
   }
   else {
-    // We are on a pause, cannot evaluate.
-    tryToBreakOnAnyMethodAndEvaluate(context, process, suspendContext, timeToSuspend, action)
+    val pauseSuspendContext = suspendContext?.takeIf { !process.isEvaluationPossible(it) }
+    // The current context does not fit, try to evaluate on a breakpoint.
+    tryToBreakOnAnyMethodAndEvaluate(context, process, pauseSuspendContext, timeToSuspend, action)
   }
 }
 
-private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate (
+private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate(
   context: DebuggerContextImpl,
   process: DebugProcessImpl,
   pauseSuspendContext: SuspendContextImpl?,
   timeToSuspend: Duration,
-  actionToEvaluate: suspend (SuspendContextImpl) -> R
+  actionToEvaluate: suspend (SuspendContextImpl) -> R,
 ): R {
   val onPause = pauseSuspendContext != null
 
@@ -128,7 +116,8 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate (
       timedOut = true
       if (programSuspendedActionStarted.isCompleted) {
         // Request was already processed, we need to ignore the timeout.
-      } else {
+      }
+      else {
         if (onPause) {
           // FIXME: get preferred thread from pauseSuspendContext
           // If the context was originally on pause, but after resume did not hit a breakpoint within a timeout,
