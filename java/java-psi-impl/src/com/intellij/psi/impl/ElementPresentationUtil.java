@@ -20,7 +20,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
 public final class ElementPresentationUtil {
   private ElementPresentationUtil() {
@@ -116,11 +116,7 @@ public final class ElementPresentationUtil {
     }
 
     if (!DumbService.getInstance(aClass.getProject()).isDumb()) {
-      final PsiManager manager = aClass.getManager();
-      final PsiClass javaLangTrowable =
-        JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
-      final boolean isException = javaLangTrowable != null && InheritanceUtil.isInheritorOrSelf(aClass, javaLangTrowable, true);
-      if (isException) {
+      if (PsiClassUtil.isThrowable(aClass)) {
         return CLASS_KIND_EXCEPTION;
       }
 
