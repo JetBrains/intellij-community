@@ -2,12 +2,10 @@
 package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.dvcs.branch.BranchType
+import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.keymap.KeymapUtil
@@ -302,13 +300,26 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
     }
   }
 
+  private fun installSpeedSearchActions() {
+    val updateSpeedSearch = {
+      val textInEditor = mySpeedSearchPatternField.textEditor.text
+      speedSearch.updatePattern(textInEditor)
+      onSpeedSearchPatternChanged()
+    }
+    val group = am.getAction(GitBranchesPopupActions.SPEED_SEARCH_ACTION_GROUP) as DefaultActionGroup
+    val speedSearchDataContext = CustomizedDataContext.withSnapshot(DataManager.getInstance().getDataContext(mySpeedSearchPatternField.textEditor)) { sink ->
+      sink[CommonDataKeys.PROJECT] = project
+    }
+    for (action in group.getChildren(am)) {
+      registerShortcutAction(action, closePopup = false, dataContext = speedSearchDataContext, afterActionPerformed = updateSpeedSearch)
+    }
+  }
+
   private fun installShortcutActions(model: TreeModel) {
     val dataContext = createShortcutActionDataContext()
     TreeUtil.nodeChildren(model.root, model).forEach { child ->
       val actionItem = child as? PopupFactoryImpl.ActionItem ?: return@forEach
-      if (actionItem.isEnabled) {
-        registerShortcutAction(actionItem.action, dataContext = dataContext)
-      }
+      registerShortcutAction(actionItem.action, closePopup = true, dataContext = dataContext)
     }
   }
 
@@ -323,15 +334,22 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
   abstract fun getHeaderToolbar(): ActionToolbar?
 
-  private fun registerShortcutAction(action: AnAction, dataContext: DataContext) {
+  private fun registerShortcutAction(
+    action: AnAction,
+    closePopup: Boolean,
+    dataContext: DataContext,
+    afterActionPerformed: (() -> Unit)? = null,
+  ) {
     val actionPlace =
       if (isNestedPopup()) GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE
       else GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE
     val wrappedAction = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
-        cancel()
-        parent?.cancel()
-        ActionUtil.invokeAction(action, dataContext, actionPlace, null, null)
+        if (closePopup) {
+          cancel()
+          parent?.cancel()
+        }
+        ActionUtil.invokeAction(action, dataContext, actionPlace, null, afterActionPerformed)
       }
     }
 
@@ -447,10 +465,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
           mySpeedSearch.update()
         }
       }
-      else -> {
-        mySpeedSearchPatternField.textEditor.requestFocus()
-        mySpeedSearch.processKeyEvent(e)
-      }
+      else -> mySpeedSearch.processKeyEvent(e)
     }
   }
 
@@ -475,6 +490,9 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
   override fun afterShow() {
     selectPreferred()
     traverseNodesAndExpand()
+    if (treeStep.isSpeedSearchEnabled) {
+      installSpeedSearchActions()
+    }
   }
 
   final override fun updateSpeedSearchColors(error: Boolean) {} // update colors only after branches tree model update
