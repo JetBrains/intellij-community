@@ -23,6 +23,8 @@ interface ScriptDependencyAware {
 
     fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile?
 
+    fun updateScriptDefinitionReferences(): Unit = Unit
+
     companion object {
         fun getInstance(project: Project): ScriptDependencyAware = project.service<ScriptConfigurationsProvider>() as ScriptDependencyAware
 

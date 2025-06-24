@@ -125,7 +125,7 @@ class ScriptConfigurationManager(val myProject: Project, val scope: CoroutineSco
     fun getLightScriptInfo(file: String): LightScriptInfo? =
         updater.classpathRoots.getLightScriptInfo(file)
 
-    fun updateScriptDefinitionReferences() {
+    override fun updateScriptDefinitionReferences() {
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
 
         default.updateScriptDefinitionsReferences()

@@ -8,6 +8,9 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 interface KotlinScriptingSettings {
     fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean
     fun setAutoReloadConfigurations(scriptDefinition: ScriptDefinition, autoReloadScriptDependencies: Boolean)
+    fun setOrder(scriptDefinition: ScriptDefinition, order: Int)
+    fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean
+    fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int
 
     companion object {
         fun getInstance(project: Project): KotlinScriptingSettings = project.service()
