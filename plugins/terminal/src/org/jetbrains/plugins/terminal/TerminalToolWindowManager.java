@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Sets;
+import com.intellij.frontend.FrontendApplicationInfo;
+import com.intellij.frontend.FrontendType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.ide.actions.ShowContentAction;
@@ -17,6 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.client.ClientKind;
+import com.intellij.openapi.client.ClientSessionsUtil;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -686,23 +690,32 @@ public final class TerminalToolWindowManager implements Disposable {
                                                            @NotNull Disposable parentDisposable) {
     TerminalWidget widget;
 
+    FrontendType frontendType = FrontendApplicationInfo.INSTANCE.getFrontendType();
+    boolean isAnyRemoteDev = frontendType instanceof FrontendType.Remote || PlatformUtils.isJetBrainsClient() || AppMode.isRemoteDevHost();
+    boolean isCodeWithMe = frontendType instanceof FrontendType.Remote remote && remote.isGuest();
+
     TerminalWidgetProvider provider = TerminalWidgetProvider.getProvider();
+    // Run Reworked Terminal (Gen2) only if the default terminal runner was specified.
+    // Do not enable it in CodeWithMe since it is not adapted to this mode.
     if (terminalEngine == TerminalEngine.REWORKED &&
         ExperimentalUI.isNewUI() &&
         terminalRunner == myTerminalRunner &&
         provider != null &&
-        terminalRunner.isGenTwoTerminalEnabled()) {
+        !isCodeWithMe) {
       widget = startReworkedShellTerminalWidget(provider, content, startupOptions, existingTab, startupFusInfo,
                                                 deferSessionStartUntilUiShown, updateTabTitleOnBackend, parentDisposable);
     }
+    // Run New Terminal (Gen1) only if the default terminal runner was specified.
+    // Do not enable it in remote dev since it is not adapted to this mode.
     else if (terminalEngine == TerminalEngine.NEW_TERMINAL &&
              ExperimentalUI.isNewUI() &&
              terminalRunner == myTerminalRunner &&
-             terminalRunner instanceof LocalTerminalDirectRunner localRunner &&
-             localRunner.isGenOneTerminalEnabled()) {
-      // TODO: use special terminal runner that doesn't depend on the state of terminal engine in the settings.
-      widget = terminalRunner.startShellTerminalWidget(parentDisposable, startupOptions, deferSessionStartUntilUiShown);
+             !isAnyRemoteDev) {
+      // Use the specific runner that will start the terminal with the corresponding shell integration.
+      var runner = new LocalBlockTerminalRunner(myProject);
+      widget = runner.startShellTerminalWidget(parentDisposable, startupOptions, deferSessionStartUntilUiShown);
     }
+    // Otherwise start the Classic Terminal with the provided runner.
     else {
       widget = terminalRunner.startShellTerminalWidget(parentDisposable, startupOptions, deferSessionStartUntilUiShown);
     }
