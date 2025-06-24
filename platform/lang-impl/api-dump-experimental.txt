@@ -800,6 +800,7 @@ f:com.intellij.platform.ide.documentation.ActionsKt
 *f:com.intellij.psi.codeStyle.DetectableIndentSettingsModifier
 - com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 - <init>():V
+- acceptsFileIndentOptionsProviders():Z
 - getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
 - getName():java.lang.String
 - getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
