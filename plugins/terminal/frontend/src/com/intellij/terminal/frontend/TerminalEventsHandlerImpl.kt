@@ -42,13 +42,15 @@ internal open class TerminalEventsHandlerImpl(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
-  private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
 
   private val terminalState: TerminalState
     get() = sessionModel.terminalState.value
+  
+  private val typeAhead: TerminalTypeAhead?
+    get() = editor.getUserData(TerminalTypeAhead.KEY)
 
   override fun keyTyped(e: TimedKeyEvent) {
     updateLookupOnTyping(e.original.keyChar)

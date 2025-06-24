@@ -116,7 +116,6 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalInput,
-      typeAhead = null,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
       scrollingModel = null,
       fusCursorPaintingListener,
@@ -132,7 +131,6 @@ internal class ReworkedTerminalView(
     scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
-    val typeAhead = TerminalTypeAhead(outputModel)
     configureOutputEditor(
       project,
       editor = outputEditor,
@@ -141,7 +139,6 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalInput,
-      typeAhead,
       coroutineScope.childScope("TerminalOutputModel"),
       scrollingModel,
       fusCursorPaintingListener,
@@ -153,6 +150,8 @@ internal class ReworkedTerminalView(
     terminalSearchController = TerminalSearchController(project)
 
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
+    val typeAhead = TerminalTypeAhead(outputModel, blocksModel)
+    outputEditor.putUserData(TerminalTypeAhead.KEY, typeAhead)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
 
@@ -177,7 +176,6 @@ internal class ReworkedTerminalView(
       terminalAliasesStorage
     )
     outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
-    controller.addShellIntegrationListener(this, typeAhead)
 
     sessionFuture.thenAccept { session ->
       controller.handleEvents(session)
@@ -289,7 +287,6 @@ internal class ReworkedTerminalView(
     sessionModel: TerminalSessionModel,
     encodingManager: TerminalKeyEncodingManager,
     terminalInput: TerminalInput,
-    typeAhead: TerminalTypeAhead?,
     coroutineScope: CoroutineScope,
     scrollingModel: TerminalOutputScrollingModel?,
     fusCursorPainterListener: TerminalFusCursorPainterListener?,
@@ -330,7 +327,7 @@ internal class ReworkedTerminalView(
       addTopAndBottomInsets(editor)
     }
 
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model, typeAhead)
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model)
     setupKeyEventDispatcher(editor, settings, eventsHandler, parentDisposable)
     setupMouseListener(editor, sessionModel, settings, eventsHandler, parentDisposable)
 
