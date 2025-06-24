@@ -208,7 +208,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
     if (arrangementState != null) {
       for (TerminalTabState tabState : arrangementState.myTabStates) {
-        createNewSession(myTerminalRunner, tabState, null, null, false, true);
+        createNewSession(myTerminalRunner, TerminalEngine.CLASSIC, tabState, null, null, false, true);
       }
 
       Content content = contentManager.getContent(arrangementState.mySelectedTabIndex);
@@ -249,7 +249,7 @@ public final class TerminalToolWindowManager implements Disposable {
       tabState.myShellCommand = tab.getShellCommand();
       tabState.myWorkingDirectory = tab.getWorkingDirectory();
 
-      createNewSession(myTerminalRunner, tabState, tab, null, false, true);
+      createNewSession(myTerminalRunner, TerminalEngine.REWORKED, tabState, tab, null, false, true);
     }
 
     ReworkedTerminalUsageCollector.logSessionRestored(myProject, tabs.size());
@@ -264,15 +264,15 @@ public final class TerminalToolWindowManager implements Disposable {
   //------------ Terminal tab creation API methods start ------------------------------------
 
   public @NotNull TerminalWidget createNewSession() {
-    return createNewSession(myTerminalRunner, null, null, null, true, true);
+    return createNewSession(myTerminalRunner, TerminalEngine.CLASSIC, null, null, null, true, true);
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner) {
-    createNewSession(terminalRunner, null, null, null, true, true);
+    createNewSession(terminalRunner, TerminalEngine.CLASSIC, null, null, null, true, true);
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState) {
-    createNewSession(terminalRunner, tabState, null, null, true, true);
+    createNewSession(terminalRunner, TerminalEngine.CLASSIC, tabState, null, null, true, true);
   }
 
   public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
@@ -283,7 +283,7 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   public @NotNull Content newTab(@NotNull ToolWindow toolWindow, @Nullable TerminalWidget terminalWidget) {
-    return createNewTab(terminalWidget, myTerminalRunner, toolWindow, null, null, null, true, true);
+    return createNewTab(terminalWidget, myTerminalRunner, toolWindow, TerminalEngine.CLASSIC, null, null, null, true, true);
   }
 
   public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
@@ -291,7 +291,7 @@ public final class TerminalToolWindowManager implements Disposable {
     if (fileToOpen != null) {
       state.myWorkingDirectory = fileToOpen.getPath();
     }
-    createNewSession(myTerminalRunner, state, null, null, true, true);
+    createNewSession(myTerminalRunner, TerminalEngine.CLASSIC, state, null, null, true, true);
   }
 
   //------------ Terminal tab creation API methods end --------------------------------------
@@ -306,27 +306,29 @@ public final class TerminalToolWindowManager implements Disposable {
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
     tabState.myShellCommand = shellCommand;
-    return createNewSession(myTerminalRunner, tabState, null, null, requestFocus, deferSessionStartUntilUiShown);
+    return createNewSession(myTerminalRunner, TerminalEngine.CLASSIC, tabState, null, null, requestFocus, deferSessionStartUntilUiShown);
   }
 
   @ApiStatus.Internal
   public void createNewSession(@NotNull TerminalStartupFusInfo startupFusInfo) {
-    createNewSession(myTerminalRunner, null, null, startupFusInfo, true, true);
+    createNewSession(myTerminalRunner, TerminalEngine.CLASSIC, null, null, startupFusInfo, true, true);
   }
 
   @ApiStatus.Internal
   public void createNewSession(@NotNull TerminalTabState tabState, @NotNull TerminalStartupFusInfo startupFusInfo) {
-    createNewSession(myTerminalRunner, tabState, null, startupFusInfo, true, true);
+    createNewSession(myTerminalRunner, TerminalEngine.CLASSIC, tabState, null, startupFusInfo, true, true);
   }
 
   private @NotNull TerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
+                                                   @NotNull TerminalEngine terminalEngine,
                                                    @Nullable TerminalTabState tabState,
                                                    @Nullable TerminalSessionTab sessionTab,
                                                    @Nullable TerminalStartupFusInfo startupFusInfo,
                                                    boolean requestFocus,
                                                    boolean deferSessionStartUntilUiShown) {
     ToolWindow toolWindow = getOrInitToolWindow();
-    Content content = createNewTab(null, terminalRunner, toolWindow, tabState, sessionTab, startupFusInfo, requestFocus, deferSessionStartUntilUiShown);
+    Content content = createNewTab(null, terminalRunner, toolWindow, terminalEngine, tabState, sessionTab,
+                                   startupFusInfo, requestFocus, deferSessionStartUntilUiShown);
     return Objects.requireNonNull(content.getUserData(TERMINAL_WIDGET_KEY));
   }
 
@@ -343,13 +345,14 @@ public final class TerminalToolWindowManager implements Disposable {
   private @NotNull Content createNewTab(@Nullable TerminalWidget terminalWidget,
                                         @NotNull AbstractTerminalRunner<?> terminalRunner,
                                         @NotNull ToolWindow toolWindow,
+                                        @NotNull TerminalEngine terminalEngine,
                                         @Nullable TerminalTabState tabState,
                                         @Nullable TerminalSessionTab sessionTab,
                                         @Nullable TerminalStartupFusInfo startupFusInfo,
                                         boolean requestFocus,
                                         boolean deferSessionStartUntilUiShown) {
     TerminalStartupMoment startupMoment = requestFocus && deferSessionStartUntilUiShown ? new TerminalStartupMoment() : null;
-    Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState,
+    Content content = createTerminalContent(terminalRunner, toolWindow, terminalEngine, terminalWidget, tabState,
                                             sessionTab, startupFusInfo, deferSessionStartUntilUiShown, startupMoment);
     content.putUserData(RUNNER_KEY, terminalRunner);
     final ContentManager contentManager = toolWindow.getContentManager();
@@ -379,6 +382,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
   private @NotNull Content createTerminalContent(@NotNull AbstractTerminalRunner<?> terminalRunner,
                                                  @NotNull ToolWindow toolWindow,
+                                                 @NotNull TerminalEngine terminalEngine,
                                                  @Nullable TerminalWidget terminalWidget,
                                                  @Nullable TerminalTabState tabState,
                                                  @Nullable TerminalSessionTab sessionTab,
@@ -404,7 +408,8 @@ public final class TerminalToolWindowManager implements Disposable {
         .commandHistoryFileProvider(() -> commandHistoryFileLazyValue.getValue())
         .startupMoment(startupMoment)
         .build();
-      widget = startShellTerminalWidget(content, terminalRunner, startupOptions, sessionTab, startupFusInfo, deferSessionStartUntilUiShown, true, content);
+      widget = startShellTerminalWidget(content, terminalRunner, startupOptions, terminalEngine, sessionTab, startupFusInfo,
+                                        deferSessionStartUntilUiShown, true, content);
       widget.getTerminalTitle().change(state -> {
         if (state.getDefaultTitle() == null) {
           state.setDefaultTitle(terminalRunner.getDefaultTabTitle());
@@ -596,7 +601,8 @@ public final class TerminalToolWindowManager implements Disposable {
       String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       ShellStartupOptions startupOptions = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
       Content content = container.getContent();
-      TerminalWidget newWidget = startShellTerminalWidget(content, myTerminalRunner, startupOptions, null, startupFusInfo, true, false, content);
+      TerminalWidget newWidget = startShellTerminalWidget(content, myTerminalRunner, startupOptions, TerminalEngine.CLASSIC, null,
+                                                          startupFusInfo, true, false, content);
       setupTerminalWidget(myToolWindow, myTerminalRunner, newWidget, content);
       container.split(!vertically, newWidget);
     }
@@ -672,6 +678,7 @@ public final class TerminalToolWindowManager implements Disposable {
   private @NotNull TerminalWidget startShellTerminalWidget(@NotNull Content content,
                                                            @NotNull AbstractTerminalRunner<?> terminalRunner,
                                                            @NotNull ShellStartupOptions startupOptions,
+                                                           @NotNull TerminalEngine terminalEngine,
                                                            @Nullable TerminalSessionTab existingTab,
                                                            @Nullable TerminalStartupFusInfo startupFusInfo,
                                                            boolean deferSessionStartUntilUiShown,
@@ -680,12 +687,21 @@ public final class TerminalToolWindowManager implements Disposable {
     TerminalWidget widget;
 
     TerminalWidgetProvider provider = TerminalWidgetProvider.getProvider();
-    if (provider != null &&
+    if (terminalEngine == TerminalEngine.REWORKED &&
         ExperimentalUI.isNewUI() &&
         terminalRunner == myTerminalRunner &&
+        provider != null &&
         terminalRunner.isGenTwoTerminalEnabled()) {
       widget = startReworkedShellTerminalWidget(provider, content, startupOptions, existingTab, startupFusInfo,
                                                 deferSessionStartUntilUiShown, updateTabTitleOnBackend, parentDisposable);
+    }
+    else if (terminalEngine == TerminalEngine.NEW_TERMINAL &&
+             ExperimentalUI.isNewUI() &&
+             terminalRunner == myTerminalRunner &&
+             terminalRunner instanceof LocalTerminalDirectRunner localRunner &&
+             localRunner.isGenOneTerminalEnabled()) {
+      // TODO: use special terminal runner that doesn't depend on the state of terminal engine in the settings.
+      widget = terminalRunner.startShellTerminalWidget(parentDisposable, startupOptions, deferSessionStartUntilUiShown);
     }
     else {
       widget = terminalRunner.startShellTerminalWidget(parentDisposable, startupOptions, deferSessionStartUntilUiShown);
