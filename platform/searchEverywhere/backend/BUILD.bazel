@@ -31,6 +31,7 @@ jvm_library(
     "//platform/usageView-impl",
     "//platform/refactoring",
     "//platform/indexing-api:indexing",
+    "//platform/scopes",
   ],
   runtime_deps = [
     ":backend_resources",

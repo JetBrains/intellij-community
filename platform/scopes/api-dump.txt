@@ -1,0 +1,8 @@
+c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
+- com.intellij.openapi.util.ColoredItem
+- <init>(com.intellij.psi.search.SearchScope):V
+- getColor():java.awt.Color
+- getDisplayName():java.lang.String
+- getIcon():javax.swing.Icon
+- getScope():com.intellij.psi.search.SearchScope
+- scopeEquals(com.intellij.psi.search.SearchScope):Z

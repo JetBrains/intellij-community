@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.providers
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
@@ -75,7 +76,7 @@ class SeLocalItemDataProvider(
     return provider.itemSelected(item, modifiers, searchText)
   }
 
-  suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
+  suspend fun getSearchScopesInfo(): SearchScopesInfo? {
     return (provider as? SeSearchScopesProvider)?.getSearchScopesInfo()
   }
 

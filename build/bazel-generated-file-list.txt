@@ -569,6 +569,8 @@ platform/runtime/product
 platform/runtime/product/tests
 platform/runtime/repository
 platform/runtime/repository/tests
+platform/scopes
+platform/scopes/backend
 platform/script-debugger/backend
 platform/script-debugger/debugger-ui
 platform/script-debugger/protocol/protocol-reader
