@@ -340,7 +340,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   public void testJavaNormalClassDeclarationContextWithInstanceMethod() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for normal classes");
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
       assertTrue(isApplicable("class Foo { <caret>xxx }", template));
       assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
       assertFalse(isApplicable("<caret>", template));
@@ -359,14 +359,14 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
       assertFalse(isApplicable("<caret>", template));
       assertFalse(isApplicable("int a = 1; <caret>", template));
     });
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
       assertFalse(isApplicable("class Foo { <caret>xxx }", template));
     });
   }
 
   public void testImplicitClassDeclarationContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Instance 'main' methods for implicitly declared classes");
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
       assertFalse(isApplicable("class Foo { <caret>xxx }", template));
       assertFalse(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
       assertTrue(isApplicable("<caret>xxx", template));
@@ -812,7 +812,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   public void testPsvmWithString() {
     IdeaTestUtil.withLevel(
       getModule(),
-      JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(),
+      JavaFeature.IMPLICIT_CLASSES.getStandardLevel(),
       () -> {
         myFixture.configureByText(
           "a.java",
@@ -835,7 +835,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   public void testPsvmWithoutString() {
     IdeaTestUtil.withLevel(
       getModule(),
-      JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(),
+      JavaFeature.IMPLICIT_CLASSES.getStandardLevel(),
       () -> {
         myFixture.configureByText(
           "a.java",
@@ -861,7 +861,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   public void testIOP() {
     IdeaTestUtil.withLevel(
       getModule(),
-      JavaFeature.JAVA_LANG_IO.getMinimumLevel(),
+      JavaFeature.JAVA_LANG_IO.getStandardLevel(),
       () -> {
         myFixture.configureByText(
           "a.java",
@@ -889,7 +889,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   public void testIOR() {
     IdeaTestUtil.withLevel(
       getModule(),
-      JavaFeature.JAVA_LANG_IO.getMinimumLevel(),
+      JavaFeature.JAVA_LANG_IO.getStandardLevel(),
       () -> {
         myFixture.configureByText(
           "a.java",
@@ -959,7 +959,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   public void testIOPAvailable() {
     final TemplateImpl template =
       TemplateSettings.getInstance().getTemplate("iop", "Java");
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getStandardLevel(), () -> {
       assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
@@ -970,7 +970,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   public void testIORAvailable() {
     final TemplateImpl template =
       TemplateSettings.getInstance().getTemplate("ior", "Java");
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getStandardLevel(), () -> {
       assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {

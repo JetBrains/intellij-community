@@ -34,7 +34,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
 
   public void testFileScopeWithoutPackage() {
-    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getMinimumLevel());
+    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getStandardLevel());
     doTest(16, "package", "public", "import", "final", "class", "interface", "abstract", "enum",
            "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
     assertNotContainItems("default", "strictfp");
@@ -55,7 +55,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
   }
   public void testFileScopeWithPackage2() {
-    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getMinimumLevel());
+    setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getStandardLevel());
     doTest(10, "public", "import", "final", "class", "interface", "abstract", "enum", "record", "sealed", "non-sealed");
     assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized");
   }
@@ -320,7 +320,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
 
   public void testVoidAtBeginningImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
       configureFromFileText("Test.java", """
       vo<caret>""");
       complete();
@@ -329,7 +329,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
 
   public void testNoVoidWithPackageStatement() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
       configureFromFileText("Test.java", """
       package a;
       vo<caret>""");

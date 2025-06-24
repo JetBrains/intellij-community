@@ -345,7 +345,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testRedundantImportWithImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(),
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(),
                            () -> {
                              doTest("""
                                       /*Unused import 'import java.util.List;'*/import java.util.List;/**/

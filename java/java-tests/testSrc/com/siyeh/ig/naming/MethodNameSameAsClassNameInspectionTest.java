@@ -27,7 +27,7 @@ public class MethodNameSameAsClassNameInspectionTest extends IGQuickFixesTestCas
 
   @SuppressWarnings("SpellCheckingInspection")
   public void testmain() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> assertQuickfixNotAvailable());
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> assertQuickfixNotAvailable());
   }
 
   @Override
