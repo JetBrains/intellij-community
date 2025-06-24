@@ -35,4 +35,6 @@ class DetectableIndentSettingsModifier : CodeStyleSettingsModifier {
   override fun getStatusBarUiContributor(transientSettings: TransientCodeStyleSettings): CodeStyleStatusBarUIContributor? = null
 
   override fun mayOverrideSettingsOf(project: Project): Boolean = CodeStyle.getSettings(project).AUTODETECT_INDENTS
+
+  override fun acceptsFileIndentOptionsProviders(): Boolean = true
 }

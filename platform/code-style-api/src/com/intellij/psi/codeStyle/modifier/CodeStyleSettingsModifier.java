@@ -91,4 +91,9 @@ public interface CodeStyleSettingsModifier {
   default @Nullable AnAction getActivatingAction(@Nullable CodeStyleStatusBarUIContributor activeUiContributor, @NotNull PsiFile file) {
     return null;
   }
+  
+  /**
+   * @return {@code true} if the modifier accepts file indent providers, {@code false} otherwise.
+   */
+  default boolean acceptsFileIndentOptionsProviders() { return false; }
 }
