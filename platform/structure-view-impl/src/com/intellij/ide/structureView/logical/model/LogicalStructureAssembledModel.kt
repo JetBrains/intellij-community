@@ -43,6 +43,37 @@ class LogicalStructureAssembledModel<T> private constructor(
     return result
   }
 
+  fun getLogicalPsiDescriptions(): Set<LogicalPsiDescription> {
+    return model?.let { getLogicalPsiDescriptions(it) } ?: emptySet()
+  }
+
+  private fun getLogicalPsiDescriptions(model: Any): Set<LogicalPsiDescription> {
+    val result = mutableSetOf<LogicalPsiDescription>()
+    if (model is LogicalPsiDescription) {
+      if (!model.isAskChildren()) {
+        return setOf(model)
+      }
+      else {
+        result.add(model)
+      }
+    }
+    for (provider in LogicalStructureElementsProvider.getProviders(model)) {
+      if (provider is LogicalPsiDescription) {
+        if (!provider.isAskChildren()) {
+          return setOf(provider)
+        }
+        else {
+          result.add(provider)
+        }
+      }
+      if (provider is ExternalElementsProvider<*, *>) continue
+      provider.getElements(model).forEach { child ->
+        result.addAll(getLogicalPsiDescriptions(child))
+      }
+    }
+    return result
+  }
+
   internal fun hasSameModelParent(): Boolean {
     var parentTmp = parent
     while (parentTmp != null) {

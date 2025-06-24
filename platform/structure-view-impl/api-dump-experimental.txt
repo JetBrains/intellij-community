@@ -23,10 +23,14 @@
 - isAutoExpand(java.lang.Object):Z
 *f:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider$Companion
 - f:getForObject(java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
+*:com.intellij.ide.structureView.logical.model.LogicalPsiDescription
+- a:getSuitableElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- isAskChildren():Z
 *f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 - *sf:Companion:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
 - equals(java.lang.Object):Z
 - f:getChildren():java.util.List
+- f:getLogicalPsiDescriptions():java.util.Set
 - f:getModel():java.lang.Object
 - f:getParent():com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 - f:getProject():com.intellij.openapi.project.Project
