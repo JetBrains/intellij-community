@@ -39,7 +39,7 @@ internal fun createXBreakpointProxy(
     FrontendXLineBreakpointProxy(project, parentCs, dto, type, manager, onBreakpointChange)
   }
   else {
-    FrontendXBreakpointProxy(project, parentCs, dto, type, manager, onBreakpointChange)
+    FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter, onBreakpointChange)
   }
 }
 
@@ -48,7 +48,7 @@ internal open class FrontendXBreakpointProxy(
   parentCs: CoroutineScope,
   private val dto: XBreakpointDto,
   override val type: XBreakpointTypeProxy,
-  protected val manager: FrontendXBreakpointManager,
+  private val breakpointRequestCounter: BreakpointRequestCounter,
   private val _onBreakpointChange: (XBreakpointProxy) -> Unit,
 ) : XBreakpointProxy {
   override val id: XBreakpointId = dto.id
@@ -64,7 +64,7 @@ internal open class FrontendXBreakpointProxy(
   protected inline fun updateState(update: (XBreakpointDtoState) -> XBreakpointDtoState): Long {
     var requestId: Long = -1
     _state.update {
-      requestId = manager.breakpointRequestCounter.increment()
+      requestId = breakpointRequestCounter.increment()
       update(it).copy(requestId = requestId)
     }
     assert(requestId != -1L)
@@ -74,7 +74,7 @@ internal open class FrontendXBreakpointProxy(
   init {
     cs.launch {
       dto.state.toFlow().collectLatest {
-        if (manager.breakpointRequestCounter.isSuitableUpdate(it.requestId)) {
+        if (breakpointRequestCounter.isSuitableUpdate(it.requestId)) {
           _state.value = it
           onBreakpointChange()
         }
