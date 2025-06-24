@@ -214,6 +214,8 @@ com.intellij.ide.navigationToolbar.NavBarModelExtension
 - normalizeChildren():Z
 - processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+f:com.intellij.ide.plugins.InstalledPluginsState
+- getInstalledWithoutRestartPlugins():java.util.Collection
 com.intellij.ide.plugins.PluginEnableStateChangedListener
 - a:stateChanged(java.util.Collection,Z):V
 com.intellij.ide.plugins.PluginManagerMain$PluginEnabler

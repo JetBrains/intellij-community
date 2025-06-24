@@ -3198,7 +3198,6 @@ c:com.intellij.ide.plugins.InstalledPluginsTableModel
 - pf:sessionId:java.util.UUID
 - pf:view:java.util.List
 - <init>(com.intellij.openapi.project.Project):V
-- <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.Collection):V
 - pf:getEnabledMap():java.util.Map
 - pf:getProject():com.intellij.openapi.project.Project
 - p:handleBeforeChangeEnableState(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.Pair):V

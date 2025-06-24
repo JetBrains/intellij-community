@@ -66,8 +66,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.isEnabled(model.getDescriptor())
   }
 
-  fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, success: Boolean, showErrors: Boolean, restartRequired: Boolean,  errors: List<HtmlChunk>) {
-    pluginModel.finishInstall(model, installedModel, success, showErrors, restartRequired, errors)
+  fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, success: Boolean, showErrors: Boolean, restartRequired: Boolean,  errors: Map<PluginId, List<HtmlChunk>>) {
+    pluginModel.finishInstall(model, installedModel, errors, success, showErrors, restartRequired)
   }
 
   fun isPluginRequiredForProject(model: PluginUiModel): Boolean {

@@ -45,7 +45,7 @@ interface PluginManagerCustomizer {
     @JvmStatic
     fun getInstance(): PluginManagerCustomizer? {
       if (Registry.`is`("reworked.plugin.manager.enabled")) {
-        return EP_NAME.extensionList.first()
+        return EP_NAME.extensionList.firstOrNull()
       }
       return null
     }
