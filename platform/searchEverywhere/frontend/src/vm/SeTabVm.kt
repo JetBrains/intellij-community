@@ -45,6 +45,8 @@ class SeTabVm(
     if (SearchEverywhereUsageTriggerCollector.isReportable(tab)) tabId
     else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
 
+  val isIndexingDependent: Boolean get() = tab.isIndexingDependent
+
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean
     get() = shouldLoadMoreFlow.value

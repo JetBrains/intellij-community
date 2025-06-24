@@ -5,6 +5,7 @@ import com.intellij.accessibility.TextFieldWithListAccessibleContext
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
+import com.intellij.ide.actions.searcheverywhere.HintHelper
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
@@ -79,7 +80,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.ShowInFindToolWindowAction(onShowFindToolWindow)
   )
 
-  private val textField: SeTextField = object : SeTextField() {
+  private val textField = object : SeTextField() {
     override fun getAccessibleContext(): AccessibleContext {
       if (accessibleContext == null) {
         accessibleContext = TextFieldWithListAccessibleContext(this, resultList.getAccessibleContext())
@@ -87,6 +88,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       return accessibleContext
     }
   }
+  private val hintHelper = HintHelper(textField)
 
   private val resultListModel = SeResultListModel { resultList.selectionModel }
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
@@ -163,7 +165,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
             resultListModel.invalidate()
 
             if (vm.searchPattern.value.isNotEmpty()) {
-              textField.setSearchInProgress(true)
+              hintHelper.setSearchInProgress(true)
             }
           }
 
@@ -190,7 +192,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               if (!resultListModel.isValid) resultListModel.reset()
 
               if (resultListModel.isEmpty) {
-                textField.setSearchInProgress(false)
+                hintHelper.setSearchInProgress(false)
                 updateEmptyStatus()
               }
 
@@ -198,7 +200,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
             }
           }.collect { event ->
             withContext(Dispatchers.EDT) {
-              textField.setSearchInProgress(false)
+              hintHelper.setSearchInProgress(false)
               val wasFrozen = resultListModel.freezer.isEnabled
 
               resultListModel.addFromThrottledEvent(event)
@@ -260,6 +262,14 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
           }.collect { (isScrolledAlmostToAnEnd, isValidList) ->
             tabVm.shouldLoadMore = isScrolledAlmostToAnEnd || !isValidList
           }
+        }
+      }
+    }
+
+    vm.coroutineScope.launch {
+      vm.searchFieldWarning.collect { warning ->
+        withContext(Dispatchers.EDT) {
+          hintHelper.setWarning(warning)
         }
       }
     }

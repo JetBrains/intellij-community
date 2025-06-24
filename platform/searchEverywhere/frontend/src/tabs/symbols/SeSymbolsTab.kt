@@ -15,9 +15,9 @@ import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
-import fleet.kernel.DurableRef
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -26,6 +26,8 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = IdeBundle.message("search.everywhere.group.name.symbols")
   override val shortName: String get() = name
   override val id: String get() = ID
+  override val isIndexingDependent: Boolean get() = true
+
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
     SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates())
   }

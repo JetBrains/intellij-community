@@ -7,7 +7,10 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
@@ -47,6 +50,9 @@ class SePopupVm(
 
   private val canBeShownInFindResultsFlow = MutableStateFlow(false)
   val canBeShownInFindResults: Boolean get() = canBeShownInFindResultsFlow.value
+
+  private val _searchFieldWarning = MutableStateFlow("")
+  val searchFieldWarning: StateFlow<String> = _searchFieldWarning
 
   private var historyIterator: HistoryIterator = historyList.getIterator(currentTab.tabId)
     get() {
@@ -94,6 +100,28 @@ class SePopupVm(
         it.getValue()?.let { tab ->
           _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern))
         }
+      }
+    }
+
+    coroutineScope.launch {
+      project ?: return@launch
+      combine(
+        currentTabFlow,
+        DumbService.getInstance(project).state,
+        project.service<IncompleteDependenciesService>().stateFlow
+      ) { currentTab, dumbMode, dependenciesState ->
+        Triple(currentTab, dumbMode.isDumb, !dependenciesState.isComplete)
+      }.map { (currentTab, isDumb, isIncomplete) ->
+        // IJPL-193615: In RemDev, IncompleteDependenciesService state is not synchronized between frontend and backend,
+        // so isIncomplete always remains false on frontend, making dependency loading messages unavailable in RemDev.
+        if (!currentTab.isIndexingDependent) ""
+        else if (isDumb || isIncomplete) {
+          if (isDumb) IdeBundle.message("dumb.mode.results.might.be.incomplete")
+          else IdeBundle.message("incomplete.mode.results.might.be.incomplete")
+        }
+        else ""
+      }.distinctUntilChanged().collect {
+        _searchFieldWarning.value = it
       }
     }
   }
