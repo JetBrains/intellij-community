@@ -27,6 +27,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -127,7 +128,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   private void implicitIoImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, () -> {
       myFixture.addClass("""
         package java.io;
         
@@ -274,7 +275,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testConflictStaticImportWithImplicitClassDemandOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24_PREVIEW, () -> {
 
       myFixture.addClass(
         """

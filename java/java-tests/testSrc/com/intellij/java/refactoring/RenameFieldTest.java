@@ -135,7 +135,7 @@ public class RenameFieldTest extends LightRefactoringTestCase {
   }
 
   public void testFieldOnlyInImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
       String suffix = getTestName(false);
       configureByFile("/refactoring/renameField/before" + suffix + ".java");
       DataContext context = ((EditorEx)getEditor()).getDataContext();

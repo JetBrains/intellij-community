@@ -31,6 +31,10 @@ public abstract class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTe
     public void testModuleImportStatement() {
       IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> doTest(LanguageLevel.JDK_25));
     }
+
+    public void testImplicitClass() {
+      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> doTest(LanguageLevel.JDK_25));
+    }
   }
 
   public static class IncreaseLanguageLevel23FixTest extends IncreaseLanguageLevelFixTest {
@@ -109,6 +113,10 @@ public abstract class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTe
 
     public void testSwitchWithPrimitiveSelectorAndPattern() {
       IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+    }
+
+    public void testImplicitClass() {
+      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(LanguageLevel.JDK_23_PREVIEW));
     }
   }
 

@@ -295,7 +295,7 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
   }
 
   public void testBrokenClassToImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
       doTest();
     });
   }

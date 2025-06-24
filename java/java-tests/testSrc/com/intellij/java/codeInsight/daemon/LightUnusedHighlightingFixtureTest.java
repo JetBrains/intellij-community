@@ -60,7 +60,7 @@ public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixt
   }
 
   public void testBrokenClassToImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.checkHighlighting();
     });

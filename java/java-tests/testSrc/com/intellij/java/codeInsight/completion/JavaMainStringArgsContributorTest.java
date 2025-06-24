@@ -21,7 +21,7 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
 
   @NeedsIndex.Full
   public void testSimpleParametersImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
       myFixture.configureByText("Test.java", """
         void main(<caret>){}
         """);
@@ -38,7 +38,7 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
 
   @NeedsIndex.Full
   public void testSimpleParametersImplicitClassSmartCompletion() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
       myFixture.configureByText("Test.java", """
         void main(<caret>){}
         """);
@@ -86,7 +86,7 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
 
   @NeedsIndex.Full
   public void testVariableImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
       myFixture.configureByText("Test.java", """
         void main(){<caret>}
         """);
@@ -107,7 +107,7 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
 
   @NeedsIndex.Full
   public void testVariableImplicitClassNoQualifier() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
       myFixture.configureByText("Test.java", """
         void main(){
           String a = "1";
@@ -126,7 +126,7 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
 
   @NeedsIndex.Full
   public void testVariableImplicitClassNoCompletionDefinedArgs() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
       myFixture.configureByText("Test.java", """
         void main(){String args = "1"; <caret>}
         """);
@@ -142,7 +142,7 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
 
   @NeedsIndex.SmartMode(reason = "necessary for rendering other items")
   public void testVariableImplicitClassNoCompletionBrokenReturnType() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
       myFixture.configureByText("Test.java", """
         int main(){<caret>}
         """);

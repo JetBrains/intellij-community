@@ -25,15 +25,15 @@ public class UnnecessaryPsvmModifierInspectionTest extends LightJavaCodeInsightF
   }
 
   public void testImplicitClassWithModifiers() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> doTest());
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> doTest());
   }
 
   public void testNormalClassWithModifiers() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> doTest());
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> doTest());
   }
 
   public void testNormalClassWithModifiersClassIsUsed() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
       myFixture.addClass("""
                            import test.NormalClassWithModifiersClassIsUsed;
                            class Foo {
