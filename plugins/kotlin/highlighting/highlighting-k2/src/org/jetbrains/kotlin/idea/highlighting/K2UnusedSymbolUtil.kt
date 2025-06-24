@@ -97,6 +97,11 @@ object K2UnusedSymbolUtil {
                 if (isEffectivelyAbstractFunction(ownerFunction) || isExpectedOrActual(ownerFunction)) {
                     return false
                 }
+
+                val containingClass = ownerFunction.containingClassOrObject
+                if (containingClass != null && isExpectedOrActual(containingClass)) {
+                    return false
+                }
             }
         }
         val owner: KtNamedDeclaration

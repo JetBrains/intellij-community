@@ -17726,6 +17726,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/functionalLiteral.kt");
             }
 
+            @TestMetadata("implicitExpectFunction.kt")
+            public void testImplicitExpectFunction() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/implicitExpectFunction.kt");
+            }
+
             @TestMetadata("inAnonymous.kt")
             public void testInAnonymous() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/inAnonymous.kt");
