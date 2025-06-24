@@ -18,7 +18,7 @@ import com.jetbrains.python.sdk.getOrCreateAdditionalData
 internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageManagerEngine {
   suspend fun updateFromEnvironmentFile(envFile: VirtualFile): PyResult<Unit> {
     val env = getEnvData()
-    return CondaExecutor.updateFromEnvironmentFile(env.condaPath, envFile.path)
+    return CondaExecutor.updateFromEnvironmentFile(env.condaPath, envFile.path, env.envIdentity)
   }
 
   suspend fun exportToEnvironmentFile(): PyResult<String> {
@@ -73,9 +73,5 @@ internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageMa
 
       PyResult.success(quoted)
     }
-  }
-
-  companion object {
-
   }
 }

@@ -37,9 +37,9 @@ object CondaExecutor {
     return runConda(condaPath, args, null).mapSuccess { }
   }
 
-  suspend fun updateFromEnvironmentFile(condaPath: Path, envYmlPath: String): PyResult<Unit> {
+  suspend fun updateFromEnvironmentFile(condaPath: Path, envYmlPath: String, envIdentity: PyCondaEnvIdentity): PyResult<Unit> {
     val args = listOf("env", "update", "--file", envYmlPath, "--prune")
-    return runConda(condaPath, args, null).mapSuccess { }
+    return runConda(condaPath, args, envIdentity).mapSuccess { }
   }
 
   suspend fun listEnvs(condaPath: Path): PyResult<CondaEnvInfo> {
@@ -55,7 +55,7 @@ object CondaExecutor {
   }
 
   suspend fun listPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<List<PythonPackage>> {
-    return runConda(condaPath, listOf("list"), envIdentity).mapSuccess {
+    return runConda(condaPath, listOf("list", "--json"), envIdentity).mapSuccess {
       CondaExecutionParser.parseCondaPackageList(it)
     }
   }
@@ -97,7 +97,7 @@ object CondaExecutor {
       return it
     }
 
-    val runArgs = (condaEnv + args).toTypedArray()
+    val runArgs = (args + condaEnv).toTypedArray()
     return runExecutableWithProgress(condaPath, null, timeout, env = envs, *runArgs)
   }
 
@@ -142,7 +142,7 @@ object CondaExecutor {
       }
       else value
 
-      key to fixedVal.toString()
+      key to fixedVal
     }.toMap()
   }
 }
