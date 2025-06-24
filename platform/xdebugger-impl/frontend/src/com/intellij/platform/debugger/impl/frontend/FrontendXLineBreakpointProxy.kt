@@ -8,16 +8,11 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointHighlighterRange
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
+import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XLineBreakpointInfo
@@ -129,10 +124,19 @@ internal class FrontendXLineBreakpointProxy(
       }
     }
     else {
+      val requestId = if (lineBreakpointInfo.highlightingRange == null) {
+        -1
+      }
+      else {
+        updateLineBreakpointState {
+          val newRange = if (it.highlightingRange == null) null else UNAVAILABLE_RANGE
+          it.copy(highlightingRange = newRange)
+        }
+      }
       // offset in file might change, pass reset to backend
       lineSourcePosition = null
       project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
-        XBreakpointApi.getInstance().updatePosition(id)
+        XBreakpointApi.getInstance().updatePosition(id, requestId)
       }
     }
   }
