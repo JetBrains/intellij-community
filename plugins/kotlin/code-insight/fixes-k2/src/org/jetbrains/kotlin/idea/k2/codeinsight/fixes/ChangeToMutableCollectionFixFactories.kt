@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.utils.MutableCollectionsConversionUtils
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
@@ -36,7 +36,7 @@ object ChangeToMutableCollectionFixFactories {
         val property = arrayExpr.mainReference?.resolve() as? KtProperty ?: return emptyList()
         if (!MutableCollectionsConversionUtils.canConvertPropertyType(property)) return emptyList()
 
-        return listOf(ChangeToMutableCollectionFix(property, ElementContext(immutableCollectionClassId)))
+        return listOf(ChangeToMutableCollectionFix(property, immutableCollectionClassId))
     }
 
     data class ElementContext(
@@ -44,16 +44,27 @@ object ChangeToMutableCollectionFixFactories {
     )
 
     class ChangeToMutableCollectionFix(
-        element: KtDeclarationWithInitializer,
+        element: KtCallableDeclaration,
         elementContext: ElementContext,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtDeclarationWithInitializer, ElementContext>(element, elementContext) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtCallableDeclaration, ElementContext>(element, elementContext) {
+
+        constructor(
+            element: KtCallableDeclaration,
+            immutableCollectionClassId: ClassId,
+        ) : this(element, ElementContext(immutableCollectionClassId))
+
+        override fun isElementApplicable(
+            element: KtCallableDeclaration,
+            context: ActionContext,
+        ): Boolean = super.isElementApplicable(element, context)
+                && MutableCollectionsConversionUtils.defaultValue(element) != null
 
         override fun getFamilyName(): @IntentionFamilyName String =
             KotlinBundle.message("fix.change.to.mutable.type.family")
 
         override fun getPresentation(
             context: ActionContext,
-            element: KtDeclarationWithInitializer,
+            element: KtCallableDeclaration,
         ): Presentation {
             val className = getElementContext(context, element)
                 .immutableCollectionClassId
@@ -67,14 +78,12 @@ object ChangeToMutableCollectionFixFactories {
 
         override fun invoke(
             actionContext: ActionContext,
-            element: KtDeclarationWithInitializer,
+            element: KtCallableDeclaration,
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            element.initializer ?: return
-
-            MutableCollectionsConversionUtils.convertPropertyTypeToMutable(
-                property = element,
+            MutableCollectionsConversionUtils.convertDeclarationTypeToMutable(
+                declaration = element,
                 immutableCollectionClassId = elementContext.immutableCollectionClassId,
             )
             updater.moveCaretTo(element.endOffset)
