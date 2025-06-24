@@ -166,6 +166,11 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
     Project project = editor.getProject();
     Document document = editor.getDocument();
+    if (project != null && project.isDisposed()) {
+      // TODO: investigate why it happens leading to IJPL-164636
+      editor.throwDisposalError("Editor " + editor + " is not disposed with project " + project);
+      return false;
+    }
     if (project != null && PostprocessReformattingAspect.getInstance(project).isDocumentLocked(document)) {
       // Disable checking for files in intermediate states - e.g., for files during refactoring.
       return false;
