@@ -55,7 +55,7 @@ public final class PsiMethodUtil {
 
   private PsiMethodUtil() { }
 
-  public static @Nullable PsiMethod findMainMethod(final PsiClass aClass) {
+  public static @Nullable PsiMethod findMainMethod(@NotNull final PsiClass aClass) {
     JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(aClass);
     if (mainMethodProvider != null) {
       return mainMethodProvider.findMainInClass(aClass);
