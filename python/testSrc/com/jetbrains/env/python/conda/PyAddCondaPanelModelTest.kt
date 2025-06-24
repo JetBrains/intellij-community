@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.asKotlinResult
@@ -64,7 +65,7 @@ class PyAddCondaPanelModelTest {
 
 
   @Test
-  fun testCondaDetection(): Unit = runTest(timeout = timeout) {
+  fun testCondaDetection(): Unit =  timeoutRunBlocking(timeout) {
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     model.detectConda(coroutineContext)
     val detectedPath = model.condaPathTextBoxRwProp.get()
@@ -74,7 +75,7 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaCreateNewEnv(): Unit = runTest(timeout = timeout) {
+  fun testCondaCreateNewEnv(): Unit =  timeoutRunBlocking(timeout) {
     val condaName = "someNewCondaEnv"
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
@@ -97,7 +98,7 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaCantUseNameUsedAlready(): Unit = runTest(timeout = timeout) {
+  fun testCondaCantUseNameUsedAlready(): Unit =  timeoutRunBlocking(timeout) {
     val name = "cond_env_" + Math.random().toString().replace('.', '_')
 
     // Create env
@@ -118,7 +119,7 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaUseExistingEnv(): Unit = runTest(timeout = timeout) {
+  fun testCondaUseExistingEnv(): Unit =  timeoutRunBlocking(timeout) {
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
     model.onLoadEnvsClicked(coroutineContext)
@@ -131,7 +132,7 @@ class PyAddCondaPanelModelTest {
   }
 
   @Test
-  fun testCondaModelValidation(): Unit = runTest(timeout = timeout) {
+  fun testCondaModelValidation(): Unit =  timeoutRunBlocking(timeout) {
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     Assert.assertNotNull("No validation error, even though path not set", model.getValidationError())
 
