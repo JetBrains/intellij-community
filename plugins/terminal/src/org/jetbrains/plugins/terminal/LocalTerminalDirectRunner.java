@@ -204,6 +204,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return false;
   }
 
+  @ApiStatus.Internal
+  protected boolean isGenTwoTerminalEnabled() {
+    return false;
+  }
+
   private @NotNull String getShellPath() {
     return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
