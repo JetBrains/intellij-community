@@ -80,6 +80,7 @@ open class McpClient(
   }
 
   fun isPortCorrect(): Boolean {
+    if (!McpServerService.getInstance().isRunning) return true
     val currentPort = McpServerService.getInstance().port
     val mcpServers = readMcpServers()
     if (mcpServers?.isEmpty() ?: true) return true
