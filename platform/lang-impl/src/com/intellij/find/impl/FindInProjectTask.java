@@ -32,6 +32,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
@@ -214,25 +216,25 @@ final class FindInProjectTask {
       progressIndicator.setIndeterminate(false);
 
       //first process files from searchers (=index):
-      Set<VirtualFile> filesForFastSearch = collectFiles(searchers, fileMaskFilter);
+      Set<VirtualFile> filesFoundByFastSearch = collectFiles(searchers, fileMaskFilter);
       for (VirtualFile file : filesToScanInitially) {
         if (fileMaskFilter.test(file)) {
-          filesForFastSearch.add(file);
+          filesFoundByFastSearch.add(file);
         }
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Search found " + filesForFastSearch.size() + " indexed files, "
+        LOG.debug("Search found " + filesFoundByFastSearch.size() + " indexed files, "
                   + filesToScanInitially.size() + " to scan initially");
       }
 
       AtomicInteger processedFastFiles = new AtomicInteger();
       processOnAllThreadsInReadActionWithRetries(
-        new ConcurrentLinkedDeque<>(sorted(filesForFastSearch, SEARCH_RESULT_FILE_COMPARATOR)),
+        new ConcurrentLinkedDeque<>(sorted(filesFoundByFastSearch, SEARCH_RESULT_FILE_COMPARATOR)),
         file -> {
           boolean result = fileProcessor.process(file);
 
           if (progressIndicator.isRunning()) {
-            double fraction = (double)processedFastFiles.incrementAndGet() / filesForFastSearch.size();
+            double fraction = (double)processedFastFiles.incrementAndGet() / filesFoundByFastSearch.size();
             progressIndicator.setFraction(fraction);
           }
 
@@ -244,22 +246,35 @@ final class FindInProjectTask {
       progressIndicator.setIndeterminate(true);
       progressIndicator.setText(FindBundle.message("progress.text.scanning.non.indexed.files"));
 
-      //search item := { VirtualFile | IndexableFilesIterator | FindModelExtension }
+      //search item := { VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }
       List<Object> searchItems = collectSearchItems();
 
       AtomicInteger otherFilesCount = new AtomicInteger();
+      AtomicInteger otherFilesTransientCount = new AtomicInteger();
+      AtomicInteger otherFilesCacheAvoidingCount = new AtomicInteger();
       unfoldAndProcessSearchItems(
         searchItems,
-        /*alreadySearched: */filesForFastSearch::contains,
+        /*alreadySearched: */filesFoundByFastSearch::contains,
         file -> {
           boolean result = fileProcessor.process(file);
+
           otherFilesCount.incrementAndGet();
+          if (file instanceof CacheAvoidingVirtualFile cacheAvoidingVirtualFile) {
+            if(cacheAvoidingVirtualFile.isCached()){
+              otherFilesCacheAvoidingCount.incrementAndGet();
+            }
+            else{
+              otherFilesTransientCount.incrementAndGet();
+            }
+          }
+
           return result;
         }
       );
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Search processed " + otherFilesCount.get() + " non-indexed files");
+        LOG.debug("Search processed " + otherFilesCount.get() + " non-indexed files: "
+                  + otherFilesTransientCount.get() + " transient, " + otherFilesCacheAvoidingCount.get() + " cache-avoiding");
         LOG.debug("Search completed in " + TimeoutUtil.getDurationMillis(searchStartedAtNs) + " ms");
       }
     }
@@ -419,8 +434,8 @@ final class FindInProjectTask {
   }
 
   /**
-   * Unfold search items (:={ VirtualFile | IndexableFilesIterator | FindModelExtension }) down to individual files,
-   * and process them with the fileProcessor. Also does filtering according to {@link #findModel} settings.
+   * Unfolds search items (:={ VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }) down to individual
+   * files, and process them with the fileProcessor. Also does filtering according to {@link #findModel} settings.
    */
   private void unfoldAndProcessSearchItems(@NotNull List<Object> searchItems,
                                            @NotNull Predicate<? super VirtualFile> alreadySearched,
@@ -448,7 +463,7 @@ final class FindInProjectTask {
     processOnAllThreadsInReadActionWithRetries(
       searchItemsDeque,
 
-      searchItem -> { // := { VirtualFile | IndexableFilesIterator | FindModelExtension }
+      searchItem -> { // := { VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }
         ProgressManager.checkCanceled();
 
         if (searchItem instanceof IndexableFilesIterator filesIterator) {
@@ -556,39 +571,58 @@ final class FindInProjectTask {
 
 
   /**
-   * @return list of search 'items' that contain 1 or more files
-   * item:= { VirtualFile | IndexableFilesIterator | FindModelExtension }
+   * @return list of search 'items'. Item contains 1 or more files:
+   * <pre>item := { VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }</pre>
    */
   private @NotNull List<Object> collectSearchItems() {
     SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
 
     List<Object> searchItems = new ArrayList<>();
+
     //fill the list from _one of_ {customScope | directory | module | indexingProviders} + FindModelExtensions:
-    //so the resulting list is of { VirtualFile | IndexableFilesIterator | FindModelExtension }
+    //so the resulting list is of { VirtualFile | IndexableFilesIterator | FindModelExtension | FilesDeque }
+
     if (customScope instanceof LocalSearchScope localSearchScope) {
       searchItems.addAll(GlobalSearchScopeUtil.getLocalScopeFiles(localSearchScope));
     }
     else if (customScope instanceof VirtualFileEnumeration virtualFileEnumeration) {
-      // GlobalSearchScope can include files out of project roots e.g., FileScope / FilesScope
-      ContainerUtil.addAll(searchItems, FileBasedIndexEx.toFileIterable(virtualFileEnumeration.asArray()));
+      // GlobalSearchScope can include files out of project roots e.g., FileScope / FilesScope. The starting files are all
+      // in VFS already (because they have ids), but file-tree down from them could be not in VFS cache yet -- so it is worth
+      // wrapping all the files into cache-avoiding wrappers here, and avoid trashing VFS cache with new entries during lookup:
+      addAllWrappingAsCacheAvoiding(searchItems, FileBasedIndexEx.toFileIterable(virtualFileEnumeration.asArray()));
     }
     else if (directoryToSearchIn != null) {
+      //Directory could be anywhere outside the project, hence it is worth wrapping it into a cache-avoiding wrapper,
+      // so walking through its children won't trash VFS cache with new entries from some rarely used file-tree:
+      VirtualFile cacheAvoidingDirectory = NewVirtualFile.asCacheAvoiding(directoryToSearchIn);
       boolean withSubdirs = findModel.isWithSubdirectories();
-      searchItems.addAll(withSubdirs ? List.of(directoryToSearchIn) : List.of(directoryToSearchIn.getChildren()));
+      if (withSubdirs) {
+        searchItems.add(cacheAvoidingDirectory);
+      }
+      else {
+        ContainerUtil.addAll(searchItems, cacheAvoidingDirectory.getChildren());
+      }
+      //MAYBE RC: should we return early here? Should FindModelExtension and nonIndexableFiles be added if user explicitly
+      //          request a search in a specific directory _only_?
     }
     else if (moduleToSearchIn != null) {
       EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
       ModuleEntity moduleEntity = Objects.requireNonNull(storage.resolve(new ModuleId(moduleToSearchIn.getName())));
+      //MAYBE RC: wrap files into a cache-avoiding wrappers?
+      //          It seems useless, since files are all indexable, so they are already scanned and cached in VFS -- but is it true?
       searchItems.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project));
     }
     else {
       FileBasedIndexEx indexes = (FileBasedIndexEx)FileBasedIndex.getInstance();
+      //Don't wrap those files in cache-avoiding wrappers: indexable files are scanned, and hence (will be) cached in VFS anyway:
       searchItems.addAll(indexes.getIndexableFilesProviders(project));
     }
 
     searchItems.addAll(FindModelExtension.EP_NAME.getExtensionList());
 
     if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
+      //MAYBE RC: currently nonIndexableFiles() returns transient files already -- but maybe it is safer to return _regular_ files
+      //          from nonIndexableFiles(), and wrap them all into transient here, in a unified way?
       searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.Companion.nonIndexableDequeue(project)).executeSynchronously());
     }
 
@@ -630,5 +664,19 @@ final class FindInProjectTask {
     }
 
     return Pair.createNonNull(psiFile, sourceVirtualFile);
+  }
+
+  /**
+   * Add all the files to the collection, wrapping them into a CacheAvoidingVirtualFileWrapper -- so walking through its children
+   * won't trash VFS cache with new entries
+   *
+   * @see NewVirtualFile#asCacheAvoiding()
+   * @see com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
+   */
+  private static void addAllWrappingAsCacheAvoiding(@NotNull List<Object> collection,
+                                                    @NotNull Iterable<VirtualFile> files) {
+    for (VirtualFile file : files) {
+      collection.add(NewVirtualFile.asCacheAvoiding(file));
+    }
   }
 }

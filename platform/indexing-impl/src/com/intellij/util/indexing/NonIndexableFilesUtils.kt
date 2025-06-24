@@ -36,6 +36,10 @@ private fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
   visitFileSets { fileSet, _ ->
     val root = fileSet.root
     if (fileSet.kind == WorkspaceFileKind.CONTENT_NON_INDEXABLE) {
+      //MAYBE RC: Better wrap the root in cache-avoiding, so file-tree hierarchy walking starting from this root will
+      // not trash VFS cache with new entries -- it makes perfect sense for CONTENT_NON_INDEXABLE because such file-sets
+      // are rarely accessed. Currently it is impossible to use this API (NewVirtualFile) here though due to the lack of
+      // dependency on apt module
       roots.add(root)
     }
   }

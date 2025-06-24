@@ -312,12 +312,12 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testFindInOpenedFilesIncludesNoneProjectButOpenedFile() throws IOException {
-    File dir = createTempDirectory();
-    File file = new File(dir.getPath(), "A.test1234");
-    assertTrue(file.createNewFile());
-    FileUtil.writeToFile(file, "foo fo foo");
-    VirtualFile nonProjectFile = VfsUtil.findFileByIoFile(file, true);
-    assertNotNull(nonProjectFile);
+    File tempDir = createTempDirectory();
+    File nonProjectFile = new File(tempDir.getPath(), "A.test1234");
+    assertTrue(nonProjectFile.createNewFile());
+    FileUtil.writeToFile(nonProjectFile, "foo fo foo");
+    VirtualFile nonProjectVFile = VfsUtil.findFileByIoFile(nonProjectFile, true);
+    assertNotNull(nonProjectVFile);
 
     FindModel findModel = new FindModel();
     findModel.setStringToFind("fo");
@@ -326,7 +326,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setGlobal(true);
     findModel.setMultipleFiles(true);
     findModel.setCustomScope(true);
-    findModel.setCustomScope(GlobalSearchScope.filesScope(myProject, Arrays.asList(nonProjectFile)));
+    findModel.setCustomScope(GlobalSearchScope.filesScope(myProject, Arrays.asList(nonProjectVFile)));
 
     assertSize(1, findInProject(findModel));
   }

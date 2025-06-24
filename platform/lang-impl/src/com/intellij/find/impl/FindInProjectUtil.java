@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
@@ -36,11 +36,12 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.ui.content.Content;
@@ -150,37 +151,49 @@ public final class FindInProjectUtil {
     model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
   }
 
+  /**
+   * @return a VirtualFile representing directory to look in, if findModel defines it, or null otherwise.
+   * Beware: returned directory may be {@link com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile} wrapper, so if
+   * you want to compare it against regular {@link VirtualFile} you should {@link CacheAvoidingVirtualFile#asCacheable() unwrap}
+   * it first.
+   */
   public static @Nullable VirtualFile getDirectory(@NotNull FindModel findModel) {
-    String directoryName = findModel.getDirectoryName();
-    if (findModel.isProjectScope() || StringUtil.isEmptyOrSpaces(directoryName)) {
+    //TODO RC: maybe add a flag avoidCaching to the method call, and use .findFileByPath()/.findFileByPathWithoutCaching()
+    //         accordingly?
+    String directoryPath = findModel.getDirectoryName();
+    if (findModel.isProjectScope() || StringUtil.isEmptyOrSpaces(directoryPath)) {
       return null;
     }
 
-    String path = FileUtil.toSystemIndependentName(directoryName);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-    if (virtualFile == null || !virtualFile.isDirectory()) {
-      virtualFile = null;
-      // path doesn't contain file system prefix so try to find it inside archives (IDEA-216479)
-      List<VirtualFileSystem> fileSystems = ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).getPhysicalFileSystems();
+    String osIndependentDirectoryPath = FileUtilRt.toSystemIndependentName(directoryPath);
+    VirtualFile directory = LocalFileSystem.getInstance().findFileByPathWithoutCaching(osIndependentDirectoryPath);
+    if (directory == null || !directory.isDirectory()) {
 
-      for (VirtualFileSystem fs : fileSystems) {
-        if (!(fs instanceof ArchiveFileSystem)) continue;
-        VirtualFile file = fs.findFileByPath(path);
+      directory = null;
+
+      // path doesn't contain file system prefix so try to find it inside archives (IDEA-216479)
+      List<VirtualFileSystem> registeredPhysicalFileSystems = ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).getPhysicalFileSystems();
+      for (VirtualFileSystem fs : registeredPhysicalFileSystems) {
+        if (!(fs instanceof ArchiveFileSystem afs)) continue;
+
+        VirtualFile file = afs.findFileByPathWithoutCaching(osIndependentDirectoryPath);
         if (file != null && file.isDirectory()) {
           if (file.getChildren().length > 0) {
-            virtualFile = file;
+            directory = file;
             break;
           }
-          if (virtualFile == null) {
-            virtualFile = file;
+          if (directory == null) {
+            directory = file;
           }
         }
       }
-      if (virtualFile == null && !path.contains(JarFileSystem.JAR_SEPARATOR)) {
-        virtualFile = JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
+
+      if (directory == null && !osIndependentDirectoryPath.contains(JarFileSystem.JAR_SEPARATOR)) {
+        //RC: shouldn't we iterate all archive FSes, as above -- not just JarFileSystem?
+        directory = JarFileSystem.getInstance().findFileByPathWithoutCaching(osIndependentDirectoryPath + JarFileSystem.JAR_SEPARATOR);
       }
     }
-    return virtualFile;
+    return directory;
   }
 
   /* filter can have form "*.js, !*_min.js", latter means except matched by *_min.js */
@@ -611,11 +624,17 @@ public final class FindInProjectUtil {
   private static @NotNull GlobalSearchScope forDirectory(@NotNull Project project,
                                                          boolean withSubdirectories,
                                                          @NotNull VirtualFile directory) {
+    if (directory instanceof CacheAvoidingVirtualFile cacheAvoidingDir) {
+      directory = cacheAvoidingDir.asCacheable();
+      if(directory == null) {
+        return GlobalSearchScope.EMPTY_SCOPE;
+      }
+    }
     Set<VirtualFile> result = new LinkedHashSet<>();
     result.add(directory);
     addSourceDirectoriesFromLibraries(project, directory, result);
-    VirtualFile[] array = result.toArray(VirtualFile.EMPTY_ARRAY);
-    GlobalSearchScope scope = GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
+    VirtualFile[] directories = result.toArray(VirtualFile.EMPTY_ARRAY);
+    GlobalSearchScope scope = GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, directories);
     for (FindInDirectoryScopeProvider provider : FindInDirectoryScopeProvider.EP_NAME.getExtensionList()) {
       scope = provider.alterDirectorySearchScope(project, directory, withSubdirectories, scope);
     }

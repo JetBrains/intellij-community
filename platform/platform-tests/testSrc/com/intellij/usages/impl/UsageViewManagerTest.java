@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindModel;
@@ -6,6 +6,7 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.ProjectExtension;
@@ -35,7 +36,12 @@ public class UsageViewManagerTest {
     UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectRule.getProject());
     ApplicationManager.getApplication().runReadAction(() -> {
       SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
-      assertThat(GlobalSearchScopesCore.directoryScope(projectRule.getProject(), dir, true)).isEqualTo(scope);
+      GlobalSearchScope expectedScope = GlobalSearchScopesCore.directoryScope(
+        projectRule.getProject(),
+        FindInProjectUtil.getDirectory(findModel),
+        true
+      );
+      assertThat(scope).isEqualTo(expectedScope);
     });
   }
 
