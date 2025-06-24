@@ -10,6 +10,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.*
@@ -101,7 +102,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     scopeProviderDelegate.applyScope(scopeId)
   }
 
-  suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
+  suspend fun getSearchScopesInfo(): SearchScopesInfo? {
     return scopeProviderDelegate.searchScopesInfo.getValue()
   }
 

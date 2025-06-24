@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.impl
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
@@ -82,7 +83,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
     isAllTab: Boolean,
-  ): Map<SeProviderId, SeSearchScopesInfo>
+  ): Map<SeProviderId, SearchScopesInfo>
 
   suspend fun getTypeVisibilityStatesForProviders(
     index: Int,

@@ -1,0 +1,6 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.scopes"/>
+  </dependencies>
+</idea-plugin>

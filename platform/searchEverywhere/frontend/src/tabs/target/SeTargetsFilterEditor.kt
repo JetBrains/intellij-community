@@ -5,7 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContr
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeTypeVisibilityStateHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
@@ -13,7 +13,7 @@ import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityS
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeTargetsFilterEditor(private val scopesInfo: SeSearchScopesInfo?,
+class SeTargetsFilterEditor(private val scopesInfo: SearchScopesInfo?,
                             typeVisibilityStates: List<SeTypeVisibilityStatePresentation>?) : SeFilterEditorBase<SeTargetsFilter>(
   SeTargetsFilter(scopesInfo?.selectedScopeId, hiddenTypes(typeVisibilityStates))
 ) {

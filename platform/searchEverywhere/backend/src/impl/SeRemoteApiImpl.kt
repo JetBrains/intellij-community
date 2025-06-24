@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.backend.impl
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
@@ -84,7 +85,7 @@ class SeRemoteApiImpl: SeRemoteApi {
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
     isAllTab: Boolean,
-  ): Map<SeProviderId, SeSearchScopesInfo> {
+  ): Map<SeProviderId, SearchScopesInfo> {
     val project = projectId.findProjectOrNull() ?: return emptyMap()
     return SeBackendService.getInstance(project).getSearchScopesInfoForProviders(sessionRef, dataContextId, providerIds, isAllTab)
   }

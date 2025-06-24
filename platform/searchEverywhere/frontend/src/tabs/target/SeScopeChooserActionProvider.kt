@@ -9,7 +9,7 @@ import com.intellij.ide.util.scopeChooser.ScopeSeparator
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
@@ -19,7 +19,7 @@ import java.awt.Color
 import javax.swing.Icon
 
 @ApiStatus.Internal
-class SeScopeChooserActionProvider(val scopesInfo: SeSearchScopesInfo, private val onSelectedScopeChanged: (String?) -> Unit) {
+class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val onSelectedScopeChanged: (String?) -> Unit) {
   private val descriptors: Map<String, ScopeDescriptor> = scopesInfo.scopes.associate {
     val descriptor =
       if (it.isSeparator) ScopeSeparator(it.name)

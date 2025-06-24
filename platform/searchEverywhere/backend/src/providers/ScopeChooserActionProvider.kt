@@ -4,13 +4,13 @@ package com.intellij.platform.searchEverywhere.backend.providers
 import com.intellij.ide.actions.searcheverywhere.ScopeChooserAction
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.application.readAction
-import com.intellij.platform.searchEverywhere.SeSearchScopeData
-import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
+import com.intellij.platform.scopes.SearchScopeData
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
+import java.util.*
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -18,12 +18,12 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 @ApiStatus.Internal
 class ScopeChooserActionProviderDelegate(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) {
 
-  val searchScopesInfo: SuspendLazyProperty<SeSearchScopesInfo?> = suspendLazy { getSearchScopesInfo() }
+  val searchScopesInfo: SuspendLazyProperty<SearchScopesInfo?> = suspendLazy { getSearchScopesInfo() }
 
   @Volatile
   private var scopeIdToScope: AtomicReference<Map<String, ScopeDescriptor>> = AtomicReference(emptyMap())
 
-  suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
+  suspend fun getSearchScopesInfo(): SearchScopesInfo? {
     val scopeChooserAction: ScopeChooserAction = contributorWrapper.contributor.getActions({ }).filterIsInstance<ScopeChooserAction>().firstOrNull()
                                                  ?: return null
 
@@ -35,7 +35,7 @@ class ScopeChooserActionProviderDelegate(private val contributorWrapper: SeAsync
       scopeChooserAction.scopesWithSeparators
     }.mapNotNull { scope ->
       val key = UUID.randomUUID().toString()
-      val data = SeSearchScopeData.from(scope, key)
+      val data = SearchScopeData.from(scope, key)
       if (data != null) all[key] = scope
       data
     }
@@ -62,10 +62,10 @@ class ScopeChooserActionProviderDelegate(private val contributorWrapper: SeAsync
       }?.scopeId
     }
 
-    return SeSearchScopesInfo(scopeDataList,
-                              selectedScopeId,
-                              projectScopeId,
-                              everywhereScopeId)
+    return SearchScopesInfo(scopeDataList,
+                            selectedScopeId,
+                            projectScopeId,
+                            everywhereScopeId)
   }
 
   fun applyScope(scopeId: String?) {

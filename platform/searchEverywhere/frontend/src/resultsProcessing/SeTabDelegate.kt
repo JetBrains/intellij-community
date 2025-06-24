@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
@@ -76,7 +77,7 @@ class SeTabDelegate(
     }
   }
 
-  suspend fun getSearchScopesInfos(): List<SeSearchScopesInfo> {
+  suspend fun getSearchScopesInfos(): List<SearchScopesInfo> {
     return providers.getValue().getSearchScopesInfos()
   }
 
@@ -129,7 +130,7 @@ class SeTabDelegate(
     fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = localProviders.mapValues { it.value.displayName } +
                                                                  (frontendProvidersFacade?.idsWithDisplayNames ?: emptyMap())
 
-    suspend fun getSearchScopesInfos(): List<SeSearchScopesInfo> {
+    suspend fun getSearchScopesInfos(): List<SearchScopesInfo> {
       return localProviders.values.mapNotNull { it.getSearchScopesInfo() } +
              (frontendProvidersFacade?.getSearchScopesInfos()?.values ?: emptyList())
     }
