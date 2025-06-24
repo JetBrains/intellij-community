@@ -13,7 +13,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -162,21 +162,23 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
         fun KtExpression.flattenParentheses(): KtExpression? =
             generateSequence(this) { (it as? KtParenthesizedExpression)?.expression }.firstOrNull { it !is KtParenthesizedExpression }
 
-        val childToUnclearPrecedenceParentsMapping: List<Pair<BinaryOperationPrecedence, List<IElementType>>> = listOf(
+        val childToUnclearPrecedenceParentsMapping: Map<BinaryOperationPrecedence, TokenSet> = listOf(
             BinaryOperationPrecedence.ELVIS to listOf(BinaryOperationPrecedence.EQUALITY, BinaryOperationPrecedence.COMPARISON, BinaryOperationPrecedence.IN_OR_IS),
             BinaryOperationPrecedence.INFIX to listOf(BinaryOperationPrecedence.ELVIS),
             BinaryOperationPrecedence.ADDITIVE to listOf(BinaryOperationPrecedence.ELVIS),
             BinaryOperationPrecedence.MULTIPLICATIVE to listOf(BinaryOperationPrecedence.ELVIS)
-        ).onEach { (key, value) ->
+        ).associate { (key, value) ->
             value.forEach { check(key < it) }
-        }.map { item -> Pair(item.first, item.second.flatMap { it.tokens.toList() }) }
+            key to TokenSet.create(*value.flatMap { it.tokens.toList() }.toTypedArray())
+        }
 
         fun isRecommendedToPutParentheses(unifiedBinaryExpression: UnifiedBinaryExpression): Boolean {
-            val parent = unifiedBinaryExpression.expression.parent?.toUnified() ?: return false
+            val parentOpType =
+                unifiedBinaryExpression.expression.parent?.toUnified()?.operation?.getReferencedNameElementType() ?: return false
+            val unifiedBinaryExpressionOpType = unifiedBinaryExpression.operation.getReferencedNameElementType()
 
-            return childToUnclearPrecedenceParentsMapping.any { mappingItem ->
-                unifiedBinaryExpression.operation.getReferencedNameElementType() in mappingItem.first.tokenSet &&
-                        parent.operation.getReferencedNameElementType() in mappingItem.second
+            return childToUnclearPrecedenceParentsMapping.any { (key, value) ->
+                unifiedBinaryExpressionOpType in key.tokenSet && parentOpType in value
             }
         }
 
