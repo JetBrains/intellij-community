@@ -4,10 +4,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
-import com.intellij.cce.evaluable.AIA_USER_PROMPT
-import com.intellij.cce.evaluable.LLM_JUDGE_RESPONSE
 import com.intellij.cce.evaluable.REFERENCE_PROPERTY
-import com.intellij.cce.metric.util.LLMJudge
 import com.intellij.cce.metric.util.CloudSemanticSimilarityCalculator
 import com.intellij.cce.metric.util.computeBleuScore
 import com.intellij.cce.workspace.info.SessionIndividualScore
@@ -175,36 +172,6 @@ class BleuScore(showByDefault: Boolean = true) : SimilarityMetric(showByDefault)
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }
 
-class LLMJudgeScore(showByDefault: Boolean = true, private val llmJudge: LLMJudge) : SimilarityMetric(showByDefault) {
-  override val name: String
-    get() = NAME
-  override val description: String = "Calculates the LLM-as-a-Judge Score score for the AIA response compared to the reference text."
-
-  private var rawResponse: String? = null
-
-  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
-    val aiaResponse = lookup.additionalInfo[AIA_RESPONSE] as? String ?: return null
-    val reference = lookup.additionalInfo[REFERENCE_PROPERTY] as? String ?: return null
-    val question = lookup.additionalInfo[AIA_USER_PROMPT] as? String ?: return null
-
-    val (score, response) = llmJudge.computeLLMJudgeScoreSync(question, aiaResponse, reference)
-    rawResponse = response
-    return score
-  }
-
-  override fun postCompute(lookup: Lookup, similarity: Double, additionalInfo: MutableMap<String, MutableList<Any>>) {
-    if (!rawResponse.isNullOrEmpty()) {
-      additionalInfo.computeIfAbsent(LLM_JUDGE_RESPONSE) { mutableListOf() }.add(rawResponse!!)
-      rawResponse = null
-    }
-  }
-
-  override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
-
-  companion object {
-    const val NAME: String = "LLM Judge Score"
-  }
-}
 
 class SemanticSimilarityScore(showByDefault: Boolean = true, val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : SimilarityMetric(showByDefault) {
   override val name = "Semantic Similarity Score"

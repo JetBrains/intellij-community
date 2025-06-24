@@ -12,14 +12,14 @@
     "evaluationRoots": [
       "README.MD"
     ],
-    "sourceFile": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/chat-question-answering/python/spyder-ide_spyder/actions.json"
+    "sourceFile": "/Users/Nikolai.Palchikov/eval_plugin/chat-question-answering/python/spyder-ide_spyder/actions_formatted.jsonl"
   },
   "interpret": {
     "saveLogs": true,
     "sessionProbability": 1.0,
     "sessionSeed": null,
-    "sessionsLimit": 500,
-    "filesLimit": 1,
+    "sessionsLimit": 3,
+    "filesLimit": 3,
     "order": "LINEAR",
     "trainTestSplit": 70,
     "registry": ""
