@@ -232,7 +232,7 @@ class PyDataView(private val project: Project) : DumbAware {
   companion object {
     private const val DATA_VIEWER_ID = "SciView"
 
-    const val COLORED_BY_DEFAULT: String = "python.debugger.dataView.coloredByDefault"
+    const val COLORED_BY_DEFAULT: String = "datagrid.heatmap.switchedByDefault"
     const val AUTO_RESIZE: String = "python.debugger.dataView.autoresize"
     private const val HELP_ID = "reference.toolWindows.PyDataView"
 
