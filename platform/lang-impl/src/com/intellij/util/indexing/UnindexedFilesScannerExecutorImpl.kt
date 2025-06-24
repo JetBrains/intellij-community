@@ -286,13 +286,14 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   }
 
   private fun cancelAllTasks(debugReason: String) {
-    scanningEnabled.value = false
+    val wasEnabled = scanningEnabled.value
+    if (wasEnabled) scanningEnabled.value = false
     try {
       scanningTask.getAndUpdate { null }?.close()
       runningTask?.cancel(debugReason)
     }
     finally {
-      scanningEnabled.value = true
+      if (wasEnabled) scanningEnabled.value = true
     }
   }
 
