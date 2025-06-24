@@ -12,10 +12,17 @@ import java.util.Set;
 public final class UserDictionary implements EditableDictionary {
   private final String name;
 
-  private final @NotNull Set<String> words = CollectionFactory.createSmallMemoryFootprintSet();
+  private final @NotNull Set<String> words;
 
   public UserDictionary(@NotNull String name) {
     this.name = name;
+    this.words = CollectionFactory.createSmallMemoryFootprintSet();
+  }
+
+  public UserDictionary(@NotNull String name, @Nullable Collection<String> words) {
+    this.name = name;
+    this.words = CollectionFactory.createSmallMemoryFootprintSet(words == null ? Set.of() : words);
+    addToDictionary(words);
   }
 
   @Override
