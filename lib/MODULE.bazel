@@ -6019,10 +6019,10 @@ http_file(
 )
 
 http_file(
-  name = "layoutlib-15_2_2_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib/15.2.2/layoutlib-15.2.2.jar",
-  sha256 = "4f8746c1c57b1c75fcbe9690f275515aa3b8b373ae77cc6fc969a80d565468b8",
-  downloaded_file_path = "layoutlib-15.2.2.jar"
+  name = "layoutlib-15_2_3_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib/15.2.3/layoutlib-15.2.3.jar",
+  sha256 = "e826a88e448a0c1d42abc30c9d047131badbac6fc3922b8e93ac3ea27bb0eb2c",
+  downloaded_file_path = "layoutlib-15.2.3.jar"
 )
 
 http_file(
