@@ -61,34 +61,10 @@ org.jetbrains.jewel.ui.icon.IconKey
 org.jetbrains.jewel.ui.icon.NewUiChecker
 - a:isNewUi():Z
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
-- sf:Add_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:IndentDetected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide
-- sf:Feedback:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Vcs
-- sf:Fetch_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Push_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:Update_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Welcome$RecentProjects
-- sf:RemoteProject:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-org.jetbrains.jewel.ui.painter.PainterHint
-- sf:None:org.jetbrains.jewel.ui.painter.PainterHint$None
-- canApply(org.jetbrains.jewel.ui.painter.PainterProviderScope):Z
-org.jetbrains.jewel.ui.painter.PainterPathHint
-- org.jetbrains.jewel.ui.painter.PainterHint
-- a:patch(org.jetbrains.jewel.ui.painter.PainterProviderScope):java.lang.String
-org.jetbrains.jewel.ui.painter.PainterProviderScope
-- androidx.compose.ui.unit.Density
-- a:getAcceptedHints():java.util.List
-- a:getPath():java.lang.String
-- a:getRawPath():java.lang.String
-org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
-- org.jetbrains.jewel.ui.painter.PainterProviderScope
-- a:getClassLoaders():java.util.Set
-f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:ActualZoom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Add:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:AddJdk:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Add_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Alpha:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowDown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowDownSmall:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -146,6 +122,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:HideToolWindow:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:History:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ImplementingMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:IndentDetected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Information:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:InformationDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:InheritedMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -244,6 +221,14 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:ZoomIn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ZoomOut:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide
+- sf:Feedback:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Vcs
+- sf:Fetch_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Push_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Update_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Welcome$RecentProjects
+- sf:RemoteProject:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 org.jetbrains.jewel.ui.painter.PainterHint
 - sf:None:org.jetbrains.jewel.ui.painter.PainterHint$None
 - canApply(org.jetbrains.jewel.ui.painter.PainterProviderScope):Z
