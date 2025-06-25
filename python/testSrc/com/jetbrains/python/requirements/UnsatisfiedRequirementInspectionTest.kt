@@ -18,8 +18,8 @@ class UnsatisfiedRequirementInspectionTest : PythonDependencyTestCase() {
   fun testPyProjectTomlUnsatisfiedRequirement() {
     doMultiFileTest(PY_PROJECT_TOML)
     val warnings = myFixture.doHighlighting(HighlightSeverity.WARNING)
-
-    listOf("mypy", "poetry-core").forEach { unsatisfiedPackage ->
+    assertTrue("[build-system] should not have unsatisfied inspection", warnings.none { it.text == "poetry-core" })
+    listOf("mypy").forEach { unsatisfiedPackage ->
       val warning = warnings.single { it.text == unsatisfiedPackage }
       assertEquals("Package $unsatisfiedPackage is not installed", warning.description)
     }
