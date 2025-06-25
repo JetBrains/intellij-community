@@ -782,7 +782,7 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
 
   private static boolean hasUnrelatedDefaults(@NotNull PsiClass aClass,
                                               @NotNull Collection<? extends PsiMethod> overrideEquivalentSuperMethods) {
-    return JavaPsiMethodUtil.getAbstractMethodToImplementWhenDefaultPresent(aClass, overrideEquivalentSuperMethods) != null ||
+    return JavaPsiMethodUtil.getAbstractMethodToImplementWhenDefaultPresent(aClass, overrideEquivalentSuperMethods, true) != null ||
            JavaPsiMethodUtil.getUnrelatedSuperMethods(aClass, overrideEquivalentSuperMethods) != null;
   }
 }
