@@ -54,7 +54,6 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//xml/impl",
-    "//java/testFramework",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//spellchecker",
@@ -64,6 +63,10 @@ jvm_library(
     "//platform/core-ui",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//xml/xml-parser:parser",
+    "//platform/refactoring",
   ]
 )
 
