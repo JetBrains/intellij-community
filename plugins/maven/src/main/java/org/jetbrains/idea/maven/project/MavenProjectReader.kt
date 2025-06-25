@@ -18,9 +18,6 @@ import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticV
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
-import org.jetbrains.idea.maven.project.MavenSettingsCache
-import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
-import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
@@ -187,9 +184,9 @@ class MavenProjectReader(
 
     if (mavenBuildBase is MavenBuild) {
       val source = findChildValueByPath(xmlBuild, "sourceDirectory")
-      if (!source.isNullOrBlank()) mavenBuildBase.addSource(source)
+      if (!source.isNullOrBlank()) mavenBuildBase.sources = listOf(source)
       val testSource = findChildValueByPath(xmlBuild, "testSourceDirectory")
-      if (!testSource.isNullOrBlank()) mavenBuildBase.addTestSource(testSource)
+      if (!testSource.isNullOrBlank()) mavenBuildBase.testSources = listOf(testSource)
 
       mavenBuildBase.outputDirectory = findChildValueByPath(xmlBuild, "outputDirectory")
       mavenBuildBase.testOutputDirectory = findChildValueByPath(xmlBuild, "testOutputDirectory")
@@ -411,8 +408,8 @@ class MavenProjectReader(
       build.finalName = "\${project.artifactId}-\${project.version}"
     }
 
-    if (build.sources.isEmpty()) build.addSource("src/main/java")
-    if (build.testSources.isEmpty()) build.addTestSource("src/test/java")
+    if (build.sources.isEmpty()) build.sources = listOf("src/main/java")
+    if (build.testSources.isEmpty()) build.testSources = listOf("src/test/java")
 
     build.resources = repairResources(build.resources, "src/main/resources")
     build.testResources = repairResources(build.testResources, "src/test/resources")
