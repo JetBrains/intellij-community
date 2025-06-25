@@ -20,6 +20,8 @@ import org.jetbrains.jewel.samples.ideplugin.releasessample.ReleasesSampleCompos
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        System.setProperty("jewel.customPopupRender", "true")
+
         toolWindow.addComposeTab("Components") { ComponentShowcaseTab(project) }
 
         toolWindow.addComposeTab("Releases Demo") { ReleasesSampleCompose(project) }

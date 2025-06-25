@@ -39,6 +39,7 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.jetbrains.jewel.ui.component.TooltipArea
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme

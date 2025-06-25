@@ -13,10 +13,12 @@ import java.io.File
 import javax.swing.JComponent
 import javax.swing.JPanel
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
+import org.jetbrains.jewel.bridge.component.JBPopupRender
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.util.JewelLogger
+import org.jetbrains.jewel.ui.component.LocalPopupRender
 
 public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(config, content)
@@ -31,7 +33,10 @@ public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Com
         config()
         setContent {
             SwingBridgeTheme {
-                CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+                CompositionLocalProvider(
+                    LocalComponent provides this@createJewelComposePanel,
+                    LocalPopupRender provides JBPopupRender,
+                ) {
                     ComponentDataProviderBridge(jewelPanel, content = content)
                 }
             }
@@ -47,7 +52,10 @@ public fun JewelToolWindowComposePanel(
     config()
     setContent {
         SwingBridgeTheme {
-            CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+            CompositionLocalProvider(
+                LocalComponent provides this@createJewelComposePanel,
+                LocalPopupRender provides JBPopupRender,
+            ) {
                 ComponentDataProviderBridge(jewelPanel, content = content)
             }
         }
@@ -65,7 +73,10 @@ public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, conten
     createJewelComposePanel { jewelPanel ->
         config()
         setContent {
-            CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+            CompositionLocalProvider(
+                LocalComponent provides this@createJewelComposePanel,
+                LocalPopupRender provides JBPopupRender,
+            ) {
                 ComponentDataProviderBridge(jewelPanel, content = content)
             }
         }
@@ -86,7 +97,10 @@ public fun JewelToolWindowNoThemeComposePanel(
 ): JComponent = createJewelComposePanel { jewelPanel ->
     config()
     setContent {
-        CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+        CompositionLocalProvider(
+            LocalComponent provides this@createJewelComposePanel,
+            LocalPopupRender provides JBPopupRender,
+        ) {
             ComponentDataProviderBridge(jewelPanel, content = content)
         }
     }
