@@ -33,7 +33,6 @@ import com.intellij.ui.*
 import com.intellij.ui.ScrollableContentBorder.Companion.setup
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
-import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
@@ -53,7 +52,6 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -70,7 +68,6 @@ class VcsLogChangesBrowser(
   private val dataGetter: (CommitId) -> VcsShortCommitDetails,
   parent: Disposable,
 ) : AsyncChangesBrowserBase(project, false, false), Disposable {
-  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private val toolbarWrapper: Wrapper
 
   private val unprocessedSelection = AtomicReference<Selection?>(null)
@@ -127,10 +124,6 @@ class VcsLogChangesBrowser(
     toolbarWrapper.setVerticalSizeReferent(referent)
   }
 
-  fun addListener(listener: Listener, disposable: Disposable) {
-    eventDispatcher.addListener(listener, disposable)
-  }
-
   override fun createToolbarActions(): List<AnAction> {
     return ContainerUtil.append(
       super.createToolbarActions(),
@@ -172,7 +165,6 @@ class VcsLogChangesBrowser(
   private fun updateModel() {
     viewer.requestRefresh {
       updateStatusText()
-      eventDispatcher.multicaster.onModelUpdated()
     }
   }
 
@@ -326,9 +318,9 @@ class VcsLogChangesBrowser(
       processor.context.putUserData(DISABLE_LOADING_BLOCKS, true)
     }
     else {
-      processor = VcsLogChangeProcessor(place, this, handler, true)
+      processor = VcsLogChangeProcessor(place, viewer, handler, true)
     }
-    VcsLogTreeChangeProcessorTracker(this, processor, handler, !isInEditor).track()
+    VcsLogTreeChangeProcessorTracker(viewer, processor, handler, !isInEditor).track()
     processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CombinedDiffToggle.DEFAULT)
     return processor
   }
@@ -354,10 +346,6 @@ class VcsLogChangesBrowser(
       text += " " + StringUtil.shortenTextWithEllipsis(detail.subject, 50, 0)
     }
     return text
-  }
-
-  fun interface Listener : EventListener {
-    fun onModelUpdated()
   }
 
   private class ParentTag(commit: Hash, private val text: @Nls String) : ValueTag<Hash>(commit) {

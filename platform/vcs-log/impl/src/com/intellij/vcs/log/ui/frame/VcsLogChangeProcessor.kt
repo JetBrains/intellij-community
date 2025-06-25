@@ -5,31 +5,38 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.util.containers.JBIterable
+import java.beans.PropertyChangeListener
+import javax.swing.JTree
 
 internal class VcsLogChangeProcessor(place: String,
-                                     val browser: VcsLogChangesBrowser,
+                                     tree: AsyncChangesTree,
                                      handler: ChangesTreeDiffPreviewHandler,
                                      private val isInEditor: Boolean
-) : TreeHandlerDiffRequestProcessor(place, browser.viewer, handler) {
+) : TreeHandlerDiffRequestProcessor(place, tree, handler) {
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 }
 
-internal class VcsLogTreeChangeProcessorTracker(val browser: VcsLogChangesBrowser,
+internal class VcsLogTreeChangeProcessorTracker(tree: AsyncChangesTree,
                                                 editorViewer: DiffEditorViewer,
                                                 handler: ChangesTreeDiffPreviewHandler,
                                                 updateWhileShown: Boolean)
-  : TreeHandlerChangesTreeTracker(browser.viewer, editorViewer, handler, updateWhileShown) {
+  : TreeHandlerChangesTreeTracker(tree, editorViewer, handler, updateWhileShown) {
 
   override fun track() {
-    browser.addListener({ updatePreviewLater(UpdateType.ON_MODEL_CHANGE) }, editorViewer.disposable)
+    val changeListener = PropertyChangeListener {
+      updatePreviewLater(UpdateType.ON_MODEL_CHANGE)
+    }
+    tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, changeListener)
+    Disposer.register(editorViewer.disposable) { tree.removePropertyChangeListener(JTree.TREE_MODEL_PROPERTY, changeListener) }
 
     super.track()
   }
