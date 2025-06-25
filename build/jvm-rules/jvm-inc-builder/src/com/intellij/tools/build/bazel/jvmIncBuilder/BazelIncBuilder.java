@@ -129,9 +129,8 @@ public class BazelIncBuilder {
           }
         }
 
-        List<CompilerRunner> compilers = collect(map(RunnerRegistry.getCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
         List<CompilerRunner> roundCompilers = collect(map(RunnerRegistry.getRoundCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
-        List<BytecodeInstrumenter> instrumenters = collect(map(RunnerRegistry.getIntrumenters(), f -> f.create(context, storageManager)), new ArrayList<>());
+        List<BytecodeInstrumenter> instrumenters = collect(map(RunnerRegistry.getInstrumenters(), f -> f.create(context, storageManager)), new ArrayList<>());
 
         boolean isInitialRound = true;
 
@@ -152,54 +151,47 @@ public class BazelIncBuilder {
           OutputSinkImpl outSink = new OutputSinkImpl(storageManager);
 
           if (isInitialRound) {
-            if (!srcSnapshotDelta.isRecompileAll()) {
-              List<String> deletedPaths = new ArrayList<>();
-              for (NodeSource source : filter(flat(srcSnapshotDelta.getDeleted(), srcSnapshotDelta.getModified()), s -> find(compilers, compiler -> compiler.canCompile(s)) != null)) {
-                // source paths are assumed to be relative to source roots, so under the output root the directory structure is the same
-                String path = source.toString();
-                if (storageManager.getOutputBuilder().deleteEntry(path)) {
-                  deletedPaths.add(path);
-                }
-              }
-              logDeletedPaths(context, deletedPaths);
-            }
-
-            for (CompilerRunner runner : compilers) {
-              List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
-              if (toCompile.isEmpty()) {
-                continue;
-              }
-
-              runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
-
-              if (diagnostic.hasErrors()) {
-                break;
-              }
+            // processing deleted sources makes sense on inintial round only
+            if (!srcSnapshotDelta.isRecompileAll() && !isEmpty(srcSnapshotDelta.getDeleted())) {
+              // clean outputs that correspond to deleted sources, no matter of source type
+              Collection<String> cleaned = deleteCompilerOutputs(
+                storageManager.getGraph(), srcSnapshotDelta.getDeleted(), storageManager.getCompositeOutputBuilder(), new ArrayList<>()
+              );
+              logDeletedPaths(context, cleaned);
             }
           }
 
-          if (!diagnostic.hasErrors()) {
-            if (!srcSnapshotDelta.isRecompileAll()) {
-              // delete outputs corresponding to deleted or recompiled sources
-              cleanOutputsForCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), roundCompilers, storageManager.getCompositeOutputBuilder());
+          for (CompilerRunner runner : roundCompilers) {
+
+            Iterable<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
+            if (isEmpty(toCompile)) {
+              continue;
             }
 
-            for (CompilerRunner runner : roundCompilers) {
-              List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
-              if (toCompile.isEmpty()) {
-                continue;
+            if (!srcSnapshotDelta.isRecompileAll()) {
+              // delete outputs corresponding to recompiled sources before running the compiler
+              ZipOutputBuilder outBuilder = storageManager.getCompositeOutputBuilder();
+              Collection<String> cleaned = deleteCompilerOutputs(
+                storageManager.getGraph(), toCompile, outBuilder, new ArrayList<>()
+              );
+              for (String toDelete : runner.getOutputPathsToDelete()) {
+                if (outBuilder.deleteEntry(toDelete)) {
+                  cleaned.add(toDelete);
+                }
               }
-              ExitCode code = runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
-              if (code == ExitCode.CANCEL) {
-                return code;
-              }
-              if (code == ExitCode.ERROR && !diagnostic.hasErrors()) {
-                // ensure we have some error message
-                diagnostic.report(Message.error(runner, runner.getName() + " completed with errors"));
-              }
-              if (diagnostic.hasErrors()) {
-                break;
-              }
+              logDeletedPaths(context, cleaned);
+            }
+
+            ExitCode code = runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
+            if (code == ExitCode.CANCEL) {
+              return code;
+            }
+            if (code == ExitCode.ERROR && !diagnostic.hasErrors()) {
+              // ensure we have some error message
+              diagnostic.report(Message.error(runner, runner.getName() + " completed with errors"));
+            }
+            if (diagnostic.hasErrors()) {
+              break;
             }
           }
 
@@ -239,7 +231,7 @@ public class BazelIncBuilder {
         
       }
       catch (Throwable e) {
-        // catch and report all errors before the sotrage manager is closed
+        // catch and report all errors before the storage manager is closed
         diagnostic.report(Message.create(null, e));
         return ExitCode.ERROR;
       }
@@ -338,31 +330,6 @@ public class BazelIncBuilder {
 
   private static boolean shouldRecompileAll(NodeSourceSnapshotDelta srcSnapshotDelta) {
     return srcSnapshotDelta.isRecompileAll() || srcSnapshotDelta.getChangedPercent() > RECOMPILE_CHANGED_RATIO_PERCENT;
-  }
-
-  private static void cleanOutputsForCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, Iterable<CompilerRunner> compilers, ZipOutputBuilder outBuilder) {
-    // separately logging deleted outputs for 'deleted' and 'modified' sources to adjust for existing test data
-    
-    BooleanFunction<@NotNull NodeSource> isCompilableFilter =
-      src -> find(compilers, compiler -> compiler.canCompile(src)) != null;
-    
-    Collection<String> cleanedOutputsOfDeletedSources = deleteCompilerOutputs(
-      depGraph, filter(snapshotDelta.getDeleted(), isCompilableFilter), outBuilder, new ArrayList<>()
-    );
-    logDeletedPaths(context, cleanedOutputsOfDeletedSources);
-
-    Collection<String> cleanedOutputsOfModifiedSources = deleteCompilerOutputs(
-      depGraph, filter(snapshotDelta.getModified(), isCompilableFilter), outBuilder, new ArrayList<>()
-    );
-    if (!cleanedOutputsOfDeletedSources.isEmpty() || !cleanedOutputsOfModifiedSources.isEmpty()) {
-      // delete additional paths only if there are any changes in the output caused by changes in sources
-      for (String toDelete : flat(map(compilers, CompilerRunner::getOutputPathsToDelete))) {
-        if (outBuilder.deleteEntry(toDelete)) {
-          cleanedOutputsOfModifiedSources.add(toDelete);
-        }
-      }
-    }
-    logDeletedPaths(context, cleanedOutputsOfModifiedSources);
   }
 
   private static Collection<String> deleteCompilerOutputs(
