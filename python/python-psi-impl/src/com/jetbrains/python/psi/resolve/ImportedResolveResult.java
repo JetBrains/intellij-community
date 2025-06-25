@@ -25,7 +25,7 @@ import java.util.Objects;
 public class ImportedResolveResult extends RatedResolveResult {
   private final @Nullable PyImportedNameDefiner myDefiner;
 
-  public ImportedResolveResult(PsiElement element, int rate, @Nullable PyImportedNameDefiner definer) {
+  public ImportedResolveResult(@Nullable PsiElement element, int rate, @Nullable PyImportedNameDefiner definer) {
     super(rate, element);
     myDefiner = definer;
   }

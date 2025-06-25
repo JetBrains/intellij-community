@@ -446,11 +446,10 @@ public final class PyUtil {
     return currentElement;
   }
 
-  /**
-   * Note that returned list may contain {@code null} items, e.g. for unresolved import elements, originally wrapped
-   * in {@link com.jetbrains.python.psi.resolve.ImportedResolveResult}.
-   */
-  public static @NotNull List<PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
+  // Note that returned list may contain null items, e.g. for unresolved import elements, originally wrapped
+  //  in `com.jetbrains.python.psi.resolve.ImportedResolveResult`
+  //  TODO: it would be a good idea to revise `filterTopPriority` to return the import definer when the element is null
+  public static @NotNull List<@Nullable PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
     if (element instanceof PyReferenceOwner referenceOwner) {
       return multiResolveTopPriority(referenceOwner.getReference(resolveContext));
     }
@@ -460,7 +459,7 @@ public final class PyUtil {
     }
   }
 
-  public static @NotNull List<PsiElement> multiResolveTopPriority(@NotNull PsiPolyVariantReference reference) {
+  public static @NotNull List<@NotNull PsiElement> multiResolveTopPriority(@NotNull PsiPolyVariantReference reference) {
     return filterTopPriorityElements(Arrays.asList(reference.multiResolve(false)));
   }
 

@@ -235,7 +235,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyLiteralType? {
       if (expression is PyReferenceExpression && expression.isQualified) {
         val type = PyUtil.multiResolveTopPriority(expression, PyResolveContext.defaultContext(context)).firstNotNullOfOrNull {
-          PyStdlibTypeProvider.getEnumMemberType(it, context)
+          PyStdlibTypeProvider.getEnumMemberType(it!!, context)
         }
         if (type != null) {
           return type

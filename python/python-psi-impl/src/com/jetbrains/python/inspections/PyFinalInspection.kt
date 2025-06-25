@@ -140,7 +140,7 @@ class PyFinalInspection : PyInspection() {
       }
 
       if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any {
-          it != node && !PyDefUseUtil.isDefinedBefore(node, it)
+          it != node && !PyDefUseUtil.isDefinedBefore(node, it!!)
         }) {
         registerProblem(node, PyPsiBundle.message("INSP.final.already.declared.name.could.not.be.redefined.as.final"))
       }
