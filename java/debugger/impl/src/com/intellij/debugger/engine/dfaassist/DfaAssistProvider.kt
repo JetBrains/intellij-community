@@ -2,7 +2,7 @@
 package com.intellij.debugger.engine.dfaassist
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.lang.LanguageExtension
@@ -33,6 +33,19 @@ interface DfaAssistProvider {
   }
 
   /**
+   * A sentinel value for Kotlin inline class qualifier
+   */
+  data class InlinedValue(val value: Value) : Value {
+    override fun virtualMachine(): VirtualMachine? {
+      return value.virtualMachine()
+    }
+    
+    override fun type(): Type {
+      return value.type()
+    }
+  }
+
+  /**
    * Quick check whether code location matches the source code in the editor
    *
    * @param element  PsiElement in the editor
@@ -58,7 +71,7 @@ interface DfaAssistProvider {
 
   /**
    * @param proxy  proxy to create JDI values
-   * @param dfaVar DfaVariableValue to find value for
+   * @param descriptor non-qualified VariableDescriptor to find value for
    * @param anchor anchor previously returned by [.getAnchor] call, where analysis takes place
    * @return JDI value for a variable; null if value is not known; NullConst if value is known to be null
    * (use [.wrap] utility method for this purpose).
@@ -67,9 +80,27 @@ interface DfaAssistProvider {
   @Throws(EvaluateException::class)
   suspend fun getJdiValueForDfaVariable(
     proxy: StackFrameProxyEx,
-    dfaVar: DfaVariableValue,
+    descriptor: VariableDescriptor,
     anchor: PsiElement,
   ): Value?
+
+  /**
+   * @param proxy  proxy to create JDI values
+   * @param qualifier qualifier for values 
+   * @param descriptors list of descriptors that could be qualified by a specified qualifier
+   * @param anchor anchor previously returned by [.getAnchor] call, where analysis takes place
+   * @return map whose keys are descriptors from the passed list and values are the corresponding JDI values 
+   * (NullConst if value is known to be null; use [.wrap] utility method for this purpose). 
+   * The map omits the descriptors that are not applicable to a given qualifier or whose value is unknown for any reason.
+   * @throws EvaluateException if proxy throws
+   */
+  @Throws(EvaluateException::class)
+  suspend fun getJdiValueForDfaVariable(
+    proxy: StackFrameProxyEx,
+    qualifier: Value,
+    descriptors: List<VariableDescriptor>,
+    anchor: PsiElement,
+  ): Map<VariableDescriptor, Value>
 
   /**
    * @return a new listener to attach to DFA session that will gather DFAAssist hints
