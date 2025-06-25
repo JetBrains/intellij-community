@@ -14,7 +14,7 @@ import com.jetbrains.python.run.buildTargetedCommandLine
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 object PythonExecuteUtils {
@@ -23,7 +23,7 @@ object PythonExecuteUtils {
     sdk: Sdk,
     pyModuleToRun: String,
     runArgs: List<String>,
-    timeout: Duration = 5000.milliseconds,
+    timeout: Duration = 5.seconds,
     envs: Map<String, String> = emptyMap(),
   ): ProcessOutput {
     val targetEnvConfiguration = sdk.targetEnvConfiguration
