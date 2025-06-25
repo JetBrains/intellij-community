@@ -15,7 +15,7 @@ public interface LibraryDataServiceExtension {
   @Nullable
   PersistentLibraryKind<?> getLibraryKind(@NotNull LibraryData libraryData);
 
-  void prepareNewLibrary(
+  void prepareLibrary(
     @NotNull IdeModifiableModelsProvider modelsProvider,
     @NotNull Library library,
     @NotNull LibraryData libraryData
