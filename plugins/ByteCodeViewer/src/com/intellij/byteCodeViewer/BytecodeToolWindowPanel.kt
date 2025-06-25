@@ -3,7 +3,7 @@ package com.intellij.byteCodeViewer
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -114,8 +114,8 @@ internal class BytecodeToolWindowPanel(
     if (classFile == null) throw IllegalStateException("Class file must not be null")
     val byteCodeText = deserializeBytecode(classFile)
     bytecodeEditor.document.putUserData(BYTECODE_WITH_DEBUG_INFO, byteCodeText) // include debug info for selection matching
-    runWriteAction {
-      val byteCodeToShow = if (BytecodeViewerSettings.getInstance().state.showDebugInfo) byteCodeText else removeDebugInfo(byteCodeText)
+    val byteCodeToShow = if (BytecodeViewerSettings.getInstance().state.showDebugInfo) byteCodeText else removeDebugInfo(byteCodeText)
+    ApplicationManager.getApplication().runWriteAction {
       bytecodeEditor.document.setText(byteCodeToShow)
     }
 
