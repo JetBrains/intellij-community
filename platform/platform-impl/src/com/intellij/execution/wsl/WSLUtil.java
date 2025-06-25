@@ -21,10 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
@@ -143,7 +140,12 @@ public final class WSLUtil {
   // To be removed when old WSL installations (without wsl.exe) are gone.
   private static int getVersionByUname(@NotNull WSLDistribution distribution) {
     try {
-      ProcessOutput output = distribution.executeOnWsl(WSLDistribution.DEFAULT_TIMEOUT, "uname", "-v");
+      ProcessOutput output = distribution.executeOnWsl(
+        Arrays.asList("uname", "-v"),
+        new WSLCommandLineOptions().setLaunchWithWslExe(true),
+        WSLDistribution.DEFAULT_TIMEOUT,
+        null
+      );
       if (output.checkSuccess(LOG)) {
         return output.getStdout().contains("Microsoft") ? 1 : 2;
       }
