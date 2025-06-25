@@ -16,4 +16,8 @@ internal class BreakpointRequestCounter {
       if (counter.compareAndSet(currentValue, count)) return true
     }
   }
+
+  companion object {
+    const val REQUEST_IS_NOT_NEEDED: Long = -1L
+  }
 }
