@@ -7,6 +7,7 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +28,17 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   @Override
   public boolean areDuplicatesOk(@NotNull LookupElement item1, @NotNull LookupElement item2) {
-    return areSameNamedFieldsInSameClass(item1.getObject(), item2.getObject()) || super.areDuplicatesOk(item1, item2);
+    return areSameNamedFieldsInSameClass(item1.getObject(), item2.getObject()) || brokenCompiledInnerClass(item1.getObject(), item2.getObject()) || super.areDuplicatesOk(item1, item2);
+  }
+
+  //workaround for broken compiled inner classes, it is not reproducible with IDEA
+  private static boolean brokenCompiledInnerClass(@NotNull Object o1, @NotNull Object o2) {
+    if (o1 instanceof ClsClassImpl c1 && o2 instanceof ClsClassImpl c2 &&
+        c1.getContainingClass() != null && c2.getContainingClass() != null &&
+        c1.getName().equals(c2.getName())) {
+      return true;
+    }
+    return false;
   }
 
   private static boolean areSameNamedFieldsInSameClass(Object o1, Object o2) {
