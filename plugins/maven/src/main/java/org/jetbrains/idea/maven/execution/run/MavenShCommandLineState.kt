@@ -29,16 +29,14 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
-import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter
@@ -379,12 +377,32 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   private fun getPathToWrapperScript(): String {
     val multimoduleDir = MavenDistributionsCache.getInstance(myConfiguration.project)
       .getMultimoduleDirectory(myConfiguration.runnerParameters.workingDirPath)
-    val relativePath = Path(myConfiguration.runnerParameters.workingDirPath).relativize(Path(multimoduleDir)).toString()
-    return if (relativePath.isEmpty() || relativePath == ".") {
-      if (isWindows()) "mvnw.cmd" else "./mvnw"
+      .let { Path.of(it) }
+    val workingDirPath = Path(myConfiguration.runnerParameters.workingDirPath)
+    val relativePath = workingDirPath.relativizeWithTargetOsSeparators(multimoduleDir)
+    return when {
+      relativePath.isEmpty() || relativePath == "." ->
+        when {
+          isWindows() -> "mvnw.cmd"
+          else -> "./mvnw"
+        }
+      else -> {
+        when {
+          isWindows() -> "$relativePath\\mvnw.cmd"
+          else -> "$relativePath/mvnw"
+        }
+      }
     }
-    else {
-      if (isWindows()) relativePath.replace("/", "\\") + "\\mvnw.cmd" else "$relativePath/mvnw"
+  }
+
+  private fun Path.relativizeWithTargetOsSeparators(other: Path): String {
+    val relativePath = relativize(other).toString()
+    val hostSeparator = if (LocalEelDescriptor.osFamily.isWindows) "\\" else "/"
+    val targetSeparator = if (getEelDescriptor().osFamily.isWindows)  "\\" else "/"
+    return if (hostSeparator == targetSeparator) {
+      relativePath
+    } else {
+      relativePath.replace(hostSeparator, targetSeparator)
     }
   }
 
