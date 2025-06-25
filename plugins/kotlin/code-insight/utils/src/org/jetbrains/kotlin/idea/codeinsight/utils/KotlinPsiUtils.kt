@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_ENUMS_PACKAGE
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
@@ -60,7 +61,7 @@ fun KtPropertyAccessor.isRedundantGetter(respectComments: Boolean = true): Boole
     return false
 }
 
-fun KtExpression.isBackingFieldReferenceTo(property: KtProperty) =
+fun KtExpression.isBackingFieldReferenceTo(property: KtProperty): Boolean =
     this is KtNameReferenceExpression
             && text == KtTokens.FIELD_KEYWORD.value
             && property.isAncestor(this)
@@ -133,9 +134,9 @@ fun removeRedundantSetter(setter: KtPropertyAccessor) {
     }
 }
 
-fun KtExpression?.isTrueConstant() = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "true"
+fun KtExpression?.isTrueConstant(): Boolean = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "true"
 
-fun KtExpression?.isFalseConstant() = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "false"
+fun KtExpression?.isFalseConstant(): Boolean = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "false"
 
 /**
  * We use [optionalBooleanExpressionCheck] only when checking [KtPrefixExpression] with "!" operation e.g., "!(expr)" has a
@@ -349,9 +350,10 @@ operator fun FqName.plus(name: Name): FqName = child(name)
 operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
 
 private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Sequence<FqName> = sequenceOf(
-    "enumValues",
-    "enumValueOf",
-).map { StandardNames.BUILT_INS_PACKAGE_FQ_NAME + it }
+    BASE_ENUMS_PACKAGE  + "enumEntries",
+    BUILT_INS_PACKAGE_FQ_NAME + "enumValues",
+    BUILT_INS_PACKAGE_FQ_NAME + "enumValueOf",
+)
 
 context(KaSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {

@@ -535,12 +535,17 @@ object K2UnusedSymbolUtil {
     context(KaSession)
     private fun hasBuiltInEnumFunctionReference(reference: PsiReference, enumClass: KtClass): Boolean {
         val parent = reference.element.parent
-        if ((parent as? KtQualifiedExpression)?.normalizeEnumQualifiedExpression(enumClass)
-                ?.canBeReferenceToBuiltInEnumFunction() == true
-        ) return true
-        if ((parent as? KtQualifiedExpression)?.normalizeEnumCallableReferenceExpression(enumClass)
-                ?.canBeReferenceToBuiltInEnumFunction() == true
-        ) return true
+        if (parent is KtQualifiedExpression) {
+            if (parent
+                    .normalizeEnumQualifiedExpression(enumClass)
+                    ?.canBeReferenceToBuiltInEnumFunction() == true
+            ) return true
+
+            if (parent
+                    .normalizeEnumCallableReferenceExpression(enumClass)
+                    ?.canBeReferenceToBuiltInEnumFunction() == true
+            ) return true
+        }
         if ((parent as? KtCallableReferenceExpression)?.canBeReferenceToBuiltInEnumFunction() == true) return true
         if (((parent as? KtTypeElement)?.parent as? KtTypeReference)?.isReferenceToBuiltInEnumFunction() == true) return true
         if ((parent as? PsiImportStaticReferenceElement)?.isReferenceToBuiltInEnumFunction() == true) return true

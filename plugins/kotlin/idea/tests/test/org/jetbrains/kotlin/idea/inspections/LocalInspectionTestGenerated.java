@@ -18091,6 +18091,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/unusedPublicMembers.kt");
             }
 
+            @TestMetadata("usedEnumEntries.kt")
+            public void testUsedEnumEntries() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/usedEnumEntries.kt");
+            }
+
             @TestMetadata("usedEnumFunction.kt")
             public void testUsedEnumFunction() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction.kt");
