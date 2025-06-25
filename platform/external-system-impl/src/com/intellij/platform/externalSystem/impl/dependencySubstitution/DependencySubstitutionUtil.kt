@@ -32,81 +32,57 @@ object DependencySubstitutionUtil {
       val libraryToModuleMap = buildLibraryToModuleMap(storage)
       for (module in storage.entities<ModuleEntity>()) {
         storage.modifyModuleEntity(module) {
-          for (i in dependencies.indices) {
-            dependencies[i] = updateDependencySubstitution(storage, module, dependencies[i], libraryToModuleMap)
-          }
+          updateDependencySubstitution(storage, libraryToModuleMap)
         }
       }
     }
   }
 
-  fun updateDependencySubstitution(
+  private fun ModuleEntity.Builder.updateDependencySubstitution(
     storage: MutableEntityStorage,
-    module: ModuleEntity,
-    dependency: ModuleDependencyItem,
     libraryToModuleMap: Map<LibraryId, ModuleId>,
-  ): ModuleDependencyItem {
-    var newDependency = dependency
-    if (newDependency is ModuleDependency) {
-      newDependency = replaceModuleWithLibraryOrNull(storage, module, newDependency, libraryToModuleMap) ?: newDependency
-    }
-    if (newDependency is LibraryDependency) {
-      newDependency = replaceLibraryWithModuleOrNull(storage, module, newDependency, libraryToModuleMap) ?: newDependency
-    }
-    return newDependency
-  }
+  ) {
+    val ownerId = ModuleId(name)
 
-  private fun replaceModuleWithLibraryOrNull(
-    storage: MutableEntityStorage,
-    ownerModule: ModuleEntity,
-    moduleDependency: ModuleDependency,
-    libraryToModuleMap: Map<LibraryId, ModuleId>,
-  ): LibraryDependency? {
+    // Tries to replace outdated module substitution by original library
+    for ((dependencyOrder, dependency) in dependencies.withIndex()) {
+      if (dependency is ModuleDependency) {
 
-    val ownerId = ownerModule.symbolicId
+        val moduleId = dependency.module
+        val scope = dependency.scope
+        val exported = dependency.exported
 
-    val moduleId = moduleDependency.module
-    val scope = moduleDependency.scope
-    val exported = moduleDependency.exported
+        val substitutionId = DependencySubstitutionId(ownerId, moduleId, scope)
 
-    val substitutionId = DependencySubstitutionId(ownerId, moduleId, scope)
+        val substitution = storage.resolve(substitutionId) ?: continue
 
-    val substitution = storage.resolve(substitutionId) ?: return null
+        val libraryId = substitution.library
 
-    val libraryId = substitution.library
+        if (libraryToModuleMap[libraryId] == moduleId) {
+          continue
+        }
 
-    if (libraryToModuleMap[libraryId] == moduleId) {
-      return null
+        storage.removeEntity(substitution)
+
+        dependencies[dependencyOrder] = LibraryDependency(libraryId, exported, scope)
+      }
     }
 
-    val libraryDependency = LibraryDependency(libraryId, exported, scope)
+    // Tries to replace library by module dependency
+    for ((dependencyOrder, dependency) in dependencies.withIndex()) {
+      if (dependency is LibraryDependency) {
 
-    storage.removeEntity(substitution)
+        val libraryId = dependency.library
+        val scope = dependency.scope
+        val exported = dependency.exported
 
-    return libraryDependency
-  }
+        val moduleId = libraryToModuleMap[libraryId] ?: continue
 
-  private fun replaceLibraryWithModuleOrNull(
-    storage: MutableEntityStorage,
-    ownerModule: ModuleEntity,
-    libraryDependency: LibraryDependency,
-    libraryToModuleMap: Map<LibraryId, ModuleId>,
-  ): ModuleDependency? {
+        storage.addEntity(DependencySubstitutionEntity(ownerId, libraryId, moduleId, scope, entitySource))
 
-    val ownerId = ownerModule.symbolicId
-    val entitySource = ownerModule.entitySource
-
-    val libraryId = libraryDependency.library
-    val scope = libraryDependency.scope
-    val exported = libraryDependency.exported
-
-    val moduleId = libraryToModuleMap[libraryId] ?: return null
-
-    val moduleDependency = ModuleDependency(moduleId, exported, scope, productionOnTest = false)
-
-    storage addEntity DependencySubstitutionEntity(ownerId, libraryId, moduleId, scope, entitySource)
-
-    return moduleDependency
+        dependencies[dependencyOrder] = ModuleDependency(moduleId, exported, scope, productionOnTest = false)
+      }
+    }
   }
 
   private fun buildLibraryToModuleMap(storage: EntityStorage): Map<LibraryId, ModuleId> {
