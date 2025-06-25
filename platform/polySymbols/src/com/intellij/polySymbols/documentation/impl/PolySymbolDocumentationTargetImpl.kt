@@ -64,7 +64,7 @@ internal class PolySymbolDocumentationTargetImpl<T : PolySymbol>(
 
   companion object {
     internal fun check(lambda: Any) {
-      assert(ApplicationManager.getApplication().isUnitTestMode &&
+      assert(!ApplicationManager.getApplication().isUnitTestMode ||
              lambda::class.java.declaredFields.none { it.name.startsWith("arg$") || it.name.startsWith("this$") }) {
         "Do not capture object instance or method parameters in documentation target builder lambda : $lambda"
       }
