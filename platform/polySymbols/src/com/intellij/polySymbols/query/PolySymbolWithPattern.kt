@@ -4,6 +4,9 @@ package com.intellij.polySymbols.query
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 
+/**
+ * A symbol, which might consist of other symbols and provides a pattern, which describes the relationship.
+ */
 interface PolySymbolWithPattern : PolySymbol {
 
   /**

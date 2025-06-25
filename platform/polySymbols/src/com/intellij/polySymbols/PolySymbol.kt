@@ -2,6 +2,7 @@
 package com.intellij.polySymbols
 
 import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
@@ -12,30 +13,62 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
+import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.utils.*
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.refactoring.rename.api.RenameUsageSearcher
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.Icon
 
 /**
- * The core element of the Poly Symbols framework - it represents an entity in the Poly Symbols model.
- * It is identified through `namespace`, `kind` and `name` properties.
+ * The core element of the Poly Symbols framework. It is identified through `name` and `qualifiedKind` properties.
+ * The symbol has a very generic meaning and may represent a variable in some language, or an endpoint of some web server,
+ * or a file.
  *
- * The symbol lifecycle is a single read action. If you need it to survive between read actions, use [PolySymbol.createPointer] to create a symbol pointer.
- * If the symbol is still valid, dereferencing the pointer will return a new instance of the symbol.
+ * Symbols, which share some common characteristics should be grouped using the same `qualifiedKind`.
+ * The `qualifiedKind` consists of a `namespace`, which roughly indicates a language or a framework the symbol belongs to,
+ * and a `kind`, which roughly indicates, what the symbol basic characteristics are.
+ *
+ * [PolySymbol]s provide a straightforward way of implementing:
+ * - navigation support - through [PolySymbol.getNavigationTargets] method
+ * - documentation support - through [PolySymbol.getDocumentationTarget] method and
+ *   [com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget.create] utility
+ * - search support - through [PolySymbol.searchTarget] property. [PolySymbol] may also implement the [SearchTargetSymbol] or
+ *   [SearchTarget] interfaces, if a non-[PolySymbolSearchTarget] is required. In such a case, however, the search support
+ *   will have to be implemented from scratch using [UsageSearcher].
+ * - rename support - through [PolySymbol.renameTarget] property. [PolySymbol] may also implement the [RenameableSymbol] or
+ *   [RenameTarget] interfaces, if a non-[PolySymbolRenameTarget] is required. In such a case, however, the rename support
+ *   will have to be implemented from scratch using [RenameUsageSearcher].
+ *
+ * Symbols should be provided to the framework through [PolySymbolQueryScopeContributor] and
+ * retrieved using [PolySymbolQueryExecutor] acquired using [PolySymbolQueryExecutorFactory].
+ * The PolySymbol framework requires an integration into language or framework support through:
+ * - completion provider - you can use `com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase`
+ * - reference contributor - use `com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider`
+ *
+ * The [PolySymbolQueryExecutor] queries support evaluation of [PolySymbolWithPattern] patterns.
+ * Symbols, which implement this interface and provide a pattern are expanded to a [PolySymbolMatch]
+ * composite symbols during queries. Such patterns allow for handy implementation of a microsyntax.
+ *
+ * Each symbol can be a scope for other symbols (like a Java class is a scope for its methods and fields). Such symbols
+ * should implement [PolySymbolScope] interface. When pattern evaluation is happening, each matched symbol's `queryScope`
+ * is put on the scope stack, allowing for expanding the scope during the pattern match process.
+ *
+ * The symbol lifecycle is a single read action. If you need it to survive between read actions,
+ * use [PolySymbol.createPointer] to create a symbol pointer.
+ * If the symbol is still valid, dereferencing the pointer might return a new instance of the symbol.
  * During write action, the symbol might not survive PSI tree commit, so you should create a pointer
  * before the commit and dereference it afterward.
  *
  * See also: [Implementing Poly Symbols](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html)
- *
  */
 /*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
@@ -62,7 +95,11 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
   val name: @NlsSafe String
 
   /**
-   * A set of symbol modifiers
+   * A set of symbol modifiers. The framework contains constants for many modifiers known from various
+   * programming languages. However, implementations are free to define other modifiers using [PolySymbolModifier.get].
+   *
+   * When a match is performed over a sequence of symbols, use [PolySymbolMatchCustomizer] to customize
+   * how modifiers from different symbols in the sequence are merged for the resulting [PolySymbolMatch] modifiers.
    */
   val modifiers: Set<PolySymbolModifier>
     get() = emptySet()
@@ -87,15 +124,15 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
     get() = PolySymbolApiStatus.Stable
 
   /**
-   * When pattern is being evaluated, matched symbols can provide additional scope for further resolution in the pattern.
-   * By default, the `queryScope` returns the symbol itself if it is a [PolySymbolScope]
+   * When a pattern is being evaluated, matched symbols can provide additional scope for further resolution of symbols in the pattern sequence.
+   * By default, the `queryScope` property returns the symbol itself if it is a [PolySymbolScope].
    */
   val queryScope: List<PolySymbolScope>
     get() = listOfNotNull(this as? PolySymbolScope)
 
   /**
    * Specifies whether the symbol is an extension.
-   * When matched along with a non-extension symbol it can provide or override some properties of the symbol,
+   * When matched along with a non-extension symbol, it can provide or override some properties of the symbol,
    * or it can extend its scope contents.
    */
   @get:JvmName("isExtension")
@@ -103,7 +140,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
     get() = false
 
   /**
-   * Symbols with higher priority will have precedence over those with lower priority,
+   * Symbols with higher priority will have precedence over those with lower priority
    * when matching is performed. Symbols with higher priority will also show higher on the completion list.
    */
   override val priority: Priority?
@@ -118,11 +155,10 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
     get() = null
 
   /**
-   * Accessor for various symbol properties. This is a convenience method which
-   * tries to cast the value to an expected type for the defined property.
-   * Plugins can use properties to provide additional information on the symbol.
+   * Accessor for various symbol properties. Plugins can use properties to provide additional information on the symbol.
    * All properties supported by IDEs are defined through `PROP_*` constants of [PolySymbol] interface.
-   * Check their documentation for further reference.
+   * Check their documentation for further reference. To ensure that results are properly casted, use
+   * [PolySymbolProperty.tryCast] method for returned values.
    */
   operator fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     null
@@ -157,7 +193,9 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
    *
    * Symbol can also implement [SearchTarget] interface directly
    * and override its methods, in which case [PolySymbolSearchTarget]
-   * returned by [searchTarget] property is ignored.
+   * returned by [searchTarget] property is ignored. If returned
+   * target is not a [PolySymbolSearchTarget], a dedicated
+   * [UsageSearcher] needs to be implemented to handle it.
    *
    * @see [SearchTargetSymbol]
    * @see [SearchTarget]
@@ -172,7 +210,9 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
    *
    * Symbol can also implement [RenameTarget] interface directly
    * and override its methods, in which case [PolySymbolRenameTarget]
-   * returned by [renameTarget] property is ignored.
+   * returned by [renameTarget] property is ignored. If returned
+   * target is not a [PolySymbolRenameTarget], a dedicated
+   * [RenameUsageSearcher] needs to be implemented to handle it.
    *
    * @see [RenameableSymbol]
    * @see [RenameTarget]
@@ -181,9 +221,13 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
     get() = null
 
   /**
-   * Used by Poly Symbols framework to get a [DocumentationTarget], which handles documentation
-   * rendering for the symbol. You may implement [com.intellij.polySymbols.documentation.PolySymbolWithDocumentation]
-   * interface, which will provide a default implementation to render the documentation.
+   * Used by the Poly Symbols framework to get a [DocumentationTarget], which handles documentation
+   * rendering for the symbol. Additional [location] parameter allows calculating more specific
+   * properties for the symbol documentation, like inferred generic parameters.
+   *
+   * By default, [com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget.create] should
+   * be used to build the documentation target for the symbol. It allows for documentation to be further
+   * customized by [PolySymbolDocumentationCustomizer]s.
    */
   fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     null
@@ -213,7 +257,10 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
   /**
    * Poly Symbols can have various naming conventions.
    * This method is used by the framework to determine a new name for a symbol based on its occurrence
+   *
+   * Note: do not implement - to be removed
    */
+  @ApiStatus.Internal
   fun adjustNameForRefactoring(queryExecutor: PolySymbolQueryExecutor, newName: String, occurence: String): String =
     queryExecutor.namesProvider.adjustRename(qualifiedName, newName, occurence)
 

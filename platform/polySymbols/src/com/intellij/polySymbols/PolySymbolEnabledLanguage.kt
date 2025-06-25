@@ -13,9 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PolySymbolEnabledLanguage private constructor() : MetaLanguage("PolySymbolEnabledLanguage") {
 
-  var totalTime: Long = 0
-  var count: Long = 0
-
   override fun matchesLanguage(language: Language): Boolean =
     language == ANY || Companion.EP_NAME.extensionList
       .any {
