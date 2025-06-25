@@ -110,6 +110,9 @@ class JdkRequirementTest : LightPlatformTestCase() {
   fun test_corretto_11() = doTest("corretto-11", fails = listOf("11"))
 
   @Test
+  fun test_corretto_20() = doTest("corretto-20", fails = listOf("20"))
+
+  @Test
   fun test_11() = doTest("11", matches = listOf("11", "11.0", "11.1", "11.0.4"), fails = listOf("12", "1.8", "6", "19", "8"))
 
   @Test

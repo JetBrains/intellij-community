@@ -5,7 +5,6 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 from _pydevd_bundle.tables.images.pydevd_image_loader import load_image_chunk
-from typing import Optional
 
 
 class TableCommandType:
@@ -28,7 +27,6 @@ def is_error_on_eval(val):
     return is_exception_on_eval
 
 def exec_image_table_command(init_command, command_type, offset, image_id, f_globals, f_locals):
-    # type: (str, str, Optional[int], Optional[str], dict, dict) -> (bool, str)
     table = pydevd_vars.eval_in_context(init_command, f_globals, f_locals)
     is_exception_on_eval = is_error_on_eval(table)
     if is_exception_on_eval:
@@ -46,7 +44,6 @@ def exec_image_table_command(init_command, command_type, offset, image_id, f_glo
 
 def exec_table_command(init_command, command_type, start_index, end_index, format, f_globals,
                        f_locals):
-    # type: (str, str, [int, None], [int, None], [str, None], dict, dict) -> (bool, str)
     table = pydevd_vars.eval_in_context(init_command, f_globals, f_locals)
     is_exception_on_eval = is_error_on_eval(table)
     if is_exception_on_eval:

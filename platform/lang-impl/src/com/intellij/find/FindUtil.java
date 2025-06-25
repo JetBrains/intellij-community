@@ -116,6 +116,15 @@ public final class FindUtil {
     model.setPromptOnReplace(false);
   }
 
+  public static void updateFindNextModel(@NotNull Project project, @NotNull FindModel with) {
+    FindManager findManager = FindManager.getInstance(project);
+    findManager.setFindWasPerformed();
+    FindModel copy = new FindModel();
+    copy.copyFrom(with);
+    copy.setReplaceState(false);
+    findManager.setFindNextModel(copy);
+  }
+
   public static void updateFindInFileModel(@Nullable Project project, @NotNull FindModel with, boolean saveFindString) {
     FindModel model = FindManager.getInstance(project).getFindInFileModel();
     model.setCaseSensitive(with.isCaseSensitive());

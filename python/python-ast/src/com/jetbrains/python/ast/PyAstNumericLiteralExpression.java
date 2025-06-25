@@ -107,7 +107,15 @@ public interface PyAstNumericLiteralExpression extends PyAstLiteralExpression {
 
   private static @NotNull String prepareLiteralForJava(@NotNull String text, int beginIndex) {
     int endIndex = text.length() - retrieveSuffix(text).length();
-    return text.substring(beginIndex, endIndex).replaceAll("_", "");
+
+    StringBuilder result = new StringBuilder(endIndex - beginIndex);
+    for (int i = beginIndex; i < endIndex; i++) {
+      char c = text.charAt(i);
+      if (c != '_') {
+        result.append(c);
+      }
+    }
+    return result.toString();
   }
 
   private static @NotNull String retrieveSuffix(@NotNull String text) {

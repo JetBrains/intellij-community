@@ -18,7 +18,7 @@ import javax.swing.Icon
 private enum class SyncStatus {ON, OFF, FAILED, PENDING_ACTION}
 
 private fun getStatus() : SyncStatus {
-  if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
+  if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.UserActionRequired) {
     return SyncStatus.PENDING_ACTION
   }
   if (SettingsSyncSettings.getInstance().syncEnabled &&

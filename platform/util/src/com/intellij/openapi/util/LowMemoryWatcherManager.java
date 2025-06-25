@@ -16,6 +16,7 @@ import java.lang.management.*;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -25,9 +26,9 @@ public final class LowMemoryWatcherManager {
   }
 
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
-  private static final long GC_COUNT_THRESHOLD = 20;
+  private static final long GC_TIME_THRESHOLD = 10_000; //20 seconds
 
-  final long[] lastGcCounts = new long[1];
+  private final AtomicLong lastGcTime = new AtomicLong();
 
   private final ExecutorService myExecutorService;
 
@@ -52,13 +53,13 @@ public final class LowMemoryWatcherManager {
       SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", backendExecutorService);
 
     myMemoryPoolMXBeansFuture = initializeMXBeanListenersLater(backendExecutorService);
-    lastGcCounts[0] = getMajorGcCount();
+    lastGcTime.set(getMajorGcTime());
   }
 
-  private static long getMajorGcCount() {
+  private static long getMajorGcTime() {
     for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
       if (gc.getName().toLowerCase().contains("g1 old generation")) {
-        return gc.getCollectionCount();
+        return gc.getCollectionTime();
       }
     }
     return 0;
@@ -101,19 +102,19 @@ public final class LowMemoryWatcherManager {
 
     private static class GcPeriod {
       final long timestamp;
-      final long count;
+      final long gcTime;
 
-      GcPeriod(long timestamp, long count) {
+      GcPeriod(long timestamp, long gcTime) {
         this.timestamp = timestamp;
-        this.count = count;
+        this.gcTime = gcTime;
       }
     }
 
-    public synchronized int trackGcAndGetRecentCount(long currentGcCount, long lastGcCount) {
+    public synchronized long trackGcAndGetRecentTime(long currentGcTime, long previousGcTimeValue) {
       long currentTime = System.currentTimeMillis();
 
-      if (currentGcCount > lastGcCount) {
-        gcPeriods.offer(new GcPeriod(currentTime, currentGcCount - lastGcCount));
+      if (currentGcTime > previousGcTimeValue) {
+        gcPeriods.offer(new GcPeriod(currentTime, currentGcTime - previousGcTimeValue));
       }
 
       while (!gcPeriods.isEmpty() && gcPeriods.peek().timestamp < currentTime - WINDOW_SIZE_MS) {
@@ -121,7 +122,7 @@ public final class LowMemoryWatcherManager {
       }
 
       return gcPeriods.stream()
-        .mapToInt(period -> (int)period.count)
+        .mapToLong(period -> period.gcTime)
         .sum();
     }
   }
@@ -136,13 +137,13 @@ public final class LowMemoryWatcherManager {
       boolean memoryCollectionThreshold = MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType());
 
       if (memoryThreshold || memoryCollectionThreshold) {
-        long currentGcCount = getMajorGcCount();
-        int recentGcCount = gcTracker.trackGcAndGetRecentCount(currentGcCount, lastGcCounts[0]);
-        lastGcCounts[0] = currentGcCount;
+        long currentGcTime = getMajorGcTime();
+        long previousGcTimeValue = lastGcTime.getAndSet(currentGcTime);
+        long recentGcTime = gcTracker.trackGcAndGetRecentTime(currentGcTime, previousGcTimeValue);
 
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = myExecutorService.submit(() -> myJanitor.accept(recentGcCount > GC_COUNT_THRESHOLD));
+            mySubmitted = myExecutorService.submit(() -> myJanitor.accept(recentGcTime > GC_TIME_THRESHOLD));
             // maybe it's executed too fast or even synchronously
             if (mySubmitted.isDone()) {
               mySubmitted = null;

@@ -61,7 +61,7 @@ internal data class IntellijUpdateMetadata(
     pluginNode.untilBuild = until
     pluginNode.productCode = productCode
     pluginNode.version = version
-    pluginNode.organization = organization
+    pluginNode.setVendorDetails(organization)
     pluginNode.url = url
     for (dep in dependencies) {
       pluginNode.addDepends(dep, false)
@@ -98,7 +98,7 @@ internal class MarketplaceSearchPluginData(
     pluginNode.name = name
     pluginNode.rating = "%.2f".format(Locale.US, rating)
     pluginNode.downloads = downloads
-    pluginNode.organization = organization
+    pluginNode.setVendorDetails(organization)
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId ?: nearestUpdate?.id
     pluginNode.isPaid = isPaid
@@ -221,9 +221,12 @@ internal data class IntellijPluginMetadata(
 
   fun toPluginNode(pluginNode: PluginNode) {
     if (vendor != null) {
-      pluginNode.verifiedName = vendor.name
-      pluginNode.isVerified = vendor.verified
-      pluginNode.isTrader = vendor.trader
+      pluginNode.setVendorDetails(
+        vendor.name,
+        vendor.url,
+        vendor.trader,
+        vendor.verified
+      )
     }
     pluginNode.forumUrl = forumUrl
     pluginNode.licenseUrl = licenseUrl
@@ -241,6 +244,7 @@ internal data class IntellijPluginMetadata(
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class PluginVendorMetadata(
   val name: String = "",
+  val url: String? = null,
   @get:JsonProperty("isTrader")
   val trader: Boolean = false,
   @get:JsonProperty("isVerified")

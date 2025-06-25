@@ -20,7 +20,9 @@ internal class FinalImportRankingStatusService {
   }
 
   private val bucket: Int
-    by lazy { service<EventLogConfiguration>().getOrCreate(ML_RECORDER_ID).bucket }
+    by lazy { service<EventLogConfiguration>().getOrCreate(ML_RECORDER_ID,
+                                                           // ids between ML and FUS recorders should match
+                                                           "FUS").bucket }
 
   private val mlEnabledOnBucket: Boolean
     by lazy { bucket % 2 == 0 }

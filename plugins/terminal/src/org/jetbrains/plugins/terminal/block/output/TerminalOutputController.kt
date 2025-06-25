@@ -393,11 +393,7 @@ class TerminalOutputController(
       val eventsHandler = BlockTerminalEventsHandler(session, settings, this@TerminalOutputController)
       setupKeyEventDispatcher(editor, eventsHandler, disposable)
       setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
-      TerminalOutputEditorInputMethodSupport(
-        editor,
-        sendInputString = { text -> session.terminalOutputStream.sendString(text, true) },
-        getCaretPosition = { caretModel.getCaretPosition() }
-      ).install(disposable)
+      setupInputMethodSupport(editor, session, caretModel, disposable)
 
       contentUpdatesScheduler = setupContentUpdating()
     }

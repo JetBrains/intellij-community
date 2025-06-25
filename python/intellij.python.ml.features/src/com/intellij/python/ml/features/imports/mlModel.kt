@@ -2,9 +2,6 @@
 package com.intellij.python.ml.features.imports
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.jetbrains.ml.api.feature.Feature
 import com.jetbrains.ml.api.feature.FeatureDeclaration
 import com.jetbrains.ml.api.feature.FeatureFilter
@@ -13,7 +10,6 @@ import com.jetbrains.ml.api.model.MLModel
 import com.jetbrains.ml.api.model.MLModelLoader
 import com.jetbrains.ml.models.PythonImportsRankingModelHolder
 import com.jetbrains.ml.tools.model.MLModelLoaders
-import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.ml.tools.model.ModelDistributionReaders
 import com.jetbrains.ml.tools.model.catboost.CatBoostDistributionFormat
 import com.jetbrains.ml.tools.model.suspendable.MLModelSuspendableService
@@ -28,17 +24,6 @@ class ImportsRankingModelService : MLModelSuspendableService<MLModel<Double>, Do
     format = CatBoostDistributionFormat(),
   ))
 )
-
-private class QuickfixRankingModelLoading : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    if (!service<FinalImportRankingStatusService>().shouldLoadModel) return
-    try {
-      service<ImportsRankingModelService>().loadModel()
-    } catch (e: RuntimeException) {
-      thisLogger().error("Failed to load python imports ranking model", e)
-    }
-  }
-}
 
 private class MissingTypingFeaturesLoader(private val baseLoader: MLModelLoader<MLModel<Double>, Double>) : MLModelLoader<MLModel<Double>, Double> {
 

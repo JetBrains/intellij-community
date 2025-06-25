@@ -116,6 +116,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                  defaultValue="true"
                  restartRequired="false"
                  description="Use bare python instead of conda run for conda"/>
+    <registryKey defaultValue="true"
+                 description="Enable pyi stubs for Django (django-stubs package)"
+                 key="django.enable.pyi.stubs"/>
     <registryKey key="python.packaging.conda.chain.installation"
                  defaultValue="true"
                  restartRequired="true"
@@ -203,7 +206,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <configurationType implementation="com.jetbrains.python.run.FastAPILockedRunConfigurationType" order="first"/>
     <facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>
 
-    <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
+    <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>

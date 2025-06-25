@@ -36,9 +36,9 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
 
       return installedPackages
         .asSequence()
-        .filter { (it.name.endsWith(STUBS_SUFFIX) || it.name.startsWith(TYPES_PREFIX)) && stubPkgsFilter(it) }
+        .filter { it.name.isStubPackage() && stubPkgsFilter(it) }
         .mapNotNull { stubPkg ->
-          (nameToPkg[stubPkg.name.removeSuffix(STUBS_SUFFIX)] ?: nameToPkg[stubPkg.name.removePrefix(TYPES_PREFIX)])
+          (nameToPkg[stubPkg.name.stubPackageToPackage()])
             ?.let { it to stubPkg }
         }
         .filter {

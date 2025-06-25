@@ -160,6 +160,7 @@ public class EditorSearchSession implements SearchSession,
           mySearchResults.clear();
           EditorSearchSession.this.updateResults(FindSettings.getInstance().isScrollToResultsDuringTyping());
           FindUtil.updateFindInFileModel(EditorSearchSession.this.getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
+          FindUtil.updateFindNextModel(getProject(), getFindModel());
         }
         finally {
           myReentrantLock = false;
@@ -554,7 +555,7 @@ public class EditorSearchSession implements SearchSession,
     myLivePreviewController.dispose();
   }
 
-  private void updateResults(final boolean allowedToChangedEditorSelection) {
+  private void updateResults(boolean allowedToChangedEditorSelection) {
     final String text = myFindModel.getStringToFind();
     if (text.isEmpty()) {
       nothingToSearchFor(allowedToChangedEditorSelection);
@@ -577,16 +578,6 @@ public class EditorSearchSession implements SearchSession,
           myComponent.setStatusText(ApplicationBundle.message("editorsearch.empty.string.matches"));
           return;
         }
-      }
-
-
-      final FindManager findManager = FindManager.getInstance(getProject());
-      if (allowedToChangedEditorSelection) {
-        findManager.setFindWasPerformed();
-        FindModel copy = new FindModel();
-        copy.copyFrom(myFindModel);
-        copy.setReplaceState(false);
-        findManager.setFindNextModel(copy);
       }
       if (myLivePreviewController != null) {
         myLivePreviewController.updateInBackground(myFindModel, allowedToChangedEditorSelection);
