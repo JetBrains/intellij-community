@@ -23,7 +23,6 @@ import java.util.prefs.Preferences;
 public final class PermanentInstallationID {
   private static final Logger LOG = Logger.getInstance("#PermanentInstallationID");
 
-  private static final String OLD_USER_ON_MACHINE_ID_KEY = "JetBrains.UserIdOnMachine";
   private static final String INSTALLATION_ID_KEY = "user_id_on_machine";
   private static final String INSTALLATION_ID = calculateInstallationId();
 
@@ -36,16 +35,13 @@ public final class PermanentInstallationID {
 
     try {
       var appInfo = ApplicationInfoImpl.getShadowInstance();
-      var oldPreferences = Preferences.userRoot();
-      var oldValue = appInfo.isVendorJetBrains() ? oldPreferences.get(OLD_USER_ON_MACHINE_ID_KEY, "") : ""; // compatibility with previous versions
-
       var companyName = appInfo.getShortCompanyName();
       var nodeName = companyName == null || companyName.isBlank() ? "jetbrains" : companyName.toLowerCase(Locale.ROOT);
       var preferences = Preferences.userRoot().node(nodeName);
 
       installationId = preferences.get(INSTALLATION_ID_KEY, "");
       if (!isValid(installationId)) {
-        installationId = !oldValue.isBlank() ? oldValue : UUID.randomUUID().toString();
+        installationId = UUID.randomUUID().toString();
         preferences.put(INSTALLATION_ID_KEY, installationId);
       }
 
@@ -56,11 +52,6 @@ public final class PermanentInstallationID {
       // on Windows, try to use the `PermanentUserId` file, for .NET and IJ products to share the same ID
       if (OS.CURRENT == OS.Windows) {
         installationId = syncWithSharedFile(installationId, preferences);
-      }
-
-      // make sure values in older location and in the new location are the same
-      if (!installationId.equals(oldValue)) {
-        oldPreferences.put(OLD_USER_ON_MACHINE_ID_KEY, installationId);
       }
     }
     catch (Throwable t) {
