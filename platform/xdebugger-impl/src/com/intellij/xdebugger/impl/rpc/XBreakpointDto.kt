@@ -152,10 +152,11 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
 private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugSessionImpl?): XBreakpointDtoState {
   val breakpoint = this
   return withContext(Dispatchers.Default) {
+    val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
       sourcePosition = readAction { sourcePosition?.toRpc () },
-      isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(breakpoint),
+      isDefault = manager.isDefaultBreakpoint(breakpoint),
       logExpressionObject = logExpressionObject?.toRpc(),
       conditionExpression = conditionExpression?.toRpc(),
       enabled = isEnabled,
@@ -176,7 +177,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugS
       currentSessionCustomPresentation = currentSession?.getBreakpointPresentation(breakpoint)?.toRpc(),
       customPresentation = breakpoint.customizedPresentation?.toRpc(),
       lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() },
-      requestId = breakpoint.requestId,
+      requestId = manager.requestCounter.getRequestId()
     )
   }
 }
