@@ -54,7 +54,9 @@ object GHPRListPanelFactory {
     GHPRStatisticsCollector.logListOpened(project)
 
     val actionManager = ActionManager.getInstance()
-    val searchPanel = GHPRSearchPanelFactory(listVm.searchVm, listVm.avatarIconsProvider).create(cs)
+    val searchPanel = GHPRSearchPanelFactory(listVm.searchVm, listVm.avatarIconsProvider).create(cs).apply {
+      border = JBUI.Borders.empty(0, 10)
+    }
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()
