@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.nio.file.*
+import java.nio.file.FileSystems.getDefault
 import kotlin.io.path.Path
 
 private val WSLDistribution.roots: Set<String>
@@ -226,7 +227,7 @@ class WslEelProvider : EelProvider {
     }
     WslIjentManager.instanceAsync().getIjentApi(wslPath.distribution, project, false)
 
-    MultiRoutingFileSystemProvider.invokeBackendProvider(wslPath.wslRoot + "\\")
+    (getDefault().provider() as MultiRoutingFileSystemProvider).theOnlyFileSystem.getBackend(wslPath.wslRoot + "\\")
   }
 }
 

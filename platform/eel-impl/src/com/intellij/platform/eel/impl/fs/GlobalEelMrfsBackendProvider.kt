@@ -21,11 +21,7 @@ object GlobalEelMrfsBackendProvider {
   }
 
   fun install(provider: MultiRoutingFileSystemProvider) {
-    provider.setBackendProvider0(::compute, ::getCustomRoots, ::getCustomFileStores)
-  }
-
-  fun install() {
-    MultiRoutingFileSystemProvider.setBackendProvider(::compute, ::getCustomRoots, ::getCustomFileStores)
+    provider.theOnlyFileSystem.setBackendProvider(::compute, ::getCustomRoots, ::getCustomFileStores)
   }
 
   fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem {

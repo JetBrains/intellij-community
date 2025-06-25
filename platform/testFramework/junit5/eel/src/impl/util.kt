@@ -134,6 +134,6 @@ internal fun eelTempDirectoryFixture(fileSystem: TestFixture<IsolatedFileSystem>
 
 
 internal fun checkMultiRoutingFileSystem() {
-  Assumptions.assumeTrue(FileSystems.getDefault().javaClass.name == MultiRoutingFileSystem::class.java.name,
+  Assumptions.assumeTrue(FileSystems.getDefault() is MultiRoutingFileSystem,
                          "Please enable `-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider`")
 }

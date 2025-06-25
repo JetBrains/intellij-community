@@ -13,7 +13,6 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.nio.file.spi.FileTypeDetector;
@@ -26,8 +25,8 @@ import java.util.function.Function;
 /**
  * A file system that can delegate specific paths to other file systems.
  *
- * @see #setBackendProvider(MultiRoutingFileSystem.BackendProvider)
- * @see #invokeBackendProvider(String)
+ * @see MultiRoutingFileSystem#setBackendProvider
+ * @see #getTheOnlyFileSystem
  * @see RoutingAwareFileSystemProvider
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -54,75 +53,8 @@ public final class MultiRoutingFileSystemProvider
 
   private final MultiRoutingFileSystem myFileSystem;
 
-  /**
-   * Sets the function that intercepts all path object creations and can return a non-default filesystem to it.
-   *
-   * @deprecated Inline me.
-   */
-  @Deprecated
-  public static void setBackendProvider(
-    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
-  ) {
-    setBackendProvider(FileSystems.getDefault().provider(), computeFn, getCustomRootsFn, getCustomFileStoresFn);
-  }
-
-  /**
-   * A workaround for IJPL-158098.
-   *
-   * @see #setBackendProvider(MultiRoutingFileSystem.BackendProvider)
-   * @deprecated Inline me.
-   */
-  @Deprecated
-  public static void setBackendProvider(
-    @NotNull FileSystemProvider provider,
-    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
-  ) {
-    ((MultiRoutingFileSystemProvider)provider).myFileSystem.setBackendProvider(computeFn, getCustomRootsFn, getCustomFileStoresFn);
-  }
-
-  /**
-   * A workaround for IJPL-158098.
-   */
-  @SuppressWarnings("unused")
-  public void setBackendProvider0(
-    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
-  ) {
-    myFileSystem.setBackendProvider(computeFn, getCustomRootsFn, getCustomFileStoresFn);
-  }
-
-  /**
-   * Invokes {@link MultiRoutingFileSystem.BackendProvider#compute} for the given path.
-   *
-   * @deprecated Inline me.
-   */
-  @Deprecated
-  public static void invokeBackendProvider(@NotNull String path) {
-    invokeBackendProvider(FileSystems.getDefault().provider(), path);
-  }
-
-  /**
-   * A workaround for IJPL-158098.
-   *
-   * @see #invokeBackendProvider(String)
-   * @deprecated Inline me.
-   */
-  @Deprecated
-  public static void invokeBackendProvider(@NotNull FileSystemProvider provider, @NotNull String path) {
-    ((MultiRoutingFileSystemProvider)provider).invokeBackendProvider0(path);
-  }
-
-  /**
-   * A workaround for IJPL-158098.
-   */
-  @SuppressWarnings("unused")
-  public void invokeBackendProvider0(@NotNull String path) {
-    myFileSystem.getBackend(path);
+  public @NotNull MultiRoutingFileSystem getTheOnlyFileSystem() {
+    return myFileSystem;
   }
 
   public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {

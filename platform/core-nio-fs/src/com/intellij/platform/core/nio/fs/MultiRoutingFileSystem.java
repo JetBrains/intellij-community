@@ -3,7 +3,6 @@ package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
@@ -130,7 +129,6 @@ public final class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRout
     return myLocalFS.supportedFileAttributeViews();
   }
 
-  @VisibleForTesting
   public @NotNull FileSystem getBackend(@NotNull String path) {
     return myComputeFn.apply(myLocalFS, sanitizeRoot(path));
   }
