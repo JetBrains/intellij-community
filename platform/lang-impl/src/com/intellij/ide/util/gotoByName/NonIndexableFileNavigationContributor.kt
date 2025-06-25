@@ -1,10 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,6 +21,10 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.annotations.ApiStatus
+
+
+@ApiStatus.Internal
+val GOTO_FILE_SEARCH_IN_NON_INDEXABLE: Key<Boolean> = Key.create("search.in.non.indexable")
 
 /**
  * The current implementation loads files into VFS, which we should avoid here.
@@ -52,9 +58,9 @@ class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAwa
   }
 
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-    if (!Registry.`is`("search.in.non.indexable")) return
-
     val project = scope.project ?: return
+    if (!isGotoFileToNonIndexableEnabled(project)) return
+
     val workspaceFileIndex = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
 
     val roots = workspaceFileIndex.contentUnindexedRoots()
@@ -63,7 +69,7 @@ class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAwa
 
 
   override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
-    if (!Registry.`is`("search.in.non.indexable")) return
+    if (!isGotoFileToNonIndexableEnabled(parameters.project)) return
 
     val nonIndexableFilesFilter = nonIndexableFilesFilter(parameters.searchScope, parameters.project)
     val parametersFilter = parameters.idFilter
@@ -77,6 +83,9 @@ class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAwa
     DefaultFileNavigationContributor.processElementsWithName(name, processor, parameters, idFilter)
   }
 }
+
+private fun isGotoFileToNonIndexableEnabled(project: Project): Boolean =
+  Registry.`is`("search.in.non.indexable") || project.getUserData(GOTO_FILE_SEARCH_IN_NON_INDEXABLE) == true
 
 
 private inline fun idFilter(crossinline filter: (Int) -> Boolean): IdFilter = object : IdFilter() {

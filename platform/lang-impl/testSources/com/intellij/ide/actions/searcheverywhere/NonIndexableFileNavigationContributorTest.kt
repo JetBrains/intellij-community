@@ -39,6 +39,7 @@ import java.nio.file.Files
 
 
 @TestApplication
+@RegistryKey("search.in.non.indexable", "true")
 class NonIndexableFileNavigationContributorTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
