@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -1266,7 +1266,9 @@ private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: Virt
   // In the case of the JetBrains client, it's better to get the file by its ID to avoid a blocking protocol call inside
   // [VirtualFileManager.findFileByUrl]
   val file = if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
-    FileIdAdapter.getInstance().getFile(fileEntry.id)
+    FileIdAdapter.getInstance().getFile(fileEntry.id)?.also {
+      StartupVirtualFileProcessor.getInstance().processVirtualFileOnStartup(it, fileEntry)
+    }
   }
   else {
     virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
