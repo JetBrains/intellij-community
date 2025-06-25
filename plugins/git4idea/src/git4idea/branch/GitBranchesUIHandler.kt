@@ -4,8 +4,10 @@ package git4idea.branch
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.ApiStatus
 
-internal interface GitBranchesUIHandler {
+@ApiStatus.Internal
+interface GitBranchesUIHandler {
   fun compare(repositories: List<GitRepository>, branchName: String, otherBranchName: String = "")
 }
 
