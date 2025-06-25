@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
@@ -46,8 +46,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
-import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
@@ -121,9 +119,23 @@ internal class KotlinFunctionCallUsage(
                     val replacement = when (symbol) {
                         is KaReceiverParameterSymbol -> symbol.containingSymbol?.name?.asString()?.let { "this@$it" } ?: "this"
 
-                        is KaContextParameterSymbol -> symbol.name.takeUnless { it.isSpecial }?.toString() ?: "contextOf<${symbol.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)}>()"
+                        is KaContextParameterSymbol -> {
+                            val name = symbol.name
+                            if (!name.isSpecial) {
+                                name.asString()
+                            } else {
+                                val returnTypeSymbol = symbol.returnType.symbol
+                                val superOfAnonymous = (returnTypeSymbol as? KaAnonymousObjectSymbol)?.superTypes?.firstOrNull()?.symbol
+                                val className =
+                                    ((superOfAnonymous ?: returnTypeSymbol) as? KaNamedClassSymbol)?.name
+                                        ?.takeUnless { it.isSpecial }?.asString()
+                                if (className != null) "contextOf<$className>()" else "contextOf()"
+                            }
+                        }
 
-                        else -> null
+                        else -> {
+                            null
+                        }
                     } ?: return@forEachIndexed
                     map[idx] = psiFactory.createExpression(replacement).createSmartPointer()
                 }
