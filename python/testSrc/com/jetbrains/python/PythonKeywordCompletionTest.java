@@ -335,4 +335,10 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   public void testNonLiteralExpressionKeywordsInCaseClauseBody() {
     assertContainsElements(doTestByTestName(), PyNames.ASYNC, PyNames.NOT, PyNames.LAMBDA);
   }
+
+  // PY-54482
+  public void testLiteralsInDecoratorArgumentList() {
+    List<String> variants = doTestByTestName();
+    assertContainsElements(variants, PyNames.TRUE);
+  }
 }
