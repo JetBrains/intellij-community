@@ -18,22 +18,22 @@ class GradleProjectRepositoriesImportingTest : GradleImportingTestCase() {
     const val FLAT_FILE_REPO_NAME = "flatFileRepository"
 
     const val MAVEN_REPO_DECLARATION = """
-        maven { 
-          name = '$MAVEN_REPO_NAME'
-          url = file('$MAVEN_REPO_NAME') 
-        }
+      maven { 
+        name = '$MAVEN_REPO_NAME'
+        url = file('$MAVEN_REPO_NAME') 
+      }
       """
     const val IVY_REPO_DECLARATION = """
-        ivy { 
-          name = '$IVY_REPO_NAME'
-          url = file('$IVY_REPO_NAME') 
-        } 
+      ivy { 
+        name = '$IVY_REPO_NAME'
+        url = file('$IVY_REPO_NAME') 
+      } 
       """
     const val FLAT_FILE_REPO_DECLARATION = """
-        flatDir {       
-          name = '$FLAT_FILE_REPO_NAME'
-          dirs '$FLAT_FILE_REPO_NAME'
-        }
+      flatDir {       
+        name = '$FLAT_FILE_REPO_NAME'
+        dirs '$FLAT_FILE_REPO_NAME'
+      }
       """
     const val MAVEN_CENTRAL_REPO_DECLARATION = "mavenCentral()"
   }
