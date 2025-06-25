@@ -2684,6 +2684,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             public void testPreferSealedHierarchyNested() throws Exception {
                 runTest("../testData/basic/common/sealedHierarchy/PreferSealedHierarchyNested.kt");
             }
+
+            @TestMetadata("SealedExpectedType.kt")
+            public void testSealedExpectedType() throws Exception {
+                runTest("../testData/basic/common/sealedHierarchy/SealedExpectedType.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

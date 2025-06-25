@@ -2684,6 +2684,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
             public void testPreferSealedHierarchyNested() throws Exception {
                 runTest("../../completion/testData/basic/common/sealedHierarchy/PreferSealedHierarchyNested.kt");
             }
+
+            @TestMetadata("SealedExpectedType.kt")
+            public void testSealedExpectedType() throws Exception {
+                runTest("../../completion/testData/basic/common/sealedHierarchy/SealedExpectedType.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
