@@ -49,16 +49,17 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
 
   private static final Logger LOG = Logger.getInstance(FileTreeModel.class);
 
-  private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
+  private final Invoker invoker;
   private final State state;
   private volatile List<Root> roots;
 
   public FileTreeModel(@NotNull FileChooserDescriptor descriptor, FileRefresher refresher) {
-    this(descriptor, refresher, true, false);
+    this(descriptor, refresher, true, false, true);
   }
 
-  public FileTreeModel(@NotNull FileChooserDescriptor descriptor, FileRefresher refresher, boolean sortDirectories, boolean sortArchives) {
+  public FileTreeModel(@NotNull FileChooserDescriptor descriptor, FileRefresher refresher, boolean sortDirectories, boolean sortArchives, boolean useReadAction) {
     if (refresher != null) Disposer.register(this, refresher);
+    invoker = useReadAction ? Invoker.forBackgroundThreadWithReadAction(this) : Invoker.forBackgroundThreadWithoutReadAction(this);
     state = new State(descriptor, refresher, sortDirectories, sortArchives, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override

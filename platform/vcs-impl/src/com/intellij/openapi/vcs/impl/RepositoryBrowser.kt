@@ -6,8 +6,11 @@ import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
+import com.intellij.openapi.fileChooser.tree.FileRefresher
+import com.intellij.openapi.fileChooser.tree.FileTreeModel
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -33,6 +36,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PlatformIcons
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus
@@ -108,7 +112,15 @@ class RepositoryBrowserPanel(
         return FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence).icon
       }
     }
-    fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) { }
+    fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) {
+      override fun createFileTreeModel(descriptor: FileChooserDescriptor, tree: Tree): FileTreeModel {
+        return FileTreeModel(
+          descriptor,
+          FileRefresher(true, 3) { ModalityState.stateForComponent(tree) },
+          true, false, false
+        )
+      }
+    }
     fileSystemTree.addOkAction {
       val files = fileSystemTree.selectedFiles
       for (file in files) {
