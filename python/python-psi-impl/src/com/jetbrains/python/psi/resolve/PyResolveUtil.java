@@ -516,7 +516,7 @@ public final class PyResolveUtil {
     return rate;
   }
 
-  public static @Nullable List<PsiElement> multiResolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+  public static @NotNull List<@NotNull PsiElement> multiResolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
     final PsiElement element = reference.getElement();
 
     final var context = resolveContext.getTypeEvalContext();
@@ -529,7 +529,7 @@ public final class PyResolveUtil {
 
         final var constructor = ContainerUtil.find(
           PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext)),
-          it -> it instanceof PyPossibleClassMember && ((PyPossibleClassMember)it).getContainingClass() == cls
+          it -> it instanceof PyPossibleClassMember possibleClassMember && possibleClassMember.getContainingClass() == cls
         );
 
         if (constructor != null) {
@@ -539,16 +539,16 @@ public final class PyResolveUtil {
     }
 
     if (reference instanceof PsiPolyVariantReference multiReference) {
-      return Stream.of(multiReference.multiResolve(false)).map(result -> result.getElement()).toList();
+      return PyUtil.multiResolveTopPriority(multiReference);
     }
     final var result = reference.resolve();
-    if (result == null) return null;
+    if (result == null) return List.of();
     return List.of(result);
   }
 
   public static @Nullable PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
     final var result = multiResolveDeclaration(reference, resolveContext);
-    if (result == null || result.isEmpty()) return null;
+    if (result.isEmpty()) return null;
     return result.get(0);
   }
 

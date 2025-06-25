@@ -228,7 +228,7 @@ class PyNavigationTest : PyTestCase() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    TestCase.assertNotNull(target)
+    assertNotNull(target)
     assertInstanceOf(target, PyFunction::class.java)
     checkPyNotPyi(target?.containingFile)
   }
@@ -400,6 +400,27 @@ class PyNavigationTest : PyTestCase() {
 
       assertInstanceOf<PyTargetExpression>(a)
     }
+  }
+
+  fun `test multi with pyi`() {
+    myFixture.copyDirectoryToProject("test_multi_with_pyi", "")
+    val (stubbed, local) = checkMulti(
+      """
+      if bool():
+          from stubbed import A
+      else:
+          class A:
+              pass
+
+      <caret>A
+      """.trimIndent(),
+      2
+    )
+    checkPyNotPyi(stubbed.containingFile)
+    assertEquals("stubbed.py", stubbed.containingFile.name)
+
+    checkPyNotPyi(local.containingFile)
+    assertEquals("test.py", local.containingFile.name)
   }
 
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
