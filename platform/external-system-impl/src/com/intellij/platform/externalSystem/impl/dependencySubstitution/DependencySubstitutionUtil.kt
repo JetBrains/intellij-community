@@ -72,7 +72,7 @@ object DependencySubstitutionUtil {
 
         val moduleId = libraryToModuleMap[libraryId] ?: continue
 
-        substitutions[moduleId to scope] = DependencySubstitutionEntity(libraryId, moduleId, scope, entitySource)
+        substitutions[moduleId to scope] = DependencySubstitutionEntity(libraryId, moduleId, scope, DependencySubstitutionEntitySource)
         dependencies[dependencyOrder] = ModuleDependency(moduleId, exported, scope, productionOnTest = false)
       }
     }
