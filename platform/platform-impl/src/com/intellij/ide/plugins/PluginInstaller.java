@@ -398,11 +398,8 @@ public final class PluginInstaller {
     // FIXME this is a bad place to do this IJPL-190806; bundled plugin may be not unloaded at this point
     var loadedPlugin = PluginManagerCore.findPlugin(targetPluginId);
     if (loadedPlugin != null && PluginManagerCore.isLoaded(loadedPlugin)) {
-      loadedPlugin.setMarkedForLoading(false);
-      var unloaded = DynamicPlugins.INSTANCE.unloadPlugin(loadedPlugin);
-      if (!unloaded) {
-        return false;
-      }
+      LOG.warn("Plugin " + loadedPlugin + " is still loaded, restart is required"); // FIXME IJPL-193781
+      return false;
     }
 
     if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
