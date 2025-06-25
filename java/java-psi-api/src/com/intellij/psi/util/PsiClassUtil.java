@@ -1,16 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
 
 public final class PsiClassUtil {
   private PsiClassUtil() { }
@@ -45,14 +40,12 @@ public final class PsiClassUtil {
    * @return true if class is {@code java.lang.Throwable} or legally inherits from it.
    */
   public static boolean isThrowable(@NotNull PsiClass psiClass) {
-    Set<PsiClass> supers = new HashSet<>();
-    while (true) {
-      if (CommonClassNames.JAVA_LANG_THROWABLE.equals(psiClass.getQualifiedName())) return true;
-      if (psiClass.isInterface()) return false;
-      if (psiClass.getTypeParameters().length > 0) return false; // Valid throwables are never generic
-      PsiClass next = psiClass.getSuperClass();
-      if (next == null || !supers.add(next)) return false;
-      psiClass = next;
-    }
+    if (psiClass.isInterface()) return false;
+    if (psiClass.getTypeParameters().length > 0) return false; // Valid throwables are never generic
+    if (CommonClassNames.JAVA_LANG_THROWABLE.equals(psiClass.getQualifiedName())) return true;
+    PsiClass throwableClass =
+      JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, psiClass.getResolveScope());
+    if (throwableClass == null) return false;
+    return psiClass.isInheritor(throwableClass, true);
   }
 }
