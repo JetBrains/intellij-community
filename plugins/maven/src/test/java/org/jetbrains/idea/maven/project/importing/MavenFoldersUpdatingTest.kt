@@ -23,7 +23,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.MavenEventsTestHelper
-import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.tryUpdateTargetFolders
+import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.updateTargetFolders
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -301,7 +301,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     assertGeneratedSources("project", "target/generated-sources/xxx")
   }
 
-  private fun updateTargetFolders() {
-    tryUpdateTargetFolders(project)
+  private suspend fun updateTargetFolders() {
+    updateTargetFolders(project)
   }
 }
