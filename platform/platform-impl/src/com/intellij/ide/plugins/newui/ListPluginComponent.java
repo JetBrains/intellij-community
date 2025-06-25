@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -95,6 +96,7 @@ public final class ListPluginComponent extends JPanel {
   private ErrorComponent myErrorComponent;
   private ProgressIndicatorEx myIndicator;
   private EventHandler myEventHandler;
+  private PluginManagerCustomizer myCustomizer;
   private @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
   public ListPluginComponent(@NotNull PluginModelFacade pluginModelFacade,
@@ -114,7 +116,7 @@ public final class ListPluginComponent extends JPanel {
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
     myIsNotFreeInFreeMode = UiPluginManager.getInstance().isPluginRequiresUltimateButItIsDisabled(pluginUiModel.getPluginId());
     pluginModelFacade.addComponent(this);
-
+    myCustomizer = Registry.is("reworked.plugin.manager.enabled", false) ? PluginManagerCustomizer.getInstance() : null;
     setOpaque(true);
     setBorder(JBUI.Borders.empty(10));
     setLayout(myLayout);
@@ -592,7 +594,7 @@ public final class ListPluginComponent extends JPanel {
       if (myUpdateButton == null) {
         myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
         myUpdateButton.addActionListener(
-          e -> myModelFacade.installOrUpdatePlugin(this, plugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
+          e -> updatePlugin(plugin));
       }
       else {
         myUpdateButton.setEnabled(true);
@@ -715,6 +717,19 @@ public final class ListPluginComponent extends JPanel {
     PluginUiModel plugin = getDescriptorForActions();
     List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myModelFacade.getErrors(plugin);
     updateErrors(errors);
+  }
+
+  private void updatePlugin(PluginUiModel plugin) {
+    if (myCustomizer != null) {
+      UpdateButtonCustomizationModel model = myCustomizer.getUpdateButtonCustomizationModel(myModelFacade, plugin, myUpdateDescriptor,
+                                                                                            ModalityState.stateForComponent(
+                                                                                              myUpdateButton));
+      if (model != null) {
+        model.getAction().invoke();
+        return;
+      }
+    }
+    myModelFacade.installOrUpdatePlugin(this, plugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton));
   }
 
   private void updateIcon(boolean errors, boolean disabled) {
