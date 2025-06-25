@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -29,8 +30,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
@@ -46,6 +45,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
@@ -99,7 +99,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       if (value !is BranchTreeNode) return
       val descriptor = value.getNodeDescriptor()
 
-      icon = when(descriptor) {
+      icon = when (descriptor) {
         is BranchNodeDescriptor.Ref -> GitBranchesTreeIconProvider.forRef(
           descriptor.refInfo.ref,
           current = descriptor.refInfo.isCurrent,
@@ -121,7 +121,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
           append(" (${DvcsUtil.getShortNames(refInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
         }
       }
-      
+
       if (refInfo is BranchInfo) {
         toolTipText =
           if (refInfo.isLocalBranch) BranchPresentation.getTooltip(getBranchesTooltipData(refInfo.branchName, BranchesTreeSelection.getSelectedRepositories(value)))
@@ -220,41 +220,38 @@ internal class FilteringBranchesTree(
   place: @NonNls String,
   private val disposable: Disposable,
 ) : FilteringBranchesTreeBase(model, component) {
-
-  init {
-    UiNotifyConnector.installOn(tree, object : Activatable {
-      private val listener = object : BranchesTreeModel.Listener {
-        override fun onTreeChange() {
-          updateTree()
-        }
-      }
-
-      override fun showNotify() {
-        updateTree()
-        model.addListener(listener)
-      }
-
-      override fun hideNotify() {
-        model.removeListener(listener)
-      }
-
-      private fun updateTree() {
-        runPreservingTreeState(!initialUpdateDone) {
-          searchModel.updateStructure()
-        }
-        initialUpdateDone = true
-      }
-    })
-  }
-
   private var initialUpdateDone = false
 
   private val treeStateProvider = BranchesTreeStateProvider(this, disposable)
 
-  private val treeStateHolder: BranchesTreeStateHolder get() =
-    BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Supplier { project.service() })
+  private val treeStateHolder: BranchesTreeStateHolder
+    get() =
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Supplier { project.service() })
 
   init {
+    val listener = object : BranchesTreeModel.Listener {
+      override fun onTreeChange() {
+        updateTree()
+      }
+
+      override fun onTreeDataChange() {
+        tree.revalidate()
+        tree.repaint()
+      }
+    }
+
+    tree.launchOnShow("Git Dashboard Tree") {
+      updateTree()
+      checkCanceled()
+      model.addListener(listener)
+      try {
+        awaitCancellation()
+      }
+      finally {
+        model.removeListener(listener)
+      }
+    }
+
     runInEdt {
       PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(), place)
       setupTreeListeners()
@@ -280,14 +277,11 @@ internal class FilteringBranchesTree(
     component.addTreeSelectionListener { treeStateHolder.setStateProvider(treeStateProvider) }
   }
 
-  fun update(initial: Boolean, repaint: Boolean) {
-    runPreservingTreeState(initial) {
+  private fun updateTree() {
+    runPreservingTreeState(!initialUpdateDone) {
       searchModel.updateStructure()
     }
-    if (repaint) {
-      tree.revalidate()
-      tree.repaint()
-    }
+    initialUpdateDone = true
   }
 
   private fun runPreservingTreeState(loadSaved: Boolean, runnable: () -> Unit) {

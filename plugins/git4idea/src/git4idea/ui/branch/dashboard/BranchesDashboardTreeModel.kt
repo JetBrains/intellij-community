@@ -148,7 +148,7 @@ abstract class BranchesDashboardTreeModelBase(
     })
     project.messageBus.connect(this)
       .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
-        runInEdt { updateBranchesIncomingOutgoingState() }
+        updateBranchesIncomingOutgoingState()
       })
 
     val changeListener = DataPackChangeListener { updateBranchesTree() }
@@ -240,7 +240,9 @@ abstract class BranchesDashboardTreeModelBase(
       localBranch.incomingOutgoingState = incomingOutgoing
     }
 
-    refreshTree()
+    runInEdt {
+      onTreeDataChange()
+    }
   }
 
   private fun updateBranchesIsMyState() {
