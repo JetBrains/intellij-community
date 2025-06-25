@@ -3,7 +3,7 @@ Run Java
 Connected to the target VM
 oneCoroutine.kt:29
 ==== Hierarchy of coroutines =====
-root RUNNING
+root
 Disconnected from the target VM
 
 Process finished with exit code 0
