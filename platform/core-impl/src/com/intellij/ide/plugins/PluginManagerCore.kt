@@ -413,8 +413,8 @@ object PluginManagerCore {
 
   fun getUnfulfilledOsRequirement(descriptor: IdeaPluginDescriptor): IdeaPluginOsRequirement? =
     descriptor.getDependencies().asSequence()
-      .map { IdeaPluginOsRequirement.fromModuleId(it.pluginId) }
-      .firstOrNull { p -> p != null && !p.isHostOs() }
+      .mapNotNull { dep -> IdeaPluginOsRequirement.fromModuleId(dep.pluginId).takeIf { !dep.isOptional } }
+      .firstOrNull { osReq -> !osReq.isHostOs() }
 
   @JvmStatic
   fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginNonLoadReason? {
