@@ -11,11 +11,15 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.psi.PsiElement
 
 /**
- * Should be implemented by [com.intellij.polySymbols.PolySymbol] if its declaration is a regular [com.intellij.psi.PsiElement], e.g. a variable or a declared type.
+ * Should be implemented by [PolySymbol] if its declaration is a regular [com.intellij.psi.PsiElement], e.g. a variable or a declared type.
  * Once a symbol implements this interface it can be searched and refactored together with the PSI element declaration.
  * If your symbol is part of a [com.intellij.psi.PsiElement] (e.g. part of a string literal), or spans multiple PSI elements,
  * or does not relate 1-1 with a PSI element, instead of implementing this interface you should contribute
  * dedicated declaration provider.
+ *
+ * To properly support search and rename refactoring for symbols, which names can be modified
+ * by [com.intellij.polySymbols.query.PolySymbolNameConversionRules], a `PsiSourcedPolySymbolProvider`
+ * should be implemented to allow the framework to search for alternative names.
  *
  * See also: [Declarations, References, Search, Refactoring](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html#declarations-references-search-refactoring)
  */

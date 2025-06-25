@@ -12,11 +12,14 @@ import com.intellij.polySymbols.utils.match
 
 /**
  * Poly Symbols are contained within a loose model built from Poly Symbols scopes, each time anew for a particular context.
- * Each Poly Symbol is also a [PolySymbolScope] and it can contain other Poly Symbols.
- * For instance an HTML element symbol would contain some HTML attributes symbols,
- * or a JavaScript class symbol would contain fields and methods symbols.
+ * Each [PolySymbol] can contain other Poly Symbols, in which case it should implement [PolySymbolScope].
+ * For instance an HTML element symbol would contain some HTML attribute symbols,
+ * or a JavaScript class symbol would contain field and method symbols.
  *
- * When configuring queries, Poly Symbols scope are added to the list to create an initial scope for symbols resolve.
+ * When configuring queries, [PolySymbolScope]s contributed by [PolySymbolQueryScopeContributor] for the given location
+ * are added to the [PolySymbolQueryStack] to create an initial scope for symbol resolve. During pattern matching
+ * with symbol sequences, all matched symbols query scopes ([PolySymbol.queryScope]) are added to the stack allowing
+ * for extending scope matching.
  *
  * When implementing a scope, which contains many elements you should extend [com.intellij.polySymbols.utils.PolySymbolScopeWithCache],
  * which caches the list of symbols and uses efficient cache to speed up queries. When extending the class,
@@ -24,7 +27,6 @@ import com.intellij.polySymbols.utils.match
  *
  * See also [Model Queries](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html#model-queries) topic
  * to learn how queries are performed.
- *
  */
 interface PolySymbolScope : ModificationTracker {
 

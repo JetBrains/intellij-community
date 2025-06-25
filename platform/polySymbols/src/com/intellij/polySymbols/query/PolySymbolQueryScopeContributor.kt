@@ -11,6 +11,46 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 
+/**
+ * Implement this interface and register through `com.intellij.polySymbols.queryScopeContributor`
+ * extension point to provide [PolySymbolScope]s for [PolySymbolQueryExecutor] to work with.
+ *
+ * The concept is similar to how code completion works. Platform runs multiple code completion
+ * contributors to build a list of available items for a particular place in the code. Later on,
+ * the list is displayed to the user. Query executor on the other hand uses list of contributed
+ * [PolySymbolScope]s at a given location to either list all available symbols,
+ * get code completions or match a name against the list of available symbols.
+ *
+ * The implementations should register query scope providers by calling the `registrar` parameter
+ * methods. The registrar works as a builder, but each call creates a new instance, so you can reuse
+ * build stages, e.g.:
+ *
+ * ```kotlin
+ * registrar
+ *   .inFile(AstroFileImpl::class.java)
+ *   .inContext { it.framework == AstroFramework.ID }
+ *   .apply {
+ *     // Default scopes
+ *     forAnyPsiLocationInFile()
+ *       .contributeScopeProvider {
+ *         mutableListOf(AstroFrontmatterScope(it.containingFile as AstroFileImpl),
+ *                       AstroAvailableComponentsScope(it.project))
+ *       }
+ *
+ *     // AstroStyleDefineVarsScope
+ *     forPsiLocation(CssElement::class.java)
+ *       .contributeScopeProvider { location ->
+ *         location.parentOfType<XmlTag>()
+ *           ?.takeIf { StringUtil.equalsIgnoreCase(it.name, HtmlUtil.STYLE_TAG_NAME) }
+ *           ?.let { listOf(AstroStyleDefineVarsScope(it)) }
+ *         ?: emptyList()
+ *       }
+ *   }
+ * ```
+ *
+ * The order in which the builder methods are called does not affect the final performance.
+ * Framework reorders conditions in the best way to efficiently match contributors with locations in the code.
+ */
 interface PolySymbolQueryScopeContributor {
 
   fun registerProviders(registrar: PolySymbolQueryScopeProviderRegistrar)

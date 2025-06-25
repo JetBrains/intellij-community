@@ -10,7 +10,6 @@
 - sf:PROP_HIDE_FROM_COMPLETION:com.intellij.polySymbols.PolySymbolProperty
 - sf:PROP_IJ_TEXT_ATTRIBUTES_KEY:com.intellij.polySymbols.PolySymbolProperty
 - sf:PROP_INJECT_LANGUAGE:com.intellij.polySymbols.PolySymbolProperty
-- adjustNameForRefactoring(com.intellij.polySymbols.query.PolySymbolQueryExecutor,java.lang.String,java.lang.String):java.lang.String
 - a:createPointer():com.intellij.model.Pointer
 - get(com.intellij.polySymbols.PolySymbolProperty):java.lang.Object
 - getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
@@ -174,12 +173,9 @@
 - a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
 - a:getDisplayName():java.lang.String
 - a:getEnd():I
-- a:getMatchScore():I
 - getName(com.intellij.polySymbols.PolySymbol):java.lang.String
-- a:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - a:getProblem():com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem
 - a:getStart():I
-- a:getSymbolKinds():java.util.Set
 - a:getSymbols():java.util.List
 *f:com.intellij.polySymbols.PolySymbolNameSegment$Companion
 - f:create(I,I,com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.PolySymbolNameSegment
