@@ -25,6 +25,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.rt.debugger.VirtualThreadDumper
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
+import com.intellij.unscramble.InfoDumpItem
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.toDumpItems
 import com.intellij.util.lang.JavaVersion
@@ -34,7 +35,6 @@ import com.sun.jdi.*
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
@@ -69,6 +69,9 @@ class ThreadDumpAction {
 
       if (onlyPlatformThreads || !Registry.`is`("debugger.thread.dump.extended")) {
         sendJavaPlatformThreads()
+        dumpItemsChannel.send(listOf(InfoDumpItem(
+          JavaDebuggerBundle.message("thread.dump.unavailable.title"),
+          "Collection of extended dump was disabled.")))
         DebuggerStatistics.logPlatformThreadDumpFallback(
           context.project, if (onlyPlatformThreads) ThreadDumpStatus.PLATFORM_DUMP_ALT_CLICK else ThreadDumpStatus.PLATFORM_DUMP_EXTENDED_DUMP_DISABLED
         )
@@ -78,25 +81,24 @@ class ThreadDumpAction {
       try {
         val providers = extendedProviders.extensionList.map { it.getProvider(context) }
 
-        suspend fun getAllItems(suspendContext: SuspendContextImpl?) {
+        suspend fun sendAllItems(suspendContext: SuspendContextImpl?) {
           coroutineScope {
-            // Compute parts of the dump asynchronously
-            launch {
-              sendJavaPlatformThreads()
-            }
-            providers.map { p ->
-              launch {
-                withBackgroundProgress(context.project, p.progressText) {
-                  try {
-                    val items = p.getItems(suspendContext)
-                    dumpItemsChannel.send(items)
-                  }
-                  catch (e: CancellationException) {
-                    thisLogger().debug("${p.progressText} was cancelled by user.")
-                    throw e
-                  }
+            sendJavaPlatformThreads()
+
+            for (p in providers) {
+              val items = try {
+                withBackgroundProgress(context.project,
+                                       JavaDebuggerBundle.message("thread.dump.progress.message", p.itemsName)) {
+                  p.getItems(suspendContext)
                 }
               }
+              catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
+                thisLogger().debug("Dumping of ${p.itemsName} was cancelled by user.")
+                listOf(InfoDumpItem(
+                  JavaDebuggerBundle.message("thread.dump.unavailable.title"),
+                  "Dumping of ${p.itemsName} was cancelled."))
+              }
+              dumpItemsChannel.send(items)
             }
           }
         }
@@ -107,6 +109,9 @@ class ThreadDumpAction {
           // If the previous dump is still being evaluated, only show the Java platform thread dump and do not start a new evaluation.
           if (vm.getUserData(EVALUATION_IN_PROGRESS) == true) {
             sendJavaPlatformThreads()
+            dumpItemsChannel.send(listOf(InfoDumpItem(
+              JavaDebuggerBundle.message("thread.dump.unavailable.title"),
+              "Previous dump is still in progress.")))
             DebuggerStatistics.logPlatformThreadDumpFallback(context.project, ThreadDumpStatus.PLATFORM_DUMP_FALLBACK_DURING_EVALUATION)
             XDebuggerManagerImpl.getNotificationGroup()
               .createNotification(JavaDebuggerBundle.message("thread.dump.during.previous.dump.evaluation.warning"), NotificationType.INFORMATION)
@@ -118,12 +123,15 @@ class ThreadDumpAction {
           try {
             vm.putUserData(EVALUATION_IN_PROGRESS, true)
             suspendAllAndEvaluate(context, timeout) { suspendContext ->
-              getAllItems(suspendContext)
+              sendAllItems(suspendContext)
             }
           }
           catch (_: TimeoutCancellationException) {
             thisLogger().warn("timeout while waiting for evaluatable context ($timeout)")
             sendJavaPlatformThreads()
+            dumpItemsChannel.send(listOf(InfoDumpItem(
+              JavaDebuggerBundle.message("thread.dump.unavailable.title"),
+              "Timeout while waiting for evaluatable context, unable to dump ${providers.joinToString(", ") { it.itemsName }}.")))
             DebuggerStatistics.logPlatformThreadDumpFallback(context.project, ThreadDumpStatus.PLATFORM_DUMP_FALLBACK_TIMEOUT)
           } finally {
             vm.removeUserData(EVALUATION_IN_PROGRESS)
@@ -133,7 +141,7 @@ class ThreadDumpAction {
           val vm = context.debugProcess!!.virtualMachineProxy
           vm.suspend()
           try {
-            getAllItems(null)
+            sendAllItems(null)
           }
           finally {
             vm.resume()
@@ -145,7 +153,10 @@ class ThreadDumpAction {
           is CancellationException, is ControlFlowException -> throw e
           else -> {
             thisLogger().error(e)
-            sendJavaPlatformThreads()
+            // There is no sense to try to send Java platform threads once again.
+            dumpItemsChannel.send(listOf(InfoDumpItem(
+              JavaDebuggerBundle.message("thread.dump.unavailable.title"),
+              "Some internal error happened.")))
             DebuggerStatistics.logPlatformThreadDumpFallback(context.project, ThreadDumpStatus.PLATFORM_DUMP_FALLBACK_ERROR)
           }
         }
@@ -532,8 +543,8 @@ private class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
       // Check if VirtualThread class is at least loaded.
       vm.classesByName("java.lang.VirtualThread").isNotEmpty()
 
-    override val progressText: String
-      get() = JavaDebuggerBundle.message("thread.dump.virtual.threads.progress")
+    override val itemsName: String
+      get() = JavaDebuggerBundle.message("thread.dump.virtual.threads.name")
 
     override val requiresEvaluation get() = enabled
 
