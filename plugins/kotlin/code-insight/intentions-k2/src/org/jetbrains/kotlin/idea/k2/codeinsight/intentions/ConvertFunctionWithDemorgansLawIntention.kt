@@ -199,7 +199,7 @@ private val standardFunctions: Map<String, List<FqName>> = listOf("takeIf", "tak
 
 private val functions: Map<String, List<FqName>> = collectionFunctions + standardFunctions
 
-private val notSequence = sequenceOf(FqName("kotlin.Boolean.not"))
+private val notSequence = listOf(FqName("kotlin.Boolean.not"))
 
 private data class Conversion(
     val fromFunctionName: String, val toFunctionName: String, val negateCall: Boolean, val negatePredicate: Boolean

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -14,38 +15,25 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 
-val KOTLIN_LET_FQ_NAME: FqName = StandardNames.BUILT_INS_PACKAGE_FQ_NAME + "let"
+@ApiStatus.Internal
+val KOTLIN_LET_FQ_NAME: List<FqName> = listOf(BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("let")))
 
+@ApiStatus.Internal
 context(KaSession)
 fun isLetCallRedundant(element: KtCallExpression): Boolean {
-    if (!element.isCalling(sequenceOf(KOTLIN_LET_FQ_NAME))) return false
+    if (!element.isCalling(KOTLIN_LET_FQ_NAME)) return false
     val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return false
     val parameterName = lambdaExpression.getParameterName() ?: return false
     val bodyExpression = lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return false
@@ -53,6 +41,7 @@ fun isLetCallRedundant(element: KtCallExpression): Boolean {
     return isLetCallRedundant(element, bodyExpression, lambdaExpression, parameterName)
 }
 
+@ApiStatus.Internal
 context(KaSession)
 fun isLetCallRedundant(
     element: KtCallExpression,
@@ -84,6 +73,7 @@ fun isLetCallRedundant(
     return singleReferenceNotInsideInnerLambda != null
 }
 
+@ApiStatus.Internal
 context(KaSession)
 fun KtDotQualifiedExpression.isLetCallRedundant(parameterName: String): Boolean {
     return !hasLambdaExpression() && getLeftMostReceiverExpression().let { receiver ->

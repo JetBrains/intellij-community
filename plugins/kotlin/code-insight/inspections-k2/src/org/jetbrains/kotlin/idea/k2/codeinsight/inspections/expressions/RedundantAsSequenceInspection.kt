@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
-import org.jetbrains.kotlin.name.StandardClassIds
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -236,7 +236,7 @@ private val collectionTransformationFunctionNames: List<String> = listOf(
     "zipWithNext",
 )
 
-private val allowedSequenceFunctionFqNames: Sequence<FqName> = sequenceOf(
+private val allowedSequenceFunctionFqNames = listOf(
     FqName("kotlin.sequences.asSequence"),
     FqName("kotlin.collections.asSequence"),
 )

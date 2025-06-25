@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -322,6 +323,7 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
 fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
 fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
+@ApiStatus.Internal
 context(KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
@@ -329,8 +331,9 @@ fun KtExpression.isSynthesizedFunction(): Boolean {
     return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
+@ApiStatus.Internal
 context(KaSession)
-fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
+fun KtCallExpression.isCalling(fqNames: Collection<FqName>): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
     if (targetFqNames.none()) return false
@@ -345,14 +348,18 @@ fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     return targetFqNames.any { it == fqName }
 }
 
+@Deprecated(replaceWith = ReplaceWith("fqName.child(name)"), message = "Use child(Name) instead")
+@ApiStatus.Internal
 operator fun FqName.plus(name: Name): FqName = child(name)
 
+@Deprecated(replaceWith = ReplaceWith("fqName.child(name)"), message = "Use child(Name) instead")
+@ApiStatus.Internal
 operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Sequence<FqName> = sequenceOf(
-    BASE_ENUMS_PACKAGE  + "enumEntries",
-    BUILT_INS_PACKAGE_FQ_NAME + "enumValues",
-    BUILT_INS_PACKAGE_FQ_NAME + "enumValueOf",
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = setOf(
+    BASE_ENUMS_PACKAGE.child(Name.identifier("enumEntries")),
+    BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("enumValues")),
+    BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("enumValueOf"))
 )
 
 context(KaSession)
