@@ -44,7 +44,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -147,10 +146,14 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   protected <T> void updateStateIfNeededAndNotify(long requestId, T newValue, Supplier<? extends T> getter, Consumer<T> setter) {
     T currentValue = getter.get();
-    if (Objects.equals(currentValue, newValue)) return;
-    setter.accept(newValue);
-    myBreakpointManager.getRequestCounter().setRequestCompleted(requestId);
-    fireBreakpointChanged();
+    boolean updateNeeded = !Objects.equals(currentValue, newValue);
+    if (updateNeeded) {
+      setter.accept(newValue);
+    }
+    boolean requestIdChanged = myBreakpointManager.getRequestCounter().setRequestCompleted(requestId);
+    if (updateNeeded || requestIdChanged) {
+      fireBreakpointChanged();
+    }
   }
 
   @Override
