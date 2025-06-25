@@ -57,7 +57,6 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
   private static final @NonNls String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
   private static final @NonNls String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
 
-  private final @NotNull VcsLogData myLogData;
   private final @NotNull MainVcsLogUiProperties myUiProperties;
 
   private final @NotNull JComponent myToolbar;
@@ -87,7 +86,6 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
                    @NotNull VcsLogColorManager colorManager,
                    boolean withEditorDiffPreview,
                    @NotNull Disposable disposable) {
-    myLogData = logData;
     myUiProperties = uiProperties;
 
     myFilterUi = filterUi;
