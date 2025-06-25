@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 
 class JavaLibraryDataServiceExtension : LibraryDataServiceExtension {
+
   override fun getLibraryKind(libraryData: LibraryData): PersistentLibraryKind<*>? {
     if (libraryData.toMavenCoordinates() != null) {
       return ImportedLibraryType.IMPORTED_LIBRARY_KIND
@@ -16,14 +17,16 @@ class JavaLibraryDataServiceExtension : LibraryDataServiceExtension {
     return null
   }
 
-  override fun prepareNewLibrary(modelsProvider: IdeModifiableModelsProvider, library: Library, libraryData: LibraryData) {
-    val libraryModel = modelsProvider.getModifiableLibraryModel(library)
-    val properties = (libraryModel as? LibraryEx)?.properties
-    val coords = libraryData.toMavenCoordinates()
-    if (properties is ImportedLibraryProperties && coords != null) {
-      (libraryModel as? LibraryEx.ModifiableModelEx)?.properties = ImportedLibraryProperties(coords)
-    }
-
+  override fun prepareLibrary(modelsProvider: IdeModifiableModelsProvider, library: Library, libraryData: LibraryData) {
+    modelsProvider.setBridgeLibraryCoordinates(library, libraryData)
     modelsProvider.setLibraryCoordinates(library, libraryData)
+  }
+
+  private fun IdeModifiableModelsProvider.setBridgeLibraryCoordinates(library: Library, libraryData: LibraryData) {
+    val libraryCoordinates = libraryData.toMavenCoordinates() ?: return
+    val libraryModel = getModifiableLibraryModel(library) as LibraryEx.ModifiableModelEx
+    if (libraryModel.properties is ImportedLibraryProperties) {
+      libraryModel.properties = ImportedLibraryProperties(libraryCoordinates)
+    }
   }
 }
