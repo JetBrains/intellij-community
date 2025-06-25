@@ -1,7 +1,10 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
@@ -19,6 +22,67 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.jewel.foundation.InternalJewelApi
+import org.jetbrains.jewel.foundation.JewelConfigs
+import org.jetbrains.jewel.ui.component.PopupRender.Arguments
+
+@Composable
+@InternalJewelApi
+public fun Popup(
+    popupPositionProvider: PopupPositionProvider,
+    onDismissRequest: (() -> Unit)? = null,
+    properties: PopupProperties = PopupProperties(),
+    onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    content: @Composable () -> Unit,
+) {
+    val popupRender = if (JewelConfigs.useCustomPopupRender) LocalPopupRender.current else DefaultPopupRender
+    popupRender.Popup(
+        arguments =
+            Arguments(
+                popupPositionProvider = popupPositionProvider,
+                onDismissRequest = onDismissRequest,
+                properties = properties,
+                onPreviewKeyEvent = onPreviewKeyEvent,
+                onKeyEvent = onKeyEvent,
+            ),
+        content = content,
+    )
+}
+
+@InternalJewelApi
+public val LocalPopupRender: ProvidableCompositionLocal<PopupRender> = staticCompositionLocalOf { DefaultPopupRender }
+
+public interface PopupRender {
+    @Composable public fun Popup(arguments: Arguments, content: @Composable () -> Unit)
+
+    public class Arguments(
+        public val popupPositionProvider: PopupPositionProvider,
+        public val onDismissRequest: (() -> Unit)? = null,
+        public val properties: PopupProperties = PopupProperties(),
+        public val onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+        public val onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    )
+
+    public companion object
+}
+
+private object DefaultPopupRender : PopupRender {
+    @Composable
+    override fun Popup(arguments: Arguments, content: @Composable () -> Unit) {
+        with(arguments) {
+            androidx.compose.ui.window.Popup(
+                popupPositionProvider = popupPositionProvider,
+                onDismissRequest = onDismissRequest,
+                properties = properties,
+                onPreviewKeyEvent = onPreviewKeyEvent,
+                onKeyEvent = onKeyEvent,
+                content = content,
+            )
+        }
+    }
+}
 
 internal fun handlePopupMenuOnKeyEvent(
     keyEvent: KeyEvent,

@@ -22,10 +22,28 @@ org.jetbrains.jewel.ui.component.MenuScope
 - bs:selectableItem$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 - a:submenu(Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
 - bs:submenu$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):V
+f:org.jetbrains.jewel.ui.component.PopupKt
+- sf:Popup(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:getLocalPopupRender():androidx.compose.runtime.ProvidableCompositionLocal
+org.jetbrains.jewel.ui.component.PopupRender
+- sf:Companion:org.jetbrains.jewel.ui.component.PopupRender$Companion
+- a:Popup(org.jetbrains.jewel.ui.component.PopupRender$Arguments,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+f:org.jetbrains.jewel.ui.component.PopupRender$Arguments
+- sf:$stable:I
+- <init>(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
+- b:<init>(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getOnDismissRequest():kotlin.jvm.functions.Function0
+- f:getOnKeyEvent():kotlin.jvm.functions.Function1
+- f:getOnPreviewKeyEvent():kotlin.jvm.functions.Function1
+- f:getPopupPositionProvider():androidx.compose.ui.window.PopupPositionProvider
+- f:getProperties():androidx.compose.ui.window.PopupProperties
+f:org.jetbrains.jewel.ui.component.PopupRender$Companion
 org.jetbrains.jewel.ui.component.TabContentScope
 - tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.ui.component.TabStripKt
 - sf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.ui.component.TooltipAreaKt
+- sf:TooltipArea(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,I,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
