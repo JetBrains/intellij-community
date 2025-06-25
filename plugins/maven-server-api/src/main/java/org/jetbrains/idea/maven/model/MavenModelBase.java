@@ -15,19 +15,21 @@
  */
 package org.jetbrains.idea.maven.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MavenModelBase implements Serializable {
   private Properties myProperties;
-  private ArrayList<MavenPlugin> myPlugins = new ArrayList<>();
-  private ArrayList<MavenArtifact> myExtensions = new ArrayList<>();
-  private ArrayList<MavenArtifact> myDependencies = new ArrayList<>();
-  private ArrayList<MavenArtifactNode> myDependencyTree = new ArrayList<>();
-  private ArrayList<MavenRemoteRepository> myRemoteRepositories = new ArrayList<>();
-  private ArrayList<MavenRemoteRepository> myRemotePluginRepositories = new ArrayList<>();
-
-  private ArrayList<String> myModules;
+  private @NotNull List<@NotNull MavenPlugin> myPlugins = new CopyOnWriteArrayList<>();
+  private @NotNull List<@NotNull MavenArtifact> myExtensions = new CopyOnWriteArrayList<>();
+  private @NotNull List<@NotNull MavenArtifact> myDependencies = new CopyOnWriteArrayList<>();
+  private @NotNull List<@NotNull MavenArtifactNode> myDependencyTree = new CopyOnWriteArrayList<>();
+  private @NotNull List<@NotNull MavenRemoteRepository> myRemoteRepositories = new CopyOnWriteArrayList<>();
+  private @NotNull List<@NotNull MavenRemoteRepository> myRemotePluginRepositories = new CopyOnWriteArrayList<>();
+  private @NotNull List<@NotNull String> myModules = new CopyOnWriteArrayList<>();
 
   public Properties getProperties() {
     if (myProperties == null) myProperties = new Properties();
@@ -52,59 +54,59 @@ public class MavenModelBase implements Serializable {
     setProperties(newProperties);
   }
 
-  public List<MavenPlugin> getPlugins() {
-    return myPlugins;
+  public @NotNull List<@NotNull MavenPlugin> getPlugins() {
+    return Collections.unmodifiableList(myPlugins);
   }
 
-  public void setPlugins(List<MavenPlugin> plugins) {
-    myPlugins = new ArrayList<>(plugins);
+  public void setPlugins(@NotNull List<@NotNull MavenPlugin> plugins) {
+    myPlugins = new CopyOnWriteArrayList<>(plugins);
   }
 
-  public List<MavenArtifact> getExtensions() {
-    return myExtensions;
+  public @NotNull List<@NotNull MavenArtifact> getExtensions() {
+    return Collections.unmodifiableList(myExtensions);
   }
 
-  public void setExtensions(List<MavenArtifact> extensions) {
-    myExtensions = new ArrayList<>(extensions);
+  public void setExtensions(@NotNull List<@NotNull MavenArtifact> extensions) {
+    myExtensions = new CopyOnWriteArrayList<>(extensions);
   }
 
-  public List<MavenArtifact> getDependencies() {
-    return myDependencies;
+  public @NotNull List<@NotNull MavenArtifact> getDependencies() {
+    return Collections.unmodifiableList(myDependencies);
   }
 
-  public void setDependencies(List<MavenArtifact> dependencies) {
-    myDependencies = new ArrayList<>(dependencies);
+  public void setDependencies(@NotNull List<@NotNull MavenArtifact> dependencies) {
+    myDependencies = new CopyOnWriteArrayList<>(dependencies);
   }
 
-  public List<MavenArtifactNode> getDependencyTree() {
-    return myDependencyTree;
+  public @NotNull List<@NotNull MavenArtifactNode> getDependencyTree() {
+    return Collections.unmodifiableList(myDependencyTree);
   }
 
-  public void setDependencyTree(List<MavenArtifactNode> dependencyTree) {
-    myDependencyTree = new ArrayList<>(dependencyTree);
+  public void setDependencyTree(@NotNull List<@NotNull MavenArtifactNode> dependencyTree) {
+    myDependencyTree = new CopyOnWriteArrayList<>(dependencyTree);
   }
 
-  public List<MavenRemoteRepository> getRemoteRepositories() {
-    return myRemoteRepositories;
+  public @NotNull List<@NotNull MavenRemoteRepository> getRemoteRepositories() {
+    return Collections.unmodifiableList(myRemoteRepositories);
   }
 
-  public void setRemoteRepositories(List<MavenRemoteRepository> remoteRepositories) {
-    myRemoteRepositories = new ArrayList<>(remoteRepositories);
+  public void setRemoteRepositories(@NotNull List<@NotNull MavenRemoteRepository> remoteRepositories) {
+    myRemoteRepositories = new CopyOnWriteArrayList<>(remoteRepositories);
   }
 
-  public ArrayList<MavenRemoteRepository> getRemotePluginRepositories() {
-    return myRemotePluginRepositories;
+  public @NotNull List<@NotNull MavenRemoteRepository> getRemotePluginRepositories() {
+    return Collections.unmodifiableList(myRemotePluginRepositories);
   }
 
-  public void setRemotePluginRepositories(List<MavenRemoteRepository> remotePluginRepositories) {
-    myRemotePluginRepositories = new ArrayList<>(remotePluginRepositories);
+  public void setRemotePluginRepositories(@NotNull List<@NotNull MavenRemoteRepository> remotePluginRepositories) {
+    myRemotePluginRepositories = new CopyOnWriteArrayList<>(remotePluginRepositories);
   }
 
-  public List<String> getModules() {
-    return myModules;
+  public @NotNull List<@NotNull String> getModules() {
+    return Collections.unmodifiableList(myModules);
   }
 
-  public void setModules(List<String> modules) {
-    myModules = new ArrayList<>(modules);
+  public void setModules(@NotNull List<@NotNull String> modules) {
+    myModules = new CopyOnWriteArrayList<>(modules);
   }
 }
