@@ -54,6 +54,7 @@ import com.intellij.ui.content.ContentManagerEvent.ContentOperation
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.PlatformUtils
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBUI
@@ -644,8 +645,8 @@ class StructureViewWrapperImpl(
         AppMode.isRemoteDevHost() && project != null -> {
           // In RD, when focus is set to a frontend-component (e.g., tabs, editors, notification tool window),
           // on the backend it can be set to anything, unfortunately.
-          // So we fall back to the active editor (or the last active one), or else the structure view may stop updating completely.
-          PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(asyncDataContext)?.file
+          // So we fall back to the active editor, or else the structure view may stop updating completely.
+          FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
         }
         else -> null
       }
