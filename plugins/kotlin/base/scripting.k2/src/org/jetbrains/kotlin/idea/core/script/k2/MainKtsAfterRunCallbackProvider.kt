@@ -23,7 +23,7 @@ class MainKtsAfterRunCallbackProvider(val project: Project, val scope: Coroutine
         val script = VfsUtil.findFile(Path( scriptPath), true) ?: return null
         if (!script.name.endsWith(".main.kts")) return null
         val ktFile = PsiManager.getInstance(project).findFile(script) as? KtFile ?: return null
-        val action = ActionUtil.getAction("LoadMainKtsConfiguration") ?: return null
+        val action = ActionUtil.getAction("ReloadScriptConfiguration") ?: return null
 
         return ProgramRunner.Callback { _ ->
             val context = SimpleDataContext.builder()
