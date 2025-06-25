@@ -72,7 +72,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private boolean myLogExpressionEnabled = true;
   private XExpression myLogExpression;
   private volatile boolean myDisposed;
-  private final AtomicLong myRequestId = new AtomicLong();
   private final MutableSharedFlow<Unit> myBreakpointChangedFlow = createMutableSharedFlow(0, 1);
 
   public XBreakpointBase(final XBreakpointType<Self, P> type,
@@ -146,23 +145,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return position.createNavigatable(getProject());
   }
 
-  public long getRequestId() {
-    return myRequestId.get();
-  }
-
-  protected boolean setRequestCompleted(long requestId) {
-    while (true) {
-      long current = myRequestId.get();
-      if (requestId <= current) return false;
-      if (myRequestId.compareAndSet(current, requestId)) return true;
-    }
-  }
-
   protected <T> void updateStateIfNeededAndNotify(long requestId, T newValue, Supplier<? extends T> getter, Consumer<T> setter) {
     T currentValue = getter.get();
     if (Objects.equals(currentValue, newValue)) return;
     setter.accept(newValue);
-    setRequestCompleted(requestId);
+    myBreakpointManager.getRequestCounter().setRequestCompleted(requestId);
     fireBreakpointChanged();
   }
 
