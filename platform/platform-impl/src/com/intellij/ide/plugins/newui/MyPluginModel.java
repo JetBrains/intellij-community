@@ -266,7 +266,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     Ref<Boolean> allowInstallWithoutRestart = Ref.create(true);
     if (isUpdate) {
       if (descriptor.isBundled()) {
-        allowInstallWithoutRestart.set(controller.tryUnloadPluginIfAllowed(parentComponent, descriptor.getPluginId(), true));
+        allowInstallWithoutRestart.set(false);
       }
       else if (!controller.allowLoadUnloadWithoutRestart(descriptor.getPluginId())) {
         allowInstallWithoutRestart.set(false);
