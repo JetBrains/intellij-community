@@ -6,7 +6,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class BytecodeLineMappingTest : BasePlatformTestCase() {
-  private fun getSelectinFromSource(text: String): Pair<Int, Int> {
+  private fun getSelectionFromSource(text: String): Pair<Int, Int> {
     myFixture.configureByText(getTestName(false) + ".java", text)
     val sourceDocument = myFixture.editor.document
 
@@ -24,7 +24,7 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     showDebugInfo: Boolean,
     expectedBytecodeSelection: String,
   ) {
-    val (startLine, endLine) = getSelectinFromSource(sourceWithSelection)
+    val (startLine, endLine) = getSelectionFromSource(sourceWithSelection)
     assertEquals(fixture.source, myFixture.editor.document.text) // ensure consistency
     assertEquals(fixture.bytecode, removeDebugInfo(fixture.bytecodeWithDebugInfo)) // ensure consistency
 
