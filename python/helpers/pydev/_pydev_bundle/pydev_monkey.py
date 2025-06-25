@@ -280,8 +280,9 @@ def patch_args(args):
         # in practice it'd raise an exception here and would return original args, which is not what we want... providing
         # a proper fix for https://youtrack.jetbrains.com/issue/PY-9767 elsewhere.
         if i >= len(args) or _is_managed_arg(args[i]):  # no need to add pydevd twice
-            log_debug("Patched args: %s" % str(args))
-            return args
+            new_args = quote_args(args)
+            log_debug("Patched args: %s" % str(new_args))
+            return new_args
 
         for x in original:
             new_args.append(x)
