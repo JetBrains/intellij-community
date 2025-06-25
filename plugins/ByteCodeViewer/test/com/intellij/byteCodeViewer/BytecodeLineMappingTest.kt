@@ -327,7 +327,6 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     )
   }
 
-  // FIXME: Figure out why it fails (only in tests). Works in IDE.
   fun `test simple 2 - single field selected`() {
     val source = """
       package simple2;
@@ -454,7 +453,6 @@ class BytecodeLineMappingTest : BasePlatformTestCase() {
     )
   }
 
-  // FIXME: Figure out why it fails (only in tests). Works in IDE. 
   fun `test simple 2 method body - two lines selected`() {
     val source = """
       package simple2;
