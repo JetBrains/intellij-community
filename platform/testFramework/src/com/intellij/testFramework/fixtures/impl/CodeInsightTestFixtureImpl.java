@@ -979,7 +979,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                             @NotNull String newName,
                             boolean searchInComments,
                             boolean searchTextOccurrences) {
-    PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, editor);
+    RenamePsiElementProcessor renameProcessor = RenamePsiElementProcessor.forElement(element);
+    PsiElement substitution = renameProcessor.substituteElementToRename(element, editor);
     if (substitution == null) return;
     new RenameProcessor(getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
   }
