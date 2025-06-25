@@ -8,10 +8,10 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.has
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi.KtFile
@@ -39,7 +39,7 @@ class InlineClassDeprecatedFix(
         element.removeModifier(KtTokens.INLINE_KEYWORD)
         element.addModifier(KtTokens.VALUE_KEYWORD)
         if (element.containingKtFile.hasJvmTarget()) {
-            element.addAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmInline")))
+            element.addAnnotation(ClassId.topLevel(StandardKotlinNames.Jvm.JvmInline))
         }
     }
 }

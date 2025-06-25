@@ -6,11 +6,10 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiComment
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 
@@ -47,7 +46,7 @@ internal class ConvertLazyPropertyToOrdinaryIntention :
     }
 }
 
-private val KOTLIN_LAZY = listOf(BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("lazy")))
+private val KOTLIN_LAZY = listOf(StandardKotlinNames.lazy)
 
 private fun KtProperty.delegateExpression(): KtCallExpression? = this.delegate?.expression as? KtCallExpression
 

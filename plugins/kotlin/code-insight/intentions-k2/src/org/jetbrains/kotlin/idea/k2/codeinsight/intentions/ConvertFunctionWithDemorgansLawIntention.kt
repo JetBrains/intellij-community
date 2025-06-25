@@ -15,19 +15,18 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.invertSelectorFunction
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeInverted
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
-import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
-import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertFunctionWithDemorgansLawIntention.ConvertFunctionWithDemorgansLawContext
 import org.jetbrains.kotlin.idea.refactoring.appendCallOrQualifiedExpression
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
@@ -190,16 +189,16 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
 
 private val collectionFunctions: Map<String, List<FqName>> =
     listOf("all", "any", "none", "filter", "filterNot", "filterTo", "filterNotTo").associateWith {
-        listOf(FqName("kotlin.collections.$it"), FqName("kotlin.sequences.$it"))
+        listOf(BASE_COLLECTIONS_PACKAGE + it, BASE_SEQUENCES_PACKAGE + it)
     }
 
-private val standardFunctions: Map<String, List<FqName>> = listOf("takeIf", "takeUnless").associateWith {
-    listOf(FqName("kotlin.$it"))
+private val standardFunctions: Map<String, List<FqName>> = listOf(StandardKotlinNames.takeIf, StandardKotlinNames.takeUnless).associate {
+    it.shortName().asString() to listOf(it)
 }
 
 private val functions: Map<String, List<FqName>> = collectionFunctions + standardFunctions
 
-private val notSequence = listOf(FqName("kotlin.Boolean.not"))
+private val notSequence = listOf(StandardKotlinNames.Boolean.not)
 
 private data class Conversion(
     val fromFunctionName: String, val toFunctionName: String, val negateCall: Boolean, val negatePredicate: Boolean

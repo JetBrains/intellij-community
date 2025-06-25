@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
@@ -28,7 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 
 
 @ApiStatus.Internal
-val KOTLIN_LET_FQ_NAME: List<FqName> = listOf(BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("let")))
+val KOTLIN_LET_FQ_NAME: List<FqName> = listOf(StandardKotlinNames.let)
 
 @ApiStatus.Internal
 context(KaSession)

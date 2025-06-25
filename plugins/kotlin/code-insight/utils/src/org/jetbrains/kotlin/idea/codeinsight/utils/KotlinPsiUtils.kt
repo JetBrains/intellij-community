@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -24,7 +23,6 @@ import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.StandardClassIds.BASE_ENUMS_PACKAGE
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
@@ -348,18 +346,16 @@ fun KtCallExpression.isCalling(fqNames: Collection<FqName>): Boolean {
     return targetFqNames.any { it == fqName }
 }
 
-@Deprecated(replaceWith = ReplaceWith("fqName.child(name)"), message = "Use child(Name) instead")
 @ApiStatus.Internal
 operator fun FqName.plus(name: Name): FqName = child(name)
 
-@Deprecated(replaceWith = ReplaceWith("fqName.child(name)"), message = "Use child(Name) instead")
 @ApiStatus.Internal
 operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
 
 private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = setOf(
-    BASE_ENUMS_PACKAGE.child(Name.identifier("enumEntries")),
-    BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("enumValues")),
-    BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("enumValueOf"))
+    StandardKotlinNames.Enum.enumEntries,
+    StandardKotlinNames.Enum.enumValues,
+    StandardKotlinNames.Enum.enumValueOf
 )
 
 context(KaSession)

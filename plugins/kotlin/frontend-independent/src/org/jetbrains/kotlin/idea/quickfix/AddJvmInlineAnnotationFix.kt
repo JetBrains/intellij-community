@@ -5,9 +5,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClass
 
 class AddJvmInlineAnnotationFix(klass: KtClass) : PsiUpdateModCommandAction<KtClass>(klass) {
@@ -17,8 +17,7 @@ class AddJvmInlineAnnotationFix(klass: KtClass) : PsiUpdateModCommandAction<KtCl
         element: KtClass,
         updater: ModPsiUpdater,
     ) {
-        val jvmInlineFqName = FqName("kotlin.jvm.JvmInline")
-        val jvmInlineClassId = ClassId.topLevel(jvmInlineFqName)
+        val jvmInlineClassId = ClassId.topLevel(StandardKotlinNames.Jvm.JvmInline)
         element.addAnnotation(jvmInlineClassId)
     }
 

@@ -2,20 +2,20 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 
+@ApiStatus.Internal
 val scopeFunctionsList: List<FqName> = listOf(
-    BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("also")),
-    BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("let")),
-    BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("takeIf")),
-    BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("takeUnless")),
+    StandardKotlinNames.also,
+    StandardKotlinNames.let,
+    StandardKotlinNames.takeIf,
+    StandardKotlinNames.takeUnless,
 )
 
 fun KtLambdaExpression.addExplicitItParameter(): KtParameter {
