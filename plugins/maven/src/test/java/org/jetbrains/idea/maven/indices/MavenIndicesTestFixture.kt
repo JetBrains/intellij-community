@@ -13,93 +13,85 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.indices;
+package org.jetbrains.idea.maven.indices
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenSettingsCache;
-import org.jetbrains.idea.maven.server.MavenServerManager;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry.Companion.get
+import com.intellij.util.ArrayUtil
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
+import org.jetbrains.idea.maven.server.MavenServerManager
+import java.io.IOException
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
+class MavenIndicesTestFixture(
+  private val myDir: Path,
+  private val myProject: Project,
+  private val myTestRootDisposable: Disposable,
+  private val myLocalRepoDir: String?,
+  vararg extraRepoDirs: String
+) {
+  private val myExtraRepoDirs = extraRepoDirs
 
-public class MavenIndicesTestFixture {
-  private final Path myDir;
-  private final Project myProject;
-  private final Disposable myTestRootDisposable;
-  private final String myLocalRepoDir;
-  private final String[] myExtraRepoDirs;
+  private var myRepositoryHelper: MavenCustomRepositoryHelper? = null
 
-  private MavenCustomRepositoryHelper myRepositoryHelper;
+  constructor(dir: Path, project: Project, testRootDisposable: Disposable) : this(dir, project, testRootDisposable, "local1", "local2")
 
-  public MavenIndicesTestFixture(Path dir, Project project, Disposable testRootDisposable) {
-    this(dir, project, testRootDisposable, "local1", "local2");
-  }
+  @Throws(Exception::class)
+  fun setUpBeforeImport() {
+    myRepositoryHelper = MavenCustomRepositoryHelper(myDir, *ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir))
 
-  public MavenIndicesTestFixture(Path dir, Project project, Disposable testRootDisposable, String localRepoDir, String... extraRepoDirs) {
-    myDir = dir;
-    myProject = project;
-    myTestRootDisposable = testRootDisposable;
-    myLocalRepoDir = localRepoDir;
-    myExtraRepoDirs = extraRepoDirs;
-  }
-
-  public void setUpBeforeImport() throws Exception {
-    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
-
-    for (String each : myExtraRepoDirs) {
-      addToRepository(each);
+    for (each in myExtraRepoDirs) {
+      addToRepository(each)
     }
 
-    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(myRepositoryHelper.getTestData(myLocalRepoDir).toString());
-    MavenSettingsCache.getInstance(myProject).reload();
-    Registry.get("maven.skip.gav.update.in.unit.test.mode").setValue(false, myTestRootDisposable);
+    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
+      myRepositoryHelper!!.getTestData(myLocalRepoDir).toString())
+    MavenSettingsCache.getInstance(myProject).reload()
+    get("maven.skip.gav.update.in.unit.test.mode").setValue(false, myTestRootDisposable)
   }
 
-  public void setUp() throws Exception {
-    setUpBeforeImport();
-    setUpAfterImport();
+  @Throws(Exception::class)
+  fun setUp() {
+    setUpBeforeImport()
+    setUpAfterImport()
   }
 
-  public void setUpAfterImport() {
-    MavenSystemIndicesManager.getInstance().setTestIndicesDir(myDir.resolve("MavenIndices"));
+  fun setUpAfterImport() {
+    MavenSystemIndicesManager.getInstance().setTestIndicesDir(myDir.resolve("MavenIndices"))
     //todo: rewrite al this to coroutines
-    CompletableFuture<Void> f = new CompletableFuture<>();
-    getIndicesManager().scheduleUpdateIndicesList(() -> {
-      f.complete(null);
-      return null;
-    });
-    f.join();
-    getIndicesManager().waitForGavUpdateCompleted();
-    UIUtil.dispatchAllInvocationEvents();
+    val f = CompletableFuture<Void?>()
+    this.indicesManager.scheduleUpdateIndicesList {
+      f.complete(null)
+      null
+    }
+    f.join()
+    this.indicesManager.waitForGavUpdateCompleted()
+    UIUtil.dispatchAllInvocationEvents()
   }
 
-  public void addToRepository(String relPath) throws IOException {
-    myRepositoryHelper.copy(relPath, myLocalRepoDir);
+  @Throws(IOException::class)
+  fun addToRepository(relPath: String?) {
+    myRepositoryHelper!!.copy(relPath, myLocalRepoDir)
   }
 
-  public void tearDown() {
-    MavenSystemIndicesManager.getInstance().gc();
-    MavenServerManager.getInstance().closeAllConnectorsAndWait();
-    Disposer.dispose(getIndicesManager());
+  fun tearDown() {
+    MavenSystemIndicesManager.getInstance().gc()
+    MavenServerManager.getInstance().closeAllConnectorsAndWait()
+    Disposer.dispose(this.indicesManager)
   }
 
-  public MavenIndicesManager getIndicesManager() {
-    return MavenIndicesManager.getInstance(myProject);
-  }
+  val indicesManager: MavenIndicesManager
+    get() = MavenIndicesManager.getInstance(myProject)
 
-  public MavenArchetypeManager getArchetypeManager() {
-    return MavenArchetypeManager.getInstance(myProject);
-  }
+  val archetypeManager: MavenArchetypeManager
+    get() = MavenArchetypeManager.getInstance(myProject)
 
-  public MavenCustomRepositoryHelper getRepositoryHelper() {
-    return myRepositoryHelper;
-  }
+  val repositoryHelper: MavenCustomRepositoryHelper
+    get() = myRepositoryHelper!!
 }
