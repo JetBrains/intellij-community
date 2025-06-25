@@ -60,11 +60,11 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
         val lambdaName = lambdaExpression.getNameOfFunctionThatTakesLambda() ?: "lambda"
 
         sink.whenOptionEnabled(SHOW_RETURN_EXPRESSIONS.name) {
-            val isUsedAsExpression = analyze(lambdaExpression) {
-                // TODO: KTIJ-16537 depends on KT-73473 : isUsedAsResultOfLambda should be used
-                element.isUsedAsExpression
+            val isUsedAsResultOfLambda = analyze(lambdaExpression) {
+                @OptIn(KaExperimentalApi::class)
+                element.isUsedAsResultOfLambda
             }
-            if (!isUsedAsExpression) return@whenOptionEnabled
+            if (!isUsedAsResultOfLambda) return@whenOptionEnabled
 
             sink.addPresentation(InlineInlayPosition(element.endOffset, true), hintFormat = HintFormat.default) {
                 text("^")
