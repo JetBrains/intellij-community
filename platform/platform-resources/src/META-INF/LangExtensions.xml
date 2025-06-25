@@ -97,7 +97,7 @@
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <registryKey defaultValue="true" key="use.workspace.file.index.to.generate.iterators" restartRequired="true"
                  description="Use WorkspaceFileIndex instead of IndexableFileIndex to generate IndexingIterators"/>
-    <registryKey defaultValue="true" key="search.in.non.indexable" restartRequired="false"
+    <registryKey defaultValue="false" key="search.in.non.indexable" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
     <registryKey defaultValue="true"
                  description="Enable reformat action execution on frontend in remote development"

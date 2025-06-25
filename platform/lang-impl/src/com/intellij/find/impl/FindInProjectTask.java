@@ -74,6 +74,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
+import static com.intellij.find.impl.FindInProjectUtil.FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE;
 import static com.intellij.find.impl.NonIndexableFilesDequeKt.nonIndexableFiles;
 import static com.intellij.openapi.roots.impl.FilesScanExecutor.processOnAllThreadsInReadActionWithRetries;
 import static com.intellij.util.containers.ContainerUtil.sorted;
@@ -463,7 +464,7 @@ final class FindInProjectTask {
 
           return true;
         }
-        else if (searchItem instanceof FilesDequeue filesDeque) {
+        else if (searchItem instanceof FilesDeque filesDeque) {
           for (var file = filesDeque.computeNext(); file != null; file = filesDeque.computeNext()) {
             if (!file.isDirectory()) {
               searchItemsDeque.add(file);
@@ -586,7 +587,10 @@ final class FindInProjectTask {
     }
 
     searchItems.addAll(FindModelExtension.EP_NAME.getExtensionList());
-    searchItems.add(ReadAction.nonBlocking( () -> nonIndexableFiles(project)).executeSynchronously());
+
+    if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
+      searchItems.add(ReadAction.nonBlocking(() -> nonIndexableFiles(project)).executeSynchronously());
+    }
 
     return searchItems;
   }
