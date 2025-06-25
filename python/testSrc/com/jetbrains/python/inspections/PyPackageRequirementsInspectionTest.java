@@ -11,8 +11,8 @@ import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.RequirementsProviderType;
 import com.jetbrains.python.packaging.management.TestPythonPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkAdditionalDataUtils;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.SdksKt;
 import com.jetbrains.python.sdk.pipenv.PipenvFilesUtilsKt;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +34,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   public void setUp() throws Exception {
     super.setUp();
     final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    PythonSdkAdditionalDataUtils.associateSdkWithModulePath(sdk, myFixture.getModule());
+    SdksKt.setAssociationToModuleAsync(sdk, myFixture.getModule());
     assertNotNull(sdk);
 
     PyPIPackageCache.reload(List.of("opster", "clevercss", "django", "test3", "pyzmq", "markdown", "pytest", "django-simple-captcha"));
