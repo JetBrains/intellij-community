@@ -1,10 +1,13 @@
 {
-  "projectPath": "../ml-eval/jackson-core",
-  "repository": "https://github.com/fasterxml/jackson-core",
-  "revision": "f1dc3c512d211ae3e14fb59af231caebf037d510",
+  "projectPath": "../ml-eval/jackson-databind",
+  "repository": "https://github.com/fasterxml/jackson-databind",
+  "revision": "73d3bbdbe8d3f5ebd53883bf9bc844d9663a87c0",
   "outputDir": "bin/ml-eval-code-generation-junie-swe-java-output",
   "strategy": {
-    "instanceId": "fasterxml__jackson-core-1142"
+    "instanceId": "fasterxml__jackson-databind-4230",
+    "codeGenerationJunieInvocationParams": {
+      "rollbackInitialChanges": false
+    }
   },
   "fileDataset": {
     "url": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/junie-swe/java/java_swe_bench.json"
