@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyUserInitiatedResolvableReference
 import com.jetbrains.python.psi.PyElement
-import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyReferenceOwner
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -52,28 +51,18 @@ class PyGotoDeclarationHandler : GotoDeclarationHandlerBase() {
     val parent = sourceElement.parent
     val referenceOwner = sourceElement as? PyReferenceOwner ?: parent as? PyReferenceOwner
     if (referenceOwner != null) {
-      val resolved = PyResolveUtil.multiResolveDeclaration(referenceOwner.getReference(context), context)
-      if (resolved != null) {
-        val stubResults =
-          resolved
-            .filter {
-              PyiUtil.isInsideStub(it) && !PyiUtil.isInsideStub(FileContextUtil.getContextFile(sourceElement)!!)
-            }
-            .map {
+      val results = PyResolveUtil.multiResolveDeclaration(referenceOwner.getReference(context), context)
+          .map {
+            if (PyiUtil.isInsideStub(it) && !PyiUtil.isInsideStub(FileContextUtil.getContextFile(sourceElement)!!)) {
               PyiUtil.getOriginalElement(it as PyElement) ?: it
             }
-        if (stubResults.isNotEmpty()) {
-          return stubResults.toTypedArray()
-        }
-
-       val results = resolved
-        .filter { it !== referenceOwner && it !is PyImportElement }
-        .groupBy { it.containingFile }
-        // include all the definitions from the current file, otherwise just the top result
-        .flatMap { if (it.key == sourceElement.containingFile) it.value else listOf(it.value.first()) }
-        if (results.isNotEmpty()) {
-          return results.toTypedArray()
-        }
+            else it
+          }
+          .filter { it !== referenceOwner }
+          .groupBy { it.containingFile }
+          .flatMap { if (it.key == sourceElement.containingFile) it.value else listOf(it.value.first()) }
+      if (results.isNotEmpty()) {
+        return results.toTypedArray()
       }
     }
 
