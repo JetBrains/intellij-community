@@ -47,7 +47,9 @@ public abstract class PsiVarDescriptor extends JvmVariableDescriptor {
 
   @Override
   public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+    if (qualifier == factory.getSentinel()) return factory.getUnknown();
     if (qualifier instanceof DfaVariableValue) {
+      if (!(qualifier.getDfType() instanceof DfReferenceType)) return factory.getUnknown();
       return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
     PsiType type = getType(null);
