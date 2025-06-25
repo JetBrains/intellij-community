@@ -421,5 +421,7 @@
     <action id="Console.TableResult.ColumnLocalFilterWithCell"
             class="com.intellij.database.run.actions.ColumnLocalFilterWithCellAction"/>
     <group id="Console.TableResult.AggregatorViewGroup"/>
+    <action id="Console.TableResult.ColumnLocalFilterClearAll"
+            class="com.intellij.database.run.actions.ColumnLocalFilterClearAllAction"/>
   </actions>
 </idea-plugin>
