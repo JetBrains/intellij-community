@@ -33,7 +33,7 @@ internal fun computeUiPresentation(
       close(e)
       throw e
     }
-    JavaFramesListRenderer.customizePresentation(descriptor, container, selectedDescriptor)
+    JavaFramesListRenderer.customizePresentation(descriptor, container, selectedDescriptor, false)
     send(container)
   }
 

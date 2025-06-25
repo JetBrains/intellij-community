@@ -9,6 +9,7 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,13 @@ final class JavaFramesListRenderer {
   public static void customizePresentation(StackFrameDescriptorImpl descriptor,
                                            @NotNull ColoredTextContainer component,
                                            @Nullable StackFrameDescriptorImpl selectedDescriptor) {
+    customizePresentation(descriptor, component, selectedDescriptor, true);
+  }
+
+  public static void customizePresentation(StackFrameDescriptorImpl descriptor,
+                                           @NotNull ColoredTextContainer component,
+                                           @Nullable StackFrameDescriptorImpl selectedDescriptor,
+                                           boolean includeRecursionCount) {
     component.setIcon(descriptor.getIcon());
 
     final ValueMarkup markup = descriptor.getValueMarkup();
@@ -39,8 +47,7 @@ final class JavaFramesListRenderer {
       component.append(label.substring(closingBrace + 1), attributes);
     }
 
-    // TODO IJPL-189114 Disabled in split debugger because it requires repeated `customizePresentation` calls on frontend
-    if (!XDebugSessionProxy.useFeProxy() && isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {
+    if (includeRecursionCount && isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor) && descriptor.isRecursiveCall()) {
       component.append(" [" + descriptor.getOccurrenceIndex() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
