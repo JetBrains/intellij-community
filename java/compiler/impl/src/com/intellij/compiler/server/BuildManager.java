@@ -1508,7 +1508,8 @@ public final class BuildManager implements Disposable {
           // No external project cache -- no copy of external project cache.
         }
         catch (FileSystemException err) {
-          throw new ExecutionException("Failed to copy external project configuration", err);
+          throw new ExecutionException(
+            JavaCompilerBundle.message("build.manager.launch.build.process.failed.to.copy.external.project.configuration"), err);
         }
       }
       else {
@@ -1676,7 +1677,8 @@ public final class BuildManager implements Disposable {
           cmdLine.addPathParameter(parameter.getFirst(), cmdLine.copyProjectSpecificPathToTargetIfRequired(project, parameter.getSecond()));
         }
         catch (FileSystemException err) {
-          throw new ExecutionException("Failed to copy parameter " + parameter.getFirst(), err);
+          throw new ExecutionException(
+            JavaCompilerBundle.message("build.manager.launch.build.process.failed.to.copy.parameter", parameter.getFirst()), err);
         }
       }
     }
@@ -1745,7 +1747,7 @@ public final class BuildManager implements Disposable {
           cmdLine.copyProjectSpecificPathToTargetIfRequired(project, Paths.get(path));
         }
         catch (FileSystemException err) {
-          throw new ExecutionException("Failed to copy additional plugin", err);
+          throw new ExecutionException(JavaCompilerBundle.message("build.manager.launch.build.process.failed.to.copy.additional.plugin"), err);
         }
       }
     }
