@@ -8,7 +8,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.wm.IdeFocusManager
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import git4idea.branch.GitBranchUtil
@@ -54,7 +53,7 @@ class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, 
       val focusedComponent = IdeFocusManager.findInstance().focusOwner
       val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
       val gitRepository = GitBranchUtil.guessRepositoryForOperation(project, dataContext)
-      if (gitRepository == null) throw VcsException("GitRepository for $project not found")
+      requireNotNull(gitRepository) { "GitRepository for $project not found" }
       brancher.checkoutNewBranchStartingFrom(newBranchName, branchName, true, mutableListOf(gitRepository),
                                              Runnable { actionCallback.setDone() })
     }
