@@ -1271,7 +1271,6 @@ open class FileEditorManagerImpl(
         options = options,
         isNewEditor = isNewEditor,
       )
-
       if (isNewEditor) {
         openFileSetModificationCount.increment()
       }
@@ -2402,22 +2401,33 @@ private inline fun <T> runBulkTabChangeInEdt(splitters: EditorsSplitters, task: 
     }
   }
 }
-
 @RequiresEdt
 fun reopenVirtualFileEditor(project: Project, oldFile: VirtualFile, newFile: VirtualFile) {
+  reopenVirtualFileEditor(project, oldFile, newFile, false)
+}
+
+@RequiresEdt
+@Internal
+fun reopenVirtualFileEditor(project: Project, oldFile: VirtualFile, newFile: VirtualFile, saveTabIndex: Boolean) {
   val editorManager: FileEditorManagerEx = FileEditorManagerEx.getInstanceEx(project)
   val windows: Array<EditorWindow> = editorManager.windows
 
   val currentWindow: EditorWindow? = if (windows.size >= 2) editorManager.currentWindow else null
 
   for (window in windows) {
-    reopenVirtualFileInEditor(editorManager, window, oldFile, newFile)
+    reopenVirtualFileInEditor(editorManager, window, oldFile, newFile, saveTabIndex)
   }
 
   currentWindow?.requestFocus(false)
 }
 
-private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window: EditorWindow, oldFile: VirtualFile, newFile: VirtualFile) {
+private fun reopenVirtualFileInEditor(
+  editorManager: FileEditorManagerEx,
+  window: EditorWindow,
+  oldFile: VirtualFile,
+  newFile: VirtualFile,
+  saveTabIndex: Boolean
+) {
   val oldComposite = window.getComposite(oldFile) ?: return // the old file is not opened in this split
   val active = window.selectedComposite == oldComposite
   val pinned = window.isFilePinned(oldFile)
@@ -2436,6 +2446,10 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
     editorManager.openFile(newFile, window, newOptions)
   }
   else {
+    if (saveTabIndex) {
+      val index = window.files().indexOf(oldFile)
+      newOptions = newOptions.copy(index = index)
+    }
     val composite = editorManager.openFile(newFile, window, newOptions)
     if (composite.allEditors.any { it.file == newFile }) {
       window.closeFile(oldFile)
