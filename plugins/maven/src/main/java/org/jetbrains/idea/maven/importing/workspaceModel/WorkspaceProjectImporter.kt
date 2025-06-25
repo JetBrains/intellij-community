@@ -97,7 +97,7 @@ internal open class WorkspaceProjectImporter(
     val mavenProjectToModuleName = buildModuleNameMap(externalSystemModuleEntities, allProjectsToChanges)
 
     val builder = MutableEntityStorage.create()
-    builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenProjectsTreeEntitySource))
+    builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenEntitySource))
 
     val contextData = UserDataHolderBase()
 
@@ -562,7 +562,7 @@ internal open class WorkspaceProjectImporter(
 
     private fun isMavenEntity(it: EntitySource) =
       (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
-      || it is MavenProjectsTreeEntitySource
+      || it is MavenEntitySource
 
     private fun readMavenExternalSystemData(storage: EntityStorage) =
       importedEntities(storage, ExternalSystemModuleOptionsEntity::class.java)
