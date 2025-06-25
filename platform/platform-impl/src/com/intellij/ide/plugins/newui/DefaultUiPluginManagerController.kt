@@ -256,9 +256,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val status = when {
       pluginsState.wasInstalledWithoutRestart(pluginId) -> PluginStatus.INSTALLED_WITHOUT_RESTART
       pluginsState.wasUninstalledWithoutRestart(pluginId) || isDeleted -> PluginStatus.UNINSTALLED_WITHOUT_RESTART
+      pluginsState.wasInstalled(pluginId) -> PluginStatus.INSTALLED_AND_REQUIRED_RESTART
       pluginsState.wasUpdatedWithRestart(pluginId) -> PluginStatus.UPDATED_WITH_RESTART
       pluginsState.wasUpdated(pluginId) -> PluginStatus.UPDATED
-      pluginsState.wasInstalled(pluginId) -> PluginStatus.INSTALLED_AND_REQUIRED_RESTART
       else -> null
     }
     return PluginInstallationState(plugin != null, status)
