@@ -293,13 +293,17 @@ class MavenProjectReader(
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
       val profiles = model.profiles
-      for (each in parentModel.profiles) {
-        val copyProfile = MavenProfile(each.id, each.source)
-        if (each.activation != null) {
-          copyProfile.activation = each.activation.clone()
+      val parentProfiles = parentModel.profiles
+        .filter { !containsProfileId(profiles, it) }
+        .map {
+          val copyProfile = MavenProfile(it.id, it.source)
+          if (it.activation != null) {
+            copyProfile.activation = it.activation.clone()
+          }
+          copyProfile
         }
-
-        addProfileIfDoesNotExist(copyProfile, profiles)
+      if (parentProfiles.isNotEmpty()) {
+        model.profiles = profiles + parentProfiles
       }
       return model
     }
@@ -391,11 +395,10 @@ class MavenProjectReader(
       mySettingsProfilesCache.set(SettingsProfilesCache(settingsProfiles, settingsAlwaysOnProfiles, settingsProblems))
     }
 
-    val modelProfiles: MutableList<MavenProfile> = ArrayList(model.profiles)
-    for (each in mySettingsProfilesCache.get()!!.profiles) {
-      addProfileIfDoesNotExist(each, modelProfiles)
-    }
-    model.profiles = modelProfiles
+    val modelProfiles = model.profiles
+    val settingsProfiles = mySettingsProfilesCache.get()!!.profiles
+      .filter { !containsProfileId(modelProfiles, it) }
+    model.profiles = modelProfiles + settingsProfiles
 
     problems.addAll(mySettingsProfilesCache.get()!!.problems)
     alwaysOnProfiles.addAll(mySettingsProfilesCache.get()!!.alwaysOnProfiles)
@@ -442,9 +445,7 @@ class MavenProjectReader(
   }
 
   private fun collectProfiles(projectFile: VirtualFile, xmlProject: Element): List<MavenProfile> {
-    val result: MutableList<MavenProfile> = ArrayList()
-    collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), result, MavenConstants.PROFILE_FROM_POM, projectFile)
-    return result
+    return collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), MavenConstants.PROFILE_FROM_POM, projectFile)
   }
 
   private suspend fun collectProfilesFromSettingsXml(
@@ -467,18 +468,21 @@ class MavenProjectReader(
     }
 
     val xmlProfiles = findChildrenByPath(rootElement, "profiles", "profile")
-    collectProfiles(xmlProfiles, result, profilesSource, projectsFile)
+    result.addAll(collectProfiles(xmlProfiles, profilesSource, projectsFile))
 
     alwaysOnProfiles.addAll(findChildrenValuesByPath(rootElement, "activeProfiles", "activeProfile"))
   }
 
-  private fun collectProfiles(xmlProfiles: List<Element>, result: MutableList<MavenProfile>, source: String, projectFile: VirtualFile) {
+  private fun collectProfiles(xmlProfiles: List<Element>, source: String, projectFile: VirtualFile): List<MavenProfile> {
+    val result = mutableListOf<MavenProfile>()
     for (each in xmlProfiles) {
       val id = findChildValueByPath(each, "id")
       if (id.isNullOrBlank()) continue
 
       val profile = MavenProfile(id, source)
-      if (!addProfileIfDoesNotExist(profile, result)) continue
+      if (containsProfileId(result, profile)) continue
+
+      result.add(profile)
 
       val xmlActivation = findChildByPath(each, "activation")
       if (xmlActivation != null) {
@@ -515,6 +519,7 @@ class MavenProjectReader(
 
       readModelBody(profile, profile.build, each, projectFile)
     }
+    return result
   }
 
   private suspend fun getVersionFromParentPomRecursively(
@@ -547,12 +552,8 @@ class MavenProjectReader(
     return parentPath
   }
 
-  private fun addProfileIfDoesNotExist(profile: MavenProfile, result: MutableList<MavenProfile>): Boolean {
-    for (each in result) {
-      if (each.id == profile.id) return false
-    }
-    result.add(profile)
-    return true
+  private fun containsProfileId(result: List<MavenProfile>, profile: MavenProfile): Boolean {
+    return result.any { it.id == profile.id }
   }
 
   private fun VirtualFile.hasPomFile(): Boolean {
