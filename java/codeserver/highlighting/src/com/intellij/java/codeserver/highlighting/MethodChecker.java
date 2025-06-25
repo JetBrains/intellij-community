@@ -556,7 +556,7 @@ final class MethodChecker {
     Map<? extends MethodSignature, Set<PsiMethod>> overrideEquivalent = PsiSuperMethodUtil.collectOverrideEquivalents(aClass);
 
     for (Set<PsiMethod> overrideEquivalentMethods : overrideEquivalent.values()) {
-      PsiMethod abstractMethod = JavaPsiMethodUtil.getAbstractMethodToImplementWhenDefaultPresent(aClass, overrideEquivalentMethods);
+      PsiMethod abstractMethod = JavaPsiMethodUtil.getAbstractMethodToImplementWhenDefaultPresent(aClass, overrideEquivalentMethods, false);
       if (abstractMethod != null) {
         PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
         if (anyAbstractMethod != null) {
