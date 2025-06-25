@@ -17,7 +17,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.Data;
 
-      <warning descr="Use of @Data is flagged according to lombok configuration.">@Data</warning>
+      <warning descr="Use of @Data is flagged according to Lombok configuration.">@Data</warning>
       public class DataFlagUsageWarningTest {
         private String field;
       }""";
@@ -38,7 +38,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.Data;
 
-      <error descr="Use of @Data is flagged according to lombok configuration.">@Data</error>
+      <error descr="Use of @Data is flagged according to Lombok configuration.">@Data</error>
       public class DataFlagUsageErrorTest {
         private String field;
       }""";
@@ -80,7 +80,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.Value;
 
-      <warning descr="Use of @Value is flagged according to lombok configuration.">@Value</warning>
+      <warning descr="Use of @Value is flagged according to Lombok configuration.">@Value</warning>
       public class ValueFlagUsageWarningTest {
         private String field;
       }""";
@@ -102,7 +102,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.Getter;
 
       public class GetterFlagUsageWarningTest {
-        <warning descr="Use of @Getter is flagged according to lombok configuration.">@Getter</warning>
+        <warning descr="Use of @Getter is flagged according to Lombok configuration.">@Getter</warning>
         private String field;
       }""";
 
@@ -123,7 +123,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.Setter;
 
       public class SetterFlagUsageWarningTest {
-        <warning descr="Use of @Setter is flagged according to lombok configuration.">@Setter</warning>
+        <warning descr="Use of @Setter is flagged according to Lombok configuration.">@Setter</warning>
         private String field;
       }""";
 
@@ -143,7 +143,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.Builder;
 
-      <warning descr="Use of @Builder is flagged according to lombok configuration.">@Builder</warning>
+      <warning descr="Use of @Builder is flagged according to Lombok configuration.">@Builder</warning>
       public class BuilderFlagUsageWarningTest {
         private String field;
       }""";
@@ -164,7 +164,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.SuperBuilder;
 
-      <warning descr="Use of @SuperBuilder is flagged according to lombok configuration.">@SuperBuilder</warning>
+      <warning descr="Use of @SuperBuilder is flagged according to Lombok configuration.">@SuperBuilder</warning>
       public class SuperBuilderFlagUsageWarningTest {
         private String field;
       }""";
@@ -185,7 +185,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.SuperBuilder;
 
-      <warning descr="Use of @SuperBuilder is flagged according to lombok configuration.">@SuperBuilder</warning>
+      <warning descr="Use of @SuperBuilder is flagged according to Lombok configuration.">@SuperBuilder</warning>
       public class ExperimentalFlagUsageWarningTest {
         private String field;
       }""";
@@ -207,7 +207,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.Getter;
 
       public class GetterLazyFlagUsageWarningTest {
-        <warning descr="Use of @Getter(lazy=true) is flagged according to lombok configuration.">@Getter(lazy=true)</warning>
+        <warning descr="Use of @Getter(lazy=true) is flagged according to Lombok configuration.">@Getter(lazy=true)</warning>
         private final String field = "test";
       }""";
 
@@ -232,7 +232,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import java.lang.annotation.Target;
 
       public class OnXFlagUsageWarningTest {
-        <warning descr="Use of @lombok.Getter(onMethod=...) is flagged according to lombok configuration.">@Getter(onMethod_=@TestAnnotation)</warning>
+        <warning descr="Use of @lombok.Getter(onMethod=...) is flagged according to Lombok configuration.">@Getter(onMethod_=@TestAnnotation)</warning>
         private String field;
 
         @Target(ElementType.METHOD)
@@ -256,7 +256,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.EqualsAndHashCode;
 
-      <warning descr="Use of @EqualsAndHashCode is flagged according to lombok configuration.">@EqualsAndHashCode</warning>
+      <warning descr="Use of @EqualsAndHashCode is flagged according to Lombok configuration.">@EqualsAndHashCode</warning>
       public class EqualsAndHashCodeFlagUsageWarningTest {
         private String field;
       }""";
@@ -277,7 +277,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.ToString;
 
-      <warning descr="Use of @ToString is flagged according to lombok configuration.">@ToString</warning>
+      <warning descr="Use of @ToString is flagged according to Lombok configuration.">@ToString</warning>
       public class ToStringFlagUsageWarningTest {
         private String field;
       }""";
@@ -299,7 +299,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.With;
 
       public class WithFlagUsageWarningTest {
-        <warning descr="Use of @With is flagged according to lombok configuration.">@With</warning>
+        <warning descr="Use of @With is flagged according to Lombok configuration.">@With</warning>
         private final String field = "test";
       }""";
 
@@ -320,7 +320,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.SneakyThrows;
 
       public class SneakyThrowsFlagUsageWarningTest {
-        <warning descr="Use of @SneakyThrows is flagged according to lombok configuration.">@SneakyThrows</warning>
+        <warning descr="Use of @SneakyThrows is flagged according to Lombok configuration.">@SneakyThrows</warning>
         public void method() {
           throw new Exception("Test");
         }
@@ -343,7 +343,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.Synchronized;
 
       public class SynchronizedFlagUsageWarningTest {
-        <warning descr="Use of @Synchronized is flagged according to lombok configuration.">@Synchronized</warning>
+        <warning descr="Use of @Synchronized is flagged according to Lombok configuration.">@Synchronized</warning>
         public void method() {
           System.out.println("Test");
         }
@@ -369,7 +369,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
 
       public class CleanupFlagUsageWarningTest {
         public void method() throws IOException {
-          <warning descr="Use of @Cleanup is flagged according to lombok configuration.">@Cleanup</warning>
+          <warning descr="Use of @Cleanup is flagged according to Lombok configuration.">@Cleanup</warning>
           FileInputStream stream = new FileInputStream("test.txt");
         }
       }""";
@@ -391,7 +391,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.NonNull;
 
       public class NonNullFlagUsageWarningTest {
-        <warning descr="Use of @NonNull is flagged according to lombok configuration.">@NonNull</warning>
+        <warning descr="Use of @NonNull is flagged according to Lombok configuration.">@NonNull</warning>
         private String field;
       }""";
 
@@ -414,7 +414,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import java.util.Collection;
 
       public class DelegateFlagUsageWarningTest {
-        <warning descr="Use of @Delegate is flagged according to lombok configuration.">@Delegate</warning>
+        <warning descr="Use of @Delegate is flagged according to Lombok configuration.">@Delegate</warning>
         private final Collection<String> collection = new ArrayList<>();
       }""";
 
@@ -435,7 +435,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.Builder;
       import lombok.extern.jackson.Jacksonized;
 
-      <warning descr="Use of @Jacksonized is flagged according to lombok configuration.">@Jacksonized</warning>
+      <warning descr="Use of @Jacksonized is flagged according to Lombok configuration.">@Jacksonized</warning>
       @Builder
       public class JacksonizedFlagUsageWarningTest {
         private String field;
@@ -457,7 +457,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.AllArgsConstructor;
 
-      <warning descr="Use of @AllArgsConstructor is flagged according to lombok configuration.">@AllArgsConstructor</warning>
+      <warning descr="Use of @AllArgsConstructor is flagged according to Lombok configuration.">@AllArgsConstructor</warning>
       public class AllArgsConstructorFlagUsageWarningTest {
         private String field1;
         private int field2;
@@ -479,7 +479,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.NoArgsConstructor;
 
-      <warning descr="Use of @NoArgsConstructor is flagged according to lombok configuration.">@NoArgsConstructor</warning>
+      <warning descr="Use of @NoArgsConstructor is flagged according to Lombok configuration.">@NoArgsConstructor</warning>
       public class NoArgsConstructorFlagUsageWarningTest {
         private String field1;
         private int field2;
@@ -501,7 +501,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.RequiredArgsConstructor;
 
-      <warning descr="Use of @RequiredArgsConstructor is flagged according to lombok configuration.">@RequiredArgsConstructor</warning>
+      <warning descr="Use of @RequiredArgsConstructor is flagged according to Lombok configuration.">@RequiredArgsConstructor</warning>
       public class RequiredArgsConstructorFlagUsageWarningTest {
         private final String field1;
         private int field2;
@@ -523,7 +523,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.AllArgsConstructor;
 
-      <warning descr="Use of @AllArgsConstructor is flagged according to lombok configuration.">@AllArgsConstructor</warning>
+      <warning descr="Use of @AllArgsConstructor is flagged according to Lombok configuration.">@AllArgsConstructor</warning>
       public class AnyConstructorFlagUsageWarningTest {
         private String field1;
         private int field2;
@@ -545,7 +545,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.Helper;
 
-      <warning descr="Use of @Helper is flagged according to lombok configuration.">@Helper</warning>
+      <warning descr="Use of @Helper is flagged according to Lombok configuration.">@Helper</warning>
       public class HelperFlagUsageWarningTest {
         public void helperMethod() {
           System.out.println("Helper method");
@@ -568,7 +568,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.UtilityClass;
 
-      <warning descr="Use of @UtilityClass is flagged according to lombok configuration.">@UtilityClass</warning>
+      <warning descr="Use of @UtilityClass is flagged according to Lombok configuration.">@UtilityClass</warning>
       public class UtilityClassFlagUsageWarningTest {
         public static void utilityMethod() {
           System.out.println("Utility method");
@@ -596,7 +596,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
         @Getter
         private String name;
 
-        <warning descr="Use of @Tolerate is flagged according to lombok configuration.">@Tolerate</warning>
+        <warning descr="Use of @Tolerate is flagged according to Lombok configuration.">@Tolerate</warning>
         public void setName(String name, String suffix) {
           this.name = name + suffix;
         }
@@ -619,7 +619,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       import lombok.Locked;
 
       public class LockedFlagUsageWarningTest {
-        <warning descr="Use of @Locked is flagged according to lombok configuration.">@Locked</warning>
+        <warning descr="Use of @Locked is flagged according to Lombok configuration.">@Locked</warning>
         public void lockedMethod() {
           System.out.println("Locked method");
         }
@@ -642,7 +642,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
 
       public class ValLocalVariableFlagUsageWarningTest {
         public void method() {
-          <warning descr="Use of @lombok.val is flagged according to lombok configuration.">val</warning> x = "test";
+          <warning descr="Use of @lombok.val is flagged according to Lombok configuration.">val</warning> x = "test";
         }
       }""";
 
@@ -667,7 +667,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       public class ValParameterFlagUsageWarningTest {
         public void method() {
           List<String> items = Arrays.asList("a", "b", "c");
-          for (<warning descr="Use of @lombok.val is flagged according to lombok configuration.">val</warning> item : items) {
+          for (<warning descr="Use of @lombok.val is flagged according to Lombok configuration.">val</warning> item : items) {
             System.out.println(item);
           }
         }
@@ -691,7 +691,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
 
       public class VarLocalVariableFlagUsageWarningTest {
         public void method() {
-          <warning descr="Use of @lombok.var is flagged according to lombok configuration.">var</warning> x = "test";
+          <warning descr="Use of @lombok.var is flagged according to Lombok configuration.">var</warning> x = "test";
         }
       }""";
 
@@ -716,7 +716,7 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
       public class VarParameterFlagUsageWarningTest {
         public void method() {
           List<String> items = Arrays.asList("a", "b", "c");
-          for (<warning descr="Use of @lombok.var is flagged according to lombok configuration.">var</warning> item : items) {
+          for (<warning descr="Use of @lombok.var is flagged according to Lombok configuration.">var</warning> item : items) {
             System.out.println(item);
           }
         }
