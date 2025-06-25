@@ -225,7 +225,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   public void setPluginUpdatesService(@NotNull PluginUpdatesService service) {
     myPluginUpdatesService = service;
-    myPluginUpdatesService.setFilter(this::isEnabled);
   }
 
   public PluginUpdatesService getPluginUpdatesService() {

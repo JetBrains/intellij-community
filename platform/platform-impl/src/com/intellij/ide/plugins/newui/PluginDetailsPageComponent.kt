@@ -171,7 +171,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     nameAndButtons = BaselinePanel(12, false)
     customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
     pluginManagerCustomizer = if (Registry.`is`("reworked.plugin.manager.enabled")) {
-      PluginManagerCustomizer.EP_NAME.extensionList.first()
+      PluginManagerCustomizer.EP_NAME.extensionList.firstOrNull()
     }
     else null
 
@@ -428,21 +428,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
     updateButton!!.addActionListener {
-      val modalityState = ModalityState.stateForComponent(updateButton!!)
-      val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
-                                                                                        descriptorForActions!!,
-                                                                                        updateDescriptor,
-                                                                                        modalityState)?.action
-      if (customizedAction != null) {
-        customizedAction()
-      }
-      else {
-        pluginModel.installOrUpdatePlugin(
-          this,
-          descriptorForActions!!, updateDescriptor,
-          modalityState,
-        )
-      }
+      updatePlugin()
     }
 
     nameAndButtons.addButtonComponent(createInstallButton().also { installButton = it }.getComponent())
@@ -464,6 +450,24 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   fun setOnlyUpdateMode() {
     nameAndButtons!!.removeButtons()
     emptyPanel!!.border = null
+  }
+
+  private fun updatePlugin() {
+    val modalityState = ModalityState.stateForComponent(updateButton!!)
+    val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
+                                                                                      descriptorForActions!!,
+                                                                                      updateDescriptor,
+                                                                                      modalityState)?.action
+    if (customizedAction != null) {
+      customizedAction()
+    }
+    else {
+      pluginModel.installOrUpdatePlugin(
+        this,
+        descriptorForActions!!, updateDescriptor,
+        modalityState,
+      )
+    }
   }
 
   private fun createScrollPane(component: JComponent): JBScrollPane {
@@ -532,20 +536,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     else {
       enableDisableController?.update()
     }
-  }
-
-  private fun customizeUpdateAction() {
-    if (pluginManagerCustomizer == null) return
-    val uiModel = descriptorForActions ?: return
-    val updateModel = updateDescriptor ?: return
-    val component = updateButton ?: return
-    val modalityState = ModalityState.stateForComponent(component)
-    val customizationModel = pluginManagerCustomizer.getUpdateButtonCustomizationModel(pluginModel,
-                                                                                       uiModel,
-                                                                                       updateModel,
-                                                                                       modalityState) ?: return
-
-
   }
 
   private fun updateAdditionalText() {
