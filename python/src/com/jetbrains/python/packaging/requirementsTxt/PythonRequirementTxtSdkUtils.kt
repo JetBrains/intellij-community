@@ -15,10 +15,7 @@ import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.associatedModuleDir
-import com.jetbrains.python.sdk.associatedModuleNioPath
-import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -59,7 +56,7 @@ object PythonRequirementTxtSdkUtils {
       }
     }
     else {
-      PyPackageCoroutine.Companion.launch(project) {
+      PyPackageCoroutine.launch(project) {
         writeAction {
           sdkModificator.commitChanges()
         }
@@ -104,10 +101,14 @@ object PythonRequirementTxtSdkUtils {
   private fun getRequirementsTxtFromModule(module: Module): String? {
     val settings = PyPackageRequirementsSettings.getInstance(module)
 
+    if (module.pythonSdk == null)
+      return null
+
     val requirementsPath = settings.state.myRequirementsPath
-    settings.state.myRequirementsPath = ""
-    return if (requirementsPath.isNotBlank() && requirementsPath != PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
+
+    return if (requirementsPath.isNotBlank() && requirementsPath != PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT) {
       requirementsPath
+    }
     else
       null
   }
