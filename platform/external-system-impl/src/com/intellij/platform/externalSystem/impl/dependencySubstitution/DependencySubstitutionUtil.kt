@@ -32,17 +32,14 @@ object DependencySubstitutionUtil {
       val libraryToModuleMap = buildLibraryToModuleMap(storage)
       for (module in storage.entities<ModuleEntity>()) {
         storage.modifyModuleEntity(module) {
-          updateDependencySubstitution(storage, libraryToModuleMap)
+          updateDependencySubstitution(libraryToModuleMap)
         }
       }
     }
   }
 
-  private fun ModuleEntity.Builder.updateDependencySubstitution(
-    storage: MutableEntityStorage,
-    libraryToModuleMap: Map<LibraryId, ModuleId>,
-  ) {
-    val ownerId = ModuleId(name)
+  private fun ModuleEntity.Builder.updateDependencySubstitution(libraryToModuleMap: Map<LibraryId, ModuleId>) {
+    val substitutions = substitutions.associateByTo(LinkedHashMap()) { it.module to it.scope }
 
     // Tries to replace outdated module substitution by original library
     for ((dependencyOrder, dependency) in dependencies.withIndex()) {
@@ -52,9 +49,7 @@ object DependencySubstitutionUtil {
         val scope = dependency.scope
         val exported = dependency.exported
 
-        val substitutionId = DependencySubstitutionId(ownerId, moduleId, scope)
-
-        val substitution = storage.resolve(substitutionId) ?: continue
+        val substitution = substitutions[moduleId to scope] ?: continue
 
         val libraryId = substitution.library
 
@@ -62,8 +57,7 @@ object DependencySubstitutionUtil {
           continue
         }
 
-        storage.removeEntity(substitution)
-
+        substitutions.remove(moduleId to scope)
         dependencies[dependencyOrder] = LibraryDependency(libraryId, exported, scope)
       }
     }
@@ -78,11 +72,12 @@ object DependencySubstitutionUtil {
 
         val moduleId = libraryToModuleMap[libraryId] ?: continue
 
-        storage.addEntity(DependencySubstitutionEntity(ownerId, libraryId, moduleId, scope, entitySource))
-
+        substitutions[moduleId to scope] = DependencySubstitutionEntity(libraryId, moduleId, scope, entitySource)
         dependencies[dependencyOrder] = ModuleDependency(moduleId, exported, scope, productionOnTest = false)
       }
     }
+
+    this.substitutions = substitutions.values.toList()
   }
 
   private fun buildLibraryToModuleMap(storage: EntityStorage): Map<LibraryId, ModuleId> {
