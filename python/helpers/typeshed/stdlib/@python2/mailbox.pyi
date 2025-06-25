@@ -1,5 +1,3 @@
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 import email.message
 from types import TracebackType
 from typing import IO, Any, AnyStr, Callable, Generic, Iterable, Iterator, Mapping, Protocol, Sequence, Text, TypeVar, overload

@@ -1,5 +1,3 @@
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 import BaseHTTPServer
 from StringIO import StringIO
 from typing import IO, Any, AnyStr, Mapping

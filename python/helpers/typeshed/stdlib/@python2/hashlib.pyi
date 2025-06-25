@@ -1,7 +1,5 @@
 _DataType = str | unicode | bytearray | buffer | memoryview
 
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 class _hash(object):  # This is not actually in the module namespace.
     @property
     def name(self) -> str: ...

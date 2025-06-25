@@ -1,5 +1,3 @@
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 from _typeshed import Self
 from abc import ABCMeta, abstractmethod

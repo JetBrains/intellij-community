@@ -1,5 +1,3 @@
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 from sre_constants import (
     SRE_FLAG_DEBUG as SRE_FLAG_DEBUG,
     SRE_FLAG_DOTALL as SRE_FLAG_DOTALL,

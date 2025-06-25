@@ -1,5 +1,3 @@
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 from email._parseaddr import (
     AddressList as _AddressList,
     mktime_tz as mktime_tz,

@@ -1,5 +1,3 @@
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 # Stub-only types. This module does not exist at runtime.
 
 from typing import Any, Protocol

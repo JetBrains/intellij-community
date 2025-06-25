@@ -1,5 +1,3 @@
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 import subprocess
 import time
 from builtins import list as List  # alias to avoid name clashes with `IMAP4.list`

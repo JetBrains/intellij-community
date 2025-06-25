@@ -2,8 +2,6 @@ __version__: str
 PyCF_ONLY_AST: int
 _identifier = str
 
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 class AST:
     _attributes: tuple[str, ...]
     _fields: tuple[str, ...]

@@ -1,5 +1,3 @@
-#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 from types import CodeType, FrameType, TracebackType
 from typing import IO, Any, Callable, Iterable, Mapping, SupportsInt, TypeVar
 from typing_extensions import ParamSpec
