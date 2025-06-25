@@ -74,6 +74,8 @@ public class CommonDataKeys {
    * <p/>
    * Note that if {@link DataContext} has a value for {@link #PSI_FILE} key it will automatically return the corresponding {@link VirtualFile}
    * for this key if explicit value isn't provided. Also it'll return the containing file if a value for {@link #PSI_ELEMENT} key is provided.
+   * <br/>
+   * If there is more than one {@link VirtualFile} in the context, the first one will be returned.
    *
    * @see #VIRTUAL_FILE_ARRAY
    */
