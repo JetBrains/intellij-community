@@ -111,7 +111,7 @@ internal class BytecodeToolWindowPanel(
   }
 
   fun updateTextInEditor() {
-    if (classFile == null) throw IllegalStateException("Class file must not be null at this point")
+    if (classFile == null) throw IllegalStateException("Class file must not be null")
     val byteCodeText = deserializeBytecode(classFile)
     bytecodeEditor.document.putUserData(BYTECODE_WITH_DEBUG_INFO, byteCodeText) // include debug info for selection matching
     runWriteAction {
