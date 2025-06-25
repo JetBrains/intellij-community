@@ -246,7 +246,7 @@ object ActionUtil {
       presentation.isEnabledAndVisible = false
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false)
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false)
-      return AnActionResult.IGNORED
+      return AnActionResult.ignored("action is not compatible with LightEdit")
     }
     val wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB)
     val dumbMode = isDumbMode(e.project)
@@ -389,10 +389,10 @@ object ActionUtil {
       if (event.presentation.getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) != false) {
         showDumbModeWarning(project, action, event)
       }
-      return AnActionResult.IGNORED
+      return AnActionResult.ignored("action is not DumbAware")
     }
     if (!event.presentation.isEnabled) {
-      return AnActionResult.IGNORED
+      return AnActionResult.ignored("action is disabled")
     }
     val actionManager = event.actionManager as ActionManagerEx
     val result = actionManager.performWithActionCallbacks(action, event) {
