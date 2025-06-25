@@ -55,7 +55,7 @@ abstract class AbstractCoroutineViewJobHierarchyTest : KotlinDescriptorTestCaseW
     }
 
     private fun printInfo(info: CoroutineInfoData, jobToChildCoroutineInfos: Map<String?, List<CoroutineInfoData>>, indent: Int) {
-        out(indent, info.name + " " + info.state)
+        out(indent, info.name)
         val children = jobToChildCoroutineInfos[info.job] ?: emptyList()
         for (child in children) {
             printInfo(child, jobToChildCoroutineInfos, indent + 1)
