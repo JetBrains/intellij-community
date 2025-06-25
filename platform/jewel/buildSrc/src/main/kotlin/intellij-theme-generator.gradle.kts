@@ -27,8 +27,8 @@ extension.all {
 
             outputFile = targetDir.file(paths)
             themeClassName = this@all.themeClassName
-            ideaVersion = this@all.ideaVersion
-            themeFile = project.layout.file(this@all.themeFile.map { rootProject.file(it) })
+            themeFilePath = this@all.themeFilePath
+            themeFile = project.layout.file(themeFilePath.map { rootProject.file(it) })
         }
 
     tasks {

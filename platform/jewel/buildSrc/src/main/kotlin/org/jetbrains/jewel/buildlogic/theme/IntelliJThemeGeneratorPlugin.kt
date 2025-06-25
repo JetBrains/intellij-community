@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.buildlogic.theme
 
 import com.squareup.kotlinpoet.ClassName
-import java.net.URI
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -28,9 +27,8 @@ class ThemeGeneration(val name: String, project: Project) {
 
     val targetDir: DirectoryProperty =
         project.objects.directoryProperty().convention(project.layout.buildDirectory.dir("generated/theme"))
-    val ideaVersion = project.objects.property<String>()
     val themeClassName = project.objects.property<String>()
-    val themeFile = project.objects.property<String>()
+    val themeFilePath = project.objects.property<String>()
 }
 
 @CacheableTask
@@ -38,11 +36,12 @@ abstract class IntelliJThemeGeneratorTask : DefaultTask() {
 
     @get:OutputFile abstract val outputFile: RegularFileProperty
 
-    @get:Input abstract val ideaVersion: Property<String>
-
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val themeFile: RegularFileProperty
+
+    @get:Input
+    abstract val themeFilePath: Property<String>
 
     @get:Input abstract val themeClassName: Property<String>
 
@@ -60,7 +59,7 @@ abstract class IntelliJThemeGeneratorTask : DefaultTask() {
         val themeDescriptor = themeFile.inputStream().use { json.decodeFromStream<IntellijThemeDescriptor>(it) }
 
         val className = ClassName.bestGuess(themeClassName.get())
-        val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, ideaVersion.get(), themeFile.path)
+        val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, themeFilePath.get())
 
         val outputFile = outputFile.get().asFile
         logger.lifecycle(
