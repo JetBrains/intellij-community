@@ -236,16 +236,3 @@ suspend fun Sdk.setAssociationToPath(path: String?) {
     modificator.commitChanges()
   }
 }
-
-@ApiStatus.Internal
-object PythonSdkAdditionalDataUtils {
-  @JvmStatic
-  fun associateSdkWithModulePath(sdk: Sdk, module: Module) {
-    val sdkModificator = sdk.sdkModificator
-    val additionalData = sdkModificator.sdkAdditionalData as? PythonSdkAdditionalData ?: return
-    additionalData.associatedModulePath = module.basePath ?: return
-    ApplicationManager.getApplication().runWriteAction {
-      sdkModificator.commitChanges()
-    }
-  }
-}

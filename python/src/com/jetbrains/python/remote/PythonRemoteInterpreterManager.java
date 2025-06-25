@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.Collection;
 
 public abstract class PythonRemoteInterpreterManager {
   public static final ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
@@ -40,8 +38,6 @@ public abstract class PythonRemoteInterpreterManager {
   public static final Key<PathMappingSettings> ADDITIONAL_MAPPINGS = Key.create("ADDITIONAL_MAPPINGS");
 
   public static final String PYTHON_PREFIX = "python";
-
-  public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, @NotNull Collection<Sdk> existingSdks);
 
   public static @Nullable PythonRemoteInterpreterManager getInstance() {
     return ContainerUtil.getFirstItem(EP_NAME.getExtensionList());
@@ -114,8 +110,6 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract String @NotNull [] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
     throws ExecutionException, InterruptedException;
-
-  public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;
 
   public static class PyHelpersNotReadyException extends RuntimeException {
     public PyHelpersNotReadyException(Throwable cause) {
