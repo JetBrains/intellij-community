@@ -280,16 +280,6 @@ internal class FilteringBranchesTree(
     component.addTreeSelectionListener { treeStateHolder.setStateProvider(treeStateProvider) }
   }
 
-  fun update(initial: Boolean, repaint: Boolean) {
-    runPreservingTreeState(initial) {
-      searchModel.updateStructure()
-    }
-    if (repaint) {
-      tree.revalidate()
-      tree.repaint()
-    }
-  }
-
   private fun runPreservingTreeState(loadSaved: Boolean, runnable: () -> Unit) {
     if (Registry.`is`("git.branches.panel.persist.tree.state")) {
       val treeState = if (loadSaved) treeStateHolder.getInitialTreeState() else TreeState.createOn(tree, root)
