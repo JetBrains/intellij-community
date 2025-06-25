@@ -25,6 +25,7 @@ import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -228,6 +229,22 @@ class PluginManagerTest {
       DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator())
   }
 
+  // TODO probably should be moved elsewhere
+  @Test
+  fun `unfulfilled os requirement triggers only on required dependencies`() {
+    data class PluginDependency(override val pluginId: PluginId, override val isOptional: Boolean) : IdeaPluginDependency
+    for (module in IdeaPluginOsRequirement.entries) {
+      val required = object : TestIdeaPluginDescriptor() {
+        override fun getDependencies(): List<IdeaPluginDependency> = listOf(PluginDependency(module.moduleId, false))
+      }
+      val optional = object : TestIdeaPluginDescriptor() {
+        override fun getDependencies(): List<IdeaPluginDependency> = listOf(PluginDependency(module.moduleId, true))
+      }
+      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(required)).isEqualTo(module.takeIf { !module.isHostOs() })
+      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(optional)).isEqualTo(null)
+    }
+  }
+
   companion object {
     private val testDataPath: String
       get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort"
@@ -301,8 +318,7 @@ class PluginManagerTest {
         override fun getDependencies(): List<IdeaPluginDependency> = listOf(
           object : IdeaPluginDependency {
             override val pluginId: PluginId = PluginId.getId(platformId)
-            override val isOptional: Boolean
-              get() = throw AssertionError("unexpected call")
+            override val isOptional: Boolean = false
           }
         )
       }
