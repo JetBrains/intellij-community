@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.project.repository.ProjectRepos
 import com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 
@@ -16,6 +17,7 @@ class GradleProjectRepositoriesImportingTest : GradleImportingTestCase() {
     const val IVY_REPO_NAME = "ivyRepository"
     const val MAVEN_CENTRAL_REPO_NAME = "MavenRepo"
     const val FLAT_FILE_REPO_NAME = "flatFileRepository"
+    const val IVY_REPO_WITHOUT_URL_NAME = "ivyRepositoryWithoutUrl"
 
     const val MAVEN_REPO_DECLARATION = """
       maven { 
@@ -35,7 +37,41 @@ class GradleProjectRepositoriesImportingTest : GradleImportingTestCase() {
         dirs '$FLAT_FILE_REPO_NAME'
       }
       """
+    const val IVY_REPO_WITHOUT_URL_NAME_DECLARATION = """
+      ivy {
+        name = "$IVY_REPO_WITHOUT_URL_NAME"
+        artifactPattern '[organisation]/[artifact]-[revision](-[classifier]).[ext]'
+        ivyPattern '[organisation]/[module]-[revision].xml'
+        content {
+          includeGroup 'org.example'
+        }
+      }
+      """
     const val MAVEN_CENTRAL_REPO_DECLARATION = "mavenCentral()"
+  }
+
+  @Test
+  @TargetVersions("5.6+")
+  fun testUrlProjectRepositoriesWithoutUrlAreRecognised() {
+    createBuildFile {
+      withJavaPlugin()
+      addRepository(IVY_REPO_WITHOUT_URL_NAME_DECLARATION)
+    }
+
+    importProject()
+
+    val repositories = ExternalSystemApiUtil.getChildren(
+      ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath)!!,
+      ProjectRepositoryData.KEY
+    )
+      .map { it.data }
+      .associateBy { it.name }
+    assertEquals(1, repositories.size)
+
+    repositories.getUrlRepository(IVY_REPO_WITHOUT_URL_NAME).run {
+      assertEquals(UrlRepositoryData.Type.IVY, type)
+      assertNull(url)
+    }
   }
 
   @Test
