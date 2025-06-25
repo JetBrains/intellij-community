@@ -87,10 +87,11 @@
   </extensions>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
-    <action id="LoadMainKtsConfiguration"
-            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadMainKtsScriptDependenciesAction"
+    <action id="ReloadScriptConfiguration"
+            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfiguration"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
-      <add-to-group group-id="EditorContextBarMenu"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="meta shift C"/>
+      <add-to-group group-id="RunContextGroup"/>
     </action>
   </actions>
 </idea-plugin>

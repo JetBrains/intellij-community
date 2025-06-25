@@ -6,10 +6,8 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRIPTS_MODULE_NAME
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import java.io.File
 import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
@@ -27,26 +25,6 @@ fun ScriptDefinition.getConfigurationResolver(project: Project): ScriptRefinedCo
 fun ScriptDefinition.getWorkspaceModelManager(project: Project): ScriptWorkspaceModelManager =
     compilationConfiguration[ScriptCompilationConfiguration.ide.scriptWorkspaceModelManagerDelegate]?.invoke()
         ?: DefaultScriptConfigurationHandler.getInstance(project)
-
-interface ScriptRefinedConfigurationResolver {
-    suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk?
-    fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk?
-}
-
-interface ScriptWorkspaceModelManager {
-    suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>)
-
-    fun isModuleExist(
-        project: Project, scriptFile: VirtualFile, definition: ScriptDefinition
-    ): Boolean = project.workspaceModel.currentSnapshot.contains(getModuleId(project, scriptFile, definition))
-
-    fun getModuleId(
-        project: Project, scriptFile: VirtualFile, definition: ScriptDefinition
-    ): ModuleId {
-        val scriptModuleLocation = project.scriptModuleRelativeLocation(scriptFile)
-        return ModuleId("$KOTLIN_SCRIPTS_MODULE_NAME.${definition.name}.$scriptModuleLocation")
-    }
-}
 
 fun Project.scriptModuleRelativeLocation(scriptFile: VirtualFile): String {
     val scriptPath = this.guessProjectDir()?.path?.let {

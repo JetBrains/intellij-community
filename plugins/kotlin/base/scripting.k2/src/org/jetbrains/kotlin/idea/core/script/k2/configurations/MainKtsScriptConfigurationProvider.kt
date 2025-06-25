@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRIPTS_MODULE_NAME
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -48,7 +50,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
 
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data[virtualFile]
 
-    fun removeConfiguration(virtualFile: VirtualFile) {
+    override fun remove(virtualFile: VirtualFile) {
         importedScripts.removeAll(virtualFile)
         data.remove(virtualFile)
     }
@@ -146,7 +148,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             val existingModule = storageToUpdate.resolve(scriptModuleId)
             if (existingModule == null) {
                 storageToUpdate.addEntity(
-                    ModuleEntity.Companion(scriptModuleId.name, allDependencies, source)
+                    ModuleEntity(scriptModuleId.name, allDependencies, source)
                 )
             } else {
                 storageToUpdate.modifyModuleEntity(existingModule) {
