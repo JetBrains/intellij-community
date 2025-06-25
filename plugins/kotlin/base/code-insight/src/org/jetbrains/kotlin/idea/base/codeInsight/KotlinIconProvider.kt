@@ -91,7 +91,7 @@ object KotlinIconProvider {
             KaSymbolVisibility.PUBLIC -> PlatformIcons.Public
             KaSymbolVisibility.PROTECTED -> PlatformIcons.Protected
             KaSymbolVisibility.PRIVATE -> PlatformIcons.Private
-            KaSymbolVisibility.INTERNAL -> PlatformIcons.Private
+            KaSymbolVisibility.INTERNAL -> PlatformIcons.Local
             else -> return null
         }
         return IconManager.getInstance().getPlatformIcon(id)
