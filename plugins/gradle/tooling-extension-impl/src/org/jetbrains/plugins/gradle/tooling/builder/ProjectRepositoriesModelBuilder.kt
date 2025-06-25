@@ -70,19 +70,20 @@ class ProjectRepositoriesModelBuilder : ModelBuilderService {
 
   private class FileRepository(override val name: String, val files: List<String>) : Repository
 
-  private class UrlRepository(override val name: String, val url: String, val type: UrlRepositoryType) : Repository
+  private class UrlRepository(override val name: String, val url: String?, val type: UrlRepositoryType) : Repository
 
   private enum class UrlRepositoryType {
     MAVEN, IVY, OTHER
   }
 
   private fun getRepositories(project: Project): List<Repository> {
+    @Suppress("UNNECESSARY_SAFE_CALL") // url is nullable; e.g, an ivy repository could be declared with ivyPattern instead of url
     return project.repositories
       .map {
         return@map when (it) {
-          is MavenArtifactRepository -> UrlRepository(it.name, it.url.toString(), UrlRepositoryType.MAVEN)
-          is IvyArtifactRepository -> UrlRepository(it.name, it.url.toString(), UrlRepositoryType.IVY)
-          is UrlArtifactRepository -> UrlRepository(it.name, it.url.toString(), UrlRepositoryType.OTHER)
+          is MavenArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.MAVEN)
+          is IvyArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.IVY)
+          is UrlArtifactRepository -> UrlRepository(it.name, it.url?.toString(), UrlRepositoryType.OTHER)
           is FlatDirectoryArtifactRepository -> FileRepository(it.name, it.dirs.map { file -> file.path })
           else -> DeclaredRepositoryImpl(it.name)
         }
