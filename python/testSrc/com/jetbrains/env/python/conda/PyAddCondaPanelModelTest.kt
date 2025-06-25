@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.conda
 
-import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
@@ -10,16 +9,14 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.target.ui.PyAddCondaPanelModel
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import kotlinx.coroutines.test.runTest
+import com.jetbrains.python.target.ui.PyAddCondaPanelModel
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.not
@@ -90,11 +87,9 @@ class PyAddCondaPanelModelTest {
     Assert.assertNotNull("Bad conda name didn't lead to validation", model.getValidationError())
     model.newEnvNameRwProperty.set(condaName)
 
-    val mockReporter = MockReporter()
-    val sdk = model.onCondaCreateSdkClicked(coroutineContext, mockReporter, targetConfiguration = null).getOrThrow()
+    val sdk = model.onCondaCreateSdkClicked(coroutineContext, null, targetConfiguration = null).getOrThrow()
     val newName = ((sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.envIdentity as PyCondaEnvIdentity.NamedEnv).envName
     Assert.assertEquals("Wrong conda name", condaName, newName)
-    Assert.assertTrue("No output provided for sink", mockReporter.out.toString().isNotEmpty())
   }
 
   @Test

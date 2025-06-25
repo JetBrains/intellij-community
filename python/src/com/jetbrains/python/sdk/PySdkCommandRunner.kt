@@ -5,7 +5,7 @@ import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -27,7 +27,7 @@ suspend fun runExecutableWithProgress(
   timeout: Duration = 10.minutes,
   env: Map<String, String> = emptyMap(),
   vararg args: String,
-): PyExecResult<String> {
+): PyResult<String> {
   val execOptions = ExecOptions(workingDirectory = workDir, timeout = timeout, env = env)
   return ExecService().execGetStdout(executable, args.toList(), execOptions)
 }

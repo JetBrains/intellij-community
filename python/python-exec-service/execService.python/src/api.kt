@@ -9,7 +9,6 @@ import com.intellij.python.community.execService.python.advancedApi.ExecutablePy
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetVersion
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
@@ -24,7 +23,7 @@ suspend fun ExecService.executeHelper(
   args: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyExecResult<String> =
+): PyResult<String> =
   executeHelperAdvanced(ExecutablePython.vanillaExecutablePython(python), helper, args, options, procListener, ZeroCodeStdoutTransformer)
 
 /**

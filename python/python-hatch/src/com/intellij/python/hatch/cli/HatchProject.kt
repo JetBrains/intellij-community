@@ -4,7 +4,7 @@ package com.intellij.python.hatch.cli
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -62,7 +62,7 @@ class HatchProject(runtime: HatchRuntime) : HatchCommand("project", runtime) {
   /**
    * Display project metadata
    */
-  suspend fun metadata(): PyExecResult<Metadata> {
+  suspend fun metadata(): PyResult<Metadata> {
     return executeAndHandleErrors("metadata") { processOutput ->
       val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString
                    ?: return@executeAndHandleErrors Result.failure(null)

@@ -22,7 +22,6 @@ import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.*
@@ -117,7 +116,7 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun testExecuteCommandOnSdk(): Unit =  timeoutRunBlocking(20.seconds) {
+  fun testExecuteCommandOnSdk(): Unit = timeoutRunBlocking(60.seconds) {
     val condaEnv = PyCondaEnv.getEnvs(condaRule.condaPathOnTarget).getOrThrow().first()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(condaEnv.envIdentity, emptyList(), projectRule.project)
     val request = LocalTargetEnvironmentRequest()

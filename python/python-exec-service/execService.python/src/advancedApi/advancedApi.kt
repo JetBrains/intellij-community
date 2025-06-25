@@ -6,7 +6,6 @@ import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.impl.validatePythonAndGetVersionImpl
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
@@ -21,7 +20,7 @@ suspend fun <T> ExecService.executePythonAdvanced(
   argsBuilder: suspend ArgsBuilder.() -> Unit = {},
   options: ExecOptions = ExecOptions(),
   processInteractiveHandler: ProcessInteractiveHandler<T>,
-): PyExecResult<T> =
+): PyResult<T> =
   executeAdvanced(python.binary, {
     addArgs(*python.args.toTypedArray())
     argsBuilder()
@@ -39,7 +38,7 @@ suspend fun <T> ExecService.executeHelperAdvanced(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyExecResult<T> = executePythonAdvanced(python, {
+): PyResult<T> = executePythonAdvanced(python, {
   addLocalFile(PythonHelpersLocator.findPathInHelpers(helper))
   addArgs(*args.toTypedArray())
 

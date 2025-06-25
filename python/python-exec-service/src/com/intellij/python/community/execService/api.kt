@@ -15,7 +15,6 @@ import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
@@ -38,7 +37,7 @@ suspend fun ExecService.execGetStdout(
   args: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyExecResult<String> = execute(
+): PyResult<String> = execute(
   binary = binary,
   args = args,
   options = options,
@@ -74,7 +73,7 @@ suspend fun ExecService.execGetStdoutInShell(
   args: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyExecResult<String> {
+): PyResult<String> {
   val (shell, arg) = eelApi.exec.getShell()
   return execGetStdout(shell.asNioPath(), listOf(arg, commandForShell) + args, options, procListener)
 }
@@ -94,7 +93,7 @@ suspend fun <T> ExecService.execute(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyExecResult<T> {
+): PyResult<T> {
   return reportRawProgress { reporter ->
     val ansiDecoder = AnsiEscapeDecoder()
     val listener = procListener ?: PyProcessListener {
