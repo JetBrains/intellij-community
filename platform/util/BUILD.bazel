@@ -124,6 +124,7 @@ jvm_library(
     "@lib//:mockito",
     "@lib//:mockito-kotlin",
     "@lib//:jimfs",
+    "//platform/ijent/buildConstants",
   ],
   runtime_deps = [
     ":util-tests_test_resources",
