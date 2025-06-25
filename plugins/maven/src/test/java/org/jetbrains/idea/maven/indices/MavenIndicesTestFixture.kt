@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry.Companion.get
@@ -72,7 +73,7 @@ class MavenIndicesTestFixture(
     }
     f.join()
     this.indicesManager.waitForGavUpdateCompleted()
-    UIUtil.dispatchAllInvocationEvents()
+    runInEdt { UIUtil.dispatchAllInvocationEvents() }
   }
 
   @Throws(IOException::class)
