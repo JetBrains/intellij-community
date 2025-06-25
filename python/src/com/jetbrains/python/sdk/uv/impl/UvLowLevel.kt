@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.util.io.delete
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.*
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
@@ -69,7 +70,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
     val path = VirtualEnvReader.Instance.findPythonInPythonRoot(cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
     if (path == null) {
-      return PyResult.localizedError("failed to initialize uv environment")
+      return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
     }
 
     return PyResult.success(path)
@@ -81,7 +82,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
     val uvDir = tryResolvePath(out)
     if (uvDir == null) {
-      return PyResult.localizedError("failed to detect uv python directory")
+      return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.detect.uv.python.directory"))
     }
 
     // TODO: ask for json output format
@@ -233,7 +234,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   fun parseUvPythonList(uvDir: Path, out: String): Set<Path> {
     val lines = out.lines()
     val pythons = lines.mapNotNull { line ->
-      var arrow = line.lastIndexOf("->").takeIf { it > 0 } ?: line.length
+      val arrow = line.lastIndexOf("->").takeIf { it > 0 } ?: line.length
 
       val pythonAndPath = line
         .substring(0, arrow)

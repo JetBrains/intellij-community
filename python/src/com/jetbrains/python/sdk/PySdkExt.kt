@@ -96,7 +96,7 @@ fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
 }
 // TODO: PythonInterpreterService: get system pythons
 /**
- * @param context used to get [BASE_DIR] in [com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.suggestLocalHomePaths]
+ * @param context used to get [BASE_DIR] in [VirtualEnvSdkFlavor.suggestLocalHomePaths]
  */
 @JvmOverloads
 fun detectSystemWideSdks(
@@ -296,18 +296,18 @@ internal fun PyDetectedSdk.setupAssociatedLogged(existingSdks: List<Sdk>, associ
 
 fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): PyResult<Sdk> {
   if (!sdkSeemsValid) {
-    return PyResult.localizedError("sdk is not valid")
+    return PyResult.localizedError(PyBundle.message("python.sdk.error.invalid.interpreter.selected", homePath))
   }
 
   val homePath = this.homePath
   if (homePath == null) {
     // e.g. directory is not there anymore
-    return PyResult.localizedError("homePath is null")
+    return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
   }
 
   val homeDir = this.homeDirectory
   if (homeDir == null) {
-    return PyResult.localizedError("homeDir is null")
+    return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
   }
 
   val suggestedName = if (doAssociate) {
@@ -508,12 +508,13 @@ fun Sdk?.isTargetBased(): Boolean = this != null && targetEnvConfiguration != nu
 /**
  *  Additional data if sdk is target-based
  */
-val Sdk.targetAdditionalData get():PyTargetAwareAdditionalData? = sdkAdditionalData as? PyTargetAwareAdditionalData
+val Sdk.targetAdditionalData: PyTargetAwareAdditionalData?
+  get():PyTargetAwareAdditionalData? = sdkAdditionalData as? PyTargetAwareAdditionalData
 
 /**
  * Returns target environment if configuration is target api based
  */
-val Sdk.targetEnvConfiguration
+val Sdk.targetEnvConfiguration: TargetEnvironmentConfiguration?
   get():TargetEnvironmentConfiguration? = (sdkAdditionalData as? TargetBasedSdkAdditionalData)?.targetEnvironmentConfiguration
 
 /**

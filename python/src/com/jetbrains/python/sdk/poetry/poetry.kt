@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.util.PathUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
@@ -20,10 +21,11 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.util.regex.Pattern
+import javax.swing.Icon
 import kotlin.io.path.pathString
 
 // TODO: Provide a special icon for poetry
-val POETRY_ICON = PythonIcons.Python.Origami
+val POETRY_ICON: Icon = PythonIcons.Python.Origami
 
 @Internal
 fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getFileName(basePath.pathString)})"
@@ -49,8 +51,9 @@ suspend fun setupPoetrySdk(
   installPackages: Boolean,
   poetryPath: String? = null,
 ): PyResult<Sdk> {
-  val projectPath = (newProjectPath ?: module?.basePath ?: project?.basePath)?.let { Path.of(it) }
-                    ?: return PyResult.localizedError("Can't find path to project or module")
+  val pathString = newProjectPath ?: module?.basePath ?: project?.basePath
+  val projectPath = pathString?.let { Path.of(it) }
+                    ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", pathString))
 
   val actualProject = project ?: module?.project
   val pythonExecutablePath = if (actualProject != null) {

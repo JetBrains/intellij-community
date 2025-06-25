@@ -105,19 +105,19 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val basePath = module.basePath?.let { Path.of(it) }
       if (basePath == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find module base path")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",module.basePath))
       }
 
       val poetry = setupPoetry(basePath, null, true, findAmongRoots(module, PY_PROJECT_TOML) == null).getOr { return@withBackgroundProgress it }
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(poetry)) }
       if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find python executable in $poetry")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", poetry))
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.pathString)
       if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find python executable in $poetry")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", path))
       }
 
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")

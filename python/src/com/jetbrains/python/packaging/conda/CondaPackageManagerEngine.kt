@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -59,7 +60,7 @@ internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageMa
   private fun getEnvData(): PyCondaEnv = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env
 
   private fun PythonPackageInstallRequest.buildInstallationArguments(): PyResult<List<String>> = when (this) {
-    is PythonPackageInstallRequest.ByLocation -> PyResult.localizedError("CondaManager does not support installing from location uri")
+    is PythonPackageInstallRequest.ByLocation -> PyResult.localizedError(PyBundle.message("python.packaging.conda.does.not.support.location.uri"))
     is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
       val condaSpecs = specifications.filter { it.repository is CondaPackageRepository }
       val specs = condaSpecs.map { it.nameWithVersionSpec }

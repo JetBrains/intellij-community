@@ -40,9 +40,9 @@ import javax.swing.JPanel
 import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
-internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
+private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 
-  private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
+internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, Source.CONFIGURATOR)
 
@@ -87,7 +87,8 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun createPipEnv(module: Module): PyResult<Sdk> {
     LOGGER.debug("Creating pipenv environment")
     return withBackgroundProgress(module.project, PyBundle.message("python.sdk.setting.up.pipenv.sentence")) {
-      val basePath = module.basePath ?: return@withBackgroundProgress PyResult.localizedError("Can't find module base path")
+      val basePath = module.basePath
+                     ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",module.basePath))
       val pipEnv = setupPipEnv(Path.of(basePath), null, true).getOr {
         PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
         return@withBackgroundProgress it
@@ -95,12 +96,12 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv)) }
       if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError("Python executable is not found: $pipEnv")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", pipEnv))
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString())
       if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError("Python executable file is not found: $path")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", path))
       }
 
       PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)
