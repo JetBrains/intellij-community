@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import java.util.*
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 private class KotlinDfaAssistProvider : DfaAssistProvider {
@@ -104,14 +105,15 @@ private class KotlinDfaAssistProvider : DfaAssistProvider {
         return null
     }
 
-    override suspend fun getJdiValueForDfaVariable(
+    override suspend fun getJdiValuesForQualifier(
         proxy: StackFrameProxyEx,
         qualifier: Value,
         descriptors: List<VariableDescriptor>,
         anchor: PsiElement
     ): Map<VariableDescriptor, Value> {
         if (qualifier !is ObjectReference) return emptyMap()
-        val map = hashMapOf<VariableDescriptor, Value>()
+        // Avoid relying on hashCode/equals, as descriptors are known to be deduplicated here
+        val map = IdentityHashMap<VariableDescriptor, Value>()
         for (descriptor in descriptors) {
             val psiVariable = readAction { descriptor.psiElement }
             if (psiVariable is KtCallableDeclaration) {

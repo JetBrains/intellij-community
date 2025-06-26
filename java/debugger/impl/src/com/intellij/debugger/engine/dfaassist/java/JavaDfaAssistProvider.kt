@@ -18,6 +18,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import com.sun.jdi.*
+import java.util.*
 
 private class JavaDfaAssistProvider : DfaAssistProvider {
   override suspend fun locationMatches(element: PsiElement, location: Location): Boolean {
@@ -154,13 +155,14 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
     return null
   }
 
-  override suspend fun getJdiValueForDfaVariable(
+  override suspend fun getJdiValuesForQualifier(
     proxy: StackFrameProxyEx,
     qualifier: Value,
     descriptors: List<VariableDescriptor>,
     anchor: PsiElement,
   ): Map<VariableDescriptor, Value> {
-    val map = hashMapOf<VariableDescriptor, Value>()
+    // Avoid relying on hashCode/equals, as descriptors are known to be deduplicated here
+    val map = IdentityHashMap<VariableDescriptor, Value>()
     when (qualifier) {
       is ArrayReference -> {
         val length = qualifier.length()
@@ -168,7 +170,7 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
           if (descriptor is ArrayElementDescriptor) {
             val index = descriptor.index
             if (index in 0..<length) {
-              readAction { map[descriptor] = wrap(qualifier.getValue(index)) }
+              map[descriptor] = wrap(qualifier.getValue(index))
             }
           }
         }
@@ -182,7 +184,7 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
             if (psiClass != null && type.name() == readAction { JVMNameUtil.getClassVMName(psiClass) }) {
               val field = DebuggerUtils.findField(type, readAction { element.getName() })
               if (field != null) {
-                readAction { map[descriptor] = wrap(qualifier.getValue(field)) }
+                map[descriptor] = wrap(qualifier.getValue(field))
                 continue
               }
             }

@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import java.util.*
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 private class K2DfaAssistProvider : DfaAssistProvider {
@@ -268,14 +269,15 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         }
     }
 
-    override suspend fun getJdiValueForDfaVariable(
+    override suspend fun getJdiValuesForQualifier(
         proxy: StackFrameProxyEx,
         qualifier: Value,
         descriptors: List<VariableDescriptor>,
         anchor: PsiElement
     ): Map<VariableDescriptor, Value> {
         if (anchor !is KtElement) return emptyMap()
-        val map = hashMapOf<VariableDescriptor, Value>()
+        // Avoid relying on hashCode/equals, as descriptors are known to be deduplicated here
+        val map = IdentityHashMap<VariableDescriptor, Value>()
         for (descriptor in descriptors) {
             if (descriptor is KtVariableDescriptor) {
                 val pointer = descriptor.pointer

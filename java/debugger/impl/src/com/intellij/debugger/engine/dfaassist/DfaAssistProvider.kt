@@ -95,7 +95,7 @@ interface DfaAssistProvider {
    * @throws EvaluateException if proxy throws
    */
   @Throws(EvaluateException::class)
-  suspend fun getJdiValueForDfaVariable(
+  suspend fun getJdiValuesForQualifier(
     proxy: StackFrameProxyEx,
     qualifier: Value,
     descriptors: List<VariableDescriptor>,
