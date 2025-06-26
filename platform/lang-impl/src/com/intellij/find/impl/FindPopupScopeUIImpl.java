@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
+import com.intellij.ide.util.scopeChooser.FrontendScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.openapi.module.Module;
@@ -48,6 +49,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   private ComboBox<String> myModuleComboBox;
   private FindPopupDirectoryChooser myDirectoryChooser;
   private ScopeChooserCombo myScopeCombo;
+  private FrontendScopeChooserCombo newScopeCombo;
 
   FindPopupScopeUIImpl(@NotNull FindPopupPanel panel) {
     myHelper = panel.getHelper();
@@ -61,8 +63,8 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
       ? ContainerUtil.ar(new Pair<>(PROJECT, new JLabel()),
                          new Pair<>(MODULE, shrink(myModuleComboBox)),
                          new Pair<>(DIRECTORY, myDirectoryChooser),
-                         new Pair<>(SCOPE, shrink(myScopeCombo)))
-      : ContainerUtil.ar(new Pair<>(SCOPE, shrink(myScopeCombo)),
+                         new Pair<>(SCOPE, shrink(getScopeChooser())))
+      : ContainerUtil.ar(new Pair<>(SCOPE, shrink(getScopeChooser())),
                          new Pair<>(DIRECTORY, myDirectoryChooser));
   }
 
@@ -80,47 +82,85 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
     myDirectoryChooser = new FindPopupDirectoryChooser(myFindPopupPanel);
 
-    myScopeCombo = new ScopeChooserCombo();
-    Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
-    myScopeCombo.init(myProject, true, true, selection, new Condition<>() {
-      //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
-      final String moduleFilesScopeName;
+    initScopeCombo(restartSearchListener);
+  }
 
-      {
-        String moduleScopeName = IndexingBundle.message("search.scope.module", "");
-        final int ind = moduleScopeName.indexOf(' ');
-        moduleFilesScopeName = moduleScopeName.substring(0, ind + 1);
-      }
+  private JComponent getScopeChooser() {
+    return FindKey.isEnabled() ? newScopeCombo : myScopeCombo;
+  }
 
-      @Override
-      public boolean value(ScopeDescriptor descriptor) {
-        final String display = descriptor.getDisplayName();
-        return /*!projectFilesScopeName.equals(display) &&*/ !display.startsWith(moduleFilesScopeName);
-      }
-    });
-    myScopeCombo.setBrowseListener(new ScopeChooserCombo.BrowseListener() {
+  private ComboBox<ScopeDescriptor> getScopeCombo() {
+    return FindKey.isEnabled() ? newScopeCombo: myScopeCombo.getComboBox();
+  }
 
-      private FindModel myModelSnapshot;
+  private void initScopeCombo(ActionListener restartSearchListener) {
+    if (FindKey.isEnabled()) {
+      newScopeCombo = new FrontendScopeChooserCombo(myProject);
+      Disposer.register(myFindPopupPanel.getDisposable(), newScopeCombo);
+    }
+    else {
+      myScopeCombo = new ScopeChooserCombo();
+      Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
+      myScopeCombo.init(myProject, true, true, selection, new Condition<>() {
+        //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
+        final String moduleFilesScopeName;
 
-      @Override
-      public void onBeforeBrowseStarted() {
-        myModelSnapshot = myHelper.getModel();
-        myFindPopupPanel.getCanClose().set(false);
-      }
-
-      @Override
-      public void onAfterBrowseFinished() {
-        if (myModelSnapshot != null) {
-          SearchScope scope = myScopeCombo.getSelectedScope();
-          if (scope != null) {
-            myModelSnapshot.setCustomScope(scope);
-          }
-          myFindPopupPanel.getCanClose().set(true);
+        {
+          String moduleScopeName = IndexingBundle.message("search.scope.module", "");
+          final int ind = moduleScopeName.indexOf(' ');
+          moduleFilesScopeName = moduleScopeName.substring(0, ind + 1);
         }
-      }
-    });
-    myScopeCombo.getComboBox().addActionListener(restartSearchListener);
-    Disposer.register(myFindPopupPanel.getDisposable(), myScopeCombo);
+
+        @Override
+        public boolean value(ScopeDescriptor descriptor) {
+          final String display = descriptor.getDisplayName();
+          return /*!projectFilesScopeName.equals(display) &&*/ !display.startsWith(moduleFilesScopeName);
+        }
+      });
+      myScopeCombo.setBrowseListener(new ScopeChooserCombo.BrowseListener() {
+
+        private FindModel myModelSnapshot;
+
+        @Override
+        public void onBeforeBrowseStarted() {
+          myModelSnapshot = myHelper.getModel();
+          myFindPopupPanel.getCanClose().set(false);
+        }
+
+        @Override
+        public void onAfterBrowseFinished() {
+          if (myModelSnapshot != null) {
+            SearchScope scope = myScopeCombo.getSelectedScope();
+            if (scope != null) {
+              myModelSnapshot.setCustomScope(scope);
+            }
+            myFindPopupPanel.getCanClose().set(true);
+          }
+        }
+      });
+      Disposer.register(myFindPopupPanel.getDisposable(), myScopeCombo);
+    }
+    getScopeCombo().addActionListener(restartSearchListener);
+  }
+
+  private String getSelectedScopeName() {
+    if (FindKey.isEnabled()) {
+      return newScopeCombo.getSelectedScopeName();
+    }
+    return myScopeCombo.getSelectedScopeName();
+  }
+
+  private void applyScopeTo(FindModel findModel) {
+    if (FindKey.isEnabled()) {
+      findModel.setCustomScopeId(newScopeCombo.getSelectedScopeId());
+      findModel.setCustomScopeName(newScopeCombo.getSelectedScopeName());
+    }
+    else {
+      SearchScope selectedCustomScope = myScopeCombo.getSelectedScope();
+      String customScopeName = selectedCustomScope == null ? null : selectedCustomScope.getDisplayName();
+      findModel.setCustomScopeName(customScopeName);
+      findModel.setCustomScope(selectedCustomScope);
+    }
   }
 
   @Override
@@ -130,7 +170,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
   @Override
   public void applyTo(@NotNull FindSettings findSettings, @NotNull FindPopupScopeUI.ScopeType selectedScope) {
-    findSettings.setDefaultScopeName(myScopeCombo.getSelectedScopeName());
+    findSettings.setDefaultScopeName(getSelectedScopeName());
   }
 
   @Override
@@ -146,10 +186,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
       findModel.setModuleName((String)myModuleComboBox.getSelectedItem());
     }
     else if (selectedScope == SCOPE) {
-      SearchScope selectedCustomScope = myScopeCombo.getSelectedScope();
-      String customScopeName = selectedCustomScope == null ? null : selectedCustomScope.getDisplayName();
-      findModel.setCustomScopeName(customScopeName);
-      findModel.setCustomScope(selectedCustomScope);
+      applyScopeTo(findModel);
       findModel.setCustomScope(true);
     }
   }
@@ -164,7 +201,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
   @Override
   public boolean hideAllPopups() {
-    final JComboBox[] candidates = { myModuleComboBox, myScopeCombo.getComboBox(), myDirectoryChooser.getComboBox() };
+    final JComboBox[] candidates = { myModuleComboBox, getScopeCombo(), myDirectoryChooser.getComboBox() };
     for (JComboBox candidate : candidates) {
       if (candidate.isPopupVisible()) {
         candidate.hidePopup();

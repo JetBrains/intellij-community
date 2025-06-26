@@ -12,6 +12,7 @@ import com.intellij.find.replaceInProject.ReplaceInProjectManager
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.ui.toSerializableTextChunk
+import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
@@ -56,6 +57,12 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           return@coroutineScope
         }
         val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
+        // SearchScope is not serializable, so we will get it by id from the client
+        findModel.customScopeId?.let { scopeId ->
+          ScopesStateService.getInstance(project).getScopeById(scopeId)?.let {
+            findModel.customScope = it
+          }
+        }
         //read action is necessary in case of the loading from a directory
         val scope = readAction {  FindInProjectUtil.getGlobalSearchScope(project, findModel) }
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->

@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.UnknownNullability
 import java.util.regex.Pattern
@@ -371,6 +372,15 @@ open class FindModel : UserDataHolder, Cloneable {
       }
     }
 
+  @ApiStatus.Internal
+  var customScopeId: String? = null
+    set(value) {
+      if (value != field) {
+        field = value
+        notifyObservers()
+      }
+    }
+
   @get:JvmName("isCustomScope")
   @set:JvmName("setCustomScope")
   var isCustomScope: Boolean = false
@@ -581,6 +591,7 @@ open class FindModel : UserDataHolder, Cloneable {
       moduleName = model.moduleName
       customScopeName = model.customScopeName
       customScope = model.customScope
+      customScopeId = model.customScopeId
       isCustomScope = model.isCustomScope
       isFindAll = model.isFindAll
       searchContext = model.searchContext
@@ -622,6 +633,7 @@ open class FindModel : UserDataHolder, Cloneable {
     if (isWholeWordsOnly != findModel.isWholeWordsOnly) return false
     if (isWithSubdirectories != findModel.isWithSubdirectories) return false
     if (if (customScope != null) (customScope != findModel.customScope) else findModel.customScope != null) return false
+    if (if (customScopeId != null) (customScopeId != findModel.customScopeId) else findModel.customScopeId != null) return false
     if (if (customScopeName != null) (customScopeName != findModel.customScopeName) else findModel.customScopeName != null) return false
     if (if (directoryName != null) (directoryName != findModel.directoryName) else findModel.directoryName != null) return false
     if (if (fileFilter != null) (fileFilter != findModel.fileFilter) else findModel.fileFilter != null) return false
@@ -663,6 +675,7 @@ open class FindModel : UserDataHolder, Cloneable {
     result = 31 * result + (fileFilter?.hashCode() ?: 0)
     result = 31 * result + (customScopeName?.hashCode() ?: 0)
     result = 31 * result + (customScope?.hashCode() ?: 0)
+    result = 31 * result + (customScopeId?.hashCode() ?: 0)
     result = 31 * result + (if (isCustomScope) 1 else 0)
     result = 31 * result + (if (isMultiline) 1 else 0)
     result = 31 * result + (if (isPreserveCase) 1 else 0)
