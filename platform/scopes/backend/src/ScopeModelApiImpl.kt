@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.scopes.backend
 
+import com.intellij.ide.scratch.ScratchesSearchScope
 import com.intellij.ide.util.scopeChooser.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -62,6 +63,8 @@ internal class ScopesModelApiImpl : ScopeModelApi {
           }
           val scopesStateMap = mutableMapOf<String, ScopeDescriptor>()
           val scopesData = scopes.scopeDescriptors.mapNotNull { descriptor ->
+            // TODO should be removed after support scopes with frontend activity IJPL-194098
+            if (descriptor.isEdtRequired || descriptor.scope is ScratchesSearchScope) return@mapNotNull null
             val scopeId = scopesState.addScope(descriptor)
             val scopeData = SearchScopeData.from(descriptor, scopeId) ?: return@mapNotNull null
             scopesStateMap[scopeData.scopeId] = descriptor
