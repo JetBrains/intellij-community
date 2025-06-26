@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
+import org.jetbrains.idea.maven.importing.MavenProjectModelModifierUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -58,7 +58,7 @@ public final class LanguageLevelQuickFixFactory {
   }
 
   private static boolean containCompilerPluginSource(@NotNull MavenDomProjectModel model) {
-    return Optional.ofNullable(MavenProjectModelModifier.findCompilerPlugin(model))
+    return Optional.ofNullable(MavenProjectModelModifierUtil.findCompilerPlugin(model))
       .map(p -> p.getConfiguration())
       .map(c -> c.getXmlTag())
       .map(tag -> tag.findFirstSubTag(LanguageLevelPluginQuickFix.COMPILER_SOURCE) != null)
