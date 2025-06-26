@@ -1,6 +1,4 @@
 <idea-plugin package="com.intellij.platform.whatsNew">
-  <module value="com.intellij.platform.whatsNew"/>
-
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.whatsNew.WhatsNewShowOnStartCheckService" order="last"/>
     <applicationService serviceImplementation="com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider" />
@@ -9,7 +7,6 @@
 
     <registryKey defaultValue="false" description="Whats new test mode" key="whats.new.test.mode" restartRequired="false" />
   </extensions>
-
   <actions resource-bundle="messages.ActionsBundle">
     <action id="WhatsNewAction" class="com.intellij.platform.whatsNew.WhatsNewAction" overrides="true"/>
   </actions>
