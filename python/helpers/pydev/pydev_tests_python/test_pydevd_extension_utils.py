@@ -5,6 +5,17 @@ import sys
 from textwrap import dedent
 
 
+def run(code, env):
+    proc = subprocess.Popen(
+        [sys.executable, "-c", code],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    stdout, stderr = proc.communicate()
+    return proc.returncode, stdout.decode("utf-8"), stderr.decode("utf-8")
+
+
 def test_could_load_extensions():
     my_extensions_path = os.path.join(os.path.dirname(__file__), "my_extensions")
 
@@ -22,17 +33,12 @@ def test_could_load_extensions():
         'pydevd_plugins.extensions.types.pydevd_plugins_django_form_str',
     }
 
-    result = subprocess.run(
-        [sys.executable, "-c", code],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        env={"PYTHONPATH": my_extensions_path}
-    )
+    env = {"PYTHONPATH": my_extensions_path}
+    return_code, stdout, stderr = run(code, env)
 
-    loaded_modules = json.loads(result.stdout)
+    loaded_modules = json.loads(stdout)
 
     assert len(loaded_modules) == len(expected_modules)
-    assert result.returncode == 0
-    assert result.stderr == ""
+    assert return_code == 0
+    assert stderr == ""
     assert set(loaded_modules) == expected_modules
