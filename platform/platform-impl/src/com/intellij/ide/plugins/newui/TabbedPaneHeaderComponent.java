@@ -19,6 +19,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,8 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Alexander Lobas
  */
-public final class TabbedPaneHeaderComponent extends JPanel {
+@ApiStatus.Internal
+public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider {
   private final JBValue myHeight = new JBValue.Float(30);
   private final JBValue myGap = new JBValue.Float(10);
 
@@ -90,6 +92,11 @@ public final class TabbedPaneHeaderComponent extends JPanel {
 
     add(myTabbedPane);
     add(createToolbar(actions, IdeBundle.message("plugin.manager.tooltip"), AllIcons.General.GearPlain), BorderLayout.EAST);
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+
   }
 
   static @NotNull JComponent createToolbar(@NotNull DefaultActionGroup actions,

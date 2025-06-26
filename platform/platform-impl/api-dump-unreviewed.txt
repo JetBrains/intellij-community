@@ -3266,15 +3266,10 @@ f:com.intellij.ide.plugins.PluginHostsConfigurable
 - isModified():Z
 - reset():V
 f:com.intellij.ide.plugins.PluginInstallCallbackData
-- <init>(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,Z):V
 - f:component1():java.nio.file.Path
-- f:component2():com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 - f:component3():Z
-- f:copy(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,Z):com.intellij.ide.plugins.PluginInstallCallbackData
-- bs:copy$default(com.intellij.ide.plugins.PluginInstallCallbackData,java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,Z,I,java.lang.Object):com.intellij.ide.plugins.PluginInstallCallbackData
 - equals(java.lang.Object):Z
 - f:getFile():java.nio.file.Path
-- f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 - f:getRestartNeeded():Z
 - hashCode():I
 f:com.intellij.ide.plugins.PluginInstaller
@@ -3701,19 +3696,6 @@ c:com.intellij.ide.plugins.newui.SearchQueryParser$Marketplace
 - p:handleAttribute(java.lang.String,java.lang.String):V
 com.intellij.ide.plugins.newui.TabHeaderListener
 - a:selectionChanged(I):V
-f:com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent
-- javax.swing.JPanel
-- <init>(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.ide.plugins.newui.TabHeaderListener):V
-- addNotify():V
-- addTab(java.lang.String,javax.swing.Icon):V
-- getSelectionTab():I
-- setBounds(I,I,I,I):V
-- setListener():V
-- setSelection(I):V
-- setSelectionWithEvents(I):V
-- setTabTooltip(I,java.lang.String):V
-- update():V
-- updateUI():V
 f:com.intellij.ide.plugins.newui.TagComponent
 - com.intellij.ide.plugins.newui.LinkComponent
 - <init>():V
