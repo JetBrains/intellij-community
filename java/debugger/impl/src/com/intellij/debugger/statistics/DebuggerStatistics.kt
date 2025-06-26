@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.SteppingAction
 import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.*
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -15,13 +16,13 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.debugger.statistics.EvaluationOnPauseStatus.*
+
 
 @ApiStatus.Internal
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 12)
+  private val GROUP = EventLogGroup("java.debugger", 13)
 
   // fields
 
@@ -41,6 +42,9 @@ object DebuggerStatistics : CounterUsagesCollector() {
 
   private val dumpedCoroutinesCounter = Int("coroutines")
   private val dumpedVirtualThreadsCounter = Int("virtual_threads")
+
+  private val threadDumpTriggeringExceptionField =
+    EventFields.StringValidatedByCustomRule("exception", ThreadDumpTriggeringExceptionValidator::class.java)
 
   // events
   /** Reports overhead spent on checking where a breakpoint must be installed. */
@@ -62,6 +66,8 @@ object DebuggerStatistics : CounterUsagesCollector() {
 
   /** Reports successful or failed attempts to get evaluatable context on pause **/
   private val evaluationOnPause = GROUP.registerEvent("evaluation.on.pause", EventFields.Enum<EvaluationOnPauseStatus>("status"))
+
+  private val threadDumpTriggeringException = GROUP.registerEvent("thread.dump.triggering.exception", threadDumpTriggeringExceptionField, EventFields.Count)
 
   /** Reports execution time of debugger commands in buckets, updated at the end of a debugger session. */
   private val timeBucketCount = GROUP.registerEvent("debugger.command.time.bucket.updated", EventFields.Int("bucket_upper_limit_ms"), EventFields.Count, EventFields.Boolean("is_remote"))
@@ -136,6 +142,11 @@ object DebuggerStatistics : CounterUsagesCollector() {
   @JvmStatic
   fun logEvaluatablePauseDisabled(project: Project?) {
     evaluationOnPause.log(project, EVALUATION_ON_PAUSE_DISABLED)
+  }
+
+  @JvmStatic
+  fun logThreadDumpTriggerException(project: Project?, name: String) {
+    threadDumpTriggeringException.log(project, name, 1)
   }
 
   private fun logEvaluatablePauseStatus(project: Project?, isDebuggerAgentAvailable: Boolean, isSuccess: Boolean) {
