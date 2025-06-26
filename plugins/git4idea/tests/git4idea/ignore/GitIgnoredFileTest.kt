@@ -140,6 +140,8 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   private fun generateGitIgnoreAndRefresh(ignoreFileRoot: VirtualFile) {
     GitUtil.generateGitignoreFileIfNeeded(project, ignoreFileRoot)
     refresh()
+    updateChangeListManager()
+    updateUntrackedFiles()
   }
 
   fun `test update first ignore block`() {
