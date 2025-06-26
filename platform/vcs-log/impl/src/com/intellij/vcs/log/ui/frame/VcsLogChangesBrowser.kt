@@ -260,8 +260,6 @@ class VcsLogChangesBrowser(
 
   val directChanges: List<Change>
     get() = commitModel.changes
-  val selectedChanges: List<Change>
-    get() = VcsTreeModelData.selected(myViewer).userObjects(Change::class.java)
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
