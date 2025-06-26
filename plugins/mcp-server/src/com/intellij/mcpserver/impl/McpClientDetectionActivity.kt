@@ -112,10 +112,8 @@ internal class McpClientDetectionActivity : ProjectActivity {
       application.service<McpClientDetectionSettings>().state.intIncrementModificationCount()
     }
     else {
-      return
+      if (shouldSkipNotification()) return
     }
-
-    if (shouldSkipNotification()) return
     application.service<McpClientDetectionSettings>().state.latestNotificationTime = Instant.now().toString()
 
     val clientNames = detectedClients.joinToString(", ") { it.name }
