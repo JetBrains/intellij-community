@@ -74,6 +74,7 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
                     searchReferences = config.searchReferences(),
                     searchInComments = config.searchInComments(),
                     mppDeclarations = config.moveExpectedActuals(),
+                    isMoveToExplicitPackage = config.moveExplicitPackage(),
                     dirStructureMatchesPkg = true
                 )
             }

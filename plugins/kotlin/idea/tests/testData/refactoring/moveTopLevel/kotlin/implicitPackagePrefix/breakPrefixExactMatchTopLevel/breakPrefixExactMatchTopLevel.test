@@ -1,0 +1,8 @@
+{
+  "mainFile": "A.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "foo",
+  "explicitPackage": "true",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

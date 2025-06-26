@@ -85,6 +85,16 @@ public class K1MultiModuleMoveTestGenerated extends AbstractK1MultiModuleMoveTes
         runTest("testData/refactoring/moveMultiModule/moveFileWithDeclarationsToUnrelatedModuleConflict/moveFileWithDeclarationsToUnrelatedModuleConflict.test");
     }
 
+    @TestMetadata("moveFilesBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test")
+    public void testMoveFilesBreakImplicitPrefix_MoveDeclarationBreakImplicitPrefix() throws Exception {
+        runTest("testData/refactoring/moveMultiModule/moveFilesBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test");
+    }
+
+    @TestMetadata("moveFilesPreserveImplicitPrefix/moveFilesPreserveImplicitPrefix.test")
+    public void testMoveFilesPreserveImplicitPrefix_MoveFilesPreserveImplicitPrefix() throws Exception {
+        runTest("testData/refactoring/moveMultiModule/moveFilesPreserveImplicitPrefix/moveFilesPreserveImplicitPrefix.test");
+    }
+
     @TestMetadata("moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test")
     public void testMoveFromJsModuleToJvmModule_MoveFromJsModuleToJvmModule() throws Exception {
         runTest("testData/refactoring/moveMultiModule/moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test");

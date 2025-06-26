@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getImplicitPackagePrefix
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -38,8 +37,8 @@ internal class K2MoveFilesOrDirectoriesRefactoringProcessor(private val descript
     }
 
     private fun setForcedPackageIfNeeded() {
-        val implicitPackagePrefix = moveTarget.baseDirectory.getImplicitPackagePrefix() ?: return
-        if (moveTarget.pkgName.startsWith(implicitPackagePrefix)) return
+        val implicitPackagePrefix = moveTarget.baseDirectory.getImplicitPackagePrefix()?.takeIf { !it.isRoot } ?: return
+        if (moveTarget.pkgName.startsWith(implicitPackagePrefix) && !descriptor.isMoveToExplicitPackage) return
         moveTarget.baseDirectory.forcedTargetPackage = moveTarget.pkgName
     }
 
@@ -133,5 +132,3 @@ class K2MoveFilesHandler : MoveFileHandler() {
         retargetUsagesAfterMove(usageInfos.toList(), oldToNewMap)
     }
 }
-
-internal var PsiDirectory.forcedTargetPackage: FqName? by CopyablePsiUserDataProperty(Key.create("FORCED_TARGET_PACKAGE"))

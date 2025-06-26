@@ -205,6 +205,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
     }
 
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixExactMatchTopLevel/breakPrefixExactMatchTopLevel.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixExactMatchTopLevel_BreakPrefixExactMatchTopLevel() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/breakPrefixExactMatchTopLevel/breakPrefixExactMatchTopLevel.test");
+    }
+
     @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveFromRootToSubpackage/breakPrefixMoveFromRootToSubpackage.test")
     public void testKotlin_implicitPackagePrefix_breakPrefixMoveFromRootToSubpackage_BreakPrefixMoveFromRootToSubpackage() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/breakPrefixMoveFromRootToSubpackage/breakPrefixMoveFromRootToSubpackage.test");

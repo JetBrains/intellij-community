@@ -61,6 +61,7 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
             val sourceDescriptor = K2MoveSourceDescriptor.FileSource(files)
             val targetPackage = config.getNullableString("targetPackage")
             val targetDir = config.getNullableString("targetDirectory")
+            val explicitPackage = config.moveExplicitPackage()
             val targetDescriptor = when {
                 targetDir != null && targetPackage != null -> {
                     val targetDirectory = rootDir.findFileByRelativePath(targetDir)?.toPsiDirectory(project)!!
@@ -86,8 +87,9 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
                 listOf(moveDescriptor),
                 shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
                 config.searchReferences(),
-                dirStructureMatchesPkg = true,
                 searchReferences = config.searchReferences(),
+                dirStructureMatchesPkg = true,
+                isMoveToExplicitPackage = explicitPackage,
             )
             K2MoveFilesOrDirectoriesRefactoringProcessor(moveOperationDescriptor).run()
         }

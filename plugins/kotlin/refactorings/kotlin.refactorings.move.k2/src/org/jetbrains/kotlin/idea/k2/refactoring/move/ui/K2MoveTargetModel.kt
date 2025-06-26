@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.util.DirectoryChooser
 import com.intellij.ide.util.TreeJavaClassChooserDialog
 import com.intellij.openapi.application.ModalityState
@@ -41,6 +42,8 @@ sealed interface K2MoveTargetModel {
 
     val pkgName: FqName
 
+    val explicitPkgMoveFqName: FqName?
+
     fun toDescriptor(): K2MoveTargetDescriptor
 
     fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
@@ -48,13 +51,16 @@ sealed interface K2MoveTargetModel {
     @ApiStatus.Internal
     abstract class SourceDirectoryChooser(
         override var pkgName: FqName,
-        override var directory: PsiDirectory
+        override var directory: PsiDirectory,
+        override val explicitPkgMoveFqName: FqName?,
     ) : K2MoveTargetModel {
         private val initialDirectory = directory
 
         protected lateinit var pkgChooser: PackageNameReferenceEditorCombo
 
         protected lateinit var destinationChooser: KotlinDestinationFolderComboBox
+
+        protected lateinit var explicitPkgWarning: Row
 
         protected fun Panel.installPkgChooser(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = directory.project
@@ -71,6 +77,14 @@ sealed interface K2MoveTargetModel {
                 }
                 pkgChooser.prependItem(pkgName.asString())
             }
+            explicitPkgWarning = row("") {
+                icon(AllIcons.General.Warning).align(AlignX.LEFT).gap(RightGap.SMALL)
+                label(RefactoringBundle.message(
+                    "create.explicit.package.warning", explicitPkgMoveFqName?.asString().orEmpty()
+                ))
+            }
+            updateExplicitPackageWarningVisibility()
+
             row(KotlinBundle.message("label.text.destination")) {
                 destinationChooser = cell(object : KotlinDestinationFolderComboBox() {
                     override fun getTargetPackage(): String {
@@ -87,9 +101,11 @@ sealed interface K2MoveTargetModel {
                 pkgName = FqName(pkgChooser.text)
                 RecentsManager.getInstance(project).registerRecentEntry(RECENT_PACKAGE_KEY, pkgChooser.text)
                 updateDirectory(onError, revalidateButtons)
+                updateExplicitPackageWarningVisibility()
             }
             destinationChooser.comboBox.addActionListener {
                 updateDirectory(onError, revalidateButtons)
+                updateExplicitPackageWarningVisibility()
             }
             destinationChooser.setData(project, directory, { s -> onError(s, destinationChooser) }, pkgChooser.childComponent)
         }
@@ -110,6 +126,10 @@ sealed interface K2MoveTargetModel {
             revalidateButtons()
         }
 
+        private fun updateExplicitPackageWarningVisibility() {
+            explicitPkgWarning.visible(isVisible = isMoveToExplicitPackage())
+        }
+
         private companion object {
             const val RECENT_PACKAGE_KEY = "K2MoveDeclarationsDialog.RECENT_PACKAGE_KEY"
 
@@ -119,9 +139,15 @@ sealed interface K2MoveTargetModel {
 
     open class SourceDirectory(
         pkgName: FqName,
-        directory: PsiDirectory
-    ) : SourceDirectoryChooser(pkgName, directory) {
-        override fun toDescriptor(): K2MoveTargetDescriptor.Directory = K2MoveTargetDescriptor.Directory(pkgName, directory)
+        directory: PsiDirectory,
+        explicitPkgMoveFqName: FqName?,
+    ) : SourceDirectoryChooser(pkgName, directory, explicitPkgMoveFqName) {
+        override fun toDescriptor(): K2MoveTargetDescriptor.Directory {
+            return K2MoveTargetDescriptor.Directory(
+                pkgName, directory,
+                isMoveToExplicitPackage = isMoveToExplicitPackage(),
+            )
+        }
 
         override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             panel.installPkgChooser(onError, revalidateButtons)
@@ -129,7 +155,12 @@ sealed interface K2MoveTargetModel {
     }
 
     @ApiStatus.Internal
-    abstract class FileChooser(fileName: String, pkg: FqName, directory: PsiDirectory) : SourceDirectoryChooser(pkg, directory) {
+    abstract class FileChooser(
+        fileName: String,
+        pkg: FqName,
+        directory: PsiDirectory,
+        explicitPkgMoveFqName: FqName?,
+    ) : SourceDirectoryChooser(pkg, directory, explicitPkgMoveFqName) {
         var fileName: String = fileName
             protected set
 
@@ -183,8 +214,13 @@ sealed interface K2MoveTargetModel {
         }
     }
 
-    class File(fileName: String, pkg: FqName, directory: PsiDirectory) : FileChooser(fileName, pkg, directory) {
-        override fun toDescriptor(): K2MoveTargetDescriptor.File = K2MoveTargetDescriptor.File(fileName, pkgName, directory)
+    class File(fileName: String, pkg: FqName, directory: PsiDirectory, explicitPkgMoveFqName: FqName?) :
+        FileChooser(fileName, pkg, directory, explicitPkgMoveFqName) {
+        override fun toDescriptor(): K2MoveTargetDescriptor.File =
+            K2MoveTargetDescriptor.File(
+                fileName, pkgName, directory,
+                isMoveToExplicitPackage = isMoveToExplicitPackage(),
+            )
 
         override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             panel.installPkgChooser(onError, revalidateButtons)
@@ -198,7 +234,7 @@ sealed interface K2MoveTargetModel {
         defaultDirectory: PsiDirectory,
         defaultPkgName: FqName,
         defaultFileName: String
-    ) : FileChooser(defaultFileName, defaultPkgName, defaultDirectory) {
+    ) : FileChooser(defaultFileName, defaultPkgName, defaultDirectory, explicitPkgMoveFqName = null) {
         private val propertyGraph = PropertyGraph()
 
         private val destinationClassProperty = propertyGraph.property<KtClassOrObject?>(null)
@@ -311,7 +347,7 @@ sealed interface K2MoveTargetModel {
     companion object {
         fun File(file: KtFile): File {
             val directory = file.containingDirectory ?: error("No containing directory was found")
-            return File(file.name, file.packageFqName, directory)
+            return File(file.name, file.packageFqName, directory, null)
         }
     }
 }

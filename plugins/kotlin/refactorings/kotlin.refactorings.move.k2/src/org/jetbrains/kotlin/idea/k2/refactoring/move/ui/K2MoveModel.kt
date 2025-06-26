@@ -150,7 +150,7 @@ sealed class K2MoveModel {
         private fun PsiFile.isAlreadyInTarget(): Boolean {
             return parent == target.directory && when (this) {
                 is PsiJavaFile -> packageName == target.pkgName.asString()
-                is KtFile -> packageFqName == target.pkgName
+                is KtFile -> packageFqName == target.pkgName && !target.isMoveToExplicitPackage()
                 else -> true
             }
         }
@@ -177,6 +177,7 @@ sealed class K2MoveModel {
                 searchReferences,
                 searchInComments.state,
                 dirStructureMatchesPkg = true,
+                isMoveToExplicitPackage = target.isMoveToExplicitPackage(),
                 moveCallBack
             )
             return operationDescriptor
@@ -201,7 +202,7 @@ sealed class K2MoveModel {
             }
             if (!fileName.isValidKotlinFile()) return false
             val files = source.elements.map { it.containingFile }
-            return files.size != 1 || !(files.single() as KtFile).isTargetFile()
+            return files.size != 1 || !(files.single() as KtFile).isTargetFile() || target.isMoveToExplicitPackage()
         }
 
         private fun K2MoveTargetModel.Declarations.isValidRefactoring(): Boolean {
@@ -304,8 +305,9 @@ sealed class K2MoveModel {
                     else -> listOf()
                 }
             }
-
             val inSourceRoot = isInSourceRoot(project, elementsToMove, targetContainer)
+            val explicitPkgMoveFqName = findExplicitPkgMoveFqName(elementsToMove)
+
             return when {
                 (elementsToMove.all { it is KtFile } && targetContainer is PsiDirectory)
                         || isMultiFileMove(elementsToMove)
@@ -315,13 +317,15 @@ sealed class K2MoveModel {
                     val source = K2MoveSourceModel.FileSource(elementsToMove.toFileElements().toSet())
                     val target = if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
-                        K2MoveTargetModel.SourceDirectory(pkg, targetContainer)
+                        K2MoveTargetModel.SourceDirectory(
+                            pkg, targetContainer, explicitPkgMoveFqName
+                        )
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val file = elementsToMove.firstOrNull { it.containingFile != null }?.containingFile
                             ?: error("No default target found")
                         val directory = file.containingDirectory ?: error("No default target found")
                         val pkgName = elementsToMove.firstIsInstanceOrNull<KtElement>()?.containingKtFile?.packageFqName ?: FqName.ROOT
-                        K2MoveTargetModel.SourceDirectory(pkgName, directory)
+                        K2MoveTargetModel.SourceDirectory(pkgName, directory, explicitPkgMoveFqName = null)
                     }
                     Files(project, source, target, inSourceRoot, moveCallBack)
                 }
@@ -333,7 +337,9 @@ sealed class K2MoveModel {
                         K2MoveTargetModel.File(targetFile)
                     } else if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
-                        K2MoveTargetModel.File(findSourceFileNameByMovedElements(elementsToMove), pkg, targetContainer)
+                        K2MoveTargetModel.File(
+                            findSourceFileNameByMovedElements(elementsToMove), pkg, targetContainer, explicitPkgMoveFqName,
+                        )
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val firstElem = elementsToMove.firstOrNull() as KtElement
                         val containingFile = firstElem.containingKtFile

@@ -85,6 +85,16 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveFileWithDeclarationsToUnrelatedModuleConflict/moveFileWithDeclarationsToUnrelatedModuleConflict.test");
     }
 
+    @TestMetadata("moveFilesBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test")
+    public void testMoveFilesBreakImplicitPrefix_MoveDeclarationBreakImplicitPrefix() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveFilesBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test");
+    }
+
+    @TestMetadata("moveFilesPreserveImplicitPrefix/moveFilesPreserveImplicitPrefix.test")
+    public void testMoveFilesPreserveImplicitPrefix_MoveFilesPreserveImplicitPrefix() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveFilesPreserveImplicitPrefix/moveFilesPreserveImplicitPrefix.test");
+    }
+
     @TestMetadata("moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test")
     public void testMoveFromJsModuleToJvmModule_MoveFromJsModuleToJvmModule() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test");

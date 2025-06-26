@@ -21,6 +21,8 @@ interface KotlinMoveRefactoringAction : AbstractMultifileRefactoringTest.Refacto
     fun JsonObject.moveExpectedActuals() = get("moveExpectedActuals")?.asBoolean?.equals(true)
         ?: KotlinCommonRefactoringSettings.getInstance().MOVE_MPP_DECLARATIONS
 
+    fun JsonObject.moveExplicitPackage() = get("explicitPackage")?.asBoolean == true
+
     fun shouldUpdateReferences(config: JsonObject, source: PsiElement, target: PsiElement): Boolean {
         fun PsiElement.virtualFile() = if (this is PsiDirectory) virtualFile else containingFile.virtualFile
         val fileIndex = ProjectFileIndex.getInstance(source.project)
