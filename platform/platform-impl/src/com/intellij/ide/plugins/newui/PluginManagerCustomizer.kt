@@ -24,6 +24,7 @@ interface PluginManagerCustomizer {
   fun getDisableButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
+    installedDescriptorForMarketplace: PluginUiModel?,
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
@@ -37,6 +38,8 @@ interface PluginManagerCustomizer {
   fun updateAfterModification(updateUi: () -> Unit)
 
   fun getExtraPluginsActions(): List<AnAction>
+
+  fun onPluginDeleted(pluginModel: PluginUiModel, pluginSource: PluginSource)
 
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?

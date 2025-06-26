@@ -249,10 +249,14 @@ fun PluginUiModel.isPaidPlugin(): Boolean = isPaid || isConverted
 
 @ApiStatus.Internal
 fun PluginUiModel.addInstalledSource(pluginSource: PluginSource) {
-  if (source == null || source == pluginSource) {
-    source = pluginSource
+  source = source.addSource(pluginSource)
+}
+
+fun PluginSource?.addSource(pluginSource: PluginSource): PluginSource {
+  if (this == null || this == pluginSource) {
+    return pluginSource
   }
   else {
-    this.source = PluginSource.BOTH
+    return PluginSource.BOTH
   }
 }
