@@ -216,6 +216,7 @@ class EditorWindow internal constructor(
             VfsUtil.markDirtyAndRefresh(true, false, false, newFile)
           }
         }
+
         _currentCompositeFlow.value = newSelection?.composite
       }
     })

@@ -857,10 +857,9 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   var focusComponent: () -> JComponent? = { null }
     private set
 
-  val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
+  private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
   var skeleton: EditorSkeleton? = null
     private set
-  private var skeletonJob: Job?
 
   init {
     addFocusListener(object : FocusAdapter() {
@@ -890,18 +889,18 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     isFocusCycleRoot = true
 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
-      skeletonJob = skeletonScope.launch(Dispatchers.UI) {
-        setNewSkeleton(EditorCompositeSkeletonFactory.getInstance(composite.project).createSkeleton(skeletonScope), cancelDelayJob = false)
+      skeletonScope.launch(Dispatchers.UI) {
+        setNewSkeleton(EditorCompositeSkeletonFactory.getInstance(composite.project).createSkeleton(skeletonScope))
       }
     }
     else {
-      skeletonJob = null
       skeletonScope.cancel()
     }
   }
 
-  fun setNewSkeleton(skeleton: EditorSkeleton, cancelDelayJob: Boolean = true) {
+  private fun setNewSkeleton(skeleton: EditorSkeleton?) {
     this.skeleton = skeleton
+    if (skeleton == null) return
     if (components.isEmpty()) {
       add(skeleton, BorderLayout.CENTER)
     }
