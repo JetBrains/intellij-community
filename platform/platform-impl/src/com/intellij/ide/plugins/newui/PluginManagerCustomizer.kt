@@ -9,9 +9,12 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface PluginManagerCustomizer {
+  fun initCustomizer(parentComponent: JComponent)
+
   fun getInstallButonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginToInstallModel: PluginUiModel,
@@ -32,6 +35,8 @@ interface PluginManagerCustomizer {
   ): UpdateButtonCustomizationModel?
 
   fun updateAfterModification(updateUi: () -> Unit)
+
+  fun getExtraPluginsActions(): List<AnAction>
 
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?

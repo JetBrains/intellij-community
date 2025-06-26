@@ -33,6 +33,7 @@ object PluginDescriptorConverter {
       isLicenseOptional = descriptor.isLicenseOptional
       releaseVersion = descriptor.releaseVersion
       displayCategory = descriptor.displayCategory
+      releaseDate = descriptor.releaseDate?.toInstant()?.toEpochMilli()
 
       descriptor.dependencies.forEach { dependency ->
         addDependency(dependency.pluginId, dependency.isOptional)

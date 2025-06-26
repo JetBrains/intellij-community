@@ -218,6 +218,12 @@ f:com.intellij.ide.plugins.InstalledPluginsState
 - getInstalledWithoutRestartPlugins():java.util.Collection
 com.intellij.ide.plugins.PluginEnableStateChangedListener
 - a:stateChanged(java.util.Collection,Z):V
+f:com.intellij.ide.plugins.PluginInstallCallbackData
+- <init>(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z):V
+- f:component2():com.intellij.ide.plugins.IdeaPluginDescriptor
+- f:copy(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z):com.intellij.ide.plugins.PluginInstallCallbackData
+- bs:copy$default(com.intellij.ide.plugins.PluginInstallCallbackData,java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z,I,java.lang.Object):com.intellij.ide.plugins.PluginInstallCallbackData
+- f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
 com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
 - com.intellij.ide.plugins.PluginEnabler
 - disable(java.util.Collection):Z

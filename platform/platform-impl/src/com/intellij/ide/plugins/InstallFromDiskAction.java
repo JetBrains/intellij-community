@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class InstallFromDiskAction extends DumbAwareAction {
   private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 

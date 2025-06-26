@@ -155,13 +155,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
-    IdeaPluginDescriptorImpl descriptor = callbackData.getPluginDescriptor();
+    IdeaPluginDescriptor descriptor = callbackData.getPluginDescriptor();
     CheckErrorsResult errors = UiPluginManager.getInstance().getErrors(sessionId.toString(), descriptor.getPluginId());
     appendOrUpdateDescriptor(new PluginUiModelAdapter(descriptor), callbackData.getRestartNeeded(), getErrors(errors));
-    if (!callbackData.getRestartNeeded()) {
+    if (!callbackData.getRestartNeeded() && callbackData.getFile() != null && descriptor instanceof IdeaPluginDescriptorImpl) {
       mySession.getDynamicPluginsToInstall().put(descriptor.getPluginId(),
                                                  new PendingDynamicPluginInstall(callbackData.getFile(),
-                                                                                 descriptor));
+                                                                                 (IdeaPluginDescriptorImpl)descriptor));
     }
   }
 
