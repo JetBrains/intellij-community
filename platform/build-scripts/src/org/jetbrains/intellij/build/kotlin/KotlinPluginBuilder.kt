@@ -308,6 +308,7 @@ object KotlinPluginBuilder {
             "kotlin-ultimate.native-debugger",
             "kotlin-ultimate.javascript.debugger",
             "kotlin-ultimate.javascript.nodeJs",
+            "kotlin-ultimate.wasm.debugger",
             "kotlin-ultimate.ultimate-plugin",
             "kotlin-ultimate.ultimate-native",
             "kotlin-ultimate.profiler",
@@ -317,6 +318,7 @@ object KotlinPluginBuilder {
             "kotlin-ultimate.native-debugger",
             "kotlin-ultimate.javascript.debugger",
             "kotlin-ultimate.javascript.nodeJs",
+            "kotlin-ultimate.wasm.debugger",
             "kotlin-ultimate.ultimate-fleet-plugin",
             "kotlin-ultimate.ultimate-native",
             //"kotlin-ultimate.profiler", FIXME: Causes perf problems in Fleet
