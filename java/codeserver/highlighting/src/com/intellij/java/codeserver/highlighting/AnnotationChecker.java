@@ -461,24 +461,16 @@ final class AnnotationChecker {
       if (myVisitor.hasErrorResults()) return;
     }
 
+    if (!(annotation.getOwner() instanceof PsiArrayType) && annotation.getParent() instanceof PsiTypeElement typeElement) {
+      PsiElement element = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
+      if (element instanceof PsiModifierListOwner modifierListOwner) {
+        targets = AnnotationTargetUtil.getTargetsForLocation(modifierListOwner.getModifierList());
+      }
+    }
     PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
     if (applicable == PsiAnnotation.TargetType.UNKNOWN) return;
 
     if (applicable == null) {
-      if (targets.length == 1 && targets[0] == PsiAnnotation.TargetType.TYPE_USE) {
-        PsiElement parent = annotation.getParent();
-        if (parent instanceof PsiTypeElement && !(annotation.getOwner() instanceof PsiArrayType)) {
-          PsiElement modifierList =
-            PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class, PsiComment.class, PsiTypeParameterList.class);
-          if (modifierList instanceof PsiModifierList psiModifierList) {
-            targets = AnnotationTargetUtil.getTargetsForLocation(psiModifierList);
-            if (AnnotationTargetUtil.findAnnotationTarget(annotation, targets) == null) {
-              myVisitor.report(JavaErrorKinds.ANNOTATION_NOT_APPLICABLE.create(annotation, Arrays.asList(targets)));
-            }
-            return;
-          }
-        }
-      }
       myVisitor.report(JavaErrorKinds.ANNOTATION_NOT_APPLICABLE.create(annotation, Arrays.asList(targets)));
       return;
     }
@@ -489,8 +481,7 @@ final class AnnotationChecker {
         return;
       }
       if (owner instanceof PsiClassReferenceType referenceType) {
-        PsiJavaCodeReferenceElement ref = referenceType.getReference();
-        checkReferenceTarget(annotation, ref);
+        checkReferenceTarget(annotation, referenceType.getReference());
       }
       else if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement) {
         PsiElement nextElement = owner instanceof PsiTypeElement typeElementOwner
