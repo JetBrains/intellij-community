@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.ui.LayeredIcon
@@ -34,6 +36,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
+import kotlin.io.path.Path
 
 @Internal
 fun unscaledProjectIconSize(): Int = Registry.intValue("ide.project.icon.size", 20)
@@ -216,6 +219,14 @@ private fun getCustomIconFileInfo(path: @SystemIndependent String): Pair<Path, B
 }
 
 private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boolean, iconSize: Int): Icon? {
+  // IJPL-194035
+  // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
+  //	1.	it may trigger Ijent initialization for each recent project
+  //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
+  if (Path(path).getEelDescriptor() != LocalEelDescriptor) {
+    return null
+  }
+
   val (file, fileInfo) = getCustomIconFileInfo(path) ?: return null
   val timestamp = fileInfo.lastModifiedTime().toMillis()
 
