@@ -8,14 +8,10 @@ import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -26,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Map;
 
 /**
@@ -61,10 +58,14 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
 
     if (JavaFeature.IMPLICIT_CLASSES.isSufficient(level)) {
       String packageNameByDirectory = PackageIndex.getInstance(project).getPackageNameByDirectory(directory.getVirtualFile());
-      if("".equals(packageNameByDirectory)) {
-        builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"),
-                        IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.JavaFileType),
-                        JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
+      if ("".equals(packageNameByDirectory)) {
+        IconManager iconManager = IconManager.getInstance();
+        Icon icon = iconManager.createLayered(
+          iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.Class),
+          iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.FinalMark),
+          iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.RunnableMark)
+        );
+        builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"), icon, JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
       }
     }
 
