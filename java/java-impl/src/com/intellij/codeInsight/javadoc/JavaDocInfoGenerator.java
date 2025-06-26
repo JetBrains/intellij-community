@@ -2320,7 +2320,7 @@ public class JavaDocInfoGenerator {
     PsiElement label = referenceLink.getLabel();
 
     String referenceText = reference != null ? reference.getText() : "";
-    String labelText = label != null ? label.getText() : "";
+    String labelText = label instanceof PsiMarkdownReferenceLabel ? label.getText() : null;
 
     // JEP 467 requires reference brackets to be escaped, remove the escape to match the reference
     referenceText = referenceText.replace("\\[", "[").replace("\\]", "]");
