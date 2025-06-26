@@ -6,7 +6,7 @@ PsiJetFileStubImpl[package=]
       OBJECT_DECLARATION[classId=/C.Companion, fqName=C.Companion, isCompanion=true, isLocal=false, isObjectLiteral=false, isTopLevel=false, name=Companion, superNames=[]]
         MODIFIER_LIST[companion]
         CLASS_BODY
-          FUN[fqName=C.Companion.foo, hasBlockBody=true, hasBody=true, hasTypeParameterListBeforeFunctionName=false, isExtension=false, isTopLevel=false, mayHaveContract=false, name=foo]
+          FUN[fqName=C.Companion.foo, hasBody=true, hasNoExpressionBody=true, hasTypeParameterListBeforeFunctionName=false, isExtension=false, isTopLevel=false, mayHaveContract=false, name=foo]
             VALUE_PARAMETER_LIST
   CLASS[classId=/D, fqName=D, isClsStubCompiledToJvmDefaultImplementation=false, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=D, superNames=[]]
     CLASS_BODY
