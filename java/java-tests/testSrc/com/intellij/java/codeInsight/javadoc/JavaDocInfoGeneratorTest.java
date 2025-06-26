@@ -232,6 +232,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     PsiMethod method = psiClass.getMethods()[0];
     verifyJavaDoc(method);
   }
+  public void testDefaultOverload() { doTestAtCaret(); }
 
   public void testEnumConstant1() { doTestEnumConstant(); }
   public void testEnumConstant2() { doTestEnumConstant(); }
