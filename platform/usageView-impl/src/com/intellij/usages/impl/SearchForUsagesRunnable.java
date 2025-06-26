@@ -37,6 +37,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -60,7 +61,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 final class SearchForUsagesRunnable implements Runnable {
-  private static final @NonNls String FIND_OPTIONS_HREF_TARGET = "FindOptions";
   private static final @NonNls String SEARCH_IN_PROJECT_HREF_TARGET = "SearchInProject";
   private static final @NonNls String LARGE_FILES_HREF_TARGET = "LargeFiles";
   private static final @NonNls String SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET = "SHOW_PROJECT_FILE_OCCURRENCES";
@@ -106,7 +106,7 @@ final class SearchForUsagesRunnable implements Runnable {
   private static @NotNull String createOptionsHtml(@NonNls UsageTarget @NotNull [] searchFor) {
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut(searchFor);
     HtmlBuilder builder = new HtmlBuilder()
-      .appendLink(FIND_OPTIONS_HREF_TARGET, UsageViewBundle.message("link.display.name.find.options"));
+      .appendLink(UsageViewUtil.FIND_OPTIONS_HREF_TARGET, UsageViewBundle.message("link.display.name.find.options"));
     if (shortcut != null) {
       builder.nbsp().append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
     }
@@ -236,7 +236,7 @@ final class SearchForUsagesRunnable implements Runnable {
     return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-        if (e.getDescription().equals(FIND_OPTIONS_HREF_TARGET)) {
+        if (e.getDescription().equals(UsageViewUtil.FIND_OPTIONS_HREF_TARGET)) {
           FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
         }
       }

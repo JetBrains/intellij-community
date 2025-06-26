@@ -90,6 +90,8 @@ com.intellij.codeInsight.hint.EditorHintListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - hintShown(com.intellij.openapi.editor.Editor,com.intellij.ui.LightweightHint,I,com.intellij.ui.HintHint):V
 com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
+f:com.intellij.codeInsight.hint.HintUtil
+- s:getWarningHint():com.intellij.ui.HintHint
 com.intellij.codeInsight.hint.LineTooltipRenderer$TooltipReloader
 - a:reload(Z):V
 com.intellij.codeInsight.hint.TooltipRenderer

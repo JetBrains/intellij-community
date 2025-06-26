@@ -15,6 +15,7 @@ import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.find.usages.impl.Psi2UsageInfo2UsageAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
@@ -47,7 +48,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
@@ -67,7 +67,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.scale.JBUIScale;
@@ -92,6 +91,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -115,6 +115,7 @@ import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.SearchOptionsService.SearchVariant.SHOW_USAGES;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
+import static com.intellij.usageView.UsageViewUtil.FIND_OPTIONS_HREF_TARGET;
 import static com.intellij.util.FindUsagesScopeKt.FindUsagesScope;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -537,7 +538,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   public static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
                                                                       @NotNull ShowUsagesActionHandler actionHandler,
                                                                       @NotNull UsageViewImpl usageView) {
-
     Span findUsageSpan = myFindUsagesTracer.spanBuilder("findUsages").startSpan();
     Scope opentelemetryScope = findUsageSpan.makeCurrent();
     Span popupSpan = myFindUsagesTracer.spanBuilder("findUsage_popup").startSpan();
@@ -858,66 +858,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       return true;
     }
     return false;
-  }
-
-  private static @NotNull JComponent createHintComponent(@NotNull @NlsContexts.HintText String secondInvocationTitle,
-                                                         boolean isWarning,
-                                                         @NotNull JComponent button) {
-    if (ExperimentalUI.isNewUI()) {
-      JPanel panel = new JPanel(new BorderLayout(6, 0));
-      panel.putClientProperty(HintHint.OVERRIDE_BORDER_KEY, JBUI.insets(10, 12, 12, 12));
-
-      JComponent label =
-        isWarning ? HintUtil.createWarningLabel(secondInvocationTitle) : HintUtil.createInformationLabel(secondInvocationTitle);
-      label.setBorder(JBUI.Borders.emptyTop(2));
-      panel.add(label, BorderLayout.CENTER);
-
-      panel.setBackground(label.getBackground());
-      button.setBackground(label.getBackground());
-      button.setPreferredSize(new JBDimension(22, 22));
-      button.setBackground(label.getBackground());
-
-      Wrapper buttonPanel = new Wrapper();
-      buttonPanel.add(button, BorderLayout.NORTH);
-      panel.add(buttonPanel, BorderLayout.EAST);
-
-      return panel;
-    }
-
-    JComponent label = HintUtil.createInformationLabel(secondInvocationTitle);
-    if (isWarning) {
-      label.setBackground(MessageType.WARNING.getPopupBackground());
-    }
-
-    JPanel panel = new JPanel(new BorderLayout());
-    button.setBackground(label.getBackground());
-    panel.setBackground(label.getBackground());
-    label.setOpaque(false);
-    label.setBorder(null);
-    panel.setBorder(HintUtil.createHintBorder());
-    panel.add(label, BorderLayout.CENTER);
-    panel.add(button, BorderLayout.EAST);
-    return panel;
-  }
-
-  private static @NotNull InplaceButton createSettingsButton(@NotNull Project project,
-                                                             @NotNull Runnable cancelAction,
-                                                             @NotNull Runnable showDialogAndFindUsagesRunnable) {
-    KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
-    String tooltip = shortcut == null
-                     ? FindBundle.message("show.usages.settings.tooltip")
-                     : FindBundle.message("show.usages.settings.tooltip.shortcut", KeymapUtil.getShortcutText(shortcut));
-    return new InplaceButton(tooltip, AllIcons.General.Settings, __ -> {
-      ApplicationManager.getApplication().invokeLater(showDialogAndFindUsagesRunnable, project.getDisposed());
-      cancelAction.run();
-    }) {
-      @Override
-      protected void paintHover(Graphics g) {
-        if (ExperimentalUI.isNewUI()) {
-          paintHover(g, JBUI.CurrentTheme.Editor.Tooltip.ICON_HOVER_BACKGROUND);
-        }
-      }
-    };
   }
 
   private static @Nullable FindUsagesOptions showDialog(@NotNull FindUsagesHandlerBase handler) {
@@ -1293,16 +1233,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return result;
   }
 
-  private static @Nls @NotNull String suggestSecondInvocation(@Nls(capitalization = Sentence) @NotNull String text,
-                                                              @Nls(capitalization = Sentence) @Nullable String hint) {
-    HtmlBuilder builder = new HtmlBuilder().append(text);
-    if (hint != null) {
-      HtmlChunk chunk = HtmlChunk.text(hint);
-      builder.br().append(ExperimentalUI.isNewUI() ? chunk.wrapWith("p").style("margin-top:5pt;") : chunk.wrapWith("small"));
-    }
-    return builder.wrapWithHtmlBody().toString();
-  }
-
   static @Nullable KeyboardShortcut getShowUsagesShortcut() {
     return ActionManager.getInstance().getKeyboardShortcut(ID);
   }
@@ -1554,38 +1484,47 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         return;
       }
 
-      ReadAction.nonBlocking(
-        () -> suggestSecondInvocation(hint, getSecondInvocationHint(actionHandler))
-      ).finishOnUiThread(ModalityState.nonModal(), (@NlsContexts.HintText String secondInvocationHintHtml) -> {
-        if (!actionHandler.isValid()) {
-          cancel(popupToCancel);
-          return;
-        }
-
-        JComponent label = createHintComponent(
-          secondInvocationHintHtml,
-          isWarning,
-          createSettingsButton(
-            project,
-            ShowUsagesAction::hideHints,
-            showDialogAndRestartRunnable(parameters, actionHandler)
-          )
-        );
-
-        Runnable clearContinuation = actionHandler.enableMaximalScopeSearch(parameters);
-        // canceling here, as the action handler becomes not fully valid after the cancellation
-        // in case of rem-dev (FrontendShowUsagesActionHandler), and the above call won't work as expected
+      HtmlBuilder builder = new HtmlBuilder()
+        .append(hint)
+        .br()
+        .appendLink(FIND_OPTIONS_HREF_TARGET, UsageViewBundle.message("link.display.name.find.options"));
+      KeyboardShortcut shortcut = getShowUsagesShortcut();
+      if (shortcut != null) {
+        builder.nbsp().append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
+      }
+      @NlsContexts.HintText String secondInvocationHintHtml = builder.toString();
+      if (!actionHandler.isValid()) {
         cancel(popupToCancel);
+        return;
+      }
 
-        if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
-          label.setBorder(JBUI.Borders.empty(5));
-          int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-          HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
+      JEditorPane label = IdeTooltipManager.initPane(
+        new Html(secondInvocationHintHtml), isWarning ? HintUtil.getWarningHint() : HintUtil.getInformationHint(),
+        null, true);
+
+      label.addHyperlinkListener(new HyperlinkAdapter() {
+        @Override
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+          if (FIND_OPTIONS_HREF_TARGET.equals(e.getDescription())) {
+            showDialogAndRestart(parameters, actionHandler);
+          }
         }
-        else {
-          HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
-        }
-      }).submit(AppExecutorUtil.getAppExecutorService());
+      });
+      label.setEditable(false);
+
+      Runnable clearContinuation = actionHandler.enableMaximalScopeSearch(parameters);
+      // canceling here, as the action handler becomes not fully valid after the cancellation
+      // in case of rem-dev (FrontendShowUsagesActionHandler), and the above call won't work as expected
+      cancel(popupToCancel);
+
+      if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
+        label.setBorder(JBUI.Borders.empty(5));
+        int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+        HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
+      }
+      else {
+        HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
+      }
     };
 
     if (editor == null) {

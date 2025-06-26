@@ -47,6 +47,7 @@ f:com.intellij.usageView.UsageViewShortNameLocation
 - sf:INSTANCE:com.intellij.usageView.UsageViewShortNameLocation
 - getDefaultProvider():com.intellij.psi.ElementDescriptionProvider
 f:com.intellij.usageView.UsageViewUtil
+- sf:FIND_OPTIONS_HREF_TARGET:java.lang.String
 - s:createNodeText(com.intellij.psi.PsiElement):java.lang.String
 - s:getLongName(com.intellij.psi.PsiElement):java.lang.String
 - s:getNotExcludedUsageInfos(com.intellij.usages.UsageView):java.util.Set
