@@ -217,10 +217,13 @@ class XMixedModeCombinedDebugProcess(
 
   override fun getCurrentStateHyperlinkListener(): HyperlinkListener? = getIfOnlyOneExists { it.currentStateHyperlinkListener }
 
+  private var layouter: XCombinedDebugTabLayouter? = null
+
   override fun createTabLayouter(): XDebugTabLayouter {
-    return XCombinedDebugTabLayouter(
-      listOf(low.createTabLayouter(), high.createTabLayouter()),
+    layouter =  XCombinedDebugTabLayouter(
+      mutableListOf(low.createTabLayouter(), high.createTabLayouter()),
       (if (config.useLowDebugProcessConsole) low else high).createTabLayouter())
+    return layouter!!
   }
 
 
@@ -312,6 +315,8 @@ class XMixedModeCombinedDebugProcess(
   fun addGoodLowDebugProcess(low: XDebugProcess) {
     this.low = low
     stateMachine.low = low
+    if (layouter != null)
+      layouter!!.replaceFirstLayouterAndApply(low.createTabLayouter())
   }
 
   fun setNextStatement(position: XSourcePosition) {

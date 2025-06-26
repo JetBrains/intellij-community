@@ -37,4 +37,7 @@ interface XMixedModeHighLevelDebugProcessExtension : XMixedModeDebugProcessExten
   suspend fun abortHighLevelStepping()
 
   fun setNextStatement(suspendContext: XSuspendContext, position: XSourcePosition)
+
+  suspend fun beforeLowLevelStep(highSuspendContext : XSuspendContext, stoppedThreadId: Long);
+
 }
