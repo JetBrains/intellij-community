@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -114,6 +115,11 @@ class UiPluginManager {
 
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
     return getController().applySession(sessionId, parent, project)
+  }
+
+  @NlsSafe
+  fun getApplSessionError(sessionId: String): String? {
+    return getController().getApplyError(sessionId)
   }
 
   fun updatePluginDependencies(sessionId: String): Set<PluginId> {

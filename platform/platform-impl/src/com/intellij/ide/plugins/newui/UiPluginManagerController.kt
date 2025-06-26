@@ -78,6 +78,7 @@ interface UiPluginManagerController {
   fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
   fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean
   fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
+  fun getApplyError(sessionId: String): String?
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
 

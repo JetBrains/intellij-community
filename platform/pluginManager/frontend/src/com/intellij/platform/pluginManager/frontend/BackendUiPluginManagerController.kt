@@ -189,6 +189,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     awaitForResult { PluginManagerApi.getInstance().setEnabledState(sessionId, pluginIds, enable) }
   }
 
+  override fun getApplyError(sessionId: String): String? {
+    return awaitForResult { PluginInstallerApi.getInstance().getApplySessionError(sessionId) }
+  }
+
   override fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
     return awaitForResult { PluginInstallerApi.getInstance().applyPluginSession(sessionId, project?.projectId()) }
   }
@@ -236,7 +240,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   override fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().uninstallDynamicPlugin(sessionId,pluginId, isUpdate) }
+    return awaitForResult { PluginInstallerApi.getInstance().uninstallDynamicPlugin(sessionId, pluginId, isUpdate) }
   }
 
   override fun deletePluginFiles(pluginId: PluginId) {
