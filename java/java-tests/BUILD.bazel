@@ -153,6 +153,7 @@ jvm_library(
     "//java/java-syntax:syntax",
     "//platform/lang-impl",
     "//xml/impl",
+    "//platform/syntax/syntax-scripts:scripts",
   ],
   runtime_deps = [
     ":tests_test_resources",

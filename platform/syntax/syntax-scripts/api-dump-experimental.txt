@@ -1,3 +1,4 @@
 *f:com.intellij.platform.syntax.scripts.GenerateBundleMappingKt
+- sf:assertPropertiesMatch(java.lang.String,java.lang.String,java.lang.ClassLoader,java.util.Map):V
 - sf:generateMapping(java.lang.String,java.lang.String,java.lang.String):V
 - sf:main(java.lang.String[]):V
