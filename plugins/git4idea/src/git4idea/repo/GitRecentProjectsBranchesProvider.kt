@@ -13,6 +13,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.application
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
@@ -91,6 +93,14 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
   fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
     val showBranchMode = AdvancedSettings.getEnum("git.recent.projects.show.branch", RecentProjectsShowBranchMode::class.java)
     if (!showBranchMode.shouldShow(nameIsDistinct)) {
+      return null
+    }
+
+    // IJPL-194035
+    // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
+    //	1.	it may trigger Ijent initialization for each recent project
+    //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
+    if (Path(projectPath).getEelDescriptor() != LocalEelDescriptor) {
       return null
     }
     val branchFuture = cache.get(projectPath)
