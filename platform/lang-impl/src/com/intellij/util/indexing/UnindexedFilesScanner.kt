@@ -54,7 +54,9 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.Future
+import java.util.concurrent.locks.ReentrantLock
 import java.util.function.BiPredicate
+import kotlin.concurrent.withLock
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
@@ -80,7 +82,7 @@ class ScanningIterators(
 }
 
 @ApiStatus.Internal
-class UnindexedFilesScanner (
+class UnindexedFilesScanner(
   private val myProject: Project,
   private val myOnProjectOpen: Boolean,
   isIndexingFilesFilterUpToDate: Boolean,
@@ -438,7 +440,7 @@ class UnindexedFilesScanner (
     ) {
       runBlockingCancellable {
         tracer.spanBuilder("runBlocking in scanning").useWithScope(context = SCANNING_DISPATCHER) {
-          providers.forEachConcurrent(SCANNING_PARALLELISM)  { provider ->
+          providers.forEachConcurrent(SCANNING_PARALLELISM) { provider ->
             try {
               tracer.spanBuilder("Scanning of ${provider.debugName}").use {
                 scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
@@ -517,45 +519,54 @@ class UnindexedFilesScanner (
       val indexingQueue = project.getService(PerProjectIndexingQueue::class.java)
       scanningStatistics.startFileChecking()
       try {
-        var counter = 0
-        readAction {
-          val currentCounter = counter++
-          if (currentCounter != 0) {
-            // report only restarts of scanning read action
-            span.addEvent("Read action restart #${currentCounter} (${files.size} files remain to scan)")
-          }
-          val finder =
-            if (ourTestMode == TestMode.PUSHING) null
-            else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
-          val pushingUtil = PushingUtil(project, provider)
-          if (!pushingUtil.mayBeUsed()) {
-            LOG.warn("Iterator based on $provider can't be used.")
-            return@readAction
-          }
-          while (files.isNotEmpty()) {
-            val file = files.removeFirst()
-            try {
-              if (file.isValid) {
-                if (file is VirtualFileWithId) {
-                  filterHandler.addFileId(project, file.id)
+        val mutex = ReentrantLock()
+        coroutineScope {
+          repeat(SCANNING_PARALLELISM) {
+            launch {
+              var counter = 0
+              readAction {
+                val currentCounter = counter++
+                if (currentCounter != 0) {
+                  // report only restarts of scanning read action
+                  val size = mutex.withLock { files.size }
+                  span.addEvent("Read action restart #${currentCounter} (${size} files remain to scan)")
                 }
-                pushingUtil.applyPushers(file)
-                val status = finder?.getFileStatus(file)
-                if (status != null) {
-                  if (status.shouldIndex && ourTestMode == null) {
-                    indexingQueue.addFile(file, scanningHistory.scanningSessionId)
+                val finder =
+                  if (ourTestMode == TestMode.PUSHING) null
+                  else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
+                val pushingUtil = PushingUtil(project, provider)
+                if (!pushingUtil.mayBeUsed()) {
+                  LOG.warn("Iterator based on $provider can't be used.")
+                  return@readAction
+                }
+                var file = mutex.withLock { files.removeFirstOrNull() }
+                while (file != null) {
+                  try {
+                    if (file.isValid) {
+                      if (file is VirtualFileWithId) {
+                        filterHandler.addFileId(project, file.id)
+                      }
+                      pushingUtil.applyPushers(file)
+                      val status = finder?.getFileStatus(file)
+                      if (status != null) {
+                        if (status.shouldIndex && ourTestMode == null) {
+                          indexingQueue.addFile(file, scanningHistory.scanningSessionId)
+                        }
+                        scanningStatistics.addStatus(file, status, project)
+                      }
+                    }
                   }
-                  scanningStatistics.addStatus(file, status, project)
+                  catch (e: ProcessCanceledException) {
+                    mutex.withLock { files.addFirst(file) }
+                    throw e
+                  }
+                  catch (e: Exception) {
+                    LOG.error("Error while scanning ${file.presentableUrl}\n" +
+                              "To reindex this file IDE has to be restarted", e)
+                  }
+                  file = mutex.withLock { files.removeFirstOrNull() }
                 }
               }
-            }
-            catch (e: ProcessCanceledException) {
-              files.addFirst(file)
-              throw e
-            }
-            catch (e: Exception) {
-              LOG.error("Error while scanning ${file.presentableUrl}\n" +
-                        "To reindex this file IDE has to be restarted", e);
             }
           }
         }
