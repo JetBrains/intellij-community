@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
@@ -38,7 +40,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
   override fun doOKAction() {
     super.doOKAction()
     val addEnvironment = mainPanel.currentSdkManager
-    PyPackageCoroutine.launch(dialogPresenter.moduleOrProject.project) {
+    PyPackageCoroutine.launch(dialogPresenter.moduleOrProject.project, ModalityState.current().asContextElement()) {
       dialogPresenter.okClicked(addEnvironment)
     }
   }
