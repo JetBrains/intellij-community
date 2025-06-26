@@ -111,7 +111,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
   init {
     setParentValue(parentValue)
-    minimumSize = if (isNewUI) JBDimension(375, 300) else JBDimension(300, 200)
+    minimumSize = if (isNewUI) JBDimension(375, 300 + NEW_UI_MIN_HEIGHT_DELTA) else JBDimension(300, 200)
     this.dimensionServiceKey = if (isNestedPopup()) null else dimensionServiceKey
     userResized = !isNestedPopup() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     closePopupOnTopLevelActionsShortcuts(step.treeModel)
@@ -178,13 +178,13 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
     val topPanel = BorderLayoutPanel().apply {
       val dragArea = simplePanel().apply {
-        preferredSize = Dimension(0, 8)
+        preferredSize = Dimension(0, DRAG_AREA_HEIGHT)
         background = JBUI.CurrentTheme.Popup.BACKGROUND
         isOpaque = true
       }
       addToCenter(dragArea)
       background = JBUI.CurrentTheme.Popup.BACKGROUND
-      border = JBUI.Borders.empty(2, 0)
+      border = JBUI.Borders.empty(DRAG_AREA_TOP_AND_BOTTOM_BORDER, 0)
 
       WindowMoveListener(this).installTo(this)
     }
@@ -741,6 +741,10 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
   }
 
   companion object {
+    private const val DRAG_AREA_HEIGHT: Int = 8
+    private const val DRAG_AREA_TOP_AND_BOTTOM_BORDER: Int = 2
+    private const val NEW_UI_MIN_HEIGHT_DELTA: Int = DRAG_AREA_HEIGHT + 2 * DRAG_AREA_TOP_AND_BOTTOM_BORDER
+
     private inline val isNewUI
       get() = ExperimentalUI.isNewUI()
 
