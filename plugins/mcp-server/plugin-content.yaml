@@ -55,8 +55,8 @@
     - name: $MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3/ktor-network-jvm-3.jar
     - name: $MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3/ktor-io-jvm-3.jar
     - name: $MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3/ktor-websockets-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3/ktor-network-tls-jvm-3.jar
     - name: $MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3/ktor-utils-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3/ktor-network-tls-jvm-3.jar
     reason: <- intellij.mcpserver.stdio
   - name: ktor-server-sse-jvm
     files:
