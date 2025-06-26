@@ -36,6 +36,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
       val detectedClients = McpClientDetector.detectMcpClients(project)
       if (McpServerSettings.getInstance().state.enableMcpServer) {
         showUnconfiguredNotificationIfNeeded(detectedClients, project)
+        suggestToChangePortIfNeeded(detectedClients, project)
         return
       }
 
@@ -46,6 +47,45 @@ internal class McpClientDetectionActivity : ProjectActivity {
         showMcpServerEnablingSuggestionNotification(project, detectedClients)
       }
     }
+  }
+
+  private fun suggestToChangePortIfNeeded(
+    detectedClients: List<McpClient>,
+    project: Project,
+  ) {
+    val notMatchingPort = detectedClients.filter { it.isConfigured() ?: false }.filterNot { it.isPortCorrect() }
+    if (notMatchingPort.isNotEmpty()) {
+      val notification = NotificationGroupManager.getInstance()
+        .getNotificationGroup("MCP Server")
+        .createNotification(
+          McpServerBundle.message("mcp.clients.with.wrong.port.detected.notification.title"),
+          McpServerBundle.message("mcp.clients.with.wrong.port.detected.notification.message", notMatchingPort.joinToString(", ") { it.name }),
+          NotificationType.INFORMATION
+        )
+        .setSuggestionType(true)
+        .setImportant(false)
+      notification.setSuppressShowingPopup(true)
+      notification
+        .addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            notMatchingPort.forEach { it.configure() }
+            val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
+              .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
+                                  McpServerBundle.message("mcp.server.client.restart.info"), NotificationType.INFORMATION)
+              .setImportant(false)
+
+            doneNotification.notify(project)
+            notification.expire()
+          }
+        })
+        .addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.settings.json")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
+          }
+        }).notify(project)
+
+    }
+
   }
 
   private fun showUnconfiguredNotificationIfNeeded(
