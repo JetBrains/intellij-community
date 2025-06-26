@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.DumbAwareAction
@@ -40,7 +39,8 @@ internal class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
     if (Registry.`is`("editor.indentProviderUX.new")
         && Utils.isFullIntellijSettingsSupport()
         && (activeUiContributor == null || DetectableIndentOptionsProvider.isIndentDetectionContributor(activeUiContributor))
-        && !Utils.isEnabled(file.project)) {
+        && !Utils.isEnabled(file.project)
+        && Utils.hasEditorConfig(file)) { // Alternative: implement creation of `.editorconfig` if absent
       return DumbAwareAction.create(EditorConfigBundle.message("action.enable")) {
           EditorConfigActionUtil.setEditorConfigEnabled(file.project, true)
       }

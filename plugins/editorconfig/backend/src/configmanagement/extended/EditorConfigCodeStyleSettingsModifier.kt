@@ -24,8 +24,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -71,15 +69,15 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       val project = psiFile.project
       try {
         // Get editorconfig settings
-        val (properties, editorConfigs) = processEditorConfig(project, psiFile)
+        val (properties, editorConfigs) = Utils.processEditorConfig(project, psiFile.virtualFile)
         if (editorConfigs.isEmpty()) {
           LOG.debug { "Project has no any `.editorconfig` for ${psiFile.name}" }
           return false
         }
 
         settings.setModifier(this)
+        settings.addDependency(EditorConfigPropertiesService.getInstance(project))
         
-        settings.addDependencies(editorConfigs)
         val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
         navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
         
@@ -351,17 +349,4 @@ private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings, propert
     logEditorConfigUsed(file, properties)
   }
   return isModified
-}
-
-private fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
-  val file = psiFile.virtualFile
-  val filePath = Utils.getFilePath(project, file)
-  if (filePath != null) {
-    return EditorConfigPropertiesService.getInstance(project).getPropertiesAndEditorConfigs(file)
-  }
-  else if (VfsUtilCore.isBrokenLink(file)) {
-    LOG.warn("${file.presentableUrl} is a broken link")
-  }
-  LOG.debug { "null filepath for ${psiFile.name}" }
-  return Pair(ResourceProperties.Builder().build(), emptyList())
 }
