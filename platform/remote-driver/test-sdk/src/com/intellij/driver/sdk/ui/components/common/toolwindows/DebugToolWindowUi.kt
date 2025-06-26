@@ -17,6 +17,5 @@ class DebugToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   val stepOutButton get() = button { byAccessibleName("Step Out") }
   val stepIntoButton get() = button { byAccessibleName("Step Into") }
   val jbRunnerTabs get() = x { byType("com.intellij.execution.ui.layout.impl.JBRunnerTabs") }
-  val debuggerTree get() = x { byClass("XDebuggerTree") }
 }
 
