@@ -258,7 +258,9 @@ private inline fun <reified T : Type> findThreadFieldImpl(fieldNames: List<Strin
   return wellTypedFields.first()
 }
 
-private inline fun <reified T : Type> findThreadField(fieldNames: List<String>, jlThreadType: ReferenceType, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? {
+private inline fun <reified T : Type> findThreadField(fieldNames: List<String>, jlThreadType: ReferenceType?, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? {
+  if (jlThreadType == null) return null
+
   findThreadFieldImpl<T>(fieldNames, jlThreadType)?.let {
     return it
   }
@@ -284,7 +286,7 @@ private inline fun <reified T : Type> findThreadField(fieldNames: List<String>, 
   return null
 }
 
-private inline fun <reified T : Type> findThreadField(fieldName: String, jlThreadType: ReferenceType, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? =
+private inline fun <reified T : Type> findThreadField(fieldName: String, jlThreadType: ReferenceType?, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? =
   findThreadField<T>(listOf(fieldName), jlThreadType, fieldHolderType, optional)
 
 private fun buildThreadStates(
@@ -297,8 +299,14 @@ private fun buildThreadStates(
   val nameToThreadMap = mutableMapOf<String, ThreadState>()
   val waitingMap = mutableMapOf<String, String>() // key 'waits_for' value
 
-
-  val jlThreadType = vmProxy.classesByName("java.lang.Thread").single()
+  val jlThreadType = platformThreads.firstOrNull()
+    ?.let { someThread ->
+      val jlThreadName = "java.lang.Thread"
+      val someThreadType = someThread.referenceType()
+      generateSequence(someThreadType as? ClassType) { it.superclass() }
+        .firstOrNull { it.name() == jlThreadName }
+        .also { if (it == null) logger<ThreadDumpAction>().error("$someThreadType is expected to have $jlThreadName as super type") }
+    }
 
   // Since Project Loom some of Thread's fields have been encapsulated into FieldHolder,
   // so we try to look up fields in the thread itself and in its holder.
