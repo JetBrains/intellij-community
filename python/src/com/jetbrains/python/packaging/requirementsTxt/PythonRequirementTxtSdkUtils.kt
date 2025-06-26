@@ -97,6 +97,18 @@ object PythonRequirementTxtSdkUtils {
     saveRequirementsTxtPath(project, sdk, path)
   }
 
+  /**
+   * Should be used if sdk is not setup
+   */
+  @JvmStatic
+  fun detectRequirementsTxtInModule(module: Module): VirtualFile? {
+    val requirementsPath = module.rootManager.contentRoots.firstNotNullOfOrNull {
+      it.findChild(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
+    }
+
+    return requirementsPath
+  }
+
   @Suppress("DEPRECATION", "removal")
   private fun getRequirementsTxtFromModule(module: Module): String? {
     val settings = PyPackageRequirementsSettings.getInstance(module)
