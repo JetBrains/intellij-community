@@ -40,15 +40,15 @@ internal suspend fun <R> suspendAllAndEvaluate(
       tryToBreakOnAnyMethodAndEvaluate(context,  process, null, timeToSuspend, action)
     } else {
       // We are on a Suspend All breakpoint, we can evaluate right here.
-      val result = Channel<R>(capacity = 1)
+      val result = CompletableDeferred<R>()
 
       // We have to evaluate inside SuspendContextCommandImpl, so we just start a new command.
       // TODO: are there any better ways to do this? Should we create proper command above?
       executeOnDMT(suspendContext) {
-        result.send(action(suspendContext))
+        result.completeWith(runCatching { action(suspendContext) })
       }
 
-      result.receive()
+      result.await()
     }
   }
   else {
