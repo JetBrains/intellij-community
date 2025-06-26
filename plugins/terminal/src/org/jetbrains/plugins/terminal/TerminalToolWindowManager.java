@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -188,6 +187,8 @@ public final class TerminalToolWindowManager implements Disposable {
           }
         }
       });
+
+    installDirectoryDnD(toolWindow);
 
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer();
@@ -398,7 +399,7 @@ public final class TerminalToolWindowManager implements Disposable {
                                                  @Nullable TerminalStartupFusInfo startupFusInfo,
                                                  boolean deferSessionStartUntilUiShown,
                                                  @Nullable TerminalStartupMoment startupMoment) {
-    TerminalToolWindowPanel panel = new TerminalToolWindowPanel(toolWindow);
+    TerminalToolWindowPanel panel = new TerminalToolWindowPanel();
 
     Content content = ContentFactory.getInstance().createContent(panel, null, false);
 
@@ -823,6 +824,40 @@ public final class TerminalToolWindowManager implements Disposable {
     return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
   }
 
+  /**
+   * Creates the new terminal tab on dropping the directory node inside the terminal tool window.
+   * For example, from Project View.
+   */
+  private void installDirectoryDnD(@NotNull ToolWindow window) {
+    DnDDropHandler handler = new DnDDropHandler() {
+      @Override
+      public void drop(DnDEvent event) {
+        TransferableWrapper tw = ObjectUtils.tryCast(event.getAttachedObject(), TransferableWrapper.class);
+        if (tw != null) {
+          PsiDirectory dir = getDirectory(ArrayUtil.getFirstElement(tw.getPsiElements()));
+          if (dir != null && tw.getPsiElements().length == 1) {
+            TerminalTabState state = new TerminalTabState();
+            state.myWorkingDirectory = dir.getVirtualFile().getPath();
+            createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), null, state);
+          }
+        }
+      }
+    };
+    DnDSupport.createBuilder(window.getComponent()).setDropHandler(handler).install();
+  }
+
+  private static @Nullable PsiDirectory getDirectory(@Nullable PsiElement item) {
+    if (item instanceof PsiFile) {
+      return ((PsiFile)item).getParent();
+    }
+    return ObjectUtils.tryCast(item, PsiDirectory.class);
+  }
+
+  /**
+   * Terminal tab can be moved to the editor using {@link org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction}.
+   * This dock container is responsible for an ability to drop the editor tab with the terminal
+   * back to the terminal tool window.
+   */
   private final class TerminalDockContainer implements DockContainer {
     @Override
     public @NotNull RelativeRectangle getAcceptArea() {
@@ -897,35 +932,8 @@ public final class TerminalToolWindowManager implements Disposable {
 
 
 final class TerminalToolWindowPanel extends SimpleToolWindowPanel {
-  TerminalToolWindowPanel(@NotNull ToolWindow window) {
+  TerminalToolWindowPanel() {
     super(false, true);
-    installDnD(window);
-  }
-
-  private static void installDnD(@NotNull ToolWindow window) {
-    DnDDropHandler handler = new DnDDropHandler() {
-      @Override
-      public void drop(DnDEvent event) {
-        TransferableWrapper tw = ObjectUtils.tryCast(event.getAttachedObject(), TransferableWrapper.class);
-        if (tw != null) {
-          PsiDirectory dir = getDirectory(ArrayUtil.getFirstElement(tw.getPsiElements()));
-          if (dir != null && tw.getPsiElements().length == 1) {
-            TerminalToolWindowManager view = TerminalToolWindowManager.getInstance(dir.getProject());
-            TerminalTabState state = new TerminalTabState();
-            state.myWorkingDirectory = dir.getVirtualFile().getPath();
-            view.createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), null, state);
-          }
-        }
-      }
-    };
-    DnDSupport.createBuilder(window.getComponent()).setDropHandler(handler).install();
-  }
-
-  private static @Nullable PsiDirectory getDirectory(@Nullable PsiElement item) {
-    if (item instanceof PsiFile) {
-      return ((PsiFile)item).getParent();
-    }
-    return ObjectUtils.tryCast(item, PsiDirectory.class);
   }
 
   @Override
