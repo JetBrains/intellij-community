@@ -86,8 +86,7 @@ internal class CreateKotlinCallableAction(
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
         return pointerToContainer.element != null
-                && callPointer?.element != null
-                && hasReferenceName()
+                && (callPointer == null || callPointer.element != null && hasReferenceName())
                 && PsiNameHelper.getInstance(project).isIdentifier(methodName)
                 && callableDefinitionAsString != null
     }
