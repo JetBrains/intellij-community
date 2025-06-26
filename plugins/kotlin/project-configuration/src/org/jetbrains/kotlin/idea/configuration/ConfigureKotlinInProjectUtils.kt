@@ -256,8 +256,7 @@ fun allConfigurators(): Array<KotlinProjectConfigurator> {
 }
 
 fun getCanBeConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): List<Module> {
-    val projectModules =
-        project.modules.asList().filter { module -> module.findSnapshotModuleEntity()?.entitySource !is KotlinScriptEntitySource }
+    val projectModules = project.modules.filter { module -> module.findSnapshotModuleEntity()?.entitySource !is KotlinScriptEntitySource }
     val result = mutableListOf<Module>()
     val progressIndicator = ProgressManager.getGlobalProgressIndicator()
     for ((index, module) in ModuleSourceRootMap(project).groupByBaseModules(projectModules).withIndex()) {
