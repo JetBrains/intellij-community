@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.java.rareRefactorings` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -15,6 +16,7 @@ jvm_library(
   deps = [
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
@@ -40,6 +42,7 @@ jvm_library(
   deps = [
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//java/testFramework",
@@ -47,7 +50,6 @@ jvm_library(
     "//java/openapi:java",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
@@ -61,7 +63,7 @@ jvm_library(
   runtime_deps = [":java-rareRefactorings_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "java-rareRefactorings_test",
   runtime_deps = [":java-rareRefactorings_test_lib"]
 )

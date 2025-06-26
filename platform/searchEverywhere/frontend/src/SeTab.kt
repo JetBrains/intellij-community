@@ -2,17 +2,20 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeSessionEntity
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-interface SeTab: Disposable {
+interface SeTab : Disposable {
   val name: @Nls String
   val shortName: @Nls String
   val id: String
@@ -31,4 +34,8 @@ interface SeTab: Disposable {
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
 
   suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? = null
+
+  suspend fun canBeShownInFindResults(): Boolean
+
+  suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean = false
 }

@@ -58,10 +58,11 @@ class EelLocalExecWindowsApi : EelExecWindowsApi {
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelWindowsProcess {
     val process = executeImpl(generatedBuilder)
+    val commandLineForDebug = (listOf(generatedBuilder.exe) + generatedBuilder.args).joinToString(" ")
     return if (process is PtyProcess)
-      LocalEelWindowsProcess.create(process, process::setWinSize)
+      LocalEelWindowsProcess.create(process, process::setWinSize, commandLineForDebug)
     else
-      LocalEelWindowsProcess.create(process, null)
+      LocalEelWindowsProcess.create(process, null, commandLineForDebug)
   }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor

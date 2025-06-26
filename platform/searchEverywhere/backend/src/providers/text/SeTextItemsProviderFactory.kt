@@ -17,6 +17,6 @@ class SeTextItemsProviderFactory : SeWrappedLegacyContributorItemsProviderFactor
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
     if (project == null || !TextSearchContributor.enabled() || legacyContributor !is WeightedSearchEverywhereContributor<Any>) return null
-    return SeTextItemsProvider(SeAsyncWeightedContributorWrapper(legacyContributor))
+    return SeTextItemsProvider(project, SeAsyncWeightedContributorWrapper(legacyContributor))
   }
 }

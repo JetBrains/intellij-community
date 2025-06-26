@@ -623,6 +623,25 @@ class ToolWindowPane private constructor(
                ?: super.createDivider().also { it.background = JBUI.CurrentTheme.ToolWindow.mainBorderColor() }
       }
 
+      private val myCustomDividerWidth: Int
+
+      init {
+        val dividerWidth = divider.getClientProperty("DividerWidth")
+        if (dividerWidth is Int) {
+          myCustomDividerWidth = dividerWidth
+        }
+        else {
+          myCustomDividerWidth = -1
+        }
+      }
+
+      override fun getDividerWidth(): Int {
+        if (myCustomDividerWidth != -1) {
+          return myCustomDividerWidth
+        }
+        return super.getDividerWidth()
+      }
+
       override fun toString() = "[$firstComponent|$secondComponent]"
     }
 

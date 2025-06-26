@@ -5,7 +5,7 @@ from __future__ import print_function
 # DO NOT edit manually!
 # DO NOT edit manually!
 import sys
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON
+from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON, ForkSafeLock
 from _pydev_bundle import pydev_log
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 pydev_log.debug("Using Cython speedups")
@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 55
+version = 56
 
 if not hasattr(sys, '_current_frames'):
 
@@ -110,11 +110,11 @@ cdef class PyDBAdditionalThreadInfo:
         self.pydev_smart_step_context = PydevSmartStepContext()
 
     def get_topmost_frame(self, thread):
-        '''
+        """
         Gets the topmost frame for the given thread. Note that it may be None
         and callers should remove the reference to the frame as soon as possible
         to avoid disturbing user code.
-        '''
+        """
         # sys._current_frames(): dictionary with thread id -> topmost frame
         current_frames = _current_frames()
         return current_frames.get(thread.ident)
@@ -152,9 +152,7 @@ cdef class PydevSmartStepContext:
     reset = __init__
 
 
-from _pydev_imps._pydev_saved_modules import threading
-_set_additional_thread_info_lock = threading.Lock()
-
+_set_additional_thread_info_lock = ForkSafeLock()
 
 def set_additional_thread_info(thread):
     try:
@@ -663,7 +661,7 @@ cdef class PyDBFrame:
             line = frame.f_lineno
             line_cache_key = (frame_cache_key, line)
 
-            if main_debugger._finish_debugging_session:
+            if main_debugger.pydb_disposed:
                 if event != 'call': frame.f_trace = NO_FTRACE
                 return None
 
@@ -899,11 +897,11 @@ cdef class PyDBFrame:
                     # if the frame is traced after breakpoint stop,
                     # but the file should be ignored while stepping because of filters
                     if step_cmd != -1:
-                        if main_debugger.is_filter_enabled and main_debugger.is_ignored_by_filters(filename):
+                        if main_debugger.is_files_filter_enabled and main_debugger.is_ignored_by_filters(filename):
                             # ignore files matching stepping filters
                             # No need to reset frame.f_trace to keep the same trace function.
                             return self.trace_dispatch
-                        if main_debugger.is_filter_libraries and not main_debugger.in_project_scope(filename):
+                        if main_debugger._is_libraries_filter_enabled and not main_debugger.in_project_scope(filename):
                             # ignore library files while stepping
                             # No need to reset frame.f_trace to keep the same trace function.
                             return self.trace_dispatch
@@ -1133,7 +1131,6 @@ from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_current_thread_id, IS_IRONPYTHON, NO_FTRACE, IS_WINDOWS
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
-from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from pydevd_tracing import SetTrace
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -1519,14 +1516,8 @@ cdef class ThreadTracer:
         is_stepping = pydev_step_cmd != -1
 
         try:
-            if py_db._finish_debugging_session:
+            if py_db.pydb_disposed:
                 if not py_db._termination_event_set:
-                    # that was not working very well because jython gave some socket errors
-                    try:
-                        if py_db.output_checker_thread is None:
-                            kill_all_pydev_threads()
-                    except:
-                        traceback.print_exc()
                     py_db._termination_event_set = True
                 if event != 'call': frame.f_trace = NO_FTRACE
                 return None
@@ -1574,11 +1565,11 @@ cdef class ThreadTracer:
                     return None
 
             if is_stepping:
-                if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):
+                if py_db.is_files_filter_enabled and py_db.is_ignored_by_filters(filename):
                     # ignore files matching stepping filters
                     if event != 'call': frame.f_trace = NO_FTRACE
                     return None
-                if py_db.is_filter_libraries and not py_db.in_project_scope(filename):
+                if py_db._is_libraries_filter_enabled and not py_db.in_project_scope(filename):
                     # ignore library files while stepping
                     if event != 'call': frame.f_trace = NO_FTRACE
                     return None
@@ -1611,7 +1602,7 @@ cdef class ThreadTracer:
             return None
 
         except Exception:
-            if py_db._finish_debugging_session:
+            if py_db.pydb_disposed:
                 if event != 'call': frame.f_trace = NO_FTRACE
                 return None  # Don't log errors when we're shutting down.
             # Log it

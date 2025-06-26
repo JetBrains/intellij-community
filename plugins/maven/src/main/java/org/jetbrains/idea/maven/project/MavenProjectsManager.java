@@ -662,12 +662,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void updateProjectTargetFolders() {
-    ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
-
-      MavenProjectImporter.tryUpdateTargetFolders(myProject);
-      VirtualFileManager.getInstance().asyncRefresh();
-    });
+      MavenProjectImporter.scheduleUpdateTargetFolders(myProject);
   }
 
   /**

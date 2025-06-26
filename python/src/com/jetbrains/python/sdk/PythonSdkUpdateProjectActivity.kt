@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.sdk.PythonSdkUtil.getSitePackagesDirectory
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
@@ -56,7 +57,11 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
       VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
     }
 
+    getSitePackagesDirectory(sdk)?.refresh(true, true)
+    sdk.associatedModuleDir?.refresh(true, false)
 
+    //Restart all inspections because packages are changed
+    DaemonCodeAnalyzer.getInstance(project).restart()
     PythonSdkUpdater.scheduleUpdate(sdk, project, false)
   }
 }

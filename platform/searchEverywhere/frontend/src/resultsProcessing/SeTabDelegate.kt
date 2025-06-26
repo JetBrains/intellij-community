@@ -33,7 +33,7 @@ class SeTabDelegate(
   private val logLabel: String,
   private val providerIds: List<SeProviderId>,
   private val initEvent: AnActionEvent,
-  val scope: CoroutineScope
+  val scope: CoroutineScope,
 ) : Disposable {
   private val providers = initAsync(scope) {
     initializeProviders(project, providerIds, initEvent, sessionRef)
@@ -76,10 +76,32 @@ class SeTabDelegate(
     return providers.getValue().canBeShownInFindResults()
   }
 
+  suspend fun openInFindToolWindow(
+    sessionRef: DurableRef<SeSessionEntity>,
+    params: SeParams,
+    initEvent: AnActionEvent,
+    isAllTab: Boolean,
+    disabledProviders: List<SeProviderId>? = null
+  ): Boolean {
+    if (project == null) return false
+
+    val dataContextId = readAction {
+      initEvent.dataContext.rpcId()
+    }
+    return SeRemoteApi.getInstance().openInFindToolWindow(project.projectId(),
+                                                          sessionRef,
+                                                          dataContextId,
+                                                          providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
+                                                          params,
+                                                          isAllTab)
+  }
+
   override fun dispose() {}
 
-  private class Providers(private val localProviders: Map<SeProviderId, SeLocalItemDataProvider>,
-                          private val frontendProvidersFacade: SeFrontendItemDataProvidersFacade?) {
+  private class Providers(
+    private val localProviders: Map<SeProviderId, SeLocalItemDataProvider>,
+    private val frontendProvidersFacade: SeFrontendItemDataProvidersFacade?,
+  ) {
 
     fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = localProviders.mapValues { it.value.displayName } +
                                                                  (frontendProvidersFacade?.idsWithDisplayNames ?: emptyMap())
@@ -142,13 +164,24 @@ class SeTabDelegate(
         frontendProvidersFacade?.itemSelected(itemData, modifiers, searchText) ?: false
       }
     }
+
+    fun getProviderIds(
+      disabledProviders: List<SeProviderId>,
+    ): List<SeProviderId> {
+      val localProviders = localProviders.filterKeys { !disabledProviders.contains(it) }.keys
+      val frontedProviders = frontendProvidersFacade?.providerIds?.filter { !disabledProviders.contains(it) }
+                             ?: emptyList()
+      return localProviders.toList() + frontedProviders
+    }
   }
 
   companion object {
-    suspend fun shouldShowLegacyContributorInSeparateTab(project: Project,
-                                                         providerId: SeProviderId,
-                                                         initEvent: AnActionEvent,
-                                                         sessionRef: DurableRef<SeSessionEntity>): Boolean {
+    suspend fun shouldShowLegacyContributorInSeparateTab(
+      project: Project,
+      providerId: SeProviderId,
+      initEvent: AnActionEvent,
+      sessionRef: DurableRef<SeSessionEntity>,
+    ): Boolean {
       val dataContextId = readAction {
         initEvent.dataContext.rpcId()
       }
@@ -160,7 +193,7 @@ class SeTabDelegate(
       project: Project?,
       providerIds: List<SeProviderId>,
       initEvent: AnActionEvent,
-      sessionRef: DurableRef<SeSessionEntity>
+      sessionRef: DurableRef<SeSessionEntity>,
     ): Providers {
       val hasWildcard = providerIds.any { it.isWildcard }
       val remoteProviderIds = SeRemoteApi.getInstance().getAvailableProviderIds().filter { hasWildcard || providerIds.contains(it) }.toSet()
@@ -173,7 +206,8 @@ class SeTabDelegate(
       val localProviderIds =
         (if (hasWildcard) localFactories.keys else providerIds) - remoteProviderIds
 
-      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder ?: error("Local providers holder is not initialized")
+      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
+                                 ?: error("Local providers holder is not initialized")
       val localProviders = localProviderIds.mapNotNull { providerId ->
         localProvidersHolder.get(providerId, hasWildcard)?.let {
           providerId to it

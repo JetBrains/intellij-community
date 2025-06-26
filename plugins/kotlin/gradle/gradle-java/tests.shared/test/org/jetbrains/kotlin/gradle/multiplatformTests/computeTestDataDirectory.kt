@@ -96,10 +96,10 @@ private fun getTestDataPathAnnotationValueWithOwner(description: Description): P
     return result.first.replace("\$PROJECT_ROOT", KotlinRoot.REPO.canonicalPath) to result.second
 }
 
-internal fun getTestFolderName(description: Description): String =
+fun getTestFolderName(description: Description): String =
     getTestFolderName(description.methodName, description.getAnnotation(TestMetadata::class.java))
 
-internal fun getTestFolderName(testMethodName: String, testMetadataIfAny: TestMetadata?): String {
+fun getTestFolderName(testMethodName: String, testMetadataIfAny: TestMetadata?): String {
     val testMetadataOnMethod = testMetadataIfAny?.value
     return testMetadataOnMethod
     // JUnit4 doesn't allow to have display name different from the test name, so have to do some

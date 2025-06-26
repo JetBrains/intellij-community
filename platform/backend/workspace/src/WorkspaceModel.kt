@@ -142,5 +142,6 @@ public interface WorkspaceModel {
 /**
  * A shorter variant of [WorkspaceModel.getInstance].
  */
+@get:RequiresBlockingContext
 public val Project.workspaceModel: WorkspaceModel
   get() = WorkspaceModel.getInstance(this)

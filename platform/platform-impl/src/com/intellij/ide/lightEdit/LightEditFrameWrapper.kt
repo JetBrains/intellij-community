@@ -116,7 +116,7 @@ internal class LightEditFrameWrapper(
         LightEditAutosaveWidget(editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
         LightEditEncodingWidgetWrapper(project, coroutineScope) to LoadingOrder.after(StatusBar.StandardWidgets.POSITION_PANEL),
         LightEditLineSeparatorWidgetWrapper(project, coroutineScope) to LoadingOrder.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
-        adaptV2Widget(StatusBar.StandardWidgets.POSITION_PANEL, dataContext) { scope ->
+        adaptV2Widget(StatusBar.StandardWidgets.POSITION_PANEL, dataContext, coroutineScope) { scope ->
           LightEditPositionWidget(dataContext = dataContext, scope = scope, editorManager = editorManager)
         } to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
       ),

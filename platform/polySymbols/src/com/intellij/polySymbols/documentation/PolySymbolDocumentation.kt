@@ -2,11 +2,11 @@
 package com.intellij.polySymbols.documentation
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationImpl
+import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationBuilderImpl
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -49,12 +49,6 @@ interface PolySymbolDocumentation {
    * API status of the symbol - deprecated or experimental
    */
   val apiStatus: PolySymbolApiStatus?
-
-  /**
-   * Whether the symbol is required
-   */
-  @get:JvmName("isRequired")
-  val required: Boolean
 
   /**
    * Default value
@@ -100,8 +94,6 @@ interface PolySymbolDocumentation {
 
   fun withApiStatus(apiStatus: PolySymbolApiStatus?): PolySymbolDocumentation
 
-  fun withRequired(required: Boolean): PolySymbolDocumentation
-
   fun withDefault(defaultValue: @NlsSafe String?): PolySymbolDocumentation
 
   fun withLibrary(library: @NlsSafe String?): PolySymbolDocumentation
@@ -110,24 +102,11 @@ interface PolySymbolDocumentation {
 
   fun withDescriptionSection(name: @Nls String, contents: @Nls String): PolySymbolDocumentation
 
+  fun withDescriptionSections(sections: Map<@Nls String, @Nls String>): PolySymbolDocumentation
+
   fun withFootnote(footnote: @Nls String?): PolySymbolDocumentation
 
   fun withHeader(header: @Nls String?): PolySymbolDocumentation
-
-  fun with(
-    name: @NlsSafe String = this.name,
-    definition: @NlsSafe String = this.definition,
-    definitionDetails: @Nls String? = this.definitionDetails,
-    description: @Nls String? = this.description,
-    docUrl: @NlsSafe String? = this.docUrl,
-    apiStatus: PolySymbolApiStatus? = this.apiStatus,
-    required: Boolean = this.required,
-    defaultValue: @NlsSafe String? = this.defaultValue,
-    library: @NlsSafe String? = this.library,
-    icon: Icon? = this.icon,
-    additionalSections: Map<@Nls String, @Nls String> = emptyMap(),
-    footnote: @Nls String? = this.footnote,
-  ): PolySymbolDocumentation
 
   fun appendFootnote(footnote: @Nls String?): PolySymbolDocumentation =
     if (footnote != null)
@@ -139,33 +118,22 @@ interface PolySymbolDocumentation {
 
   companion object {
 
+    @JvmStatic
     fun create(
-      symbol: PolySymbolWithDocumentation,
+      symbol: PolySymbol,
       location: PsiElement?,
-      name: String = symbol.name,
-      definition: String = Strings.escapeXmlEntities(symbol.name),
-      definitionDetails: String? = null,
-      description: @Nls String? = symbol.description,
-      docUrl: String? = symbol.docUrl,
-      apiStatus: PolySymbolApiStatus? = symbol.apiStatus,
-      required: Boolean = symbol.required ?: false,
-      defaultValue: String? = symbol.defaultValue,
-      library: String? = symbol.origin.takeIf { it.library != null }
-        ?.let { context ->
-          context.library +
-          if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
-        },
-      icon: Icon? = symbol.icon,
-      descriptionSections: Map<@Nls String, @Nls String> = symbol.descriptionSections,
-      footnote: @Nls String? = null,
+      builder: (PolySymbolDocumentationBuilder.() -> Unit),
     ): PolySymbolDocumentation =
-      PolySymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, required, defaultValue, library, icon,
-                                  descriptionSections, footnote, null)
-        .let { doc: PolySymbolDocumentation ->
-          PolySymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
-            customizer.customize(symbol, location, documentation)
-          }
-        }
+      PolySymbolDocumentationBuilderImpl(symbol, location)
+        .also { builder.invoke(it) }
+        .build()
+
+    @JvmStatic
+    fun builder(
+      symbol: PolySymbol,
+      location: PsiElement?,
+    ): PolySymbolDocumentationBuilder =
+      PolySymbolDocumentationBuilderImpl(symbol, location)
 
   }
 

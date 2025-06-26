@@ -41,23 +41,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     super.setUp()
     myFixture.enableInspections(*inspectionTools)
 
-    GrazieConfig.update { state ->
-      val checkingContext = state.checkingContext.copy(
-        isCheckInStringLiteralsEnabled = true,
-        isCheckInCommentsEnabled = true,
-        isCheckInDocumentationEnabled = true,
-        enabledLanguages = additionalEnabledContextLanguages.map { it.id }.toSet(),
-      )
-      state.copy(
-        enabledLanguages = enabledLanguages,
-        userEnabledRules = enabledRules + additionalEnabledRules,
-        checkingContext = checkingContext
-      )
-    }
-
-    service<GrazieCheckers>().awaitConfiguration()
-
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    configureGrazieSettings()
 
     val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
     ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, testRootDisposable)
@@ -75,6 +59,25 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     finally {
       super.tearDown()
     }
+  }
+
+  protected fun configureGrazieSettings(enabledLanguages: Set<Lang> = GrazieTestBase.enabledLanguages) {
+    GrazieConfig.update { state ->
+      val checkingContext = state.checkingContext.copy(
+        isCheckInStringLiteralsEnabled = true,
+        isCheckInCommentsEnabled = true,
+        isCheckInDocumentationEnabled = true,
+        enabledLanguages = additionalEnabledContextLanguages.map { it.id }.toSet(),
+      )
+      state.copy(
+        enabledLanguages = enabledLanguages,
+        userEnabledRules = enabledRules + additionalEnabledRules,
+        checkingContext = checkingContext
+      )
+    }
+
+    service<GrazieCheckers>().awaitConfiguration()
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
   }
 
   protected open fun runHighlightTestForFile(file: String) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ide.core.permissions.Permission;
@@ -56,9 +57,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   @ApiStatus.Internal
   @Override
   public @NotNull ActionRemoteBehavior getBehavior() {
-    // TODO: cannot be on the FE side until IJPL-185748 and IJPL-189393 resolved
-    //return ActionRemoteBehavior.FrontendOtherwiseBackend;
-    return ActionRemoteBehavior.BackendOnly;
+    return Registry.is("reformat.action.execute.on.frontend")
+           ? ActionRemoteBehavior.FrontendOtherwiseBackend
+           : ActionRemoteBehavior.BackendOnly;
   }
 
   @Override

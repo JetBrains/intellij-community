@@ -22,10 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
-import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
+import static com.intellij.spellchecker.SpellCheckerManagerKt.isDic;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static java.util.Arrays.asList;
 
@@ -105,7 +105,7 @@ public final class CustomDictionariesPanel extends JPanel {
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return file != null && extensionEquals(file.getPath(), "dic");
+        return file != null && isDic(file.getName());
       }
     };
 

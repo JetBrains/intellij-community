@@ -231,19 +231,12 @@ com.intellij.diff.editor.DiffContentVirtualFile
 com.intellij.diff.editor.DiffEditorEscapeAction
 com.intellij.diff.editor.DiffEditorTabFilesManager
 - sf:Companion:com.intellij.diff.editor.DiffEditorTabFilesManager$Companion
-- sf:SHOW_DIFF_IN_EDITOR_SETTING:java.lang.String
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.diff.editor.DiffEditorTabFilesManager
-- s:isDiffInEditor():Z
-- s:isDiffInWindow():Z
 - a:isDiffOpenedInWindow(com.intellij.openapi.vfs.VirtualFile):Z
-- s:setDiffInEditor(Z):V
-- a:showDiffFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.FileEditor[]
+- showDiffFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.FileEditor[]
+- a:showDiffFile(com.intellij.openapi.vfs.VirtualFile,Z,Z):com.intellij.openapi.fileEditor.FileEditor[]
 f:com.intellij.diff.editor.DiffEditorTabFilesManager$Companion
-- sf:SHOW_DIFF_IN_EDITOR_SETTING:java.lang.String
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.diff.editor.DiffEditorTabFilesManager
-- f:isDiffInEditor():Z
-- f:isDiffInWindow():Z
-- f:setDiffInEditor(Z):V
 c:com.intellij.diff.editor.DiffEditorViewerFileEditor
 - com.intellij.diff.util.FileEditorBase
 - com.intellij.openapi.fileEditor.FileEditorWithTextEditors

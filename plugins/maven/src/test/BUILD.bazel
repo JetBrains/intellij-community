@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.maven.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -21,11 +22,14 @@ jvm_library(
     "//plugins/maven",
     "//plugins/maven/testFramework",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
@@ -73,7 +77,7 @@ jvm_library(
   runtime_deps = [":maven-tests_test_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "maven-tests_test",
   runtime_deps = [":maven-tests_test_lib"]
 )

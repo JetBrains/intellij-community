@@ -2,7 +2,9 @@ from __future__ import nested_scopes
 
 import ctypes
 import os
+import signal
 import traceback
+from importlib import import_module
 
 import pydevd_file_utils
 
@@ -23,7 +25,7 @@ from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GRE
     IS_PY37_OR_GREATER
 import sys
 from _pydev_bundle import pydev_log
-from _pydev_imps._pydev_saved_modules import threading
+from _pydev_imps._pydev_saved_modules import threading, thread
 from _pydevd_bundle.pydevd_asyncio_provider import get_eval_async_expression_in_context
 from array import array
 from collections import deque
@@ -640,10 +642,13 @@ def is_safe_to_access(obj, attr_name):
     `inspect` module, facilitating attribute retrieval without triggering any
     descriptor functionality.
     """
+    if "__getattr__" in dir(obj):
+        return False
+
     attr = inspect.getattr_static(obj, attr_name, None)
 
     # Should we check for other descriptor types here?
-    if inspect.isgetsetdescriptor(attr):
+    if inspect.isgetsetdescriptor(attr) or isinstance(attr, property):
         return False
 
     return True
@@ -691,3 +696,92 @@ def kill_thread(thread):
         pydev_log.debug("Successfully raised an exception in thread with ID '%s'"
                         % thread_id)
     pydev_log.debug("Thread with ID '%s' is stopped" % thread_id)
+
+def import_attr_from_module(import_with_attr_access):
+    if "." not in import_with_attr_access:
+        # We need at least one '.' (we don't support just the module import, we need the attribute access too).
+        raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
+
+    module_name, attr_name = import_with_attr_access.rsplit(".", 1)
+
+    while True:
+        try:
+            mod = import_module(module_name)
+        except ImportError:
+            if "." not in module_name:
+                raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
+
+            module_name, new_attr_part = module_name.rsplit(".", 1)
+            attr_name = new_attr_part + "." + attr_name
+        else:
+            # Ok, we got the base module, now, get the attribute we need.
+            try:
+                for attr in attr_name.split("."):
+                    mod = getattr(mod, attr)
+                return mod
+            except:
+                raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
+
+def interrupt_main_thread(main_thread=None):
+    """
+    Generates a KeyboardInterrupt in the main thread by sending a Ctrl+C
+    or by calling thread.interrupt_main().
+
+    :param main_thread:
+        Needed because Jython needs main_thread._thread.interrupt() to be called.
+
+    Note: if unable to send a Ctrl+C, the KeyboardInterrupt will only be raised
+    when the next Python instruction is about to be executed (so, it won't interrupt
+    a sleep(1000)).
+    """
+    if main_thread is None:
+        main_thread = threading.main_thread()
+
+    pydev_log.debug("Interrupt main thread.")
+    called = False
+    try:
+        if os.name == "posix":
+            # On Linux we can't interrupt 0 as in Windows because it's
+            # actually owned by a process -- on the good side, signals
+            # work much better on Linux!
+            os.kill(os.getpid(), signal.SIGINT)
+            called = True
+
+        elif os.name == "nt":
+            # This generates a Ctrl+C only for the current process and not
+            # to the process group!
+            # Note: there doesn't seem to be any public documentation for this
+            # function (although it seems to be  present from Windows Server 2003 SP1 onwards
+            # according to: https://www.geoffchappell.com/studies/windows/win32/kernel32/api/index.htm)
+            ctypes.windll.kernel32.CtrlRoutine(0)
+
+            # The code below is deprecated because it actually sends a Ctrl+C
+            # to the process group, so, if this was a process created without
+            # passing `CREATE_NEW_PROCESS_GROUP` the  signal may be sent to the
+            # parent process and to sub-processes too (which is not ideal --
+            # for instance, when using pytest-xdist, it'll actually stop the
+            # testing, even when called in the subprocess).
+
+            # if hasattr_checked(signal, 'CTRL_C_EVENT'):
+            #     os.kill(0, signal.CTRL_C_EVENT)
+            # else:
+            #     # Python 2.6
+            #     ctypes.windll.kernel32.GenerateConsoleCtrlEvent(0, 0)
+            called = True
+
+    except:
+        # If something went wrong, fallback to interrupting when the next
+        # Python instruction is being called.
+        pydev_log.error("Error interrupting main thread (using fallback).")
+
+    if not called:
+        try:
+            # In this case, we don't really interrupt a sleep() nor IO operations
+            # (this makes the KeyboardInterrupt be sent only when the next Python
+            # instruction is about to be executed).
+            if hasattr(thread, "interrupt_main"):
+                thread.interrupt_main()
+            else:
+                main_thread._thread.interrupt()  # Jython
+        except:
+            pydev_log.error("Error on interrupt main thread fallback.")

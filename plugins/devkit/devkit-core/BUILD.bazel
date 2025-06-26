@@ -25,8 +25,11 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
@@ -43,7 +46,6 @@ jvm_library(
     "//xml/impl",
     "//java/openapi:java",
     "@lib//:guava",
-    "@lib//:xerces",
     "//platform/observable",
     "//spellchecker",
     "//plugins/properties/properties-psi-api:psi",
@@ -88,6 +90,7 @@ jvm_library(
     "//platform/markdown-utils",
     "@lib//:snakeyaml",
     "//platform/eel-provider",
+    "//libraries/xerces",
   ],
   runtime_deps = [":core_resources"]
 )

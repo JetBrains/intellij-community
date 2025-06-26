@@ -31,7 +31,7 @@ internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoH
                 KotlinBaseHighlightingBundle.message(
                     "0.smart.cast.to.1",
                     receiverName,
-                    it.type.toString()
+                    it.type.render(position = Variance.INVARIANT)
                 )
             )
             if (builder != null) {

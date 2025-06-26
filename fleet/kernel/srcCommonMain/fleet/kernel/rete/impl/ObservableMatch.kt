@@ -91,8 +91,8 @@ internal suspend fun <U> withObservableMatches(
   }
 }
 
-internal fun <T> Query<T>.observable(terminalId: NodeId): Query<T> =
-  Query {
+internal fun <T> Query<*, T>.observable(terminalId: NodeId): Query<*, T> =
+  Query<Many, T> {
     val observableMatches = adaptiveMapOf<Match<T>, ObservableMatch<T>>()
     onDispose {
       // when the terminal is retracted from the network for other reasons, make sure jobs of Matches served by the terminal are cancelled:

@@ -6,13 +6,14 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface TreeEntity : WorkspaceEntity {
   val data: String
 
-  val children: List<@Child TreeEntity>
+  val children: List<TreeEntity>
+  @Parent
   val parentEntity: TreeEntity?
 
   //region generated code

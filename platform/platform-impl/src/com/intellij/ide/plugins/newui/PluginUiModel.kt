@@ -40,9 +40,7 @@ interface PluginUiModel {
   val isPaid: Boolean
   val isEnabled: Boolean
 
-  val source: PluginSource
   val dependencies: List<PluginDependencyModel>
-
   var dependencyNames: Collection<String>?
 
   @get:NlsSafe
@@ -56,13 +54,17 @@ interface PluginUiModel {
 
   @get:NlsSafe
   val productCode: String?
+
+  val releaseDate: Long?
+
   @get:NlsSafe
   val size: String?
-
   val releaseVersion: Int
 
   @get:NlsSafe
   val displayCategory: String?
+
+  var source: PluginSource?
 
   @get:NlsSafe
   var forumUrl: String?
@@ -125,6 +127,12 @@ interface PluginUiModel {
   var category: String?
   var isDeleted: Boolean
 
+  @get:NlsSafe
+  val sinceBuild: String?
+
+  @get:NlsSafe
+  val untilBuild: String?
+
 
   fun addDependency(id: PluginId, optional: Boolean)
 
@@ -147,7 +155,10 @@ private fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {
 
 @ApiStatus.Internal
 enum class PluginSource {
-  LOCAL, REMOTE
+  LOCAL, REMOTE, BOTH;
+
+  fun isLocal(): Boolean = this == LOCAL || this == BOTH
+  fun isRemote(): Boolean = this == REMOTE || this == BOTH
 }
 
 /**
@@ -231,4 +242,17 @@ fun PluginUiModel.presentableDate(): String? {
 @ApiStatus.Internal
 fun PluginUiModel.getTrialPeriodByProductCode(code: String): Int? {
   return customTrialPeriods?.getOrDefault(code, defaultTrialPeriod!!)
+}
+
+@ApiStatus.Internal
+fun PluginUiModel.isPaidPlugin(): Boolean = isPaid || isConverted
+
+@ApiStatus.Internal
+fun PluginUiModel.addInstalledSource(pluginSource: PluginSource) {
+  if (source == null || source == pluginSource) {
+    source = pluginSource
+  }
+  else {
+    this.source = PluginSource.BOTH
+  }
 }

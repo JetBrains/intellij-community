@@ -74,9 +74,9 @@ class GitShareProjectService(
   // check for existing git repo
   // check available repos and privateRepo access (net)
   // Show dialog (window)
-  // create GitHub repo (net)
+  // create GitHub/Lab repo (net)
   // create local git repo (if not exist)
-  // add GitHub as a remote host
+  // add GitHub/Lab as a remote host
   // make first commit
   // push everything (net)
   fun <RepoResult> performShareProject(
@@ -93,17 +93,17 @@ class GitShareProjectService(
       withBackgroundProgress(project, GitBundle.message("share.process", hostServiceName), cancellable = true) {
         try {
           reportSequentialProgress(size = 7) { reporter ->
-            // create GitHub repo (network)
+            // create GitHub/Lab repo (network)
             val repoResult = reporter.itemStep(GitBundle.message("share.process.creating.repository", hostServiceName)) {
-              LOG.info("Creating GitHub repository")
+              LOG.info("Creating ${hostServiceName} repository")
               createRepo()
             }
             val url = extractRepoWebUrl(repoResult)
-            LOG.info("Successfully created GitHub repository")
+            LOG.info("Successfully created ${hostServiceName} repository")
 
             // creating empty git repo if git is not initialized
             val repository = reporter.itemStep(GitBundle.message("share.process.creating.git.repository")) {
-              coroutineToIndicator { ensureGitRepositoryExistsAndGet(gitRepository, root) }
+              coroutineToIndicator { ensureGitRepositoryExistsAndGet(hostServiceName, gitRepository, root) }
             }
             if (repository == null) return@withBackgroundProgress
 
@@ -114,7 +114,7 @@ class GitShareProjectService(
 
             // git remote add origin git@github.com:login/name.git
             reporter.itemStep(GitBundle.message("share.process.adding.gh.as.remote.host", hostServiceName)) {
-              LOG.info("Adding GitHub as a remote host")
+              LOG.info("Adding ${hostServiceName} as a remote host")
               coroutineToIndicator { addGitRemote(repository, remoteName, remoteUrl) }
             }
 
@@ -126,7 +126,7 @@ class GitShareProjectService(
             // git push origin master
             if (!reporter.itemStep(
                 GitBundle.message("share.process.pushing.to.host.master", hostServiceName, repository.currentBranch?.name ?: "")) {
-                LOG.info("Pushing to github master")
+                LOG.info("Pushing to ${hostServiceName} master")
                 coroutineToIndicator {
                   pushCurrentBranch(hostServiceName, repository, remoteName, remoteUrl, repositoryName, url)
                 }
@@ -170,10 +170,11 @@ class GitShareProjectService(
   }
 
   private fun ensureGitRepositoryExistsAndGet(
+    hostServiceName: @NlsContexts.ConfigurableName String,
     repository: GitRepository?,
     root: VirtualFile,
   ): GitRepository? {
-    LOG.info("Binding local project with GitHub")
+    LOG.info("Binding local project with ${hostServiceName}")
     if (repository == null) {
       LOG.info("No git detected, creating empty git repo")
       if (!createEmptyGitRepository(root)) {
@@ -303,7 +304,7 @@ class GitShareProjectService(
     }
     catch (e: VcsException) {
       LOG.warn(e)
-      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED, hostServiceName, name, url,
+      notifyProjectCreationFailure(hostServiceName, VcsNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED, name, url,
                                    GitBundle.message("share.error.init.commit.failed", hostServiceName) + getErrorTextFromException(e))
       return false
     }
@@ -328,13 +329,13 @@ class GitShareProjectService(
   ): Boolean {
     val currentBranch = repository.currentBranch
     if (currentBranch == null) {
-      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, hostServiceName, name, url,
+      notifyProjectCreationFailure(hostServiceName, VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, name, url,
                                    GitBundle.message("share.error.push.no.current.branch", hostServiceName))
       return false
     }
     val result = Git.getInstance().push(repository, remoteName, remoteUrl, currentBranch.name, true)
     if (!result.success()) {
-      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, hostServiceName, name, url,
+      notifyProjectCreationFailure(hostServiceName, VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, name, url,
                                    GitBundle.message("share.error.push.failed", hostServiceName, result.errorOutputAsHtmlString))
       return false
     }

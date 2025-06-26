@@ -101,26 +101,27 @@ public interface HighlightInfoType {
     return false;
   }
 
-  class HighlightInfoTypeImpl implements HighlightInfoType, HighlightInfoType.UpdateOnTypingSuppressible {
+  class HighlightInfoTypeImpl implements HighlightInfoType {
     private final HighlightSeverity mySeverity;
     private final TextAttributesKey attributeKey;
-    private final boolean needUpdateOnTyping;
 
     //read external only
     HighlightInfoTypeImpl(@NotNull Element element) {
       mySeverity = new HighlightSeverity(element);
       attributeKey = new TextAttributesKey(element);
-      needUpdateOnTyping = false;
     }
 
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey) {
-      this(severity, attributesKey, true);
+      mySeverity = severity;
+      attributeKey = attributesKey;
     }
 
+    /**
+     * @deprecated use {@link HighlightInfoTypeImpl#HighlightInfoTypeImpl(HighlightSeverity, TextAttributesKey)}
+     */
     public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey, boolean needsUpdateOnTyping) {
       mySeverity = severity;
       attributeKey = attributesKey;
-      needUpdateOnTyping = needsUpdateOnTyping;
     }
 
     /** Whether the corresponding severity should be available for choosing and editing in inspection settings */
@@ -170,11 +171,6 @@ public interface HighlightInfoType {
       result = 29 * result + attributeKey.hashCode();
       return result;
     }
-
-    @Override
-    public boolean needsUpdateOnTyping() {
-      return needUpdateOnTyping;
-    }
   }
 
   final class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
@@ -213,11 +209,6 @@ public interface HighlightInfoType {
   interface Iconable {
     @NotNull
     Icon getIcon();
-  }
-
-  @FunctionalInterface
-  interface UpdateOnTypingSuppressible {
-    boolean needsUpdateOnTyping();
   }
 
   static @Nls(capitalization = Sentence) String getUnusedSymbolDisplayName() {

@@ -1812,7 +1812,7 @@ open class EditorInspectionsActionToolbar(
   private val prevErrorAction: AnAction?
 ) : ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
   init {
-    putClientProperty(SUPPRESS_FAST_TRACK, true)
+    ClientProperty.put(this, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
   }
 
   override fun addNotify() {

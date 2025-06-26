@@ -33,6 +33,7 @@
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="TEST" name="maven-resolver-provider" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
   </component>
 </module>

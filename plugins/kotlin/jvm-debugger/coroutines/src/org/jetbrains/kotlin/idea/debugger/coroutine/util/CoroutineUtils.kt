@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.xdebugger.XSourcePosition
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
 const val CREATION_CLASS_NAME = "_COROUTINE._CREATION"
+private const val DEBUG_PROBES_IMPL_CLASS_FQNAME = "kotlinx.coroutines.debug.internal.DebugProbesImpl"
 
 fun Method.isInvokeSuspend(): Boolean =
     name() == KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME && signature() == "(Ljava/lang/Object;)Ljava/lang/Object;"
@@ -145,3 +147,6 @@ fun Location.isFilterFromTop(location: Location?): Boolean =
 
 fun Location.isFilterFromBottom(location: Location?): Boolean =
     sameLineAndMethod(location)
+
+internal fun VirtualMachineProxyImpl.findDebugProbesImplClass(): ClassObjectReference? =
+    classesByName(DEBUG_PROBES_IMPL_CLASS_FQNAME).firstOrNull()?.classObject()

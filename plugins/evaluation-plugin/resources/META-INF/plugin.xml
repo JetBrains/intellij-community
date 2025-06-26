@@ -3,6 +3,7 @@
   <!--suppress PluginXmlValidity -->
   <name>Evaluation Plugin</name>
   <vendor>JetBrains</vendor>
+  <category>Platform Development</category>
   <!--suppress PluginXmlValidity -->
   <idea-version since-build="211"/>
   <description><![CDATA[
@@ -38,6 +39,7 @@
   <dependencies>
     <plugin id="com.intellij.completion.ml.ranking"/>
     <plugin id="com.intellij.stats.completion"/>
+    <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.platform.warmup"/>
   </dependencies>

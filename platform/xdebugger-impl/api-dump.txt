@@ -38,8 +38,23 @@ com.intellij.xdebugger.attach.XLocalAttachDebugger
 - a:getDebuggerDisplayName():java.lang.String
 com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
 - a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+- sessionStopped():V
 com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
 - a:getBackgroundColor():java.awt.Color
+f:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationHandler
+- <init>(com.intellij.xdebugger.impl.frame.XDebuggerFramesList,kotlinx.coroutines.CoroutineScope):V
+- f:clear():V
+- f:customizePresentation(com.intellij.xdebugger.frame.XStackFrame,com.intellij.ui.ColoredTextContainer):V
+- f:scheduleForFrames(java.util.List):V
+- f:sessionStopped():V
+f:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager
+- sf:Companion:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:createFor(com.intellij.xdebugger.impl.frame.XDebuggerFramesList):com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationHandler
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager
+f:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager
 com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 - com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
 - a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V

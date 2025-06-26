@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
-import com.intellij.dvcs.branch.DvcsBranchInfo;
-import com.intellij.dvcs.branch.DvcsBranchSettings;
-import com.intellij.dvcs.branch.DvcsCompareSettings;
-import com.intellij.dvcs.branch.DvcsSyncSettings;
+import com.intellij.dvcs.branch.*;
 import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -303,6 +300,20 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     return getState().getBranchSettings();
   }
 
+  public void setBranchGroupingSettings(@NotNull GroupingKey key, boolean state) {
+    DvcsBranchSettings branchSettings = getBranchSettings();
+
+    if (state) {
+      branchSettings.getGroupingKeyIds().add(key.getId());
+    }
+    else {
+      branchSettings.getGroupingKeyIds().remove(key.getId());
+    }
+    branchSettings.intIncrementModificationCount();
+
+    project.getMessageBus().syncPublisher(GitVcsSettingsListener.TOPIC).branchGroupingSettingsChanged(key, state);
+  }
+
   public boolean shouldSetUserNameGlobally() {
     return getState().isSetUserNameGlobally();
   }
@@ -378,5 +389,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     void showTagsChanged(boolean value);
 
     void pathToGitChanged();
+
+    void branchGroupingSettingsChanged(@NotNull GroupingKey key, boolean state);
   }
 }

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures
 
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeatureWithSetUpTearDown
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
 import org.jetbrains.kotlin.idea.codeInsight.gradle.ImportStatusCollector
@@ -30,15 +30,8 @@ object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<Unit> {
             .removeNotificationListener(importStatusCollector!!)
     }
 
-    override fun KotlinMppTestsContext.afterImport() {
-        val expectedFailure = findMostSpecificExistingFileOrNewDefault(
-            "importErrors",
-            testDataDirectory,
-            kgpVersion,
-            gradleVersion.version,
-            agpVersion,
-            testConfiguration
-        )
+    override fun KotlinSyncTestsContext.afterImport() {
+        val expectedFailure = findMostSpecificExistingFileOrNewDefault("importErrors")
         val buildErrors = importStatusCollector!!.buildErrors
         val isBuildFailed = importStatusCollector!!.isBuildSuccessful.not()
         when {

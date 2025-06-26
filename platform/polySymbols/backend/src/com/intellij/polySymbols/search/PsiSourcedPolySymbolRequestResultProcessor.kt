@@ -5,21 +5,23 @@ import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.references.PolySymbolReference
+import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.ReferenceRange
 import com.intellij.psi.search.RequestResultProcessor
 import com.intellij.util.Processor
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.references.PolySymbolReference
-import com.intellij.polySymbols.utils.asSingleSymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PsiSourcedPolySymbolRequestResultProcessor(private val targetElement: PsiElement,
-                                                 private val targetSymbols: List<PolySymbol>,
-                                                 private val includeRegularReferences: Boolean) : RequestResultProcessor() {
+class PsiSourcedPolySymbolRequestResultProcessor(
+  private val targetElement: PsiElement,
+  private val targetSymbols: List<PolySymbol>,
+  private val includeRegularReferences: Boolean,
+) : RequestResultProcessor() {
   private val mySymbolReferenceService = PsiSymbolReferenceService.getService()
   private val myPsiReferenceService = PsiReferenceService.getService()
   private val myTargetSymbol = PsiSymbolService.getInstance().asSymbol(targetElement)

@@ -360,8 +360,7 @@ public final class SideEffectChecker {
 
     // all Throwable descendants from java.lang are side effects free
     if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName) || "java.io".equals(packageName)) {
-      PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
-      if (throwableClass != null && com.intellij.psi.util.InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
+      if (PsiClassUtil.isThrowable(aClass)) {
         return ThreeState.NO;
       }
     }

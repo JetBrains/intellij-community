@@ -23,10 +23,12 @@ object NameCaseUtils {
     toSeparatorBasedCase('-', str, false, false, false)
 
   @JvmStatic
-  fun toKebabCase(str: String,
-                  noHyphenBeforeDigit: Boolean,
-                  noHyphenBetweenDigitAndLowercase: Boolean,
-                  splitConsecutiveUppercase: Boolean): String =
+  fun toKebabCase(
+    str: String,
+    noHyphenBeforeDigit: Boolean,
+    noHyphenBetweenDigitAndLowercase: Boolean,
+    splitConsecutiveUppercase: Boolean,
+  ): String =
     toSeparatorBasedCase('-', str, noHyphenBeforeDigit,
                          noHyphenBetweenDigitAndLowercase,
                          splitConsecutiveUppercase)
@@ -36,10 +38,12 @@ object NameCaseUtils {
     toSeparatorBasedCase('_', str, false, false, false)
 
   @JvmStatic
-  fun toSnakeCase(str: String,
-                  noUnderscoreBeforeDigit: Boolean,
-                  noUnderscoreBetweenDigitAndLowercase: Boolean,
-                  splitConsecutiveUppercase: Boolean): String =
+  fun toSnakeCase(
+    str: String,
+    noUnderscoreBeforeDigit: Boolean,
+    noUnderscoreBetweenDigitAndLowercase: Boolean,
+    splitConsecutiveUppercase: Boolean,
+  ): String =
     toSeparatorBasedCase('_', str, noUnderscoreBeforeDigit,
                          noUnderscoreBetweenDigitAndLowercase,
                          splitConsecutiveUppercase)
@@ -84,10 +88,12 @@ object NameCaseUtils {
     return result.toString()
   }
 
-  private fun toSeparatorBasedCase(separator: Char, str: String,
-                                   noSeparatorBeforeDigit: Boolean,
-                                   noSeparatorBetweenDigitAndLowercase: Boolean,
-                                   splitConsecutiveUppercase: Boolean): String {
+  private fun toSeparatorBasedCase(
+    separator: Char, str: String,
+    noSeparatorBeforeDigit: Boolean,
+    noSeparatorBetweenDigitAndLowercase: Boolean,
+    splitConsecutiveUppercase: Boolean,
+  ): String {
     val result = StringBuilder()
     val codePoints = str.codePoints().toArray()
     for (i in codePoints.indices) {

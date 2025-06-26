@@ -2,6 +2,7 @@
 
 package com.intellij.mcpserver.toolsets.terminal
 
+import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
@@ -37,7 +38,8 @@ class TerminalToolset : McpToolset {
     suspend fun get_terminal_text(): String {
         val project = coroutineContext.project
         val text = runReadAction<String?> {
-            TerminalView.getInstance(project).getWidgets().firstOrNull()?.text
+          val terminalWidget = TerminalView.getInstance(project).getWidgets().firstOrNull() ?: throw McpExpectedError("No terminal available")
+          terminalWidget.text
         }
         return text ?: ""
     }

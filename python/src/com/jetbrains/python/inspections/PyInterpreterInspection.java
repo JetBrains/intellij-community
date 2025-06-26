@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityChange;
@@ -42,6 +43,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
+import com.jetbrains.python.projectModel.uv.UvProjectModelService;
+import com.jetbrains.python.projectModel.uv.UvProjectModelService.UvWorkspace;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -124,7 +127,9 @@ public final class PyInterpreterInspection extends PyInspection {
       }
       else {
         final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
-        if (!PlatformUtils.isFleetBackend() && (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module))) {
+        if (!PlatformUtils.isFleetBackend() &&
+            (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module)) &&
+            !(Registry.is("python.project.model.uv", false) && isAssociatedWithUvWorkspaceRootModule(associatedModulePath, module))) {
           final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.getExtensionList().stream()
             .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
             .filter(it -> it != null)
@@ -133,7 +138,6 @@ public final class PyInterpreterInspection extends PyInspection {
 
           if (fixData != null) {
             fixes.add(fixData.getQuickFix());
-            // noinspection HardCodedStringLiteral
             registerProblemWithCommonFixes(node, fixData.getMessage(), module, sdk, fixes, pyCharm);
             return;
           }
@@ -165,6 +169,13 @@ public final class PyInterpreterInspection extends PyInspection {
           }
         }
       }
+    }
+
+    private static boolean isAssociatedWithUvWorkspaceRootModule(@Nullable String sdkAssociatedPath, @NotNull Module module) {
+      if (sdkAssociatedPath == null) return false;
+      UvWorkspace<@NotNull Module> uvWorkspace = UvProjectModelService.INSTANCE.findWorkspace(module);
+      if (uvWorkspace == null) return false;
+      return sdkAssociatedPath.equals(BasePySdkExtKt.getBasePath(uvWorkspace.getRoot()));
     }
 
     private void registerProblemWithCommonFixes(PyFile node,
@@ -481,8 +492,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension,
-                                                                    () -> myExtension.createAndAddSdkForInspection(myModule));
+      PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension);
     }
 
     @Override

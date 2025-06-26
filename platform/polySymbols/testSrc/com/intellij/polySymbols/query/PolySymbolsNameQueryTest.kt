@@ -7,7 +7,6 @@ import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
-import com.intellij.util.containers.Stack
 
 class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
@@ -388,12 +387,12 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNestedPattern1() {
-    polySymbolsQueryExecutorFactory.addScope(
-      object : PolySymbolsScope {
+    polySymbolQueryExecutorFactory.addScope(
+      object : PolySymbolScope {
         override fun getMatchingSymbols(
           qualifiedName: PolySymbolQualifiedName,
-          params: PolySymbolsNameMatchQueryParams,
-          scope: Stack<PolySymbolsScope>,
+          params: PolySymbolNameMatchQueryParams,
+          stack: PolySymbolQueryStack,
         ): List<PolySymbol> {
           return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
@@ -413,7 +412,7 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           else emptyList()
         }
 
-        override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
+        override fun createPointer(): Pointer<out PolySymbolScope> = Pointer.hardPointer(this)
 
         override fun getModificationCount(): Long = 0
       }, null, testRootDisposable)
@@ -437,7 +436,7 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   ) {
     doTest(testPath) {
       registerFiles(framework, webTypes, customElementsManifests)
-      val matches = polySymbolsQueryExecutorFactory.create(null)
+      val matches = polySymbolQueryExecutorFactory.create(null)
         .nameMatchQuery(parseWebTypesPath(path, null)) {
           if (!includeVirtual) exclude(PolySymbolModifier.VIRTUAL)
           exclude(PolySymbolModifier.ABSTRACT)

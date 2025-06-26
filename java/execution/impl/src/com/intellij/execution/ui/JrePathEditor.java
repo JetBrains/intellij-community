@@ -264,6 +264,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   public void setDefaultJreSelector(DefaultJreSelector defaultJreSelector) {
     myDefaultJreSelector = defaultJreSelector;
     myDefaultJreSelector.addChangeListener(() -> updateDefaultJrePresentation());
+    updateDefaultJrePresentation();
   }
 
   public void setPathOrName(@Nullable String pathOrName, boolean useAlternativeJre) {

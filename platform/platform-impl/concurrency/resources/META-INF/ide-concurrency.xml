@@ -1,0 +1,9 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
+                        serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <applicationService serviceInterface="com.intellij.concurrency.AsyncFutureFactory"
+                        serviceImplementation="com.intellij.concurrency.AsyncFutureFactoryImpl"/>
+  </extensions>
+</idea-plugin>

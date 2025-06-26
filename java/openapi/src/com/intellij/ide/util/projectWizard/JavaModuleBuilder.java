@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 
@@ -167,7 +167,8 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
       instance.setLanguageLevel(extension.getLanguageLevel());
     }
     else {
-      //setup language level according to jdk, then setup default flag
+      //setup default flag and language level according to jdk
+      instance.setDefault(true);
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       LOG.debug("commit: projectSdk=" + sdk);
       if (sdk != null) {
@@ -175,7 +176,6 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
         LOG.debug("commit: sdk.version=" + version);
         if (version != null) {
           instance.setLanguageLevel(version.getMaxLanguageLevel());
-          instance.setDefault(true);
         }
       }
     }

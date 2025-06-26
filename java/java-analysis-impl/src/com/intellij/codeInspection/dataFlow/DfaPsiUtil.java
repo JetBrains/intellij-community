@@ -417,7 +417,14 @@ public final class DfaPsiUtil {
     });
   }
 
-  public static List<PsiExpression> findAllConstructorInitializers(PsiField field) {
+  /**
+   * Finds all initializers of the specified field inside constructors and class/instance initializers.
+   * Includes the field's own initializer, if any.
+   *
+   * @param field  the field find initializers for
+   * @return the initializers found.
+   */
+  public static @NotNull List<PsiExpression> findAllConstructorInitializers(@NotNull PsiField field) {
     final List<PsiExpression> result = ContainerUtil.createLockFreeCopyOnWriteList();
     ContainerUtil.addIfNotNull(result, field.getInitializer());
 
@@ -428,7 +435,16 @@ public final class DfaPsiUtil {
     return result;
   }
 
-  public static List<PsiExpression> findAllConstructorInitializers(PsiRecordComponent component) {
+  /**
+   * Finds all initializers of the specified record component.
+   * This includes the right-side of assignments in a compact constructor to the implicit parameter
+   * corresponding to the specified component.
+   * Since a record component is implicitly final, all of its initializers will be inside a constructor (when the code is compilable).
+   *
+   * @param component  the record component to find initializers for
+   * @return the initializers found.
+   */
+  static @NotNull List<PsiExpression> findAllConstructorInitializers(@NotNull PsiRecordComponent component) {
     PsiClass containingClass = component.getContainingClass();
     return containingClass == null || containingClass instanceof PsiCompiledElement
            ? Collections.emptyList()

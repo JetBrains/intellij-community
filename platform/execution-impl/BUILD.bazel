@@ -21,9 +21,12 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//jps/model-serialization",
     "//platform/lang-api:lang",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
+    "//platform/remote-core",
     "//platform/statistics",
     "//platform/platform-impl:ide-impl",
     "//platform/macro",
@@ -65,12 +68,12 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/platform-impl/rpc",
   ],
-  exports = ["//platform/macro"],
   runtime_deps = [":execution-impl_resources"]
 )
 ### auto-generated section `build intellij.platform.execution.impl` end
 
 ### auto-generated section `build intellij.platform.execution.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -98,7 +101,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "execution-tests_test",
   runtime_deps = [":execution-tests_test_lib"]
 )

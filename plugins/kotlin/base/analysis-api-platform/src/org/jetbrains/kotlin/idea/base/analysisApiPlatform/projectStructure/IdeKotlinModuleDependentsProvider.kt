@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.ideProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.symbolicId
@@ -122,8 +123,8 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
     private val transitiveDependentsCache: CachedValue<Cache<KaModule, Set<KaModule>>> =
         CachedValuesManager.getManager(project).createCachedValue {
             CachedValueProvider.Result.create(
-              Caffeine.newBuilder().maximumSize(100).build(),
-              ProjectRootModificationTracker.getInstance(project),
+                Caffeine.newBuilder().maximumSize(100).build(),
+                project.ideProjectStructureProvider.getCacheDependenciesTracker()
             )
         }
 

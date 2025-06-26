@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 
 @Suppress("GrUnresolvedAccess")
 open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImportingTestCase() {
@@ -54,7 +54,7 @@ open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImpor
     }
 
     @JvmStatic
-    protected fun ScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
+    protected fun GradleScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
       call("maven") {
         assign("url", url)
         if (useOldStyleMetadata) {

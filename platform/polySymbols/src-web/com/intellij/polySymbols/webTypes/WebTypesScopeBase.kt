@@ -14,7 +14,6 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
@@ -22,7 +21,7 @@ import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.context.PolyContextKindRules.DisablementRules
 import com.intellij.polySymbols.context.PolyContextKindRules.EnablementRules
 import com.intellij.polySymbols.context.PolyContextRulesProvider
-import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
+import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
@@ -33,7 +32,7 @@ import javax.swing.Icon
 
 @Internal
 abstract class WebTypesScopeBase :
-  StaticPolySymbolsScopeBase<Contributions, GenericContributionsHost, WebTypesJsonOrigin>(),
+  StaticPolySymbolScopeBase<Contributions, GenericContributionsHost, WebTypesJsonOrigin>(),
   PolyContextRulesProvider {
 
   private val frameworkConfigs = mutableMapOf<WebTypes, FrameworkConfig>()

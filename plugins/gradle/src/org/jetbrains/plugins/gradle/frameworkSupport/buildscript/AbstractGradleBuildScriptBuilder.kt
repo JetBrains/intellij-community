@@ -5,16 +5,21 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder.Companion.tree
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import kotlin.apply as applyKt
 
-@ApiStatus.NonExtendable
+@ApiStatus.Internal
 abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>(
   gradleVersion: GradleVersion,
-) : AbstractGradleBuildScriptBuilderCore<Self>(gradleVersion),
+  gradleDsl: GradleDsl,
+) : AbstractGradleBuildScriptBuilderCore<Self>(gradleVersion, gradleDsl),
     GradleBuildScriptBuilder<Self> {
+
+  private val PREDEFINED_TASKS = setOf("test", "compileJava", "compileTestJava")
 
   protected val kotlinVersion: String = getKotlinVersion(gradleVersion)
   protected val groovyVersion: String = getGroovyVersion()
@@ -27,7 +32,48 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun addVersion(version: String): Self =
     withPrefix { assign("version", version) }
 
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self =
+  override fun registerTask(name: String, type: String?, configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    withPostfix {
+      val nameArgument = argument(name)
+      val blockArgument = tree(configure).takeUnless { it.isEmpty() }?.let { argument(it) }
+      when (gradleDsl) {
+        GradleDsl.GROOVY -> if (isTaskConfigurationAvoidanceSupported(gradleVersion)) {
+          val typeArgument = type?.let { argument(code(it)) }
+          call("tasks.register", listOfNotNull(nameArgument, typeArgument, blockArgument))
+        }
+        else {
+          val typeArgument = type?.let { argument(code(it)) }
+          call("tasks.create", listOfNotNull(nameArgument, typeArgument, blockArgument))
+        }
+        GradleDsl.KOTLIN -> if (isTaskConfigurationAvoidanceSupported(gradleVersion)) {
+          val typeArgument = type?.let { "<$it>" } ?: ""
+          call("tasks.register$typeArgument", listOfNotNull(nameArgument, blockArgument))
+        }
+        else {
+          val typeArgument = type?.let { argument(code("$it::class.java")) }
+          call("tasks.create", listOfNotNull(nameArgument, typeArgument, blockArgument))
+        }
+      }
+    }
+
+  override fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    withPostfix {
+      val block = tree(configure)
+      if (!block.isEmpty()) {
+        when (gradleDsl) {
+          GradleDsl.GROOVY -> when (name in PREDEFINED_TASKS) {
+            true -> call(name, argument(block))
+            else -> call("tasks.named", argument(name), argument(code(type)), argument(block))
+          }
+          GradleDsl.KOTLIN -> when (name in PREDEFINED_TASKS) {
+            true -> call("tasks.$name", argument(block))
+            else -> call("tasks.named<$type>", argument(name), argument(block))
+          }
+        }
+      }
+    }
+
+  override fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self =
     configureTask("test", "Test", configure)
 
   override fun addDependency(scope: String, dependency: String, sourceSet: String?): Self =
@@ -116,6 +162,19 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun withKotlinJvmPlugin(): Self =
     withKotlinJvmPlugin(kotlinVersion)
 
+  override fun withKotlinJvmPlugin(version: String?): Self = apply {
+    withMavenCentral()
+    when (gradleDsl) {
+      GradleDsl.GROOVY -> withPlugin("org.jetbrains.kotlin.jvm", version)
+      GradleDsl.KOTLIN -> withPlugin {
+        when (version) {
+          null -> call("kotlin", "jvm")
+          else -> infixCall(call("kotlin", "jvm"), "version", string(version))
+        }
+      }
+    }
+  }
+
   override fun withKotlinJsPlugin(): Self =
     withPlugin("org.jetbrains.kotlin.js", kotlinVersion)
 
@@ -164,6 +223,26 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
         assignIfNotNull("mainClass", mainClass)
         assignIfNotNull("executableDir", executableDir)
         assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
+      }
+    }
+  }
+
+  override fun withKotlinTest(): Self = apply {
+    when (gradleDsl) {
+      GradleDsl.GROOVY -> {
+        withMavenCentral()
+        // The kotlin-test dependency version is inherited from the Kotlin plugin
+        addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
+        configureTestTask {
+          call("useJUnitPlatform")
+        }
+      }
+      GradleDsl.KOTLIN -> {
+        withMavenCentral()
+        addTestImplementationDependency(call("kotlin", "test"))
+        configureTestTask {
+          call("useJUnitPlatform")
+        }
       }
     }
   }
@@ -234,7 +313,20 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun project(name: String, configuration: String): Expression =
     call("project", "path" to name, "configuration" to configuration)
 
-  override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = applyKt {
+  override fun GradleScriptTreeBuilder.mavenRepository(url: String): GradleScriptTreeBuilder = applyKt {
+    when (gradleDsl) {
+      GradleDsl.GROOVY -> {
+        call("maven") {
+          assign("url", url)
+        }
+      }
+      GradleDsl.KOTLIN -> {
+        call("maven", "url" to url)
+      }
+    }
+  }
+
+  override fun GradleScriptTreeBuilder.mavenCentral(): GradleScriptTreeBuilder = applyKt {
     val mavenRepositoryUrl = GradleEnvironment.Urls.getMavenRepositoryUrl()
     if (mavenRepositoryUrl != null) {
       // it is possible to configure the mavenCentral repository via closure only since Gradle 5.3
@@ -250,5 +342,28 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     else {
       call("mavenCentral")
     }
+  }
+
+  override fun GradleScriptTreeBuilder.mavenLocal(url: String): GradleScriptTreeBuilder = applyKt {
+    when (gradleDsl) {
+      GradleDsl.GROOVY -> {
+        call("mavenLocal") {
+          assign("url", url)
+        }
+      }
+      GradleDsl.KOTLIN -> {
+
+        call("mavenLocal") {
+          assign("url", call("uri", url))
+        }
+      }
+    }
+  }
+
+  internal class Impl(
+    gradleVersion: GradleVersion,
+    gradleDsl: GradleDsl,
+  ) : AbstractGradleBuildScriptBuilder<Impl>(gradleVersion, gradleDsl) {
+    override fun apply(action: Impl.() -> Unit) = applyKt(action)
   }
 }

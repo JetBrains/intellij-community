@@ -3,6 +3,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -42,6 +44,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ExceptionEvent;
+import kotlinx.coroutines.flow.Flow;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -95,19 +98,40 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   @Override
+  public void customizeTextPresentation(@NotNull ColoredTextContainer component) {
+    Location location = myDescriptor.getLocation();
+    if (location == null) {
+      return;
+    }
+    //noinspection HardCodedStringLiteral
+    component.append(ThreadDumpAction.renderLocation(location), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  @Override
   public void customizePresentation(@NotNull ColoredTextContainer component) {
-    StackFrameDescriptorImpl selectedDescriptor = null;
+    StackFrameDescriptorImpl selectedDescriptor = getSelectedDescriptor();
+    JavaFramesListRenderer.customizePresentation(myDescriptor, component, selectedDescriptor);
+  }
+
+  @Override
+  public @NotNull Flow<@NotNull XStackFrameUiPresentationContainer> customizePresentation() {
+    StackFrameDescriptorImpl selectedDescriptor = getSelectedDescriptor();
+    return JavaFramesListRendererUtilsKt.computeUiPresentation(myDescriptor, selectedDescriptor);
+  }
+
+  private StackFrameDescriptorImpl getSelectedDescriptor() {
+    StackFrameDescriptorImpl result = null;
     DebuggerSession session = myDebugProcess.getSession();
     if (session != null) {
       XDebugSession xSession = session.getXDebugSession();
       if (xSession != null) {
         XStackFrame frame = xSession.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
-          selectedDescriptor = ((JavaStackFrame)frame).getDescriptor();
+          result = ((JavaStackFrame)frame).getDescriptor();
         }
       }
     }
-    JavaFramesListRenderer.customizePresentation(myDescriptor, component, selectedDescriptor);
+    return result;
   }
 
   @Override

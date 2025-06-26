@@ -1,3 +1,15 @@
+f:org.jetbrains.jewel.foundation.DisabledAppearanceValues
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion
+- <init>(I,I,I):V
+- equals(java.lang.Object):Z
+- f:getAlpha():I
+- f:getBrightness():I
+- f:getContrast():I
+- hashCode():I
+f:org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion
+f:org.jetbrains.jewel.foundation.DisabledAppearanceValuesKt
+- sf:getLocalDisabledAppearanceValues():androidx.compose.runtime.ProvidableCompositionLocal
 org.jetbrains.jewel.foundation.actionSystem.DataProviderContext
 - a:lazy(java.lang.String,kotlin.jvm.functions.Function0):V
 - a:set(java.lang.String,java.lang.Object):V
@@ -57,3 +69,5 @@ f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
 - f:getInstanceUuid(androidx.compose.runtime.Composer,I):java.util.UUID
 f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
 - sf:getLocalThemeInstanceUuid():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.foundation.theme.ThemeDefinition
+- f:getDisabledAppearanceValues():org.jetbrains.jewel.foundation.DisabledAppearanceValues

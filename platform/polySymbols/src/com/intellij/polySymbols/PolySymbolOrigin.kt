@@ -29,11 +29,13 @@ interface PolySymbolOrigin {
 
   companion object {
     @JvmStatic
-    fun create(framework: FrameworkId? = null,
-               library: String? = null,
-               version: String? = null,
-               defaultIcon: Icon? = null,
-               typeSupport: PolySymbolTypeSupport? = null): PolySymbolOrigin =
+    fun create(
+      framework: FrameworkId? = null,
+      library: String? = null,
+      version: String? = null,
+      defaultIcon: Icon? = null,
+      typeSupport: PolySymbolTypeSupport? = null,
+    ): PolySymbolOrigin =
       PolySymbolOriginImpl(framework, library, version, defaultIcon, typeSupport)
 
     @JvmStatic

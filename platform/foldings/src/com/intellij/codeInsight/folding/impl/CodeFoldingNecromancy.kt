@@ -11,7 +11,7 @@ import java.io.DataOutput
 
 internal object CodeFoldingNecromancy : Necromancy<CodeFoldingZombie> {
 
-  override fun spellLevel(): Int = 0
+  override fun spellLevel(): Int = 1
 
   override fun isDeepBury(): Boolean = false
 

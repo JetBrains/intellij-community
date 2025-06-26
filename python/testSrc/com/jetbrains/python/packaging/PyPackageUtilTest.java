@@ -140,7 +140,13 @@ public class PyPackageUtilTest extends PyTestCase {
         assertNotNull(PyPackageUtil.findSetupCall(module));
 
         if (requires) {
-          checkRequirements(PyPackageUtil.findSetupPyRequires(module));
+          if (extrasRequire) {
+            checkRequirements(PyPackageUtil.findSetupPyRequires(module), 0,
+                              PyRequirementParser.fromText("Markdown\nNewDjango==1.3.1\nnumpy\nmynose\nr1\nr2\nr3\nr4"));
+          }
+          else {
+            checkRequirements(PyPackageUtil.findSetupPyRequires(module));
+          }
         }
         else {
           final List<PyRequirement> requirements = PyPackageUtil.findSetupPyRequires(module);
@@ -152,9 +158,9 @@ public class PyPackageUtilTest extends PyTestCase {
           final Map<String, List<PyRequirement>> extrasRequirements = PyPackageUtil.findSetupPyExtrasRequire(module);
 
           final ImmutableMap<String, List<PyRequirement>> expected = ImmutableMap.of(
-            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1",null)),
-            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2",null)),
-            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3",null), PyRequirementsKt.pyRequirement("r4",null))
+            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1", null)),
+            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2", null)),
+            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3", null), PyRequirementsKt.pyRequirement("r4", null))
           );
 
           assertEquals(expected, extrasRequirements);
@@ -216,6 +222,10 @@ public class PyPackageUtilTest extends PyTestCase {
 
   private static void checkRequirements(@Nullable List<PyRequirement> actual, int fromIndex) {
     final List<PyRequirement> expected = PyRequirementParser.fromText("Markdown\nNewDjango==1.3.1\nnumpy\nmynose");
+    checkRequirements(actual, fromIndex, expected);
+  }
+
+  private static void checkRequirements(@Nullable List<PyRequirement> actual, int fromIndex, List<PyRequirement> expected) {
     assertEquals(expected.subList(fromIndex, expected.size()), actual);
   }
 

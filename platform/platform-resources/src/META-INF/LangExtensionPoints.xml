@@ -543,8 +543,10 @@
       <with attribute="implementationClass" implements="com.intellij.testIntegration.TestCreator"/>
     </extensionPoint>
 
-    <extensionPoint name="moduleConfigurationEditorProvider" interface="com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider"
-                    area="IDEA_MODULE" dynamic="true"/>
+    <extensionPoint name="moduleConfigurationEditorProvider" beanClass="com.intellij.openapi.roots.ui.configuration.impl.ModuleConfigurationEditorProviderEp"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="callHierarchyProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.hierarchy.HierarchyProvider"/>

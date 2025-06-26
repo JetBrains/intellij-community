@@ -10,6 +10,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -75,8 +76,10 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     }
   }
 
-  private suspend fun getProvidersHolder(sessionRef: DurableRef<SeSessionEntity>,
-                                         dataContextId: DataContextId?): SeProvidersHolder? =
+  private suspend fun getProvidersHolder(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId?,
+  ): SeProvidersHolder? =
     mutex.withLock {
       val session = sessionRef.derefOrNull() ?: return@withLock null
       sessionIdToProviderHolders[session.eid]?.let { return@withLock it }
@@ -111,7 +114,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
-    isAllTab: Boolean
+    isAllTab: Boolean,
   ): Map<SeProviderId, SeSearchScopesInfo> {
     return providerIds.mapNotNull { providerId ->
       val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, isAllTab)
@@ -126,7 +129,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
-    isAllTab: Boolean
+    isAllTab: Boolean,
   ): List<SeTypeVisibilityStatePresentation> {
     return providerIds.mapNotNull { providerId ->
       val provider = getProvidersHolder(sessionRef, dataContextId)?.get(providerId, isAllTab)
@@ -165,6 +168,23 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     providerId: SeProviderId,
   ): Boolean {
     return getProvidersHolder(sessionRef, dataContextId)?.getLegacyContributor(providerId, false)?.isShownInSeparateTab ?: false
+  }
+
+  suspend fun openInFindToolWindow(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId?,
+    providerIds: List<SeProviderId>,
+    params: SeParams,
+    isAllTab: Boolean,
+  ): Boolean {
+    val providersHolder = getProvidersHolder(sessionRef, dataContextId)
+    if (providersHolder == null) return false
+
+    SeFindToolWindowManager(project).openInFindToolWindow(
+      providerIds, params, isAllTab, providersHolder, projectId,
+    )
+    return true
   }
 
   companion object {

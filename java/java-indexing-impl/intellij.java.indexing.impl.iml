@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.java.indexing" />

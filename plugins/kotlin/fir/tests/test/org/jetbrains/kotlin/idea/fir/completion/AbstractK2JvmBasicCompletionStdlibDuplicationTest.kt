@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.downloadKotlinArtifactOrReportUnavailability
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.downloadArtifact
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 
@@ -13,9 +13,10 @@ abstract class AbstractK2JvmBasicCompletionStdlibDuplicationTest : AbstractK2Jvm
     override fun setUp() {
         super.setUp()
 
-        val libraryRoot = downloadKotlinArtifactOrReportUnavailability(
-            artifactId = KotlinStdlibIndex.KOTLIN_STDLIB_NAME.shortName().asString(),
-            version = BuildSystemKotlinNewProjectWizard.DEFAULT_KOTLIN_VERSION,
+        val libraryRoot = downloadArtifact(
+          groupId = "org.jetbrains.kotlin",
+          artifactId = KotlinStdlibIndex.KOTLIN_STDLIB_NAME.shortName().asString(),
+          version = BuildSystemKotlinNewProjectWizard.DEFAULT_KOTLIN_VERSION,
         )
 
         ModuleRootModificationUtil.addModuleLibrary(

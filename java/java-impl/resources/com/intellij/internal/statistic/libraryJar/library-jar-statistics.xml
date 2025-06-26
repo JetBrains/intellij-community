@@ -141,6 +141,7 @@
   <technology name="karate" class="com.intuit.karate.Runner"/>
   <technology name="kodein" class="org.kodein.di.Kodein"/>
   <technology name="koin" class="org.koin.core.Koin"/>
+  <technology name="koog" class="ai.koog.agents.core.agent.AIAgent"/>
   <technology name="kotest" class="io.kotest.core.annotation.Tags"/>
   <technology name="kotless" class="io.kotless.HttpMethod"/>
   <technology name="kotlin" class="kotlin.reflect.KClass"/>

@@ -8,6 +8,7 @@ import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.locking.impl.listeners.ErrorHandler
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider
@@ -18,6 +19,7 @@ import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.Result
@@ -547,6 +549,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
           val newArray = currentPendingWaArray + AtomicInteger(0)
         }
         while (!myWriteActionPending.compareAndSet(currentPendingWaArray, newArray))
+        drainWriteActionFollowups()
 
         return ComputationStateContextElement(newComputationState) to {
           var isWriteActionPendingOnCurrentLevel: Boolean
@@ -925,8 +928,16 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       finally {
         writeLockInitResult.release()
       }
-    } catch (e : Throwable) {
-      throw e
+    }
+    catch (e: CancellationException) {
+      val job = currentThreadContext()[Job]
+      if (job != null && job.isCancelled && e !is ProcessCanceledException) {
+        // the lock acquisition was promptly canceled, so we need to rethrow a PCE from here to comply with blocking context
+        throw ProcessCanceledException(e)
+      }
+      else {
+        throw e
+      }
     }
     finally {
       writeIntentInitResult.release()
@@ -1457,6 +1468,34 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   @Suppress("FunctionName") // this function is for hackers
   private fun hack_setPublishedPermitData(newData: ExposedWritePermitData?) {
     publishedPermits = newData
+  }
+
+  override fun transferWriteActionAndBlock(blockingExecutor: (ThreadingSupport.RunnableWithTransferredWriteAction) -> Unit, action: Runnable) {
+    val completionMarker = AtomicBoolean(false)
+    val currentState = getComputationState()
+    val permit = currentState.getThisThreadPermit()
+    check(permit is ParallelizablePermit.Write) {
+      "Attempt to transfer write action with existing permit: $permit. Write Permit is required here"
+    }
+    blockingExecutor(object : ThreadingSupport.RunnableWithTransferredWriteAction() {
+      override fun run() {
+        val currentPermit = thisLevelPermit.get()
+        hack_setThisLevelPermit(permit.writePermit)
+        val currentWriteThreadAcquired = myWriteAcquired
+        myWriteAcquired = Thread.currentThread()
+        try {
+          action.run()
+        }
+        finally {
+          myWriteAcquired = currentWriteThreadAcquired
+          hack_setThisLevelPermit(currentPermit)
+          completionMarker.set(true)
+        }
+      }
+    })
+    check(completionMarker.get()) {
+      "The executor must run the action synchronously"
+    }
   }
 }
 

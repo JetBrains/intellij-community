@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.javaFX` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -14,13 +15,16 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//java/execution/openapi:java-execution",
     "//java/execution/impl",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/platform-impl:ide-impl",
@@ -57,19 +61,21 @@ jvm_library(
   associates = [":javaFX"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//java/execution/openapi:java-execution",
     "//java/execution/impl",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
@@ -101,7 +107,7 @@ jvm_library(
   runtime_deps = [":javaFX_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "javaFX_test",
   runtime_deps = [":javaFX_test_lib"]
 )

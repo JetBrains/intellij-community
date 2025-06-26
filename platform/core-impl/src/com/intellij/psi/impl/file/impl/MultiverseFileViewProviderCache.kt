@@ -43,7 +43,7 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
     cache.cache.keys.forEach(block)
   }
 
-  override fun forEach(block: FileViewProviderCache.Consumer) {
+  override fun forEach(block: FileViewProviderCache.CacheEntryConsumer) {
     if (!(cache.isInitialized)) return
     val map = cache.cache
     map.forEach { (file, map) ->

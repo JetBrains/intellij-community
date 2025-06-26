@@ -109,5 +109,6 @@ fun String.unescapeHtml(): String =
   replace("&lt;", "<")
     .replace("&gt;", ">")
     .replace("&amp;", "&")
+    .replace("&#32;", " ")
     .replace("&#39;", "'")
     .replace("&quot;", "\"")

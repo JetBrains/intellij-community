@@ -1,0 +1,16 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend.split"/>
+    <module name="intellij.xml.frontback.impl"/>
+    <module name="intellij.xml.parser"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.lang.xml.BasicXmlElementFactory"
+                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendXmlElementFactory"/>
+    <applicationService serviceInterface="com.intellij.lang.html.BasicHtmlElementFactory"
+                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
+    <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
+                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
+  </extensions>
+</idea-plugin>

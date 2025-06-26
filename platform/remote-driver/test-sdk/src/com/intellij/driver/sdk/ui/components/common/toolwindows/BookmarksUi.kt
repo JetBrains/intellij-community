@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 fun IdeaFrameUI.bookmarksToolWindow(action: BookmarksToolWindowUiComponent.() -> Unit = {}) =
   x(BookmarksToolWindowUiComponent::class.java) { byAccessibleName("Bookmarks Tool Window") }.apply(action)
 
-class BookmarksToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
+class BookmarksToolWindowUiComponent(data: ComponentData) : ToolWindowUiComponent(data) {
 
   val bookmarksTree by lazy {
     if (isRemDevMode) {

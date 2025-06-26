@@ -3,12 +3,13 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyEmptyExpression;
+import com.jetbrains.python.psi.PyInstantTypeProvider;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyEmptyExpressionImpl extends PyElementImpl implements PyEmptyExpression {
+public class PyEmptyExpressionImpl extends PyElementImpl implements PyEmptyExpression, PyInstantTypeProvider {
   public PyEmptyExpressionImpl(ASTNode astNode) {
     super(astNode);
   }

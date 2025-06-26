@@ -1617,6 +1617,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     }
 
     @Override
+    @Nullable
+    @ApiStatus.Obsolete
     public VirtualFile getVirtualFile() {
       return FileDocumentManager.getInstance().getFile(getDocument());
     }

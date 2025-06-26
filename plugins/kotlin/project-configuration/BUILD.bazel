@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:guava",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/observable",
@@ -57,6 +58,8 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:maven-resolver-provider",
     "//platform/util",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/scripting",
   ],
   runtime_deps = [":project-configuration_resources"]
 )

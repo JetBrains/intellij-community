@@ -232,7 +232,7 @@ fun serveStream(
 
   when (descriptor) {
     is InternalStreamDescriptor.ToRemote -> {
-      coroutineScope.launch(coroutineName) {
+      coroutineScope.launch(coroutineName + Dispatchers.Unconfined) {
         try {
           sendMessage(RpcMessage.StreamInit(streamId = descriptor.uid))
           for (item in descriptor.channel) {
@@ -301,7 +301,7 @@ fun serveStream(
         }
       }
 
-      coroutineScope.launch(coroutineName) {
+      coroutineScope.launch(coroutineName + Dispatchers.Unconfined) {
         try {
           try {
             userChannel.invokeOnClose {

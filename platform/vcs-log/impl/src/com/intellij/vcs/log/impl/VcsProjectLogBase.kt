@@ -37,6 +37,8 @@ import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.StorageId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -54,7 +56,8 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   protected val project: Project,
   protected val coroutineScope: CoroutineScope,
 ) : VcsProjectLog() {
-  private val logManagerState = MutableStateFlow<M?>(null)
+  private val _logManagerState = MutableStateFlow<M?>(null)
+  override val logManagerState: StateFlow<M?> = _logManagerState.asStateFlow()
   private val errorCountBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
 
   private val shutDownStarted = AtomicBoolean(false)
@@ -63,7 +66,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   // not-reentrant - invoking [lock] even from the same thread/coroutine that currently holds the lock still suspends the invoker
   private val mutex = Mutex()
 
-  final override val logManager: M? get() = logManagerState.value
+  final override val logManager: M? get() = _logManagerState.value
 
   final override val dataManager: VcsLogData? get() = logManager?.dataManager
 
@@ -122,7 +125,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
         mutex.withLock {
-          logManagerState.getAndUpdate { null }?.let {
+          _logManagerState.getAndUpdate { null }?.let {
             LOG.debug { "Disposing ${it.name}" }
             it.dispose(useRawSwingDispatcher = useRawSwingDispatcher)
           }
@@ -189,7 +192,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 
   private suspend fun disposeLogManager(invalidateCaches: Boolean = false) {
-    val manager = logManagerState.getAndUpdate { null } ?: return
+    val manager = _logManagerState.getAndUpdate { null } ?: return
 
     LOG.debug { "Disposing ${manager.name}" }
     withContext(Dispatchers.EDT) {
@@ -213,13 +216,13 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 
   private suspend fun getOrCreateLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): M {
-    logManagerState.value?.let {
+    _logManagerState.value?.let {
       return it
     }
 
     LOG.debug { "Creating ${getProjectLogName(logProviders)}" }
     return createLogManager(logProviders).also { manager ->
-      logManagerState.value = manager
+      _logManagerState.value = manager
       withContext(Dispatchers.EDT) {
         notifyLogCreated(manager)
       }

@@ -43,6 +43,7 @@ fun createContentCheckTests(
   testInfo: TestInfo,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   checkPlugins: Boolean = true,
+  suggestedReviewer: String? = null,
 ): Iterator<DynamicTest> {
   val packageResult by lazy {
     lateinit var result: PackageResult
@@ -62,6 +63,7 @@ fun createContentCheckTests(
         expectedFile = projectHome.resolve(contentYamlPath),
         projectHome = projectHome,
         isBundled = true,
+        suggestedReviewer = suggestedReviewer,
       )
     })
 
@@ -107,6 +109,7 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
   project: JpsProject,
   projectHome: Path?,
   testInfo: TestInfo,
+  suggestedReviewer: String? = null,
 ) {
   for (item in fileEntries) {
     val module = project.modules.find { it.name == item.mainModule } ?: continue
@@ -124,6 +127,7 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
         expectedFile = expectedFile,
         projectHome = projectHome!!,
         isBundled = nonBundled != null,
+        suggestedReviewer = suggestedReviewer,
       )
 
       if (nonBundled != null) {

@@ -217,10 +217,10 @@ class MacDistributionBuilder(
     val binariesToSign = customizer.getBinariesToSign(context, arch).map(osAndArchSpecificDistPath::resolve)
     val matchers = generateExecutableFilesMatchers(includeRuntime = false, arch).keys
     withContext(Dispatchers.IO) {
-      signMacBinaries(files = binariesToSign, context)
+      signMacBinaries(binariesToSign, context)
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
         launch(CoroutineName("recursively signing macOS binaries in $dir")) {
-          recursivelySignMacBinaries(root = dir, context, matchers)
+          recursivelySignMacBinaries(coroutineScope = this, dir, context, matchers)
         }
       }
     }
@@ -552,9 +552,6 @@ class MacDistributionBuilder(
   private val publishSitArchive: Boolean
     get() = !context.isStepSkipped(BuildOptions.MAC_SIT_PUBLICATION_STEP)
 
-  private val signMacOsBinaries: Boolean
-    get() = !context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)
-
   private suspend fun signAndBuildDmg(macZip: Path, isRuntimeBundled: Boolean, suffix: String, arch: JvmArchitecture, notarize: Boolean) {
     require(Files.isRegularFile(macZip))
 
@@ -563,7 +560,7 @@ class MacDistributionBuilder(
     Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
 
     if (context.isMacCodeSignEnabled) {
-      context.proprietaryBuildTools.signTool.signFiles(listOf(sitFile), context, signingOptions("application/x-mac-app-zip", context))
+      context.proprietaryBuildTools.signTool.signFiles(listOf(sitFile), context, macSigningOptions("application/x-mac-app-zip", context))
     }
 
     if (notarize) {
@@ -631,7 +628,7 @@ class MacDistributionBuilder(
       Files.readString(scriptsDir.resolve("build-template.sh"))
         .resolveTemplateVar("staple", "$staple")
         .resolveTemplateVar("appName", context.fullBuildNumber)
-        .resolveTemplateVar("contentSigned", "${signMacOsBinaries}")
+        .resolveTemplateVar("contentSigned", "${context.isMacCodeSignEnabled}")
         .resolveTemplateVar("buildDateInSeconds", "${context.options.buildDateInSeconds}")
     )
     NioFiles.setExecutable(entrypoint)

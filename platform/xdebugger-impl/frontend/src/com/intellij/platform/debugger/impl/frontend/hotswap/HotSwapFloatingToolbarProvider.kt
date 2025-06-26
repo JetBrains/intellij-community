@@ -118,7 +118,6 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
   : JPanel(BorderLayout(0, 0)) {
 
   private val tooltip = createHelpTooltip()
-    .setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
   val button = object : ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
     override fun getMargins(): Insets = JBUI.insets(4, 6)
     override fun iconTextSpace(): Int = JBUI.scale(4)
@@ -146,6 +145,7 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     presentation.disabledIcon = icon
     @Suppress("DialogTitleCapitalization")
     presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
+    tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
   }
 
 }

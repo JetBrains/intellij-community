@@ -191,16 +191,4 @@ interface Query<Result> : Iterable<Result> {
       }
     }
   }
-
-  @ScheduledForRemoval
-  @Experimental
-  @Deprecated("use {@link #interceptWith}")
-  fun wrap(wrapper: @Suppress("DEPRECATION") QueryWrapper<Result>): Query<Result> {
-    val query: Query<Result> = this
-    return object : AbstractQuery<Result>() {
-      override fun processResults(consumer: Processor<in Result>): Boolean {
-        return wrapper.wrapExecution(Processor { c -> delegateProcessResults(query, c) }, consumer)
-      }
-    }
-  }
 }

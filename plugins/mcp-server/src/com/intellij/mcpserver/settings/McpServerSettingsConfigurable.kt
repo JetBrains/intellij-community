@@ -6,19 +6,31 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
+import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.ValueComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.not
 import com.intellij.util.ui.TextTransferable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import java.awt.event.ActionEvent
+import java.nio.file.Path
 import javax.swing.JComponent
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 class McpServerSettingsConfigurable : SearchableConfigurable {
   private var settingsPanel: DialogPanel? = null
@@ -52,19 +64,54 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
           }
         }
 
-        row {
-          link(McpServerBundle.message("copy.mcp.server.sse.configuration.json.to.clipboard")) {
-            val json = createSseServerJsonEntry(McpServerService.getInstance().port)
-            CopyPasteManager.getInstance().setContents(TextTransferable(json.toString() as CharSequence))
-            showCopiedBallon(it)
+
+
+        McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
+          val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
+          val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
+          val json = mcpClient.json
+          group(mcpClient.name) {
+            row {
+              text(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
+              text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect))
+              text(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
+            }
+            val autoconfiguredPressed = ValueComponentPredicate(false)
+            val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
+            row {
+              icon(AllIcons.General.Information)
+              comment(McpServerBundle.message("mcp.server.client.restart.info"))
+            }.visibleIf(autoconfiguredPressed)
+            row {
+              button(McpServerBundle.message("autoconfigure.mcp.server"), {
+                mcpClient.configure()
+                isConfigured.set(true)
+                isPortCorrect.set(true)
+                configExists.set(true)
+                autoconfiguredPressed.set(true)
+              })
+              button(McpServerBundle.message("open.settings.json"), { openFileInEditor(mcpClient.configPath) }).visibleIf(configExists)
+              button(McpServerBundle.message("copy.mcp.server.configuration"), {
+                CopyPasteManager.getInstance().setContents(TextTransferable(json.encodeToString(buildJsonObject {
+                  put("jetbrains", json.encodeToJsonElement(mcpClient.getConfig()))
+                }) as CharSequence))
+                showCopiedBallon(it)
+              })
+            }
           }
         }
-
-        row {
-          link(McpServerBundle.message("copy.mcp.server.stdio.configuration.json.to.clipboard")) {
-            val json = createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, null)
-            CopyPasteManager.getInstance().setContents(TextTransferable(json.toString() as CharSequence))
-            showCopiedBallon(it)
+        group(McpServerBundle.message("mcp.general.client")){
+          row{
+            button(McpServerBundle.message("copy.mcp.server.sse.configuration"), {
+              val json = createSseServerJsonEntry(McpServerService.getInstance().port)
+              CopyPasteManager.getInstance().setContents(TextTransferable(json.toString() as CharSequence))
+              showCopiedBallon(it)
+            })
+            button(McpServerBundle.message("copy.mcp.server.stdio.configuration"), {
+              val json = createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, null)
+              CopyPasteManager.getInstance().setContents(TextTransferable(json.toString() as CharSequence))
+              showCopiedBallon(it)
+            })
           }
         }
 
@@ -92,6 +139,17 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
       .createHtmlTextBalloonBuilder(McpServerBundle.message("json.configuration.copied.to.clipboard"), null, null, null)
       .createBalloon()
       .showInCenterOf(event.source as JComponent)
+  }
+
+  private fun openFileInEditor(filePath: Path) {
+    val project = getLastFocusedOrOpenedProject()
+    if (project == null) {
+      return
+    }
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.toString())
+    virtualFile?.let { file ->
+      FileEditorManager.getInstance(project).openFile(file, true)
+    }
   }
 
   override fun isModified(): Boolean {

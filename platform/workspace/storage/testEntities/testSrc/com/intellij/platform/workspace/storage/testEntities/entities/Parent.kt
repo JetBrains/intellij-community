@@ -2,15 +2,15 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface XParentEntity : WorkspaceEntity {
   val parentProperty: String
 
-  val children: List<@Child XChildEntity>
-  val optionalChildren: List<@Child XChildWithOptionalParentEntity>
-  val childChild: List<@Child XChildChildEntity>
+  val children: List<XChildEntity>
+  val optionalChildren: List<XChildWithOptionalParentEntity>
+  val childChild: List<XChildChildEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -57,9 +57,10 @@ interface XChildEntity : WorkspaceEntity {
   val childProperty: String
   val dataClass: DataClassX?
 
+  @Parent
   val parentEntity: XParentEntity
 
-  val childChild: List<@Child XChildChildEntity>
+  val childChild: List<XChildChildEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -102,6 +103,7 @@ fun MutableEntityStorage.modifyXChildEntity(
 
 interface XChildWithOptionalParentEntity : WorkspaceEntity {
   val childProperty: String
+  @Parent
   val optionalParent: XParentEntity?
 
   //region generated code
@@ -142,7 +144,9 @@ fun MutableEntityStorage.modifyXChildWithOptionalParentEntity(
 //endregion
 
 interface XChildChildEntity : WorkspaceEntity {
+  @Parent
   val parent1: XParentEntity
+  @Parent
   val parent2: XChildEntity
 
   //region generated code

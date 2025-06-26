@@ -51,7 +51,6 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     options: List<String> = emptyList(),
   ): List<PythonPackage>? {
     val progressTitle = when (installRequest) {
-      is PythonPackageInstallRequest.AllRequirements -> PyBundle.message("python.packaging.installing.requirements")
       is PythonPackageInstallRequest.ByLocation -> PyBundle.message("python.packaging.installing.package", installRequest.title)
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> if (installRequest.specifications.size == 1) {
         PyBundle.message("python.packaging.installing.package", installRequest.specifications.first().name)
@@ -103,7 +102,8 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     }
   }
 
-  private suspend fun <T> executeCommand(
+  @ApiStatus.Internal
+  suspend fun <T> executeCommand(
     progressTitle: @Nls String,
     operation: suspend (() -> PyResult<T>?),
   ): T? = PythonPackageManagerUIHelpers.runPackagingOperationMaybeBackground(manager.project, sink, progressTitle) {

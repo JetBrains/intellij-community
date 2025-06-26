@@ -13,13 +13,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
 import org.jetbrains.intellij.build.BuildContext
@@ -231,8 +225,7 @@ class BuildContextImpl internal constructor(
   override suspend fun getBundledPluginModules(): List<String> =
     bundledPluginModulesForModularLoader.await() ?: productProperties.productLayout.bundledPluginModules
 
-  @OptIn(DelicateCoroutinesApi::class)
-  private val bundledPluginModulesForModularLoader = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("bundled plugin modules for modular loader"), CoroutineStart.LAZY) {
+  private val bundledPluginModulesForModularLoader = asyncLazy("bundled plugin modules for modular loader") {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
       getOriginalModuleRepository().loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
         it.stringId
@@ -257,8 +250,7 @@ class BuildContextImpl internal constructor(
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
-  private val _frontendModuleFilter = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("JetBrains client module filter"), CoroutineStart.LAZY) {
+  private val _frontendModuleFilter = asyncLazy("JetBrains client module filter") {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       val moduleRepository = getOriginalModuleRepository()
@@ -274,7 +266,6 @@ class BuildContextImpl internal constructor(
 
   private val contentModuleFilter = computeContentModuleFilter()
 
-  @OptIn(DelicateCoroutinesApi::class)
   private fun computeContentModuleFilter(): Deferred<ContentModuleFilter> {
     if (productProperties.productMode == ProductMode.MONOLITH) {
       if (productProperties.productLayout.skipUnresolvedContentModules) {
@@ -283,7 +274,7 @@ class BuildContextImpl internal constructor(
       return CompletableDeferred(IncludeAllContentModuleFilter)
     }
 
-    return GlobalScope.async(Dispatchers.Unconfined + CoroutineName("Content Modules Filter"), CoroutineStart.LAZY) {
+    return asyncLazy("Content Modules Filter") {
       val bundledPluginModules = getBundledPluginModules()
       ContentModuleByProductModeFilter(getOriginalModuleRepository().repository, bundledPluginModules, productProperties.productMode)
     }
@@ -345,7 +336,6 @@ class BuildContextImpl internal constructor(
     Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
-  @Suppress("SpellCheckingInspection")
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean, isQodana: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
 
@@ -433,8 +423,7 @@ class BuildContextImpl internal constructor(
     computeAppInfoXml(context = this, applicationInfo)
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
-  private val devModeProductRunner = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("dev mode product runner"), CoroutineStart.LAZY) {
+  private val devModeProductRunner = asyncLazy("dev mode product runner") {
     createDevModeProductRunner(this@BuildContextImpl)
   }
 
@@ -461,6 +450,14 @@ class BuildContextImpl internal constructor(
 
   override val pluginAutoPublishList: PluginAutoPublishList by lazy {
     PluginAutoPublishList(this)
+  }
+
+  private val distributionState: Deferred<DistributionBuilderState> = asyncLazy("Creating distribution state") {
+    createDistributionState(this@BuildContextImpl)
+  }
+
+  override suspend fun distributionState(): DistributionBuilderState {
+    return distributionState.await()
   }
 }
 

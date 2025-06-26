@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
+import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ExtractedHintInfo.*
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ParserException
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.extractHints
 import com.intellij.openapi.editor.Editor
@@ -37,9 +38,24 @@ import java.lang.Character.*
  *
  * Block inlays can carry zero or more hints. Inline inlays can carry zero or one hint.
  *
+ * ##### Parser Directives
+ *
+ * Use directives to instruct the parser on how to interpret your inlay hints.
+ * ```
+ * /*<# block dir:opt=val #>*/
+ * ```
+ * (Block inlays work nicely with directives as their corresponding line is completely removed from the text.)
+ *
+ * Generally, the text of an inlay is a sequence of directives and hint contents (delimited by `[...]`) separated by whitespace.
+ * The text of an inline inlay is implicitly considered as hint content (i.e., implicitly wrapped with `[...]`).
+ * ```
+ * /*<#] fmt:colorKind=Parameter [foo] [#>*/
+ * ```
+ * escapes the hint content mode, sets the [HintColorKind], and specifies a single hint with the content `foo`.
+ *
  * ##### Hint format
  *
- * To modify the format of the hint, special parser directives can be used.
+ * To modify the format of the hint, use the `fmt` directive.
  * ```
  * /*<# block fmt:colorKind=TextWithoutBackground,
  *                fontSize=ABitSmallerThanInEditor,
@@ -50,12 +66,12 @@ import java.lang.Character.*
  * Possible format directive values correspond to constants in their respective enum classes.
  * The new format is applied to **all following hints**.
  *
- * Generally, the text of an inlay is a sequence of `fmt` directives and hint contents (delimited by `[...]`) separated by whitespace.
- * The text of an inline inlay is implicitly considered as hint content (i.e., implicitly wrapped with `[...]`).
+ * #### Options
+ *
+ * Directive `opt` mimics [InlayTreeSink.whenOptionEnabled] using its two options `start` and `end`.
  * ```
- * /*<#] fmt:colorKind=Parameter [foo] [#>*/
+ * /*<#] opt:start=my.option.id [foo] opt:end #>*/
  * ```
- * escapes the hint content mode, sets the [HintColorKind], and specifies a single hint.
  *
  * ##### Hint content with brackets
  *
@@ -80,9 +96,19 @@ object DeclarativeHintsDumpUtil {
 
       var position: InlayPosition = InlineInlayPosition(0, true)
       var hintFormat: HintFormat = HintFormat.default
+      var activeOptionsDiff: MutableList<ActiveOptionDiff> = mutableListOf()
 
       fun build(text: String) {
-        extractedHints.add(ExtractedHintInfo(position, text, hintFormat))
+        extractedHints.add(ExtractedHintInfo(position, text, hintFormat, activeOptionsDiff))
+        activeOptionsDiff = mutableListOf()
+      }
+    }
+
+    fun parseDirective(dir: InlayPart.Directive) {
+      when (dir.id) {
+        "fmt" -> hintBuilder.hintFormat = parseFmtDirective(dir.options, hintBuilder.hintFormat)
+        "opt" -> parseOptDirective(dir.options, hintBuilder.activeOptionsDiff)
+        else -> parseFail("Unknown directive '${dir.id}'")
       }
     }
 
@@ -111,7 +137,7 @@ object DeclarativeHintsDumpUtil {
           var hintContentCounter = 0
           for (part in parts) {
             when (part) {
-              is InlayPart.Directive -> hintBuilder.hintFormat = parseFmtDirective(part, hintBuilder.hintFormat)
+              is InlayPart.Directive -> parseDirective(part)
               is InlayPart.HintContent -> {
                 hintContentCounter++
                 if (!part.text.isEmpty()) {
@@ -131,7 +157,7 @@ object DeclarativeHintsDumpUtil {
         val parts = inlayContentParser.parse(inlayContent)
         for (part in parts) {
           when (part) {
-            is InlayPart.Directive -> hintBuilder.hintFormat = parseFmtDirective(part, hintBuilder.hintFormat)
+            is InlayPart.Directive -> parseDirective(part)
             is InlayPart.HintContent -> hintBuilder.build(part.text)
           }
         }
@@ -141,7 +167,17 @@ object DeclarativeHintsDumpUtil {
     return hintBuilder.extractedHints
   }
 
-  data class ExtractedHintInfo(val position: InlayPosition, val text: String, val hintFormat: HintFormat)
+  data class ExtractedHintInfo(
+    val position: InlayPosition,
+    val text: String,
+    val hintFormat: HintFormat,
+    val activeOptionDiff: List<ActiveOptionDiff>,
+  ) {
+    sealed interface ActiveOptionDiff {
+      data class Start(val id: String) : ActiveOptionDiff
+      object End : ActiveOptionDiff
+    }
+  }
 
   class ParserException(msg: String) : Exception(msg)
 
@@ -198,13 +234,29 @@ private fun parseFail(msg: String): Nothing {
   throw ParserException(msg)
 }
 
-private fun parseFmtDirective(directive: InlayPart.Directive, currentFormat: HintFormat): HintFormat {
-  if (directive.id != "fmt") parseFail("Unknown directive '${directive.id}'")
+private fun parseOptDirective(options: List<Option>, activeOptionsDiff: MutableList<ActiveOptionDiff>) {
+  for (opt in options) {
+    val key = opt.key.lowercase()
+    val maybeValue = opt.value
+    when (key) {
+     "start" -> {
+       val value = maybeValue ?: parseFail("Expected value for directive option '${opt.key}'")
+       activeOptionsDiff.add(ActiveOptionDiff.Start(value))
+     }
+     "end" -> {
+       if (maybeValue != null) parseFail("Directive option '${opt.key}' does not take a value")
+       activeOptionsDiff.add(ActiveOptionDiff.End)
+     }
+     else -> parseFail("Unknown directive option '${opt.key}'")
+    }
+  }
+}
 
+private fun parseFmtDirective(options: List<Option>, currentFormat: HintFormat): HintFormat {
   var newFormat = currentFormat
-  for (opt in directive.options) {
-    val key = opt.first.lowercase()
-    val value = opt.second
+  for (opt in options) {
+    val key = opt.key.lowercase()
+    val value = opt.value ?: parseFail("Expected value for directive option '$key'")
     when (key) {
       "colorkind" -> newFormat = newFormat.withColorKind(enumValueOf(value))
       "fontsize" -> newFormat = newFormat.withFontSize(enumValueOf(value))
@@ -217,8 +269,10 @@ private fun parseFmtDirective(directive: InlayPart.Directive, currentFormat: Hin
 
 private sealed interface InlayPart {
   data class HintContent(val text: String) : InlayPart
-  data class Directive(val id: String, val options: List<Pair<String, String>>) : InlayPart
+  data class Directive(val id: String, val options: List<Option>) : InlayPart
 }
+
+private data class Option(val key: String, val value: String?)
 
 private class InlayContentParser() {
   private var offset = 0
@@ -227,7 +281,7 @@ private class InlayContentParser() {
 
   private var currentDirId: String = ""
   private var currentOptKey: String = ""
-  private var currentOptValue: String = ""
+  private var currentOptValue: String? = null
 
   private val contentBuilder = StringBuilder()
 
@@ -291,11 +345,11 @@ private class InlayContentParser() {
 
   private fun parseDir() {
     parseDirId()
-    val opts = mutableListOf<Pair<String, String>>()
+    val opts = mutableListOf<Option>()
     var moreOpts = true
     while (moreOpts) {
       moreOpts = parseDirOpt()
-      opts.add(currentOptKey to currentOptValue)
+      opts.add(Option(currentOptKey, currentOptValue))
     }
     inlayParts.add(InlayPart.Directive(currentDirId, opts))
   }
@@ -318,7 +372,15 @@ private class InlayContentParser() {
 
   private fun parseDirOpt(): Boolean {
     parseDirOptKey()
-    return parseDirOptValue()
+    currentOptValue = null
+    if (hasNextChar()) {
+      val ch = nextChar()
+      when (ch) {
+        '=' -> return parseDirOptValue()
+        ',' -> return true
+      }
+    }
+    return false
   }
 
   private fun parseDirOptKey() {
@@ -331,15 +393,15 @@ private class InlayContentParser() {
     while (hasNextChar()) {
       val ch = nextChar()
       when {
-        ch == '=' -> {
+        isJavaIdentifierPart(ch) -> {}
+        else -> {
           currentOptKey = text.substring(start, offset - 1)
+          offset--
           return
         }
-        isJavaIdentifierPart(ch) -> {}
-        else -> fail("Unexpected character '$ch' in directive key")
       }
     }
-    fail("Expected '=' after directive key")
+    currentOptKey = text.substring(start, offset)
   }
 
   // true ⇒ more opts follow

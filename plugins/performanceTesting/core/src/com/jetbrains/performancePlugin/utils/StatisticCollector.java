@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -40,7 +39,7 @@ public class StatisticCollector {
 
   public String collectMetrics(boolean addGeneralInfo) {
     StringBuilder output = new StringBuilder();
-    FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
 
     VirtualFile baseDir = ProjectUtil.guessProjectDir(project);
     if (baseDir != null) {
@@ -54,7 +53,7 @@ public class StatisticCollector {
     }
 
     output.append("Project Info:\n");
-    output.append("Number of opened files: ").append(fileEditorManager.getOpenedFiles().size()).append('\n');
+    output.append("Number of opened files: ").append(fileEditorManager.getOpenFiles().length).append('\n');
     ReadAction.run(() -> {
       Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor(true);
       if (selectedTextEditor != null) {

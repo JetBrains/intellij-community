@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-@ApiStatus.Internal
 public final class ForwardAction extends NavigationAction {
   public ForwardAction(JComponent c, @NotNull Disposable parentDisposable) {
     super(c, "Forward", parentDisposable);

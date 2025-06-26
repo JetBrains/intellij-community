@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.vcs.github` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -107,7 +108,6 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/util",
     "@lib//:jackson",
     "//platform/dvcs-impl:vcs-dvcs-impl",
@@ -174,7 +174,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "vcs-github_test",
   runtime_deps = [":vcs-github_test_lib"]
 )

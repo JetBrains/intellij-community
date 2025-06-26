@@ -25,9 +25,9 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
+import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewVirtualEnvFromFilePanel
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -35,7 +35,6 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyTargetEnvironmentPackageManager
 import com.jetbrains.python.requirements.RequirementsFileType
-import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewVirtualEnvFromFilePanel
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
@@ -50,14 +49,12 @@ import kotlin.io.path.Path
 private val LOGGER = fileLogger()
 
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
+  override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
 
-  override fun getIntention(module: Module): @IntentionName String? =
+  override suspend fun getIntention(module: Module): @IntentionName String? =
     getRequirementsTxtOrSetupPy(module)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name) }
 
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
+  override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
 
   private fun createAndAddSdk(module: Module, source: Source): Sdk? {
     val existingSdks = ProjectJdkTable.getInstance().allJdks.asList()

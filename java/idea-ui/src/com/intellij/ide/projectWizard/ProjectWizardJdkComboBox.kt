@@ -24,7 +24,6 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.*
-import com.intellij.openapi.projectRoots.impl.AddJdkService
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.JavaHomeFinder
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -32,7 +31,6 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.*
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -72,39 +70,27 @@ import kotlin.io.path.Path
 
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
-  sdkProperty: GraphProperty<Sdk?>,
-  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
-): Cell<ProjectWizardJdkComboBox> {
-  return projectWizardJdkComboBox(row, sdkProperty, sdkDownloadTaskProperty, null, null)
-}
-
-fun NewProjectWizardStep.projectWizardJdkComboBox(
-  row: Row,
-  sdkProperty: GraphProperty<Sdk?>,
-  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
   intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
-  jdkPredicate: ProjectWizardJdkPredicate?,
+  sdkFilter: (Sdk) -> Boolean = { true },
+  jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
   return projectWizardJdkComboBox(
-    row, sdkProperty, sdkDownloadTaskProperty,
+    row,
     requireNotNull(baseData) {
       "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
     }.pathProperty,
     intentProperty,
-    { sdk -> context.projectJdk = sdk },
     context.disposable,
     context.projectJdk,
-    jdkPredicate = jdkPredicate,
+    sdkFilter,
+    jdkPredicate,
   )
 }
 
 fun projectWizardJdkComboBox(
   row: Row,
-  sdkProperty: GraphProperty<Sdk?>,
-  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
   locationProperty: GraphProperty<String>,
   intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
-  setProjectJdk: (Sdk?) -> Unit,
   disposable: Disposable,
   projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
@@ -157,18 +143,10 @@ fun projectWizardJdkComboBox(
       null
     }
     .onChanged {
-      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, intentProperty, selectedJdkProperty)
+      updateIntentProperty(combo, intentProperty)
     }
     .onApply {
-      val selected = combo.selectedItem
-
-      if (selected is DetectedJdk) {
-        sdkProperty.set(service<AddJdkService>().createIncompleteJdk(selected.home))
-      }
-
-      setProjectJdk.invoke(sdkProperty.get())
-
-      when (selected) {
+      when (val selected = combo.selectedItem) {
         is NoJdk -> JdkComboBoxCollector.noJdkSelected()
         is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((selected.task as JdkDownloadTask).jdkItem)
       }
@@ -184,7 +162,7 @@ fun projectWizardJdkComboBox(
       }
     }
     .apply {
-      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, intentProperty, selectedJdkProperty)
+      updateIntentProperty(combo, intentProperty)
     }
 }
 
@@ -214,26 +192,11 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
   return null
 }
 
-private fun updateGraphProperties(
+private fun updateIntentProperty(
   combo: ProjectWizardJdkComboBox,
-  sdkProperty: GraphProperty<Sdk?>,
-  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
   intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
-  selectedJdkProperty: String,
 ) {
-  val stateComponent = PropertiesComponent.getInstance()
-  val intent = combo.selectedItem
-  val (sdk, downloadTask) = when (intent) {
-    is ExistingJdk -> {
-      stateComponent.setValue(selectedJdkProperty, intent.jdk.name)
-      (intent.jdk to null)
-    }
-    is DownloadJdk -> (null to intent.task)
-    else -> (null to null)
-  }
-  sdkProperty.set(sdk)
-  sdkDownloadTaskProperty.set(downloadTask)
-  intentProperty?.set(intent as? ProjectWizardJdkIntent)
+  intentProperty?.set(combo.selectedItem as? ProjectWizardJdkIntent)
 }
 
 @Service(Service.Level.APP)

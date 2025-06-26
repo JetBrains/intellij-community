@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
@@ -30,7 +31,7 @@ object ToolbarUtils {
 
       init {
         this.targetComponent = targetComponent
-        putClientProperty(SUPPRESS_FAST_TRACK, true)
+        ClientProperty.put(this, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
         isReservePlaceAutoPopupIcon = false
         ComponentUtil.markAsShowing(this, true)
         updateActionsImmediately(true)

@@ -3,7 +3,6 @@ package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.execution.ijent.nio.getCachedFileAttributesAndWrapToDosAttributesAdapter
 import com.intellij.execution.ijent.nio.readAttributesUsingDosAttributesAdapter
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
@@ -45,13 +44,12 @@ import kotlin.io.path.ExperimentalPathApi
  */
 @ApiStatus.Internal
 class IjentWslNioFileSystemProvider(
-  private val wslDistribution: WSLDistribution,
+  val wslId: @NlsSafe String,
   private val ijentFsProvider: FileSystemProvider,
   internal val originalFsProvider: FileSystemProvider,
 ) : FileSystemProvider(), RoutingAwareFileSystemProvider {
-  private val ijentFsUri: URI = URI("ijent", "wsl", "/${wslDistribution.id}", null, null)
+  private val ijentFsUri: URI = URI("ijent", "wsl", "/$wslId", null, null)
   private val originalFs = originalFsProvider.getFileSystem(URI("file:/"))
-  private val wslId: @NlsSafe String = wslDistribution.id
   private val createdFileSystems: MutableMap<String, IjentWslNioFileSystem> = ConcurrentHashMap()
 
   internal fun removeFileSystem(wslId: String) {

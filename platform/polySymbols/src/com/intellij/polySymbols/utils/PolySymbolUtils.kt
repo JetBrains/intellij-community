@@ -30,7 +30,6 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SyntheticElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.asSafely
-import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.Icon
@@ -149,15 +148,13 @@ fun PolySymbolMatch.withSegments(segments: List<PolySymbolNameSegment>): PolySym
 
 fun PolySymbol.match(
   nameToMatch: String,
-  params: PolySymbolsNameMatchQueryParams,
-  context: Stack<PolySymbolsScope>,
+  params: PolySymbolNameMatchQueryParams,
+  stack: PolySymbolQueryStack,
 ): List<PolySymbol> {
-  pattern?.let { pattern ->
-    val additionalScope = this.queryScope
-    additionalScope.forEach { context.push(it) }
-    try {
-      return pattern
-        .match(this, context, nameToMatch, params)
+  (this as? PolySymbolWithPattern)?.pattern?.let { pattern ->
+    return stack.withSymbols(queryScope) {
+      pattern
+        .match(this, stack, nameToMatch, params)
         .mapNotNull { matchResult ->
           if ((matchResult.segments.lastOrNull()?.end ?: 0) < nameToMatch.length) {
             null
@@ -166,9 +163,6 @@ fun PolySymbol.match(
             PolySymbolMatch.create(nameToMatch, matchResult.segments, qualifiedKind, origin)
           }
         }
-    }
-    finally {
-      additionalScope.forEach { _ -> context.pop() }
     }
   }
 
@@ -182,25 +176,20 @@ fun PolySymbol.match(
 
 fun PolySymbol.toCodeCompletionItems(
   name: String,
-  params: PolySymbolsCodeCompletionQueryParams,
-  context: Stack<PolySymbolsScope>,
+  params: PolySymbolCodeCompletionQueryParams,
+  stack: PolySymbolQueryStack,
 ): List<PolySymbolCodeCompletionItem> =
-  pattern?.let { pattern ->
-    val additionalScope = this.queryScope
-    additionalScope.forEach { context.push(it) }
-    try {
-      pattern.complete(this, context, name, params)
+  (this as? PolySymbolWithPattern)?.pattern?.let { pattern ->
+    stack.withSymbols(queryScope) {
+      pattern.complete(this, stack, name, params)
         .applyIcons(this)
-    }
-    finally {
-      additionalScope.forEach { _ -> context.pop() }
     }
   }
   ?: params.queryExecutor.namesProvider
     .getNames(qualifiedName, PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
-fun PolySymbol.nameMatches(name: String, queryExecutor: PolySymbolsQueryExecutor): Boolean {
+fun PolySymbol.nameMatches(name: String, queryExecutor: PolySymbolQueryExecutor): Boolean {
   val queryNames = queryExecutor.namesProvider.getNames(qualifiedKind.withName(name), PolySymbolNamesProvider.Target.NAMES_QUERY)
   val symbolNames = queryExecutor.namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return queryNames.any { symbolNames.contains(it) }
@@ -222,7 +211,7 @@ val PolySymbol.completeMatch: Boolean
 
 val PolySymbol.nameSegments: List<PolySymbolNameSegment>
   get() = (this as? CompositePolySymbol)?.nameSegments
-          ?: pattern?.let { listOf(PolySymbolNameSegment.create(0, 0, this)) }
+          ?: (this as? PolySymbolWithPattern)?.pattern?.let { listOf(PolySymbolNameSegment.create(0, 0, this)) }
           ?: listOf(PolySymbolNameSegment.create(this))
 
 val PolySymbol.nameSegmentsWithProblems: Sequence<PolySymbolNameSegment>
@@ -382,21 +371,18 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
   }
 }
 
-fun PolySymbolsScope.getDefaultCodeCompletions(
+fun PolySymbolScope.getDefaultCodeCompletions(
   qualifiedName: PolySymbolQualifiedName,
-  params: PolySymbolsCodeCompletionQueryParams,
-  scope: Stack<PolySymbolsScope>,
+  params: PolySymbolCodeCompletionQueryParams,
+  stack: PolySymbolQueryStack,
 ): List<PolySymbolCodeCompletionItem> =
   getSymbols(qualifiedName.qualifiedKind,
-             PolySymbolsListSymbolsQueryParams.create(
+             PolySymbolListSymbolsQueryParams.create(
                params.queryExecutor,
                expandPatterns = false) {
                copyFiltersFrom(params)
-             }, scope)
-    .flatMap { (it as? PolySymbol)?.toCodeCompletionItems(qualifiedName.name, params, scope) ?: emptyList() }
-
-internal val List<PolySymbolsScope>.lastPolySymbol: PolySymbol?
-  get() = this.lastOrNull { it is PolySymbol } as? PolySymbol
+             }, stack)
+    .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, stack) }
 
 @ApiStatus.Internal
 fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTracker>>): ModificationTracker =
@@ -408,6 +394,7 @@ fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTra
     }
     modCount
   }
+
 @ApiStatus.Internal
 fun acceptSymbolForPsiSourcedPolySymbolRenameHandler(symbol: Symbol): Boolean =
   symbol is PsiSourcedPolySymbol

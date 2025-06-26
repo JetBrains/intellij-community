@@ -1009,11 +1009,6 @@ open class KotlinIdeDescriptorRenderer(
         includeName: Boolean,
         topLevel: Boolean
     ) {
-        if (topLevel) {
-            append(renderKeyword("value-parameter"))
-            append(" ")
-        }
-
         if (verbose) {
             appendHighlighted("/*${valueParameter.index}*/ ") { asInfo }
         }

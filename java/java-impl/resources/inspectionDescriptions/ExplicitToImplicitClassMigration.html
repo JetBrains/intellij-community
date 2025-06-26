@@ -1,18 +1,18 @@
 <html>
 <body>
-Reports ordinary classes, which can be converted into implicitly declared classes
+Reports ordinary classes, which can be converted into compact source files
 <p><b>Example:</b></p>
 <pre><code>
   public class Sample {
       public static void main(String[] args) {
-          System.out.println("Hello, world!");
+          String a = "Hello, world!";
       }
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-  public static void main(String[] args) {
-      System.out.println("Hello, world!");
+  void main() {
+      String a = "Hello, world!";
   }
 </code></pre>
 <!-- tooltip end -->

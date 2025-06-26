@@ -125,6 +125,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testLegacySpacesInLiteral() { useJava7(); verifyJavaDoc(getTestClass()); }
   public void testLinkWithModule() { doTestClass(); }
   public void testLinkToModule() { doTestClass(); }
+  public void testLinkWithLineBreak() { doTestClass(); }
   public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForUncheckedExceptionsInSupers() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForGetterByField() { doTestAtCaret(); }
@@ -231,6 +232,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     PsiMethod method = psiClass.getMethods()[0];
     verifyJavaDoc(method);
   }
+  public void testDefaultOverload() { doTestAtCaret(); }
 
   public void testEnumConstant1() { doTestEnumConstant(); }
   public void testEnumConstant2() { doTestEnumConstant(); }

@@ -31,7 +31,7 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -116,7 +116,7 @@ internal fun syncWithImports(module: Module) {
   }
 
   val requirementsFile = PyPackageUtil.findRequirementsTxt(module) ?: runWriteAction {
-    PythonRequirementTxtUtils.createRequirementsTxtPath(module, sdk)
+    PythonRequirementTxtSdkUtils.createRequirementsTxtPath(module, sdk)
   }
 
   if (requirementsFile == null) {

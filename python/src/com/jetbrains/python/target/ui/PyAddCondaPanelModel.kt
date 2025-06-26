@@ -147,7 +147,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
                                 reporter: RawProgressReporter? = null): PyResult<List<PyCondaEnv>> = withContext(uiContext) {
     val path = condaPathTextBoxRwProp.get()
     reporter?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
-    val envs = PyCondaEnv.getEnvs(targetCommandExecutor, path.trim())
+    val envs = PyCondaEnv.getEnvs(path.trim())
       .onFailure {
         condaEnvModel.removeAllElements()
         showCondaActionsPanelRoProp.set(false)

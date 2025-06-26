@@ -22,11 +22,10 @@ import com.intellij.polySymbols.js.*
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.NameCaseUtils
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
-import com.intellij.polySymbols.utils.lastPolySymbol
 import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.webTypes.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
-import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
+import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 import com.intellij.polySymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import com.intellij.util.applyIf
 import java.util.*
@@ -169,26 +168,26 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedK
 
 internal fun Reference.resolve(
   name: String,
-  scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  stack: PolySymbolQueryStack,
+  queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean = true,
   abstractSymbols: Boolean = false,
 ): List<PolySymbol> =
-  processPolySymbols(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+  processPolySymbols(name, stack, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     nameMatchQuery(path) {
       if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
       if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
-      additionalScope(scope)
+      additionalScope(stack)
     }
   }
 
 internal fun Reference.resolve(
-  scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  stack: PolySymbolQueryStack,
+  queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean = true,
   abstractSymbols: Boolean = false,
 ): List<PolySymbol> =
-  processPolySymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+  processPolySymbols(null, stack, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
     if (lastSegment.name.isEmpty())
@@ -196,57 +195,57 @@ internal fun Reference.resolve(
                        false) {
         if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
         if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
-        additionalScope(scope)
+        additionalScope(stack)
       }
     else
       nameMatchQuery(path) {
         if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
         if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
-        additionalScope(scope)
+        additionalScope(stack)
       }
   }
 
 internal fun Reference.list(
-  scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  stack: PolySymbolQueryStack,
+  queryExecutor: PolySymbolQueryExecutor,
   expandPatterns: Boolean,
   virtualSymbols: Boolean = true,
   abstractSymbols: Boolean = false,
 ): List<PolySymbol> =
-  processPolySymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+  processPolySymbols(null, stack, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
     listSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
                      expandPatterns) {
       if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
       if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
-      additionalScope(scope)
+      additionalScope(stack)
     }
   }
 
 private fun Reference.processPolySymbols(
   name: String?,
-  scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  stack: PolySymbolQueryStack,
+  queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean,
   abstractSymbols: Boolean,
-  queryRunner: PolySymbolsQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>,
+  queryRunner: PolySymbolQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>,
 ): List<PolySymbol> {
   ProgressManager.checkCanceled()
   return when (val reference = this.value) {
     is String -> queryExecutor.queryRunner(
-      parseWebTypesPath(reference, scope.lastPolySymbol).applyIf(name != null) { withLastSegmentName(name ?: "") },
+      parseWebTypesPath(reference, stack.lastPolySymbol).applyIf(name != null) { withLastSegmentName(name ?: "") },
       virtualSymbols, abstractSymbols)
     is ReferenceWithProps -> {
-      val nameConversionRules = reference.createNameConversionRules(scope.lastPolySymbol)
-      val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastPolySymbol)
+      val nameConversionRules = reference.createNameConversionRules(stack.lastPolySymbol)
+      val path = parseWebTypesPath(reference.path ?: return emptyList(), stack.lastPolySymbol)
         .applyIf(name != null) { withLastSegmentName(name ?: "") }
       val matches = queryExecutor.withNameConversionRules(nameConversionRules).queryRunner(
         path, reference.includeVirtual ?: virtualSymbols, reference.includeAbstract ?: abstractSymbols)
       if (reference.filter == null) return matches
       val properties = reference.additionalProperties.toMap()
-      PolySymbolsFilter.get(reference.filter)
-        .filterNameMatches(matches, queryExecutor, scope, properties)
+      PolySymbolFilter.get(reference.filter)
+        .filterNameMatches(matches, queryExecutor, stack, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
   }.flatMap { symbol ->
@@ -263,32 +262,32 @@ private fun Reference.processPolySymbols(
 
 internal fun Reference.codeCompletion(
   name: String,
-  scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  stack: PolySymbolQueryStack,
+  queryExecutor: PolySymbolQueryExecutor,
   position: Int = 0,
   virtualSymbols: Boolean = true,
 ): List<PolySymbolCodeCompletionItem> {
   return when (val reference = this.value) {
     is String -> queryExecutor.codeCompletionQuery(
-      parseWebTypesPath(reference, scope.lastPolySymbol).withLastSegmentName(name), position
+      parseWebTypesPath(reference, stack.lastPolySymbol).withLastSegmentName(name), position
     ) {
       if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
       exclude(PolySymbolModifier.ABSTRACT)
-      additionalScope(scope)
+      additionalScope(stack)
     }
     is ReferenceWithProps -> {
-      val nameConversionRules = reference.createNameConversionRules(scope.lastPolySymbol)
-      val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastPolySymbol).withLastSegmentName(name)
+      val nameConversionRules = reference.createNameConversionRules(stack.lastPolySymbol)
+      val path = parseWebTypesPath(reference.path ?: return emptyList(), stack.lastPolySymbol).withLastSegmentName(name)
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
         .codeCompletionQuery(path, position) {
           if (!(reference.includeVirtual ?: virtualSymbols)) exclude(PolySymbolModifier.VIRTUAL)
           exclude(PolySymbolModifier.ABSTRACT)
-          additionalScope(scope)
+          additionalScope(stack)
         }
       if (reference.filter == null) return codeCompletions
       val properties = reference.additionalProperties.toMap()
-      PolySymbolsFilter.get(reference.filter)
-        .filterCodeCompletions(codeCompletions, queryExecutor, scope, properties)
+      PolySymbolFilter.get(reference.filter)
+        .filterCodeCompletions(codeCompletions, queryExecutor, stack, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
   }

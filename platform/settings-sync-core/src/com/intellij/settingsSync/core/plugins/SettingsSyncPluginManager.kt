@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.core.plugins
 
+import com.intellij.ide.plugins.ContentModuleDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginEnableStateChangedListener
@@ -88,7 +89,8 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
       }
 
       val pluginIdMap = PluginManagerCore.buildPluginIdMap()
-
+      val contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap()
+      
       for (plugin in currentIdePlugins) {
         val id = plugin.pluginId
         if (!isPluginSynceable(id) || PluginManagerProxy.getInstance().isIncompatible(plugin)) {
@@ -102,7 +104,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
         }
         else if (
           PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID) &&
-          isUltimate(plugin, pluginIdMap)
+          isUltimate(plugin, pluginIdMap, contentModuleIdMap)
         ) {
           if (LOG.isDebugEnabled) {
             LOG.debug("Skipped syncing ultimate plugin ${plugin.pluginId}")
@@ -125,9 +127,10 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
   private fun isUltimate(
     plugin: IdeaPluginDescriptor,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+    contentModuleIdMap: Map<String, ContentModuleDescriptor>,
   ): Boolean {
     var isUltimate = false
-    PluginManagerCore.processAllNonOptionalDependencyIds(plugin as IdeaPluginDescriptorImpl, pluginIdMap) {
+    PluginManagerCore.processAllNonOptionalDependencyIds(plugin as IdeaPluginDescriptorImpl, pluginIdMap, contentModuleIdMap) {
       if (it == PluginManagerCore.ULTIMATE_PLUGIN_ID) {
         isUltimate = true
       }

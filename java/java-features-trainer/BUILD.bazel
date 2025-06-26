@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.java.featuresTrainer` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -19,6 +20,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/ide-core-impl",
     "//java/java-impl:impl",
     "//java/idea-ui:ui",
@@ -30,6 +32,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//java/execution/impl",
@@ -50,19 +53,20 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/ide-core-impl",
     "//java/java-impl:impl",
     "//java/idea-ui:ui",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "//java/debugger/impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/testFramework",
@@ -73,7 +77,7 @@ jvm_library(
   runtime_deps = [":featuresTrainer_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "featuresTrainer_test",
   runtime_deps = [":featuresTrainer_test_lib"]
 )

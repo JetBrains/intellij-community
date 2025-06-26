@@ -128,7 +128,9 @@ public final class ActionHint {
       }
       ModCommand command = action.perform(context);
       if (!(command instanceof ModChooseAction chooseAction)) {
-        fail(exceptionHeader(curStep) + " does not produce a chooser");
+        if (myShouldPresent) {
+          fail(exceptionHeader(curStep) + " does not produce a chooser");
+        }
         return null;
       }
       commonActions = chooseAction.actions();

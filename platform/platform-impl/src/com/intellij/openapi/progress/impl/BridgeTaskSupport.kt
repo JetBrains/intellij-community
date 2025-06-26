@@ -12,12 +12,7 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 /**
  * [BridgeTaskSupport] operates as a bridge between [ProgressIndicatorEx] and [PlatformTaskSupport],
@@ -29,7 +24,8 @@ internal class BridgeTaskSupport(private val coroutineScope: CoroutineScope) {
 
   fun withBridgeBackgroundProgress(project: Project?, indicator: ProgressIndicatorEx, info: TaskInfo) {
     project ?: run {
-      LOG.error("Project is null for task: ${info.title}, progress is not shown")
+      // cannot require project - a status bar maybe created before project opening
+      LOG.warn("Project is null for task: ${info.title}, progress is not shown")
       return
     }
 

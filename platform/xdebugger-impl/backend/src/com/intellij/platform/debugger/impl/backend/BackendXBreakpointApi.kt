@@ -11,7 +11,6 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
@@ -23,17 +22,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class BackendXBreakpointApi : XBreakpointApi {
-  override suspend fun setEnabled(breakpointId: XBreakpointId, enabled: Boolean) {
+  override suspend fun setEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {
-      breakpoint.isEnabled = enabled
+      breakpoint.setEnabled(requestId, enabled)
     }
   }
 
-  override suspend fun setSuspendPolicy(breakpointId: XBreakpointId, suspendPolicy: SuspendPolicy) {
+  override suspend fun setSuspendPolicy(breakpointId: XBreakpointId, requestId: Long, suspendPolicy: SuspendPolicy) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {
-      breakpoint.suspendPolicy = suspendPolicy
+      breakpoint.setSuspendPolicy(requestId, suspendPolicy)
     }
   }
 
@@ -45,82 +44,82 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
-  override suspend fun setConditionEnabled(breakpointId: XBreakpointId, enabled: Boolean) {
+  override suspend fun setConditionEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {
-      breakpoint.isConditionEnabled = enabled
+      breakpoint.setConditionEnabled(requestId, enabled)
     }
   }
 
-  override suspend fun setConditionExpression(breakpointId: XBreakpointId, condition: XExpressionDto?) {
+  override suspend fun setConditionExpression(breakpointId: XBreakpointId, requestId: Long, condition: XExpressionDto?) {
     val breakpoint = breakpointId.findValue() ?: return
     val expression = condition?.xExpression()
     edtWriteAction {
-      breakpoint.conditionExpression = expression
+      breakpoint.setConditionExpression(requestId, expression)
     }
   }
 
-  override suspend fun setFileUrl(breakpointId: XBreakpointId, fileUrl: String?) {
+  override suspend fun setFileUrl(breakpointId: XBreakpointId, requestId: Long, fileUrl: String?) {
     val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
     edtWriteAction {
-      breakpoint.fileUrl = fileUrl
+      breakpoint.setFileUrl(requestId, fileUrl)
     }
   }
 
-  override suspend fun setLine(breakpointId: XBreakpointId, line: Int) {
+  override suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int) {
     val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
     edtWriteAction {
-      breakpoint.line = line
+      breakpoint.setLine(requestId, line)
     }
   }
 
-  override suspend fun updatePosition(breakpointId: XBreakpointId) {
+  override suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long) {
     val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
     edtWriteAction {
-      breakpoint.resetSourcePosition()
+      breakpoint.resetSourcePosition(requestId)
     }
   }
 
-  override suspend fun setLogMessage(breakpointId: XBreakpointId, enabled: Boolean) {
+  override suspend fun setLogMessage(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {
-      breakpoint.isLogMessage = enabled
+      breakpoint.setLogMessage(requestId, enabled)
     }
   }
 
-  override suspend fun setLogStack(breakpointId: XBreakpointId, enabled: Boolean) {
+  override suspend fun setLogStack(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {
-      breakpoint.isLogStack = enabled
+      breakpoint.setLogStack(requestId, enabled)
     }
   }
 
-  override suspend fun setLogExpressionEnabled(breakpointId: XBreakpointId, enabled: Boolean) {
+  override suspend fun setLogExpressionEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {
-      breakpoint.isLogExpressionEnabled = enabled
+      breakpoint.setLogExpressionEnabled(requestId, enabled)
     }
   }
 
-  override suspend fun setLogExpressionObject(breakpointId: XBreakpointId, logExpression: XExpressionDto?) {
+  override suspend fun setLogExpressionObject(breakpointId: XBreakpointId, requestId: Long, logExpression: XExpressionDto?) {
     val breakpoint = breakpointId.findValue() ?: return
     val expression = logExpression?.xExpression()
     edtWriteAction {
-      breakpoint.logExpressionObject = expression
+      breakpoint.setLogExpressionObject(requestId, expression)
     }
   }
 
-  override suspend fun setTemporary(breakpointId: XBreakpointId, isTemporary: Boolean) {
-    val breakpoint = breakpointId.findValue() as? XLineBreakpoint<*> ?: return
+  override suspend fun setTemporary(breakpointId: XBreakpointId, requestId: Long, isTemporary: Boolean) {
+    val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
     edtWriteAction {
-      breakpoint.isTemporary = isTemporary
+      breakpoint.setTemporary(requestId, isTemporary)
     }
   }
 
-  override suspend fun setUserDescription(breakpointId: XBreakpointId, description: String?) {
+  override suspend fun setUserDescription(breakpointId: XBreakpointId, requestId: Long, description: String?) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {
-      breakpoint.userDescription = description
+      breakpoint.setUserDescription(requestId, description)
     }
   }
 
@@ -130,7 +129,7 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     val editorsProvider = getEditorsProvider(breakpoint.type, breakpoint, breakpoint.project) ?: return null
     return withContext(Dispatchers.EDT) {
       val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
-      backendDocument.bindToFrontend(frontendDocumentId)
+      backendDocument.bindToFrontend(frontendDocumentId, project)
     }
   }
 }

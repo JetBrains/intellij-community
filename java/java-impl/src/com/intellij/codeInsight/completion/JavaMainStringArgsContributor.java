@@ -34,6 +34,7 @@ public final class JavaMainStringArgsContributor extends CompletionContributor i
     PsiElement position = parameters.getPosition();
     if (!(position instanceof PsiIdentifier psiIdentifier)) return;
     if (!(psiIdentifier.getParent() instanceof PsiReferenceExpression referenceExpression)) return;
+    if (referenceExpression.getQualifierExpression() != null) return;
     PsiMethod method = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethod.class, false);
     if (method == null) return;
     if (!HardcodedMethodConstants.MAIN.equals(method.getName())) return;

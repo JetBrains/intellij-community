@@ -7,23 +7,28 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.openapi.util.io.relativizeToClosestAncestor
+import com.intellij.openapi.util.io.toNioPathOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
-import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getWorkspaceModelManager
-import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
+import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
+import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
+import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
+import kotlin.script.experimental.jvm.util.isError
 
 @Service(Service.Level.PROJECT)
 class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: CoroutineScope) {
@@ -36,63 +41,82 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
         val configurationsSupplier = definition.getConfigurationResolver(project)
         val projectModelUpdater = definition.getWorkspaceModelManager(project)
 
-        return configurationsSupplier.get(ktFile.alwaysVirtualFile) != null
-               && projectModelUpdater.isModuleExist(project, ktFile.alwaysVirtualFile, definition)
+        val configuration = configurationsSupplier.get(ktFile.alwaysVirtualFile)?.scriptConfiguration ?: return false
+        if (configuration.isError()) {
+            project.service<ScriptReportSink>().attachReports(ktFile.alwaysVirtualFile, configuration.reports)
+            return true
+        }
+
+        return projectModelUpdater.isModuleExist(project, ktFile.alwaysVirtualFile, definition)
     }
 
     fun execute(vararg ktFiles: KtFile): Job {
-        val firstDefinition = ktFiles.firstNotNullOfOrNull { it.findScriptDefinition() }
-        if (firstDefinition == null) {
-          scriptingErrorLog("failed to find script definition", IllegalStateException())
-            return Job()
+        val definitionByFile = ktFiles
+            .filterNot { KotlinScripDeferredResolutionPolicy.shouldDeferResolution(project, it.virtualFile) }
+            .associateWith {
+                findScriptDefinition(project, KtFileScriptSource(it))
+            }
+
+        scriptingDebugLog {
+            val baseDirPath = project.basePath?.toNioPathOrNull()
+
+            definitionByFile.entries.joinToString(prefix = "processing scripts:\n", separator = "\n") { (script, definition) ->
+                val path = baseDirPath?.relativizeToClosestAncestor(script.alwaysVirtualFile.path)?.second ?: script.alwaysVirtualFile.path
+                "$path -> ${definition.name}(${definition.definitionId})"
+            }
         }
 
-        val configurationsSupplier = firstDefinition.getConfigurationResolver(project)
-        val projectModelUpdater = firstDefinition.getWorkspaceModelManager(project)
-
-        val definitionByVirtualFile = ktFiles
-            .map { it.alwaysVirtualFile }
-            .filterNot { KotlinScripDeferredResolutionPolicy.shouldDeferResolution(project, it) }
-            .associateWith {
-                findScriptDefinition(project, VirtualFileScriptSource(it))
-            }
-
-        if (definitionByVirtualFile.isEmpty()) return Job()
+        if (definitionByFile.isEmpty()) return Job()
 
         return coroutineScope.launch {
-          withBackgroundProgress(project, KotlinBaseScriptingBundle.message("progress.title.processing.scripts")) {
-            val configurationPerVirtualFile = definitionByVirtualFile.entries.associate { (script, definition) ->
-              val configuration = configurationsSupplier.get(script)
-                                  ?: configurationsSupplier.create(script, definition)
-                                  ?: return@withBackgroundProgress
+            process(definitionByFile)
+        }
+    }
 
-              script to configuration
-            }
+    private suspend fun process(definitionByFile: Map<KtFile, ScriptDefinition>) {
+        val configurationsSupplier = definitionByFile.firstNotNullOf { it.value.getConfigurationResolver(project) }
+        val projectModelUpdater = definitionByFile.firstNotNullOf { it.value.getWorkspaceModelManager(project) }
 
-            projectModelUpdater.updateWorkspaceModel(configurationPerVirtualFile)
-            ScriptConfigurationsProviderImpl.getInstance(project).store(configurationPerVirtualFile.values)
+        val configurationPerVirtualFile = definitionByFile.entries.associate { (file, definition) ->
+            val virtualFile = file.virtualFile
+            val configuration = configurationsSupplier.get(virtualFile)
+                ?: configurationsSupplier.create(virtualFile, definition)
+                ?: return
 
-            edtWriteAction {
-              project.publishGlobalModuleStateModificationEvent()
-            }
+            virtualFile to configuration
+        }
 
-            ScriptDependenciesModificationTracker.Companion.getInstance(project).incModificationCount()
-            HighlightingSettingsPerFile.getInstance(project).incModificationCount()
+        projectModelUpdater.updateWorkspaceModel(configurationPerVirtualFile)
+        ScriptConfigurationsProviderImpl.getInstance(project).store(configurationPerVirtualFile.values)
 
-            if (project.isOpen && !project.isDisposed) {
-              val focusedFile = readAction { FileEditorManager.getInstance(project).focusedEditor?.file }
-              ktFiles.firstOrNull { it.alwaysVirtualFile == focusedFile }?.let {
-                readAction {
-                  DaemonCodeAnalyzer.getInstance(project).restart(it)
+        edtWriteAction {
+            project.publishGlobalModuleStateModificationEvent()
+        }
+
+        ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+        HighlightingSettingsPerFile.getInstance(project).incModificationCount()
+
+        val filesInEditors = readAction {
+            FileEditorManager.getInstance(project).allEditors.mapTo(hashSetOf(), FileEditor::getFile)
+        }
+
+        if (project.isOpen && !project.isDisposed) {
+            for (ktFile in definitionByFile.keys) {
+                if (ktFile.alwaysVirtualFile !in filesInEditors) continue
+                if (project.isOpen && !project.isDisposed) {
+                    readAction {
+                        DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                    }
                 }
-              }
             }
-          }
         }
     }
 
     companion object {
         @JvmStatic
         fun getInstance(project: Project): DefaultScriptResolutionStrategy = project.service()
+
+        private val logger: Logger
+            get() = Logger.getInstance(DefaultScriptResolutionStrategy::class.java)
     }
 }

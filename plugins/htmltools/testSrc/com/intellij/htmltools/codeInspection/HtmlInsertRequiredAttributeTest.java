@@ -1,9 +1,7 @@
 package com.intellij.htmltools.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.htmltools.HtmlToolsBundle;
 import com.intellij.htmltools.codeInspection.htmlInspections.HtmlRequiredAltAttributeInspection;
@@ -13,27 +11,25 @@ import com.intellij.htmltools.codeInspection.htmlInspections.HtmlRequiredTitleEl
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class HtmlInsertRequiredAttributeTest extends LightQuickFixTestCase {
-
+public class HtmlInsertRequiredAttributeTest extends BasePlatformTestCase {
   public static final String BASE_PATH = "/insertRequiredAttribute";
 
   @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new RequiredAttributesInspection(),
-      new HtmlRequiredAltAttributeInspection(),
-      new HtmlRequiredLangAttributeInspection(),
-      new HtmlRequiredTitleElementInspection(),
-      new HtmlRequiredSummaryAttributeInspection()
-    };
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new RequiredAttributesInspection(),
+                                new HtmlRequiredAltAttributeInspection(),
+                                new HtmlRequiredLangAttributeInspection(),
+                                new HtmlRequiredTitleElementInspection(),
+                                new HtmlRequiredSummaryAttributeInspection());
   }
-
 
   @Override
   protected String getBasePath() {
@@ -47,7 +43,7 @@ public class HtmlInsertRequiredAttributeTest extends LightQuickFixTestCase {
   }
 
   public void testInsertDefaultAttribute() {
-    doSingleTest(getTestName(false) + ".html");
+    doSingleTest();
   }
 
   public void testDefaultWithChangedQuote() {
@@ -55,11 +51,18 @@ public class HtmlInsertRequiredAttributeTest extends LightQuickFixTestCase {
     final CodeStyleSettings.QuoteStyle oldQuote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
-      doSingleTest(getTestName(false) + ".html");
+      doSingleTest();
     }
     finally {
       settings.HTML_QUOTE_STYLE = oldQuote;
     }
+  }
+
+  private void doSingleTest() {
+    myFixture.configureByFile(BASE_PATH + "/before" + getTestName(false) + ".html");
+    var intention = myFixture.findSingleIntention("Insert required attribute 'src'");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(BASE_PATH + "/after" + getTestName(false) + ".html");
   }
 
   public void testInsertRequiredAltInput() {
@@ -141,17 +144,17 @@ public class HtmlInsertRequiredAttributeTest extends LightQuickFixTestCase {
   }
 
   private void checkInspection(String fileNameBefore, String fileNameAfter, String folder, String intention) {
-    configureByFile(BASE_PATH + "/" + folder + "/" + fileNameBefore);
-    final List<IntentionAction> list = getAvailableActions();
+    myFixture.configureByFile(BASE_PATH + "/" + folder + "/" + fileNameBefore);
+    final List<IntentionAction> list = myFixture.getAvailableIntentions();
     final IntentionAction action = CodeInsightTestUtil.findIntentionByPartialText(list, intention);
     assertNotNull(action);
-    invoke(action);
-    checkResultByFile(BASE_PATH + "/" + folder + "/" + fileNameAfter);
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(BASE_PATH + "/" + folder + "/" + fileNameAfter);
   }
 
   private void checkInspectionDoesNotExist(String fileNameBefore, String intention, String folder) {
-    configureByFile(BASE_PATH + "/" + folder + "/" + fileNameBefore);
-    final List<IntentionAction> list = getAvailableActions();
+    myFixture.configureByFile(BASE_PATH + "/" + folder + "/" + fileNameBefore);
+    final List<IntentionAction> list = myFixture.getAvailableIntentions();
     final IntentionAction action = CodeInsightTestUtil.findIntentionByPartialText(list, intention);
     assertNull(action);
   }

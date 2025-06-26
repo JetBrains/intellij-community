@@ -1050,8 +1050,6 @@ class DynamicPluginsTest {
   @Test
   @TestFor(issues = ["IJPL-183884"])
   fun `initial loading errors are cleared after successful dynamic plugin loading`() {
-    PluginManagerCore.getAndClearPluginLoadingErrors() // clear errors which may be registered by other tests
-
     val barPluginPath = pluginsDir.resolve("bar")
     val fooPluginPath = pluginsDir.resolve("foo")
 

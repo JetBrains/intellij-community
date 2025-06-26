@@ -592,7 +592,6 @@ Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
 - hasHint():Z
 - hashCode():I
 - isAfterEndOfLine():Z
-- needUpdateOnTyping():Z
 - s:newHighlightInfo(com.intellij.codeInsight.daemon.impl.HighlightInfoType):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - registerFix(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - setHighlighter(com.intellij.openapi.editor.ex.RangeHighlighterEx):V
@@ -616,7 +615,6 @@ a:com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor
 - progressIsAdvanced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,D):V
 c:com.intellij.codeInsight.daemon.impl.HighlightInfoType$HighlightInfoTypeImpl
 - com.intellij.codeInsight.daemon.impl.HighlightInfoType
-- com.intellij.codeInsight.daemon.impl.HighlightInfoType$UpdateOnTypingSuppressible
 - <init>(com.intellij.lang.annotation.HighlightSeverity,com.intellij.openapi.editor.colors.TextAttributesKey):V
 - <init>(com.intellij.lang.annotation.HighlightSeverity,com.intellij.openapi.editor.colors.TextAttributesKey,Z):V
 - equals(java.lang.Object):Z
@@ -624,7 +622,6 @@ c:com.intellij.codeInsight.daemon.impl.HighlightInfoType$HighlightInfoTypeImpl
 - getSeverity(com.intellij.psi.PsiElement):com.intellij.lang.annotation.HighlightSeverity
 - hashCode():I
 - isApplicableToInspections():Z
-- needsUpdateOnTyping():Z
 - writeExternal(org.jdom.Element):V
 f:com.intellij.codeInsight.daemon.impl.HighlightInfoType$HighlightInfoTypeSeverityByKey
 - com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -632,8 +629,6 @@ f:com.intellij.codeInsight.daemon.impl.HighlightInfoType$HighlightInfoTypeSeveri
 - getAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
 - getSeverity(com.intellij.psi.PsiElement):com.intellij.lang.annotation.HighlightSeverity
 - getSeverityKey():com.intellij.codeInsight.daemon.HighlightDisplayKey
-com.intellij.codeInsight.daemon.impl.HighlightInfoType$UpdateOnTypingSuppressible
-- a:needsUpdateOnTyping():Z
 com.intellij.codeInsight.daemon.impl.HighlightingSession
 - a:getColorsScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:getDocument():com.intellij.openapi.editor.Document
@@ -3486,6 +3481,7 @@ a:com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 - com.intellij.refactoring.rename.CollisionUsageInfo
 - <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 - a:getDescription():java.lang.String
+- getShortDescription():java.lang.String
 c:com.intellij.refactoring.util.AbstractVariableData
 - name:java.lang.String
 - originalName:java.lang.String

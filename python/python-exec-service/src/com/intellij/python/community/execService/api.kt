@@ -1,18 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService
 
+import com.intellij.execution.process.AnsiEscapeDecoder
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
@@ -35,7 +37,7 @@ suspend fun ExecService.execGetStdout(
   args: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyExecResult<String> = execute(
+): PyResult<String> = execute(
   binary = binary,
   args = args,
   options = options,
@@ -71,7 +73,7 @@ suspend fun ExecService.execGetStdoutInShell(
   args: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyExecResult<String> {
+): PyResult<String> {
   val (shell, arg) = eelApi.exec.getShell()
   return execGetStdout(shell.asNioPath(), listOf(arg, commandForShell) + args, options, procListener)
 }
@@ -91,7 +93,29 @@ suspend fun <T> ExecService.execute(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyExecResult<T> = executeAdvanced(binary, { addArgs(*args.toTypedArray()) }, options, transformerToHandler(procListener, processOutputTransformer))
+): PyResult<T> {
+  return reportRawProgress { reporter ->
+    val ansiDecoder = AnsiEscapeDecoder()
+    val listener = procListener ?: PyProcessListener {
+      when (it) {
+        is ProcessEvent.ProcessStarted, is ProcessEvent.ProcessEnded -> Unit
+        is ProcessEvent.ProcessOutput -> {
+          val outType = when (it.stream) {
+            ProcessEvent.OutputType.STDOUT -> ProcessOutputTypes.STDOUT
+            ProcessEvent.OutputType.STDERR -> ProcessOutputTypes.STDERR
+          }
+          ansiDecoder.escapeText(it.line, outType) { text, _ ->
+            @Suppress("HardCodedStringLiteral")
+            reporter.text(text)
+          }
+        }
+      }
+    }
+    executeAdvanced(binary, { addArgs(*args.toTypedArray()) }, options, transformerToHandler(procListener
+                                                                                             ?: listener, processOutputTransformer))
+  }
+
+}
 
 
 /**
@@ -115,5 +139,5 @@ data class ExecOptions(
   val env: Map<String, String> = emptyMap(),
   val workingDirectory: Path? = null,
   val processDescription: @Nls String? = null,
-  val timeout: Duration = 1.minutes,
+  val timeout: Duration = 5.minutes,
 )

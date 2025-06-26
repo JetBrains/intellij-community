@@ -24,25 +24,34 @@ enum class EelOsFamily {
 
 @get:ApiStatus.Experimental
 val EelOsFamily.isPosix: Boolean get() = this == EelOsFamily.Posix
+
 @get:ApiStatus.Experimental
 val EelPlatform.isPosix: Boolean get() = osFamily.isPosix
+
 @get:ApiStatus.Experimental
 val EelPlatform.isMac: Boolean get() = this is Darwin
+
 @get:ApiStatus.Experimental
 val EelPlatform.isLinux: Boolean get() = this is Linux
+
 @get:ApiStatus.Experimental
 val EelOsFamily.isWindows: Boolean get() = this == EelOsFamily.Windows
+
 @get:ApiStatus.Experimental
 val EelPlatform.isWindows: Boolean get() = osFamily.isWindows
+
 @get:ApiStatus.Experimental
 val EelPlatform.isFreeBSD: Boolean get() = this is FreeBSD
 
 @get:ApiStatus.Experimental
 val EelPlatform.isArm32: Boolean get() = arch is Arch.ARM_32
+
 @get:ApiStatus.Experimental
 val EelPlatform.isArm64: Boolean get() = arch is Arch.ARM_64
+
 @get:ApiStatus.Experimental
 val EelPlatform.isX86: Boolean get() = arch is Arch.X86
+
 @get:ApiStatus.Experimental
 val EelPlatform.isX86_64: Boolean get() = arch is Arch.X86_64
 

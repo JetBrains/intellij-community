@@ -170,9 +170,28 @@ public class IdeStubIndexService extends StubIndexService {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);
             }
 
-            KtTypeReference typeReference = stub.getPsi().getTypeReference();
+            KtNamedFunction ktNamedFunction = stub.getPsi();
+            KtTypeReference typeReference = ktNamedFunction.getTypeReference();
             if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
                 sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.Helper.getIndexKey(), name);
+            }
+
+            List<KtParameter> parameters = ktNamedFunction.getValueParameters();
+            boolean injectedCandidate = false;
+            parameterLoop: for (KtParameter parameter : parameters) {
+                List<KtAnnotationEntry> annotationEntries = parameter.getAnnotationEntries();
+                if (!annotationEntries.isEmpty()) {
+                    for (KtAnnotationEntry entry : annotationEntries) {
+                        Name shortName = entry.getShortName();
+                        if (shortName != null && shortName.asString().equals("Language")) {
+                            injectedCandidate = true;
+                            break parameterLoop;
+                        }
+                    }
+                }
+            }
+            if (injectedCandidate) {
+                sink.occurrence(KotlinProbablyInjectedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
             if (stub.mayHaveContract()) {

@@ -309,7 +309,6 @@ c:com.intellij.openapi.roots.JavadocOrderRootType
 - s:getUrls(com.intellij.openapi.roots.OrderEntry):java.lang.String[]
 a:com.intellij.openapi.roots.ModuleRootManagerEx
 - com.intellij.openapi.roots.ModuleRootManager
-- sf:MODULE_EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - s:getInstanceEx(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModuleRootManagerEx
 - a:getModificationCountForTests():J

@@ -249,10 +249,12 @@ c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigu
 - getSettings():com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 - getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
 - isDebugServerProcess():Z
+- isDebuggingDisabled():Z
 - isReattachDebugProcess():Z
 - readExternal(org.jdom.Element):V
 - ps:readExternalBoolean(org.jdom.Element,java.lang.String,java.util.function.Consumer):Z
 - setDebugServerProcess(Z):V
+- setDebuggingDisabled(Z):V
 - setReattachDebugProcess(Z):V
 - suggestedName():java.lang.String
 - writeExternal(org.jdom.Element):V
@@ -614,7 +616,9 @@ a:com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataS
 - sf:MODULE_KEY:com.intellij.openapi.util.Key
 - sf:ORDERED_DATA_MAP_KEY:com.intellij.openapi.util.Key
 - <init>():V
+- computeOrphanData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):com.intellij.openapi.util.Computable
 - p:createModule(com.intellij.openapi.externalSystem.model.DataNode,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):com.intellij.openapi.module.Module
+- getExternalModuleType():java.lang.String
 - importData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
 - onFailureImport(com.intellij.openapi.project.Project):V
 - onSuccessImport(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModelsProvider):V

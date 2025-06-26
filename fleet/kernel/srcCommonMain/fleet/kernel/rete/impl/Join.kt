@@ -5,26 +5,29 @@ import fleet.kernel.rete.*
 
 typealias JoinMemory<T, U> = HashMap<T, HashSet<Match<U>>>
 
-fun <L, R, T> joinOn(left: Query<L>, onLeft: (Match<L>) -> T,
-                     right: Query<R>, onRight: (Match<R>) -> T): Query<JoinPair<L, R, T>> = run {
-  val leftMapped = left.flatMapMatch { setOf(it.value to onLeft(it)) }
-  val rightMapped = right.flatMapMatch { setOf(it.value to onRight(it)) }
-  Query {
-    rawJoinOn(left = leftMapped.producer(),
-              onLeft = { it.value.second },
-              right = rightMapped.producer(),
-              onRight = { it.value.second })
-      .rawMap { p ->
-        JoinPair(p.value.left.first,
-                 p.value.right.first,
-                 p.value.on)
-      }
+fun <L, R, T> joinOn(
+  left: Query<*, L>, onLeft: (Match<L>) -> T,
+  right: Query<*, R>, onRight: (Match<R>) -> T,
+): Query<Many, JoinPair<L, R, T>> =
+  run {
+    val leftMapped = left.flatMapMatch { setOf(it.value to onLeft(it)) }
+    val rightMapped = right.flatMapMatch { setOf(it.value to onRight(it)) }
+    Query<Many, JoinPair<L, R, T>> {
+      rawJoinOn(left = leftMapped.producer(),
+                onLeft = { it.value.second },
+                right = rightMapped.producer(),
+                onRight = { it.value.second })
+        .rawMap { p ->
+          JoinPair(p.value.left.first,
+                   p.value.right.first,
+                   p.value.on)
+        }
+    }
   }
-}
 
 fun <L, R, T> SubscriptionScope.rawJoinOn(
   left: Producer<L>, onLeft: (Match<L>) -> T,
-  right: Producer<R>, onRight: (Match<R>) -> T
+  right: Producer<R>, onRight: (Match<R>) -> T,
 ): Producer<JoinPair<L, R, T>> = run {
   val broadcast = Broadcaster<JoinPair<L, R, T>>()
   val leftMemory = JoinMemory<T, L>()
@@ -54,11 +57,13 @@ fun <L, R, T> SubscriptionScope.rawJoinOn(
   }
 }
 
-private inline fun <U, V, W> feedJoin(token: Token<U>,
-                                      thisMemory: JoinMemory<W, U>,
-                                      thatMemory: JoinMemory<W, V>,
-                                      key: W,
-                                      emit: (thisMatch: Match<U>, thatMatch: Match<V>) -> Unit) {
+private inline fun <U, V, W> feedJoin(
+  token: Token<U>,
+  thisMemory: JoinMemory<W, U>,
+  thatMemory: JoinMemory<W, V>,
+  key: W,
+  emit: (thisMatch: Match<U>, thatMatch: Match<V>) -> Unit,
+) {
   val input = token.match
   when (token.added) {
     true -> {

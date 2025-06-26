@@ -7,12 +7,12 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.utils.acceptSymbolForPsiSourcedPolySymbolRenameHandler
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
-import com.intellij.polySymbols.utils.acceptSymbolForPsiSourcedPolySymbolRenameHandler
 
 private class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
 

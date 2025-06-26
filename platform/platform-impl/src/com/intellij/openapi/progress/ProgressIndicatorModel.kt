@@ -16,9 +16,18 @@ class ProgressIndicatorModel(
   override val cancellation: TaskCancellation,
   override val visibleInStatusBar: Boolean,
 ) : ProgressModel {
-  constructor(progressIndicator: ProgressIndicatorEx, title: String, isCancellable: Boolean) : this(progressIndicator, title, if (isCancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable(), true)
+  constructor(
+    progressIndicator: ProgressIndicatorEx,
+    title: String,
+    isCancellable: Boolean,
+  ) : this(progressIndicator, title, if (isCancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable(), true)
 
-  constructor(title: String, taskCancellation: TaskCancellation, visibleInStatusBar: Boolean = true, onCancel: () -> Unit) : this(ProgressIndicatorBase().apply {
+  constructor(
+    title: String,
+    taskCancellation: TaskCancellation,
+    visibleInStatusBar: Boolean = true,
+    onCancel: () -> Unit,
+  ) : this(ProgressIndicatorBase().apply {
     addStateDelegate(object : AbstractProgressIndicatorExBase() {
       override fun cancel() {
         onCancel.invoke()

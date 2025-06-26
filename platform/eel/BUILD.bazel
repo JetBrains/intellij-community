@@ -15,6 +15,7 @@ jvm_library(
 ### auto-generated section `build intellij.platform.eel` end
 
 ### auto-generated section `build intellij.platform.eel.codegen` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -35,6 +36,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -47,13 +49,14 @@ jvm_library(
   runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
 )
 
-jvm_test(
+jps_test(
   name = "eel-codegen_test",
   runtime_deps = [":eel-codegen_test_lib"]
 )
 ### auto-generated section `build intellij.platform.eel.codegen` end
 
 ### auto-generated section `build intellij.platform.eel.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -72,7 +75,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "eel-tests_test",
   runtime_deps = [":eel-tests_test_lib"]
 )

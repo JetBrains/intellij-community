@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@ApiStatus.Internal
 public final class FileTreeModel extends AbstractTreeModel implements InvokerSupplier {
 
   private static final Logger LOG = Logger.getInstance(FileTreeModel.class);
@@ -173,11 +175,13 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   private void process(List<? extends VFileEvent> events) {
     if (roots == null) return;
 
-    HashSet<VirtualFile> files = new HashSet<>();
+    //HashSet<VirtualFile> files = new HashSet<>();
     HashSet<VirtualFile> parents = new HashSet<>();
     for (VFileEvent event : events) {
       if (event instanceof VFilePropertyChangeEvent) {
-        if (hasEntry(event.getFile())) files.add(event.getFile());
+        //if (hasEntry(event.getFile())) {
+        //  files.add(event.getFile());
+        //}
       }
       else if (event instanceof VFileCreateEvent create) {
         if (hasEntry(create.getParent())) parents.add(create.getParent());
@@ -192,7 +196,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       else if (event instanceof VFileDeleteEvent) {
         VirtualFile file = event.getFile();
         if (hasEntry(file)) {
-          files.add(file);
+          //files.add(file);
           //TODO:for all roots
           file = file.getParent();
           parents.add(hasEntry(file) ? file : null);
@@ -224,9 +228,9 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
         }
       }
     }
-    for (VirtualFile file : files) {
-      //TODO:update
-    }
+    //for (VirtualFile file : files) {
+    //  TODO:update
+    //}
     //TODO:on valid thread / entry - mark as valid
   }
 

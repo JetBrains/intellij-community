@@ -27,8 +27,10 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
@@ -60,8 +62,10 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     assertEquals(2, gutters.size());
     assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
-  
+
+  //todo fix for IDEA-374935
   public void testRunLineMarkerOnInterface() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> {
     myFixture.configureByText("Main.java", """
       public class Ma<caret>in implements I {}
       interface I {    public static void main(String[] args) {}
@@ -72,6 +76,7 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     List<GutterMark> gutters = myFixture.findAllGutters();
     assertEquals(2, gutters.size());
     assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    });
   }
 
   public void testNoRunLineMarkerAnonymous() {

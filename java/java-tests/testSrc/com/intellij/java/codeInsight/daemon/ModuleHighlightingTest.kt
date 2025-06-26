@@ -89,10 +89,56 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testModuleImportDeclarationLevelCheck() {
+  fun testModuleImportDeclarationLevelCheck23() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23) {
       highlight("Test.java", """
         <error descr="Module Import Declarations are not supported at language level '23'">import module java.sql;</error>
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck23Preview() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("Test.java", """
+        import module java.base;
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck24() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_24) {
+      highlight("Test.java", """
+        <error descr="Module Import Declarations are not supported at language level '24'">import module java.sql;</error>
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck24Preview() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_24_PREVIEW) {
+      highlight("Test.java", """
+        import module java.base;
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck25() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25) {
+      highlight("Test.java", """
+        import module java.base;
+        import module java.base;
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck25Preview() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25) {
+      highlight("Test.java", """
+        import module java.base;
         class Test {}
       """.trimIndent())
     }
@@ -189,7 +235,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testWrongFileName() {
-    highlight("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
+    highlight("M.java", """/* ... */ <error descr="Module declarations only allowed in a 'module-info.java' file">module M</error> { }""")
   }
 
   fun testFileDuplicate() {

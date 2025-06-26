@@ -8,4 +8,12 @@ public final class ExternalRefCollectorCompilerToolExtension extends AbstractRef
   protected boolean isEnabled() {
     return "true".equals(System.getProperty(ENABLED_PARAM));
   }
+
+  public static void enable() {
+    System.setProperty(ENABLED_PARAM, "true");
+  }
+
+  public static void disable() {
+    System.clearProperty(ENABLED_PARAM);
+  }
 }

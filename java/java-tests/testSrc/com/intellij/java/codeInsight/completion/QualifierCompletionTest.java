@@ -682,7 +682,7 @@ public class QualifierCompletionTest extends NormalCompletionTestCase {
     ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true,
                                                                       getTestRootDisposable());
     IdeaTestUtil.withLevel(getModule(),
-                           JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+                           JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(), () -> {
         myFixture.addClass("""
                              package java.io;
                              

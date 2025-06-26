@@ -23,10 +23,10 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:netty-buffer",
     "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/util/jdom",
-  ],
-  exports = ["//platform/execution-impl"]
+  ]
 )
 ### auto-generated section `build intellij.platform.scriptDebugger.ui` end

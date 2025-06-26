@@ -3,13 +3,13 @@ package com.intellij.polySymbols.refactoring
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.polySymbols.search.PsiSourcedPolySymbolReference
+import com.intellij.polySymbols.search.PsiSourcedPolySymbolReference.RenameHandler
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
-import com.intellij.polySymbols.search.PsiSourcedPolySymbolReference
-import com.intellij.polySymbols.search.PsiSourcedPolySymbolReference.RenameHandler
 
 private class PsiSourcedPolySymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
   override fun prepareOperation(usages: Array<out UsageInfo>, elements: List<PsiElement>): List<RenameHandler> =

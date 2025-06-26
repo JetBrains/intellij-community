@@ -13,10 +13,13 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.hasInstalledPackage
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager
+import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +39,27 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
   ): PyResult<Unit> = engine.installPackageCommand(installRequest, options)
+
+  override fun getDependencyManager(): PythonDependenciesManager? {
+    val requirementsTxtManager = PythonRequirementsTxtManager.getInstance(project, sdk)
+    if (requirementsTxtManager.getDependenciesFile() != null)
+      return requirementsTxtManager
+    val setupPyManager = SetupPyManager.getInstance(project, sdk)
+    if (setupPyManager.getDependenciesFile() != null)
+      return setupPyManager
+    return null
+  }
+
+  override suspend fun syncCommand(): PyResult<Unit> {
+    val requirementsManager = getDependencyManager() as? PythonRequirementsTxtManager
+    val requirementsFile = requirementsManager?.getDependenciesFile()
+    return if (requirementsFile != null) {
+      engine.syncRequirementsTxt(requirementsFile)
+    }
+    else {
+      engine.syncProject()
+    }
+  }
 
   override suspend fun updatePackageCommand(
     vararg specifications: PythonRepositoryPackageSpecification,

@@ -67,6 +67,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.stream.Stream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
 
@@ -310,10 +311,9 @@ class CompilationContextImpl private constructor(
     val override = options.classOutDir
     when {
       !override.isNullOrEmpty() -> classesOutputDirectory = Path.of(override)
-      options.useCompiledClassesFromProjectOutput -> check(Files.exists(classesOutputDirectory)) {
-        "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory $classesOutputDirectory doesn't exist"
+      !options.useCompiledClassesFromProjectOutput || isBazelTestRun() -> {
+        classesOutputDirectory = paths.buildOutputDir.resolve("classes")
       }
-      else -> classesOutputDirectory = paths.buildOutputDir.resolve("classes")
     }
     Span.current().addEvent("set class output directory", Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
@@ -453,8 +453,8 @@ private suspend fun defineJavaSdk(context: CompilationContext) {
   for ((sdkRef, module) in sdkReferenceToFirstModule) {
     val sdkName = sdkRef.sdkName
     val vendorPrefixEnd = sdkName.indexOf('-')
-    val sdkNameWithoutVendor = (if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)).removeSuffix(" (WSL)")
-    check(sdkNameWithoutVendor == "17") {
+    val sdkNameWithoutVendor = (if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1))
+    check(sdkNameWithoutVendor.startsWith("17")) {
       "Project model at ${context.paths.projectHome} [module ${module.name}] requested SDK $sdkNameWithoutVendor, " +
       "but only '17' is supported as SDK in intellij project"
     }
@@ -588,4 +588,12 @@ suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePa
       throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
     }
   }
+}
+
+/**
+ * TODO: need to use bazel path, but options.useCompiledClassesFromProjectOutput is true even if intellij.build.use.compiled.classes == false
+ *  see com.intellij.platform.buildScripts.testFramework.BuildScriptTestUtilsKt.createBuildOptionsForTest(org.jetbrains.intellij.build.ProductProperties, java.nio.file.Path, boolean, org.junit.jupiter.api.TestInfo)
+ */
+internal fun isBazelTestRun(): Boolean {
+  return Stream.of("TEST_TMPDIR", "RUNFILES_DIR", "JAVA_RUNFILES").allMatch { bazelTestEnv: String? -> System.getenv(bazelTestEnv) != null }
 }

@@ -3,10 +3,10 @@ package com.intellij.polySymbols.context.impl
 
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.polySymbols.context.PolyContextProvider
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.polySymbols.context.PolyContextProvider
 import org.jetbrains.annotations.TestOnly
 
 class PolyContextProviderExtensionPoint : BaseKeyedLazyInstance<PolyContextProvider>, KeyedLazyInstance<PolyContextProvider> {

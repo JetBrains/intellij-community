@@ -158,6 +158,10 @@ internal data class ProviderRecentProjectItem(
   val progressText: String? get() = recentProject.status.progressText
   val additionalActions: List<AnAction> get() = recentProject.additionalActions
 
+  fun canOpenProject() : Boolean {
+    return recentProject.canOpenProject()
+  }
+
   fun openProject(actionEvent: AnActionEvent) {
     recentProject.openProject(actionEvent)
   }

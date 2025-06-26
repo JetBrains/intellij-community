@@ -433,7 +433,7 @@ public class ChangesViewManager implements ChangesViewEx,
       registerShortcuts(this);
 
       ApplicationManager.getApplication().getMessageBus().connect(project)
-        .subscribe(AdvancedSettingsChangeListener.TOPIC, new  AdvancedSettingsChangeListener() {
+        .subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
           @Override
           public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
             if (CommitMode.NonModalCommitMode.COMMIT_TOOL_WINDOW_SETTINGS_KEY.equals(id) && oldValue != newValue) {
@@ -561,6 +561,11 @@ public class ChangesViewManager implements ChangesViewEx,
       public void returnFocusToTree() {
         ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
         if (toolWindow != null) toolWindow.activate(null);
+      }
+
+      @Override
+      public boolean openPreview(boolean requestFocus) {
+        return CommitToolWindowUtil.openDiff(LOCAL_CHANGES, this, requestFocus);
       }
 
       @Override

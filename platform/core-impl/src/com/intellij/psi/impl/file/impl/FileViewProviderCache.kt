@@ -29,7 +29,7 @@ internal sealed interface FileViewProviderCache {
 
   fun forEachKey(block: java.util.function.Consumer<VirtualFile>)
 
-  fun forEach(block: Consumer)
+  fun forEach(block: CacheEntryConsumer)
 
   fun processQueue()
 
@@ -56,7 +56,7 @@ internal sealed interface FileViewProviderCache {
    */
   fun trySetContext(viewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext?
 
-  fun interface Consumer {
+  fun interface CacheEntryConsumer {
     fun consume(file: VirtualFile, context: CodeInsightContext, provider: FileViewProvider)
   }
 }

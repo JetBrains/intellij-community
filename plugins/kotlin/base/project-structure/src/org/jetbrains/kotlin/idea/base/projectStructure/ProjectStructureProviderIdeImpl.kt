@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -329,6 +330,8 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
         val kotlinLibrary = (module.moduleInfo as? AbstractKlibLibraryInfo)?.resolvedKotlinLibrary ?: return emptyList()
         return listOf(kotlinLibrary)
     }
+
+    override fun getCacheDependenciesTracker(): ModificationTracker = ProjectRootModificationTracker.getInstance(project)
 
     companion object {
         // TODO maybe introduce some cache?

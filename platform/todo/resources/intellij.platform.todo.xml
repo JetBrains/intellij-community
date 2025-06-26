@@ -1,4 +1,6 @@
 <idea-plugin>
+  <module value="com.intellij.modules.todo"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
     <highlightVisitor implementation="com.intellij.ide.todo.codeInsight.TodoHighlightVisitor"/>

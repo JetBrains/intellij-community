@@ -6,12 +6,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.packageRequires.PythonPackageRequiresExtractor
-import com.jetbrains.python.packaging.packageRequires.PythonPackageRequiresExtractorProvider
+import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementExtractor
+import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequiresExtractorProvider
 import com.jetbrains.python.sdk.poetry.isPoetry
 import com.jetbrains.python.sdk.poetry.runPoetryWithSdk
 
-internal class PoetryPackageRequiresExtractor(private val sdk: Sdk) : PythonPackageRequiresExtractor {
+internal class PoetryPackageRequirementExtractor(private val sdk: Sdk) : PythonPackageRequirementExtractor {
 
   override suspend fun extract(pkg: PythonPackage, module: Module): List<NormalizedPythonPackageName> {
     val data = runPoetryWithSdk(sdk, "show", pkg.name).getOr {
@@ -52,8 +52,8 @@ internal class PoetryPackageRequiresExtractor(private val sdk: Sdk) : PythonPack
 }
 
 private class PoetryRequiresExtractorProvider: PythonPackageRequiresExtractorProvider {
-  override fun createExtractor(sdk: Sdk): PythonPackageRequiresExtractor? {
+  override fun createExtractor(sdk: Sdk): PythonPackageRequirementExtractor? {
     if (!sdk.isPoetry) return null
-    return PoetryPackageRequiresExtractor(sdk)
+    return PoetryPackageRequirementExtractor(sdk)
   }
 }

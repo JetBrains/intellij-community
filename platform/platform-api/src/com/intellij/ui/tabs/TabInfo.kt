@@ -50,9 +50,10 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
 
   val changeSupport: PropertyChangeSupport = PropertyChangeSupport(this)
 
-  var icon: Icon? = null
-    private set
+  private var iconHolder: TabInfoIconHolder = TabInfoIconHolder.default(this)
 
+  val icon: Icon?
+    get() = iconHolder.getIcon()
   private var place: @NonNls String? = null
 
   var `object`: Any? = null
@@ -199,9 +200,15 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   fun setIcon(icon: Icon?): TabInfo {
     val old = this.icon
     if (old != icon) {
-      this.icon = icon
-      changeSupport.firePropertyChange(ICON, old, icon)
+      iconHolder.setIcon(icon)
     }
+    return this
+  }
+
+  @Internal
+  fun setIconHolder(iconHolder: TabInfoIconHolder): TabInfo {
+    iconHolder.setIcon(this.iconHolder.getIcon())
+    this.iconHolder = iconHolder
     return this
   }
 

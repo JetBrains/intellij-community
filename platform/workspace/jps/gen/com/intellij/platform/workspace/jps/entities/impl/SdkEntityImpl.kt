@@ -18,7 +18,7 @@ import java.io.Serializable
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, WorkspaceEntityBase(dataSource) {
 

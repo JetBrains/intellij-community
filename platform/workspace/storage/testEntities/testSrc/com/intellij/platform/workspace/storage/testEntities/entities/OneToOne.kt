@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 //region ------------------- Parent Entity --------------------------------
@@ -10,9 +10,9 @@ import com.intellij.platform.workspace.storage.annotations.Child
 @Suppress("unused")
 interface OoParentEntity : WorkspaceEntity {
   val parentProperty: String
-  val child: @Child OoChildEntity?
+  val child: OoChildEntity?
 
-  val anotherChild: @Child OoChildWithNullableParentEntity?
+  val anotherChild: OoChildWithNullableParentEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -58,6 +58,7 @@ fun MutableEntityStorage.modifyOoParentEntity(
 @Suppress("unused")
 interface OoChildEntity : WorkspaceEntity {
   val childProperty: String
+  @Parent
   val parentEntity: OoParentEntity
 
   //region generated code
@@ -100,6 +101,7 @@ fun MutableEntityStorage.modifyOoChildEntity(
 
 //region ----------------- Child entity with a nullable parent -----------------------------
 interface OoChildWithNullableParentEntity : WorkspaceEntity {
+  @Parent
   val parentEntity: OoParentEntity?
 
   //region generated code
@@ -149,8 +151,8 @@ interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
 
   override val symbolicId: OoParentEntityId get() = OoParentEntityId(parentProperty)
 
-  val childOne: @Child OoChildForParentWithPidEntity?
-  val childThree: @Child OoChildAlsoWithPidEntity?
+  val childOne: OoChildForParentWithPidEntity?
+  val childThree: OoChildAlsoWithPidEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -195,6 +197,7 @@ fun MutableEntityStorage.modifyOoParentWithPidEntity(
 
 interface OoChildForParentWithPidEntity : WorkspaceEntity {
   val childProperty: String
+  @Parent
   val parentEntity: OoParentWithPidEntity
 
   //region generated code
@@ -238,6 +241,7 @@ fun MutableEntityStorage.modifyOoChildForParentWithPidEntity(
 
 interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
   val childProperty: String
+  @Parent
   val parentEntity: OoParentWithPidEntity
 
   override val symbolicId: OoChildEntityId get() = OoChildEntityId(childProperty)
@@ -284,7 +288,7 @@ fun MutableEntityStorage.modifyOoChildAlsoWithPidEntity(
 
 interface OoParentWithoutPidEntity : WorkspaceEntity {
   val parentProperty: String
-  val childOne: @Child OoChildWithPidEntity?
+  val childOne: OoChildWithPidEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -333,6 +337,7 @@ data class OoChildEntityId(val name: String) : SymbolicEntityId<OoChildWithPidEn
 
 interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
   val childProperty: String
+  @Parent
   val parentEntity: OoParentWithoutPidEntity
 
   override val symbolicId: OoChildEntityId get() = OoChildEntityId(childProperty)

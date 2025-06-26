@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -48,7 +47,7 @@ import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
-import org.jetbrains.jewel.ui.disabled
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
@@ -80,6 +79,7 @@ public fun Dropdown(
                 is PressInteraction.Press -> dropdownState = dropdownState.copy(pressed = true)
                 is PressInteraction.Cancel,
                 is PressInteraction.Release -> dropdownState = dropdownState.copy(pressed = false)
+
                 is HoverInteraction.Enter -> dropdownState = dropdownState.copy(hovered = true)
                 is HoverInteraction.Exit -> dropdownState = dropdownState.copy(hovered = false)
                 is FocusInteraction.Focus -> dropdownState = dropdownState.copy(focused = true)
@@ -138,12 +138,10 @@ public fun Dropdown(
                 contentAlignment = Alignment.Center,
             ) {
                 val alpha = if (dropdownState.isEnabled) 1f else 0.5f
-                val colorFilter = if (dropdownState.isEnabled) null else ColorFilter.disabled()
                 Icon(
-                    modifier = Modifier.alpha(alpha),
+                    modifier = Modifier.alpha(alpha).thenIf(!dropdownState.isEnabled) { disabledAppearance() },
                     key = style.icons.chevronDown,
                     contentDescription = "Dropdown Chevron",
-                    colorFilter = colorFilter,
                     hint = Stateful(dropdownState),
                 )
             }

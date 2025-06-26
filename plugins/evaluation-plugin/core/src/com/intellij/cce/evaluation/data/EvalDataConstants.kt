@@ -171,7 +171,7 @@ object Analysis {
   )
 
   val CODE_IS_COMPILABLE: TrivialEvalData<Boolean> = EvalDataDescription(
-    name = "Code is compilable",
+    name = "Code Is Compilable",
     description = "Generated code is compiling successfully",
     DataPlacement.AdditionalBoolean(AIA_CODE_IS_COMPILABLE),
     presentation = EvalDataPresentation(
@@ -179,7 +179,7 @@ object Analysis {
       DataRenderer.InlineBoolean,
     ),
     problemIndicators = listOf(
-      ProblemIndicator.FromMetric { Metrics.WITHOUT_SYNTAX_ERRORS }
+      ProblemIndicator.FromValue { !it }
     )
   )
 

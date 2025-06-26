@@ -1191,6 +1191,8 @@
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$ImplicitClassDeclaration"/>
     <liveTemplateContext contextId="JAVA_NORMAL_CLASS_DECLARATION_WITHOUT_INSTANCE_MAIN" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$NormalClassDeclarationBeforeShortMainMethod"/>
+    <liveTemplateContext contextId="JAVA_LANG_IO_STATEMENT" baseContextId="JAVA_CODE"
+                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaLangIOStatement"/>
     <liveTemplateContext contextId="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$NormalClassDeclarationAfterShortMainMethod"/>
     <liveTemplateContext contextId="JAVA_COMMENT" baseContextId="JAVA_CODE"
@@ -1688,13 +1690,13 @@
                      key="inspection.string.template.reverse.migration.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids25" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.ImplicitToExplicitClassBackwardMigrationInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.implicit.to.explicit.class.backward.migration.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids25" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitToImplicitClassMigrationInspection"
                      bundle="messages.JavaBundle"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
@@ -2832,8 +2834,8 @@
 
     <action id="ExternalSystem.AttachProject"
             class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction">
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel" anchor="after"
-                    relative-to-action="ExternalSystem.RefreshAllProjects"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.AttachProjectPanel" anchor="before"
+                    relative-to-action="ExternalSystem.DetachProject"/>/>
     </action>
   </actions>
 

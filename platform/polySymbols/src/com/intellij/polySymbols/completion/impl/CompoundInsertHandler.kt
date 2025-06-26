@@ -22,8 +22,10 @@ internal class CompoundInsertHandler private constructor(val handlers: List<Poly
 
   companion object {
 
-    fun merge(a: PolySymbolCodeCompletionItemInsertHandler?,
-              b: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemInsertHandler? {
+    fun merge(
+      a: PolySymbolCodeCompletionItemInsertHandler?,
+      b: PolySymbolCodeCompletionItemInsertHandler?,
+    ): PolySymbolCodeCompletionItemInsertHandler? {
       if (a == null) return b
       if (b == null) return a
 

@@ -41,7 +41,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ReflectionUtil
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jdom.IllegalDataException
 import org.jetbrains.annotations.Nls
@@ -343,7 +342,7 @@ private suspend fun getModuleByAction(rootAction: AnAction, actionToPluginId: Ma
       return module
     }
     if (action is ActionGroup) {
-      actions.addAll(session.childrenSuspend(action))
+      actions.addAll(session.childrenEx(action))
     }
   }
 

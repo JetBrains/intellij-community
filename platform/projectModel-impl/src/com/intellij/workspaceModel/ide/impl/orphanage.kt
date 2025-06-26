@@ -3,11 +3,13 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.useReactiveWorkspaceModelApi
@@ -104,7 +106,7 @@ internal class OrphanService(
   fun start() {
     cs.launch {
       // flowOfDiff is used to process updates in batches
-      (project.workspaceModel as WorkspaceModelInternal).flowOfDiff(query).collect { diff ->
+      (project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal).flowOfDiff(query).collect { diff ->
         val added = diff.added
 
         val updateTime = measureTimeMillis {
@@ -115,7 +117,8 @@ internal class OrphanService(
             ExcludeRootAdder(),
           )
 
-          val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
+          val entitiesOrphanage = EntitiesOrphanage.getInstance(project)
+          val orphanage = entitiesOrphanage.currentSnapshot
           val orphanModules = added.mapNotNull {
             orphanage.resolve(it.symbolicId)?.let { om -> om to it }
           }
@@ -126,7 +129,7 @@ internal class OrphanService(
           if (needToUpdateWorkspaceModel || needToUpdateOrphanage) {
             edtWriteAction {
               if (needToUpdateOrphanage) {
-                EntitiesOrphanage.getInstance(project).update {
+                entitiesOrphanage.update {
                   adders.forEach { adder -> adder.cleanOrphanage(it) }
                 }
               }
@@ -166,13 +169,14 @@ private class OrphanListener(private val project: Project) : WorkspaceModelChang
         .filterIsInstance<EntityChange.Added<ModuleEntity>>()
         .map { it.newEntity }
 
-      val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
+      val entitiesOrphanage = project.service<EntitiesOrphanage>()
+      val orphanage = entitiesOrphanage.currentSnapshot
       val orphanModules = changedModules.mapNotNull {
         orphanage.resolve(it.symbolicId)?.let { om -> om to it }
       }
       adders.forEach { it.collectOrphanRoots(orphanModules) }
 
-      EntitiesOrphanage.getInstance(project).update {
+      entitiesOrphanage.update {
         adders.forEach { adder -> adder.cleanOrphanage(it) }
       }
       if (adders.any { it.hasUpdates() }) {

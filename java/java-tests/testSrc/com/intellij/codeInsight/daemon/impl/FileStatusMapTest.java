@@ -13,6 +13,7 @@ import com.intellij.configurationStore.StoreUtil;
 import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -25,11 +26,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.FileContentUtilCore;
@@ -252,7 +255,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     Document document = myEditor.getDocument();
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
     fileStatusMap.disposeDirtyDocumentRangeStorage(document);
-    assertEquals(TextRange.EMPTY_RANGE, fileStatusMap.getCompositeDocumentDirtyRange(document));
+    assertNull(fileStatusMap.getCompositeDocumentDirtyRange(document));
 
     int offset = myEditor.getCaretModel().getOffset();
     type(' ');
@@ -264,7 +267,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("  "));
     assertEquals(new TextRange(0, 2), fileStatusMap.getCompositeDocumentDirtyRange(document));
     fileStatusMap.disposeDirtyDocumentRangeStorage(document);
-    assertEquals(new TextRange(0, 0), fileStatusMap.getCompositeDocumentDirtyRange(document));
+    assertNull(fileStatusMap.getCompositeDocumentDirtyRange(document));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0,"x"));
     assertEquals(new TextRange(0, 1), fileStatusMap.getCompositeDocumentDirtyRange(document));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1,"x"));
@@ -318,6 +321,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     String text = "class EEE { void f(){} }";
     VirtualFile excluded = configureByText(JavaFileType.INSTANCE, text).getVirtualFile();
     PsiTestUtil.addExcludedRoot(myModule, excluded.getParent());
+    assertTrue(ProjectFileIndex.getInstance(myProject).isExcluded(excluded));
 
     configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
     assertEmpty(highlightErrors());
@@ -399,11 +403,12 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
 
     document.set(getDocument(file));
     psiFile.set(PsiDocumentManager.getInstance(myProject).getPsiFile(document.get()));
-    for (int pass = 0; pass<=Pass.LAST_PASS; pass++) {
+    for (int pass = 1; pass<=Pass.LAST_PASS; pass++) {
       fileStatusMap.markFileUpToDate(document.get(), FileViewProviderUtil.getCodeInsightContext(psiFile.get()), pass, new DaemonProgressIndicator());
     }
-    assertNull(fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), Pass.EXTERNAL_TOOLS));
-    assertTrue(fileStatusMap.allDirtyScopesAreNull(document.get(), FileViewProviderUtil.getCodeInsightContext(psiFile.get())));
+    for (int pass=1; pass<=Pass.LAST_PASS; pass++) {
+      fileStatusMap.assertFileStatusScopeIsNull(document.get(), FileViewProviderUtil.getCodeInsightContext(psiFile.get()), pass);
+    }
     TextRange range = new TextRange(1, 2);
     AppExecutorUtil.getAppExecutorService().submit(() -> ReadAction.run(()->fileStatusMap.markScopeDirty(document.get(), range, getTestName(false)))).get();
     assertEquals(range, fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), Pass.EXTERNAL_TOOLS));
@@ -415,5 +420,30 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
 
     document.set(getDocument(file));
     assertNull(fileStatusMap.getFileDirtyScopeForAllPassesCombined(document.get()));
+  }
+
+  public void testChangeDocumentFollowedByImmediateUndoMustDirtyTheInvolvedLinesBecauseRangeHighlightersMightBeDestroyedAndThenNotRestored() {
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "blah\nblah<caret>\nblah");
+    Document document = psiFile.getFileDocument();
+
+    highlightErrors();
+    assertNull(FileStatusMap.getDirtyTextRange(document, psiFile, Pass.LOCAL_INSPECTIONS));
+
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE, getEditor(), getProject());
+    LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_UNDO, getEditor(), getProject());
+
+    assertEquals(psiFile.getTextRange(), FileStatusMap.getDirtyTextRange(document, psiFile, Pass.LOCAL_INSPECTIONS));
+  }
+
+  public void testAfterNoPsiChangeTheWholeFileShouldBeDirty() {
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "@Deprecated<caret> class S { } ");
+    Document document = psiFile.getFileDocument();
+    doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
+    assertNull(FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));
+
+    backspace();
+    type('d');
+
+    assertEquals(psiFile.getTextRange(), FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));
   }
 }

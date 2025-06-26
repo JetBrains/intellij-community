@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.concurrency.installThreadContext
@@ -17,7 +19,7 @@ import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
@@ -39,10 +41,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
@@ -111,14 +113,14 @@ abstract class ProjectFrameHelper internal constructor(
     contentPane = createContentPane()
     rootPane.contentPane = contentPane
 
-    glassPane = IdeGlassPaneImpl(rootPane, loadingState, coroutineScope.childScope())
+    glassPane = IdeGlassPaneImpl(rootPane, loadingState, coroutineScope.childScope("IdeGlassPane"))
     rootPane.overrideGlassPane(glassPane)
 
     InternalUICustomization.getInstance()?.attachIdeFrameBackgroundPainter(this, glassPane)
 
     frame.doSetRootPane(rootPane)
 
-    frameDecorator = IdeFrameDecorator.decorate(frame, glassPane, coroutineScope.childScope())
+    frameDecorator = IdeFrameDecorator.decorate(frame, glassPane, coroutineScope.childScope("IdeFrameDecorator"))
     // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane via
     // [com.intellij.openapi.wm.impl.IdeFrameDecorator.notifyFrameComponents]
     frameDecorator?.setStoredFullScreen(getReusedFullScreenState())
@@ -168,13 +170,12 @@ abstract class ProjectFrameHelper internal constructor(
       }
     })
 
-
     frame.background = JBColor.PanelBackground
     val balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8)).also {
       balloonLayout = it
     }
 
-    application.messageBus.connect(coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener {
       frame.background = JBColor.PanelBackground
       balloonLayout.queueRelayout()
     })
@@ -227,6 +228,7 @@ abstract class ProjectFrameHelper internal constructor(
         return null
       }
 
+      @Suppress("IfThenToElvis")
       val projectFrame = if (window is IdeFrameImpl) {
         window
       }
@@ -246,9 +248,10 @@ abstract class ProjectFrameHelper internal constructor(
 
   private val isInitialized = AtomicBoolean()
 
-  // purpose of delayed init -
-  // to show project frame as early as possible (and start loading of a project too) and use it as project loading "splash"
-  // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
+  // Purpose of delayed init:
+  // To show the project frame as early as possible (and start loading the project too),
+  // and use it as a "splash screen" during project loading.
+  // Show frame → start project loading (performed in a pooled thread) → do UI tasks while the project loads.
   @Internal
   fun init(): JFrame {
     if (!isInitialized.compareAndSet(false, true)) {
@@ -260,7 +263,7 @@ abstract class ProjectFrameHelper internal constructor(
     MnemonicHelper.init(frame)
     frame.focusTraversalPolicy = IdeFocusTraversalPolicy()
 
-    // to show window thumbnail under Macs
+    // to show a window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
     if (SystemInfoRt.isMac) {
       frame.iconImage = null
@@ -286,7 +289,7 @@ abstract class ProjectFrameHelper internal constructor(
     fun updateStatusBarVisibility(uiSettings: UISettings = UISettings.shadowInstance) {
       statusBar.isVisible = uiSettings.showStatusBar && !uiSettings.presentationMode
     }
-    application.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener(::updateStatusBarVisibility))
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener(::updateStatusBarVisibility))
     updateStatusBarVisibility()
     this.statusBar = statusBar
     val component = statusBar.component
@@ -626,9 +629,9 @@ private object WindowCloseListener : WindowAdapter() {
 
     val app = ApplicationManager.getApplication()
     if (app != null && !app.isDisposed) {
-      // Project closing process is also subject to cancellation checks.
-      // Here we run the closing process in the scope of applicaiton, so that the user gets the chance to abort project closing process.
-      installThreadContext((app as ComponentManagerEx).getCoroutineScope().coroutineContext).use {
+      // The project closing process is also subject to cancellation checks.
+      // Here we run the closing process in the scope of the application, so that the user gets the chance to abort a project closing process.
+      installThreadContext(service<CoreUiCoroutineScopeHolder>().coroutineScope.coroutineContext).use {
         frameHelper.windowClosing(project)
       }
     }

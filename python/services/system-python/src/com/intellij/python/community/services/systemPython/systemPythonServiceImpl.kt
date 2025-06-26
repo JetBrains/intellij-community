@@ -16,6 +16,7 @@ import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.python.community.services.systemPython.impl.CoreSystemPythonProvider
+import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -63,7 +64,8 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
   }
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): PyResult<SystemPython> {
-    val pythonWithLangLevel = VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr("Python {$pythonPath} is broken") { return it }
+    val pythonWithLangLevel = VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonPath)
+      .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken", pythonPath)) { return it }
     val systemPython = SystemPython(pythonWithLangLevel, null)
     state.userProvidedPythons.add(pythonPath.pathString)
     cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)

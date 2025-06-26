@@ -10,7 +10,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil.getProjectForComponent
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.PluginManagerCore.getPlugin
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
@@ -20,6 +19,7 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginRevie
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginWriteReviewUrl
 import com.intellij.ide.plugins.newui.PluginsViewCustomizer.PluginDetailsCustomizer
 import com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction.OptionButtonController
+import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -54,7 +55,9 @@ import com.intellij.util.ui.AsyncProcessIcon.BigCentered
 import com.intellij.util.ui.StartupUiUtil.labelFont
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -62,7 +65,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
+import java.util.Collections
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
@@ -93,9 +96,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var panel: OpaquePanel? = null
   private var iconLabel: JLabel? = null
   private val nameComponent = createNameComponent()
+  private val additionalTextLabel = JLabel()
   private var nameAndButtons: BaselinePanel? = null
   private var restartButton: JButton? = null
-  private var installButton: InstallButton? = null
+  private var installButton: PluginInstallButton? = null
   private val mySuggestedIdeBanner = SuggestedIdeBanner()
   private var updateButton: JButton? = null
   private var gearButton: JComponent? = null
@@ -161,9 +165,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private var enableDisableController: OptionButtonController<PluginDetailsPageComponent>? = null
 
+  private val pluginManagerCustomizer: PluginManagerCustomizer?
+
   init {
     nameAndButtons = BaselinePanel(12, false)
     customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
+    pluginManagerCustomizer = if (Registry.`is`("reworked.plugin.manager.enabled")) {
+      PluginManagerCustomizer.EP_NAME.extensionList.firstOrNull()
+    }
+    else null
 
     createPluginPanel()
     select(1, true)
@@ -298,10 +308,17 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     suggestedFeatures = SuggestedComponent()
     topPanel.add(suggestedFeatures, VerticalLayout.FILL_HORIZONTAL)
 
-    nameAndButtons!!.add(JBLabel().setCopyable(true).also { myVersion1 = it })
+    additionalTextLabel.foreground = ListPluginComponent.GRAY_COLOR
+    additionalTextLabel.isVisible = false
+
+    val versionLabel = JBLabel().setCopyable(true).also { myVersion1 = it }
+    val versionPanel = VersionPanel(versionLabel)
+    versionPanel.add(versionLabel)
+    versionPanel.add(additionalTextLabel)
+    nameAndButtons!!.add(versionPanel)
 
     createButtons()
-    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton else updateButton)!!)
+    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else if(updateDescriptor != null) updateButton else gearButton)!!)
 
     topPanel.add(ErrorComponent().also { errorComponent = it }, VerticalLayout.FILL_HORIZONTAL)
     topPanel.add(licensePanel)
@@ -411,17 +428,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
     updateButton!!.addActionListener {
-      pluginModel.installOrUpdatePlugin(
-        this,
-        descriptorForActions!!, updateDescriptor,
-        ModalityState.stateForComponent(updateButton!!),
-      )
+      updatePlugin()
     }
 
-    nameAndButtons.addButtonComponent(InstallButton(true).also { installButton = it })
-    installButton!!.addActionListener(ActionListener { _ ->
-      pluginModel.installOrUpdatePlugin(this, plugin!!, null, ModalityState.stateForComponent(installButton!!))
-    })
+    nameAndButtons.addButtonComponent(createInstallButton().also { installButton = it }.getComponent())
 
     enableDisableController = SelectionBasedPluginModelAction.createOptionButton(
       { action -> this.createEnableDisableAction(action) },
@@ -442,6 +452,24 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     emptyPanel!!.border = null
   }
 
+  private fun updatePlugin() {
+    val modalityState = ModalityState.stateForComponent(updateButton!!)
+    val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
+                                                                                      descriptorForActions!!,
+                                                                                      updateDescriptor,
+                                                                                      modalityState)?.action
+    if (customizedAction != null) {
+      customizedAction()
+    }
+    else {
+      pluginModel.installOrUpdatePlugin(
+        this,
+        descriptorForActions!!, updateDescriptor,
+        modalityState,
+      )
+    }
+  }
+
   private fun createScrollPane(component: JComponent): JBScrollPane {
     val scrollPane = JBScrollPane(component)
     scrollPane.verticalScrollBar.background = PluginManagerConfigurable.MAIN_BG_COLOR
@@ -457,6 +485,69 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         bottomScrollPane!!.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
       }
     }
+  }
+
+  private fun customizeInstallButton() {
+    val pluginToInstall = plugin ?: return
+    if (gearButton!!.isEnabled) {
+      installButton?.setVisible(false)
+      return
+    }
+    val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
+    val customizationModel = pluginManagerCustomizer?.getInstallButonCustomizationModel(pluginModel, pluginToInstall, modalityState)
+                             ?: return
+    val installOptionButton = installButton as? InstallOptionButton ?: return
+    installOptionButton.setOptions(customizationModel.additionalActions)
+    val mainAction = customizationModel.mainAction
+    if (mainAction != null) {
+      installOptionButton.action = mainAction
+      installOptionButton.setEnabled(true)
+      installOptionButton.isVisible = true
+    }
+    else {
+      setDefaultInstallAction(installOptionButton)
+      val text = if (customizationModel.isVisible) null else IdeBundle.message("plugins.configurable.installed")
+      installButton?.setEnabled(customizationModel.isVisible, text)
+      installButton?.setVisible(customizationModel.isVisible)
+    }
+
+    if (installButton?.isVisible() == true) {
+      gearButton?.isVisible = false
+    }
+
+  }
+
+  private fun customizeEnableDisableButton() {
+    if (pluginManagerCustomizer == null) return
+    val uiModel = descriptorForActions ?: return
+    if (uiModel.isBundled) return
+    val component = gearButton ?: return
+    val modalityState = ModalityState.stateForComponent(component)
+    val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, modalityState) ?: return
+    enableDisableController?.setOptions(customizationModel.additionalActions)
+    val visible = customizationModel.isVisible && customizationModel.text == null
+    component.isVisible = visible
+    component.isEnabled = visible
+    if (customizationModel.text != null && restartButton?.isVisible != true) {
+      enableDisableController?.setText(customizationModel.text)
+      gearButton?.isVisible = true
+      gearButton?.isEnabled = false
+    }
+    else {
+      enableDisableController?.update()
+    }
+  }
+
+  private fun updateAdditionalText() {
+    additionalTextLabel.isVisible = !isMarketplace
+    if (isMarketplace) {
+      return
+    }
+    val additionalText = pluginManagerCustomizer?.getAdditionalTitleText(plugin!!)
+    if (additionalText != null) {
+      additionalTextLabel.text = additionalText
+    }
+    additionalTextLabel.isVisible = additionalText != null
   }
 
   private fun createTabs(parent: JPanel) {
@@ -754,7 +845,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
       installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
-      nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton else updateButton)!!)
+      nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton?.getComponent() else updateButton)!!)
     }
     showPlugin()
 
@@ -763,7 +854,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val suggestedCommercialIde: String? = plugin!!.suggestedCommercialIde
 
     if (suggestedCommercialIde != null) {
-      installButton!!.isVisible = false
+      installButton!!.setVisible(false)
     }
 
     if (plugin != null) {
@@ -771,6 +862,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, plugin!!.pluginId)
+    applyCustomization()
   }
 
   private enum class EmptyState {
@@ -952,7 +1044,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                     }, ModalityState.any())
 
     if (pluginModel.isPluginInstallingOrUpdating(plugin)) {
-      showProgress()
+      showInstallProgress()
     }
     else {
       fullRepaint()
@@ -1161,7 +1253,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun updateButtons() {
     if (!isPluginAvailable) {
       restartButton!!.isVisible = false
-      installButton!!.isVisible = false
+      installButton!!.setVisible(false)
       updateButton!!.isVisible = false
       gearButton!!.isVisible = false
       myUninstallButton?.isVisible = false
@@ -1169,15 +1261,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       return
     }
 
-    val installedWithoutRestart = InstalledPluginsState.getInstance().wasInstalledWithoutRestart(plugin!!.pluginId)
+    val pluginState = UiPluginManager.getInstance().getPluginInstallationState(plugin!!.pluginId)
+    val installedWithoutRestart = pluginState.status == PluginStatus.INSTALLED_WITHOUT_RESTART
     if (isMarketplace) {
-      val installed = InstalledPluginsState.getInstance().wasInstalled(plugin!!.pluginId)
-      restartButton!!.isVisible = installed
+      val installed = pluginState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART
+      restartButton!!.isVisible = pluginState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART
 
-      installButton!!.setEnabled(getPlugin(
-        plugin!!.pluginId) == null && !installedWithoutRestart,
+      installButton!!.setEnabled(!pluginState.fullyInstalled && pluginState.status != PluginStatus.INSTALLED_WITHOUT_RESTART,
                                  IdeBundle.message("plugins.configurable.installed"))
-      installButton!!.isVisible = !installed
+      installButton!!.setVisible(!installed)
 
       updateButton!!.isVisible = false
       myUninstallButton?.isVisible = false
@@ -1190,12 +1282,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         val uninstalled = state[0]
         val uninstalledWithoutRestart = state[1]
 
-        installButton!!.isVisible = false
+        installButton!!.setVisible(false)
 
         if (uninstalled) {
           if (uninstalledWithoutRestart) {
             restartButton!!.isVisible = false
-            installButton!!.isVisible = true
+            installButton!!.setVisible(true)
             installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
           }
           else {
@@ -1215,7 +1307,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       }
     }
     else {
-      installButton!!.isVisible = false
+      installButton!!.setVisible(false)
 
       val state = getDeletedState(plugin!!)
       val uninstalled = state[0]
@@ -1224,7 +1316,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       if (uninstalled) {
         if (uninstalledWithoutRestart) {
           restartButton!!.isVisible = false
-          installButton!!.isVisible = true
+          installButton!!.setVisible(true)
           installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
         }
         else {
@@ -1284,14 +1376,33 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     fullRepaint()
   }
 
-  fun showProgress() {
+  fun showProgress(storeIndicator: Boolean, cancelRunnable: () -> Unit) {
     indicator = OneLineProgressIndicator(false)
-    indicator!!.setCancelRunnable { pluginModel.finishInstall(descriptorForActions!!, null, false, false, true) }
+    indicator!!.setCancelRunnable(cancelRunnable)
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
-
-    PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)
+    if (storeIndicator) {
+      PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)
+    }
 
     fullRepaint()
+  }
+
+  fun showInstallProgress() {
+    showProgress(true) {
+      pluginModel.finishInstall(descriptorForActions!!,
+                                null,
+                                false,
+                                false,
+                                true,
+                                Collections.emptyMap())
+    }
+  }
+
+  fun showUninstallProgress(cs: CoroutineScope) {
+    showProgress(false) {
+      cs.cancel()
+      hideProgress()
+    }
   }
 
   private fun fullRepaint() {
@@ -1300,38 +1411,96 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     repaint()
   }
 
+  private fun applyCustomization() {
+    if (plugin == null || pluginManagerCustomizer == null) return
+    customizeEnableDisableButton()
+    customizeInstallButton()
+    updateAdditionalText()
+    if (updateDescriptor != null) {
+      nameAndButtons!!.setProgressDisabledButton(updateButton!!)
+    }
+    else {
+      if (installButton!!.isVisible()) {
+        nameAndButtons!!.setProgressDisabledButton(installButton!!.getComponent())
+      }
+      else {
+        nameAndButtons!!.setProgressDisabledButton(gearButton!!)
+      }
+    }
+  }
+
+  private fun updateButtonsAndApplyCustomization() {
+    updateButtons()
+    applyCustomization()
+  }
+
+  fun hideProgress() {
+    indicator = null
+    nameAndButtons?.removeProgressComponent()
+  }
+
   fun hideProgress(success: Boolean, restartRequired: Boolean) {
     indicator = null
     nameAndButtons!!.removeProgressComponent()
-
-    if (success) {
-      if (restartRequired) {
-        updateAfterUninstall(true)
-      }
-      else {
-        val installButton = installButton
-        if (installButton != null) {
-          installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
-          if (installButton.isVisible) {
-            installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
-            installedDescriptorForMarketplace?.let {
-              installButton.isVisible = false
-              myVersion1!!.text = it.version
-              myVersion1!!.isVisible = true
-              updateEnabledState()
-              return
+    if (pluginManagerCustomizer != null) {
+      updateButtonsAndApplyCustomization()
+    }
+    else {
+      if (success) {
+        if (restartRequired) {
+          updateAfterUninstall(true)
+        }
+        else {
+          val installButton = installButton
+          if (installButton != null) {
+            installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
+            if (installButton.isVisible()) {
+              installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
+              installedDescriptorForMarketplace?.let {
+                installButton.setVisible(false)
+                myVersion1!!.text = it.version
+                myVersion1!!.isVisible = true
+                updateEnabledState()
+                return
+              }
             }
           }
+          if (updateButton!!.isVisible) {
+            updateButton!!.isEnabled = false
+            updateButton!!.text = IdeBundle.message("plugin.status.installed")
+          }
+          myEnableDisableButton!!.isVisible = false
         }
-        if (updateButton!!.isVisible) {
-          updateButton!!.isEnabled = false
-          updateButton!!.text = IdeBundle.message("plugin.status.installed")
-        }
-        myEnableDisableButton!!.isVisible = false
       }
     }
 
     fullRepaint()
+  }
+
+  private fun createInstallButton(): PluginInstallButton {
+    if (Registry.`is`("reworked.plugin.manager.enabled")) {
+      val button = InstallOptionButton()
+      setDefaultInstallAction(button)
+      return button
+    }
+    val installButton = InstallButton(true)
+    installButton.addActionListener { _ ->
+      installOrUpdatePlugin()
+    }
+    return installButton
+  }
+
+  private fun setDefaultInstallAction(button: InstallOptionButton) {
+    button.action = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        installOrUpdatePlugin()
+      }
+    }
+  }
+
+  private fun installOrUpdatePlugin() {
+    val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
+    pluginModel.installOrUpdatePlugin(this, plugin!!, null, modalityState)
   }
 
   private fun updateEnableForNameAndIcon() {
@@ -1368,7 +1537,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   fun updateAfterUninstall(showRestart: Boolean) {
-    installButton!!.isVisible = false
+    if (pluginManagerCustomizer != null) {
+      updateButtonsAndApplyCustomization()
+      return
+    }
+    installButton!!.setVisible(false)
     updateButton!!.isVisible = false
     gearButton!!.isVisible = false
     myUninstallButton?.isVisible = false
@@ -1376,9 +1549,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myEnableDisableButton!!.isVisible = false
     }
     restartButton!!.isVisible = isPluginAvailable && showRestart
-
-    if (!showRestart && InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(descriptorForActions!!.pluginId)) {
-      installButton!!.isVisible = true
+    val state = UiPluginManager.getInstance().getPluginInstallationState(descriptorForActions!!.pluginId)
+    if (!showRestart && state.status == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
+      installButton!!.setVisible(true)
       installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
     }
 
@@ -1521,10 +1694,11 @@ private fun updateUrlComponent(panel: LinkPanel?, messageKey: String, url: Strin
 private fun getDeletedState(pluginUiModel: PluginUiModel): BooleanArray {
   val pluginId = pluginUiModel.pluginId
   var uninstalled = pluginUiModel.isDeleted
-  val uninstalledWithoutRestart = InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)
+
+  val state = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
+  val uninstalledWithoutRestart = state.status == PluginStatus.UNINSTALLED_WITHOUT_RESTART
   if (!uninstalled) {
-    val pluginsState = InstalledPluginsState.getInstance()
-    uninstalled = pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdated(pluginId)
+    uninstalled = state.status in listOf(PluginStatus.INSTALLED_AND_REQUIRED_RESTART, PluginStatus.UPDATED, PluginStatus.UPDATED_WITH_RESTART)
   }
 
   return booleanArrayOf(uninstalled, uninstalledWithoutRestart)

@@ -22,6 +22,7 @@ jvm_library(
     "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/lang-api:lang",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "@lib//:jackson",
     "@lib//:jackson-databind",

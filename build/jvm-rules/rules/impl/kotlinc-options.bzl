@@ -16,6 +16,14 @@ _KOPTS = {
         type = attr.bool,
         flag_name = "context-receivers",
     ),
+    "context_parameters": struct(
+        args = dict(
+            default = False,
+            doc = "Enable experimental context parameters.",
+        ),
+        type = attr.bool,
+        flag_name = "context-parameters",
+    ),
     "x_inline_classes": struct(
         args = dict(
             default = False,

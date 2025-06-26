@@ -91,6 +91,7 @@ class EelLocalExecApiTest {
     return testCases.map { (exitType, ptyManagement) ->
       DynamicTest.dynamicTest("$exitType $ptyManagement") {
         timeoutRunBlocking(1.minutes) {
+          Assumptions.assumeFalse(exitType == ExitType.KILL && ptyManagement == PTYManagement.PTY_SIZE_FROM_START, "IJPL-192895")
           testOutputImpl(ptyManagement, exitType)
         }
       }

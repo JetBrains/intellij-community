@@ -8,27 +8,24 @@ import org.jetbrains.annotations.VisibleForTesting;
 import sun.nio.fs.DefaultFileTypeDetector;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.nio.file.spi.FileTypeDetector;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A file system that can delegate specific paths to other file systems.
- * <p>
- * Although this filesystem routes requests to different filesystems, it doesn't mangle paths.
- * It's the responsibility of the backend filesystem to convert a path passed to {@link MultiRoutingFileSystem}
- * into some other specific path.
  *
- * @see #computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)
+ * @see #setBackendProvider(MultiRoutingFileSystem.BackendProvider)
+ * @see #invokeBackendProvider(String)
  * @see RoutingAwareFileSystemProvider
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -55,62 +52,33 @@ public final class MultiRoutingFileSystemProvider
 
   private final MultiRoutingFileSystem myFileSystem;
 
-  volatile BiConsumer<String, Boolean> myPathSpy = (ignored, ignored2) -> {};
-
   /**
-   * Adds a new backend filesystem that handles requests to specific roots.
-   * <p>
-   * If there's already a file system assigned to the specified root, it will be replaced with the new one. Otherwise, the new will be
-   * just added.
-   * <p>
-   * The function is defined as static and requires an instance of {@link MultiRoutingFileSystem}
-   * because there may be more than one class {@link MultiRoutingFileSystem} loaded different classloaders.
-   *
-   * @param provider      Provider <b>must</b> be an instance of {@link MultiRoutingFileSystemProvider}.
-   * @param root          The first directory of an absolute path.
-   *                      On Windows, it can be {@code C:}, {@code \\wsl.localhost\Ubuntu-22.04}, etc.
-   * @param isPrefix      If true, {@code root} will be matched not exactly, but as a prefix for queried root paths.
-   * @param caseSensitive Defines if the whole filesystem is case-sensitive. This flag is used for finding a specific root.
-   * @param function      A function that either defines a new backend, or deletes an existing one by returning {@code null}.
-   *                      The function gets as the first argument {@link #myLocalProvider} and gets as the second the previous filesystem
-   *                      assigned to the root, if it has been assigned.
-   *                      <b>Note:</b> the function may be called more than once.
+   * Sets the function that intercepts all path object creations and can return a non-default filesystem to it.
    */
-  public static void computeBackend(
-    @NotNull FileSystemProvider provider,
-    @NotNull String root,
-    boolean isPrefix,
-    boolean caseSensitive,
-    @NotNull BiFunction<@NotNull FileSystemProvider, @Nullable FileSystem, @Nullable FileSystem> function
+  public static void setBackendProvider(
+    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
+    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
+    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
   ) {
-    if (provider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
-      Map<String, Object> arguments = new HashMap<>();
-      arguments.put(KEY_MRFS, Void.TYPE);
-      arguments.put(KEY_ROOT, root);
-      arguments.put(KEY_PREFIX, isPrefix);
-      arguments.put(KEY_CASE_SENSITIVE, caseSensitive);
-      arguments.put(KEY_FUNCTION, function);
-
-      try {
-        //noinspection resource
-        provider.newFileSystem(URI.create("file:/"), arguments);
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-    else {
-      throw new IllegalArgumentException(String.format("%s is not an instance of %s", provider, MultiRoutingFileSystemProvider.class));
-    }
+    setBackendProvider(FileSystems.getDefault().provider(), computeFn, getCustomRootsFn, getCustomFileStoresFn);
   }
 
-  public static void setPathSpy(
+  /**
+   * A workaround for IJPL-158098.
+   *
+   * @see #setBackendProvider(MultiRoutingFileSystem.BackendProvider)
+   */
+  public static void setBackendProvider(
     @NotNull FileSystemProvider provider,
-    @NotNull BiConsumer<@NotNull String, @NotNull Boolean> pathSpy
+    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
+    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
+    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
   ) {
     if (provider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
       try {
-        provider.getClass().getMethod("setPathSpy", BiConsumer.class).invoke(provider, pathSpy);
+        provider.getClass()
+          .getMethod("setBackendProvider0", BiFunction.class, Function.class, Function.class)
+          .invoke(provider, computeFn, getCustomRootsFn, getCustomFileStoresFn);
       }
       catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
         throw new RuntimeException(e);
@@ -121,8 +89,52 @@ public final class MultiRoutingFileSystemProvider
     }
   }
 
-  public void setPathSpy(@NotNull BiConsumer<String, Boolean> pathSpy) {
-    myPathSpy = pathSpy;
+  /**
+   * A workaround for IJPL-158098.
+   */
+  @SuppressWarnings("unused")
+  public void setBackendProvider0(
+    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
+    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
+    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
+  ) {
+    myFileSystem.setBackendProvider(computeFn, getCustomRootsFn, getCustomFileStoresFn);
+  }
+
+  /**
+   * Invokes {@link MultiRoutingFileSystem.BackendProvider#compute} for the given path.
+   */
+  public static void invokeBackendProvider(@NotNull String path) {
+    invokeBackendProvider(FileSystems.getDefault().provider(), path);
+  }
+
+  /**
+   * A workaround for IJPL-158098.
+   *
+   * @see #invokeBackendProvider(String)
+   */
+  public static void invokeBackendProvider(@NotNull FileSystemProvider provider, @NotNull String path) {
+    if (provider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
+      try {
+        provider.getClass()
+          .getMethod("invokeBackendProvider0", String.class)
+          .invoke(provider, path);
+      }
+      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    else {
+      throw new IllegalArgumentException(String.format("%s is not an instance of %s", provider, MultiRoutingFileSystemProvider.class));
+    }
+  }
+
+  /**
+   * A workaround for IJPL-158098.
+   */
+  @SuppressWarnings("unused")
+  public void invokeBackendProvider0(@NotNull String path) {
+    myFileSystem.getBackend(path);
   }
 
   public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
@@ -140,6 +152,7 @@ public final class MultiRoutingFileSystemProvider
     throw new UnsupportedOperationException(MultiRoutingFileSystemProvider.class.getName() + " doesn't open other files as filesystems");
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public @Nullable MultiRoutingFileSystem newFileSystem(URI uri, @Nullable Map<String, ?> env) {
     if (env == null || !env.containsKey(KEY_MRFS)) {
@@ -150,23 +163,24 @@ public final class MultiRoutingFileSystemProvider
       );
     }
 
-    String root = Objects.requireNonNull((String)env.get(KEY_ROOT));
-    Boolean isPrefix = Objects.requireNonNull((Boolean)env.get(KEY_PREFIX));
-    Boolean caseSensitive = Objects.requireNonNull((Boolean)env.get(KEY_CASE_SENSITIVE));
+    BiFunction<FileSystem, String, FileSystem> computeFn =
+      Objects.requireNonNull((BiFunction<FileSystem, String, FileSystem>)env.get(KEY_COMPUTE_FN));
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    BiFunction<@NotNull FileSystemProvider, @Nullable FileSystem, @Nullable FileSystem> function =
-      Objects.requireNonNull((BiFunction)env.get(KEY_FUNCTION));
+    Function<FileSystem, Collection<Path>> getCustomRootsFn =
+      Objects.requireNonNull((Function<FileSystem, Collection<Path>>)env.get(KEY_GET_CUSTOM_ROOTS_FN));
 
-    myFileSystem.computeBackend(root, isPrefix, caseSensitive, function);
+    Function<FileSystem, Collection<FileStore>> getCustomFileStoresFn =
+      Objects.requireNonNull((Function<FileSystem, Collection<FileStore>>)env.get(KEY_GET_CUSTOM_FILE_STORES_FN));
+
+    myFileSystem.setBackendProvider(computeFn, getCustomRootsFn, getCustomFileStoresFn);
+
     return null;
   }
 
   private static final String KEY_MRFS = "MRFS";
-  private static final String KEY_ROOT = "KEY_ROOT";
-  private static final String KEY_PREFIX = "KEY_PREFIX";
-  private static final String KEY_CASE_SENSITIVE = "KEY_CASE_SENSITIVE";
-  private static final String KEY_FUNCTION = "KEY_FUNCTION";
+  private static final String KEY_COMPUTE_FN = "KEY_COMPUTE_FN";
+  private static final String KEY_GET_CUSTOM_ROOTS_FN = "KEY_GET_CUSTOM_ROOTS_FN";
+  private static final String KEY_GET_CUSTOM_FILE_STORES_FN = "KEY_GET_CUSTOM_FILE_STORES_FN";
 
   @Override
   public @NotNull MultiRoutingFileSystem getFileSystem(@NotNull URI uri) {
@@ -201,7 +215,6 @@ public final class MultiRoutingFileSystemProvider
     FileSystem backend1 = myFileSystem.getBackend(path1String);
     FileSystemProvider provider1 = backend1.provider();
     if (path2 == null) {
-      myPathSpy.accept(path1String, provider1 != this);
       return provider1;
     }
 
@@ -214,17 +227,14 @@ public final class MultiRoutingFileSystemProvider
     FileSystemProvider provider2 = backend2.provider();
 
     if (provider1.equals(provider2)) {
-      myPathSpy.accept(path1String, provider1 != this);
       return provider1;
     }
 
     if (canHandleRouting(provider1, backend2.getPath(path2String))) {
-      myPathSpy.accept(path1String, provider1 != this);
       return provider1;
     }
 
     if (canHandleRouting(provider2, backend1.getPath(path1String))) {
-      myPathSpy.accept(path2String, provider2 != this);
       return provider2;
     }
 
@@ -391,7 +401,7 @@ public final class MultiRoutingFileSystemProvider
     if (path instanceof MultiRoutingFsPath) {
       // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
       // Tricks with classloaders are not expected here.
-      return ((MultiRoutingFsPath)path).getDelegate();
+      return ((MultiRoutingFsPath)path).getCurrentDelegate();
     }
     else {
       return path;

@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl.logError
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.StringReference
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoCache
@@ -51,7 +52,8 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
      *
      * The corresponding properties [CoroutineInfoData.job] and [CoroutineInfoData.parentJob] are set to the obtained values.
      */
-    internal fun fetchAndSetJobsAndParentsForCoroutines(infos: List<CoroutineInfoData>): Boolean {
+    @ApiStatus.Internal
+    fun fetchAndSetJobsAndParentsForCoroutines(infos: List<CoroutineInfoData>): Boolean {
         val executionContext = suspendContext.executionContext() ?: return false
         val debugCoroutineInfos = infos.map { it.debugCoroutineInfoRef }
         val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getJobsAndParentsForCoroutines", debugCoroutineInfos)

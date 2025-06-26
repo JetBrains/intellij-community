@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
@@ -20,8 +21,11 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.toolWindow.FrameLayeredPane
+import com.intellij.toolWindow.ToolWindowButtonManager
+import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.GraphicsUtil
@@ -31,6 +35,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
+import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -38,7 +43,7 @@ import javax.swing.JLayeredPane
 import javax.swing.UIManager
 
 internal class IslandsUICustomization : InternalUICustomization() {
-  private val isIslandsAvailable = !Registry.`is`("llm.riderNext.enabled", false)
+  private val isIslandsAvailable = !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI()
 
   private val isOneIslandEnabled: Boolean
     get() {
@@ -75,22 +80,34 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  init {
-    val listener = AWTEventListener { event ->
-      if (isManyIslandEnabled && JBColor.isBright()) {
-        val component = (event as HierarchyEvent).component
-        val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
+  private val awtListener = AWTEventListener { event ->
+    val component = (event as HierarchyEvent).component
+    val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
 
-        if (isToolWindow) {
-          UIUtil.forEachComponentInHierarchy(component) {
-            if (it.background == JBColor.PanelBackground) {
-              it.background = JBUI.CurrentTheme.ToolWindow.background()
-            }
-          }
+    if (isToolWindow) {
+      UIUtil.forEachComponentInHierarchy(component) {
+        if (it.background == JBColor.PanelBackground) {
+          it.background = JBUI.CurrentTheme.ToolWindow.background()
         }
       }
     }
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.HIERARCHY_EVENT_MASK)
+  }
+
+  init {
+    if (isManyIslandEnabled && JBColor.isBright()) {
+      Toolkit.getDefaultToolkit().addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
+    }
+
+    val connection = ApplicationManager.getApplication().messageBus.connect()
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      val toolkit = Toolkit.getDefaultToolkit()
+
+      toolkit.removeAWTEventListener(awtListener)
+
+      if (isManyIslandEnabled && JBColor.isBright()) {
+        toolkit.addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
+      }
+    })
   }
 
   private val tabPainterAdapter = ManyIslandsTabPainterAdapter()
@@ -103,6 +120,35 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return super.toolWindowUIDecorator
     }
 
+  override fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {
+    if (isIslandsEnabled && buttonManager is ToolWindowPaneNewButtonManager) {
+      buttonManager.addVisibleToolbarsListener { leftVisible, rightVisible ->
+        if (leftVisible && rightVisible) {
+          if (toolWindowPaneParent.border != null) {
+            toolWindowPaneParent.border = null
+          }
+        }
+        else {
+          val gap = JBUI.getInt("Islands.emptyGap", JBUI.scale(if (isManyIslandEnabled) 4 else 8))
+          val left = if (leftVisible) 0 else gap
+          val right = if (rightVisible) 0 else gap
+
+          val border = toolWindowPaneParent.border
+          if (border == null) {
+            toolWindowPaneParent.border = JBUI.Borders.empty(0, left, 0, right)
+          }
+          else {
+            val insets = border.getBorderInsets(toolWindowPaneParent)
+            if (insets.left != left || insets.right != right) {
+              toolWindowPaneParent.border = JBUI.Borders.empty(0, left, 0, right)
+            }
+          }
+        }
+      }
+      buttonManager.updateToolStripesVisibility()
+    }
+  }
+
   override fun createToolWindowPaneLayered(splitter: JComponent, frame: JFrame): JLayeredPane? {
     if (isOneIslandEnabled) {
       return object : FrameLayeredPane(splitter, frame) {
@@ -112,9 +158,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         @Suppress("GraphicsSetClipInspection")
         override fun paintChildren(g: Graphics) {
-          val cornerRadius = JBUI.getInt("Island.arc", 10)
+          val isGradient = isIslandsGradientEnabled
 
-          if (isIslandsGradientEnabled) {
+          if (isGradient) {
             putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, null)
             val gg = IdeBackgroundUtil.withFrameBackground(g, this)
             gg.color = parent.background
@@ -122,22 +168,40 @@ internal class IslandsUICustomization : InternalUICustomization() {
             putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
           }
 
-          val clip = g.clip
-          g.clip = null
-          val cornerRadiusF = cornerRadius.toFloat()
-          g.clip = RoundRectangle2D.Float(x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), cornerRadiusF, cornerRadiusF)
-
           super.paintChildren(g)
 
-          g.clip = null
-          g.clip = clip
+          val config = GraphicsUtil.setupRoundedBorderAntialiasing(g)
 
-          val color = UIManager.get("Island.borderColor")
+          try {
+            val gg: Graphics
 
-          if (color is Color) {
-            val config = GraphicsUtil.setupRoundedBorderAntialiasing(g)
-            g.color = color
-            g.drawRoundRect(0, 0, width - 1, height - 1, cornerRadius, cornerRadius)
+            if (isGradient) {
+              putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, null)
+              gg = IdeBackgroundUtil.withFrameBackground(g, this)
+              gg.color = parent.background
+            }
+            else {
+              gg = g
+              gg.color = background
+            }
+
+            val shape = Area(Rectangle(0, 0, width, height))
+            val cornerRadius = JBUI.getInt("Island.arc", 10)
+            val cornerRadiusF = cornerRadius.toFloat()
+            shape.subtract(Area(RoundRectangle2D.Float(x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), cornerRadiusF, cornerRadiusF)))
+            (gg as Graphics2D).fill(shape)
+
+            val color = UIManager.get("Island.borderColor")
+
+            if (color is Color) {
+              gg.color = color
+              gg.drawRoundRect(0, 0, width - 1, height - 1, cornerRadius, cornerRadius)
+            }
+          }
+          finally {
+            if (isGradient) {
+              putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
+            }
             config.restore()
           }
 
@@ -160,9 +224,17 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return object : OnePixelDivider(isVertical, splitter) {
         override fun paint(g: Graphics) {
         }
+      }.also {
+        it.putClientProperty("DividerWidth", 0)
       }
     }
     return null
+  }
+
+  override fun configureRendererComponent(component: JComponent) {
+    if (isIslandsEnabled) {
+      ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+    }
   }
 
   override fun installEditorBackground(component: JComponent) {

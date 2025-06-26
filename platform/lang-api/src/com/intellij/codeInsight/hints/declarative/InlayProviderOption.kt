@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @Tag("option")
@@ -37,6 +38,16 @@ class InlayProviderOption {
   @RequiredElement
   @Nls(capitalization = Nls.Capitalization.Title)
   var nameKey: String? = null
+
+  /**
+   * The subset of options where `showInTree == true` should be exhaustive:
+   * if all such options are disabled, the provider must not collect any inlay hints.
+   *
+   * If set to `false`, the option will be displayed outside the inlay hints checkbox tree in settings, in the right pane.
+   */
+  @ApiStatus.Experimental
+  @Attribute("showInTree")
+  var showInTree: Boolean = true
 
   fun getDescription(bean: InlayHintsProviderExtensionBean): @Nls String? {
     return bean.getLocalizedString(bundle, descriptionBundleKey)

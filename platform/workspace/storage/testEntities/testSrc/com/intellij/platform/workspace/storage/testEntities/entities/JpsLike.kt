@@ -2,13 +2,13 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
   val name: String
 
-  val contentRoots: List<@Child ContentRootTestEntity>
-  val facets: List<@Child FacetTestEntity>
+  val contentRoots: List<ContentRootTestEntity>
+  val facets: List<FacetTestEntity>
 
   override val symbolicId: ModuleTestEntitySymbolicId
     get() = ModuleTestEntitySymbolicId(name)
@@ -51,9 +51,10 @@ fun MutableEntityStorage.modifyModuleTestEntity(
 //endregion
 
 interface ContentRootTestEntity : WorkspaceEntity {
+  @Parent
   val module: ModuleTestEntity
-  val sourceRootOrder: @Child SourceRootTestOrderEntity?
-  val sourceRoots: List<@Child SourceRootTestEntity>
+  val sourceRootOrder: SourceRootTestOrderEntity?
+  val sourceRoots: List<SourceRootTestEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -89,12 +90,14 @@ fun MutableEntityStorage.modifyContentRootTestEntity(
   return modifyEntity(ContentRootTestEntity.Builder::class.java, entity, modification)
 }
 
+@Parent
 var ContentRootTestEntity.Builder.projectModelTestEntity: ProjectModelTestEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ProjectModelTestEntity::class.java)
 //endregion
 
 interface SourceRootTestOrderEntity : WorkspaceEntity {
   val data: String
+  @Parent
   val contentRoot: ContentRootTestEntity
 
   //region generated code
@@ -135,6 +138,7 @@ fun MutableEntityStorage.modifySourceRootTestOrderEntity(
 
 interface SourceRootTestEntity : WorkspaceEntity {
   val data: String
+  @Parent
   val contentRoot: ContentRootTestEntity
 
   //region generated code
@@ -186,6 +190,7 @@ data class FacetTestEntitySymbolicId(val name: String) : SymbolicEntityId<FacetT
 interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
   val data: String
   val moreData: String
+  @Parent
   val module: ModuleTestEntity
 
   override val symbolicId: FacetTestEntitySymbolicId

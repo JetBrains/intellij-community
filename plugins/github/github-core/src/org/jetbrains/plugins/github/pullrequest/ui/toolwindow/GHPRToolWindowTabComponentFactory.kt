@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.toolwindow.ReviewTabsComponentFactory
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.yield
@@ -35,7 +36,9 @@ internal class GHPRToolWindowTabComponentFactory(
   }
 
   override fun createReviewListComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel): JComponent {
-    return GHPRListPanelFactory.create(project, cs, projectVm.dataContext, projectVm.listVm)
+    return GHPRListPanelFactory.create(project, cs, projectVm.dataContext, projectVm.listVm).apply {
+      border = JBUI.Borders.emptyTop(8)
+    }
   }
 
   override fun createTabComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel, tabVm: GHPRToolWindowTabViewModel): JComponent =

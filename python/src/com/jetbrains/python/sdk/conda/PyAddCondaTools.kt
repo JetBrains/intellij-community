@@ -18,18 +18,20 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.jetbrains.python.conda.loadLocalPythonCondaPath
+import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.conda.loadLocalPythonCondaPath
-import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -48,8 +50,9 @@ internal val condaSupportedLanguages: List<LanguageLevel>
     .asReversed()
     .filter { it < LanguageLevel.PYTHON313 }
 
-val condaLatestSupportedLanguage: LanguageLevel @ApiStatus.Internal get() =
-  condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
+val condaLatestSupportedLanguage: LanguageLevel
+  @ApiStatus.Internal get() =
+    condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
 
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
@@ -73,7 +76,9 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   sdkModificator.sdkAdditionalData = additionalData
   // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
   // Because homePath is not set yet, CondaPathFix does not work
-  sdkModificator.homePath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).getOrThrow()
+  sdkModificator.homePath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).onFailure {
+    ShowingMessageErrorSync.emit(it)
+  }.getOrThrow()
   edtWriteAction {
     sdkModificator.commitChanges()
   }
@@ -127,12 +132,7 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   project: Project,
   reporter: RawProgressReporter? = null,
 ): PyResult<Sdk> {
-  val process = PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
-
-  ProcessHandlerReader(process).runProcessAndGetError(uiContext, reporter)?.let {
-    return PyResult.localizedError(it)
-  }
-
+  PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
   val sdk = createCondaSdkFromExistingEnv(newCondaEnvInfo.toIdentity(), existingSdks, project)
   saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
 

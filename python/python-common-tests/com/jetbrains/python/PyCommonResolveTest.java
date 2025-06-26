@@ -271,6 +271,21 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertInstanceOf(parent, PyAssignmentStatement.class);
   }
 
+  // PY-82115
+  public void testGlobalDefinedLocally2() {
+    PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "s");
+    PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("inner", function.getName());
+  }
+
+  // PY-82115
+  public void testGlobalNotResolvedToLocalNameInOuterScope() {
+    // resolves to itself
+    PsiElement resolved = doResolve();
+    PsiReference reference = findReferenceByMarker(myFixture.getFile());
+    assertEquals(reference.getElement(), resolved);
+  }
+
   public void testLambda() {
     PsiElement targetElement = resolve();
     assertInstanceOf(targetElement, PyNamedParameter.class);

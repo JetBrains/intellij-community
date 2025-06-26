@@ -262,6 +262,7 @@ public class OutputChecker {
       result = result.replace("-Ddebugger.agent.enable.coroutines=true ", "");
       result = result.replace("-Dkotlinx.coroutines.debug.enable.flows.stack.trace=true ", "");
       result = result.replace("-Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true ", "");
+      result = result.replace("-Ddebugger.async.stack.trace.for.all.threads=true ", "");
       result = result.replace("-Ddebugger.agent.support.throwable=false ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 

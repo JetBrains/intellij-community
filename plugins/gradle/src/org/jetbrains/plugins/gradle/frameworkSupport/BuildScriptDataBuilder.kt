@@ -5,10 +5,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElementBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 import java.util.function.Consumer
 
 
@@ -16,7 +16,7 @@ class BuildScriptDataBuilder(
   val buildScriptFile: VirtualFile,
   private val backend: GradleBuildScriptBuilder<*>,
 ) : GradleBuildScriptBuilder<BuildScriptDataBuilder>,
-    ScriptElementBuilder by backend {
+    GradleScriptElementBuilder by backend {
 
   fun addBuildscriptPropertyDefinition(definition: String): BuildScriptDataBuilder =
     apply { addPrefix(definition.trim()) }
@@ -53,41 +53,42 @@ class BuildScriptDataBuilder(
 
   // @formatter:off
   override val gradleVersion: GradleVersion by backend::gradleVersion
+  override val gradleDsl: GradleDsl by backend::gradleDsl
   override fun addImport(import: String): BuildScriptDataBuilder = apply { backend.addImport(import) }
   override fun addBuildScriptPrefix(vararg prefix: String): BuildScriptDataBuilder = apply { backend.addBuildScriptPrefix(*prefix) }
-  override fun withBuildScriptPrefix(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptPrefix(configure) }
-  override fun withBuildScriptPrefix(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withBuildScriptPrefix(configure) }
+  override fun withBuildScriptPrefix(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptPrefix(configure) }
+  override fun withBuildScriptPrefix(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withBuildScriptPrefix(configure) }
   override fun addBuildScriptDependency(dependency: String): BuildScriptDataBuilder = apply { backend.addBuildScriptDependency(dependency) }
-  override fun withBuildScriptDependency(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptDependency(configure) }
-  override fun withBuildScriptDependency(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withBuildScriptDependency(configure) }
+  override fun withBuildScriptDependency(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptDependency(configure) }
+  override fun withBuildScriptDependency(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withBuildScriptDependency(configure) }
   override fun addBuildScriptRepository(repository: String): BuildScriptDataBuilder = apply { backend.addBuildScriptRepository(repository) }
-  override fun withBuildScriptRepository(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptRepository(configure) }
-  override fun withBuildScriptRepository(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withBuildScriptRepository(configure) }
+  override fun withBuildScriptRepository(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptRepository(configure) }
+  override fun withBuildScriptRepository(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withBuildScriptRepository(configure) }
   override fun addBuildScriptPostfix(vararg postfix: String): BuildScriptDataBuilder = apply { backend.addBuildScriptPostfix(*postfix) }
-  override fun withBuildScriptPostfix(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptPostfix(configure) }
-  override fun withBuildScriptPostfix(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withBuildScriptPostfix(configure) }
+  override fun withBuildScriptPostfix(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptPostfix(configure) }
+  override fun withBuildScriptPostfix(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withBuildScriptPostfix(configure) }
   override fun addPlugin(plugin: String): BuildScriptDataBuilder = apply { backend.addPlugin(plugin) }
-  override fun withPlugin(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withPlugin(configure) }
+  override fun withPlugin(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withPlugin(configure) }
   override fun addPrefix(vararg prefix: String): BuildScriptDataBuilder = apply { backend.addPrefix(*prefix) }
-  override fun withPrefix(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withPrefix(configure) }
-  override fun withPrefix(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withPrefix(configure) }
+  override fun withPrefix(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withPrefix(configure) }
+  override fun withPrefix(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withPrefix(configure) }
   override fun addDependency(dependency: String): BuildScriptDataBuilder = apply { backend.addDependency(dependency) }
-  override fun withDependency(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withDependency(configure) }
-  override fun withDependency(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withDependency(configure) }
+  override fun withDependency(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withDependency(configure) }
+  override fun withDependency(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withDependency(configure) }
   override fun addRepository(repository: String): BuildScriptDataBuilder = apply { backend.addRepository(repository) }
-  override fun withRepository(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withRepository(configure) }
-  override fun withRepository(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withRepository(configure) }
+  override fun withRepository(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withRepository(configure) }
+  override fun withRepository(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withRepository(configure) }
   override fun addPostfix(vararg postfix: String): BuildScriptDataBuilder = apply { backend.addPostfix(*postfix) }
-  override fun withPostfix(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withPostfix(configure) }
-  override fun withPostfix(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withPostfix(configure) }
+  override fun withPostfix(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withPostfix(configure) }
+  override fun withPostfix(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withPostfix(configure) }
   override fun generate(): String = backend.generate()
   override fun generateTree(): BlockElement = backend.generateTree()
 
   override fun addGroup(group: String): BuildScriptDataBuilder = apply { backend.addGroup(group) }
   override fun addVersion(version: String): BuildScriptDataBuilder = apply { backend.addVersion(version) }
-  override fun registerTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.registerTask(name, type, configure) }
-  override fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.configureTask(name, type, configure) }
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.configureTestTask(configure) }
+  override fun registerTask(name: String, type: String?, configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.registerTask(name, type, configure) }
+  override fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.configureTask(name, type, configure) }
+  override fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.configureTestTask(configure) }
   override fun addDependency(scope: String, dependency: String, sourceSet: String?): BuildScriptDataBuilder = apply { backend.addDependency(scope, dependency, sourceSet) }
   override fun addDependency(scope: String, dependency: Expression, sourceSet: String?): BuildScriptDataBuilder = apply { backend.addDependency(scope, dependency, sourceSet) }
   override fun addApiDependency(dependency: String, sourceSet: String?): BuildScriptDataBuilder = apply { backend.addApiDependency(dependency, sourceSet) }
@@ -126,16 +127,16 @@ class BuildScriptDataBuilder(
   override fun withJUnit(): BuildScriptDataBuilder = apply { backend.withJUnit() }
   override fun withJUnit4(): BuildScriptDataBuilder = apply { backend.withJUnit4() }
   override fun withJUnit5(): BuildScriptDataBuilder = apply { backend.withJUnit5() }
-  override fun withJava(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withJava(configure) }
-  override fun withJava(configure: Consumer<ScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withJava(configure) }
+  override fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withJava(configure) }
+  override fun withJava(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withJava(configure) }
   override fun targetCompatibility(level: String): BuildScriptDataBuilder = apply { backend.targetCompatibility(level) }
   override fun sourceCompatibility(level: String): BuildScriptDataBuilder = apply { backend.sourceCompatibility(level) }
 
   override fun project(name: String): Expression = backend.project(name)
   override fun project(name: String, configuration: String): Expression = backend.project(name, configuration)
-  override fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder = with(backend) { mavenRepository(url) }
-  override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = with(backend) { mavenCentral() }
-  override fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder = with(backend) { mavenLocal(url) }
+  override fun GradleScriptTreeBuilder.mavenRepository(url: String): GradleScriptTreeBuilder = with(backend) { mavenRepository(url) }
+  override fun GradleScriptTreeBuilder.mavenCentral(): GradleScriptTreeBuilder = with(backend) { mavenCentral() }
+  override fun GradleScriptTreeBuilder.mavenLocal(url: String): GradleScriptTreeBuilder = with(backend) { mavenLocal(url) }
   // @formatter:on
 
   companion object {

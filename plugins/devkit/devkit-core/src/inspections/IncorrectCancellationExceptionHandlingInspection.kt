@@ -1,27 +1,25 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.uast.UastHintedVisitorAdapter.Companion.create
+import com.intellij.util.CommonProcessors
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-// "CE" stands for "cancellation exception", without a specific type meaning
-private val ceClassNames = listOf("com.intellij.openapi.progress.ProcessCanceledException")
+private const val PCE_CLASS_NAME = "com.intellij.openapi.progress.ProcessCanceledException"
 
 internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInspectionBase() {
 
@@ -29,19 +27,19 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
     return create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
 
       override fun visitCatchClause(node: UCatchClause): Boolean {
+        val pceClass = findPceClass(holder.file.resolveScope) ?: return super.visitCatchClause(node)
         val catchParameters = node.parameters
-        val caughtCeInfo = findSuspiciousCeCaughtParam(catchParameters)
+        val caughtCeInfo = findSuspiciousCeCaughtParam(catchParameters, pceClass)
         if (caughtCeInfo != null) {
           inspectIncorrectCeHandling(node, caughtCeInfo)
         }
         else {
-          inspectGenericThrowableIfAnyOfTryStatementsThrowsCe(node, catchParameters)
+          inspectGenericThrowableIfAnyOfTryStatementsThrowsCe(node, catchParameters, pceClass)
         }
         return super.visitCatchClause(node)
       }
 
-      private fun findSuspiciousCeCaughtParam(catchParameters: List<UParameter>): CaughtCeInfo? {
-        val ceClasses = findCeClasses(holder.file.resolveScope) ?: return null
+      private fun findSuspiciousCeCaughtParam(catchParameters: List<UParameter>, pceClass: PsiClass): CaughtCeInfo? {
         for (catchParameter in catchParameters) {
           // language-specific check:
           val checker = cancellationExceptionHandlingChecker(catchParameter.lang)
@@ -53,10 +51,9 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
           val type = catchParameter.type
           val caughtExceptionTypes = (if (type is PsiDisjunctionType) type.disjunctions else listOf(type)).filterIsInstance<PsiClassType>()
           for (caughtExceptionType in caughtExceptionTypes) {
-            val baseCeClass = ceClasses.firstOrNull { caughtExceptionType.isInheritorOrSelf(it) }
-            if (baseCeClass != null) {
+            if (caughtExceptionType.isInheritorOrSelf(pceClass)) {
               return CaughtCeInfo(
-                baseCeClass.qualifiedName!!,
+                PCE_CLASS_NAME,
                 !caughtExceptionType.isCancellationExceptionClass(),
                 catchParameter
               )
@@ -66,20 +63,18 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         return null
       }
 
-      private fun findCeClasses(resolveScope: GlobalSearchScope): List<PsiClass>? {
-        return ceClassNames
-          .mapNotNull { JavaPsiFacade.getInstance(holder.project).findClass(it, resolveScope) }
-          .takeIf { it.isNotEmpty() }
+      private fun findPceClass(resolveScope: GlobalSearchScope): PsiClass? {
+        return JavaPsiFacade.getInstance(holder.project).findClass(PCE_CLASS_NAME, resolveScope)
       }
 
       private fun PsiType.isCancellationExceptionClass(): Boolean {
-        return ceClassNames.any { it == (this as? PsiClassType)?.resolve()?.qualifiedName }
+        return PCE_CLASS_NAME == (this as? PsiClassType)?.resolve()?.qualifiedName
       }
 
-      private fun PsiType.isInheritorOrSelf(ceClass: PsiClass): Boolean {
+      private fun PsiType.isInheritorOrSelf(psiClass: PsiClass): Boolean {
         val psiClassType = this as? PsiClassType ?: return false
-        val psiClass = psiClassType.resolve() ?: return false
-        return InheritanceUtil.isInheritorOrSelf(psiClass, ceClass, true)
+        val checkedPsiClass = psiClassType.resolve() ?: return false
+        return InheritanceUtil.isInheritorOrSelf(checkedPsiClass, psiClass, true)
       }
 
       private fun inspectIncorrectCeHandling(node: UCatchClause, caughtCeInfo: CaughtCeInfo) {
@@ -102,17 +97,22 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
       private fun inspectGenericThrowableIfAnyOfTryStatementsThrowsCe(
         catchClause: UCatchClause,
         catchParameters: List<UParameter>,
+        pceClass: PsiClass,
       ): Boolean {
         val tryExpression = catchClause.getParentOfType<UTryExpression>() ?: return super.visitCatchClause(catchClause)
-        if (tryExpression.containsCatchClauseForType<ProcessCanceledException>() || tryExpression.checkContainsSuspiciousCeCatchClause()) {
+        if (tryExpression.containsCatchClauseForType(PCE_CLASS_NAME) || tryExpression.checkContainsSuspiciousCeCatchClause()) {
           // Cancellation exception will be caught by the explicit catch clause
           return super.visitCatchClause(catchClause)
         }
+        val pceSuperTypeClasses = getPceThrowableSuperTypeClasses(pceClass)
         val caughtGenericThrowableParam = catchParameters.firstOrNull {
-          it.type.isClassType<RuntimeException>() || it.type.isClassType<Exception>() || it.type.isClassType<Throwable>()
+          pceSuperTypeClasses.any { pceSuperTypeClass ->
+            val pceSuperTypeQualifiedName = pceSuperTypeClass.qualifiedName ?: return@any false
+            it.type.isClassType(pceSuperTypeQualifiedName)
+          }
         }
         if (caughtGenericThrowableParam != null) {
-          if (tryExpression.containsMoreSpecificCatchClause(caughtGenericThrowableParam)) {
+          if (tryExpression.containsMoreSpecificCatchClause(caughtGenericThrowableParam, pceSuperTypeClasses)) {
             // Cancellation exception will be caught by catch clause with a more specific type, so do not report
             return super.visitCatchClause(catchClause)
           }
@@ -131,12 +131,26 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         return super.visitCatchClause(catchClause)
       }
 
+      private fun getPceThrowableSuperTypeClasses(pceClass: PsiClass): List<PsiClass> {
+        val factory = JavaPsiFacade.getElementFactory(pceClass.project)
+        val pceClassType = factory.createType(pceClass)
+        val collectProcessor = CommonProcessors.CollectProcessor<PsiType>()
+        InheritanceUtil.processSuperTypes(pceClassType, false, collectProcessor)
+        return collectProcessor.results
+          .filterIsInstance<PsiClassType>()
+          .filter { InheritanceUtil.isInheritor(it, "java.lang.Throwable") }
+          .mapNotNull { it.resolve() }
+      }
+
       private fun UTryExpression.checkContainsSuspiciousCeCatchClause(): Boolean {
         val sourcePsi = this.sourcePsi ?: return false
         return cancellationExceptionHandlingChecker(this.lang)?.containsSuspiciousCeCatchClause(sourcePsi) == true
       }
 
-      private fun findLangSpecificCeThrowingExpressionInfo(tryExpression: UTryExpression, caughtGenericThrowableParam: UParameter): CaughtCeInfo? {
+      private fun findLangSpecificCeThrowingExpressionInfo(
+        tryExpression: UTryExpression,
+        caughtGenericThrowableParam: UParameter,
+      ): CaughtCeInfo? {
         val ceHandlingChecker = cancellationExceptionHandlingChecker(tryExpression.lang)
         val ceThrowingExpressionName = ceHandlingChecker?.findCeThrowingExpressionName(tryExpression.sourcePsi!!) ?: return null
         return CaughtCeInfo(ceHandlingChecker.getCeName(), false, caughtGenericThrowableParam, ceThrowingExpressionName)
@@ -147,18 +161,17 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         var caughtCeInfo: CaughtCeInfo? = null
         val tryClause = tryExpression.tryClause
         val resolveScope = tryClause.sourcePsi?.resolveScope ?: return null
-        val ceClasses = findCeClasses(resolveScope) ?: return null
+        val pceClass = findPceClass(resolveScope) ?: return null
         tryClause.accept(object : AbstractUastVisitor() {
           override fun visitCallExpression(node: UCallExpression): Boolean {
             if (caughtCeInfo == null) {
               val calledMethod = node.resolveToUElementOfType<UMethod>() ?: return super.visitCallExpression(node)
               for (throwsType in calledMethod.javaPsi.throwsTypes) {
                 val throwsClassType = throwsType as? PsiClassType ?: continue
-                val baseThrowsCeClass = ceClasses.firstOrNull { throwsClassType.isInheritorOrSelf(it) }
-                if (baseThrowsCeClass != null) {
+                if (throwsClassType.isInheritorOrSelf(pceClass)) {
                   if (!isInNestedTryCatchBlock(node, tryExpression, throwsClassType)) {
                     caughtCeInfo = CaughtCeInfo(
-                      baseThrowsCeClass.qualifiedName!!,
+                      PCE_CLASS_NAME,
                       !throwsClassType.isCancellationExceptionClass(),
                       caughtGenericThrowableParam,
                       node.methodName
@@ -234,7 +247,7 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
           override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
             if (caughtParam == node.resolveToUElement()) {
               val callExpression = node.getParentOfType<UCallExpression>() ?: return super.visitSimpleNameReferenceExpression(node)
-              if (callExpression.receiverType?.isClassType<Logger>() == true) {
+              if (callExpression.receiverType?.isClassType("com.intellij.openapi.diagnostic.Logger") == true) {
                 loggingExpression = callExpression
               }
             }
@@ -244,23 +257,27 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         return loggingExpression
       }
 
-      private inline fun <reified T> PsiType.isClassType(): Boolean {
+      private fun PsiType.isClassType(qualifiedName: String): Boolean {
         if (this is PsiDisjunctionType) {
-          return this.disjunctions.any { PsiTypesUtil.classNameEquals(it, T::class.java.name) }
+          return this.disjunctions.any { PsiTypesUtil.classNameEquals(it, qualifiedName) }
         }
-        return PsiTypesUtil.classNameEquals(this, T::class.java.name)
+        return PsiTypesUtil.classNameEquals(this, qualifiedName)
       }
 
-      private inline fun <reified T> UTryExpression.containsCatchClauseForType(): Boolean {
-        return this.catchClauses.any { clause -> clause.parameters.any { it.type.isClassType<T>() } }
+      private fun UTryExpression.containsCatchClauseForType(qualifiedName: String): Boolean {
+        return this.catchClauses.any { clause -> clause.parameters.any { it.type.isClassType(qualifiedName) } }
       }
 
-      private fun UTryExpression.containsMoreSpecificCatchClause(param: UParameter): Boolean {
-        return when ((param.type as? PsiClassType)?.resolve()?.qualifiedName) {
-          java.lang.Throwable::class.java.name ->
-            this.containsCatchClauseForType<Exception>() || this.containsCatchClauseForType<RuntimeException>()
-          java.lang.Exception::class.java.name -> this.containsCatchClauseForType<RuntimeException>()
-          else -> false
+      private fun UTryExpression.containsMoreSpecificCatchClause(
+        param: UParameter,
+        pceSuperTypeClasses: Collection<PsiClass>,
+      ): Boolean {
+        val parameterType = param.type as? PsiClassType ?: return false
+        val parameterTypeQualifiedName = parameterType.resolve()?.qualifiedName ?: return false
+        val subclassesOfCheckedType = pceSuperTypeClasses.filter { InheritanceUtil.isInheritor(it, true, parameterTypeQualifiedName) }
+        return subclassesOfCheckedType.any {
+          val qualifiedName = it.qualifiedName ?: return@any false
+          this.containsCatchClauseForType(qualifiedName)
         }
       }
 

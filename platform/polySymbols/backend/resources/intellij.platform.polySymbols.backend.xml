@@ -18,10 +18,10 @@
                     beanClass="com.intellij.polySymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.inspectionToolMapping"
-                    beanClass="com.intellij.polySymbols.inspections.impl.PolySymbolsInspectionToolMappingEP"
+                    beanClass="com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.problemQuickFixProvider"
-                    interface="com.intellij.polySymbols.inspections.PolySymbolsProblemQuickFixProvider"
+                    interface="com.intellij.polySymbols.inspections.PolySymbolProblemQuickFixProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.codeCompletionItemCustomizer"
                     interface="com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer"
@@ -29,13 +29,13 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <annotator language="PolySymbolsEnabledLanguage"
-               implementationClass="com.intellij.polySymbols.highlighting.impl.PolySymbolsHighlightingAnnotator"/>
+    <annotator language="PolySymbolEnabledLanguage"
+               implementationClass="com.intellij.polySymbols.highlighting.impl.PolySymbolHighlightingAnnotator"/>
     <psi.declarationProvider implementation="com.intellij.polySymbols.declarations.impl.PolySymbolDeclarationProviderDelegate"/>
 
     <!--suppress PluginXmlRegistrationCheck -->
     <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
-                                 hostLanguage="PolySymbolsEnabledLanguage"
+                                 hostLanguage="PolySymbolEnabledLanguage"
                                  implementationClass="com.intellij.polySymbols.references.impl.PsiPolySymbolReferenceProviderImpl"
                                  targetClass="com.intellij.polySymbols.PolySymbol"
                                  referenceClass="com.intellij.polySymbols.references.PolySymbolReference"/>
@@ -49,9 +49,9 @@
                              implementationClass="com.intellij.polySymbols.search.PolySymbolSearchTargetFactory"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
-              implementationClass="com.intellij.polySymbols.search.PolySymbolsUsageSearcher"/>
+              implementationClass="com.intellij.polySymbols.search.PolySymbolUsageSearcher"/>
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
-              implementationClass="com.intellij.polySymbols.refactoring.PolySymbolsRenameUsageSearcher"/>
+              implementationClass="com.intellij.polySymbols.refactoring.PolySymbolRenameUsageSearcher"/>
 
     <platform.backend.documentation.targetProvider
       implementation="com.intellij.polySymbols.documentation.PolySymbolDocumentationTargetProvider"/>

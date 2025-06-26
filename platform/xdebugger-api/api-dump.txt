@@ -561,6 +561,7 @@ a:com.intellij.xdebugger.frame.XStackFrame
 - com.intellij.xdebugger.frame.XValueContainer
 - <init>():V
 - customizePresentation(com.intellij.ui.ColoredTextContainer):V
+- customizeTextPresentation(com.intellij.ui.ColoredTextContainer):V
 - getEqualityObject():java.lang.Object
 - getEvaluator():com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 - getSourcePosition():com.intellij.xdebugger.XSourcePosition

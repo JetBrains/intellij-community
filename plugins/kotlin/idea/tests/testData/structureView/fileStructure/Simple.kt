@@ -7,4 +7,8 @@ class Test(
     public fun other() {}
 }
 
+internal class Simple
+
+internal fun foo() = "bar"
+
 // EXTRA_INFO_KEYS: visibility, icon

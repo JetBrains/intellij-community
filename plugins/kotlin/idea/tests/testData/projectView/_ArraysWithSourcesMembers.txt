@@ -288,6 +288,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        Array<out T?>.filterNotNullTo(destination: C): C
        Array<T>.copyOf(): Array<T>
        Array<T>.copyOf(newSize: Int): Array<T?>
+       Array<T>.copyOf(newSize: Int, init: (Int) -> T): Array<T>
        Array<T>.copyOfRange(fromIndex: Int, toIndex: Int): Array<T>
        Array<T>.fill(element: T, fromIndex: Int, toIndex: Int): Unit
        Array<T>.plus(element: T): Array<T>
@@ -327,6 +328,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        BooleanArray.copyInto(destination: BooleanArray, destinationOffset: Int, startIndex: Int, endIndex: Int): BooleanArray
        BooleanArray.copyOf(): BooleanArray
        BooleanArray.copyOf(newSize: Int): BooleanArray
+       BooleanArray.copyOf(newSize: Int, init: (Int) -> Boolean): BooleanArray
        BooleanArray.copyOfRange(fromIndex: Int, toIndex: Int): BooleanArray
        BooleanArray.count(): Int
        BooleanArray.count(predicate: (Boolean) -> Boolean): Int
@@ -506,6 +508,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        ByteArray.copyInto(destination: ByteArray, destinationOffset: Int, startIndex: Int, endIndex: Int): ByteArray
        ByteArray.copyOf(): ByteArray
        ByteArray.copyOf(newSize: Int): ByteArray
+       ByteArray.copyOf(newSize: Int, init: (Int) -> Byte): ByteArray
        ByteArray.copyOfRange(fromIndex: Int, toIndex: Int): ByteArray
        ByteArray.count(): Int
        ByteArray.count(predicate: (Byte) -> Boolean): Int
@@ -697,6 +700,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        CharArray.copyInto(destination: CharArray, destinationOffset: Int, startIndex: Int, endIndex: Int): CharArray
        CharArray.copyOf(): CharArray
        CharArray.copyOf(newSize: Int): CharArray
+       CharArray.copyOf(newSize: Int, init: (Int) -> Char): CharArray
        CharArray.copyOfRange(fromIndex: Int, toIndex: Int): CharArray
        CharArray.count(): Int
        CharArray.count(predicate: (Char) -> Boolean): Int
@@ -888,6 +892,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        DoubleArray.copyInto(destination: DoubleArray, destinationOffset: Int, startIndex: Int, endIndex: Int): DoubleArray
        DoubleArray.copyOf(): DoubleArray
        DoubleArray.copyOf(newSize: Int): DoubleArray
+       DoubleArray.copyOf(newSize: Int, init: (Int) -> Double): DoubleArray
        DoubleArray.copyOfRange(fromIndex: Int, toIndex: Int): DoubleArray
        DoubleArray.count(): Int
        DoubleArray.count(predicate: (Double) -> Boolean): Int
@@ -1080,6 +1085,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        FloatArray.copyInto(destination: FloatArray, destinationOffset: Int, startIndex: Int, endIndex: Int): FloatArray
        FloatArray.copyOf(): FloatArray
        FloatArray.copyOf(newSize: Int): FloatArray
+       FloatArray.copyOf(newSize: Int, init: (Int) -> Float): FloatArray
        FloatArray.copyOfRange(fromIndex: Int, toIndex: Int): FloatArray
        FloatArray.count(): Int
        FloatArray.count(predicate: (Float) -> Boolean): Int
@@ -1281,6 +1287,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        IntArray.copyInto(destination: IntArray, destinationOffset: Int, startIndex: Int, endIndex: Int): IntArray
        IntArray.copyOf(): IntArray
        IntArray.copyOf(newSize: Int): IntArray
+       IntArray.copyOf(newSize: Int, init: (Int) -> Int): IntArray
        IntArray.copyOfRange(fromIndex: Int, toIndex: Int): IntArray
        IntArray.count(): Int
        IntArray.count(predicate: (Int) -> Boolean): Int
@@ -1482,6 +1489,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        LongArray.copyInto(destination: LongArray, destinationOffset: Int, startIndex: Int, endIndex: Int): LongArray
        LongArray.copyOf(): LongArray
        LongArray.copyOf(newSize: Int): LongArray
+       LongArray.copyOf(newSize: Int, init: (Int) -> Long): LongArray
        LongArray.copyOfRange(fromIndex: Int, toIndex: Int): LongArray
        LongArray.count(): Int
        LongArray.count(predicate: (Long) -> Boolean): Int
@@ -1674,6 +1682,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        ShortArray.copyInto(destination: ShortArray, destinationOffset: Int, startIndex: Int, endIndex: Int): ShortArray
        ShortArray.copyOf(): ShortArray
        ShortArray.copyOf(newSize: Int): ShortArray
+       ShortArray.copyOf(newSize: Int, init: (Int) -> Short): ShortArray
        ShortArray.copyOfRange(fromIndex: Int, toIndex: Int): ShortArray
        ShortArray.count(): Int
        ShortArray.count(predicate: (Short) -> Boolean): Int

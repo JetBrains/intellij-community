@@ -5,6 +5,9 @@ org.jetbrains.jewel.ui.ComponentStyling
 - a:styles(androidx.compose.runtime.Composer,I):androidx.compose.runtime.ProvidedValue[]
 - with(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
 - with(org.jetbrains.jewel.ui.ComponentStyling):org.jetbrains.jewel.ui.ComponentStyling
+f:org.jetbrains.jewel.ui.DisabledAppearanceKt
+- sf:disabledAppearance(androidx.compose.ui.Modifier,I,I,I,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.ui.DisabledColorFilterKt
 e:org.jetbrains.jewel.ui.component.AutoHideBehavior
 - java.lang.Enum
 - sf:Long:org.jetbrains.jewel.ui.component.AutoHideBehavior
@@ -21,6 +24,8 @@ org.jetbrains.jewel.ui.component.MenuScope
 - bs:submenu$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 org.jetbrains.jewel.ui.component.TabContentScope
 - tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.ui.component.TabStripKt
+- sf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
@@ -34,6 +39,14 @@ org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - a:getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - a:getTrackThickness-D9Ej5fM():F
 - a:getTrackThicknessExpanded-D9Ej5fM():F
+e:org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- java.lang.Enum
+- sf:Long:org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- sf:Never:org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- sf:Normal:org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- s:values():org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior[]
 f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
@@ -50,15 +63,181 @@ f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
 - f:defaults-L5TaK9c(androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - bs:defaults-L5TaK9c$default(org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion,androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
+f:org.jetbrains.jewel.ui.component.styling.TooltipStyle
+- <init>(org.jetbrains.jewel.ui.component.styling.TooltipColors,org.jetbrains.jewel.ui.component.styling.TooltipMetrics,org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior):V
+- f:getAutoHideBehavior():org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 org.jetbrains.jewel.ui.icon.IconKey
 - a:getIconClass():java.lang.Class
 - a:path(Z):java.lang.String
 org.jetbrains.jewel.ui.icon.NewUiChecker
 - a:isNewUi():Z
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
+- sf:ActualZoom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Add:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:AddJdk:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Add_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Alpha:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ArrowDown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ArrowDownSmall:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ArrowLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ArrowRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ArrowSplitCenterH:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ArrowSplitCenterV:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ArrowUp:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:AutoscrollFromSource:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:AutoscrollToSource:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Balloon:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:BalloonError:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:BalloonInformation:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:BalloonWarning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:BalloonWarning12:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Beta:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ButtonDropTriangle:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ChevronDown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ChevronDownLargeWhite:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ChevronLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ChevronRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ChevronUp:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Close:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:CloseSmall:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:CloseSmallHovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:CollapseComponent:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:CollapseComponentHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ContextHelp:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Copy:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:CopyHovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:DebugDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Delete:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Divider:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Drag:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:DropPlace:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Dropdown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:DropdownGutter:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:EditorPreviewVertical:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Ellipsis:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Error:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ErrorDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ExclMark:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ExpandComponent:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ExpandComponentHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Export:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ExternalTools:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Filter:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:FitContent:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Gear:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:GearHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:GearPlain:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:GreenCheckmark:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Groups:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Hashtag:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:HideToolWindow:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:History:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ImplementingMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:IndentDetected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Information:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InformationDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InheritedMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineAdd:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineAddHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineClose:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineCloseHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineCopy:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineCopyHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineRefresh:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineRefreshHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineVariables:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InlineVariablesHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Inline_edit:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Inline_edit_hovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsError:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsErrorEmpty:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsEye:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsGrammar:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsMixed:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsOK:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsOKEmpty:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsPause:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsPowerSaveMode:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsTrafficOff:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsTypos:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsWarning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:InspectionsWarningEmpty:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Keyboard:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Language:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Layout:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:LayoutEditorOnly:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:LayoutEditorPreview:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:LayoutPreviewOnly:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:LinkDropTriangle:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:LocalizationSettings:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Locate:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Menu:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Modified:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ModifiedSelected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoreTabs:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Mouse:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:New_badge:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Note:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:NotificationError:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:NotificationInfo:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:NotificationWarning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:OpenDisk:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:OpenDiskHover:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:OpenInToolWindow:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:OverridenMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:OverridingMethod:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Pin:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:PinHovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:PinSelected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:PinSelectedHovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Pin_tab:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:PreviewHorizontally:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Print:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ProjectConfigurable:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ProjectStructure:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ProjectTab:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:QuestionDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ReaderMode:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Refresh:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:RefreshAuto:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Remove:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Reset:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:RunWithCoverage:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SelectIn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SeparatorH:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Settings:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Show:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ShowInfos:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ShowWarning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Show_to_implement:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SuccessDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SuccessLogin:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TbHidden:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TbShown:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Tip:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TodoDefault:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TodoImportant:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TodoQuestion:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Tree:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TreeHovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TreeSelected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TrialBadge:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:User:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Vcs:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Warning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:WarningDecorator:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:WarningDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Web:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:WindowsMenu_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ZoomIn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ZoomOut:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide
 - sf:Feedback:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Vcs
+- sf:Fetch_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Push_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Update_20x20:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Welcome$RecentProjects
 - sf:RemoteProject:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 org.jetbrains.jewel.ui.painter.PainterHint

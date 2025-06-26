@@ -125,7 +125,7 @@ object GrazieFUSCounter : CounterUsagesCollector() {
   }
 }
 
-private enum class TextContext {
+enum class TextContext {
   /** String literals of a programming language  */
   LITERALS,
 

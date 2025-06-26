@@ -204,7 +204,7 @@ class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   ) {
     registerFiles(framework, webTypes, customElementsManifests)
     val parsedPath = parseWebTypesPath(path, null)
-    val queryExecutor = polySymbolsQueryExecutorFactory.create(null)
+    val queryExecutor = polySymbolQueryExecutorFactory.create(null)
     val last = parsedPath.last()
 
     if (compareWithCompletionResults) {

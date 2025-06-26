@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
@@ -10,18 +11,19 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.SOURCES
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
+import org.jdom.Element
 import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
 import org.jetbrains.idea.maven.importing.MavenImportUtil.escapeCompileSourceRootModuleSuffix
+import org.jetbrains.idea.maven.importing.MavenImportUtil.findCompilerPlugin
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getNonDefaultCompilerExecutions
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getSourceLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTargetLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestSourceLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestTargetLanguageLevel
-import org.jetbrains.idea.maven.importing.MavenImportUtil.hasExecutionsForTests
-import org.jetbrains.idea.maven.importing.MavenImportUtil.hasTestCompilerArgs
-import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompilerTestSupport
+import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompileExecution
+import org.jetbrains.idea.maven.importing.MavenImportUtil.isTestCompileExecution
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.selectScope
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.*
@@ -29,11 +31,13 @@ import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectModifications
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.SupportedRequestType
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
 import java.util.function.Function
 
@@ -50,7 +54,7 @@ internal class MavenProjectImportContextProvider(
   fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectModifications>): List<MavenTreeModuleImportData> {
     val allModules: MutableList<MavenProjectImportData> = ArrayList<MavenProjectImportData>()
     val moduleImportDataByMavenId: MutableMap<MavenId, MavenProjectImportData> = TreeMap<MavenId, MavenProjectImportData>(
-      Comparator.comparing<MavenId?, String?>(Function { obj: MavenId? -> obj!!.getKey() }))
+      Comparator.comparing(Function { obj: MavenId? -> obj!!.getKey() }))
 
     for (each in projectsWithChanges.entries) {
       val project = each.key
@@ -295,14 +299,51 @@ internal class MavenProjectImportContextProvider(
   private fun needCreateCompoundModule(project: MavenProject, languageLevels: LanguageLevels): Boolean {
     if (!`is`("maven.import.separate.main.and.test.modules.when.needed")) return false
     if (project.isAggregator) return false
-    if (!isCompilerTestSupport(project)) return false
 
-    if (languageLevels.mainAndTestLevelsDiffer()) return true
-    if (hasTestCompilerArgs(project)) return true
-    if (hasExecutionsForTests(project)) return true
+    if (`is`("maven.import.separate.main.and.test.modules.when.lang.level") && languageLevels.mainAndTestLevelsDiffer()) return true
+
+    if (`is`("maven.import.separate.main.and.test.modules.when.compiler.args") && isCompilerTestSupport(project)) {
+      if (hasTestCompilerArgs(project)) return true
+      if (mainAndTestCompilerArgsDiffer(project)) return true
+    }
+
     if (getNonDefaultCompilerExecutions(project).isNotEmpty()) return true
 
     return false
+  }
+
+  private fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
+    return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
+  }
+
+  private fun hasTestCompilerArgs(project: MavenProject): Boolean {
+    val plugin = project.findCompilerPlugin() ?: return false
+    val executions = plugin.executions
+    if (executions == null || executions.isEmpty()) {
+      return hasTestCompilerArgs(plugin.configurationElement)
+    }
+
+    return executions.any { hasTestCompilerArgs(it.configurationElement) }
+  }
+
+  private fun hasTestCompilerArgs(config: Element?): Boolean {
+    return config != null && (config.getChild("testCompilerArgument") != null ||
+                              config.getChild("testCompilerArguments") != null)
+  }
+
+  private fun mainAndTestCompilerArgsDiffer(project: MavenProject): Boolean {
+    val plugin = project.findCompilerPlugin() ?: return false
+    val executions = plugin.executions
+    if (executions == null || executions.isEmpty()) return false
+    val compilerArgs = executions.find { isCompileExecution(it) }?.getCompilerArgs()
+    val testCompilerArgs = executions.find { isTestCompileExecution(it) }?.getCompilerArgs()
+    if (compilerArgs == null) return testCompilerArgs != null
+    if (testCompilerArgs == null) return true
+    return !JDOMUtil.areElementsEqual(compilerArgs, testCompilerArgs)
+  }
+
+  private fun MavenPlugin.Execution.getCompilerArgs(): Element? {
+    return this.configurationElement?.getChild("compilerArgs")
   }
 
   private fun getModuleImportDataSingle(

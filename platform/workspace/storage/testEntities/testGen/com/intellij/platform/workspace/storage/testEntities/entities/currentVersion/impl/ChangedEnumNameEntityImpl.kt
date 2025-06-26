@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEnum
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumNameEntityData) : ChangedEnumNameEntity,
                                                                                               WorkspaceEntityBase(dataSource) {

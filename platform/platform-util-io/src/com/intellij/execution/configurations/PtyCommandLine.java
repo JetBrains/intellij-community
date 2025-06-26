@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.process.LocalProcessService;
+import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -145,6 +145,20 @@ public class PtyCommandLine extends GeneralCommandLine implements CommandLineWit
 
   @ApiStatus.Internal
   public @NotNull Process startProcessWithPty(@NotNull List<String> commands) throws IOException {
+    Map<String, String> env = getPreparedEnvironment();
+    Path workingDirectory = getWorkingDirectory();
+    LocalPtyOptions options = getPtyOptions();
+    return LocalProcessService.getInstance().startPtyProcess(
+      commands,
+      workingDirectory != null ? workingDirectory.toString() : null,
+      env,
+      options,
+      isRedirectErrorStream()
+    );
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull Map<String, String> getPreparedEnvironment() {
     Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
     if (!SystemInfo.isWindows) {
@@ -156,16 +170,7 @@ public class PtyCommandLine extends GeneralCommandLine implements CommandLineWit
         env.put("TERM", "xterm-256color");
       }
     }
-
-    Path workingDirectory = getWorkingDirectory();
-    LocalPtyOptions options = getPtyOptions();
-    return LocalProcessService.getInstance().startPtyProcess(
-      commands,
-      workingDirectory != null ? workingDirectory.toString() : null,
-      env,
-      options,
-      isRedirectErrorStream()
-    );
+    return env;
   }
 
   @ApiStatus.Internal

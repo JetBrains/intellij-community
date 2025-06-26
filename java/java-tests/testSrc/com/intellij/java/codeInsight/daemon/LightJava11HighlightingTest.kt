@@ -63,7 +63,7 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testRequiresTransitiveJavaBaseWithStatic() {
-    IdeaTestUtil.withLevel(module, JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE.minimumLevel){
+    IdeaTestUtil.withLevel(module, JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE.standardLevel!!){
       myFixture.configureByText("module-info.java", """
       module M {
         requires <error descr="Modifier 'static' not allowed here">static</error> transitive java.base;
@@ -73,7 +73,7 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testRequiresTransitiveJavaBase() {
-    IdeaTestUtil.withLevel(module, JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE.minimumLevel){
+    IdeaTestUtil.withLevel(module, JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE.standardLevel!!){
       myFixture.configureByText("module-info.java", """
       module M {
         requires transitive java.base;

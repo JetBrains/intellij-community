@@ -53,7 +53,6 @@ internal object GitLabShareProjectDialogComponentFactory {
             .bindSelectedItemIn(cs, vm.account.valueFlow)
             .bindValidationOnApplyIn(cs, vm.account)
             .align(AlignX.FILL).resizableColumn()
-            .enabledIf(vm.accounts.mapState { it.isNotEmpty() }.asObservableIn(cs))
 
           link(GitLabBundle.message("share.dialog.account.addButton")) { event ->
             val (account, token) = GitLabLoginUtil.logInViaToken(project, event.source as JComponent, uniqueAccountPredicate = { server, username ->

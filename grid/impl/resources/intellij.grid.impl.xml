@@ -331,6 +331,23 @@
               icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.ColumnFilter" />
       <action id="Console.TableResult.ToggleRecordView" class="com.intellij.database.actions.ToggleEditMaximizedViewAction"
               icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.SingleRecordView"/>
+      <group id="TableViewColoringGroup" icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.TableHeatmap" popup="true">
+        <separator key="separator.TableViewColoring.mode"/>
+        <action id="ToggleTableViewColoringModeOffAction"
+                class="com.intellij.database.run.actions.ToggleTableViewColoringModeOffAction"/>
+        <action id="ToggleTableViewColoringModeSequentialAction"
+                class="com.intellij.database.run.actions.ToggleTableViewColoringModeSequentialAction"/>
+        <action id="ToggleTableViewColoringModeDivergingAction"
+                class="com.intellij.database.run.actions.ToggleTableViewColoringModeDivergingAction"/>
+        <separator key="separator.TableViewColoring.options"/>
+        <action id="ToggleTableViewColorPerColumnAction"
+                class="com.intellij.database.run.actions.ToggleTableViewColorPerColumnAction"/>
+        <action id="ToggleTableViewColorPerTableAction"
+                class="com.intellij.database.run.actions.ToggleTableViewColorPerTableAction"/>
+        <separator/>
+        <action id="ToggleTableViewColorBooleanColumnsAction"
+                class="com.intellij.database.run.actions.ToggleTableViewColorBooleanColumnsAction"/>
+      </group>
     </group>
     <reference ref="Console.TableResult.ChooseExtractor"/>
     <group id="Console.TableResult.ChooseExtractor.Group">
@@ -404,5 +421,7 @@
     <action id="Console.TableResult.ColumnLocalFilterWithCell"
             class="com.intellij.database.run.actions.ColumnLocalFilterWithCellAction"/>
     <group id="Console.TableResult.AggregatorViewGroup"/>
+    <action id="Console.TableResult.ColumnLocalFilterClearAll"
+            class="com.intellij.database.run.actions.ColumnLocalFilterClearAllAction"/>
   </actions>
 </idea-plugin>

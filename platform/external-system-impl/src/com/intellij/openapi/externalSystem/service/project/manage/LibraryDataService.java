@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -59,7 +60,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       String libraryName = libraryData.getInternalName();
       LibraryData importedLibrary = processedLibraries.putIfAbsent(libraryName, libraryData);
       if (importedLibrary == null) {
-        importLibrary(libraryData, modelsProvider);
+        importLibrary(modelsProvider, libraryData);
       }
       else {
         LOG.warn("Multiple project level libraries found with the same name '" + libraryName + "'");
@@ -71,33 +72,26 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  private static void importLibrary(final @NotNull LibraryData toImport, final @NotNull IdeModifiableModelsProvider modelsProvider) {
-    final String libraryName = toImport.getInternalName();
-    Library library = modelsProvider.getLibraryByName(libraryName);
-    ProjectModelExternalSource source = ExternalSystemApiUtil.toExternalSource(toImport.getOwner());
-    if (library != null) {
+  private static void importLibrary(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull LibraryData libraryData) {
+    var libraryName = libraryData.getInternalName();
+    var libraryKind = getLibraryKind(libraryData);
+    var librarySource = ExternalSystemApiUtil.toExternalSource(libraryData.getOwner());
+    var existingLibrary = modelsProvider.getLibraryByName(libraryName);
+    var library = ObjectUtils.notNull(existingLibrary, () -> {
+      var librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
+      return librariesModel.createLibrary(libraryName, libraryKind, librarySource);
+    });
+    var libraryModel = modelsProvider.getModifiableLibraryModel(library);
+    if (existingLibrary != null) {
       if (library.getExternalSource() == null) {
-        ((LibraryEx.ModifiableModelEx)modelsProvider.getModifiableLibraryModel(library)).setExternalSource(source);
+        ((LibraryEx.ModifiableModelEx)libraryModel).setExternalSource(librarySource);
       }
-      syncPaths(toImport, library, modelsProvider);
-      return;
+      syncPaths(libraryModel, libraryData);
     }
-    LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-    library = librariesModel.createLibrary(libraryName, getLibraryKind(toImport), source);
-    prepareNewLibrary(modelsProvider, library, libraryName, toImport);
-  }
-
-  private static void prepareNewLibrary(
-    @NotNull IdeModifiableModelsProvider modelsProvider,
-    @NotNull Library library,
-    @NotNull String libraryName,
-    @NotNull LibraryData libraryData
-  ) {
-    Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(libraryData);
-    Set<String> excludedPaths = libraryData.getPaths(LibraryPathType.EXCLUDED);
-    Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    registerPaths(libraryData.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
-    EP_NAME.forEachExtensionSafe(extension -> extension.prepareNewLibrary(modelsProvider, library, libraryData));
+    else {
+      registerPaths(libraryModel, libraryData);
+    }
+    EP_NAME.forEachExtensionSafe(extension -> extension.prepareLibrary(modelsProvider, library, libraryData));
   }
 
   private static PersistentLibraryKind<?> getLibraryKind(LibraryData anImport) {
@@ -251,10 +245,14 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  private static void syncPaths(final @NotNull LibraryData externalLibrary,
-                                final @NotNull Library ideLibrary,
-                                final @NotNull IdeModifiableModelsProvider modelsProvider) {
-    if (externalLibrary.isUnresolved()) {
+  private static void registerPaths(@NotNull Library.ModifiableModel libraryModel, @NotNull LibraryData libraryData) {
+    var libraryFiles = prepareLibraryFiles(libraryData);
+    var excludedPaths = libraryData.getPaths(LibraryPathType.EXCLUDED);
+    registerPaths(libraryData.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryData.getInternalName());
+  }
+
+  private static void syncPaths(@NotNull Library.ModifiableModel libraryModel, @NotNull LibraryData libraryData) {
+    if (libraryData.isUnresolved()) {
       return;
     }
     final Map<OrderRootType, Set<String>> toRemove = new HashMap<>();
@@ -263,7 +261,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     for (LibraryPathType pathType: LibraryPathType.values()) {
       OrderRootType ideType = externalLibraryPathTypeMapper.map(pathType);
       if (ideType == null) continue;
-      HashSet<String> toAddPerType = new HashSet<>(externalLibrary.getPaths(pathType));
+      HashSet<String> toAddPerType = new HashSet<>(libraryData.getPaths(pathType));
       toAdd.put(ideType, toAddPerType);
 
       // do not remove attached or manually added sources/javadocs if nothing to add
@@ -273,7 +271,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       HashSet<String> toRemovePerType = new HashSet<>();
       toRemove.put(ideType, toRemovePerType);
 
-      for (String url : ideLibrary.getUrls(ideType)) {
+      for (String url : libraryModel.getUrls(ideType)) {
         String idePath = getLocalPath(url);
         if (!toAddPerType.remove(idePath)) {
           toRemovePerType.add(url);
@@ -284,18 +282,17 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       return;
     }
 
-    final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(ideLibrary);
     for (Map.Entry<OrderRootType, Set<String>> entry: toRemove.entrySet()) {
       for (String path: entry.getValue()) {
         libraryModel.removeRoot(path, entry.getKey());
       }
     }
 
-    Set<String> excludedPaths = externalLibrary.getPaths(LibraryPathType.EXCLUDED);
+    Set<String> excludedPaths = libraryData.getPaths(LibraryPathType.EXCLUDED);
     for (Map.Entry<OrderRootType, Set<String>> entry: toAdd.entrySet()) {
       Map<OrderRootType, Collection<File>> roots = new HashMap<>();
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), File::new));
-      registerPaths(false, roots, excludedPaths, libraryModel, externalLibrary.getInternalName());
+      registerPaths(false, roots, excludedPaths, libraryModel, libraryData.getInternalName());
     }
   }
 

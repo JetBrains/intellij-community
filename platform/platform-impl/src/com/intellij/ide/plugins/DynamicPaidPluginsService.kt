@@ -27,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.nio.file.FileVisitResult
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.measureTimedValue
 
 @Service(Service.Level.APP)
 class DynamicPaidPluginsService(private val cs: CoroutineScope) {
@@ -75,13 +76,14 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     val disabledPlugins = DisabledPluginsState.getDisabledIds()
     val pluginSet = PluginManagerCore.getPluginSet()
     val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+    val contentModuleIdMap = pluginSet.buildContentModuleIdMap()
     val loadedPlugins = pluginSet.enabledPlugins.toSet()
 
     val pluginsToEnable = pluginSet.allPlugins.filter {
       !disabledPlugins.contains(it.pluginId) &&
       !loadedPlugins.contains(it) &&
-      pluginRequiresUltimatePlugin(it.pluginId, pluginIdMap) &&
-      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, disabledPlugins)
+      pluginRequiresUltimatePlugin(it.pluginId, pluginIdMap, contentModuleIdMap) &&
+      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, contentModuleIdMap, disabledPlugins)
     }
 
     if (pluginsToEnable.isEmpty()) {
@@ -131,14 +133,17 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     progressTitle: @Nls String? = null,
   ) {
     logger.info("Plugins to enable: [${descriptors.joinToString(separator = ", ") { it.pluginId.idString }}]")
-    val result =
+    val (result, elapsedTime) = measureTimedValue {
       if (pluginEnabler is DynamicPluginEnabler) {
         pluginEnabler.enable(descriptors, progressTitle, project)
       }
       else {
         pluginEnabler.enable(descriptors)
       }
-    logger.debug("Plugins enabled: $result")
+    }
+    val pluginsCount = descriptors.size
+    DynamicPluginsUsagesCollector.logPaidPluginsLoaded(elapsedTime, pluginsCount, restart)
+    logger.info("Loaded $pluginsCount plugins in ${elapsedTime.inWholeMilliseconds} ms. Enabled: $result. Restart requested: $restart")
 
     if (restart) {
       ApplicationManagerEx.getApplicationEx().restart(true)
@@ -177,10 +182,11 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
   }
 }
 
-private fun pluginRequiresDisabledPlugin(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>, disabledPluginIds: Set<PluginId>): Boolean {
+private fun pluginRequiresDisabledPlugin(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>, 
+                                         contentModuleIdMap: Map<String, ContentModuleDescriptor>, disabledPluginIds: Set<PluginId>): Boolean {
   if (disabledPluginIds.isEmpty()) return false
   val rootDescriptor = pluginMap[plugin] ?: return false
-  return !processAllNonOptionalDependencies(rootDescriptor, pluginMap) { descriptorImpl ->
+  return !processAllNonOptionalDependencies(rootDescriptor, pluginMap, contentModuleIdMap) { descriptorImpl ->
     if (disabledPluginIds.contains(descriptorImpl.pluginId)) FileVisitResult.TERMINATE
     else FileVisitResult.CONTINUE
   }

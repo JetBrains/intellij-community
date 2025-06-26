@@ -2,16 +2,13 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 
 /**
  * This helper is not an API, consider using methods listed below.
- *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
  *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
@@ -25,9 +22,6 @@ fun pyRequirement(name: String, versionSpec: PyRequirementVersionSpec? = null): 
 /**
  * This helper is not an API, consider using methods listed below.
  *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
- *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromFile
@@ -39,9 +33,6 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
 /**
  * This helper is not an API, consider using methods listed below.
  * If given version could not be normalized, then specified relation will be replaced with [PyRequirementRelation.STR_EQ].
- *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
  *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
@@ -58,7 +49,7 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
 fun pyRequirementVersionSpec(relationWithVersion: @NlsSafe String): PyResult<PyRequirementVersionSpec> {
   val value = relationWithVersion.trim()
   val relation = PyRequirementRelation.entries.lastOrNull { value.startsWith(it.presentableText) }
-                 ?: return PyResult.localizedError("Could not parse relation from: $value")
+                 ?: return PyResult.localizedError(PyPsiBundle.message("packaging.could.not.parse.relation", value))
 
   val version = value.removePrefix(relation.presentableText)
   return PyResult.success(pyRequirementVersionSpec(relation, version))
@@ -130,12 +121,11 @@ private data class PyRequirementVersionSpecImpl(
                                         toEqPartOfCompatibleRelation(parsedVersion)).matches(version)
       }
       PyRequirementRelation.STR_EQ -> version == this.version
-      else -> false
     }
   }
 
   private fun splitIntoPublicAndLocalVersions(version: PyPackageVersion): Pair<String, String> {
-    return version.copy(local = null).presentableText to StringUtil.notNullize(version.local)
+    return version.copy(local = null).presentableText to (version.local ?: "")
   }
 
   private fun splitIntoPublicAndLocalVersions(version: String): Pair<String, String> {

@@ -122,20 +122,15 @@ internal open class FirClassifierCompletionContributor(
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
         val scopesToCheck = context.scopeContext
             .scopes
-            .toMutableList()
+            .toMutableSet()
 
-        context.preferredSubtype?.symbol?.let { preferredSubtypeSymbol ->
-            preferredSubtypeSymbol.staticScope?.let {
-                if (!scopesToCheck.contains(it)) {
-                    scopesToCheck.add(it)
-                }
-            }
-            preferredSubtypeSymbol.containingSymbol?.staticScope?.let {
-                if (!scopesToCheck.contains(it)) {
-                    scopesToCheck.add(it)
-                }
-            }
+        fun addContainingScopesToCheck(symbol: KaClassifierSymbol) {
+            symbol.staticScope?.let(scopesToCheck::add)
+            symbol.containingSymbol?.staticScope?.let(scopesToCheck::add)
         }
+
+        context.expectedType?.symbol?.takeIf { it.modality == KaSymbolModality.SEALED }?.let(::addContainingScopesToCheck)
+        context.preferredSubtype?.symbol?.let(::addContainingScopesToCheck)
 
         val scopeClassifiers = scopesToCheck
             .asSequence()
@@ -194,6 +189,8 @@ internal open class FirClassifierCompletionContributor(
     ): Sequence<LookupElementBuilder> = sequence {
         if (classifierSymbol is KaNamedClassSymbol
             && expectedType?.symbol == classifierSymbol
+            && classifierSymbol.modality != KaSymbolModality.SEALED
+            && classifierSymbol.modality != KaSymbolModality.ABSTRACT
         ) {
             val constructorSymbols = classifierSymbol.memberScope.constructors
                 .filter { visibilityChecker.isVisible(it, positionContext) }

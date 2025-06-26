@@ -5,19 +5,16 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
 
 
 @Experimental
-@Internal
-private class UndoDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
+private class UndoDumpAction : DumbAwareAction() {
 
   companion object {
     private val LOG: Logger = logger<UndoDumpAction>()
@@ -37,7 +34,7 @@ private class UndoDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecificat
     val undoManager = UndoRedoAction.getUndoManager(editor, dataContext, false, false)
     LOG.warn("${undoManager ?: "null undo manager"}")
     if (undoManager is UndoManagerImpl) {
-      LOG.warn(undoManager.dumpState(editor))
+      LOG.warn(undoManager.dumpState(editor, "triggered by UndoDumpAction"))
     }
   }
 

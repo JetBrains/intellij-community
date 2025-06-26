@@ -171,6 +171,11 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     return myTable;
   }
 
+  @ApiStatus.Internal
+  public final @NotNull OnePixelSplitter getSplitter() {
+    return split;
+  }
+
   public void setDefaultRenderer(@NotNull Class<?> columnClass, @NotNull TableCellRenderer renderer) {
     myTable.setDefaultRenderer(columnClass,renderer);
   }

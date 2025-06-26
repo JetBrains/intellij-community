@@ -1,583 +1,316 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
-import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
-import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
-import com.intellij.openapi.util.io.getResolvedPath
-import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
-import com.intellij.testFramework.common.runAll
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.junit5.RegistryKey
-import com.intellij.testFramework.useProjectAsync
+import com.intellij.testFramework.withProjectAsync
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
-import org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWizardData.Companion.kotlinGradleData
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.setup.GradleCreateProjectTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.annotations.CsvCrossProductSource
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.junit.jupiter.api.*
-import java.io.File
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.pathString
+import kotlin.io.path.walk
 
-/**
- * A test case for the Kotlin Gradle new project/module wizard.
- * Test cases can either generate a new project, or a new module in an existing projects.
- * Existing projects can be defined using the [projectInfo] DSL.
- * The tests work by asserting that certain generated files are created with the correct content,
- * the files are located in the testData/newProjectWizard/<testName> folder.
- * Only files that are mentioned in these folders are asserted to be generated correctly.
- */
-@TestRoot("project-wizard/tests")
-@Disabled("Temporarily disabled until timeouts are fixed: KTI-2059")
-class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotlinProjectTestUtils {
+class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() {
 
-    override var testDirectory = "testData/gradleNewProjectWizard"
-
-    private lateinit var testInfo: TestInfo
-
-    @BeforeEach
-    fun init(testInfo: TestInfo) {
-        this.testInfo = testInfo
-    }
-
-    @AfterEach
-    fun tearDown() {
-        runAll({ KotlinSdkType.removeKotlinSdkInTests() })
-    }
-
-    override fun getTestFolderName(): String {
-        return testInfo.displayName.takeWhile { it != '(' }.removePrefix("test").decapitalizeAsciiOnly()
-    }
-
-    private fun Project.findKotlinVersion(useKotlinDsl: Boolean, modulePath: String? = null): String? {
-        val path = StringBuilder().apply {
-            if (modulePath != null) {
-                append(modulePath)
-                append("/")
-            }
-            append("build.gradle")
-            if (useKotlinDsl) {
-                append(".kts")
-            }
-        }.toString()
-        val buildFile = findRelativeFile(path)
-        Assertions.assertNotNull(buildFile, "Could not find build file at $path")
-        return kotlinVersionRegex.find(buildFile!!.readText())?.groupValues?.get(1)
-    }
-
-    private fun Project.assertKotlinVersion(expectedVersion: String, useKotlinDsl: Boolean, modulePath: String? = null) {
-        val kotlinVersion = findKotlinVersion(useKotlinDsl, modulePath)
-        Assertions.assertNotNull(kotlinVersion, "Could not find Kotlin version in build file")
-        Assertions.assertEquals(expectedVersion, kotlinVersion)
-    }
-
-    private val kotlinVersionRegex = Regex("""kotlin.*version.*["']([\w-.]*)["']""")
-    override fun substituteArtifactsVersions(str: String): String {
-        return str.replaceFirstGroup(kotlinVersionRegex, "KOTLIN_VERSION")
-    }
-
-    private val jvmToolchainVersionRegex = Regex("""jvmToolchain\((\d+)\)""")
-    private fun substituteJvmToolchainVersion(str: String): String {
-        return str.replaceFirstGroup(jvmToolchainVersionRegex, "JDK_VERSION")
-    }
-
-    private val foojayRegex = Regex("""foojay-resolver-convention.*version.*["']([\w-.]*)["']""")
-    private fun substituteFoojayVersion(str: String): String {
-        return str.replaceFirstGroup(foojayRegex, "FOOJAY_VERSION")
-    }
-
-    private fun tomlVersionRegex(libraryName: String) = Regex("""$libraryName = "(\d+\.\d+\.\d+)"""")
-    private fun substituteTomlLibraryVersion(str: String, libraryName: String, libraryReplacementName: String): String {
-        return str.replaceFirstGroup(tomlVersionRegex(libraryName), libraryReplacementName)
-    }
-
-    private val daemonJvmCriteriaRegex = Regex("""toolchainVersion=(\d+)""")
-    private fun substituteDaemonJvmCriteriaVersions(str: String): String {
-        return str.replaceFirstGroup(daemonJvmCriteriaRegex, "TOOLCHAIN_VERSION")
-    }
-
-    // We replace dynamic values like the Kotlin version that is used with placeholders.
-    // That way we do not have to update tests every time a new Kotlin version releases.
-    override fun postprocessOutputFile(relativePath: String, fileContents: String): String {
-        return if (relativePath.contains("build.gradle")) { // covers build.gradle and build.gradle.kts
-            var newContents = fileContents
-            newContents = substituteArtifactsVersions(newContents)
-            newContents = substituteJvmToolchainVersion(newContents)
-            newContents
-        } else if (relativePath.contains("settings.gradle")) { // covers settings.gradle and settings.gradle.kts
-            var newContents = fileContents
-            newContents = substituteFoojayVersion(newContents)
-            newContents = substituteDaemonJvmCriteriaVersions(newContents)
-            newContents
-        } else if (relativePath.contains("gradle.kts")) { // convention plugin
-            var newContents = fileContents
-            newContents = substituteArtifactsVersions(newContents)
-            newContents = substituteJvmToolchainVersion(newContents)
-            newContents
-        } else if (relativePath.contains("libs.versions.toml")) {
-            var newContents = fileContents
-            newContents = substituteTomlLibraryVersion(newContents, "kotlin", "KOTLIN_VERSION")
-            newContents = substituteTomlLibraryVersion(newContents, "kotlinxDatetime", "KOTLINX_DATETIME_VERSION")
-            newContents = substituteTomlLibraryVersion(newContents, "kotlinxSerializationJSON", "KOTLINX_SERIALIZATION_JSON_VERSION")
-            newContents = substituteTomlLibraryVersion(newContents, "kotlinxCoroutines", "KOTLINX_COROUTINES_VERSION")
-            newContents
-        } else fileContents
-    }
-
-    private fun NewProjectWizardStep.setGradleWizardData(
-        useKotlinDsl: Boolean = false,
-        name: String = "project",
-        path: String = name,
-        groupId: String = "org.testcase",
-        version: String = "1.0.0",
-        addSampleCode: Boolean = false,
-        parentData: ProjectData? = null,
-        generateMultipleModules: Boolean = false,
-    ) {
-        baseData!!.name = name
-        baseData!!.path = testRoot.toNioPath().getResolvedPath(path).parent.toCanonicalPath()
-        kotlinBuildSystemData!!.buildSystem = GRADLE
-        kotlinGradleData!!.parentData = parentData
-        kotlinGradleData!!.generateMultipleModules = generateMultipleModules
-        kotlinGradleData!!.gradleDsl = GradleDsl.valueOf(useKotlinDsl)
-        kotlinGradleData!!.groupId = groupId
-        kotlinGradleData!!.artifactId = name
-        kotlinGradleData!!.version = version
-        kotlinGradleData!!.addSampleCode = addSampleCode
-    }
-
-    private fun runNewProjectTestCase(
-        expectedModules: List<String> = listOf("project", "project.main", "project.test"),
-        useKotlinDsl: Boolean = false,
-        name: String = "project",
-        groupId: String = "org.testcase",
-        version: String = "1.0.0",
-        addSampleCode: Boolean = false,
-        generateMultipleModules: Boolean = false,
-        additionalAssertions: (Project) -> Unit = {}
-    ) {
-
-        runBlocking {
-            createProjectByWizard(KOTLIN) {
-                setGradleWizardData(
-                    useKotlinDsl = useKotlinDsl,
-                    name = name,
-                    groupId = groupId,
-                    version = version,
-                    parentData = null,
-                    path = name,
-                    addSampleCode = addSampleCode,
-                    generateMultipleModules = generateMultipleModules,
-                )
-            }.useProjectAsync { project ->
-                assertModules(project, expectedModules)
-                project.assertCorrectProjectFiles()
-                additionalAssertions(project)
-            }
-        }
-    }
-
-    @Test
-    fun testSimpleProject() {
-        runNewProjectTestCase()
-    }
-
-    @Test
-    fun testSimpleProjectKts() {
-        runNewProjectTestCase(useKotlinDsl = true)
+    @ParameterizedTest
+    @EnumSource(GradleDsl::class)
+    fun testSimpleProject(gradleDsl: GradleDsl): Unit = runBlocking {
+        createProjectByWizard(KOTLIN) {
+            setGradleWizardData("project", gradleDsl = gradleDsl)
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                withKotlinBuildFile()
+                withKotlinSettingsFile()
+            })
+        }.closeProjectAsync()
     }
 
     @Test
     @RegistryKey("gradle.daemon.jvm.criteria.new.project", "true")
-    fun testSimpleProjectUsingDaemonJvmCriteria() {
-        runNewProjectTestCase { project ->
+    fun testSimpleProjectUsingDaemonJvmCriteria(): Unit = runBlocking {
+        createProjectByWizard(KOTLIN) {
+            setGradleWizardData("project", gradleDsl = GradleDsl.KOTLIN)
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", GradleDsl.KOTLIN) {
+                withKotlinBuildFile()
+                withKotlinSettingsFile()
+            })
             assertDaemonJvmProperties(project)
-        }
+        }.closeProjectAsync()
     }
 
-    private val expectedMultiModuleProjectModules = listOf(
-        "project",
-        "project.app",
-        "project.utils",
-        "project.buildSrc",
-        "project.app.main",
-        "project.app.test",
-        "project.utils.main",
-        "project.utils.test",
-        "project.buildSrc.main",
-        "project.buildSrc.test"
-    )
-
-    @Test
-    fun testNoMultiModuleProjectForGroovy() {
-        runNewProjectTestCase(
-            generateMultipleModules = true,
-        )
-    }
-
-    @Test
-    fun testMultiModuleProjectKts() {
-        runNewProjectTestCase(
-            useKotlinDsl = true,
-            addSampleCode = true,
-            expectedModules = expectedMultiModuleProjectModules,
-            generateMultipleModules = true
-        )
-    }
-
-    @Test
-    fun testMultiModuleProjectEmptyKts() {
-        runNewProjectTestCase(
-            useKotlinDsl = true,
-            addSampleCode = false,
-            expectedModules = expectedMultiModuleProjectModules,
-            generateMultipleModules = true
-        ) { project ->
-            val basePath = File(project.basePath!!)
-            val hasKotlinFile = basePath.walkTopDown().none { it.extension == "kt" }
-            Assertions.assertFalse(hasKotlinFile, "empty project should not contain Kotlin files")
-        }
-    }
-
-    @Test
-    fun testSampleCode() {
-        runNewProjectTestCase(addSampleCode = true) { project ->
-            val mainFileContent = project.findMainFileContent()
-            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-            Assertions.assertTrue(
-                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                "Main file did not contain onboarding tips"
-            )
-            Assertions.assertTrue(
-                mainFileContent.contains("//TIP"),
-                "Main file contained rendered onboarding tips"
-            )
-        }
-    }
-
-    // The onboarding tips have to be handled a bit more manually because the rendered text depends on the OS of the system
-    // because shortcuts are OS specific
-    @Test
-    fun testSampleCodeKts() {
-        runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true) { project ->
-            val mainFileContent = project.findMainFileContent()
-            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-            Assertions.assertTrue(
-                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                "Main file did not contain onboarding tips"
-            )
-            Assertions.assertTrue(
-                mainFileContent.contains("//TIP"),
-                "Main file contained rendered onboarding tips"
-            )
-        }
-    }
-
-    @Test
-    @RegistryKey("doc.onboarding.tips.render", "false")
-    fun testSampleCodeRawOnboardingTips() {
-        runNewProjectTestCase(addSampleCode = true) { project ->
-            val mainFileContent = project.findMainFileContent()
-            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-            Assertions.assertTrue(
-                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                "Main file did not contain onboarding tips"
-            )
-            Assertions.assertFalse(
-                mainFileContent.contains("//TIP"),
-                "Main file contained rendered onboarding tips"
-            )
-        }
-    }
-
-    @Test
-    @RegistryKey("doc.onboarding.tips.render", "false")
-    fun testSampleCodeRawOnboardingTipsKts() {
-        runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true) { project ->
-            val mainFileContent = project.findMainFileContent()
-            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-            Assertions.assertTrue(
-                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                "Main file did not contain onboarding tips"
-            )
-            Assertions.assertFalse(
-                mainFileContent.contains("//TIP"),
-                "Main file contained rendered onboarding tips"
-            )
-        }
-    }
-
-    private fun runNewModuleTestCase(
-        expectedNewModules: List<String>,
-        projectInfo: ProjectInfo,
-        parentPath: String = "project",
-        useKotlinDsl: Boolean = false,
-        name: String = "module",
-        groupId: String = "org.testcase",
-        version: String = "1.0.0",
-        addSampleCode: Boolean = false,
-        independentHierarchy: Boolean = false,
-        generateMultipleModules: Boolean = false,
-        additionalAssertions: (Project) -> Unit = {}
-    ) {
-        runBlocking {
-            initProject(projectInfo)
-            openProject("project").useProjectAsync { project ->
-                val parentData = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/$parentPath")!!
-                val existingModules = project.modules.map { it.name }
-                createModuleByWizard(project, KOTLIN) {
-                    setGradleWizardData(
-                        useKotlinDsl = useKotlinDsl,
-                        name = name,
-                        groupId = groupId,
-                        version = version,
-                        parentData = parentData.data.takeUnless { independentHierarchy },
-                        path = "$parentPath/$name",
-                        addSampleCode = addSampleCode,
-                        generateMultipleModules = generateMultipleModules,
-                    )
+    @ParameterizedTest
+    @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
+    fun testMultiModuleProject(gradleDsl: GradleDsl, addSampleCode: Boolean): Unit = runBlocking {
+        createProjectByWizard(KOTLIN) {
+            setGradleWizardData("project", gradleDsl = gradleDsl, addSampleCode = addSampleCode, generateMultipleModules = true)
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                if (gradleDsl == GradleDsl.KOTLIN) {
+                    modulesPerSourceSet.clear() // no build script for a root module
+                    moduleInfo("project.app", "app")
+                    moduleInfo("project.utils", "utils")
+                    moduleInfo("project.buildSrc", "buildSrc")
                 }
-                assertModules(project, existingModules + expectedNewModules)
-                project.assertCorrectProjectFiles()
-                additionalAssertions(project)
+            })
+        }.withProjectAsync { project ->
+            val hasKotlinFiles = project.projectRoot.walk()
+                .any { it.extension == "kt" && !it.pathString.contains("project/buildSrc/build/generated-sources/") }
+            if (addSampleCode) {
+                Assertions.assertTrue(hasKotlinFiles) {
+                    "Project with sample code should contain Kotlin files"
+                }
+            } else {
+                Assertions.assertFalse(hasKotlinFiles) {
+                    "Project without sample code should not contain Kotlin files"
+                }
             }
-        }
+        }.closeProjectAsync()
     }
 
-    private fun simpleJavaProject(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
-        withJavaBuildFile()
-        withSettingsFile {
-            withFoojayPlugin()
-            setProjectName("project")
-        }
-    }
-
-    @Test
-    fun testNewModuleInJavaProject() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleJavaProject(false),
-            addSampleCode = true
-        ) { project ->
-            val propertiesExist = project.findRelativeFile("module/gradle.properties")?.exists() == true
-            Assertions.assertFalse(propertiesExist, "Gradle properties file should not exist in modules")
-        }
-    }
-
-    @Test
-    fun testNewModuleInJavaProjectKts() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleJavaProject(true),
-            addSampleCode = true,
-            useKotlinDsl = true
-        ) { project ->
-            val propertiesExist = project.findRelativeFile("module/gradle.properties")?.exists() == true
-            Assertions.assertFalse(propertiesExist, "Gradle properties file should not exist in modules")
-        }
-    }
-
-    @Test
-    fun testNewModuleInJavaProjectMixed() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleJavaProject(true)
-        )
-    }
-
-    private fun simpleKotlinProject(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
-        withBuildFile {
-            addGroup(groupId)
-            addVersion(version)
-            withKotlinJvmPlugin("1.9.0")
-        }
-        withSettingsFile {
-            withFoojayPlugin()
-            setProjectName("project")
-        }
-    }
-
-    @Test
-    fun testNewModuleInKotlinProject() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleKotlinProject(false)
-        )
-    }
-
-    @Test
-    fun testNewModuleInKotlinProjectKts() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleKotlinProject(true),
-            useKotlinDsl = true
-        )
-    }
-
-    @Test
-    fun testNewModuleInKotlinProjectIndependentHierarchy() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("module", "module.main", "module.test"),
-            projectInfo = simpleKotlinProject(false),
-            independentHierarchy = true
-        )
-    }
-
-    @Test
-    fun testNewModuleInKotlinProjectIndependentHierarchyKts() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("module", "module.main", "module.test"),
-            projectInfo = simpleKotlinProject(true),
-            useKotlinDsl = true,
-            independentHierarchy = true
-        )
-    }
-
-    @Test
-    fun testNoMultiModuleProjectForNewModulesKts() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleKotlinProject(true),
-            useKotlinDsl = true,
-        )
-    }
-
-    private fun javaProjectWithKotlinSubmodule(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
-        withJavaBuildFile()
-        moduleInfo("othermodule", "othermodule", useKotlinDsl) {
-            withBuildFile {
-                addGroup(groupId)
-                addVersion(version)
-                withKotlinJvmPlugin("1.8.0")
+    @ParameterizedTest
+    @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
+    fun testSampleCode(gradleDsl: GradleDsl, renderedTips: Boolean): Unit = runBlocking {
+        Registry.get("doc.onboarding.tips.render").setValue(renderedTips, asDisposable())
+        createProjectByWizard(KOTLIN) {
+            setGradleWizardData("project", gradleDsl = gradleDsl, addSampleCode = true)
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                withKotlinBuildFile()
+                withKotlinSettingsFile()
+            })
+        }.withProjectAsync {
+            // The onboarding tips have to be handled a bit more manually because the rendered text depends on the OS of the system
+            // because shortcuts are OS specific
+            val mainFileContent = getMainFileContent("project")
+            Assertions.assertTrue(mainFileContent.contains(ONBOARDING_TIPS_SEARCH_STR)) {
+                "Main file did not contain onboarding tips"
             }
-        }
-        withSettingsFile {
-            withFoojayPlugin()
-            setProjectName("project")
-            include("othermodule")
-        }
+            Assertions.assertEquals(renderedTips, mainFileContent.contains("//TIP")) {
+                "Main file should contain rendered onboarding tips"
+            }
+        }.closeProjectAsync()
     }
 
-    @Test
-    fun testOtherKotlinModule() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = javaProjectWithKotlinSubmodule(false)
-        ) { project ->
-            project.assertKotlinVersion("1.8.0", false, "module")
-        }
+    @ParameterizedTest
+    @CsvCrossProductSource("KOTLIN,GROOVY", "KOTLIN,GROOVY")
+    fun testNewModuleInJavaProject(gradleDslInJava: GradleDsl, gradleDslInKotlin: GradleDsl): Unit = runBlocking {
+        initProject(projectInfo("project", gradleDslInJava) {
+            withJavaBuildFile()
+            withKotlinSettingsFile()
+        })
+        openProject("project").withProjectAsync { project ->
+            createModuleByWizard(project, KOTLIN) {
+                val projectNode = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, project.projectPath)!!
+                setGradleWizardData("module", "project/module", gradleDslInKotlin, parentData = projectNode.data)
+            }
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDslInJava) {
+                withJavaBuildFile()
+                withKotlinSettingsFile { include("module") }
+                moduleInfo("project.module", "module", gradleDslInKotlin) {
+                    withKotlinBuildFile()
+                }
+            })
+        }.withProjectAsync { project ->
+            Assertions.assertFalse(project.projectRoot.resolve("module/gradle.properties").exists()) {
+                "Gradle properties file should not exist in modules"
+            }
+        }.closeProjectAsync()
     }
 
-    @Test
-    fun testOtherKotlinModuleKts() {
-        runNewModuleTestCase(
-            expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = javaProjectWithKotlinSubmodule(true),
-            useKotlinDsl = true
-        ) { project ->
-            project.assertKotlinVersion("1.8.0", true, "module")
-        }
+    @ParameterizedTest
+    @EnumSource(GradleDsl::class)
+    fun testNewModuleInKotlinProject(gradleDsl: GradleDsl): Unit = runBlocking {
+        initProject(projectInfo("project", gradleDsl) {
+            withKotlinBuildFile()
+            withKotlinSettingsFile()
+        })
+        openProject("project").withProjectAsync { project ->
+            createModuleByWizard(project, KOTLIN) {
+                val projectNode = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, project.projectPath)!!
+                setGradleWizardData("module", "project/module", gradleDsl, parentData = projectNode.data)
+            }
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                withKotlinBuildFile()
+                withKotlinSettingsFile { include("module") }
+                moduleInfo("project.module", "module") {
+                    withKotlinBuildFile(kotlinJvmPluginVersion = null)
+                }
+            })
+        }.withProjectAsync { project ->
+            Assertions.assertFalse(project.projectRoot.resolve("module/gradle.properties").exists()) {
+                "Gradle properties file should not exist in modules"
+            }
+        }.closeProjectAsync()
     }
 
-    private fun simpleBuildSrcProjectWithVersionCatalog(useDependency: Boolean) = projectInfo("project") {
-        moduleInfo("project.buildSrc", "buildSrc") {
-            withBuildFile {
-                if (useDependency) {
-                    withDependency {
-                        addElement(code("libs.kotlinGradlePlugin"))
+    @ParameterizedTest
+    @EnumSource(GradleDsl::class)
+    fun testNewModuleInKotlinProjectIndependentHierarchy(gradleDsl: GradleDsl): Unit = runBlocking {
+        initProject(projectInfo("project", gradleDsl) {
+            withKotlinBuildFile()
+            withKotlinSettingsFile()
+        })
+        openProject("project").withProjectAsync { project ->
+            createModuleByWizard(project, KOTLIN) {
+                setGradleWizardData("module", "project/module", gradleDsl, parentData = null)
+            }
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                withKotlinBuildFile()
+                withKotlinSettingsFile()
+            }, projectInfo("project/module", gradleDsl) {
+                withKotlinBuildFile()
+                withKotlinSettingsFile()
+            })
+        }.closeProjectAsync()
+    }
+
+    @ParameterizedTest
+    @EnumSource(GradleDsl::class)
+    fun testNoMultiModuleProjectForNewModules(gradleDsl: GradleDsl): Unit = runBlocking {
+        initProject(projectInfo("project", gradleDsl) {
+            withKotlinBuildFile()
+            withKotlinSettingsFile()
+        })
+        openProject("project").withProjectAsync { project ->
+            createModuleByWizard(project, KOTLIN) {
+                val projectNode = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, project.projectPath)!!
+                setGradleWizardData("module", "project/module", gradleDsl, parentData = projectNode.data)
+            }
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                withKotlinBuildFile()
+                withKotlinSettingsFile { include("module") }
+                moduleInfo("project.module", "module") {
+                    withKotlinBuildFile(kotlinJvmPluginVersion = null)
+                }
+            })
+        }.closeProjectAsync()
+    }
+
+    @ParameterizedTest
+    @EnumSource(GradleDsl::class)
+    fun testOtherKotlinModule(gradleDsl: GradleDsl): Unit = runBlocking {
+        val kotlinJvmPluginVersion = "1.8.0"
+        initProject(projectInfo("project", gradleDsl) {
+            withJavaBuildFile()
+            withKotlinSettingsFile {
+                include("other_module")
+            }
+            moduleInfo("project.other_module", "other_module") {
+                withKotlinBuildFile(kotlinJvmPluginVersion)
+            }
+        })
+        openProject("project").withProjectAsync { project ->
+            createModuleByWizard(project, KOTLIN) {
+                val projectNode = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, project.projectPath)!!
+                setGradleWizardData("module", "project/module", gradleDsl, parentData = projectNode.data)
+            }
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                withJavaBuildFile()
+                withKotlinSettingsFile {
+                    include("other_module")
+                    include("module")
+                }
+                moduleInfo("project.other_module", "other_module") {
+                    withKotlinBuildFile(kotlinJvmPluginVersion)
+                }
+                moduleInfo("project.module", "module") {
+                    withKotlinBuildFile(kotlinJvmPluginVersion)
+                }
+            })
+        }.closeProjectAsync()
+    }
+
+    @ParameterizedTest
+    @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
+    fun testNewModuleWithVersionCatalog(gradleDsl: GradleDsl, addBuildSrcVersionCatalogDependency: Boolean): Unit = runBlocking {
+        val kotlinJvmPluginVersion = "2.0.21"
+        val versionTomlContent = """
+            |[versions]
+            |kotlin = "$kotlinJvmPluginVersion"
+            |
+            |[libraries]
+            |kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+         """.trimMargin()
+        val versionCatalogContent = """
+            |dependencyResolutionManagement {
+            |
+            |    // Use Maven Central and Gradle Plugin Portal for resolving dependencies in the shared build logic ("buildSrc") project
+            |    @Suppress("UnstableApiUsage")
+            |    repositories {
+            |        mavenCentral()
+            |    }
+            |
+            |    // Re-use the version catalog from the main build
+            |    versionCatalogs {
+            |        create("libs") {
+            |            from(files("../gradle/libs.versions.toml"))
+            |        }
+            |    }
+            |}
+        """.trimMargin()
+        initProject(projectInfo("project") {
+            withFile("gradle/libs.versions.toml", versionTomlContent)
+            moduleInfo("project.buildSrc", "buildSrc") {
+                withBuildFile {
+                    withKotlinDsl()
+                    if (addBuildSrcVersionCatalogDependency) {
+                        addImplementationDependency(code("libs.kotlinGradlePlugin"))
                     }
                 }
+                withSettingsFile {
+                    addCode(versionCatalogContent)
+                }
             }
-            withSettingsFile {
-                addCode(
-                    """
-                        dependencyResolutionManagement {
-        
-                            // Use Maven Central and Gradle Plugin Portal for resolving dependencies in the shared build logic ("buildSrc") project
-                            @Suppress("UnstableApiUsage")
-                            repositories {
-                                mavenCentral()
-                            }
-        
-                            // Re-use the version catalog from the main build
-                            versionCatalogs {
-                                create("libs") {
-                                    from(files("../gradle/libs.versions.toml"))
-                                }
-                            }
+            modulesPerSourceSet.clear() // no build script for a root module
+            withKotlinSettingsFile()
+        })
+        openProject("project").withProjectAsync { project ->
+            createModuleByWizard(project, KOTLIN) {
+                val projectNode = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, project.projectPath)!!
+                setGradleWizardData("module", "project/module", gradleDsl, parentData = projectNode.data)
+            }
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project") {
+                withFile("gradle/libs.versions.toml", versionTomlContent)
+                moduleInfo("project.buildSrc", "buildSrc") {
+                    withSettingsFile {
+                        addCode(versionCatalogContent)
+                    }
+                    withBuildFile {
+                        withKotlinDsl()
+                        if (addBuildSrcVersionCatalogDependency) {
+                            addImplementationDependency(code("libs.kotlinGradlePlugin"))
                         }
-                    """.trimIndent()
-                )
-            }
-        }
-        withSettingsFile {
-            withFoojayPlugin()
-            setProjectName("project")
-        }
-        withFile(
-            "gradle/libs.versions.toml",
-            """
-                 [versions]
-                 kotlin = "2.0.21"
-
-                 [libraries]
-                 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-             """.trimIndent()
-        )
-    }
-
-    @Test
-    fun testNewModuleWithVersionCatalog() {
-        runNewModuleTestCase(
-            useKotlinDsl = false,
-            expectedNewModules = listOf("module"),
-            projectInfo = simpleBuildSrcProjectWithVersionCatalog(true)
-        ) { project ->
-            // It should not specify an explicit version because it is defined in the version catalog
-            Assertions.assertNull(project.findKotlinVersion(false, "module"))
-        }
-    }
-
-    @Test
-    fun testNewModuleWithVersionCatalogKts() {
-        runNewModuleTestCase(
-            useKotlinDsl = true,
-            expectedNewModules = listOf("module"),
-            projectInfo = simpleBuildSrcProjectWithVersionCatalog(true)
-        ) { project ->
-            // It should not specify an explicit version because it is defined in the version catalog
-            Assertions.assertNull(project.findKotlinVersion(true, "module"))
-        }
-    }
-
-    @Test
-    fun testNewModuleWithUnusedVersionCatalog() {
-        runNewModuleTestCase(
-            useKotlinDsl = false,
-            expectedNewModules = listOf("project.module.main", "project.module.test", "project.module"),
-            projectInfo = simpleBuildSrcProjectWithVersionCatalog(false)
-        ) { project ->
-            Assertions.assertNotNull(project.findKotlinVersion(false, "module"))
-        }
-    }
-
-    @Test
-    fun testNewModuleWithUnusedVersionCatalogKts() {
-        runNewModuleTestCase(
-            useKotlinDsl = true,
-            expectedNewModules = listOf("project.module.main", "project.module.test", "project.module"),
-            projectInfo = simpleBuildSrcProjectWithVersionCatalog(false)
-        ) { project ->
-            Assertions.assertNotNull(project.findKotlinVersion(true, "module"))
-        }
+                    }
+                }
+                modulesPerSourceSet.clear() // no build script for a root module
+                withKotlinSettingsFile { include("module") }
+                moduleInfo("project.module", "module", gradleDsl) {
+                    if (addBuildSrcVersionCatalogDependency) {
+                        // It should not specify an explicit version because it is defined in the version catalog
+                        withKotlinBuildFile(kotlinJvmPluginVersion = null)
+                    } else {
+                        withKotlinBuildFile(kotlinJvmPluginVersion = kotlinJvmPluginVersion)
+                    }
+                }
+            })
+        }.closeProjectAsync()
     }
 }

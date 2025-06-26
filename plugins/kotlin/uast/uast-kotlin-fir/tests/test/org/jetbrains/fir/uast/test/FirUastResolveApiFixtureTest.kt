@@ -218,6 +218,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkOperatorMultiResolvable(myFixture)
     }
 
+    fun testResolveAnnotationOnSetparam() {
+        checkResolveAnnotationOnSetparam(myFixture)
+    }
+
     fun testResolveDataClassSyntheticMember() {
         checkResolveDataClassSyntheticMember(myFixture, isK2 = true)
     }
@@ -240,6 +244,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveKotlinPropertyAccessor() {
         checkResolveKotlinPropertyAccessor(myFixture)
+    }
+
+    fun testResolveKotlinPropertyAccessor_binary() {
+        checkResolveKotlinPropertyAccessor_binary(myFixture)
     }
 
     fun testResolveBackingField() {

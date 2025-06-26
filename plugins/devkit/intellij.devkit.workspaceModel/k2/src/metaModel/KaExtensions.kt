@@ -146,5 +146,5 @@ internal fun KaSession.createObjTypeStub(symbol: KaClassSymbol, module: Compiled
   return ObjClassImpl(module, symbol.name?.identifier!!, openness, symbol.sourcePsi(), propertyAnnotations)
 }
 
-internal fun KaSession.isChild(kaType: KaAnnotated) =
-  kaType.isAnnotatedBy(WorkspaceModelDefaults.CHILD_ANNOTATION.classId)
+internal fun KaSession.isParent(kaType: KaAnnotated) =
+  kaType.isAnnotatedBy(WorkspaceModelDefaults.PARENT_ANNOTATION.classId)

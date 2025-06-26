@@ -2,15 +2,24 @@
 package com.jetbrains.python.packaging.conda
 
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import javax.swing.Icon
 
 class CondaPackage(
   name: String, version: String,
   editableMode: Boolean,
   val installedWithPip: Boolean = false,
 ) : PythonPackage(name, version, editableMode) {
+  override val sourceRepoIcon: Icon = if (installedWithPip) {
+    PythonPsiApiIcons.Python
+  } else {
+    PythonIcons.Python.Anaconda
+  }
+
   override fun toString(): String {
     return "CondaPackage(name='$name', version='$version', installedWithPip=$installedWithPip)"
   }

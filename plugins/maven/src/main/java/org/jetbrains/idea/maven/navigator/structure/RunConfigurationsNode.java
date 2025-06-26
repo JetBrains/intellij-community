@@ -17,8 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-class RunConfigurationsNode extends GroupNode {
-
+final class RunConfigurationsNode extends GroupNode {
   private final List<RunConfigurationNode> myChildren = new CopyOnWriteArrayList<>();
 
   RunConfigurationsNode(MavenProjectsStructure structure, ProjectNode parent) {

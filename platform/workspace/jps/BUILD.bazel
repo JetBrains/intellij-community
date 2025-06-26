@@ -34,6 +34,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic/telemetry",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":jps_resources"]
 )

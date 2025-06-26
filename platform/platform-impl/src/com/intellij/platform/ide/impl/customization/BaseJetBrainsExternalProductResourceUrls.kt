@@ -1,6 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.customization
 
+import com.intellij.ide.Region
+import com.intellij.ide.RegionSettings
+import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.updateSettings.impl.PatchInfo
 import com.intellij.openapi.updateSettings.impl.UpdateRequestParametersProvider
@@ -21,29 +24,72 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   abstract val basePatchDownloadUrl: Url
 
   /**
-   * Returns ID of YouTrack project which will be used by the "Submit a Bug Report" action.
+   * Returns ID of a YouTrack project which will be used by the "Submit a Bug Report" action.
    */
   abstract val youtrackProjectId: String
 
   /**
-   * Returns the product name in the form shown at "intellij-support.jetbrains.com" site and "jetbrains.com/feedback/feedback.jsp" page.
+   * Returns the product name in the form shown at the "intellij-support.jetbrains.com" site and "jetbrains.com/feedback/feedback.jsp" page.
    */
   abstract val shortProductNameUsedInForms: String?
 
   /**
    * Returns URL of the product page on the "jetbrains.com" site.
-   * It's used to compute URLs of the following resources: 
+   * It's used to compute URLs of the following resources:
    * * [productPageUrl]/download to get the address of the download page;
-   * * [productPageUrl]/whatsnew to get the address of "What's New" page.  
+   * * [productPageUrl]/whatsnew to get the address of "What's New" page.
    */
   abstract val productPageUrl: Url
 
   /**
-   * Returns base URL of context help pages. 
+   * Returns base URL of context help pages.
    * The current IDE version number and ID of the requested topic are added to it to get the actual URL:
    * [baseWebHelpUrl]`/<version>/?<topicId>`.
    */
   abstract val baseWebHelpUrl: Url?
+
+  /**
+   * Returns base URL for JetBrains website. Takes into account the user-selected region and locale.
+   * When localized pages are not present on the website, it takes care of redirecting to their English equivalents,
+   * so the IDE doesn't need to worry about that
+   */
+  val baseWebSiteUrl: Url
+    get() {
+
+      //China mainland has its own website, on which the default locale is zh; other regions use jetbrains.com with default en
+      val defaultLocales = mapOf(Region.CHINA to "zh")
+
+      //All language URLs currently supported by the website
+      val langToUrl = mapOf(
+        "en" to "en-us",
+        "zh" to "zh-cn",
+        "ja" to "ja-jp",
+        "ko" to "ko-kr",
+        "es" to "es-es",
+        "pt" to "pt-br",
+        "fr" to "fr-fr",
+        "de" to "de-de"
+      )
+
+      val currentRegion = RegionSettings.getRegion()
+      val selectedLocale = LocalizationStateService.getInstance()?.selectedLocale
+
+      return Urls.newFromEncoded(
+        buildString {
+          append("https://www.jetbrains.com")
+          if (currentRegion == Region.CHINA)
+            append(".cn")
+          if (selectedLocale != defaultLocales.getOrDefault(currentRegion, "en")) {
+            val locale = langToUrl[selectedLocale]
+            /**
+             * In case the locale is not supported by the website, direct to its default language.
+             * For jetbrains.com it will be English, and for jetbrains.com.cn — Chinese.
+             **/
+            if (locale != null)
+              append("/$locale")
+          }
+        })
+    }
 
   /**
    * Returns ID of the form used to contact support at the "intellij-support.jetbrains.com" site.
@@ -78,12 +124,12 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
         "project" to youtrackProjectId,
         "clearDraft" to "true",
         "description" to description,
-        "c" to "Affected versions: ${ApplicationInfo.getInstance().fullVersion}"
+        "c" to "Affected versions: ${ApplicationInfo.getInstance().fullVersion} (${ApplicationInfo.getInstance().getBuild().withoutProductCode()})"
       ))
     }
-  
+
   override val technicalSupportUrl: ((description: String) -> Url)?
-    get() = { _ ->  
+    get() = { _ ->
       Urls.newFromEncoded("https://intellij-support.jetbrains.com/hc/en-us/requests/new").addParameters(
         mapOf(
           "ticket_form_id" to intellijSupportFormId.toString(),
@@ -111,7 +157,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
         baseUrl.resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
           topicId to ""
         ))
-      }  
+      }
     }
 }
 

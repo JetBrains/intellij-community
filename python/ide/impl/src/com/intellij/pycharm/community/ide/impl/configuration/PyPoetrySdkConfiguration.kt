@@ -6,19 +6,20 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -26,11 +27,9 @@ import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.sdk.poetry.ui.PyAddNewPoetryFromFilePanel
 import com.jetbrains.python.sdk.setAssociationToModule
-import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -45,26 +44,26 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
   }
 
-  override fun getIntention(module: Module): String? =
-    runWithModalBlockingOrInBackground(module.project, PyBundle.message("python.sdk.validating.environment")) {
-      val toml = findAmongRoots(module, PY_PROJECT_TOML)
-      if (toml == null) {
-        return@runWithModalBlockingOrInBackground null
-      }
-
-      val isPoetry = getPyProjectTomlForPoetry(toml) != null
-      if (!isPoetry) {
-        return@runWithModalBlockingOrInBackground null
-      }
-
-      return@runWithModalBlockingOrInBackground PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", toml.name)
+  @NlsSafe
+  override suspend fun getIntention(module: Module): String? = reportRawProgress {
+    it.text(PyBundle.message("python.sdk.validating.environment"))
+    val toml = PyProjectToml.findFile(module)
+    if (toml == null) {
+      return@reportRawProgress null
     }
 
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, false) }
+    val isPoetry = getPyProjectTomlForPoetry(toml) != null
+    if (!isPoetry) {
+      return@reportRawProgress null
+    }
 
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForInspection(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, true) }
+    return@reportRawProgress PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", toml.name)
+  }
+
+
+  override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, false)
+
+  override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, true)
 
   override fun supportsHeadlessModel(): Boolean = true
 
@@ -106,19 +105,19 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val basePath = module.basePath?.let { Path.of(it) }
       if (basePath == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find module base path")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",module.basePath))
       }
-
-      val poetry = setupPoetry(basePath, null, true, findAmongRoots(module, PY_PROJECT_TOML) == null).getOr { return@withBackgroundProgress it }
+      val tomlFile = PyProjectToml.findFile(module)
+      val poetry = setupPoetry(basePath, null, true, tomlFile == null).getOr { return@withBackgroundProgress it }
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(poetry)) }
       if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find python executable in $poetry")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", poetry))
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.pathString)
       if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find python executable in $poetry")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", path))
       }
 
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")

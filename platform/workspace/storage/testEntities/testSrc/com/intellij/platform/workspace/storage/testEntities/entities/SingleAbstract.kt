@@ -7,11 +7,11 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface ParentSingleAbEntity : WorkspaceEntity {
-  val child: @Child ChildSingleAbstractBaseEntity?
+  val child: ChildSingleAbstractBaseEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -51,6 +51,7 @@ fun MutableEntityStorage.modifyParentSingleAbEntity(
 interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
   val commonData: String
 
+  @Parent
   val parentEntity: ParentSingleAbEntity
 
   //region generated code

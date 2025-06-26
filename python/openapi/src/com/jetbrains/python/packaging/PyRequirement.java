@@ -16,9 +16,6 @@ import java.util.List;
  * @see <a href="https://pip.pypa.io/en/stable/reference/pip_install/"><code>pip install</code> documentation</a>
  * @see <a href="https://www.python.org/dev/peps/pep-0508/">PEP-508</a>
  * @see <a href="https://www.python.org/dev/peps/pep-0440/">PEP-440</a>
- * @see PyPackageManager#parseRequirement(String)
- * @see PyPackageManager#parseRequirements(String)
- * @see PyPackageManager#parseRequirements(VirtualFile)
  */
 public interface PyRequirement {
 

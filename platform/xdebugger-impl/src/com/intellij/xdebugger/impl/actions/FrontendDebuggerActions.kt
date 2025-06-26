@@ -10,5 +10,5 @@ import org.jetbrains.annotations.ApiStatus
 fun areFrontendDebuggerActionsEnabled(): Boolean {
   val frontendType = FrontendApplicationInfo.getFrontendType()
   return useFeProxy() ||
-         (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported) // CWM case
+         (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
 }

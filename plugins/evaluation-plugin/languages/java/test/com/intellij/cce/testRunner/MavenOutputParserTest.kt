@@ -1,7 +1,6 @@
 package com.intellij.cce.testrunner
 
 
-import com.intellij.cce.test.TestRunResult
 import com.intellij.cce.java.test.MavenOutputParser
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -19,6 +18,8 @@ class MavenOutputParserTest(private val fileName: String) : BasePlatformTestCase
       "test1",
       "fasterxml__jackson-core-370",
       "fasterxml__jackson-core-380",
+      "fasterxml__jackson-dataformat-xml-544",
+      "fasterxml__jackson-dataformat-xml-590",
       )
   }
 
@@ -33,8 +34,9 @@ class MavenOutputParserTest(private val fileName: String) : BasePlatformTestCase
     val content = file.readText()
 
     val compilationSuccessful = MavenOutputParser.compilationSuccessful(content)
+    val projectIsResolvable = MavenOutputParser.checkIfProjectIsResolvable(content)
     val (passed, failed) = MavenOutputParser.parse(content)
-    checkResult(dump(compilationSuccessful, passed, failed))
+    checkResult(dump(compilationSuccessful, projectIsResolvable, passed, failed))
   }
 
   // copypast from ActionsProcessorTest.
@@ -52,9 +54,15 @@ class MavenOutputParserTest(private val fileName: String) : BasePlatformTestCase
   }
 }
 
-private fun dump(compilationSuccessful: Boolean, passed: List<String>, failed: List<String>): String {
+private fun dump(
+  compilationSuccessful: Boolean,
+  projectIsResolvable: Boolean,
+  passed: List<String>,
+  failed: List<String>,
+): String {
   val sb = StringBuilder()
   sb.appendLine("compilationSuccessful: ${compilationSuccessful}")
+  sb.appendLine("projectIsResolvable: ${projectIsResolvable}")
   sb.appendLine("passed: ${passed.size}")
   passed.forEach {
     sb.appendLine("\t$it")

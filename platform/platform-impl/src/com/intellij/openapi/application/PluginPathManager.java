@@ -74,7 +74,7 @@ public final class PluginPathManager {
   private static File findSubRepo(String pluginName) {
     for (File subRepo : SubRepoHolder.subRepos) {
       File candidate = new File(subRepo, pluginName);
-      if (candidate.exists() && candidate.isDirectory()) {
+      if (candidate.isDirectory()) {
         return candidate;
       }
     }

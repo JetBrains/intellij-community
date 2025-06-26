@@ -874,7 +874,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }
 
     @Override
-    public void executePaint(Component component, Graphics2D g) {
+    public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
       GraphicsUtil.setupAAPainting(g);
       g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
       g.fill(myArea);

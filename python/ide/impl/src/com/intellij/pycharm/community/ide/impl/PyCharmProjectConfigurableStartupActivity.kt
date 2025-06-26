@@ -18,17 +18,15 @@ class PyCharmProjectConfigurableStartupActivity : ProjectActivity {
           ep.bundle="messages.PyBundle"
           ep.groupWeight = 80
         }
+        "pyconsole" -> {
+          ep.groupId = PythonMainConfigurable.ID
+          ep.groupWeight = 75
+        }
         "PyPlotsConfigurable" -> {
           ep.groupId = PythonMainConfigurable.ID
           ep.key = "configurable.plots.pycharm.display.name"
           ep.bundle="messages.PyBundle"
           ep.groupWeight = 60
-        }
-        "com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" -> {
-          ep.groupId = PythonMainConfigurable.ID
-          ep.key = "configurable.PyIntegratedToolsModulesConfigurable.pycharm.display.name"
-          ep.bundle="messages.PyBundle"
-          ep.groupWeight = 20
         }
         "com.intellij.python.django.customization.DjangoModulesConfigurable" -> {
           ep.groupId = PythonMainConfigurable.ID
@@ -37,6 +35,12 @@ class PyCharmProjectConfigurableStartupActivity : ProjectActivity {
         "com.intellij.python.pro.flask.configuration.FlaskConfigurable" -> {
           ep.groupId = PythonMainConfigurable.ID
           ep.groupWeight = 40
+        }
+        "com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" -> {
+          ep.groupId = PythonMainConfigurable.ID
+          ep.key = "configurable.PyIntegratedToolsModulesConfigurable.pycharm.display.name"
+          ep.bundle="messages.PyBundle"
+          ep.groupWeight = 20
         }
       }
     }

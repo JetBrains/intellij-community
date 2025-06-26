@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SecondEntit
 import com.intellij.platform.workspace.storage.testEntities.entities.SecondPId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SecondEntityWithPIdImpl(private val dataSource: SecondEntityWithPIdData) : SecondEntityWithPId,
                                                                                           WorkspaceEntityBase(dataSource) {

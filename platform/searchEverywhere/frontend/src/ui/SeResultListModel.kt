@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
+import com.intellij.ide.rpc.ThrottledAccumulatedItems
+import com.intellij.ide.rpc.ThrottledItems
+import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.frontend.vm.SeThrottledAccumulatedItems
-import com.intellij.platform.searchEverywhere.frontend.vm.SeThrottledItems
-import com.intellij.platform.searchEverywhere.frontend.vm.SeThrottledOneItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,18 +38,18 @@ class SeResultListModel(private val selectionModelProvider: () -> ListSelectionM
     }
   }
 
-  fun addFromThrottledEvent(throttledEvent: SeThrottledItems<SeResultEvent>) {
+  fun addFromThrottledEvent(throttledEvent: ThrottledItems<SeResultEvent>) {
     if (!isValid) reset()
 
     when (throttledEvent) {
-      is SeThrottledAccumulatedItems<SeResultEvent> -> {
+      is ThrottledAccumulatedItems<SeResultEvent> -> {
         val accumulatedList = SeResultListCollection()
         throttledEvent.items.forEach {
           accumulatedList.handleEvent(it)
         }
         addAll(accumulatedList.list)
       }
-      is SeThrottledOneItem<SeResultEvent> -> {
+      is ThrottledOneItem<SeResultEvent> -> {
         SeResultListModelAdapter(this, selectionModelProvider()).handleEvent(throttledEvent.item)
       }
     }

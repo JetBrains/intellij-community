@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "CanConvertToMultiDollarString")
 
 package org.jetbrains.intellij.build.bazel
 
@@ -20,12 +20,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
 
@@ -54,11 +51,11 @@ internal data class CustomModuleDescription(
 
 internal val customModules: Map<String, CustomModuleDescription> = listOf(
   CustomModuleDescription(moduleName = "intellij.idea.community.build.zip", bazelPackage = "@rules_jvm//zip", bazelTargetName = "zip",
-                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/zip"),
+                          outputDirectory = "out/bazel-bin/external/rules_jvm+/zip"),
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@rules_jvm//dependency-graph", bazelTargetName = "dependency-graph",
-                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/dependency-graph"),
+                          outputDirectory = "out/bazel-bin/external/rules_jvm+/dependency-graph"),
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt", bazelPackage = "@rules_jvm//jps-builders-6", bazelTargetName = "build-javac-rt",
-                          outputDirectory = "out/bazel-out/rules_jvm+/\${CONF}/bin/jps-builders-6"),
+                          outputDirectory = "out/bazel-bin/external/rules_jvm+/jps-builders-6"),
 ).associateBy { it.moduleName }
 
 @Suppress("ReplaceGetOrSet")
@@ -102,10 +99,6 @@ internal class BazelBuildFileGenerator(
     }
 
     val resourceDescriptors = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.RESOURCE)
-    val extraResourceTarget = computeExtraResourceTarget(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir)
-    if (extraResourceTarget.any() && !module.name.contains(".android.")) {
-      throw IllegalStateException("Extra resource target for module ${module.name} is not null")
-    }
 
     val moduleContent = ModuleDescriptor(
       imlFile = imlDir.resolve("${module.name}.iml"),
@@ -114,7 +107,7 @@ internal class BazelBuildFileGenerator(
       bazelBuildFileDir = bazelBuildDir,
       isCommunity = isCommunity,
       sources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.SOURCE),
-      resources = resourceDescriptors + extraResourceTarget,
+      resources = resourceDescriptors,
       testSources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.TEST_SOURCE),
       testResources = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.TEST_RESOURCE),
       targetName = jpsModuleNameToBazelBuildName(module = module, baseBuildDir = bazelBuildDir, projectDir = projectDir),
@@ -483,6 +476,7 @@ internal class BazelBuildFileGenerator(
     if (moduleDescriptor.testSources.isNotEmpty()) {
       load("@rules_jvm//:jvm.bzl", "jvm_test")
       load("@rules_jvm//:jvm.bzl", "jvm_library")
+      load("@community//build:tests-options.bzl", "jps_test")
 
       val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
       target("jvm_library") {
@@ -497,7 +491,7 @@ internal class BazelBuildFileGenerator(
         renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceTargets, forTests = true)
       }
 
-      target("jvm_test") {
+      target("jps_test") {
         option("name", "${moduleDescriptor.targetName}_test")
         option("runtime_deps", arrayOf(":$testLibTargetName"))
       }
@@ -526,7 +520,7 @@ internal class BazelBuildFileGenerator(
 
     val jarOutputDirectory = when {
       customModule != null -> customModule.outputDirectory
-      moduleDescriptor.isCommunity -> "out/bazel-out/community+/\${CONF}/bin/$bazelModuleRelativePath"
+      moduleDescriptor.isCommunity -> "out/bazel-bin/external/community+/$bazelModuleRelativePath"
       else -> "out/bazel-bin/$bazelModuleRelativePath"
     }
 
@@ -537,7 +531,7 @@ internal class BazelBuildFileGenerator(
       // full target name instead of just jar for intellij.dotenv.*
       // like @community//plugins/env-files-support:dotenv-go_resources
       jarName.startsWith("@community//") ->
-        "out/bazel-out/community+/\${CONF}/bin/${jarName.substringAfter("@community//").replace(':', '/')}.jar"
+        "out/bazel-bin/external/community+/${jarName.substringAfter("@community//").replace(':', '/')}.jar"
       else -> "$jarOutputDirectory/$jarName.jar"
     }
 
@@ -704,50 +698,6 @@ private fun computeResources(module: JpsModule, contentRoots: List<Path>, bazelB
     .toList()
 }
 
-@OptIn(ExperimentalPathApi::class)
-private fun computeExtraResourceTarget(
-  module: JpsModule,
-  contentRoots: List<Path>,
-  bazelBuildDir: Path,
-): Sequence<ResourceDescriptor> {
-  return module.sourceRoots
-    .asSequence()
-    .filter { it.rootType == JavaSourceRootType.SOURCE }
-    .mapNotNull { sourceRoot ->
-      val sourceRootDir = sourceRoot.path
-      val metaInf = sourceRootDir.resolve("META-INF")
-      if (Files.notExists(metaInf)) {
-        return@mapNotNull null
-      }
-
-      val isEmptyDir = Files.newDirectoryStream(metaInf).use { stream ->
-        val iterator = stream.iterator()
-        while (iterator.hasNext()) {
-          if (!iterator.next().toString().startsWith('.')) {
-            return@use false
-          }
-        }
-        true
-      }
-      if (isEmptyDir) {
-        metaInf.deleteRecursively()
-        return@mapNotNull null
-      }
-
-      val metaInfRelative = resolveRelativeToBazelBuildFileDirectory(childDir = metaInf, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, module = module)
-        .invariantSeparatorsPathString
-
-      val existingResourceRoot = module.sourceRoots.firstOrNull { it.rootType == JavaResourceRootType.RESOURCE }
-      if (existingResourceRoot != null) {
-        //FileUtil.moveDirWithContent(sourceRootDir.resolve("META-INF").toFile(), existingResourceRoot.file.resolve("META-INF"))
-        println("WARN: Move META-INF to resource root (module=${module.name})")
-      }
-
-      val prefix = resolveRelativeToBazelBuildFileDirectory(sourceRootDir, contentRoots, bazelBuildDir, module = module).invariantSeparatorsPathString
-      ResourceDescriptor(baseDirectory = prefix, files = listOf("$metaInfRelative/**/*"), relativeOutputPath = "")
-    }
-}
-
 private fun isReferencedAsTestDep(
   moduleList: ModuleList,
   referencedModule: ModuleDescriptor,
@@ -837,6 +787,9 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
   }
   if (mergedCompilerArguments.contextReceivers) {
     options.put("context_receivers", true)
+  }
+  if (mergedCompilerArguments.contextParameters) {
+    options.put("context_parameters", true)
   }
   if (mergedCompilerArguments.whenGuards) {
     options.put("when_guards", true)

@@ -99,9 +99,9 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Reloads the contents of the specified PSI file and its associated document (if any) from the disk.
    *
-   * @param file the PSI file to reload.
+   * @param psiFile the PSI file to reload.
    */
-  public abstract void reloadFromDisk(@NotNull PsiFile file);
+  public abstract void reloadFromDisk(@NotNull PsiFile psiFile);
 
   /**
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.

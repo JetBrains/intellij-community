@@ -5,6 +5,7 @@ import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JO
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtWhenEntry
@@ -19,11 +20,17 @@ class JoinWhenEntryHandler : JoinRawLinesHandlerDelegate {
         val entry = element.getPrevSiblingIgnoringWhitespaceAndComments() as? KtWhenEntry ?: return CANNOT_JOIN
         val entryLastCondition = entry.conditions.lastOrNull() ?: return CANNOT_JOIN
         val whenExpression = entry.parent as? KtWhenExpression ?: return CANNOT_JOIN
+
+        val prevSiblingIgnoringWhitespace = element.getPrevSiblingIgnoringWhitespace()
+        val nextSiblingIgnoringWhitespace = element.getNextSiblingIgnoringWhitespace()
+        if (nextSiblingIgnoringWhitespace is PsiComment) return CANNOT_JOIN
         val nextEntry = entry.getNextSiblingIgnoringWhitespaceAndComments() as? KtWhenEntry ?: return CANNOT_JOIN
 
         if (nextEntry.isElse) return CANNOT_JOIN
         if (entry.hasComments() || nextEntry.hasComments() || !nextEntry.hasSameExpression(entry)) {
-            return joinWithSemicolon(document, entry, nextEntry)
+            return joinWithSemicolon(document,
+                                     prevSiblingIgnoringWhitespace ?: entry,
+                                     nextSiblingIgnoringWhitespace ?: nextEntry)
         }
         val nextEntryFirstCondition = nextEntry.conditions.firstOrNull() ?: return CANNOT_JOIN
         val separator = if (whenExpression.subjectExpression != null) ", " else " || "
@@ -33,8 +40,8 @@ class JoinWhenEntryHandler : JoinRawLinesHandlerDelegate {
 
     private fun joinWithSemicolon(
         document: Document,
-        entry: KtWhenEntry,
-        nextEntry: KtWhenEntry
+        entry: PsiElement,
+        nextEntry: PsiElement
     ): Int {
         document.replaceString(entry.textRange.endOffset, nextEntry.textRange.startOffset, "; ")
         return entry.textRange.endOffset + 1

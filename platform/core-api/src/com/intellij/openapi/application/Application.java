@@ -153,7 +153,7 @@ public interface Application extends ComponentManager {
   <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
-   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
+   * Runs the specified write action. Must be called from EDT. The action is executed
    * immediately if no read actions are currently running, or blocked until all read actions complete.
    * <p>
    * See also {@link WriteAction#run} for a more lambda-friendly version.
@@ -165,7 +165,7 @@ public interface Application extends ComponentManager {
   void runWriteAction(@NotNull Runnable action);
 
   /**
-   * Runs the specified computation in a write-action. Must be called from the Swing dispatch thread.
+   * Runs the specified computation in a write-action. Must be called from EDT.
    * The action is executed immediately if no read actions or write actions are currently running,
    * or blocked until all read actions and write actions complete.
    * <p>
@@ -180,7 +180,7 @@ public interface Application extends ComponentManager {
   <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
-   * Runs the specified computation in a write-action. Must be called from the Swing dispatch thread.
+   * Runs the specified computation in a write-action. Must be called from EDT.
    * The action is executed immediately if no read actions or write actions are currently running,
    * or blocked until all read actions and write actions complete.
    * <p>
@@ -208,7 +208,7 @@ public interface Application extends ComponentManager {
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
   /**
-   * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
+   * Runs the specified computation in a write intent action. Must be called from EDT. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action
    * completes.
    * <p>
@@ -337,7 +337,7 @@ public interface Application extends ComponentManager {
   void saveSettings();
 
   /**
-   * @return true if this thread is inside read action.
+   * @return true if this thread is inside a read action.
    * @see #runReadAction(Runnable)
    */
   boolean holdsReadLock();
@@ -378,7 +378,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
-   * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
+   * @return {@code true} if the current thread is EDT with IW lock, {@code false} otherwise.
    * @see #isWriteIntentLockAcquired()
    */
   @Contract(pure = true)
@@ -440,7 +440,7 @@ public interface Application extends ComponentManager {
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread under Write Intent lock, when IDE is in the specified modality
-   * state(or a state with less modal dialogs open) - unless the expiration condition is fulfilled.
+   * state (or a state with less modal dialogs open) - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed.
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
@@ -541,7 +541,7 @@ public interface Application extends ComponentManager {
   long getIdleTime();
 
   /**
-   * Checks if IDE is currently running unit tests. No UI should be shown when unit
+   * Checks if the IDE is currently running unit tests. No UI should be shown when unit
    * tests are being executed.
    * This method may also be used for additional debug checks or logging in test mode.
    * <p>
@@ -564,15 +564,15 @@ public interface Application extends ComponentManager {
   boolean isUnitTestMode();
 
   /**
-   * Checks if IDE is running as a command line applet or in unit test mode.
-   * No UI should be shown when IDE is running in this mode.
+   * Checks if the IDE is running as a command line applet or in unit test mode.
+   * No UI should be shown when the IDE is running in this mode.
    *
    * @return {@code true} if IDE is running in UI-less mode, {@code false} otherwise
    */
   boolean isHeadlessEnvironment();
 
   /**
-   * Checks if IDE is running as a command line applet or in unit test mode.
+   * Checks if the IDE is running as a command line applet or in unit test mode.
    * UI can be shown (e.g. diff frame)
    *
    * @return {@code true} if IDE is running in command line mode, {@code false} otherwise
@@ -631,7 +631,7 @@ public interface Application extends ComponentManager {
   boolean isActive();
 
   /**
-   * Checks if IDE is running in
+   * Checks if the IDE is running in
    * <a href="https://plugins.jetbrains.com/docs/intellij/enabling-internal.html">Internal Mode</a>
    * to enable additional features for plugin development.
    */

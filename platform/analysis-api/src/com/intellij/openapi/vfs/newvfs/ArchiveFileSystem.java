@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -8,7 +8,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +39,10 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return isCorrectFileType(file) ? findFileByPath(getRootPathByLocal(file)) : null;
   }
 
+  /**
+   * Dresses a local file path to make it a suitable root path for this filesystem.
+   * E.g., VirtualFile("/x/y.jar") -> "/x/y.jar!/"
+   */
   public @NotNull String getRootPathByLocal(@NotNull VirtualFile file) {
     return composeRootPath(file.getPath());
   }

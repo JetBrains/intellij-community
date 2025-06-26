@@ -27,7 +27,7 @@ class InstallAllPackagesQuickFix(private val packageNames: List<String>) : Local
 
     if (confirmedPackages.isEmpty()) return
 
-    val fix = PyInstallRequirementsFix(familyName, module, sdk,
+    val fix = PyInstallRequirementsFix(familyName, sdk,
                                        confirmedPackages.toList(),
                                        emptyList())
     fix.applyFix(module.project, descriptor)

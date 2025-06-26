@@ -6,6 +6,7 @@
     <module name="intellij.json.backend"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
+    <module name="intellij.libraries.xerces"/>
   </dependencies>
 
   <resource-bundle>messages.DevKitBundle</resource-bundle>
@@ -613,6 +614,8 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.PluginDescriptorDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
+    <codeInsight.lineMarkerProvider language="XML"
+                                    implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleLineMarkerProvider"/>
     <psi.referenceContributor
       language="Properties"
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor"/>

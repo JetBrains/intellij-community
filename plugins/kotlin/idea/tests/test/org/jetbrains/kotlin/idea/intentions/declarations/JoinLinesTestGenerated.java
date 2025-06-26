@@ -571,6 +571,21 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
             runTest("testData/joinLines/whenEntry/hasComment2.kt");
         }
 
+        @TestMetadata("hasComment3.kt")
+        public void testHasComment3() throws Exception {
+            runTest("testData/joinLines/whenEntry/hasComment3.kt");
+        }
+
+        @TestMetadata("hasComment4.kt")
+        public void testHasComment4() throws Exception {
+            runTest("testData/joinLines/whenEntry/hasComment4.kt");
+        }
+
+        @TestMetadata("hasComment5.kt")
+        public void testHasComment5() throws Exception {
+            runTest("testData/joinLines/whenEntry/hasComment5.kt");
+        }
+
         @TestMetadata("in.kt")
         public void testIn() throws Exception {
             runTest("testData/joinLines/whenEntry/in.kt");

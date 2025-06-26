@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,11 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
     );
 
   private static final Set<String> CHECK_ANNOTATIONS = Set.of(
-    "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
+    "javax.annotation.CheckReturnValue",
+    "org.assertj.core.util.CheckReturnValue",
+    "com.google.errorprone.annotations.CheckReturnValue",
+    "org.jetbrains.annotations.CheckReturnValue",
+    "org.springframework.lang.CheckReturnValue");
   private final MethodMatcher myMethodMatcher;
   /**
    * @noinspection PublicField
@@ -210,65 +214,49 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
   private class IgnoreResultOfCallVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
-      if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
-        PsiElement resolve = expression.resolve();
-        if (resolve instanceof PsiMethod method && !method.isConstructor()) {
-          visitCalledExpression(expression, method, null);
-        }
+      if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression)) &&
+          expression.resolve() instanceof PsiMethod method && !method.isConstructor() && shouldReport(expression, method, null)) {
+        registerError(ObjectUtils.notNull(expression.getReferenceNameElement(), expression), method.getContainingClass());
       }
     }
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      if (ExpressionUtils.isVoidContext(expression)) {
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null || method.isConstructor()) {
-          return;
-        }
-        visitCalledExpression(expression, method, expression.getParent());
+      if (!ExpressionUtils.isVoidContext(expression)) return;
+      final PsiMethod method = expression.resolveMethod();
+      if (method != null && !method.isConstructor() && shouldReport(expression, method, expression.getParent())) {
+        registerMethodCallError(expression, method.getContainingClass());
       }
     }
 
-    private void visitCalledExpression(PsiExpression call, PsiMethod method, @Nullable PsiElement errorContainer) {
-      if (shouldReport(call, method, errorContainer)) {
-        registerMethodCallOrRefError(call, method.getContainingClass());
-      }
-    }
-
-    private boolean shouldReport(PsiExpression call, PsiMethod method, @Nullable PsiElement errorContainer) {
+    private boolean shouldReport(PsiExpression expression, PsiMethod method, @Nullable PsiElement errorContainer) {
       final PsiType returnType = method.getReturnType();
       if (PsiTypes.voidType().equals(returnType) || TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, returnType)) return false;
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;
-      if (call instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
+      if (expression instanceof PsiMethodCallExpression call) {
+        final PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall(call);
         if (MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
       }
       if (PropertyUtil.isSimpleGetter(method)) {
         return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
-      if (method instanceof PsiCompiledElement) {
-        final PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
-        if (sourceMethod != null && PropertyUtil.isSimpleGetter(sourceMethod)) {
-          return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
-        }
+      if (method instanceof PsiCompiledElement && method.getNavigationElement() instanceof PsiMethod nav &&
+          PropertyUtil.isSimpleGetter(nav)) {
+        return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
-      if (isInTestContainer(call)) return false;
+      if (isInTestContainer(expression)) return false;
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
         return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
-      if(isKnownArgumentSideEffect(call)){
+      if (isKnownArgumentSideEffect(expression) || isKnownExceptionalSideEffectCaught(expression) || isHardcodedException(expression)) {
         return false;
       }
-      if (isKnownExceptionalSideEffectCaught(call)) {
-        return false;
-      }
-      if (isPureMethod(method, call)) {
+      if (isPureMethod(method, expression)) {
         return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
 
-      if (isHardcodedException(call)) return false;
       PsiElement stop;
       if (!myMethodMatcher.matches(method)) {
         final PsiAnnotation annotation = findCheckReturnValueAnnotation(method);
@@ -296,26 +284,22 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
       return null;
     }
 
-    private static boolean isKnownArgumentSideEffect(PsiExpression call) {
-      if (!(call instanceof PsiMethodCallExpression callExpression)) {
+    private static boolean isKnownArgumentSideEffect(PsiExpression expression) {
+      if (!(expression instanceof PsiMethodCallExpression call) || !KNOWN_ARGUMENT_SIDE_EFFECTS.test(call)) {
         return false;
       }
-      if (!KNOWN_ARGUMENT_SIDE_EFFECTS.test(callExpression)) {
-        return false;
-      }
-      PsiMethod method = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+      PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
       if (method == null) {
         return false;
       }
-      PsiExpressionList list = callExpression.getArgumentList();
+      PsiExpressionList list = call.getArgumentList();
       for (PsiExpression argument : list.getExpressions()) {
         if (TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(argument.getType())) {
           continue;
         }
-        if (argument instanceof  PsiReferenceExpression referenceExpression &&
-            referenceExpression.resolve() instanceof PsiVariable variable) {
+        if (argument instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable variable) {
           List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, method);
-          if (ContainerUtil.exists(references, ref -> ref.getTextOffset() > argument.getTextOffset())) {
+          if (ContainerUtil.exists(references, r -> r.getTextOffset() > argument.getTextOffset())) {
             return true;
           }
         }
@@ -323,52 +307,47 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
       return false;
     }
 
-    private static boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {
+    private static boolean isKnownExceptionalSideEffectCaught(PsiExpression expression) {
       String exception = null;
-      if (call instanceof PsiMethodCallExpression) {
-        exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst((PsiMethodCallExpression)call);
+      if (expression instanceof PsiMethodCallExpression call) {
+        exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst(call);
       }
-      else if (call instanceof PsiMethodReferenceExpression) {
-        exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst((PsiMethodReferenceExpression)call);
+      else if (expression instanceof PsiMethodReferenceExpression ref) {
+        exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst(ref);
       }
       if (exception == null) return false;
-      PsiClass exceptionClass = JavaPsiFacade.getInstance(call.getProject()).findClass(exception, call.getResolveScope());
+      PsiClass exceptionClass = JavaPsiFacade.getInstance(expression.getProject()).findClass(exception, expression.getResolveScope());
       if (exceptionClass == null) return false;
-      PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(call, PsiTryStatement.class);
-      if (parentTry == null || !PsiTreeUtil.isAncestor(parentTry.getTryBlock(), call, true)) return false;
+      PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(expression, PsiTryStatement.class);
+      if (parentTry == null || !PsiTreeUtil.isAncestor(parentTry.getTryBlock(), expression, true)) return false;
       return ContainerUtil.exists(ExceptionUtils.getExceptionTypesHandled(parentTry),
                                   type -> InheritanceUtil.isInheritor(exceptionClass, type.getCanonicalText()));
     }
 
     private static boolean isHardcodedException(PsiExpression expression) {
       if (!(expression instanceof PsiMethodCallExpression call)) return false;
-      if (STREAM_COLLECT.test(call)) {
-        PsiMethodCallExpression collector =
-          ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);
-        if (COLLECTOR_TO_COLLECTION.test(collector)) {
-          PsiLambdaExpression lambda = ObjectUtils
-            .tryCast(PsiUtil.skipParenthesizedExprDown(collector.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
-          if (lambda != null) {
-            PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
-            if (body instanceof PsiReferenceExpression && ((PsiReferenceExpression)body).resolve() instanceof PsiVariable) {
-              // .collect(toCollection(() -> var)) : the result is written into given collection
-              return true;
-            }
-          }
+      if (STREAM_COLLECT.test(call)
+          && PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]) instanceof PsiMethodCallExpression collector
+          && COLLECTOR_TO_COLLECTION.test(collector)
+          && PsiUtil.skipParenthesizedExprDown(collector.getArgumentList().getExpressions()[0]) instanceof PsiLambdaExpression lambda) {
+        PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
+        if (body instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable) {
+          // .collect(toCollection(() -> var)) : the result is written into the given collection
+          return true;
         }
       }
 
       return false;
     }
 
-    private static boolean isPureMethod(PsiMethod method, PsiExpression call) {
+    private static boolean isPureMethod(PsiMethod method, PsiExpression expression) {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
       if (!SideEffectChecker.mayHaveExceptionalSideEffect(method)) return true;
-      if (!(call instanceof PsiCallExpression) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
-      CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(call);
-      return result != null && result.cannotFailByContract((PsiCallExpression)call);
+      if (!(expression instanceof PsiCallExpression call) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
+      CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
+      return result != null && result.cannotFailByContract(call);
     }
 
     private static boolean isInTestContainer(PsiExpression call) {
@@ -381,10 +360,10 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
         if (skipParenthesizedExprUp == null) return false;
         expressionList = PsiUtil.skipParenthesizedExprUp(skipParenthesizedExprUp.getParent());
       }
-      else if (psiElement instanceof PsiAnonymousClass psiAnonymousClass) {
-        if (!LambdaUtil.isFunctionalType(psiAnonymousClass.getBaseClassType()) ||
-            InheritanceUtil.isInheritor(psiAnonymousClass, JAVA_UTIL_FUNCTION_SUPPLIER)) return false;
-        if (!(psiAnonymousClass.getParent() instanceof PsiNewExpression psiNewExpression)) return false;
+      else if (psiElement instanceof PsiAnonymousClass anonymous) {
+        if (!LambdaUtil.isFunctionalType(anonymous.getBaseClassType()) ||
+            InheritanceUtil.isInheritor(anonymous, JAVA_UTIL_FUNCTION_SUPPLIER)) return false;
+        if (!(anonymous.getParent() instanceof PsiNewExpression psiNewExpression)) return false;
         PsiElement skipParenthesizedExprUp = PsiUtil.skipParenthesizedExprUp(psiNewExpression);
         if (skipParenthesizedExprUp == null) return false;
         expressionList = PsiUtil.skipParenthesizedExprUp(skipParenthesizedExprUp.getParent());
@@ -403,15 +382,6 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
       return nonFailingReturnValue != null &&
              (nonFailingReturnValue.equals(ContractReturnValue.returnThis()) ||
               nonFailingReturnValue instanceof ContractReturnValue.ParameterReturnValue);
-    }
-
-    private void registerMethodCallOrRefError(PsiExpression call, PsiClass aClass) {
-      if (call instanceof PsiMethodCallExpression) {
-        registerMethodCallError((PsiMethodCallExpression)call, aClass);
-      }
-      else if (call instanceof PsiMethodReferenceExpression){
-        registerError(ObjectUtils.notNull(((PsiMethodReferenceExpression)call).getReferenceNameElement(), call), aClass);
-      }
     }
   }
 }

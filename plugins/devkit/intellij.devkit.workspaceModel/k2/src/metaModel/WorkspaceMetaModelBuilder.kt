@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k2.metaModel
 
+import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityInheritsEntitySourceException
 import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
+import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityMultipleInheritanceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
 import com.intellij.devkit.workspaceModel.metaModel.impl.*
 import com.intellij.devkit.workspaceModel.metaModel.unsupportedType
@@ -77,7 +79,7 @@ internal class WorkspaceMetaModelBuilder(
   ): ObjModuleStub {
     val module = CompiledObjModuleImpl(packageName)
 
-    val types = packageSymbol.packageScope.declarations
+    val entityTypes = packageSymbol.packageScope.declarations
       .filterIsInstance<KaClassSymbol>()
       .filter(::isEntityInterface)
       .filter { it.containingModule == kaModule }
@@ -86,7 +88,7 @@ internal class WorkspaceMetaModelBuilder(
       .toList()
 
     val moduleAbstractTypes = moduleAbstractTypes()
-    return ObjModuleStub(module, types, moduleAbstractTypes, kaModule)
+    return ObjModuleStub(module, entityTypes, moduleAbstractTypes, kaModule)
   }
 
   private fun KaSession.getObjClass(entityInterface: KaClassSymbol): ObjClass<*> {
@@ -99,7 +101,7 @@ internal class WorkspaceMetaModelBuilder(
   private inner class ObjModuleStub(
     val compiledObjModule: CompiledObjModuleImpl,
     // TODO: storing KaClassSymbol is unsafe, ObjModuleStub should inherit from KaLifetimeOwner
-    val types: List<Pair<KaClassSymbol, ObjClassImpl<Obj>>>,
+    val entityTypes: List<Pair<KaClassSymbol, ObjClassImpl<Obj>>>,
     val moduleAbstractTypes: List<KaClassSymbol>,
     val kaModule: KaModule,
   ) /* : KaLifetimeOwner */ {
@@ -107,7 +109,7 @@ internal class WorkspaceMetaModelBuilder(
     fun registerContent(kaSession: KaSession, extProperties: List<Pair<KaPropertySymbol, KaClassSymbol>>): CompiledObjModule =
       with(kaSession) {
         var extPropertyId = 0
-        for ((classSymbol, objType) in types) {
+        for ((classSymbol, objType) in entityTypes) {
           val properties = classSymbol.declaredMemberScope.callables
             .filterIsInstance<KaPropertySymbol>().toList()
             .filter { it.containingModule == kaModule }
@@ -123,12 +125,22 @@ internal class WorkspaceMetaModelBuilder(
             }
           }
 
-          classSymbol.superTypes.forEach { superType ->
-            val superSymbol = superType.expandedSymbol
-            if (superSymbol is KaClassSymbol && isEntityInterface(superSymbol)) {
-              val superClass = findObjClass(superSymbol)
-              objType.addSuperType(superClass)
+          val extendedAbstract = mutableSetOf<String>()
+          classSymbol.superTypes
+            .map { it.expandedSymbol }
+            .filterIsInstance<KaClassSymbol>()
+            .forEach { superSymbol ->
+              if (isEntityInterface(superSymbol)) {
+                val superClass = findObjClass(superSymbol)
+                objType.addSuperType(superClass)
+                extendedAbstract.add(superClass.name)
+              }
+              if (isEntitySource(superSymbol)) {
+                throw WorkspaceEntityInheritsEntitySourceException(classSymbol.javaClassFqn)
+              }
             }
+          if (extendedAbstract.size > 1) {
+            throw WorkspaceEntityMultipleInheritanceException(classSymbol.javaClassFqn, extendedAbstract)
           }
 
           compiledObjModule.addType(objType)
@@ -173,7 +185,8 @@ internal class WorkspaceMetaModelBuilder(
       propertyId: Int,
       receiver: ObjClassImpl<Obj>,
     ): OwnProperty<Obj, *> {
-      val valueType = convertType(property.returnType, hashMapOf(), isChild(property))
+      val hasParentAnnotation = isParent(property)
+      val valueType = convertType(property.returnType, hashMapOf(), hasParentAnnotation)
       return OwnPropertyImpl(receiver, property.name.identifier, valueType, computeKind(property),
                              property.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.classId), !property.isVal, false, false,
                              propertyId, property.isAnnotatedBy(WorkspaceModelDefaults.EQUALS_BY_ANNOTATION.classId),
@@ -185,7 +198,8 @@ internal class WorkspaceMetaModelBuilder(
       receiverClass: KaClassSymbol,
       extPropertyId: Int,
     ): ExtProperty<*, *> {
-      val valueType = convertType(extProperty.returnType, hashMapOf(), false)
+      val hasParentAnnotation = isParent(extProperty)
+      val valueType = convertType(extProperty.returnType, hashMapOf(), hasParentAnnotation)
       val propertyAnnotations = extProperty.getter?.annotations?.mapNotNull { annotation ->
         annotation.classId?.asSingleFqName()?.let {
           ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() })
@@ -200,12 +214,12 @@ internal class WorkspaceMetaModelBuilder(
     private fun KaSession.convertType(
       type: KaType,
       knownTypes: MutableMap<String, ValueType.Blob<*>>,
-      hasChildAnnotation: Boolean,
+      hasParentAnnotation: Boolean,
     ): ValueType<*> {
       if (type !is KaClassType) error("$type is not a class")
       if (type.nullability == KaTypeNullability.NULLABLE) {
         val nonNullableType = type.withNullability(KaTypeNullability.NON_NULLABLE)
-        return ValueType.Optional(convertType(nonNullableType, knownTypes, hasChildAnnotation))
+        return ValueType.Optional(convertType(nonNullableType, knownTypes, hasParentAnnotation))
       }
 
       val symbol = type.expandedSymbol
@@ -215,7 +229,7 @@ internal class WorkspaceMetaModelBuilder(
 
         if (type.isSubtypeOf(StandardClassIds.Collection)) {
           val typeArguments = type.typeArguments.mapNotNull { it.type }
-          val genericType = convertType(typeArguments.first(), knownTypes, hasChildAnnotation)
+          val genericType = convertType(typeArguments.first(), knownTypes, hasParentAnnotation)
           when {
             type.isSubtypeOf(StandardClassIds.List) -> return ValueType.List(genericType)
             type.isSubtypeOf(StandardClassIds.Set) -> return ValueType.Set(genericType)
@@ -225,14 +239,13 @@ internal class WorkspaceMetaModelBuilder(
 
         if (type.isSubtypeOf(StandardClassIds.Map)) {
           val (keyType, valueType) = type.typeArguments.mapNotNull { it.type }
-          val convertedKeyType = convertType(keyType, knownTypes, hasChildAnnotation)
-          val convertedValueType = convertType(valueType, knownTypes, hasChildAnnotation)
+          val convertedKeyType = convertType(keyType, knownTypes, hasParentAnnotation)
+          val convertedValueType = convertType(valueType, knownTypes, hasParentAnnotation)
           return ValueType.Map(convertedKeyType, convertedValueType)
         }
 
         if (symbol.classKind == KaClassKind.INTERFACE && type.isSubtypeOf(WorkspaceModelDefaults.WORKSPACE_ENTITY.classId)) {
-          // TODO IJPL-600 Replace @Child annotation to @Parent annotation and not for the type, but for the field
-          return ValueType.ObjRef(isChild(type) || hasChildAnnotation, findObjClass(symbol))
+          return ValueType.ObjRef(!hasParentAnnotation, findObjClass(symbol))
         }
 
         return classSymbolToValueType(symbol, knownTypes, processAbstractTypes)
@@ -243,7 +256,7 @@ internal class WorkspaceMetaModelBuilder(
 
     private fun KaSession.findObjClass(classSymbol: KaClassSymbol): ObjClass<*> {
       if (classSymbol.packageOrDie.asString() == compiledObjModule.name) {
-        return types.find { it.first.classId == classSymbol.classId }?.second
+        return entityTypes.find { it.first.classId == classSymbol.classId }?.second
                ?: error("Cannot find ${classSymbol.name} in $compiledObjModule")
       }
       return getObjClass(classSymbol)

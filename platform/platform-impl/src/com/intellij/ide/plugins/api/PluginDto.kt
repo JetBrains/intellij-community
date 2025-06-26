@@ -32,7 +32,7 @@ class PluginDto(
   override var detailsLoaded: Boolean = false
   override var allowBundledUpdate: Boolean = false
   override var isPaid: Boolean = false
-  override var source: PluginSource = PluginSource.LOCAL
+  override var source: PluginSource? = null
   override var dependencies: MutableList<PluginDependencyModel> = mutableListOf()
   override var dependencyNames: Collection<String>? = null
   override var suggestedFeatures: Collection<String> = emptyList()
@@ -40,6 +40,7 @@ class PluginDto(
   override var organization: String? = null
   override var changeNotes: String? = null
   override var productCode: String? = null
+  override var releaseDate: Long? = null
   override var size: String? = null
   override var downloadUrl: String? = null
 
@@ -72,6 +73,9 @@ class PluginDto(
 
   override var category: String? = null
   override var description: String? = null
+
+  override var sinceBuild: String? = null
+  override var untilBuild: String? = null
 
   override fun getDescriptor(): IdeaPluginDescriptor {
     return PluginDtoDescriptorWrapper(this)
@@ -139,6 +143,9 @@ class PluginDto(
         installSource = model.installSource
         description = model.description
         category = model.category
+        sinceBuild = model.sinceBuild
+        untilBuild = model.untilBuild
+        releaseDate = model.releaseDate
       }
     }
   }

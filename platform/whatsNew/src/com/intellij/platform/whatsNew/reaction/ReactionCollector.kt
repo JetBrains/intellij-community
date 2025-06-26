@@ -11,7 +11,7 @@ internal enum class ReationAction { Set, Unset }
 
 
 internal object ReactionCollector : CounterUsagesCollector() {
-  private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew.reactions", 2)
+  private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew.reactions", 3)
   private val reacted = eventLogGroup.registerEvent("reacted",
                                                     EventFields.ActionPlace,
                                                     EventFields.Enum(("type"), ReactionType::class.java),

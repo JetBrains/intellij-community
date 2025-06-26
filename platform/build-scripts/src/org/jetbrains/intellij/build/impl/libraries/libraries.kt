@@ -31,4 +31,5 @@ private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
   "intellij.libraries.skiko",
   "intellij.libraries.testng",
   "intellij.libraries.dokka",
+  "intellij.libraries.xerces",
 )

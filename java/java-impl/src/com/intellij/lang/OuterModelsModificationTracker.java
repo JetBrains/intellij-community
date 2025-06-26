@@ -303,9 +303,24 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
                                                  it -> isInstanceOf(it, possiblePsiTypes.forImports) // changed import (completion, typing)
                                                        || isRelevantAnnotation(it, possiblePsiTypes))// editing on or inside annotation
           || child instanceof LazyParseablePsiElement
+          || (isAnnotatedPackageStatement(child))
       ) {
         incModificationCount();
       }
+    }
+
+    private static boolean isAnnotatedPackageStatement(PsiElement psiElement) {
+      if (psiElement instanceof PsiPackageStatement psiPackageStatement) {
+        try {
+          PsiModifierList psiModifierList = psiPackageStatement.getAnnotationList();
+          if (psiModifierList != null) {
+            return psiModifierList.getAnnotations().length > 0;
+          }
+        }
+        catch (PsiInvalidElementAccessException ignored) {
+        }
+      }
+      return false;
     }
 
     private static @Nullable PsiElement getUnsafeGrandChild(PsiElement child) {

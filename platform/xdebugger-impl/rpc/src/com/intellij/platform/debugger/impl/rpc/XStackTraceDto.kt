@@ -31,7 +31,7 @@ data class XStackFrameDto(
   val sourcePosition: XSourcePositionDto?,
   val equalityObject: XStackFrameEqualityObject?,
   val evaluator: XDebuggerEvaluatorDto,
-  val initialPresentation: XStackFramePresentation,
+  val textPresentation: XStackFramePresentation,
   val captionInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo.noInfo,
   val customBackgroundInfo: XStackFrameCustomBackgroundInfo? = null,
   val canDrop: ThreeState,

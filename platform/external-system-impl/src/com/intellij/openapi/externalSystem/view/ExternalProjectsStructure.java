@@ -22,9 +22,6 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.function.Predicate;
 
-/**
- * @author Vladislav.Soroka
- */
 public class ExternalProjectsStructure extends SimpleTreeStructure implements Disposable  {
   private final Project myProject;
   private final Tree myTree;

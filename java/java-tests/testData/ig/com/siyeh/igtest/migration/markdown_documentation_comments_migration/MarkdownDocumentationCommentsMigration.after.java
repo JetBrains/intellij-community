@@ -34,8 +34,8 @@ public class MarkdownDocumentationCommentsMigration {
   ///
   /// @implSpec As far as is reasonably practical, the `hashCode` method defined
   /// by class `Object` returns distinct integers for distinct objects.
-  /// @apiNote The [hash][#hash(Object...)] and 
-  /// [hashCode][#hashCode(Object)] methods of 
+  /// @apiNote The [hash][Objects#hash(Object...)] and 
+  /// [hashCode][Objects#hashCode(Object)] methods of 
   /// [Objects] can be used to help construct simple hash codes.
   /// @see Object#equals(Object)
   /// @see System#identityHashCode
@@ -94,7 +94,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// general contract for the `hashCode` method, which states
   /// that equal objects must have equal hash codes.
   /// 
-  /// The two-argument [Objects.equals][#equals(Object,
+  /// The two-argument [Objects.equals][Objects#equals(Object,
   /// Object)] method implements an equivalence relation
   /// on two possibly-null object references.
   /// @see #hashCode()
@@ -188,7 +188,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// {@snippet lang = java:
   ///  getClass().getName() + '@' + Integer.toHexString(hashCode())
   /// }
-  /// The [Objects.toIdentityString][#toIdentityString(Object)] method returns the string for an
+  /// The [Objects.toIdentityString][Objects#toIdentityString(Object)] method returns the string for an
   /// object equal to the string that would be returned if neither
   /// the `toString` nor `hashCode` methods were
   /// overridden by the object's class.
@@ -251,7 +251,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// @apiNote Classes that embed non-heap resources have many options
   /// for cleanup of those resources. The class must ensure that the
   /// lifetime of each instance is longer than that of any resource it embeds.
-  /// [#reachabilityFence] can be used to ensure that
+  /// [Reference#reachabilityFence] can be used to ensure that
   /// objects remain reachable while resources embedded in the object are in use.
   /// 
   /// A subclass should avoid overriding the `finalize` method

@@ -3,12 +3,15 @@ package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.project.ProjectId
@@ -26,7 +29,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPluginById(pluginId: PluginId): PluginDto?
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto>
   suspend fun getInstalledPlugins(): List<PluginDto>
-  suspend fun getUpdates(): List<PluginUiModel>
+  suspend fun getUpdates(): List<PluginDto>
   suspend fun findPlugin(pluginId: PluginId): PluginDto?
   suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?): PluginDto?
   suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate>
@@ -46,7 +49,8 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun isPluginRequiresUltimateButItIsDisabled(pluginId: PluginId): Boolean
   suspend fun hasPluginRequiresUltimateButItsDisabled(ids: List<PluginId>): Boolean
   suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
-  suspend fun getCustomRepoPlugins(): List<PluginUiModel>
+  suspend fun getCustomRepoPlugins(): List<PluginDto>
+  suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginDto>>
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun isPluginInstalled(pluginId: PluginId): Boolean
   suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean
@@ -58,6 +62,11 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun recalculatePluginUpdates(sessionId: String)
   suspend fun disposeUpdaterService(sessionId: String)
   suspend fun notifyUpdateFinished(sessionId: String)
+  suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
+  suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
+  suspend fun checkPluginCanBeDownloaded(plugin: PluginDto): Boolean
+  suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
+  suspend fun initSession(sessionId: String): InitSessionResult
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

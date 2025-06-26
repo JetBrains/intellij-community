@@ -65,6 +65,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
   private static final String[] SUPPRESSIONS = {UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.ALTERNATIVE_ID};
   private final Map<RefEntity, UnusedDeclarationHint> myFixedElements = ConcurrentCollectionFactory.createConcurrentIdentityMap();

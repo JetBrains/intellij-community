@@ -4,16 +4,14 @@
 *:com.intellij.polySymbols.PolySymbol
 - com.intellij.model.Symbol
 - com.intellij.navigation.NavigatableSymbol
-- com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
+- com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
 - *sf:Companion:com.intellij.polySymbols.PolySymbol$Companion
 - sf:PROP_DOC_HIDE_PATTERN:com.intellij.polySymbols.PolySymbolProperty
 - sf:PROP_HIDE_FROM_COMPLETION:com.intellij.polySymbols.PolySymbolProperty
 - sf:PROP_IJ_TEXT_ATTRIBUTES_KEY:com.intellij.polySymbols.PolySymbolProperty
 - sf:PROP_INJECT_LANGUAGE:com.intellij.polySymbols.PolySymbolProperty
-- adjustNameForRefactoring(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,java.lang.String,java.lang.String):java.lang.String
 - a:createPointer():com.intellij.model.Pointer
 - get(com.intellij.polySymbols.PolySymbolProperty):java.lang.Object
-- getAccessModifier():com.intellij.polySymbols.PolySymbolAccessModifier
 - getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
 - getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
 - getIcon():javax.swing.Icon
@@ -21,7 +19,6 @@
 - a:getName():java.lang.String
 - getNavigationTargets(com.intellij.openapi.project.Project):java.util.Collection
 - a:getOrigin():com.intellij.polySymbols.PolySymbolOrigin
-- getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 - getPresentation():com.intellij.platform.backend.presentation.TargetPresentation
 - getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getPsiContext():com.intellij.psi.PsiElement
@@ -31,7 +28,6 @@
 - getSearchTarget():com.intellij.polySymbols.search.PolySymbolSearchTarget
 - isEquivalentTo(com.intellij.model.Symbol):Z
 - isExtension():Z
-- isRequired():java.lang.Boolean
 - matchContext(com.intellij.polySymbols.context.PolyContext):Z
 *f:com.intellij.polySymbols.PolySymbol$Companion
 *:com.intellij.polySymbols.PolySymbol$Priority
@@ -46,27 +42,6 @@
 - a:getValue():D
 *f:com.intellij.polySymbols.PolySymbol$Priority$Companion
 - f:custom(D):com.intellij.polySymbols.PolySymbol$Priority
-*:com.intellij.polySymbols.PolySymbolAccessModifier
-- *sf:Companion:com.intellij.polySymbols.PolySymbolAccessModifier$Companion
-- sf:FILEPRIVATE:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:INTERNAL:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:OPEN:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PACKAGE_PRIVATE:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PRIVATE:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PRIVATE_PACKAGE:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PRIVATE_PROTECTED:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PRIVATE_THIS:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PROTECTED:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PROTECTED_INTERNAL:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PROTECTED_PACKAGE:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PROTECTED_THIS:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PUB:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PUBLIC:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PUB_CRATE:com.intellij.polySymbols.PolySymbolAccessModifier
-- sf:PUB_SUPER:com.intellij.polySymbols.PolySymbolAccessModifier
-- a:getName():java.lang.String
-*f:com.intellij.polySymbols.PolySymbolAccessModifier$Companion
-- f:get(java.lang.String):com.intellij.polySymbols.PolySymbolAccessModifier
 *:com.intellij.polySymbols.PolySymbolApiStatus
 - *sf:Companion:com.intellij.polySymbols.PolySymbolApiStatus$Companion
 - sf:Deprecated:com.intellij.polySymbols.PolySymbolApiStatus$Deprecated
@@ -132,6 +107,7 @@
 - sf:EXPORT:com.intellij.polySymbols.PolySymbolModifier
 - sf:EXTERN:com.intellij.polySymbols.PolySymbolModifier
 - sf:EXTERNAL:com.intellij.polySymbols.PolySymbolModifier
+- sf:FILEPRIVATE:com.intellij.polySymbols.PolySymbolModifier
 - sf:FINAL:com.intellij.polySymbols.PolySymbolModifier
 - sf:FRIEND:com.intellij.polySymbols.PolySymbolModifier
 - sf:GENERATOR:com.intellij.polySymbols.PolySymbolModifier
@@ -141,6 +117,7 @@
 - sf:INFIX:com.intellij.polySymbols.PolySymbolModifier
 - sf:INLINE:com.intellij.polySymbols.PolySymbolModifier
 - sf:INNER:com.intellij.polySymbols.PolySymbolModifier
+- sf:INTERNAL:com.intellij.polySymbols.PolySymbolModifier
 - sf:LATEINIT:com.intellij.polySymbols.PolySymbolModifier
 - sf:LAZY:com.intellij.polySymbols.PolySymbolModifier
 - sf:MUTABLE:com.intellij.polySymbols.PolySymbolModifier
@@ -154,8 +131,21 @@
 - sf:OPTIONAL:com.intellij.polySymbols.PolySymbolModifier
 - sf:OUT:com.intellij.polySymbols.PolySymbolModifier
 - sf:OVERRIDE:com.intellij.polySymbols.PolySymbolModifier
+- sf:PACKAGE_PRIVATE:com.intellij.polySymbols.PolySymbolModifier
 - sf:PARTIAL:com.intellij.polySymbols.PolySymbolModifier
+- sf:PRIVATE:com.intellij.polySymbols.PolySymbolModifier
+- sf:PRIVATE_PACKAGE:com.intellij.polySymbols.PolySymbolModifier
+- sf:PRIVATE_PROTECTED:com.intellij.polySymbols.PolySymbolModifier
+- sf:PRIVATE_THIS:com.intellij.polySymbols.PolySymbolModifier
+- sf:PROTECTED:com.intellij.polySymbols.PolySymbolModifier
+- sf:PROTECTED_INTERNAL:com.intellij.polySymbols.PolySymbolModifier
+- sf:PROTECTED_PACKAGE:com.intellij.polySymbols.PolySymbolModifier
+- sf:PROTECTED_THIS:com.intellij.polySymbols.PolySymbolModifier
 - sf:PROTO:com.intellij.polySymbols.PolySymbolModifier
+- sf:PUB:com.intellij.polySymbols.PolySymbolModifier
+- sf:PUBLIC:com.intellij.polySymbols.PolySymbolModifier
+- sf:PUB_CRATE:com.intellij.polySymbols.PolySymbolModifier
+- sf:PUB_SUPER:com.intellij.polySymbols.PolySymbolModifier
 - sf:READONLY:com.intellij.polySymbols.PolySymbolModifier
 - sf:REGISTER:com.intellij.polySymbols.PolySymbolModifier
 - sf:REIFIED:com.intellij.polySymbols.PolySymbolModifier
@@ -183,12 +173,9 @@
 - a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
 - a:getDisplayName():java.lang.String
 - a:getEnd():I
-- a:getMatchScore():I
 - getName(com.intellij.polySymbols.PolySymbol):java.lang.String
-- a:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - a:getProblem():com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem
 - a:getStart():I
-- a:getSymbolKinds():java.util.Set
 - a:getSymbols():java.util.List
 *f:com.intellij.polySymbols.PolySymbolNameSegment$Companion
 - f:create(I,I,com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.PolySymbolNameSegment
@@ -253,6 +240,12 @@
 - *sf:Companion:com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem$Companion
 - a:addToResult(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet,D):V
 - bs:addToResult$default(com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem,com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet,D,I,java.lang.Object):V
+- s:builder(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- s:builder(java.lang.String,I):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- s:builder(java.lang.String,I,com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- s:create(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- s:create(java.lang.String,I):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- s:create(java.lang.String,I,com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - s:create(java.lang.String,I,com.intellij.polySymbols.PolySymbol,kotlin.jvm.functions.Function1):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:getAliases():java.util.Set
 - a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
@@ -269,8 +262,6 @@
 - a:getTailText():java.lang.String
 - a:getTypeText():java.lang.String
 - a:isCompleteAfterInsert():Z
-- a:with(java.lang.String,I,Z,java.util.Set,java.lang.String,com.intellij.polySymbols.PolySymbol,com.intellij.polySymbols.PolySymbol$Priority,java.lang.Integer,com.intellij.polySymbols.PolySymbolApiStatus,javax.swing.Icon,java.lang.String,java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-- bs:with$default(com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem,java.lang.String,I,Z,java.util.Set,java.lang.String,com.intellij.polySymbols.PolySymbol,com.intellij.polySymbols.PolySymbol$Priority,java.lang.Integer,com.intellij.polySymbols.PolySymbolApiStatus,javax.swing.Icon,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withAliasAdded(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withAliasesAdded(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withAliasesReplaced(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
@@ -294,16 +285,38 @@
 - a:withTypeText(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withTypeText(kotlin.jvm.functions.Function0):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 *f:com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem$Companion
+- f:builder(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- f:builder(java.lang.String,I):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- f:builder(java.lang.String,I,com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- bs:builder$default(com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem$Companion,java.lang.String,I,com.intellij.polySymbols.PolySymbol,I,java.lang.Object):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- f:create(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- f:create(java.lang.String,I):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- f:create(java.lang.String,I,com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - f:create(java.lang.String,I,com.intellij.polySymbols.PolySymbol,kotlin.jvm.functions.Function1):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - bs:create$default(com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem$Companion,java.lang.String,I,com.intellij.polySymbols.PolySymbol,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - f:getPsiElement(com.intellij.codeInsight.lookup.LookupElement):com.intellij.psi.PsiElement
 *:com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:aliases(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:apiStatus(com.intellij.polySymbols.PolySymbolApiStatus):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- a:build():com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:completeAfterChars(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:completeAfterInsert(Z):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:displayName(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- a:getAliases():java.util.Set
+- a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
+- a:getCompleteAfterChars():java.util.Set
+- a:getCompleteAfterInsert():Z
+- a:getDisplayName():java.lang.String
+- a:getIcon():javax.swing.Icon
+- a:getInsertHandler():com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler
+- a:getOffset():I
+- a:getPriority():com.intellij.polySymbols.PolySymbol$Priority
+- a:getProximity():java.lang.Integer
+- a:getSymbol():com.intellij.polySymbols.PolySymbol
+- a:getTailText():java.lang.String
+- a:getTypeText():java.lang.String
 - a:icon(javax.swing.Icon):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- a:insertHandler(com.intellij.codeInsight.completion.InsertHandler):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:insertHandler(com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:offset(I):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:priority(com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
@@ -397,6 +410,7 @@
 - a:getContextRules():com.intellij.util.containers.MultiMap
 *:com.intellij.polySymbols.context.PolyContextSourceProximityProvider
 - *sf:Companion:com.intellij.polySymbols.context.PolyContextSourceProximityProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:calculateProximity(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Set,com.intellij.polySymbols.context.PolyContextSourceProximityProvider$SourceKind):com.intellij.polySymbols.context.PolyContextSourceProximityProvider$Result
 - s:mergeProximity(java.lang.Double,D):D
 *f:com.intellij.polySymbols.context.PolyContextSourceProximityProvider$Companion
@@ -439,10 +453,13 @@
 - sf:NAMESPACE_CSS:java.lang.String
 - sf:PROP_CSS_ARGUMENTS:com.intellij.polySymbols.PolySymbolProperty
 *:com.intellij.polySymbols.customElements.CustomElementsSymbol
-- com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-- com.intellij.polySymbols.query.PolySymbolsScope
+- com.intellij.polySymbols.PolySymbol
+- com.intellij.polySymbols.query.PolySymbolScope
 - *sf:Companion:com.intellij.polySymbols.customElements.CustomElementsSymbol$Companion
 - a:createPointer():com.intellij.model.Pointer
+- getDefaultValue():java.lang.String
+- getDescription():java.lang.String
+- getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
 - getModificationCount():J
 *f:com.intellij.polySymbols.customElements.CustomElementsSymbol$Companion
 - f:getCEM_DECLARATIONS():com.intellij.polySymbols.PolySymbolQualifiedKind
@@ -453,6 +470,7 @@
 - a:getSymbol():com.intellij.polySymbols.PolySymbol
 *:com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 - *sf:Companion:com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - s:getAllDeclarations(com.intellij.psi.PsiElement,I):java.util.Collection
 - s:getAllEquivalentDeclarations(com.intellij.psi.PsiElement,I,com.intellij.polySymbols.PolySymbol):java.util.Collection
 - a:getDeclarations(com.intellij.psi.PsiElement,I):java.util.Collection
@@ -464,6 +482,8 @@
 - *sf:Companion:com.intellij.polySymbols.documentation.PolySymbolDocumentation$Companion
 - appendFootnote(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:build(com.intellij.polySymbols.PolySymbolOrigin):com.intellij.platform.backend.documentation.DocumentationResult
+- s:builder(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- s:create(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,kotlin.jvm.functions.Function1):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
 - a:getDefaultValue():java.lang.String
 - a:getDefinition():java.lang.String
@@ -477,64 +497,99 @@
 - a:getLibrary():java.lang.String
 - a:getName():java.lang.String
 - a:isNotEmpty():Z
-- a:isRequired():Z
-- a:with(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.polySymbols.PolySymbolApiStatus,Z,java.lang.String,java.lang.String,javax.swing.Icon,java.util.Map,java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
-- bs:with$default(com.intellij.polySymbols.documentation.PolySymbolDocumentation,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.polySymbols.PolySymbolApiStatus,Z,java.lang.String,java.lang.String,javax.swing.Icon,java.util.Map,java.lang.String,I,java.lang.Object):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withApiStatus(com.intellij.polySymbols.PolySymbolApiStatus):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withDefault(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withDefinition(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withDefinitionDetails(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withDescription(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withDescriptionSection(java.lang.String,java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
+- a:withDescriptionSections(java.util.Map):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withDocUrl(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withFootnote(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withHeader(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withIcon(javax.swing.Icon):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withLibrary(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:withName(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
-- a:withRequired(Z):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 *f:com.intellij.polySymbols.documentation.PolySymbolDocumentation$Companion
-- f:create(com.intellij.polySymbols.documentation.PolySymbolWithDocumentation,com.intellij.psi.PsiElement,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.polySymbols.PolySymbolApiStatus,Z,java.lang.String,java.lang.String,javax.swing.Icon,java.util.Map,java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
-- bs:create$default(com.intellij.polySymbols.documentation.PolySymbolDocumentation$Companion,com.intellij.polySymbols.documentation.PolySymbolWithDocumentation,com.intellij.psi.PsiElement,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.polySymbols.PolySymbolApiStatus,Z,java.lang.String,java.lang.String,javax.swing.Icon,java.util.Map,java.lang.String,I,java.lang.Object):com.intellij.polySymbols.documentation.PolySymbolDocumentation
+- f:builder(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- f:create(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,kotlin.jvm.functions.Function1):com.intellij.polySymbols.documentation.PolySymbolDocumentation
+*:com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:apiStatus(com.intellij.polySymbols.PolySymbolApiStatus):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:build():com.intellij.polySymbols.documentation.PolySymbolDocumentation
+- a:defaultValue(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:definition(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:definitionDetails(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:description(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:descriptionSection(java.lang.String,java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:descriptionSections(java.util.Map):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:docUrl(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:footnote(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
+- a:getDefaultValue():java.lang.String
+- a:getDefinition():java.lang.String
+- a:getDefinitionDetails():java.lang.String
+- a:getDescription():java.lang.String
+- a:getDescriptionSections():java.util.Map
+- a:getDocUrl():java.lang.String
+- a:getFootnote():java.lang.String
+- a:getHeader():java.lang.String
+- a:getIcon():javax.swing.Icon
+- a:getLibrary():java.lang.String
+- a:getName():java.lang.String
+- a:header(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:icon(javax.swing.Icon):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:library(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:name(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
+- a:setApiStatus(com.intellij.polySymbols.PolySymbolApiStatus):V
+- a:setDefaultValue(java.lang.String):V
+- a:setDefinition(java.lang.String):V
+- a:setDefinitionDetails(java.lang.String):V
+- a:setDescription(java.lang.String):V
+- a:setDocUrl(java.lang.String):V
+- a:setFootnote(java.lang.String):V
+- a:setHeader(java.lang.String):V
+- a:setIcon(javax.swing.Icon):V
+- a:setLibrary(java.lang.String):V
+- a:setName(java.lang.String):V
 *:com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
 - *sf:Companion:com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:customize(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,com.intellij.polySymbols.documentation.PolySymbolDocumentation):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 *f:com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+*:com.intellij.polySymbols.documentation.PolySymbolDocumentationProvider
+- computePresentation(com.intellij.polySymbols.PolySymbol):com.intellij.platform.backend.presentation.TargetPresentation
+- a:createDocumentation(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 *:com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 - com.intellij.platform.backend.documentation.DocumentationTarget
-- computePresentation():com.intellij.platform.backend.presentation.TargetPresentation
+- *sf:Companion:com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget$Companion
+- s:create(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,com.intellij.polySymbols.documentation.PolySymbolDocumentationProvider):com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
+- s:create(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,kotlin.jvm.functions.Function3):com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
+- a:getDocumentation():com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:getLocation():com.intellij.psi.PsiElement
 - a:getSymbol():com.intellij.polySymbols.PolySymbol
-*:com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-- com.intellij.polySymbols.PolySymbol
-- createDocumentation(com.intellij.psi.PsiElement):com.intellij.polySymbols.documentation.PolySymbolDocumentation
-- a:createPointer():com.intellij.model.Pointer
-- getDefaultValue():java.lang.String
-- getDescription():java.lang.String
-- getDescriptionSections():java.util.Map
-- getDocUrl():java.lang.String
-- getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
-*a:com.intellij.polySymbols.framework.PolySymbolsFramework
-- *sf:Companion:com.intellij.polySymbols.framework.PolySymbolsFramework$Companion
+*f:com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget$Companion
+- f:create(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,com.intellij.polySymbols.documentation.PolySymbolDocumentationProvider):com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
+- f:create(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,kotlin.jvm.functions.Function3):com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
+*a:com.intellij.polySymbols.framework.PolySymbolFramework
+- *sf:Companion:com.intellij.polySymbols.framework.PolySymbolFramework$Companion
 - <init>():V
-- sf:get(java.lang.String):com.intellij.polySymbols.framework.PolySymbolsFramework
+- sf:get(java.lang.String):com.intellij.polySymbols.framework.PolySymbolFramework
 - sf:getAll():java.util.List
 - sf:getAllAsSequence$intellij_platform_polySymbols():kotlin.sequences.Sequence
 - a:getDisplayName():java.lang.String
 - getIcon():javax.swing.Icon
 - f:getId():java.lang.String
 - getNames(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNamesProvider$Target):java.util.List
-- sf:inLocation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.polySymbols.framework.PolySymbolsFramework
-- sf:inLocation(com.intellij.psi.PsiElement):com.intellij.polySymbols.framework.PolySymbolsFramework
+- sf:inLocation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.polySymbols.framework.PolySymbolFramework
+- sf:inLocation(com.intellij.psi.PsiElement):com.intellij.polySymbols.framework.PolySymbolFramework
 - f:isInContext(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - f:isInContext(com.intellij.psi.PsiElement):Z
 - pf:setIdFromAnotherModule(java.lang.String):V
-*f:com.intellij.polySymbols.framework.PolySymbolsFramework$Companion
-- f:get(java.lang.String):com.intellij.polySymbols.framework.PolySymbolsFramework
+*f:com.intellij.polySymbols.framework.PolySymbolFramework$Companion
+- f:get(java.lang.String):com.intellij.polySymbols.framework.PolySymbolFramework
 - f:getAll():java.util.List
-- f:inLocation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.polySymbols.framework.PolySymbolsFramework
-- f:inLocation(com.intellij.psi.PsiElement):com.intellij.polySymbols.framework.PolySymbolsFramework
+- f:inLocation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.polySymbols.framework.PolySymbolFramework
+- f:inLocation(com.intellij.psi.PsiElement):com.intellij.polySymbols.framework.PolySymbolFramework
 *f:com.intellij.polySymbols.html.HtmlSymbolKinds
 - sf:HTML_ATTRIBUTES:com.intellij.polySymbols.PolySymbolQualifiedKind
 - sf:HTML_ATTRIBUTE_VALUES:com.intellij.polySymbols.PolySymbolQualifiedKind
@@ -601,12 +656,75 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.polySymbols.js.JsSymbolSymbolKind
 - s:values():com.intellij.polySymbols.js.JsSymbolSymbolKind[]
-*Fa:com.intellij.polySymbols.patterns.PolySymbolsPattern
+*Fa:com.intellij.polySymbols.patterns.PolySymbolPattern
+*:com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProvider
+- a:getScopes(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):java.util.List
+*:com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
+- a:contributeScopeProvider(com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProvider):V
+- a:inContext(java.util.function.Predicate):com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
+- a:withResolveRequired():com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
+*:com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+- com.intellij.polySymbols.query.PolySymbolQueryParams
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams$Companion
+- s:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,I):com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+- s:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,I,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+- a:getPosition():I
+- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolQueryExecutor
+*:com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams$Builder
+- com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams$BuilderMixin
+- com.intellij.polySymbols.query.PolySymbolQueryParams$Builder
+*:com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams$BuilderMixin
+*f:com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams$Companion
+- f:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,I):com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+- f:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,I,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+- bs:create$default(com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams$Companion,com.intellij.polySymbols.query.PolySymbolQueryExecutor,I,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+*a:com.intellij.polySymbols.query.PolySymbolCompoundScope
+- com.intellij.polySymbols.query.PolySymbolScope
+- <init>():V
+- pa:build(com.intellij.polySymbols.query.PolySymbolQueryExecutor,kotlin.jvm.functions.Function1):V
+- a:createPointer():com.intellij.model.Pointer
+- f:getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- f:getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- f:getModificationCount():J
+- f:getScopes(com.intellij.polySymbols.query.PolySymbolQueryExecutor):java.util.List
+- f:getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- f:isExclusiveFor(com.intellij.polySymbols.PolySymbolQualifiedKind):Z
+- p:requiresResolve():Z
 *:com.intellij.polySymbols.query.PolySymbolDefaultIconProvider
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolDefaultIconProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getDefaultIcon(com.intellij.polySymbols.PolySymbolQualifiedKind):javax.swing.Icon
 *f:com.intellij.polySymbols.query.PolySymbolDefaultIconProvider$Companion
 - f:get(com.intellij.polySymbols.PolySymbolQualifiedKind):javax.swing.Icon
+*:com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+- com.intellij.polySymbols.query.PolySymbolQueryParams
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams$Companion
+- s:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,Z):com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+- s:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,Z,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+- a:getExpandPatterns():Z
+- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- a:getStrictScope():Z
+*:com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams$Builder
+- com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams$BuilderMixin
+- com.intellij.polySymbols.query.PolySymbolQueryParams$Builder
+*:com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams$BuilderMixin
+- com.intellij.polySymbols.query.PolySymbolQueryParams$Builder
+- a:strictScope(Z):java.lang.Object
+*f:com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams$Companion
+- f:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,Z):com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+- f:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,Z,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+- bs:create$default(com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams$Companion,com.intellij.polySymbols.query.PolySymbolQueryExecutor,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+*:com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProvider
+- a:getScopes(com.intellij.psi.PsiElement):java.util.List
+*:com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:contributeScopeProvider(com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProvider):V
+- a:inContext(java.util.function.Predicate):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:inFile(com.intellij.patterns.PsiFilePattern):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:inFile(java.lang.Class):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:inFiles(java.util.Collection):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:inFiles(com.intellij.patterns.PsiFilePattern[]):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:inFiles(java.lang.Class[]):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:withResolveRequired():com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
 *:com.intellij.polySymbols.query.PolySymbolMatch
 - com.intellij.polySymbols.CompositePolySymbol
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolMatch$Companion
@@ -624,6 +742,15 @@
 - a:explicitPriority(com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.query.PolySymbolMatchBuilder
 - a:explicitProximity(I):com.intellij.polySymbols.query.PolySymbolMatchBuilder
 - a:setProperty(java.lang.String,java.lang.Object):com.intellij.polySymbols.query.PolySymbolMatchBuilder
+*:com.intellij.polySymbols.query.PolySymbolMatchCustomizer
+- mergeModifiers(java.util.Set,java.util.Set,com.intellij.polySymbols.PolySymbol):java.util.Set
+*:com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:create(com.intellij.polySymbols.query.PolySymbolMatch):com.intellij.polySymbols.query.PolySymbolMatchCustomizer
+- s:getPolySymbolMatchCustomizer(com.intellij.polySymbols.query.PolySymbolMatch):com.intellij.polySymbols.query.PolySymbolMatchCustomizer
+*f:com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory$Companion
+- f:getPolySymbolMatchCustomizer(com.intellij.polySymbols.query.PolySymbolMatch):com.intellij.polySymbols.query.PolySymbolMatchCustomizer
 *:com.intellij.polySymbols.query.PolySymbolNameConversionRules
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolNameConversionRules$Companion
 - s:builder():com.intellij.polySymbols.query.PolySymbolNameConversionRulesBuilder
@@ -656,6 +783,22 @@
 - a:getNameConversionRules():com.intellij.polySymbols.query.PolySymbolNameConversionRules
 *:com.intellij.polySymbols.query.PolySymbolNameConverter
 - a:getNames(java.lang.String):java.util.List
+*:com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+- com.intellij.polySymbols.query.PolySymbolQueryParams
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams$Companion
+- s:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor):com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+- s:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- a:getStrictScope():Z
+*:com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams$Builder
+- com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams$BuilderMixin
+- com.intellij.polySymbols.query.PolySymbolQueryParams$Builder
+*:com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams$BuilderMixin
+- a:strictScope(Z):java.lang.Object
+*f:com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams$Companion
+- f:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor):com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+- f:create(com.intellij.polySymbols.query.PolySymbolQueryExecutor,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+- bs:create$default(com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams$Companion,com.intellij.polySymbols.query.PolySymbolQueryExecutor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
 *:com.intellij.polySymbols.query.PolySymbolNamesProvider
 - com.intellij.openapi.util.ModificationTracker
 - a:adjustRename(com.intellij.polySymbols.PolySymbolQualifiedName,java.lang.String,java.lang.String):java.lang.String
@@ -671,80 +814,19 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.polySymbols.query.PolySymbolNamesProvider$Target
 - s:values():com.intellij.polySymbols.query.PolySymbolNamesProvider$Target[]
-*:com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-- com.intellij.polySymbols.query.PolySymbolsQueryParams
-- *sf:Companion:com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams$Companion
-- s:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,I):com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-- s:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,I,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-- a:getPosition():I
-- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-*:com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams$Builder
-- com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams$BuilderMixin
-- com.intellij.polySymbols.query.PolySymbolsQueryParams$Builder
-*:com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams$BuilderMixin
-*f:com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams$Companion
-- f:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,I):com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-- f:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,I,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-- bs:create$default(com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams$Companion,com.intellij.polySymbols.query.PolySymbolsQueryExecutor,I,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-*a:com.intellij.polySymbols.query.PolySymbolsCompoundScope
-- com.intellij.polySymbols.query.PolySymbolsScope
-- <init>():V
-- pa:build(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,kotlin.jvm.functions.Function1):V
-- a:createPointer():com.intellij.model.Pointer
-- f:getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
-- f:getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
-- f:getModificationCount():J
-- f:getScopes(com.intellij.polySymbols.query.PolySymbolsQueryExecutor):java.util.List
-- f:getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
-- f:isExclusiveFor(com.intellij.polySymbols.PolySymbolQualifiedKind):Z
-- p:requiresResolve():Z
-*:com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-- com.intellij.polySymbols.query.PolySymbolsQueryParams
-- *sf:Companion:com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams$Companion
-- s:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,Z):com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-- s:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,Z,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-- a:getExpandPatterns():Z
-- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- a:getStrictScope():Z
-*:com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams$Builder
-- com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams$BuilderMixin
-- com.intellij.polySymbols.query.PolySymbolsQueryParams$Builder
-*:com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams$BuilderMixin
-- com.intellij.polySymbols.query.PolySymbolsQueryParams$Builder
-- a:strictScope(Z):java.lang.Object
-*f:com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams$Companion
-- f:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,Z):com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-- f:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,Z,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-- bs:create$default(com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams$Companion,com.intellij.polySymbols.query.PolySymbolsQueryExecutor,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-*:com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-- com.intellij.polySymbols.query.PolySymbolsQueryParams
-- *sf:Companion:com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams$Companion
-- s:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor):com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-- s:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- a:getStrictScope():Z
-*:com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams$Builder
-- com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams$BuilderMixin
-- com.intellij.polySymbols.query.PolySymbolsQueryParams$Builder
-*:com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams$BuilderMixin
-- a:strictScope(Z):java.lang.Object
-*f:com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams$Companion
-- f:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor):com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-- f:create(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-- bs:create$default(com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams$Companion,com.intellij.polySymbols.query.PolySymbolsQueryExecutor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-*:com.intellij.polySymbols.query.PolySymbolsQueryConfigurator
-- *sf:Companion:com.intellij.polySymbols.query.PolySymbolsQueryConfigurator$Companion
+*:com.intellij.polySymbols.query.PolySymbolQueryConfigurator
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryConfigurator$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - beforeQueryExecutorCreation(com.intellij.openapi.project.Project):V
 - getContextRulesProviders(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.List
 - getNameConversionRulesProviders(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext):java.util.List
-- getScope(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext,Z):java.util.List
-*f:com.intellij.polySymbols.query.PolySymbolsQueryConfigurator$Companion
-*:com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+*f:com.intellij.polySymbols.query.PolySymbolQueryConfigurator$Companion
+*:com.intellij.polySymbols.query.PolySymbolQueryExecutor
 - com.intellij.openapi.util.ModificationTracker
 - a:allowResolve():Z
-- codeCompletionQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,I):com.intellij.polySymbols.query.PolySymbolsQueryExecutor$CodeCompletionQueryBuilder
+- codeCompletionQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,I):com.intellij.polySymbols.query.PolySymbolQueryExecutor$CodeCompletionQueryBuilder
 - codeCompletionQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,I,kotlin.jvm.functions.Function1):java.util.List
-- a:codeCompletionQuery(java.util.List,I):com.intellij.polySymbols.query.PolySymbolsQueryExecutor$CodeCompletionQueryBuilder
+- a:codeCompletionQuery(java.util.List,I):com.intellij.polySymbols.query.PolySymbolQueryExecutor$CodeCompletionQueryBuilder
 - codeCompletionQuery(java.util.List,I,kotlin.jvm.functions.Function1):java.util.List
 - a:createPointer():com.intellij.model.Pointer
 - a:getContext():com.intellij.polySymbols.context.PolyContext
@@ -752,103 +834,130 @@
 - a:getKeepUnresolvedTopLevelReferences():Z
 - a:getLocation():com.intellij.psi.PsiElement
 - a:getNamesProvider():com.intellij.polySymbols.query.PolySymbolNamesProvider
-- a:getResultsCustomizer():com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
+- a:getResultsCustomizer():com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 - a:hasExclusiveScopeFor(com.intellij.polySymbols.PolySymbolQualifiedKind,java.util.List):Z
-- bs:hasExclusiveScopeFor$default(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,com.intellij.polySymbols.PolySymbolQualifiedKind,java.util.List,I,java.lang.Object):Z
-- listSymbolsQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,Z):com.intellij.polySymbols.query.PolySymbolsQueryExecutor$ListSymbolsQueryBuilder
+- bs:hasExclusiveScopeFor$default(com.intellij.polySymbols.query.PolySymbolQueryExecutor,com.intellij.polySymbols.PolySymbolQualifiedKind,java.util.List,I,java.lang.Object):Z
+- listSymbolsQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,Z):com.intellij.polySymbols.query.PolySymbolQueryExecutor$ListSymbolsQueryBuilder
 - listSymbolsQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,Z,kotlin.jvm.functions.Function1):java.util.List
-- a:listSymbolsQuery(java.util.List,com.intellij.polySymbols.PolySymbolQualifiedKind,Z):com.intellij.polySymbols.query.PolySymbolsQueryExecutor$ListSymbolsQueryBuilder
+- a:listSymbolsQuery(java.util.List,com.intellij.polySymbols.PolySymbolQualifiedKind,Z):com.intellij.polySymbols.query.PolySymbolQueryExecutor$ListSymbolsQueryBuilder
 - listSymbolsQuery(java.util.List,com.intellij.polySymbols.PolySymbolQualifiedKind,Z,kotlin.jvm.functions.Function1):java.util.List
-- bs:listSymbolsQuery$default(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,com.intellij.polySymbols.PolySymbolQualifiedKind,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.List
-- nameMatchQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String):com.intellij.polySymbols.query.PolySymbolsQueryExecutor$NameMatchQueryBuilder
+- bs:listSymbolsQuery$default(com.intellij.polySymbols.query.PolySymbolQueryExecutor,com.intellij.polySymbols.PolySymbolQualifiedKind,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.List
+- nameMatchQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String):com.intellij.polySymbols.query.PolySymbolQueryExecutor$NameMatchQueryBuilder
 - nameMatchQuery(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,kotlin.jvm.functions.Function1):java.util.List
-- a:nameMatchQuery(java.util.List):com.intellij.polySymbols.query.PolySymbolsQueryExecutor$NameMatchQueryBuilder
+- a:nameMatchQuery(java.util.List):com.intellij.polySymbols.query.PolySymbolQueryExecutor$NameMatchQueryBuilder
 - nameMatchQuery(java.util.List,kotlin.jvm.functions.Function1):java.util.List
 - a:setKeepUnresolvedTopLevelReferences(Z):V
-- a:withNameConversionRules(java.util.List):com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-*:com.intellij.polySymbols.query.PolySymbolsQueryExecutor$CodeCompletionQueryBuilder
-- com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams$BuilderMixin
-- com.intellij.polySymbols.query.PolySymbolsQueryExecutor$QueryBuilder
+- a:withNameConversionRules(java.util.List):com.intellij.polySymbols.query.PolySymbolQueryExecutor
+*:com.intellij.polySymbols.query.PolySymbolQueryExecutor$CodeCompletionQueryBuilder
+- com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams$BuilderMixin
+- com.intellij.polySymbols.query.PolySymbolQueryExecutor$QueryBuilder
 - a:run():java.util.List
-*:com.intellij.polySymbols.query.PolySymbolsQueryExecutor$ListSymbolsQueryBuilder
-- com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams$BuilderMixin
-- com.intellij.polySymbols.query.PolySymbolsQueryExecutor$QueryBuilder
+*:com.intellij.polySymbols.query.PolySymbolQueryExecutor$ListSymbolsQueryBuilder
+- com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams$BuilderMixin
+- com.intellij.polySymbols.query.PolySymbolQueryExecutor$QueryBuilder
 - a:run():java.util.List
-*:com.intellij.polySymbols.query.PolySymbolsQueryExecutor$NameMatchQueryBuilder
-- com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams$BuilderMixin
-- com.intellij.polySymbols.query.PolySymbolsQueryExecutor$QueryBuilder
+*:com.intellij.polySymbols.query.PolySymbolQueryExecutor$NameMatchQueryBuilder
+- com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams$BuilderMixin
+- com.intellij.polySymbols.query.PolySymbolQueryExecutor$QueryBuilder
 - a:run():java.util.List
-*:com.intellij.polySymbols.query.PolySymbolsQueryExecutor$QueryBuilder
-- com.intellij.polySymbols.query.PolySymbolsQueryParams$Builder
-- a:additionalScope(com.intellij.polySymbols.query.PolySymbolsScope):java.lang.Object
+*:com.intellij.polySymbols.query.PolySymbolQueryExecutor$QueryBuilder
+- com.intellij.polySymbols.query.PolySymbolQueryParams$Builder
+- a:additionalScope(com.intellij.polySymbols.query.PolySymbolQueryStack):java.lang.Object
+- a:additionalScope(com.intellij.polySymbols.query.PolySymbolScope):java.lang.Object
 - a:additionalScope(java.util.Collection):java.lang.Object
-- a:additionalScope(com.intellij.polySymbols.query.PolySymbolsScope[]):java.lang.Object
-*:com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+- a:additionalScope(com.intellij.polySymbols.query.PolySymbolScope[]):java.lang.Object
+*:com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 - com.intellij.openapi.Disposable
-- *sf:Companion:com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$Companion
-- a:addScope(com.intellij.polySymbols.query.PolySymbolsScope,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.Disposable):V
-- a:create(com.intellij.psi.PsiElement,Z):com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- bs:create$default(com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory,com.intellij.psi.PsiElement,Z,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
-*f:com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$Companion
-- f:create(com.intellij.psi.PsiElement,Z):com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- bs:create$default(com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$Companion,com.intellij.psi.PsiElement,Z,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- f:createCustom():com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-- f:createCustom(kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
-*:com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-- a:addCustomizer(com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-- a:addNameConversionRules(com.intellij.polySymbols.query.PolySymbolNameConversionRules):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-- a:addPolyContext(java.lang.String,java.lang.String):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-- a:addRootScope(com.intellij.polySymbols.query.PolySymbolsScope):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-- a:addRootScopes(java.util.List):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-- a:allowResolve(Z):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-- a:create():com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- a:setFramework(java.lang.String):com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory$PolySymbolsQueryExecutorBuilder
-*:com.intellij.polySymbols.query.PolySymbolsQueryExecutorListener
-- *sf:Companion:com.intellij.polySymbols.query.PolySymbolsQueryExecutorListener$Companion
-- a:afterQuery(com.intellij.polySymbols.query.PolySymbolsQueryParams):V
-- a:beforeQuery(com.intellij.polySymbols.query.PolySymbolsQueryParams):V
-*f:com.intellij.polySymbols.query.PolySymbolsQueryExecutorListener$Companion
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$Companion
+- a:addScope(com.intellij.polySymbols.query.PolySymbolScope,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.Disposable):V
+- a:create(com.intellij.psi.PsiElement,Z):com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- bs:create$default(com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory,com.intellij.psi.PsiElement,Z,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+*f:com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$Companion
+- f:create(com.intellij.psi.PsiElement,Z):com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- bs:create$default(com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$Companion,com.intellij.psi.PsiElement,Z,I,java.lang.Object):com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- f:createCustom():com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+- f:createCustom(kotlin.jvm.functions.Function1):com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+*:com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+- a:addCustomizer(com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+- a:addNameConversionRules(com.intellij.polySymbols.query.PolySymbolNameConversionRules):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+- a:addPolyContext(java.lang.String,java.lang.String):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+- a:addRootScope(com.intellij.polySymbols.query.PolySymbolScope):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+- a:addRootScopes(java.util.List):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+- a:allowResolve(Z):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+- a:create():com.intellij.polySymbols.query.PolySymbolQueryExecutor
+- a:setFramework(java.lang.String):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
+*:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener$Companion
+- a:afterQuery(com.intellij.polySymbols.query.PolySymbolQueryParams):V
+- a:beforeQuery(com.intellij.polySymbols.query.PolySymbolQueryParams):V
+*f:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener$Companion
 - f:getTOPIC():com.intellij.util.messages.Topic
-*:com.intellij.polySymbols.query.PolySymbolsQueryParams
+*:com.intellij.polySymbols.query.PolySymbolQueryParams
 - accept(com.intellij.polySymbols.PolySymbol):Z
-- a:getExcludeAccessModifiers():java.util.List
 - a:getExcludeModifiers():java.util.List
 - getFramework():java.lang.String
-- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-- a:getRequiredAccessModifier():com.intellij.polySymbols.PolySymbolAccessModifier
+- a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolQueryExecutor
 - a:getRequiredModifiers():java.util.List
-*:com.intellij.polySymbols.query.PolySymbolsQueryParams$Builder
-- copyFiltersFrom(com.intellij.polySymbols.query.PolySymbolsQueryParams):V
+*:com.intellij.polySymbols.query.PolySymbolQueryParams$Builder
+- copyFiltersFrom(com.intellij.polySymbols.query.PolySymbolQueryParams):V
 - a:exclude(com.intellij.polySymbols.PolySymbolModifier):java.lang.Object
 - a:exclude(java.util.Collection):java.lang.Object
 - a:exclude(com.intellij.polySymbols.PolySymbolModifier[]):java.lang.Object
-- a:excludeAccess(com.intellij.polySymbols.PolySymbolAccessModifier):java.lang.Object
-- a:excludeAccess(java.util.Collection):java.lang.Object
-- a:excludeAccess(com.intellij.polySymbols.PolySymbolAccessModifier[]):java.lang.Object
 - a:require(com.intellij.polySymbols.PolySymbolModifier):java.lang.Object
 - a:require(java.util.Collection):java.lang.Object
 - a:require(com.intellij.polySymbols.PolySymbolModifier[]):java.lang.Object
-- a:requireAccess(com.intellij.polySymbols.PolySymbolAccessModifier):java.lang.Object
-*:com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
+*:com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 - com.intellij.openapi.util.ModificationTracker
 - a:apply(com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem,com.intellij.polySymbols.PolySymbolQualifiedKind):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:apply(java.util.List,Z,com.intellij.polySymbols.PolySymbolQualifiedName):java.util.List
 - a:createPointer():com.intellij.model.Pointer
-*:com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizerFactory
-- *sf:Companion:com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizerFactory$Companion
-- a:create(com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext):com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
-- s:getQueryResultsCustomizer(com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext):com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
-*f:com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizerFactory$Companion
-- f:getQueryResultsCustomizer(com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext):com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
-*:com.intellij.polySymbols.query.PolySymbolsScope
+*:com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizerFactory
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizerFactory$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:create(com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext):com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
+- s:getQueryResultsCustomizer(com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext):com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
+*f:com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizerFactory$Companion
+- f:getQueryResultsCustomizer(com.intellij.psi.PsiElement,com.intellij.polySymbols.context.PolyContext):com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
+*:com.intellij.polySymbols.query.PolySymbolQueryScopeContributor
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryScopeContributor$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:registerProviders(com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar):V
+*f:com.intellij.polySymbols.query.PolySymbolQueryScopeContributor$Companion
+*:com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
+- com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:forAnywhere():com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
+- a:inContext(java.util.function.Predicate):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
+- a:inFile(com.intellij.patterns.PsiFilePattern):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:inFile(java.lang.Class):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:inFiles(java.util.Collection):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:inFiles(com.intellij.patterns.PsiFilePattern[]):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:inFiles(java.lang.Class[]):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:withResolveRequired():com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
+*:com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:forAnyPsiLocationInFile():com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:forPsiLocation(com.intellij.patterns.PsiElementPattern):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:forPsiLocation(java.lang.Class):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:forPsiLocations(java.util.Collection):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:forPsiLocations(com.intellij.patterns.PsiElementPattern[]):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:forPsiLocations(java.lang.Class[]):com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+- a:inContext(java.util.function.Predicate):com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+- a:withResolveRequired():com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+*f:com.intellij.polySymbols.query.PolySymbolQueryStack
+- <init>():V
+- <init>(java.util.Collection):V
+- <init>(com.intellij.polySymbols.query.PolySymbolScope[]):V
+*:com.intellij.polySymbols.query.PolySymbolScope
 - com.intellij.openapi.util.ModificationTracker
 - a:createPointer():com.intellij.model.Pointer
-- getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
-- getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
-- getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
+- getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - isExclusiveFor(com.intellij.polySymbols.PolySymbolQualifiedKind):Z
+*:com.intellij.polySymbols.query.PolySymbolWithPattern
+- com.intellij.polySymbols.PolySymbol
+- a:getPattern():com.intellij.polySymbols.patterns.PolySymbolPattern
 *:com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 - com.intellij.refactoring.rename.api.RenameTarget
 - *sf:Companion:com.intellij.polySymbols.refactoring.PolySymbolRenameTarget$Companion
@@ -873,14 +982,14 @@
 *f:com.intellij.polySymbols.utils.FileUtils
 - sf:findOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 *f:com.intellij.polySymbols.utils.MappedPolySymbol
-- com.intellij.polySymbols.PolySymbol
+- com.intellij.polySymbols.query.PolySymbolWithPattern
 - *sf:Companion:com.intellij.polySymbols.utils.MappedPolySymbol$Companion
 - sf:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedName[]):com.intellij.polySymbols.utils.MappedPolySymbol
 - sf:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedName[],com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.utils.MappedPolySymbol
 - createPointer():com.intellij.model.Pointer
 - getName():java.lang.String
 - getOrigin():com.intellij.polySymbols.PolySymbolOrigin
-- getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
+- getPattern():com.intellij.polySymbols.patterns.PolySymbolPattern
 - getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
 *f:com.intellij.polySymbols.utils.MappedPolySymbol$Companion
@@ -919,46 +1028,101 @@
 - navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
 *:com.intellij.polySymbols.utils.PolySymbolDelegate
 - com.intellij.polySymbols.PolySymbol
-- com.intellij.polySymbols.query.PolySymbolsScope
+- com.intellij.polySymbols.query.PolySymbolScope
 - *sf:Companion:com.intellij.polySymbols.utils.PolySymbolDelegate$Companion
 - a:createPointer():com.intellij.model.Pointer
 - get(com.intellij.polySymbols.PolySymbolProperty):java.lang.Object
-- getAccessModifier():com.intellij.polySymbols.PolySymbolAccessModifier
 - getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
-- getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
+- getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - a:getDelegate():com.intellij.polySymbols.PolySymbol
 - getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
 - getExtension():Z
 - getIcon():javax.swing.Icon
-- getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
+- getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - getModificationCount():J
 - getModifiers():java.util.Set
 - getName():java.lang.String
 - getNavigationTargets(com.intellij.openapi.project.Project):java.util.Collection
 - getOrigin():com.intellij.polySymbols.PolySymbolOrigin
-- getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 - getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getPsiContext():com.intellij.psi.PsiElement
 - getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
 - getQueryScope():java.util.List
 - getRenameTarget():com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
-- getRequired():java.lang.Boolean
 - getSearchTarget():com.intellij.polySymbols.search.PolySymbolSearchTarget
-- getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
+- getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - isExclusiveFor(com.intellij.polySymbols.PolySymbolQualifiedKind):Z
 - s:unwrapAllDelegates(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.PolySymbol
 *f:com.intellij.polySymbols.utils.PolySymbolDelegate$Companion
 - f:unwrapAllDelegates(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.PolySymbol
-*:com.intellij.polySymbols.utils.PolySymbolDelegateWithDocumentation
-- com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-- com.intellij.polySymbols.utils.PolySymbolDelegate
-- createDocumentation(com.intellij.psi.PsiElement):com.intellij.polySymbols.documentation.PolySymbolDocumentation
+*a:com.intellij.polySymbols.utils.PolySymbolIsolatedMappingScope
+- com.intellij.polySymbols.query.PolySymbolScope
+- <init>(java.util.Map,java.lang.String,com.intellij.psi.PsiElement):V
+- pa:acceptSymbol(com.intellij.polySymbols.PolySymbol):Z
+- f:equals(java.lang.Object):Z
+- getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- pf:getFramework():java.lang.String
+- pf:getLocation():com.intellij.psi.PsiElement
+- pf:getMappings():java.util.Map
+- getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- f:getModificationCount():J
+- pa:getSubScopeBuilder():kotlin.jvm.functions.Function2
+- getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- hashCode():I
+*:com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
+- a:getPriority():com.intellij.polySymbols.PolySymbol$Priority
+*a:com.intellij.polySymbols.utils.PolySymbolScopeWithCache
+- com.intellij.polySymbols.query.PolySymbolScope
+- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder,java.lang.Object):V
 - a:createPointer():com.intellij.model.Pointer
-- getDefaultValue():java.lang.String
-- getDescription():java.lang.String
-- getDescriptionSections():java.util.Map
-- getDocUrl():java.lang.String
-- getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
+- equals(java.lang.Object):Z
+- getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- pf:getDataHolder():com.intellij.openapi.util.UserDataHolder
+- pf:getFramework():java.lang.String
+- pf:getKey():java.lang.Object
+- getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- getModificationCount():J
+- pf:getProject():com.intellij.openapi.project.Project
+- getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- hashCode():I
+- pa:initialize(kotlin.jvm.functions.Function1,java.util.Set):V
+- pa:provides(com.intellij.polySymbols.PolySymbolQualifiedKind):Z
+*a:com.intellij.polySymbols.utils.PolySymbolStructuredScope
+- com.intellij.polySymbols.query.PolySymbolCompoundScope
+- <init>(com.intellij.psi.PsiElement):V
+- p:build(com.intellij.polySymbols.query.PolySymbolQueryExecutor,kotlin.jvm.functions.Function1):V
+- a:createPointer():com.intellij.model.Pointer
+- equals(java.lang.Object):Z
+- p:findBestMatchingScope(com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScope):com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScope
+- pf:getCurrentScope():com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScope
+- pf:getLocation():com.intellij.psi.PsiElement
+- pa:getProvidedSymbolKinds():java.util.Set
+- pa:getRootPsiElement():com.intellij.psi.PsiElement
+- pf:getRootScope():com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScope
+- pa:getScopesBuilderProvider():kotlin.jvm.functions.Function2
+- hashCode():I
+*p:com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScope
+- com.intellij.polySymbols.query.PolySymbolScope
+- a:getAllSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind):java.util.List
+- a:getChildren():java.util.List
+- a:getLocalSymbols():java.util.List
+- a:getParent():com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScope
+- a:getProperties():java.util.Map
+- a:getSource():com.intellij.psi.PsiElement
+*pf:com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScopesHolder
+- <init>(com.intellij.psi.PsiElement,java.util.Set):V
+- f:currentScope():com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScope
+- f:currentScope(kotlin.jvm.functions.Function1):V
+- f:getProvidedSymbolKinds():java.util.Set
+- f:getRootElement():com.intellij.psi.PsiElement
+- f:popScope():V
+- f:previousScope():com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScope
+- f:previousScope(kotlin.jvm.functions.Function1):V
+- f:pushScope(com.intellij.psi.PsiElement,java.util.Map,java.util.Set,kotlin.jvm.functions.Function1):V
+- bs:pushScope$default(com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScopesHolder,com.intellij.psi.PsiElement,java.util.Map,java.util.Set,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+*:com.intellij.polySymbols.utils.PolySymbolStructuredScope$PolySymbolPsiScopesHolder$ScopeModifier
+- a:addSymbol(com.intellij.polySymbols.PolySymbol):V
+- a:addSymbols(java.util.List):V
 *:com.intellij.polySymbols.utils.PolySymbolTypeSupport
 - a:getTypeProperty():com.intellij.polySymbols.PolySymbolProperty
 - a:resolve(java.util.List):java.lang.Object
@@ -977,7 +1141,7 @@
 - sf:coalesceWith(com.intellij.polySymbols.PolySymbolApiStatus,com.intellij.polySymbols.PolySymbolApiStatus):com.intellij.polySymbols.PolySymbolApiStatus
 - sf:createPsiRangeNavigationItem(com.intellij.platform.backend.navigation.NavigationTarget,com.intellij.psi.PsiElement,I):com.intellij.pom.Navigatable
 - sf:getCompleteMatch(com.intellij.polySymbols.PolySymbol):Z
-- sf:getDefaultCodeCompletions(com.intellij.polySymbols.query.PolySymbolsScope,com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
+- sf:getDefaultCodeCompletions(com.intellij.polySymbols.query.PolySymbolScope,com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - sf:getHideFromCompletion(com.intellij.polySymbols.PolySymbol):Z
 - sf:getKind(com.intellij.polySymbols.PolySymbol):java.lang.String
 - sf:getNameSegments(com.intellij.polySymbols.PolySymbol):java.util.List
@@ -986,10 +1150,10 @@
 - sf:getQualifiedName(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.PolySymbolQualifiedName
 - sf:hasOnlyExtensions(java.util.List):Z
 - sf:isCritical(com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem):Z
-- sf:match(com.intellij.polySymbols.PolySymbol,java.lang.String,com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
+- sf:match(com.intellij.polySymbols.PolySymbol,java.lang.String,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - sf:merge(kotlin.sequences.Sequence):com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
-- sf:nameMatches(com.intellij.polySymbols.PolySymbol,java.lang.String,com.intellij.polySymbols.query.PolySymbolsQueryExecutor):Z
-- sf:toCodeCompletionItems(com.intellij.polySymbols.PolySymbol,java.lang.String,com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
+- sf:nameMatches(com.intellij.polySymbols.PolySymbol,java.lang.String,com.intellij.polySymbols.query.PolySymbolQueryExecutor):Z
+- sf:toCodeCompletionItems(com.intellij.polySymbols.PolySymbol,java.lang.String,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - sf:unwrapMatchedSymbols(com.intellij.polySymbols.PolySymbol):kotlin.sequences.Sequence
 - sf:withMatchedKind(com.intellij.polySymbols.PolySymbol,com.intellij.polySymbols.PolySymbolQualifiedKind):com.intellij.polySymbols.PolySymbol
 - sf:withMatchedName(com.intellij.polySymbols.PolySymbol,java.lang.String):com.intellij.polySymbols.PolySymbol
@@ -997,74 +1161,6 @@
 - sf:withOffset(java.util.List,I):java.util.List
 - sf:withSegments(com.intellij.polySymbols.query.PolySymbolMatch,java.util.List):com.intellij.polySymbols.query.PolySymbolMatch
 - sf:withSymbols(com.intellij.polySymbols.PolySymbolNameSegment,java.util.List):com.intellij.polySymbols.PolySymbolNameSegment
-*a:com.intellij.polySymbols.utils.PolySymbolsIsolatedMappingScope
-- com.intellij.polySymbols.query.PolySymbolsScope
-- <init>(java.util.Map,java.lang.String,com.intellij.psi.PsiElement):V
-- pa:acceptSymbol(com.intellij.polySymbols.PolySymbol):Z
-- f:equals(java.lang.Object):Z
-- getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
-- pf:getFramework():java.lang.String
-- pf:getLocation():com.intellij.psi.PsiElement
-- pf:getMappings():java.util.Map
-- getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
-- f:getModificationCount():J
-- pa:getSubScopeBuilder():kotlin.jvm.functions.Function2
-- getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
-- hashCode():I
-*:com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
-- a:getPriority():com.intellij.polySymbols.PolySymbol$Priority
-*a:com.intellij.polySymbols.utils.PolySymbolsScopeWithCache
-- com.intellij.polySymbols.query.PolySymbolsScope
-- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder,java.lang.Object):V
-- a:createPointer():com.intellij.model.Pointer
-- equals(java.lang.Object):Z
-- getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
-- pf:getDataHolder():com.intellij.openapi.util.UserDataHolder
-- pf:getFramework():java.lang.String
-- pf:getKey():java.lang.Object
-- getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
-- getModificationCount():J
-- pf:getProject():com.intellij.openapi.project.Project
-- getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
-- hashCode():I
-- pa:initialize(kotlin.jvm.functions.Function1,java.util.Set):V
-- pa:provides(com.intellij.polySymbols.PolySymbolQualifiedKind):Z
-*a:com.intellij.polySymbols.utils.PolySymbolsStructuredScope
-- com.intellij.polySymbols.query.PolySymbolsCompoundScope
-- <init>(com.intellij.psi.PsiElement):V
-- p:build(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,kotlin.jvm.functions.Function1):V
-- a:createPointer():com.intellij.model.Pointer
-- equals(java.lang.Object):Z
-- p:findBestMatchingScope(com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScope):com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScope
-- pf:getCurrentScope():com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScope
-- pf:getLocation():com.intellij.psi.PsiElement
-- pa:getProvidedSymbolKinds():java.util.Set
-- pa:getRootPsiElement():com.intellij.psi.PsiElement
-- pf:getRootScope():com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScope
-- pa:getScopesBuilderProvider():kotlin.jvm.functions.Function2
-- hashCode():I
-*p:com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScope
-- com.intellij.polySymbols.query.PolySymbolsScope
-- a:getAllSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind):java.util.List
-- a:getChildren():java.util.List
-- a:getLocalSymbols():java.util.List
-- a:getParent():com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScope
-- a:getProperties():java.util.Map
-- a:getSource():com.intellij.psi.PsiElement
-*pf:com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScopesHolder
-- <init>(com.intellij.psi.PsiElement,java.util.Set):V
-- f:currentScope():com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScope
-- f:currentScope(kotlin.jvm.functions.Function1):V
-- f:getProvidedSymbolKinds():java.util.Set
-- f:getRootElement():com.intellij.psi.PsiElement
-- f:popScope():V
-- f:previousScope():com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScope
-- f:previousScope(kotlin.jvm.functions.Function1):V
-- f:pushScope(com.intellij.psi.PsiElement,java.util.Map,java.util.Set,kotlin.jvm.functions.Function1):V
-- bs:pushScope$default(com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScopesHolder,com.intellij.psi.PsiElement,java.util.Map,java.util.Set,kotlin.jvm.functions.Function1,I,java.lang.Object):V
-*:com.intellij.polySymbols.utils.PolySymbolsStructuredScope$PolySymbolsPsiScopesHolder$ScopeModifier
-- a:addSymbol(com.intellij.polySymbols.PolySymbol):V
-- a:addSymbols(java.util.List):V
 *:com.intellij.polySymbols.utils.PsiSourcedPolySymbolDelegate
 - com.intellij.polySymbols.search.PsiSourcedPolySymbol
 - com.intellij.polySymbols.utils.PolySymbolDelegate
@@ -1073,7 +1169,7 @@
 - getPsiContext():com.intellij.psi.PsiElement
 - getSource():com.intellij.psi.PsiElement
 *f:com.intellij.polySymbols.utils.ReferencingPolySymbol
-- com.intellij.polySymbols.PolySymbol
+- com.intellij.polySymbols.query.PolySymbolWithPattern
 - *sf:Companion:com.intellij.polySymbols.utils.ReferencingPolySymbol$Companion
 - sf:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedKind[]):com.intellij.polySymbols.utils.ReferencingPolySymbol
 - sf:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedKind[],com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.utils.ReferencingPolySymbol
@@ -1082,7 +1178,7 @@
 - equals(java.lang.Object):Z
 - getName():java.lang.String
 - getOrigin():com.intellij.polySymbols.PolySymbolOrigin
-- getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
+- getPattern():com.intellij.polySymbols.patterns.PolySymbolPattern
 - getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
 - hashCode():I
@@ -1092,13 +1188,11 @@
 - f:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedKind[],com.intellij.polySymbols.PolySymbol$Priority,java.util.List):com.intellij.polySymbols.utils.ReferencingPolySymbol
 - bs:create$default(com.intellij.polySymbols.utils.ReferencingPolySymbol$Companion,com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedKind[],com.intellij.polySymbols.PolySymbol$Priority,java.util.List,I,java.lang.Object):com.intellij.polySymbols.utils.ReferencingPolySymbol
 *:com.intellij.polySymbols.webTypes.WebTypesSymbol
-- com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-- com.intellij.polySymbols.query.PolySymbolsScope
+- com.intellij.polySymbols.query.PolySymbolScope
 - com.intellij.polySymbols.search.PsiSourcedPolySymbol
 - *sf:Companion:com.intellij.polySymbols.webTypes.WebTypesSymbol$Companion
 - sf:PROP_NO_DOC:com.intellij.polySymbols.PolySymbolProperty
 - a:createPointer():com.intellij.model.Pointer
-- getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
 - a:getLocation():com.intellij.polySymbols.webTypes.WebTypesSymbol$Location
 *f:com.intellij.polySymbols.webTypes.WebTypesSymbol$Companion
 *:com.intellij.polySymbols.webTypes.WebTypesSymbol$FileExport
@@ -1136,47 +1230,42 @@
 - f:create(java.lang.String,java.lang.String):com.intellij.polySymbols.webTypes.WebTypesSymbol$ModuleExport
 *c:com.intellij.polySymbols.webTypes.WebTypesSymbolBase
 - com.intellij.polySymbols.webTypes.WebTypesSymbol
-- p:queryExecutor:com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+- p:queryExecutor:com.intellij.polySymbols.query.PolySymbolQueryExecutor
 - <init>():V
 - createPointer():com.intellij.model.Pointer
 - equals(java.lang.Object):Z
 - get(com.intellij.polySymbols.PolySymbolProperty):java.lang.Object
 - f:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
-- f:getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
-- f:getDefaultValue():java.lang.String
-- f:getDescription():java.lang.String
-- f:getDescriptionSections():java.util.Map
-- f:getDocUrl():java.lang.String
+- f:getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
+- getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
 - f:getExtension():Z
 - f:getIcon():javax.swing.Icon
 - f:getLocation():com.intellij.polySymbols.webTypes.WebTypesSymbol$Location
-- f:getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
+- f:getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - getModificationCount():J
 - getModifiers():java.util.Set
 - f:getName():java.lang.String
 - f:getOrigin():com.intellij.polySymbols.PolySymbolOrigin
-- f:getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 - f:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - f:getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
-- pf:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+- pf:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolQueryExecutor
 - f:getQueryScope():java.util.List
-- f:getRequired():java.lang.Boolean
 - f:getSource():com.intellij.psi.PsiElement
-- f:getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
+- f:getSymbols(com.intellij.polySymbols.PolySymbolQualifiedKind,com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - hashCode():I
 - isEquivalentTo(com.intellij.model.Symbol):Z
 - f:isExclusiveFor(com.intellij.polySymbols.PolySymbolQualifiedKind):Z
 - matchContext(com.intellij.polySymbols.context.PolyContext):Z
-- pf:setQueryExecutor(com.intellij.polySymbols.query.PolySymbolsQueryExecutor):V
+- pf:setQueryExecutor(com.intellij.polySymbols.query.PolySymbolQueryExecutor):V
 *:com.intellij.polySymbols.webTypes.WebTypesSymbolFactory
 - a:create():com.intellij.polySymbols.webTypes.WebTypesSymbolBase
-*:com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
-- *sf:Companion:com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter$Companion
-- a:filterCodeCompletions(java.util.List,com.intellij.polySymbols.query.PolySymbolsQueryExecutor,java.util.List,java.util.Map):java.util.List
-- a:filterNameMatches(java.util.List,com.intellij.polySymbols.query.PolySymbolsQueryExecutor,java.util.List,java.util.Map):java.util.List
-- s:get(java.lang.String):com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
-*f:com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter$Companion
-- f:get(java.lang.String):com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
+*:com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
+- *sf:Companion:com.intellij.polySymbols.webTypes.filters.PolySymbolFilter$Companion
+- a:filterCodeCompletions(java.util.List,com.intellij.polySymbols.query.PolySymbolQueryExecutor,com.intellij.polySymbols.query.PolySymbolQueryStack,java.util.Map):java.util.List
+- a:filterNameMatches(java.util.List,com.intellij.polySymbols.query.PolySymbolQueryExecutor,com.intellij.polySymbols.query.PolySymbolQueryStack,java.util.Map):java.util.List
+- s:get(java.lang.String):com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
+*f:com.intellij.polySymbols.webTypes.filters.PolySymbolFilter$Companion
+- f:get(java.lang.String):com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 *f:com.intellij.webSymbols.references.WebSymbolReferenceProvider
 - *sf:Companion:com.intellij.webSymbols.references.WebSymbolReferenceProvider$Companion
 - <init>():V

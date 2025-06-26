@@ -1,20 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun applyIslandsTheme(afterImportSettings: Boolean) {
   val application = ApplicationManager.getApplication()
-  if (PlatformUtils.isRider() || !application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment) {
+  if (Registry.`is`("llm.riderNext.enabled", false) || !application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
     return
   }
 
@@ -46,8 +49,17 @@ private fun enableTheme(oneIsland: Boolean) {
   val currentTheme = lafManager.currentUIThemeLookAndFeel?.id ?: return
   val currentEditorTheme = colorsManager.globalScheme.displayName
 
+  if (lafManager.autodetect) {
+    return
+  }
+
   if ((currentTheme != "ExperimentalDark" && currentTheme != "ExperimentalLight" && currentTheme != "ExperimentalLightWithLightHeader") ||
-      (currentEditorTheme != "Light" && currentEditorTheme != "Dark")) {
+      (currentEditorTheme != "Light" && currentEditorTheme != "Dark" && currentEditorTheme != "Rider Light" && currentEditorTheme != "Rider Dark")) {
+    return
+  }
+
+  val id = PluginId.getId("com.chrisrm.idea.MaterialThemeUI")
+  if (PluginManagerCore.findPlugin(id) != null && !PluginManagerCore.isDisabled(id)) {
     return
   }
 

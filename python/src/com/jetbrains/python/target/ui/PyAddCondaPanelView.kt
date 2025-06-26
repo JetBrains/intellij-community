@@ -108,11 +108,6 @@ internal class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : Py
   override val component: Component
     get() = panel
 
-  // Those three functions are from the old (pre-target) interface which is not used anymore
-  override fun previous() = Unit
-  override fun next() = Unit
-  override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
-
   override fun onSelected() {
     runWithModalProgressBlocking(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
       reportRawProgress { reporter ->
@@ -120,10 +115,6 @@ internal class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : Py
       }
     }
   }
-
-  override val actions: Map<PyAddSdkDialogFlowAction, Boolean> = emptyMap()
-
-  override fun complete() = Unit
 
   override fun validateAll(): List<ValidationInfo> =
     panel.validateAll() + (model.getValidationError()?.let { listOf(ValidationInfo(it)) } ?: emptyList())

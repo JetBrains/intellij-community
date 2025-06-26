@@ -12,7 +12,9 @@ import com.intellij.openapi.editor.impl.FoldingKeys.AUTO_CREATED_ZOMBIE
 import com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.impl.zombie.Zombie
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.text.BreakIterator
 
 internal class CodeFoldingZombie(
   val regions: List<CodeFoldingRegion>,
@@ -29,7 +31,7 @@ internal class CodeFoldingZombie(
         val regionState = CodeFoldingRegion(
           foldRegion.startOffset,
           foldRegion.endOffset,
-          foldRegion.placeholderText,
+          createPlaceholderText(foldRegion.placeholderText),
           foldRegion.group?.id,
           foldRegion.shouldNeverExpand(),
           foldRegion.isExpanded,
@@ -38,6 +40,15 @@ internal class CodeFoldingZombie(
         putRegion(regionState, regions, groupedRegions)
       }
       return CodeFoldingZombie(regions, groupedRegions)
+    }
+
+    private fun createPlaceholderText(text: String): String {
+      return if (Registry.`is`("cache.folding.model.hide.placeholder")) {
+        CodeFoldingRegion.PLACEHOLDER_SYMBOL.repeat(text.graphemeCount())
+      }
+      else {
+        text
+      }
     }
 
     fun putRegion(
@@ -135,8 +146,23 @@ internal data class CodeFoldingRegion(
   val isExpanded: Boolean,
   val isAutoCreated: Boolean,
 ) {
+    companion object {
+      const val PLACEHOLDER_SYMBOL = " "
+    }
   override fun toString(): String {
     val groupStr = if (groupId == null) "" else " $groupId,"
     return "($startOffset-$endOffset,$groupStr '$placeholderText', ${(if (isExpanded) "-" else "+")}, ${if (isAutoCreated) "AUTO" else "MANUAL"})"
   }
+}
+
+private fun String.graphemeCount(): Int {
+  val iterator = BreakIterator.getCharacterInstance()
+  iterator.setText(this)
+
+  var count = 0
+  while (iterator.next() != BreakIterator.DONE) {
+    count++
+  }
+
+  return count
 }

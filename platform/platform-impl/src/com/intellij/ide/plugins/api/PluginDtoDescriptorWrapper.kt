@@ -42,13 +42,9 @@ class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginD
     throw UnsupportedOperationException("No direct mapping for displayCategory in PluginDto")
   }
 
-  override fun getSinceBuild(): String? {
-    throw UnsupportedOperationException("No direct mapping for sinceBuild in PluginDto")
-  }
+  override fun getSinceBuild(): String? = pluginDto.sinceBuild
 
-  override fun getUntilBuild(): String? {
-    throw UnsupportedOperationException("No direct mapping for untilBuild in PluginDto")
-  }
+  override fun getUntilBuild(): String? = pluginDto.untilBuild
 
   override fun getDescription(): @Nls String? = pluginDto.description
 

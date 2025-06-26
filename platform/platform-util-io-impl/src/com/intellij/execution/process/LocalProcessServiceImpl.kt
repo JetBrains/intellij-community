@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SystemProperties
+import com.pty4j.Command
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import com.pty4j.windows.conpty.WinConPtyProcess
@@ -21,8 +22,24 @@ class LocalProcessServiceImpl : LocalProcessService {
     env: Map<String, String>,
     options: LocalPtyOptions,
     redirectErrorStream: Boolean,
+  ): PtyProcess = startPtyProcess(Command.CommandList(command), directory, env, options, redirectErrorStream)
+
+  override fun startPtyProcess(
+    command: RawCommandLineString,
+    directory: String?,
+    env: Map<String, String>,
+    options: LocalPtyOptions,
+    redirectErrorStream: Boolean,
+  ): PtyProcess = startPtyProcess(Command.RawCommandString(command.commandLine), directory, env, options, redirectErrorStream)
+
+  private fun startPtyProcess(
+    command: Command,
+    directory: String?,
+    env: Map<String, String>,
+    options: LocalPtyOptions,
+    redirectErrorStream: Boolean,
   ): PtyProcess {
-    val builder = PtyProcessBuilder(command.toTypedArray())
+    val builder = PtyProcessBuilder(command)
       .setEnvironment(env)
       .setDirectory(directory)
       .setInitialColumns(if (options.initialColumns > 0) options.initialColumns else null)
@@ -104,8 +121,8 @@ class LocalProcessServiceImpl : LocalProcessService {
 
   override fun getCommand(process: Process): List<String> {
     return when (process) {
-      is WinConPtyProcess -> process.command
-      is WinPtyProcess -> process.command
+      is WinConPtyProcess -> process.commandWrapper.toList()
+      is WinPtyProcess -> process.commandWrapper.toList()
       else -> {
         val processInfo: ProcessHandle.Info = try {
           process.info()

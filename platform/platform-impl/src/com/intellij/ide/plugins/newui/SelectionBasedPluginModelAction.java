@@ -5,14 +5,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult;
+import com.intellij.ide.plugins.newui.buttons.OptionButton;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Producer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -369,41 +367,17 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       myUninstallButton.putValue(Action.NAME, presentation.getText());
     }
 
+    public void setOptions(List<AnAction> options) {
+      button.setOptions(options);
+    }
+
+    public void setText(@Nls String text) {
+      button.getAction().putValue(Action.NAME, text);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
       myCurrentAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
-    }
-  }
-
-  private static final class OptionButton extends JBOptionButton {
-    private final JButton myBaseline = new JButton();
-
-    OptionButton() {
-      super(null, null);
-
-      setAddSeparator(false);
-      setSelectFirstItem(false);
-      setPopupBackgroundColor(UIUtil.getListBackground());
-      setShowPopupYOffset(-2);
-
-      setPopupHandler(popup -> {
-        Dimension size = new Dimension(popup.getSize());
-        Insets insets = getInsets();
-        int oldWidth = size.width;
-        int newWidth = getWidth() - insets.left - insets.right;
-        if (oldWidth <= newWidth || newWidth / (double)oldWidth > 0.85) {
-          size.width = newWidth;
-        }
-        popup.setSize(size);
-        return null;
-      });
-    }
-
-    @Override
-    public int getBaseline(int width, int height) {
-      myBaseline.setText(getText());
-      myBaseline.setSize(getSize());
-      return myBaseline.getBaseline(width, height);
     }
   }
 }

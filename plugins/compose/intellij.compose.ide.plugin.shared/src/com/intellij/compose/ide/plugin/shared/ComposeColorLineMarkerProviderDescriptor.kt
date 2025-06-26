@@ -20,10 +20,12 @@ package com.intellij.compose.ide.plugin.shared
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.ui.colorpicker.ColorPickerBuilder
@@ -34,6 +36,7 @@ import com.intellij.util.ui.ColorIcon
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parsing.parseNumericLiteral
 import org.jetbrains.kotlin.psi.*
@@ -55,8 +58,9 @@ abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
     if (!isComposeEnabledInModule(module)) return null
 
     // don't provide line markers for the places where Android Jetpack Compose plugin is supposed to work
-    // i.e., Android modules with Android SDK configured, so with Android being a single target
-    if (isAndroidJetpackComposePluginLoaded() && isAndroidSdkConfiguredInModule(module)) return null
+    // i.e., Android modules with an available Android Facet
+    if (hasAndroidComposeColorLineMarkerProviderDescriptorAvailable(element.project)
+        && isAndroidFacetConfiguredInModule(module)) return null
 
     val callExpression = element.parent.parent as? KtCallExpression ?: return null
     if (!callExpression.isColorCall()) return null
@@ -375,7 +379,7 @@ private fun KtConstantExpression.colorParamTypeOrNull(): ComposeColorParamType? 
 }
 
 private fun List<KtValueArgument>.singleColorParamTypeOrNull(): ComposeColorParamType? {
-  val elementsTypes = map { (it.children.singleOrNull() as? KtConstantExpression)?.colorParamTypeOrNull() }
+  val elementsTypes = map { (it.getArgumentExpression() as? KtConstantExpression)?.colorParamTypeOrNull() }
   return when {
     elementsTypes.all { it == ComposeColorParamType.FLOAT } -> ComposeColorParamType.FLOAT
     elementsTypes.all { it == ComposeColorParamType.INT } -> ComposeColorParamType.INT
@@ -402,7 +406,11 @@ private fun getConstructorType(arguments: List<KtValueArgument>): ComposeColorCo
       ComposeColorParamType.FLOAT -> ComposeColorConstructor.FLOAT_X4
       else -> null
     }
-    5 ->  ComposeColorConstructor.FLOAT_X4_COLORSPACE
+    5 -> ComposeColorConstructor.FLOAT_X4_COLORSPACE
     else -> null
   }
 }
+
+private fun hasAndroidComposeColorLineMarkerProviderDescriptorAvailable(project: Project): Boolean =
+  LineMarkersPass.getMarkerProviders(KotlinLanguage.INSTANCE, project)
+    .any { it::class.java.name == "com.android.tools.compose.ComposeColorLineMarkerProviderDescriptor" }

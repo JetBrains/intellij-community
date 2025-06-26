@@ -1,11 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.ide.impl.UndoRemoteBehaviorService;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -28,7 +25,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 
-public abstract class UndoRedoAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification, LightEditCompatible {
+public abstract class UndoRedoAction extends DumbAwareAction implements LightEditCompatible {
 
   /**
    * Allow JB UndoManager for a JTextComponent (IJPL-8951)
@@ -88,19 +85,12 @@ public abstract class UndoRedoAction extends DumbAwareAction implements ActionRe
     return ActionUpdateThread.EDT;
   }
 
-  @Internal
-  @Override
-  public @NotNull ActionRemoteBehavior getBehavior() {
-    return UndoRemoteBehaviorService.isExperimentalFrontendUndoEnabled()
-      ? ActionRemoteBehavior.FrontendOtherwiseBackend // see `com.jetbrains.rdclient.command.FrontendUndoManager`
-      : ActionRemoteBehavior.BackendOnly;
-  }
-
   private @Nullable UndoManager getUndoManager(@Nullable FileEditor editor, DataContext dataContext, boolean isActionPerformed) {
     return getUndoManager(editor, dataContext, myActionInProgress, isActionPerformed);
   }
 
-  static @Nullable UndoManager getUndoManager(
+  @Internal
+  public static @Nullable UndoManager getUndoManager(
     @Nullable FileEditor editor,
     DataContext dataContext,
     boolean isActionInProgress,

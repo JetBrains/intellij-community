@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xlambdas=class -opt-in=kotlinx.serialization.ExperimentalSerializationApi -Xcontext-receivers -Xjvm-default=all" />
+          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xlambdas=class -opt-in=kotlinx.serialization.ExperimentalSerializationApi -Xcontext-parameters -Xjvm-default=all" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -34,5 +34,8 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="fleet.util.core" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" name="ktor-network-tls" level="project" />
+    <orderEntry type="library" name="kotlinx-io-core" level="project" />
   </component>
 </module>

@@ -31,4 +31,4 @@ fun main() {
 
 // EXPRESSION: a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
 // RESULT: Unresolved reference: a
-// RESULT_K2: 15: I
+// RESULT_K2_COMPILER: 15: I

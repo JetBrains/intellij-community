@@ -21,7 +21,7 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override
@@ -82,7 +82,7 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   }
 
   public void testWithImportConflictDemandsOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
        myFixture.addClass(
          """
            package p;

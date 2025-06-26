@@ -19,7 +19,7 @@ object GradleDaemonJvmCriteriaViewFactory {
       criteria = daemonJvmProperties.criteria,
       versionsDropdownList = getSuggestedVersions(),
       vendorDropdownList = getSuggestedVendors(),
-      displayAdvancedSettings = GradleDaemonJvmHelper.isDamonJvmVendorCriteriaSupported(gradleVersion),
+      displayAdvancedSettings = GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported(gradleVersion),
       disposable = disposable
     )
   }

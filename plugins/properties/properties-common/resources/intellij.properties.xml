@@ -22,6 +22,7 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.lang.properties.codeStyle.PropertiesLanguageCodeStyleSettingsProvider"/>
     <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
     <enterHandlerDelegate implementation="com.intellij.lang.properties.EnterInPropertiesFileHandler" id="EnterInPropertiesFileHandler"/>
+    <renameInputValidator implementation="com.intellij.lang.properties.rename.PropertyKeyRenameInputValidator"/>
 
     <stripTrailingSpacesFilterFactory implementation="com.intellij.lang.properties.formatting.PropertiesStripTrailingSpacesFilterFactory"/>
   </extensions>

@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.test.api.Descriptor
 import com.intellij.workspaceModel.test.api.SimpleEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
 

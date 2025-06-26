@@ -72,6 +72,9 @@
                  description="Disabled completion popUp for reworked terminal for development time"/>
     <registryKey key="terminal.type.ahead" defaultValue="false"
                  description="Early prototype of type-ahead for the reworked terminal"/>
+    <registryKey key="terminal.generic.hyperlinks" defaultValue="false"
+                 description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
+                  Open a new terminal after enabling this option to take effect."/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
@@ -95,8 +98,12 @@
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.block.prompt.TerminalCharFilter"
                        id="terminal" order="first"/>
     <completion.contributor language="any"
-                            id="terminalCommandSpec"
-                            implementationClass="org.jetbrains.plugins.terminal.block.completion.TerminalCommandSpecCompletionContributor"
+                            id="terminalCommandSpecGen1"
+                            implementationClass="org.jetbrains.plugins.terminal.block.completion.TerminalCommandSpecCompletionContributorGen1"
+                            order="first, before terminalPowerShell, after ml_context"/>
+    <completion.contributor language="any"
+                            id="terminalCommandSpecGen2"
+                            implementationClass="org.jetbrains.plugins.terminal.block.reworked.completion.TerminalCommandSpecCompletionContributorGen2"
                             order="first, before terminalPowerShell, after ml_context"/>
     <completion.contributor language="any"
                             id="terminalPowerShell"
@@ -104,7 +111,7 @@
                             order="first, before shShebang, before liveTemplates, after ml_context"/>
     <completion.ml.model implementation="org.jetbrains.plugins.terminal.block.completion.ml.ShMLRankingProvider"/>
     <weigher key="completion"
-             id="terminalCommandSpec"
+             id="terminalCommandSpecGen2"
              order="before stats"
              implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.ReworkedTerminalFeedbackSurvey"/>

@@ -550,7 +550,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.internal.ml.MLFeatureProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.MLFeatureProvider"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.platform.ml.environmentExtender"
@@ -664,7 +664,14 @@
     <extensionPoint name="usagePresentationProvider"
                     interface="com.intellij.find.impl.UsagePresentationProvider"
                     dynamic="true"/>
-    <extensionPoint name="uiPluginManagerController" interface="com.intellij.ide.plugins.newui.UiPluginManagerController" dynamic="true"/>
+    <extensionPoint name="uiPluginManagerController"
+                    interface="com.intellij.ide.plugins.newui.UiPluginManagerController"
+                    dynamic="true"/>
+    <extensionPoint name="pluginManagerCustomizer"
+                    interface="com.intellij.ide.plugins.newui.PluginManagerCustomizer"
+                    dynamic="true"/>
     <extensionPoint name="managedCacheFactory" interface="com.intellij.util.io.cache.ManagedCacheFactory" dynamic="true" />
+
+    <extensionPoint name="editorSkeletonPolicy" interface="com.intellij.openapi.fileEditor.impl.EditorSkeletonPolicy" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

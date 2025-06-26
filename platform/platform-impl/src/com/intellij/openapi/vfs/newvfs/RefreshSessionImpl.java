@@ -224,7 +224,9 @@ final class RefreshSessionImpl extends RefreshSession {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
         app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
           indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
-          ((ProgressIndicatorWithDelayedPresentation)indicator).setDelayInMillis(PROGRESS_THRESHOLD_MILLIS);
+          if (indicator instanceof ProgressIndicatorWithDelayedPresentation withDelayedPresentation) {
+            withDelayedPresentation.setDelayInMillis(PROGRESS_THRESHOLD_MILLIS);
+          }
           var t = System.nanoTime();
           fireEventsInWriteAction(events, appliers, asyncProcessing);
           t = NANOSECONDS.toMillis(System.nanoTime() - t);

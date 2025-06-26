@@ -32,13 +32,13 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public @Nullable Document getDocument(@NotNull PsiFile file) {
+  public @Nullable Document getDocument(@NotNull PsiFile psiFile) {
     return null;
   }
 
   @Override
-  public @Nullable Document getCachedDocument(@NotNull PsiFile file) {
-    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+  public @Nullable Document getCachedDocument(@NotNull PsiFile psiFile) {
+    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     return FileDocumentManager.getInstance().getCachedDocument(vFile);
   }
 
@@ -71,7 +71,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public @Nullable Document getLastCommittedDocument(@NotNull PsiFile file) {
+  public @Nullable Document getLastCommittedDocument(@NotNull PsiFile psiFile) {
     return null;
   }
 
@@ -111,12 +111,12 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
+  public boolean isDocumentBlockedByPsi(@NotNull Document document) {
     throw new UnsupportedOperationException("Method isDocumentBlockedByPsi is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
+  public void doPostponedOperationsAndUnblockDocument(@NotNull Document document) {
     throw new UnsupportedOperationException(
       "Method doPostponedOperationsAndUnblockDocument is not yet implemented in " + getClass().getName());
   }

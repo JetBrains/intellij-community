@@ -197,7 +197,9 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
   }
 }
 
-private class RunWidgetButtonLook : HeaderToolbarButtonLook() {
+private class RunWidgetButtonLook : HeaderToolbarButtonLook(
+  iconSize = { 16 }
+) {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
     val isDisabled = (component as? ActionButton)?.presentation?.isEnabled == false
     val isStopButton = isStopButton(component)

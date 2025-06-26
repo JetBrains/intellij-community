@@ -10,8 +10,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
-import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryParams
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.Interner
@@ -85,7 +84,7 @@ internal fun List<PolySymbol>.sortSymbolsByPriority(extensionsLast: Boolean = tr
       .thenComparingDouble { -(it.priority ?: PolySymbol.Priority.NORMAL).value }
   )
 
-internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: PolySymbolsQueryParams): Sequence<T> =
+internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: PolySymbolQueryParams): Sequence<T> =
   this.filter { symbol ->
     symbol.matchContext(params.queryExecutor.context)
     && params.accept(symbol)

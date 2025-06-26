@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.properties.resource.bundle.editor` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -62,7 +63,6 @@ jvm_library(
     "//platform/usageView",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",
@@ -72,7 +72,7 @@ jvm_library(
   runtime_deps = [":resource-bundle-editor_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "resource-bundle-editor_test",
   runtime_deps = [":resource-bundle-editor_test_lib"]
 )

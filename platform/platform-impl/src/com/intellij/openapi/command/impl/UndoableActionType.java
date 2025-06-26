@@ -23,18 +23,21 @@ public enum UndoableActionType {
   OTHER,
   ;
 
-  public static @Nullable UndoableAction getAction(@NotNull String actionType, @NotNull Collection<? extends DocumentReference> docRefs, boolean isGlobal) {
+  public static @NotNull UndoableAction getAction(
+    @NotNull String actionType,
+    @Nullable Collection<DocumentReference> docRefs,
+    boolean isGlobal
+  ) {
+    if (docRefs == null) {
+      return new MockUndoableAction(docRefs, isGlobal);
+    }
     UndoableActionType type = valueOf(actionType);
     return switch (type) {
-      case START_MARK -> new StartMarkAction(docRefs.stream().iterator().next(), "", isGlobal);
-      case FINISH_MARK -> new FinishMarkAction(docRefs.stream().iterator().next(), isGlobal);
+      case START_MARK -> new StartMarkAction(first(docRefs), "", isGlobal);
+      case FINISH_MARK -> new FinishMarkAction(first(docRefs), isGlobal);
       case MENTION_ONLY -> new MentionOnlyUndoableAction(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
-      case EDITOR_CHANGE -> null;
-      case NON_UNDOABLE -> {
-        yield docRefs.isEmpty()
-              ? null // TODO: possibly outdated, docRefs.isEmpty() is still the case?
-              : new NonUndoableAction(docRefs.stream().iterator().next(), isGlobal);
-      }
+      case EDITOR_CHANGE -> new MockEditorChangeAction(first(docRefs));
+      case NON_UNDOABLE -> new NonUndoableAction(first(docRefs), isGlobal);
       case GLOBAL -> new MockGlobalUndoableAction(docRefs);
       case OTHER -> new MockUndoableAction(docRefs, isGlobal);
     };
@@ -60,5 +63,9 @@ public enum UndoableActionType {
       return GLOBAL;
     }
     return OTHER;
+  }
+
+  private static <T> @NotNull T first(@NotNull Collection<T> collection) {
+    return collection.stream().iterator().next();
   }
 }

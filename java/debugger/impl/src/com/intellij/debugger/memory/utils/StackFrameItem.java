@@ -3,6 +3,7 @@ package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -32,6 +33,8 @@ import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.*;
+import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.FlowKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -261,6 +264,7 @@ public class StackFrameItem {
     private final String myPath;
     private final @NlsSafe String myMethodName;
     private final int myLineNumber;
+    private final Location myLocation;
 
     private final List<XNamedValue> myVariables;
 
@@ -273,14 +277,14 @@ public class StackFrameItem {
       myLineNumber = item.line();
       myVariables = item.myVariables;
 
-      Location location = item.myLocation;
+      myLocation = item.myLocation;
       mySourcePosition = DebuggerUtilsEx.toXSourcePosition(sourcePosition);
-      myIsSynthetic = DebuggerUtils.isSynthetic(location.method());
+      myIsSynthetic = DebuggerUtils.isSynthetic(myLocation.method());
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
 
       myShouldHide = myIsSynthetic || myIsInLibraryContent ||
-                     (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(location));
+                     (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(myLocation));
     }
 
     @Override
@@ -305,6 +309,23 @@ public class StackFrameItem {
 
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
+      doCustomizePresentation(component);
+    }
+
+    @Override
+    public void customizeTextPresentation(@NotNull ColoredTextContainer component) {
+      //noinspection HardCodedStringLiteral
+      component.append(ThreadDumpAction.renderLocation(myLocation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+
+    @Override
+    public @NotNull Flow<@NotNull XStackFrameUiPresentationContainer> customizePresentation() {
+      XStackFrameUiPresentationContainer component = new XStackFrameUiPresentationContainer();
+      doCustomizePresentation(component);
+      return FlowKt.flowOf(component);
+    }
+
+    private void doCustomizePresentation(ColoredTextContainer component) {
       component.setIcon(EmptyIcon.ICON_16);
       component.append(myMethodName + ":" + myLineNumber, getAttributes());
       ThreadsViewSettings settings = ThreadsViewSettings.getInstance();

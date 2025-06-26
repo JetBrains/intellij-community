@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
@@ -250,6 +251,12 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         JAVA_SOURCE_ROOT_ENTITY_TYPE_ID.name, KOTLIN_SOURCE_ROOT_TYPE_ID -> KaSourceModuleKind.PRODUCTION
         JAVA_TEST_ROOT_ENTITY_TYPE_ID.name, KOTLIN_TEST_ROOT_TYPE_ID -> KaSourceModuleKind.TEST
         else -> null
+    }
+
+    override fun getCacheDependenciesTracker(): ModificationTracker {
+        return ModificationTracker {
+            cache.getCacheSdkAndLibrariesTracker().modificationCount + cache.getCacheSourcesTracker().modificationCount
+        }
     }
 
     companion object {

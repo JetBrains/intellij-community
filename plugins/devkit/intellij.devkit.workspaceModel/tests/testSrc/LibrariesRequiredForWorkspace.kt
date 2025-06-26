@@ -116,7 +116,8 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
     assertNotNull("Cannot convert $classesPathUrl to a jar VirtualFile", classesRootVirtualFile)
     VfsUtil.markDirtyAndRefresh(false, true, true, classesRootVirtualFile)
     modifiableModel.addRoot(classesRootVirtualFile!!, OrderRootType.CLASSES)
-  } else {
+  }
+  else {
     VfsUtil.markDirtyAndRefresh(false, true, true, classesRootVirtualFile)
     modifiableModel.addJarDirectory(classesRootVirtualFile, true)
   }
@@ -144,14 +145,15 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
     classpathRootVirtualFile = sharedClassesRootVirtualFile?.children?.find { it.name == classpathFolder }
     assertNotNull("Cannot find $classpathFolder in $sharedClassesRootVirtualFile. Possibly, project was partially compiled", classpathRootVirtualFile)
   }
+  VfsUtil.markDirtyAndRefresh(false, true, true, classpathRootVirtualFile)
 
   if (classpathRootVirtualFile!!.isFile && classpathRootVirtualFile.extension == "jar") {
     val file = classpathRootVirtualFile
     classpathRootVirtualFile = JarFileSystem.getInstance().getJarRootForLocalFile(file)
     assertNotNull("Cannot convert $file to a jar VirtualFile", classpathRootVirtualFile)
+    VfsUtil.markDirtyAndRefresh(false, true, true, classpathRootVirtualFile)
   }
 
-  VfsUtil.markDirtyAndRefresh(false, true, true, classpathRootVirtualFile)
   modifiableModel.addDependency(classpathRootVirtualFile!!)
   modifiableModel.commit()
 }

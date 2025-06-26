@@ -15,6 +15,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
   @Override
   public boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context,

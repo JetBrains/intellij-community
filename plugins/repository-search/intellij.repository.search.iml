@@ -49,7 +49,6 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" name="ktor-client-logging" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
     <orderEntry type="library" scope="TEST" name="ktor-client-mock" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />

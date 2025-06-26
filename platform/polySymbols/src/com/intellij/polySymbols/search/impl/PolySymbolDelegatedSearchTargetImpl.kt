@@ -6,10 +6,10 @@ import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
 import com.intellij.model.search.SearchRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.psi.search.SearchScope
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.utils.PolySymbolDelegate
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
+import com.intellij.polySymbols.utils.PolySymbolDelegate
+import com.intellij.psi.search.SearchScope
 
 /**
  * Used when creating a [PolySymbolSearchTarget] in [PolySymbolDelegate]. Allows to wrap a [SearchTarget] symbol

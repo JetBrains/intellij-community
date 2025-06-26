@@ -869,7 +869,9 @@ public final class PsiImplUtil {
     }
 
     // java.io.IO.* for implicit classes
-    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) && file instanceof PsiJavaFile) {
+    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) &&
+        !PsiUtil.isAvailable(JavaFeature.JAVA_LANG_IO, file) &&
+        file instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)file).getClasses();
       if (classes.length == 1 && classes[0] instanceof PsiImplicitClass) {
         implicitImports.add(ImplicitlyImportedStaticMember.create(project, JAVA_IO_IO, "*"));

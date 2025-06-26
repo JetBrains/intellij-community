@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Predicate
 import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
 
 internal class MavenServerManagerImpl : MavenServerManager {
   private val myMultimoduleDirToConnectorMap: MutableMap<String, MavenServerConnector> = HashMap()
@@ -288,9 +287,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     if (eventListenerJar != null) {
       return eventListenerJar
     }
-    val pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-    val root = pluginFileOrDir.parent
-    if (pluginFileOrDir.isDirectory()) {
+    if (MavenUtil.isRunningFromSources()) {
       eventListenerJar = eventSpyPathForLocalBuild
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("""
@@ -301,6 +298,8 @@ internal class MavenServerManagerImpl : MavenServerManager {
       }
     }
     else {
+      val pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
+      val root = pluginFileOrDir.parent
       eventListenerJar = root.resolve("maven-event-listener.jar")
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("Event listener does not exist at " + eventListenerJar +
@@ -457,8 +456,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
     private val eventSpyPathForLocalBuild: Path
       get() {
-        val root = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-        return root.parent.resolve("intellij.maven.server.eventListener")
+        return MavenUtil.locateModuleOutput("intellij.maven.server.eventListener")!!
       }
   }
 }

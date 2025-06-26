@@ -9,7 +9,7 @@ private enum class SanitationState {
 }
 
 /**
- * Remove platform blocks that don't match the host, substitute KGP version placeholders.
+ * Remove platform blocks that don't match the host, substitute version placeholders.
  *
  * Platform blocks are declared as follows. Nested blocks are forbidden.
  * ```
@@ -17,7 +17,6 @@ private enum class SanitationState {
  *     /* ... */
  * #END
  * ```
- * `{{KGP_VERSION}}` stubs will be replaced by the KGP version used in a test
  */
 internal fun sanitizeExpectedFile(text: String): String = buildString {
     var currentState = SanitationState.TAKE

@@ -43,8 +43,8 @@ object SharedConfigFolderUtil {
   /**
    * @param path $ROOT_CONFIG$ to watch (aka <config>, idea.config.path)
    */
-  fun installFsWatcher(path: Path) {
-    SharedConfigFolderNioListener(path).init()
+  internal fun installFsWatcher(path: Path, configFilesUpdatedByThisProcess: ConfigFilesUpdatedByThisProcess) {
+    SharedConfigFolderNioListener(path, configFilesUpdatedByThisProcess).init()
   }
 
   internal fun reloadComponents(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {

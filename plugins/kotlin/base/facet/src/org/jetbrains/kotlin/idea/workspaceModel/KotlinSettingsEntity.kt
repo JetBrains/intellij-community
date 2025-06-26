@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.util.descriptors.ConfigFileItem
@@ -21,6 +21,7 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
     val sourceRoots: List<String>
     val configFileItems: List<ConfigFileItem>
 
+    @Parent
     val module: ModuleEntity
 
     // trivial parameters (String, Boolean)
@@ -141,7 +142,7 @@ fun MutableEntityStorage.modifyKotlinSettingsEntity(
   return modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
 }
 
-var ModuleEntity.Builder.kotlinSettings: @Child List<KotlinSettingsEntity.Builder>
+var ModuleEntity.Builder.kotlinSettings: List<KotlinSettingsEntity.Builder>
   by WorkspaceEntity.extensionBuilder(KotlinSettingsEntity::class.java)
 //endregion
 
@@ -153,7 +154,7 @@ data class CompilerSettingsData(
     val outputDirectoryForJsLibraryFiles: String
 )
 
-val ModuleEntity.kotlinSettings: List<@Child KotlinSettingsEntity>
+val ModuleEntity.kotlinSettings: List<KotlinSettingsEntity>
         by WorkspaceEntity.extension()
 
 data class KotlinSettingsId(val name: @NlsSafe String, val parentId: ModuleId) : SymbolicEntityId<KotlinSettingsEntity> {

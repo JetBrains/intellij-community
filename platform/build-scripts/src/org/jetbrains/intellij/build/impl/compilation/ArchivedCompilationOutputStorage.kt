@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import kotlinx.serialization.json.Json
@@ -6,12 +6,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.iterator
 import kotlin.io.path.invariantSeparatorsPathString
 
 @ApiStatus.Internal
@@ -70,9 +68,9 @@ class ArchivedCompilationOutputStorage(
     }
     val name = classesOutputDirectory.relativize(path).toString()
 
-    val archive = Files.createTempFile(paths.tempDir, name.replace(File.separator, "_"), ".jar")
+    val archive = Files.createTempFile(paths.tempDir, name.replace(path.fileSystem.separator, "_"), ".jar")
     Files.deleteIfExists(archive)
-    val hash = packAndComputeHash(addDirEntriesMode = AddDirEntriesMode.ALL, name = name, archive = archive, directory = path)
+    val hash = packAndComputeHash(addDirEntriesMode = AddDirEntriesMode.ALL, name = name, archive = archive, source = path)
 
     val result = archivedOutputDirectory.resolve(name).resolve("$hash.jar")
     Files.createDirectories(result.parent)

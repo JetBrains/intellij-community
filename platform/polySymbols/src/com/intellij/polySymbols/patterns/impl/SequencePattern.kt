@@ -9,20 +9,19 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.impl.CompoundInsertHandler
 import com.intellij.polySymbols.html.NAMESPACE_HTML
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.coalesceWith
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.withOffset
-import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 
-internal class SequencePattern(private val patternsProvider: () -> List<PolySymbolsPattern>) : PolySymbolsPattern() {
+internal class SequencePattern(private val patternsProvider: () -> List<PolySymbolPattern>) : PolySymbolPattern() {
 
-  constructor(vararg patterns: PolySymbolsPattern) : this({ patterns.toList() })
+  constructor(vararg patterns: PolySymbolPattern) : this({ patterns.toList() })
 
   override fun getStaticPrefixes(): Sequence<String> {
     val patterns = patternsProvider()
@@ -36,22 +35,22 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
     end: Int,
   ): List<MatchResult> =
     process(emptyList()) { matches, pattern, staticPrefixes ->
       if (matches.isEmpty()) {
-        pattern.match(null, scopeStack, symbolsResolver, params,
+        pattern.match(null, stack, symbolsResolver, params,
                       start,
                       findStaticStart(params, start, end, pattern, staticPrefixes))
       }
       else {
         matches.flatMap { prevResult ->
-          withPrevMatchScope(scopeStack, prevResult.segments) {
-            pattern.match(null, scopeStack, symbolsResolver, params,
+          withPrevMatchScope(stack, prevResult.segments) {
+            pattern.match(null, stack, symbolsResolver, params,
                           prevResult.end,
                           findStaticStart(params, prevResult.end, end, pattern, staticPrefixes))
               .map { it.prefixedWith(prevResult) }
@@ -62,18 +61,18 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     process(emptyList()) { matches, pattern, _ ->
       if (matches.isEmpty()) {
-        pattern.list(null, scopeStack, symbolsResolver, params)
+        pattern.list(null, stack, symbolsResolver, params)
       }
       else {
         matches.flatMap { prevResult ->
-          withPrevMatchScope(scopeStack, prevResult.segments) {
-            pattern.list(null, scopeStack, symbolsResolver, params)
+          withPrevMatchScope(stack, prevResult.segments) {
+            pattern.list(null, stack, symbolsResolver, params)
               .map { it.prefixedWith(prevResult) }
           }
         }
@@ -82,8 +81,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,
@@ -98,14 +97,14 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
     ) { matches, pattern, staticPrefixes ->
       val completeAfterChars = staticPrefixes.mapNotNull { it.getOrNull(0) }.toList()
       matches.flatMap { (prevResult, lastMatched, requiredPart, onlyRequired) ->
-        withPrevMatchScope(scopeStack, requiredPart?.symbol?.nameSegments ?: lastMatched.segments) {
+        withPrevMatchScope(stack, requiredPart?.symbol?.nameSegments ?: lastMatched.segments) {
           val matchStart = lastMatched.end
           val matchEnd = findStaticStart(params, matchStart, end, pattern, staticPrefixes)
           val matchResults = if (prevResult == null) {
             listOf(null)
           }
           else {
-            pattern.match(null, scopeStack, symbolsResolver, params, matchStart, matchEnd)
+            pattern.match(null, stack, symbolsResolver, params, matchStart, matchEnd)
               .map { it.prefixedWith(prevResult) }
               .ifEmpty { listOf(null) }
           }
@@ -118,7 +117,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
                 return@inner it
               }
 
-            val completionResults = getCompletionResultsOnPattern(pattern, scopeStack, symbolsResolver, matchResult, params, matchStart,
+            val completionResults = getCompletionResultsOnPattern(pattern, stack, symbolsResolver, matchResult, params, matchStart,
                                                                   prevResult)
             if (!completionResults.required && onlyRequired) {
               return@inner listOf(requiredPart.asRequiredOnlyCompletionResult(matchResult, params, lastMatched))
@@ -150,11 +149,11 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   private fun sliceRequiredPartIfNeeded(
     matchResult: MatchResult?,
-    pattern: PolySymbolsPattern,
+    pattern: PolySymbolPattern,
     matchStart: Int,
     matchEnd: Int,
     prevResult: MatchResult?,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
   ): List<SequenceCompletionResult>? =
     matchResult
@@ -178,7 +177,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   private fun processCompletionResults(
     matchResult: MatchResult?,
-    pattern: PolySymbolsPattern,
+    pattern: PolySymbolPattern,
     matchStart: Int,
     completionResults: CompletionResults,
     params: CompletionParameters,
@@ -302,15 +301,15 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
   }
 
   private fun getCompletionResultsOnPattern(
-    pattern: PolySymbolsPattern,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    pattern: PolySymbolPattern,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     matchResult: MatchResult?,
     params: CompletionParameters,
     matchStart: Int,
     prevResult: MatchResult?,
   ) =
-    pattern.complete(null, scopeStack, symbolsResolver,
+    pattern.complete(null, stack, symbolsResolver,
                      if (matchResult != null) params else params.withPosition(matchStart),
                      matchStart, matchResult?.end ?: matchStart)
       .let { completionResults ->
@@ -329,10 +328,11 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
                 offset >= 0 && it.name.length > offset
                 && StringUtil.equals(CharSequenceSubSequence(it.name, offset, it.name.length), matchedName)
               }) {
-          completionResults.copy(items = completionResults.items + PolySymbolCodeCompletionItem.create(
-            matchedName.toString(), lastMatchedSegment.start, false,
-            symbol = lastMatchedSegment.symbols.asSingleSymbol()
-          ))
+          completionResults.copy(items = completionResults.items + PolySymbolCodeCompletionItem.builder(
+            matchedName.toString(), lastMatchedSegment.start, lastMatchedSegment.symbols.asSingleSymbol())
+            .completeAfterInsert(false)
+            .build()
+          )
         }
         else completionResults
       }
@@ -377,31 +377,27 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
       minOf(required.priority!!, new.priority!!)
 
     return if (required.completeAfterInsert)
-      PolySymbolCodeCompletionItem.create(
-        name = name,
-        displayName = displayName,
-        offset = required.offset,
-        completeAfterInsert = true,
-        symbol = symbol,
-        proximity = proximity,
-        priority = priority,
-        apiStatus = required.apiStatus.coalesceWith(new.apiStatus),
-        icon = new.icon ?: required.icon
-      )
+      PolySymbolCodeCompletionItem
+        .builder(name, required.offset, symbol)
+        .displayName(displayName)
+        .completeAfterInsert(true)
+        .proximity(proximity)
+        .priority(priority)
+        .apiStatus(required.apiStatus.coalesceWith(new.apiStatus))
+        .icon(new.icon ?: required.icon)
+        .build()
     else
-      PolySymbolCodeCompletionItem.create(
-        name = name,
-        displayName = displayName,
-        offset = required.offset,
-        completeAfterInsert = new.completeAfterInsert,
-        completeAfterChars = new.completeAfterChars + completeAfterChars,
-        symbol = symbol,
-        proximity = proximity,
-        priority = priority,
-        apiStatus = required.apiStatus.coalesceWith(new.apiStatus),
-        icon = new.icon ?: required.icon,
-        insertHandler = CompoundInsertHandler.merge(required.insertHandler, new.insertHandler)
-      )
+      PolySymbolCodeCompletionItem
+        .builder(name, required.offset, symbol)
+        .displayName(displayName)
+        .completeAfterInsert(new.completeAfterInsert)
+        .completeAfterChars(new.completeAfterChars + completeAfterChars)
+        .proximity(proximity)
+        .priority(priority)
+        .apiStatus(required.apiStatus.coalesceWith(new.apiStatus))
+        .icon(new.icon ?: required.icon)
+        .insertHandler(CompoundInsertHandler.merge(required.insertHandler, new.insertHandler))
+        .build()
   }
 
   private fun concatSymbols(name: String, firstNameLength: Int, first: PolySymbol?, second: PolySymbol?): PolySymbol? {
@@ -424,7 +420,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   private fun <T> process(
     initialMatches: List<T>,
-    processor: (matches: List<T>, pattern: PolySymbolsPattern, staticPrefixes: Set<String>) -> List<T>,
+    processor: (matches: List<T>, pattern: PolySymbolPattern, staticPrefixes: Set<String>) -> List<T>,
   ): List<T> {
     val list = patternsProvider()
     if (list.isEmpty()) return emptyList()
@@ -449,7 +445,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
     params: MatchParameters,
     start: Int,
     end: Int,
-    pattern: PolySymbolsPattern,
+    pattern: PolySymbolPattern,
     staticPrefixes: Set<String>,
   ): Int {
     if (end == start) return start

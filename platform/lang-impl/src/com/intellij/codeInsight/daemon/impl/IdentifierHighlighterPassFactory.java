@@ -27,7 +27,7 @@ public final class IdentifierHighlighterPassFactory {
   private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
 
   @ApiStatus.Internal
-  public boolean shouldHighlightingIdentifiers(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+  public static boolean shouldHighlightIdentifiers(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     return CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
            (!editor.isOneLineMode() || !((EditorEx)editor).isEmbeddedIntoDialogWrapper()) &&
            checkDumbMode(psiFile) &&
@@ -47,6 +47,7 @@ public final class IdentifierHighlighterPassFactory {
   @RequiresEdt
   @ApiStatus.Internal
   public static void doWithIdentifierHighlightingEnabled(@NotNull Project project, @NotNull Runnable r) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundHighlighter.Companion.runWithEnabledListenersInTest(project, ()-> {
       try {
@@ -66,6 +67,7 @@ public final class IdentifierHighlighterPassFactory {
   @TestOnly
   @RequiresEdt
   public static void waitForIdentifierHighlighting(@NotNull Editor editor) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     Project project = editor.getProject();
     UIUtil.dispatchAllInvocationEvents();
     if (project != null) {

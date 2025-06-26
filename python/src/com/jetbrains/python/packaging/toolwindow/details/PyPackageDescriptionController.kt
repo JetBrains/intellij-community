@@ -33,9 +33,7 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction
-import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
-import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -142,7 +140,14 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       }
       val comboBox = cell(versionSelector)
       comboBox.enabledIf(isManagement.and(progressEnabledProperty.not())).gap(RightGap.SMALL)
-      comboBox.visibleIf(progressEnabledProperty.not())
+      comboBox.visibleIf(progressEnabledProperty.not().and(
+        selectedPackage.transform { pkg ->
+          when (pkg) {
+            is InstallablePackage, is InstalledPackage -> true
+            is RequirementPackage, is ExpandResultNode, is DisplayablePackage, null -> false
+          }
+        }
+      ))
 
       installActionButton.action = installAction
       installActionButton.options = arrayOf(installWithOptionAction)

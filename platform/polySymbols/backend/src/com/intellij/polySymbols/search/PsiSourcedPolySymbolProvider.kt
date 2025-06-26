@@ -3,6 +3,7 @@ package com.intellij.polySymbols.search
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Implement this interface if symbol name can have a different format and a name provider needs to be
@@ -12,7 +13,10 @@ interface PsiSourcedPolySymbolProvider {
 
   fun getSymbols(element: PsiElement): List<PsiSourcedPolySymbol>
 
+  @Suppress("TestOnlyProblems")
   companion object {
+    @TestOnly
+    @JvmField
     val EP_NAME: ExtensionPointName<PsiSourcedPolySymbolProvider> = ExtensionPointName.Companion.create<PsiSourcedPolySymbolProvider>("com.intellij.polySymbols.psiSourcedSymbolProvider")
 
     fun getAllSymbols(element: PsiElement): Collection<PsiSourcedPolySymbol> =

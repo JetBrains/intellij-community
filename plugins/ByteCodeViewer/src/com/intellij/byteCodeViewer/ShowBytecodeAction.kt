@@ -3,10 +3,8 @@ package com.intellij.byteCodeViewer
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.psi.PsiFile
 import com.intellij.ui.content.ContentFactory
 
 internal class ShowBytecodeAction : AnAction() {
@@ -27,16 +25,25 @@ internal class ShowBytecodeAction : AnAction() {
                        hideOnEmptyContent = true
                        canCloseContent = true
                      }
-    val editor = event.getData<Editor>(CommonDataKeys.EDITOR) ?: return
-    val psiFile = event.getData<PsiFile>(CommonDataKeys.PSI_FILE) ?: return
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+    val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
     val psiElement = psiFile.findElementAt(editor.caretModel.offset) ?: return
     val psiClass = ByteCodeViewerManager.getContainingClass(psiElement) ?: return
-    val clsFile = ByteCodeViewerManager.findClassFile(psiClass) ?: return
+    val clsFile = ByteCodeViewerManager.findClassFile(psiClass)
+
     val panel = BytecodeToolWindowPanel(project, psiClass, clsFile)
-    val content = toolWindow.contentManager.contents.firstOrNull { it.description == clsFile.presentableUrl }
-                  ?: ContentFactory.getInstance().createContent(panel, clsFile.presentableName, false).apply {
-                    description = clsFile.presentableUrl
-                  }
+
+    val content = if (clsFile != null) {
+      toolWindow.contentManager.contents.firstOrNull { it.description == clsFile.presentableUrl }
+      ?: ContentFactory.getInstance().createContent(panel, clsFile.presentableName, false).apply {
+        description = clsFile.presentableUrl // appears on tab hover
+      }
+    }
+    else {
+      toolWindow.contentManager.contents.firstOrNull { it.description == null }
+      ?: ContentFactory.getInstance().createContent(panel, BytecodeViewerBundle.message("bytecode.not.found.title"), false)
+    }
+
     toolWindow.contentManager.addContent(content)
     content.setDisposer(panel)
     toolWindow.contentManager.setSelectedContent(content)
@@ -58,7 +65,7 @@ internal class ShowBytecodeAction : AnAction() {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(BytecodeToolWindowPanel.TOOL_WINDOW_ID) ?: return
         toolWindow.contentManager.contents.forEach {
           val panel = it.component as? BytecodeToolWindowPanel ?: return@forEach
-          panel.setEditorText()
+          panel.updateTextInEditor()
         }
       }
     }

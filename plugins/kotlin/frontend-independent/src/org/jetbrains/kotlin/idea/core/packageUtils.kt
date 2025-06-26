@@ -67,15 +67,19 @@ fun PsiFile.getFqNameByDirectory(): FqName {
     return parent?.getNonRootFqNameOrNull() ?: FqName.ROOT
 }
 
+fun PsiDirectory.getFqNameByDirectoryOrRoot(): FqName = getNonRootFqNameOrNull() ?: FqName.ROOT
+
 fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
     val packageFqName = getNonRootFqNameOrNull() ?: return null
-    sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
-        @OptIn(K1ModeProjectStructureApi::class)
-        val implicitPrefix = PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
-        return FqName.fromSegments((implicitPrefix.pathSegments() + packageFqName.pathSegments()).map { it.asString() })
-    }
+    val implicitPrefix = getImplicitPackagePrefix() ?: return packageFqName
+    return FqName.fromSegments((implicitPrefix.pathSegments() + packageFqName.pathSegments()).map { it.asString() })
+}
 
-    return packageFqName
+fun PsiDirectory.getImplicitPackagePrefix(): FqName? {
+    return sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
+        @OptIn(K1ModeProjectStructureApi::class)
+        PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
+    }
 }
 
 fun PsiDirectory.getFqNameWithImplicitPrefixOrRoot(): FqName = getFqNameWithImplicitPrefix() ?: FqName.ROOT

@@ -4,13 +4,15 @@ package com.intellij.polySymbols.query
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.PolySymbolsTestsDebugOutputPrinter
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printCodeCompletionItems
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
-import com.intellij.util.containers.Stack
 
 class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
@@ -228,14 +230,14 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNestedPattern1() {
-    polySymbolsQueryExecutorFactory.addScope(
-      object : PolySymbolsScope {
-        override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
+    polySymbolQueryExecutorFactory.addScope(
+      object : PolySymbolScope {
+        override fun createPointer(): Pointer<out PolySymbolScope> = Pointer.hardPointer(this)
 
         override fun getCodeCompletions(
           qualifiedName: PolySymbolQualifiedName,
-          params: PolySymbolsCodeCompletionQueryParams,
-          scope: Stack<PolySymbolsScope>,
+          params: PolySymbolCodeCompletionQueryParams,
+          stack: PolySymbolQueryStack,
         ): List<PolySymbolCodeCompletionItem> {
           return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
             listOf(PolySymbolCodeCompletionItem.create("bar"))
@@ -348,7 +350,7 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   ) {
     doTest(testPath) {
       registerFiles(framework, webTypes, customElementsManifests)
-      val matches = polySymbolsQueryExecutorFactory.create(null)
+      val matches = polySymbolQueryExecutorFactory.create(null)
         .codeCompletionQuery(parseWebTypesPath(path, null), position)
         .exclude(PolySymbolModifier.ABSTRACT)
         .run()

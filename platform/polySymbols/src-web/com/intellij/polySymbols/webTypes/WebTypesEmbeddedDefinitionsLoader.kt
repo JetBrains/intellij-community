@@ -11,7 +11,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.text.SemVer
-import com.intellij.polySymbols.impl.StaticPolySymbolsScope
+import com.intellij.polySymbols.impl.StaticPolySymbolScope
 import com.intellij.polySymbols.webTypes.impl.WebTypesDefinitionsEP
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import org.jetbrains.annotations.ApiStatus
@@ -32,7 +32,7 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
 
     fun getPackagesEnabledByDefault(project: Project): Map<String, SemVer?> = getInstance(project).packagesEnabledByDefault
 
-    fun getDefaultWebTypesScope(project: Project): StaticPolySymbolsScope = getInstance(project).defaultWebTypesScope
+    fun getDefaultWebTypesScope(project: Project): StaticPolySymbolScope = getInstance(project).defaultWebTypesScope
 
     private val LOG = logger<WebTypesEmbeddedDefinitionsLoader>()
   }

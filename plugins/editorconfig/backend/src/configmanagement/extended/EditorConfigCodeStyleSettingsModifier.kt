@@ -53,11 +53,8 @@ private val LOG: Logger
 class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
   private val reportedErrorIds: MutableSet<String> = HashSet()
 
-  override fun modifySettingsAndUiCustomization(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
-    if (isActiveForFile(settings, psiFile)) {
-      settings.setModifier(this)
-      return modifySettings(settings, psiFile)
-    }
+  override fun modifySettings(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
+    // nether called
     return false
   }
 
@@ -69,40 +66,50 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
            && Utils.isEnabled(settings)
   }
 
-  override fun modifySettings(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
-    val project = psiFile.project
-    try {
-      // Get editorconfig settings
-      val (properties, editorConfigs) = processEditorConfig(project, psiFile)
-      // Apply editorconfig settings for the current editor
-      if (applyCodeStyleSettings(settings, properties, psiFile)) {
+  override fun modifySettingsAndUiCustomization(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
+    if (isActiveForFile(settings, psiFile)) {
+      val project = psiFile.project
+      try {
+        // Get editorconfig settings
+        val (properties, editorConfigs) = processEditorConfig(project, psiFile)
+        if (editorConfigs.isEmpty()) {
+          LOG.debug { "Project has no any `.editorconfig` for ${psiFile.name}" }
+          return false
+        }
+
+        settings.setModifier(this)
+        
         settings.addDependencies(editorConfigs)
         val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
         navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
-        LOG.debug { "Modified for ${psiFile.name}" }
-        return true
+        
+        // Apply editorconfig settings for the current editor
+        if (applyCodeStyleSettings(settings, properties, psiFile)) {
+          LOG.debug { "Modified for ${psiFile.name}" }
+          return true
+        }
+        else {
+          LOG.debug { "No changes for ${psiFile.name}" }
+          return false
+        }
       }
-      else {
-        LOG.debug { "No changes for ${psiFile.name}" }
-        return false
+      catch (e: TimeoutCancellationException) {
+        LOG.warn(e)
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+          error(project, "timeout",
+                message("error.timeout"),
+                DumbAwareAction.create(message("action.disable")) {
+                  EditorConfigActionUtil.setEditorConfigEnabled(project, false)
+                },
+                true)
+        }
       }
-    }
-    catch (e: TimeoutCancellationException) {
-      LOG.warn(e)
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-        error(project, "timeout",
-              message("error.timeout"),
-              DumbAwareAction.create(message("action.disable")) {
-                EditorConfigActionUtil.setEditorConfigEnabled(project, false)
-              },
-              true)
+      catch (e: CancellationException) {
+        throw e
       }
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Exception) {
-      LOG.error(e)
+      catch (e: Exception) {
+        LOG.error(e)
+      }
     }
     return false
   }

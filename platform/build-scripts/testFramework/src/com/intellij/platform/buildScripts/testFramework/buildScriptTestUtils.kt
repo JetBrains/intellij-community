@@ -46,6 +46,8 @@ fun createBuildOptionsForTest(
   val outDir = createTestBuildOutDir(productProperties)
   val options = BuildOptions(
     cleanOutDir = false,
+    //TODO: figure out what to do on bazel
+    // affects org.jetbrains.intellij.build.impl.CompilationContextImpl.overrideClassesOutputDirectory
     useCompiledClassesFromProjectOutput = true,
     jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
     buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),

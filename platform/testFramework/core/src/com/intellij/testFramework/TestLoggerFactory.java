@@ -350,8 +350,7 @@ public final class TestLoggerFactory implements Logger.Factory {
           Files.writeString(logFile, buffer);
           String headerFooter = StringUtil.repeat("=", 80);
           buffer = "\n" + headerFooter +
-                   "\nLog saved to: " + logFile.getFileName() +
-                   "\n    (" + logFile + ")" +
+                   "\nLog saved to: " + logFile +
                    "\n" + headerFooter +
                    "\n";
         }

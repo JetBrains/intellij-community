@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -20,7 +19,6 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -42,18 +40,15 @@ import javax.swing.JPanel
 import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
+private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
+
 internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
+  override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, Source.CONFIGURATOR)
 
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, Source.CONFIGURATOR) }
+  override suspend fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
 
-  @RequiresBackgroundThread
-  override fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
-
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForInspection(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, Source.INSPECTION) }
+  override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, Source.INSPECTION)
 
   private suspend fun createAndAddSDk(module: Module, source: Source): Sdk? {
     val pipEnvExecutable = askForEnvData(module, source) ?: return null
@@ -92,7 +87,8 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun createPipEnv(module: Module): PyResult<Sdk> {
     LOGGER.debug("Creating pipenv environment")
     return withBackgroundProgress(module.project, PyBundle.message("python.sdk.setting.up.pipenv.sentence")) {
-      val basePath = module.basePath ?: return@withBackgroundProgress PyResult.localizedError("Can't find module base path")
+      val basePath = module.basePath
+                     ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",module.basePath))
       val pipEnv = setupPipEnv(Path.of(basePath), null, true).getOr {
         PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
         return@withBackgroundProgress it
@@ -100,12 +96,12 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv)) }
       if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError("Python executable is not found: $pipEnv")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", pipEnv))
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString())
       if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError("Python executable file is not found: $path")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", path))
       }
 
       PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)

@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // COMPILER_ARGUMENTS: -Xcontext-parameters
+// PROBLEM: Java collection 'ConcurrentHashMap' is parameterized with a nullable type
 import java.util.concurrent.ConcurrentHashMap
 
 class A {

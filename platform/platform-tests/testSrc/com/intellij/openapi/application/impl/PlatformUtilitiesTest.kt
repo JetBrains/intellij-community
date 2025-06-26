@@ -7,11 +7,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
@@ -23,6 +22,7 @@ import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
@@ -207,7 +207,9 @@ class PlatformUtilitiesTest {
         (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
           assertThat(EDT.isCurrentThreadEdt()).isTrue
           assertThat(application.isWriteAccessAllowed).isTrue
-          runWriteAction {}
+          assertThat(application.isReadAccessAllowed).isTrue
+            runWriteAction {}
+            runReadAction { }
           assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue
         }
       }
@@ -223,7 +225,9 @@ class PlatformUtilitiesTest {
       (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
         assertThat(EDT.isCurrentThreadEdt()).isTrue
         assertThat(application.isWriteAccessAllowed).isTrue
+        assertThat(application.isReadAccessAllowed).isTrue
         runWriteAction {}
+        runReadAction { }
         assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue
       }
     }
@@ -257,5 +261,54 @@ class PlatformUtilitiesTest {
       }
       assertThat(exception.message).isEqualTo("custom message")
     }
+  }
+
+
+  class CustomException : RuntimeException()
+
+  @Test
+  fun `nested old modal progress does not leak lock`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val customExceptionWasRethrown = AtomicBoolean(false)
+    val writeActionThrew = AtomicBoolean(false)
+    LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String?>, t: Throwable?): Set<Action?> {
+        if (t is CustomException) {
+          // rethrow exception directly
+          throw t
+        }
+        return super.processError(category, message, details, t)
+      }
+    }).use {
+      try {
+        ProgressManager.getInstance().run(object : Task.Backgroundable(null, "title1") {
+          override fun run(indicator: ProgressIndicator) {
+            invokeLater {
+              ProgressManager.getInstance().run(object : Task.Backgroundable(null, "title2") {
+                override fun run(indicator: ProgressIndicator) {
+                  application.invokeLater {
+                    throw CustomException()
+                  }
+                  try {
+                    application.invokeAndWait {
+                      runWriteAction {
+                      }
+                    }
+                  }
+                  catch (e: Throwable) {
+                    writeActionThrew.set(true)
+                  }
+                }
+              })
+            }
+          }
+        })
+      }
+      catch (_: CustomException) {
+        delay(1000)
+        customExceptionWasRethrown.set(true)
+      }
+    }
+    assertThat(customExceptionWasRethrown.get()).isTrue()
+    assertThat(writeActionThrew.get()).isFalse()
   }
 }

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class GradlePluginReference(
   private val myElement: PsiElement,
   private val myRange: TextRange,
-  private val pluginId: String
+  private val pluginId: String,
 ) : SingleTargetReference(), PsiCompletableReference {
 
   override fun getElement(): PsiElement = myElement
@@ -30,7 +30,7 @@ class GradlePluginReference(
   override fun resolveSingleTarget(): Symbol? {
     val searchScope = GlobalSearchScope.projectScope(myElement.project)
     val pluginFile = findPrecompiledGroovyPlugin(searchScope)
-                     ?: findPrecompiledKotlinPlugin(searchScope)
+                     ?: findPrecompiledKotlinPlugin(searchScope, myElement.containingFile.name)
                      ?: return null
     return GradlePluginSymbol(pluginFile.path, pluginId)
   }
@@ -43,14 +43,15 @@ class GradlePluginReference(
    * Precompiled script plugins on Kotlin could have a package declaration. If plugin ID ([pluginId]) contains dots,
    * probably they split file name and packages (directories, containing a file with plugin).
    */
-  private fun findPrecompiledKotlinPlugin(searchScope: GlobalSearchScope): VirtualFile? {
+  private fun findPrecompiledKotlinPlugin(searchScope: GlobalSearchScope, sourceFileName: String): VirtualFile? {
     val leftParts = pluginId.split(".").toMutableList()
     var fileName = ""
     var lastPart = leftParts.removeLastOrNull()
     while (lastPart != null) {
       if (fileName.isEmpty()) {
-        fileName = "${lastPart}${pluginId.fileExtension}"
-      } else {
+        fileName = "${lastPart}${getFileExtension(pluginId, sourceFileName)}"
+      }
+      else {
         fileName = "$lastPart.$fileName"
       }
       val file = findPrecompiledPlugin(fileName, searchScope, packageParts = leftParts)
@@ -61,14 +62,24 @@ class GradlePluginReference(
     }
     return null
   }
-  
-  private val String.fileExtension: String
-    get() = if (this.endsWith(".settings")) ".settings.gradle.kts" else ".gradle.kts"
+
+  /*
+    Return build logic plugin file extension according to pluginId and the file you navigating from.
+    You can navigate to .settings plugin only from 'settings.gradle.kts' or 'custom.settings.gradle.kts'.
+   */
+  private fun getFileExtension(pluginId: String, sourceFileName: String): String =
+    if (pluginId.endsWith(".settings")
+        && (sourceFileName == "settings.gradle.kts" || sourceFileName.endsWith(".settings.gradle.kts"))) {
+      ".settings.gradle.kts"
+    }
+    else {
+      ".gradle.kts"
+    }
 
   private fun findPrecompiledPlugin(
     fileName: String,
     searchScope: GlobalSearchScope,
-    packageParts: List<String> = emptyList()
+    packageParts: List<String> = emptyList(),
   ): VirtualFile? {
     val files = FilenameIndex.getVirtualFilesByName(fileName, searchScope)
     for (file in files) {

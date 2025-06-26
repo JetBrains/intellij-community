@@ -60,6 +60,7 @@ jvm_library(
     "//platform/observable",
     "//jps/model-api:model",
     "//platform/refactoring",
+    "@lib//:guava",
   ],
   runtime_deps = [":scripting.k2_resources"]
 )

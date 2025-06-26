@@ -1,16 +1,19 @@
 <idea-plugin package="com.intellij.mcpserver">
   <name>MCP Server</name>
   <id>com.intellij.mcpServer</id>
-  <category>AI Tools</category>
-  <description>
+  <category>AI-Powered</category>
+  <description><![CDATA[
     MCP (Model Context Protocol) Server for IntelliJ IDEs
-    This plugin integrates the MCP server into IntelliJ-based IDEs, enabling seamless communication between Large Language Models (LLMs) and your development environment. It provides tools for interacting with the IDE, including:
-    Reading the current file
-    Executing terminal commands
-    Setting breakpoints
-    Searching project files
-    And more
-  </description>
+    This plugin integrates the MCP server into IntelliJ-based IDEs, enabling seamless communication between Large Language Models (LLMs)
+    and your development environment. It provides tools for interacting with the IDE, including:
+    <ul>
+      <li>Reading the current file</li>
+      <li>Executing terminal commands</li>
+      <li>Setting breakpoints</li>
+      <li>Searching project files</li>
+      <li>And more</li>
+    </ul>
+  ]]></description>
   <vendor>JetBrains</vendor>
 
   <depends config-file="mcpServer-terminal.xml" optional="true">org.jetbrains.plugins.terminal</depends>
@@ -22,6 +25,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>
+
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpClientDetectionActivity" />
     <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"/>
@@ -34,8 +41,9 @@
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.TextToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />
 
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Detect MCP clients to suggest enable MCP server on project startup"
                  key="mcp.server.detect.mcp.clients"/>
 

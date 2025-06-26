@@ -556,7 +556,7 @@ def _is_int(filename):
 
 def is_real_file(filename):
     # Check for Jupyter cells
-    return not _is_int(filename) and not filename.startswith("<ipython-input")
+    return not _is_int(filename) and (isinstance(filename, str) and not filename.startswith("<ipython-input"))
 
 
 def is_jupyter_cell(frame):
@@ -633,3 +633,9 @@ def get_package_dir(mod_name):
         if os.path.isdir(mod_path):
             return mod_path
     return None
+
+def absolute_path(filename):
+    """
+    Provides a version of the filename that's absolute (and NOT normalized).
+    """
+    return get_abs_path_real_path_and_base_from_file(filename)[0]

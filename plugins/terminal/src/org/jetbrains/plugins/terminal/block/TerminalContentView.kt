@@ -32,8 +32,10 @@ interface TerminalContentView : Disposable {
   @RequiresEdt(generateAssertion = false)
   fun sendCommandToExecute(shellCommand: String)
 
+  /**
+   * Returns the **immutable** state of the terminal output text.
+   */
   @RequiresEdt(generateAssertion = false)
-  fun isCommandRunning(): Boolean {
-    return false
-  }
+  fun getText(): CharSequence
+
 }

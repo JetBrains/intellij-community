@@ -4,8 +4,8 @@ package com.intellij.openapi.progress.util;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +40,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  *
  * @author gregsh
  */
-@Obsolete
 public final class ProgressIndicatorUtils {
   private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
 
@@ -146,6 +145,7 @@ public final class ProgressIndicatorUtils {
   }
 
   @ApiStatus.Internal
+  @Obsolete
   public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application,
                                                       @NotNull Runnable cancellation,
                                                       @NotNull Runnable action) {
@@ -161,6 +161,7 @@ public final class ProgressIndicatorUtils {
   }
 
   @ApiStatus.Internal
+  @Obsolete
   public static boolean isWriteActionRunningOrPending(@NotNull ApplicationEx application) {
     return application.isWriteActionPending() || application.isWriteActionInProgress();
   }
@@ -169,6 +170,7 @@ public final class ProgressIndicatorUtils {
    * @deprecated see {@link ReadTask}
    */
   @Deprecated(forRemoval = true)
+  @Obsolete
   public static @NotNull CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator,
                                                                               @NotNull Executor executor,
                                                                               @NotNull ReadTask readTask) {

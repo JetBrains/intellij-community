@@ -66,6 +66,8 @@ public abstract class DeleteActionBase extends DeleteAction implements DeletePro
     if (grid == null) return;
     ModelIndex<GridColumn> column = grid.getContextColumn();
 
+    if (!grid.getDataHookup().isForSingleSource()) return;
+
     if (!ApplicationManager.getApplication().isUnitTestMode() && grid.getDataSupport().isSubmitImmediately()) {
       int itemsCount = itemsCount(grid);
       ActionText text = text(grid);

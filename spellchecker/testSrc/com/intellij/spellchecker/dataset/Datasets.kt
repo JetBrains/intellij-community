@@ -10,7 +10,7 @@ object Datasets {
     WordWithMisspellings(word, LinkedHashSet(misspellings.split(" ").filter { it.isNotBlank() }))
   }
 
-  val missp: List<WordWithMisspellings> by lazy { parseWordsFormat(getLines("/data/missp.dat")) }
+  val misspelling: List<WordWithMisspellings> by lazy { parseWordsFormat(getLines("/data/missp.dat")) }
   val words: List<WordWithMisspellings> by lazy { parseWordsFormat(getLines("/data/words.dat")) }
   val wordsCamelCase: List<WordWithMisspellings> by lazy { parseWordsFormat(getLines("/data/words_camel_case.dat")) }
 }

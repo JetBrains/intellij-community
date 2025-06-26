@@ -64,6 +64,7 @@ data class XBreakpointDtoState(
   val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
   val customPresentation: XBreakpointCustomPresentationDto?,
   val lineBreakpointInfo: XLineBreakpointInfo?,
+  val requestId: Long,
 )
 
 @ApiStatus.Internal
@@ -129,14 +130,15 @@ data class XLineBreakpointTypeInfo(
 @ApiStatus.Internal
 suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   val editorsProvider = getEditorsProvider(type, this, project)
+  val xDebuggerManager = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
   return XBreakpointDto(
     id = breakpointId,
-    initialState = getDtoState((XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).currentSession),
+    initialState = getDtoState(xDebuggerManager.currentSession),
     typeId = XBreakpointTypeId(type.id),
     localEditorsProvider = editorsProvider,
     editorsProviderFileTypeId = editorsProvider?.fileType?.name,
     state = channelFlow {
-      val currentSessionFlow = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).currentSessionFlow
+      val currentSessionFlow = xDebuggerManager.currentSessionFlow
       breakpointChangedFlow().combine(currentSessionFlow) { _, currentSession ->
         currentSession
       }.collectLatest { currentSession ->
@@ -150,10 +152,11 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
 private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugSessionImpl?): XBreakpointDtoState {
   val breakpoint = this
   return withContext(Dispatchers.Default) {
+    val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
       sourcePosition = readAction { sourcePosition?.toRpc () },
-      isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(breakpoint),
+      isDefault = manager.isDefaultBreakpoint(breakpoint),
       logExpressionObject = logExpressionObject?.toRpc(),
       conditionExpression = conditionExpression?.toRpc(),
       enabled = isEnabled,
@@ -173,7 +176,8 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugS
       timestamp = timeStamp,
       currentSessionCustomPresentation = currentSession?.getBreakpointPresentation(breakpoint)?.toRpc(),
       customPresentation = breakpoint.customizedPresentation?.toRpc(),
-      lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() }
+      lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() },
+      requestId = manager.requestCounter.getRequestId()
     )
   }
 }

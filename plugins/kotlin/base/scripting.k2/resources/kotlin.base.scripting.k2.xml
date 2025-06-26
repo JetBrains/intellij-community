@@ -18,6 +18,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.implicitReferenceProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.MainKtsReferenceProvider"/>
+
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
@@ -34,6 +36,9 @@
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.MainKtsScriptNotificationProvider"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.ScriptingSupportChecker"/>
+
+    <registryKey defaultValue="false" key="kotlin.scripting.show.widget"
+                 description="Enable displaying Kotlin Script definition name in status bar" restartRequired="false" />
 
     <registryKey defaultValue="false"
                  key="kotlin.k2.scripting.show.modules"
@@ -67,6 +72,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptAfterRunCallbackProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
+
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingKaModuleFactory"/>
     <scriptDefinitionsSource
             id="StandardScriptDefinitionContributor"
@@ -80,10 +87,11 @@
   </extensions>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
-    <action id="LoadMainKtsConfiguration"
-            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadMainKtsScriptDependenciesAction"
+    <action id="ReloadScriptConfiguration"
+            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfiguration"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
-      <add-to-group group-id="EditorContextBarMenu"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="meta shift C"/>
+      <add-to-group group-id="RunContextGroup"/>
     </action>
   </actions>
 </idea-plugin>

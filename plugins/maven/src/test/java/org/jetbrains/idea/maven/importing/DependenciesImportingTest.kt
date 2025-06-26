@@ -1899,6 +1899,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNoRemoveUnusedLibraryIfItWasChanged() = runBlocking {
+
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

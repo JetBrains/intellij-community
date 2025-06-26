@@ -1011,6 +1011,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("comparingWithObject.kt")
+            public void testComparingWithObject() throws Exception {
+                runTest("testData/inspectionsLocal/branched/introduceWhenSubject/comparingWithObject.kt");
+            }
+
             @TestMetadata("ifElseBranches.kt")
             public void testIfElseBranches() throws Exception {
                 runTest("testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
@@ -6964,6 +6969,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("returnReturn.kt")
         public void testReturnReturn() throws Exception {
             runTest("testData/inspectionsLocal/kotlinUnreachableCode/returnReturn.kt");
+        }
+
+        @TestMetadata("returnReturnAndStatement.kt")
+        public void testReturnReturnAndStatement() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/returnReturnAndStatement.kt");
         }
 
         @TestMetadata("returnTryReturn.kt")
@@ -17721,6 +17731,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/functionalLiteral.kt");
             }
 
+            @TestMetadata("implicitExpectFunction.kt")
+            public void testImplicitExpectFunction() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/implicitExpectFunction.kt");
+            }
+
             @TestMetadata("inAnonymous.kt")
             public void testInAnonymous() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/inAnonymous.kt");
@@ -18074,6 +18089,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("unusedPublicMembers.kt")
             public void testUnusedPublicMembers() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/unusedPublicMembers.kt");
+            }
+
+            @TestMetadata("usedEnumEntries.kt")
+            public void testUsedEnumEntries() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/usedEnumEntries.kt");
             }
 
             @TestMetadata("usedEnumFunction.kt")

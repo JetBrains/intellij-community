@@ -484,6 +484,7 @@ public class AllIcons {
   public static final class General {
     /** 16x16 */ public static final @NotNull Icon ActualZoom = load("expui/image/actualZoom.svg", "general/actualZoom.svg", -749904846, 2);
     /** 16x16 */ public static final @NotNull Icon Add = load("expui/general/add.svg", "general/add.svg", -906460278, 2);
+    /** 20x20 */ public static final @NotNull Icon Add_20x20 = load("expui/general/add@20x20.svg", 1639986855, 2);
     /** 16x16 */ public static final @NotNull Icon AddJdk = load("general/addJdk.svg", 1591845252, 2);
     /** 38x15 */ public static final @NotNull Icon Alpha = load("general/alpha.svg", -764382938, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowDown = load("expui/general/chevronDown.svg", "general/arrowDown.svg", 2097510840, 2);
@@ -538,6 +539,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon GearPlain = load("expui/general/settings.svg", "general/gearPlain.svg", -595181203, 2);
     /** 16x16 */ public static final @NotNull Icon GreenCheckmark = load("expui/general/greenCheckmark.svg", "general/greenCheckmark.svg", 1355926933, 2);
     /** 16x16 */ public static final @NotNull Icon Groups = load("expui/general/groups.svg", -2073085413, 2);
+    /** 16x16 */ public static final @NotNull Icon Hashtag = load("expui/general/hashtag.svg", 859350157, 2);
     /** 16x16 */ public static final @NotNull Icon HideToolWindow = load("expui/general/hide.svg", "general/hideToolWindow.svg", -24888126, 2);
     /** 16x16 */ public static final @NotNull Icon History = load("expui/general/history.svg", -1313586434, 2);
     /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("expui/general/showToImplement.svg", "general/implementingMethod.svg", -286814761, 1);
@@ -925,7 +927,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon C_public = load("expui/nodes/accessPublic.svg", "nodes/c_public.svg", -440432317, 0);
     /** 16x16 */ public static final @NotNull Icon Class = load("expui/nodes/class.svg", "nodes/class.svg", 1223421377, 0);
     /** 16x16 */ public static final @NotNull Icon ClassInitializer = load("expui/nodes/classInitializer.svg", "nodes/classInitializer.svg", -65487192, 0);
-    /** 16x16 */ public static final @NotNull Icon CompiledClassesFolder = load("nodes/compiledClassesFolder.svg", -698597684, 0);
+    /** 16x16 */ public static final @NotNull Icon CompiledClassesFolder = load("expui/nodes/compiledClassesFolder.svg", "nodes/compiledClassesFolder.svg", -698597684, 0);
     /** 16x16 */ public static final @NotNull Icon ConfigFolder = load("expui/build/taskGroup.svg", "nodes/configFolder.svg", -1322890185, 0);
     /** 16x16 */ public static final @NotNull Icon Console = load("expui/fileTypes/shell.svg", "nodes/console.svg", 1497553448, 0);
     /** 16x16 */ public static final @NotNull Icon Constant = load("expui/nodes/constant.svg", "nodes/constant.svg", -1342227936, 0);
@@ -1270,7 +1272,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Stop = load("expui/run/stop.svg", 1749021823, 10);
 
     public static final class Widget {
-      /** 16x16 */ public static final @NotNull Icon Build = load("expui/run/widget/build.svg", 1366482764, 2);
+      /** 16x16 */ public static final @NotNull Icon Build = load("expui/run/widget/build.svg", 744666306, 2);
       /** 16x16 */ public static final @NotNull Icon Restart = load("expui/run/widget/restart.svg", -509572269, 2);
     }
   }
@@ -1480,6 +1482,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("expui/vcs/commit.svg", "vcs/commitNode.svg", 334394479, 0);
     /** 16x16 */ public static final @NotNull Icon Equal = load("vcs/equal.svg", -1196383288, 2);
     /** 16x16 */ public static final @NotNull Icon Fetch = load("expui/vcs/fetch.svg", "vcs/fetch.svg", -1252692037, 2);
+    /** 20x20 */ public static final @NotNull Icon Fetch_20x20 = load("expui/vcs/fetch@20x20.svg", -1632890854, 2);
     /** 16x16 */ public static final @NotNull Icon Folders = load("expui/nodes/copyOfFolder.svg", "vcs/folders.svg", 1810604817, 2);
     /** 24x24 */ public static final @NotNull Icon FromVCSDialog = load("vcs/fromVCSDialog.svg", -500633666, 2);
     /** 16x16 */ public static final @NotNull Icon History = load("expui/general/history.svg", "vcs/history.svg", 995622878, 2);
@@ -1492,11 +1495,13 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Patch_applied = load("vcs/patch_applied.svg", -2166485, 2);
     /** 16x16 */ public static final @NotNull Icon Patch_file = load("expui/fileTypes/patch.svg", "vcs/patch_file.svg", -1991117101, 0);
     /** 16x16 */ public static final @NotNull Icon Push = load("expui/vcs/push.svg", "vcs/push.svg", 1768616645, 2);
+    /** 20x20 */ public static final @NotNull Icon Push_20x20 = load("expui/vcs/push@20x20.svg", 1083651890, 2);
     /** 16x16 */ public static final @NotNull Icon Remove = load("expui/vcs/remove.svg", "vcs/remove.svg", -930385649, 2);
     /** 16x16 */ public static final @NotNull Icon ShelveSilent = load("expui/vcs/shelve.svg", "vcs/shelveSilent.svg", -370626475, 2);
     /** 16x16 */ public static final @NotNull Icon ShowUnversionedFiles = load("vcs/ShowUnversionedFiles.svg", -1565476650, 2);
     /** 16x16 */ public static final @NotNull Icon Unshelve = load("expui/vcs/unshelve.svg", "vcs/Unshelve.svg", -81545320, 2);
     /** 16x16 */ public static final @NotNull Icon UnshelveSilent = load("expui/vcs/unshelve.svg", "vcs/unshelveSilent.svg", -20176584, 2);
+    /** 20x20 */ public static final @NotNull Icon Update_20x20 = load("expui/vcs/update@20x20.svg", 518676462, 2);
 
     public static final class Vendors {
       /** 16x16 */ public static final @NotNull Icon Github = load("vcs/vendors/github.svg", 588882631, 2);

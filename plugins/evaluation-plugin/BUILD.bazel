@@ -20,6 +20,7 @@ jvm_library(
     "//libraries/io",
     "//libraries/ktor-client",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -41,13 +42,13 @@ jvm_library(
     "//platform/warmup",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:ktor-client-logging",
   ],
   runtime_deps = [":evaluation-plugin_resources"]
 )
 ### auto-generated section `build intellij.evaluationPlugin` end
 
 ### auto-generated section `build intellij.evaluationPlugin.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -73,7 +74,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "evaluationPlugin-tests_test",
   runtime_deps = [":evaluationPlugin-tests_test_lib"]
 )

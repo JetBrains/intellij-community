@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
@@ -63,7 +64,7 @@ public final class PluginUpdateDialog extends DialogWrapper {
 
   public PluginUpdateDialog(@Nullable Project project,
                      @NotNull Collection<PluginDownloader> downloaders,
-                     @Nullable Collection<PluginNode> customRepositoryPlugins) {
+                     @Nullable Collection<PluginUiModel> customRepositoryPlugins) {
     this(project, downloaders, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
@@ -75,7 +76,7 @@ public final class PluginUpdateDialog extends DialogWrapper {
 
   private PluginUpdateDialog(@Nullable Project project,
                              Collection<PluginDownloader> downloaders,
-                             @Nullable Collection<PluginNode> customRepositoryPlugins,
+                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
@@ -97,7 +98,7 @@ public final class PluginUpdateDialog extends DialogWrapper {
       }
 
       @Override
-      protected @NotNull Collection<PluginNode> getCustomRepoPlugins() {
+      protected @NotNull Collection<PluginUiModel> getCustomRepoPlugins() {
         return customRepositoryPlugins != null ? customRepositoryPlugins : super.getCustomRepoPlugins();
       }
     };
@@ -116,7 +117,9 @@ public final class PluginUpdateDialog extends DialogWrapper {
 
     myPluginsPanel = new PluginsGroupComponent(eventHandler) {
       @Override
-      protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model, @NotNull PluginsGroup group) {
+      protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
+                                                                 @NotNull PluginsGroup group,
+                                                                 @NotNull List<HtmlChunk> errors) {
         if (!(model.isFromMarketplace())) {
           PluginNode node = new PluginNode(model.getPluginId(), model.getName(), "0");
           node.setDescription(model.getDescription());
@@ -129,7 +132,7 @@ public final class PluginUpdateDialog extends DialogWrapper {
           node.setDependencies(dependencies);
           model = new PluginUiModelAdapter(node);
         }
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, LinkListener.NULL, true);
+        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, LinkListener.NULL, errors, true);
         component.setOnlyUpdateMode();
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;

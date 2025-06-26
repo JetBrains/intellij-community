@@ -135,10 +135,6 @@ internal fun Q.entityTypePossibleAttributes(entityTypeEID: EID): List<Attribute<
     Attribute<Any>(v as EID)
   }
 
-private object Logger {
-  val logger = logger<Logger>()
-}
-
 fun DbContext<Q>.attributeSerializer(attr: Attribute<*>): KSerializer<Any>? =
   (entity(attr.eid) as EntityAttribute<*, *>?)?.serializerLazy?.value as KSerializer<Any>?
 

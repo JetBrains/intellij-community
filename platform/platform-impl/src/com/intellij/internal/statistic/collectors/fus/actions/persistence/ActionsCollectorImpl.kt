@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.TimeoutUtil
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import it.unimi.dsi.fastutil.objects.Object2LongMaps
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.jetbrains.annotations.ApiStatus
@@ -179,12 +180,15 @@ class ActionsCollectorImpl : ActionsCollector() {
         ?.let { event?.dataContext?.getData(CommonDataKeys.HOST_EDITOR) }
         ?.let { LookupManager.getActiveLookup(it) } != null
 
+      val actionOnNonIndexableFile = isActionOnNonIndexableFile(project, event)
+
       val toolWindowId = event?.dataContext?.getData(PlatformDataKeys.TOOL_WINDOW)?.id
       val projectPairs = projectData(project)
 
       eventId.log(project) {
         val info = getPluginInfo(action.javaClass)
         add(EventFields.PluginInfoFromInstance.with(action))
+        add(ActionsEventLogGroup.ACTION_ON_NON_INDEXABLE_FILE.with(actionOnNonIndexableFile))
         if (event != null) {
           if (action is ToggleAction) {
             add(ActionsEventLogGroup.TOGGLE_ACTION.with(Toggleable.isSelected(event.presentation)))
@@ -330,13 +334,30 @@ class ActionsCollectorImpl : ActionsCollector() {
       }
     }
 
-    private fun toReportedResult(result: AnActionResult): ObjectEventData = when {
-      result.isPerformed -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"))
-      result.isIgnored -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"))
-      else -> ObjectEventData(
+    private fun toReportedResult(result: AnActionResult): ObjectEventData = when (result) {
+      is AnActionResult.Performed -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"))
+      is AnActionResult.Ignored -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"))
+      is AnActionResult.Failed -> ObjectEventData(
         ActionsEventLogGroup.RESULT_TYPE.with("failed"),
-        ActionsEventLogGroup.ERROR.with(result.failureCause.javaClass)
+        ActionsEventLogGroup.ERROR.with(result.cause.javaClass)
       )
+    }
+
+    private fun isActionOnNonIndexableFile(project: Project?, event: AnActionEvent?): Boolean {
+      var actionOnNonIndexableFile = false
+      val virtualFile = event?.dataContext?.let {
+        CommonDataKeys.VIRTUAL_FILE.getData(it)
+      }
+
+      if (virtualFile != null && project != null && !project.isDisposed) {
+        val workspaceFileIndexEx = WorkspaceFileIndexEx.getInstance(project)
+        runReadAction {
+          if (!workspaceFileIndexEx.isIndexable(virtualFile)) {
+            actionOnNonIndexableFile = true
+          }
+        }
+      }
+      return actionOnNonIndexableFile
     }
 
     private fun addLanguageContextFields(project: Project?,

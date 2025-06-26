@@ -11,33 +11,31 @@ import com.intellij.polySymbols.customElements.CustomElementsSymbol
 import com.intellij.polySymbols.customElements.json.CustomElementClassOrMixinDeclaration
 import com.intellij.polySymbols.customElements.json.resolve
 import com.intellij.polySymbols.customElements.json.toApiStatus
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.Stack
 
 class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val name: String,
   private val declaration: CustomElementClassOrMixinDeclaration,
   private val origin: CustomElementsJsonOrigin,
   private val rootScope: CustomElementsManifestScopeBase,
-) : StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
+) : StaticPolySymbolScopeBase.StaticSymbolContributionAdapter {
 
   private val cacheHolder = UserDataHolderBase()
 
   override val qualifiedKind: PolySymbolQualifiedKind
     get() = CustomElementsSymbol.CEM_DECLARATIONS
 
-  override val pattern: PolySymbolsPattern?
+  override val pattern: PolySymbolPattern?
     get() = null
 
   override val framework: FrameworkId?
     get() = null
 
-  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolQueryExecutor): PolySymbol =
     CustomElementClassOrMixinDeclarationSymbol(this, queryExecutor)
 
   private fun createPointer(): Pointer<CustomElementsClassOrMixinDeclarationAdapter> {
@@ -54,7 +52,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
   private class CustomElementClassOrMixinDeclarationSymbol(
     private val base: CustomElementsClassOrMixinDeclarationAdapter,
-    private val queryExecutor: PolySymbolsQueryExecutor,
+    private val queryExecutor: PolySymbolQueryExecutor,
   ) : CustomElementsSymbol, PsiSourcedPolySymbol {
 
     private var _superContributions: List<PolySymbol>? = null
@@ -82,13 +80,13 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
       get() = (base.declaration.description?.takeIf { it.isNotBlank() } ?: base.declaration.summary)
                 ?.let { origin.renderDescription(it) }
               ?: superContributions.asSequence()
-                .mapNotNull { (it as? PolySymbolWithDocumentation)?.description }
+                .mapNotNull { (it as? CustomElementsSymbol)?.description }
                 .firstOrNull()
 
     override val apiStatus: PolySymbolApiStatus
       get() = base.declaration.deprecated.toApiStatus(origin) ?: PolySymbolApiStatus.Stable
 
-    override val queryScope: List<PolySymbolsScope>
+    override val queryScope: List<PolySymbolScope>
       get() = superContributions.asSequence()
         .flatMap { it.queryScope }
         .plus(this)
@@ -109,17 +107,17 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getMatchingSymbols(
       qualifiedName: PolySymbolQualifiedName,
-      params: PolySymbolsNameMatchQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      params: PolySymbolNameMatchQueryParams,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
       base.rootScope
-        .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
+        .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, stack)
         .toList()
 
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
-      params: PolySymbolsListSymbolsQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      params: PolySymbolListSymbolsQueryParams,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
       base.rootScope
         .getSymbols(base.declaration, this.origin, qualifiedKind, params)
@@ -127,11 +125,11 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getCodeCompletions(
       qualifiedName: PolySymbolQualifiedName,
-      params: PolySymbolsCodeCompletionQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      params: PolySymbolCodeCompletionQueryParams,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbolCodeCompletionItem> =
       base.rootScope
-        .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, scope)
+        .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, stack)
         .toList()
   }
 

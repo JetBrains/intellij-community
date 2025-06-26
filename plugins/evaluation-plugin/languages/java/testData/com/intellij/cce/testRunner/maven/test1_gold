@@ -1,4 +1,5 @@
 compilationSuccessful: true
+projectIsResolvable: true
 passed: 179
 	com.fasterxml.jackson.core.ErrorReportConfigurationTest
 	com.fasterxml.jackson.core.JsonLocationTest

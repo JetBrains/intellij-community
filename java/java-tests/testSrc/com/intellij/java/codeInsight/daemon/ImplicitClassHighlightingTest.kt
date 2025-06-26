@@ -13,7 +13,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 
 class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor() = JAVA_23
+  override fun getProjectDescriptor() = JAVA_LATEST_WITH_LATEST_JDK
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/implicitClass"
 
   fun testHighlightInsufficientLevel() {
@@ -72,51 +72,112 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
       class DuplicateImplicitClass2 {}
     """.trimIndent())
     val highlightings = myFixture.doHighlighting().filter { it?.description?.contains("Duplicate class") ?: false }
-    UsefulTestCase.assertNotEmpty(highlightings)
+    assertNotEmpty(highlightings)
   }
 
-  fun testImplicitIoImport() {
-    IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.minimumLevel, Runnable {
-      myFixture.addClass("""
-        package java.io;
-        
-        public final class IO {
-          public static void println(Object obj) {}    
-        }
-        
-        """.trimIndent())
-      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
-      myFixture.checkHighlighting()
-      val statement = (psiFile as PsiJavaFile).classes[0].methods[0].body!!.statements[0] as PsiExpressionStatement
-      val resolveMethod = (statement.expression as PsiCallExpression).resolveMethod()
-      assertNotNull(resolveMethod)
+  fun testImplicitIoImport25() {
+    IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.standardLevel!!, Runnable {
+      implicitIoImport(false)
     })
   }
 
-  fun testImplicitModuleImport() {
+  fun testImplicitIoImport23Preview() {
     IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.minimumLevel, Runnable {
-      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      implicitIoImport(true)
+    })
+  }
+
+  private fun implicitIoImport(success: Boolean) {
+    myFixture.addClass("""
+          package java.io;
+          
+          public final class IO {
+            public static void println(Object obj) {}    
+          }
+          
+          """.trimIndent())
+    val psiFile = myFixture.configureByFile(if (success) "ImplicitIoImport.java" else "ImplicitIoImportFail.java")
+    if (success) {
       myFixture.checkHighlighting()
-      val statement = (psiFile as PsiJavaFile).classes[0].methods[0].body!!.statements[0] as PsiDeclarationStatement
-      val variable = (statement.declaredElements[0] as PsiVariable)
-      val variableType = variable.type
-      assertNotNull(variableType)
-      val psiClass = PsiUtil.resolveClassInClassTypeOnly(variableType)
+    }
+    val statement = (psiFile as PsiJavaFile).classes[0].methods[0].body!!.statements[0] as PsiExpressionStatement
+    val resolveMethod = (statement.expression as PsiCallExpression).resolveMethod()
+    if (success) {
+      assertNotNull(resolveMethod)
+    }
+    else {
+      assertNull(resolveMethod)
+    }
+  }
+
+  fun testImplicitModuleImport25() {
+    IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.standardLevel!!, Runnable {
+      implicitModuleImport(true)
+    })
+  }
+
+  fun testImplicitModuleImport23Preview() {
+    IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.minimumLevel, Runnable {
+      implicitModuleImport(true)
+    })
+  }
+
+  fun testImplicitModuleImport24() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_24, Runnable {
+      implicitModuleImport(false)
+    })
+  }
+
+  private fun implicitModuleImport(success: Boolean) {
+    val psiFile = myFixture.configureByFile(if (success) "ImplicitModuleImport.java" else "ImplicitModuleImportFail.java")
+    myFixture.checkHighlighting()
+    val statement = (psiFile as PsiJavaFile).classes[0].methods[0].body!!.statements[0] as PsiDeclarationStatement
+    val variable = (statement.declaredElements[0] as PsiVariable)
+    val variableType = variable.type
+    assertNotNull(variableType)
+    val psiClass = PsiUtil.resolveClassInClassTypeOnly(variableType)
+    if (success) {
       assertNotNull(psiClass)
       assertEquals(CommonClassNames.JAVA_UTIL_LIST, psiClass!!.qualifiedName)
+    }
+    else {
+      assertNull(psiClass)
+    }
+  }
+
+  fun testImplicitIoImport24() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_24, Runnable {
+      implicitIoImport(false)
     })
   }
 
   fun testImplicitWithPackages() {
-    IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.minimumLevel, Runnable {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW, Runnable {
       myFixture.addClass("""
         package a.b;
         
         public final class List {
         }
         """.trimIndent())
+      myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+    })
+  }
+
+  fun testImplicitWithStaticPackagesPackagesOverModule() {
+    IdeaTestUtil.withLevel(module, JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.minimumLevel, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public class Other {
+            public static class List {
+        
+            }
+        }""".trimIndent())
       val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
       myFixture.checkHighlighting()
+      val element = psiFile.findElementAt(myFixture.caretOffset)
+      assertEquals("a.b.Other.List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
     })
   }
 
@@ -132,6 +193,35 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
       myFixture.checkHighlighting()
       val element = psiFile.findElementAt(myFixture.caretOffset)
       assertEquals("a.b.List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
+    })
+  }
+
+  fun testImplicitWithPackagesPackagesOverModule25() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public final class List {
+        }
+        """.trimIndent())
+      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+      val element = psiFile.findElementAt(myFixture.caretOffset)
+      assertEquals("a.b.List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
+    })
+  }
+
+
+  fun testImplicitWithPackagesPackagesOverModule24() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_24, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public final class List {
+        }
+        """.trimIndent())
+      myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
     })
   }
 

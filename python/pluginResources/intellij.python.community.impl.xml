@@ -96,7 +96,6 @@
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
 
     <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
-    <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
     <lang.surroundDescriptor language="Python"
@@ -469,7 +468,6 @@
 
     <!--folding-->
     <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
-    <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
 
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"
@@ -708,7 +706,6 @@
     <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
                     interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.packageManagerProvider"
                     interface="com.jetbrains.python.packaging.PyPackageManagerProvider"
                     dynamic="true"/>
@@ -778,7 +775,11 @@
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.PythonPackageRequiresExtractorProvider"
-                    interface="com.jetbrains.python.packaging.packageRequires.PythonPackageRequiresExtractorProvider"
+                    interface="com.jetbrains.python.packaging.packageRequirements.PythonPackageRequiresExtractorProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.PythonPackageRequirementsTreeExtractorProvider"
+                    interface="com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractorProvider"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -833,7 +834,6 @@
     <visitorFilter language="Python"
                    implementationClass="com.jetbrains.python.inspections.PyExpressionCodeFragmentVisitorFilter"/>
 
-    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.add.v2.PyLocalAddSdkProvider"/>
     <!-- Pipenv -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
 
@@ -886,6 +886,11 @@
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.poetry.packaging.PoetryRequiresExtractorProvider"/>
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.uv.packaging.UvPackageRequiresExtractorProvider"/>
 
+    <PythonPackageRequirementsTreeExtractorProvider implementation="com.jetbrains.python.poetry.packaging.PoetryPackageRequirementsTreeExtractorProvider"/>
+    <PythonPackageRequirementsTreeExtractorProvider implementation="com.jetbrains.python.uv.packaging.UvPackageRequirementsTreeExtractorProvider"/>
+
+
+
     <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
@@ -894,7 +899,8 @@
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
 
     <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.pip.PipPackagingToolwindowActionProvider"/>
-    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
+    <PythonPackagingToolwindowActionProvider
+      implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
   </extensions>
 
   <actions resource-bundle="messages.PyBundle">
@@ -962,8 +968,8 @@
     <action id="ExpandPythonTypeAnnotations" class="com.jetbrains.python.actions.PyExpandTypeAnnotationsAction"/>
 
 
+    <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>
     <group id="PyPackagingMenu">
-      <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
       <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
@@ -1070,6 +1076,15 @@
 
       <action id="HatchRunAction"
               class="com.jetbrains.python.hatch.packaging.HatchRunAction"
+              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+
+      <separator/>
+
+      <action id="CondaExportAction"
+              class="com.jetbrains.python.packaging.conda.actions.CondaExportEnvAction"
+              icon="com.intellij.icons.AllIcons.General.Export"/>
+      <action id="CondaUpdateEnvAction"
+              class="com.jetbrains.python.packaging.conda.actions.CondaUpdateEnvAction"
               icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
 
       <separator/>

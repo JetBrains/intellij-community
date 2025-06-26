@@ -3,16 +3,19 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElementBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 import java.util.function.Consumer
 
 @ApiStatus.NonExtendable
 interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<Self>>
-  : ScriptElementBuilder {
+  : GradleScriptElementBuilder {
 
   val gradleVersion: GradleVersion
+
+  val gradleDsl: GradleDsl
 
   /**
    * ...
@@ -35,8 +38,8 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * }
    */
   fun addBuildScriptPrefix(vararg prefix: String): Self
-  fun withBuildScriptPrefix(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withBuildScriptPrefix(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withBuildScriptPrefix(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withBuildScriptPrefix(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
    * buildscript {
@@ -47,8 +50,8 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * }
    */
   fun addBuildScriptDependency(dependency: String): Self
-  fun withBuildScriptDependency(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withBuildScriptDependency(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withBuildScriptDependency(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withBuildScriptDependency(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
    * buildscript {
@@ -59,8 +62,8 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * }
    */
   fun addBuildScriptRepository(repository: String): Self
-  fun withBuildScriptRepository(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withBuildScriptRepository(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withBuildScriptRepository(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withBuildScriptRepository(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
    * buildscript {
@@ -72,8 +75,8 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * }
    */
   fun addBuildScriptPostfix(vararg postfix: String): Self
-  fun withBuildScriptPostfix(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withBuildScriptPostfix(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withBuildScriptPostfix(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withBuildScriptPostfix(configure: Consumer<GradleScriptTreeBuilder>): Self
 
 
   /**
@@ -83,7 +86,7 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * }
    */
   fun addPlugin(plugin: String): Self
-  fun withPlugin(configure: ScriptTreeBuilder.() -> Unit): Self
+  fun withPlugin(configure: GradleScriptTreeBuilder.() -> Unit): Self
 
   /**
    * buildscript { ... }
@@ -94,8 +97,8 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * ...
    */
   fun addPrefix(vararg prefix: String): Self
-  fun withPrefix(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withPrefix(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withPrefix(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withPrefix(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
    * dependencies {
@@ -104,8 +107,8 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * }
    */
   fun addDependency(dependency: String): Self
-  fun withDependency(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withDependency(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withDependency(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withDependency(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
    * repositories {
@@ -114,14 +117,14 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * }
    */
   fun addRepository(repository: String): Self
-  fun withRepository(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withRepository(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withRepository(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withRepository(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
    * java { ... }
    */
-  fun withJava(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withJava(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withJava(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
    * buildscript { ... }
@@ -132,8 +135,8 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
    * [postfix]
    */
   fun addPostfix(vararg postfix: String): Self
-  fun withPostfix(configure: ScriptTreeBuilder.() -> Unit): Self
-  fun withPostfix(configure: Consumer<ScriptTreeBuilder>): Self
+  fun withPostfix(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withPostfix(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
    * @return content for build.gradle

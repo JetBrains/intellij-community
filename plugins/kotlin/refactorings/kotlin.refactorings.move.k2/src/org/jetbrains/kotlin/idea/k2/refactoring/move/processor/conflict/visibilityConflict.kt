@@ -130,7 +130,6 @@ internal fun checkVisibilityConflictForNonMovedUsages(
     targetDir: PsiDirectory,
     target: K2MoveTargetDescriptor.Declaration<*>? = null
 ): MultiMap<PsiElement, String> {
-    val declarationToContainers = HashMap<KtNamedDeclaration, MutableSet<PsiElement>>()
     return usages
         .filter { usageInfo -> usageInfo.willNotBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
         .mapNotNull { usageInfo ->
@@ -151,8 +150,7 @@ internal fun checkVisibilityConflictForNonMovedUsages(
 
                         else -> true
                     }
-                    val reported = declarationToContainers.computeIfAbsent(referencedDeclaration, { HashSet() })
-                    if (reported.add(usageElement.getContainer()) && !isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
+                    if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
                 }
             }
         }
@@ -211,7 +209,7 @@ fun checkVisibilityConflictsForInternalUsages(
                 val usageElement = usageInfo.element as? KtElement ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
                 val isVisible = if (referencedDeclaration is KtNamedDeclaration) {
-                    analyze(referencedDeclaration) {
+                    analyze(usageElement) {
                         val referencedDeclarationKaModule = referencedDeclaration.module?.toKaSourceModuleForProductionOrTest()
                         val symbol = referencedDeclaration.symbol
                         val visibility = if (symbol is KaConstructorSymbol) {

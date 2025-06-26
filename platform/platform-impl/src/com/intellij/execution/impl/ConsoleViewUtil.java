@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -11,6 +12,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
@@ -39,6 +42,7 @@ public final class ConsoleViewUtil {
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
 
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
+  private static final Logger LOG = Logger.getInstance(ConsoleViewUtil.class);
 
   public static @NotNull EditorEx setupConsoleEditor(@Nullable Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
@@ -290,7 +294,19 @@ public final class ConsoleViewUtil {
                                                             @NotNull GlobalSearchScope searchScope) {
     List<Filter> result = new ArrayList<>();
     for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-      Collections.addAll(result, computeConsoleFilters(eachProvider, project, consoleView, searchScope));
+      try {
+        Collections.addAll(result, computeConsoleFilters(eachProvider, project, consoleView, searchScope));
+      }
+      catch (CancellationException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(PluginException.createByClass(
+          "An exception occurred when trying to get console filters, this provider will be unavailable: " + eachProvider,
+          e,
+          eachProvider.getClass()
+        ));
+      }
     }
     return result;
   }

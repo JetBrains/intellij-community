@@ -24,7 +24,7 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
                                         private val dataContextId: DataContextId,
                                         private val isAllTab: Boolean) {
 
-  private val providerIds: List<SeProviderId> = idsWithDisplayNames.keys.toList()
+  val providerIds: List<SeProviderId> = idsWithDisplayNames.keys.toList()
 
   fun hasId(providerId: SeProviderId): Boolean = idsWithDisplayNames.containsKey(providerId)
 

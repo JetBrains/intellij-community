@@ -13,7 +13,10 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
@@ -29,6 +32,7 @@ import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
@@ -41,6 +45,8 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.stateStore
+import com.intellij.ui.mac.createMacDelegate
+import com.intellij.ui.win.createWinDockDelegate
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
@@ -79,7 +85,7 @@ private val LOG = logger<RecentProjectsManager>()
 @State(name = "RecentProjectsManager",
        category = SettingsCategory.SYSTEM,
        storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
-open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope) :
+open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
     const val MAX_PROJECTS_IN_MAIN_MENU: Int = 6
@@ -100,6 +106,7 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
   private val disableUpdatingRecentInfo = AtomicBoolean()
 
   private val nameResolveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val updateDockRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
@@ -120,11 +127,35 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
         }
     }
 
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      coroutineScope.launch {
+        val delegate = when {
+                         SystemInfoRt.isMac -> createMacDelegate()
+                         SystemInfoRt.isWindows -> createWinDockDelegate()
+                         else -> null
+                       } ?: return@launch
+
+        updateDockRequests
+          .debounce(50.milliseconds)
+          .collectLatest {
+            runActivity("system dock menu") {
+              runCatching {
+                delegate.updateRecentProjectsMenu()
+              }.getOrLogException(LOG)
+            }
+          }
+      }
+    }
+
     application.messageBus.connect().subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
       override fun change() {
         updateSystemDockMenu()
       }
     })
+  }
+
+  private fun updateSystemDockMenu() {
+    check(updateDockRequests.tryEmit(Unit))
   }
 
   final override fun getState(): RecentProjectManagerState = state
@@ -218,11 +249,7 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
       }
     }
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-      coroutineScope.launch(Dispatchers.ui(UiDispatcherKind.STRICT)) {
-        updateSystemDockMenu()
-      }
-    }
+    updateSystemDockMenu()
   }
 
   override fun removePath(path: String) {
@@ -421,11 +448,11 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
   }
 
   @Internal
-  suspend fun projectOpened(project: Project) {
+  fun projectOpened(project: Project) {
     projectOpened(project, System.currentTimeMillis())
   }
 
-  internal suspend fun projectOpened(project: Project, openTimestamp: Long) {
+  internal fun projectOpened(project: Project, openTimestamp: Long) {
     if (disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
       return
     }
@@ -442,9 +469,7 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
       validateRecentProjects(modCounter, state.additionalInfo)
     }
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      updateSystemDockMenu()
-    }
+    updateSystemDockMenu()
   }
 
   @Internal
@@ -478,7 +503,7 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
       synchronized(manager.stateLock) {
         manager.state.additionalInfo.get(manager.getProjectPath(project))?.opened = false
       }
-      updateSystemDockMenu()
+      manager.updateSystemDockMenu()
     }
   }
 
@@ -673,7 +698,12 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
   fun setProjectHidden(project: Project, hidden: Boolean) {
     val path = getProjectPath(project) ?: return
     synchronized(stateLock) {
-      val info = state.additionalInfo.get(path) ?: return
+      val info = state.additionalInfo.computeIfAbsent(path) {
+        // A new unopened project isn't in `state.additionalInfo` yet, because it will be
+        // added there on frame activation in `setActivationTimestamp` a bit later.
+        // Add it to `state.additionalInfo` now to support new projects which are not opened yet.
+        RecentProjectMetaInfo()
+      }
       if (info.hidden == hidden) return
 
       info.hidden = hidden
@@ -946,14 +976,6 @@ private fun convertToSystemIndependentPaths(list: MutableList<String>) {
   }
 }
 
-private fun updateSystemDockMenu() {
-  if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-    runActivity("system dock menu") {
-      SystemDock.updateMenu()
-    }
-  }
-}
-
 private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String, RecentProjectMetaInfo>) {
   val limit = AdvancedSettings.getInt("ide.max.recent.projects")
   var toRemove = map.size - limit
@@ -1007,3 +1029,8 @@ val OpenProjectTask.frame: IdeFrameImpl?
 
 val OpenProjectTask.frameInfo: FrameInfo?
   @Internal get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
+
+@Internal
+interface SystemDock {
+  suspend fun updateRecentProjectsMenu()
+}

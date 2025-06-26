@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity,
                                                                                         WorkspaceEntityBase(dataSource) {

@@ -16,8 +16,7 @@ internal sealed class HatchPackageManagerAction : PythonPackageManagerAction<Hat
 }
 
 internal class HatchRunAction() : HatchPackageManagerAction() {
-  override suspend fun execute(e: AnActionEvent, manager: HatchPackageManager): PyResult<String> {
-    val service = manager.getHatchService().getOr { return it }
-    return service.syncDependencies()
+  override suspend fun execute(e: AnActionEvent, manager: HatchPackageManager): PyResult<Unit> {
+    return manager.sync().mapSuccess { }
   }
 }

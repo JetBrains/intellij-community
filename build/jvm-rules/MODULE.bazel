@@ -12,10 +12,11 @@ http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-bazel_dep(name = "hermetic_cc_toolchain", version = "3.2.0")
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 
 toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-use_repo(toolchains, "zig_sdk", "zig_sdk-linux-amd64", "zig_sdk-linux-arm64", "zig_sdk-macos-amd64", "zig_sdk-macos-arm64", "zig_sdk-windows-amd64")
+
+use_repo(toolchains, "zig_sdk")
 
 register_toolchains(
     "@zig_sdk//toolchain/...",
@@ -88,10 +89,17 @@ http_file(
 )
 
 http_file(
-  name = "rhizomedb-compiler-plugin-2_1_20-0_5_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.5/rhizomedb-compiler-plugin-2.1.20-0.5.jar",
-  sha256 = "4a72bd4f988180e9933117bb98c0a13fb2dbe2f3d058e35562ce66bf79373e52",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.5.jar"
+  name = "rhizomedb-compiler-plugin-2_2_0-RC2-0_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.2.0-RC2-0.2/rhizomedb-compiler-plugin-2.2.0-RC2-0.2.jar",
+  sha256 = "66d8ffd490115de8f698144e9e96c3edbeb6f7d54ecb5dca0b7e6ca2dcf38969",
+  downloaded_file_path = "rhizomedb-compiler-plugin-2.2.0-RC2-0.2.jar"
+)
+
+http_file(
+  name = "rhizomedb-compiler-plugin-2_2_0-RC2-0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.2.0-RC2-0.2/rhizomedb-compiler-plugin-2.2.0-RC2-0.2-sources.jar",
+  sha256 = "d8d008d23a967785a1337837001d5f60d866986eb458d8d7e6237e10cd336b8c",
+  downloaded_file_path = "rhizomedb-compiler-plugin-2.2.0-RC2-0.2-sources.jar"
 )
 
 http_file(

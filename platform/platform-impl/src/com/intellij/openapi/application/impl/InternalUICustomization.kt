@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.toolWindow.StripesUxCustomizer
+import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.JBColor
 import com.intellij.ui.tabs.impl.TabPainterAdapter
@@ -62,6 +63,8 @@ open class InternalUICustomization {
       return isProjectCustomDecorationActive
     }
 
+  internal open fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {}
+
   open fun createToolWindowPaneLayered(splitter: JComponent, frame: JFrame): JLayeredPane? = null
 
   /**
@@ -99,6 +102,8 @@ open class InternalUICustomization {
   open fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider? = null
 
   open fun createCustomToolWindowPaneHolder(): JPanel = JPanel()
+
+  open fun configureRendererComponent(component: JComponent) {}
 
   open val isCustomPaintersAllowed: Boolean = false
 

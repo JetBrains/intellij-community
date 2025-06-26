@@ -40,14 +40,14 @@ data class ProjectInfo(
     fun compositeInfo(
       name: String,
       relativePath: String,
-      useKotlinDsl: Boolean? = null,
+      gradleDsl: GradleDsl? = null,
       configure: Builder.() -> Unit = {}
     ): ProjectInfo
 
     fun moduleInfo(
       ideName: String,
       relativePath: String,
-      useKotlinDsl: Boolean? = null,
+      gradleDsl: GradleDsl? = null,
       configure: ModuleInfo.Builder.() -> Unit = {}
     ): ModuleInfo
   }
@@ -69,13 +69,13 @@ data class ProjectInfo(
     override fun compositeInfo(
       name: String,
       relativePath: String,
-      useKotlinDsl: Boolean?,
+      gradleDsl: GradleDsl?,
       configure: Builder.() -> Unit
     ): ProjectInfo {
       val projectInfo = create(
         name,
         "$projectRelativePath/$relativePath",
-        useKotlinDsl?.let(GradleDsl::valueOf) ?: defaultGradleDsl,
+        gradleDsl ?: defaultGradleDsl,
         configure
       )
       composites.add(projectInfo)
@@ -85,13 +85,13 @@ data class ProjectInfo(
     override fun moduleInfo(
       ideName: String,
       relativePath: String,
-      useKotlinDsl: Boolean?,
+      gradleDsl: GradleDsl?,
       configure: ModuleInfo.Builder.() -> Unit
     ): ModuleInfo {
       val builder = ModuleInfo.createBuilder(
         ideName,
         "$projectRelativePath/$relativePath",
-        useKotlinDsl?.let(GradleDsl::valueOf) ?: defaultGradleDsl,
+        gradleDsl ?: defaultGradleDsl,
         configure
       )
       val moduleInfo = ModuleInfo.create(builder)

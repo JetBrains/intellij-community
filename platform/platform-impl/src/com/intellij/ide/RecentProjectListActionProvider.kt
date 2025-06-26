@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -23,12 +22,15 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentP
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.ui.UIBundle
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.forEachLoggingErrors
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 open class RecentProjectListActionProvider {
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(): RecentProjectListActionProvider = service<RecentProjectListActionProvider>()
 
     private val EP = ExtensionPointName.create<RecentProjectProvider>("com.intellij.recentProjectsProvider")
@@ -78,10 +80,18 @@ open class RecentProjectListActionProvider {
   }
 
   @ApiStatus.Internal
-  open fun getActions(project: Project?): List<AnAction> = getActions()
+  open fun getActions(project: Project?): List<AnAction> = getActions(allowCustomProjectActions = true)
 
+  /**
+   * @param useGroups Whether apply user-defined grouping for projects
+   * @param allowCustomProjectActions Whether to include additional actions to the projects, if available (by turning them into an [ActionGroup])
+   */
   @JvmOverloads
-  open fun getActions(addClearListItem: Boolean = false, useGroups: Boolean = false): List<AnAction> {
+  open fun getActions(
+    addClearListItem: Boolean = false,
+    useGroups: Boolean = false,
+    allowCustomProjectActions: Boolean = false,
+  ): List<AnAction> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     val paths = LinkedHashSet(recentProjectManager.getRecentPaths())
     val openedPaths = LinkedHashSet<String>()
@@ -133,10 +143,12 @@ open class RecentProjectListActionProvider {
       emptyList()
     }
 
-    val actionsFromEP = if (Registry.`is`("ide.recent.projects.query.ep.providers")) {
-      EP.extensionList.flatMap { createActionsFromProvider(it) }
+    val actionsFromEP = if (LoadingState.COMPONENTS_LOADED.isOccurred && Registry.`is`("ide.recent.projects.query.ep.providers")) {
+      EP.extensionList.flatMap { createActionsFromProvider(it, allowCustomProjectActions) }
     }
-    else emptyList()
+    else {
+      emptyList()
+    }
 
     val mergedProjectsWithoutGroups = insertProjectsFromProvider(actionsWithoutGroup, actionsFromEP) { it.activationTimestamp }
     return (topGroups + mergedProjectsWithoutGroups + bottomGroups)
@@ -221,12 +233,31 @@ open class RecentProjectListActionProvider {
     }
   }
 
-  private fun createActionsFromProvider(provider: RecentProjectProvider): List<AnAction> {
+  private fun createActionsFromProvider(provider: RecentProjectProvider, allowCustomProjectActions: Boolean): List<AnAction> {
     return provider.getRecentProjects().map { project ->
       val projectId = getProviderProjectId(provider, project)
 
-      RemoteRecentProjectAction(projectId, project)
+      if (allowCustomProjectActions) {
+        RemoteRecentProjectActionGroup(projectId, project)
+      }
+      else {
+        RemoteRecentProjectAction(projectId, project)
+      }
     }
+  }
+
+  @ApiStatus.Internal
+  fun countLocalProjects(): Int {
+    return RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size
+  }
+
+  @ApiStatus.Internal
+  fun countProjectsFromProviders(): Int {
+    var sum = 0
+    EP.extensionList.forEachLoggingErrors(logger<RecentProjectListActionProvider>()) {
+      sum += it.getRecentProjects().size
+    }
+    return sum
   }
 
   /**
@@ -265,7 +296,7 @@ open class RecentProjectListActionProvider {
   }
 
   /**
-   * Returns true if action corresponds to a specified project
+   * Returns true if the action corresponds to a specified project
    */
   open fun isCurrentProjectAction(project: Project, action: ReopenProjectAction): Boolean = action.projectPath == project.basePath
 }
@@ -306,7 +337,9 @@ private class ProjectGroupComparator(private val projectPaths: Set<String>) : Co
   }
 }
 
-internal class RemoteRecentProjectAction(val projectId: String, val project: RecentProject) : ActionGroup(), DumbAware, ProjectToolbarWidgetPresentable {
+private class RemoteRecentProjectActionGroup(val projectId: String, val project: RecentProject)
+  : ActionGroup(), DumbAware,
+    ProjectToolbarWidgetPresentable by RemoteRecentProjectWidgetActionHelper(projectId, project) {
   init {
     templatePresentation.text = nameToDisplayAsText
   }
@@ -314,13 +347,15 @@ internal class RemoteRecentProjectAction(val projectId: String, val project: Rec
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isPerformGroup = project.additionalActions.isEmpty()
+    e.presentation.isPerformGroup = project.additionalActions.isEmpty() || e.place == ActionPlaces.DOCK_MENU
     e.presentation.isPopupGroup = true
   }
 
   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
     val additionalActions = project.additionalActions
     if (additionalActions.isEmpty()) return EMPTY_ARRAY
+
+    if (e != null && e.place == ActionPlaces.DOCK_MENU) return EMPTY_ARRAY
 
     val result = mutableListOf<AnAction>()
     if (project.canOpenProject()) {
@@ -335,9 +370,21 @@ internal class RemoteRecentProjectAction(val projectId: String, val project: Rec
   override fun actionPerformed(e: AnActionEvent) {
     project.openProject(e)
   }
+}
 
-  fun canOpenProject() : Boolean = project.canOpenProject()
+private class RemoteRecentProjectAction(val projectId: String, val project: RecentProject)
+  : AnAction(), DumbAware,
+    ProjectToolbarWidgetPresentable by RemoteRecentProjectWidgetActionHelper(projectId, project) {
+  init {
+    templatePresentation.text = nameToDisplayAsText
+  }
 
+  override fun actionPerformed(e: AnActionEvent) {
+    project.openProject(e)
+  }
+}
+
+private class RemoteRecentProjectWidgetActionHelper(val projectId: String, val project: RecentProject) : ProjectToolbarWidgetPresentable {
   override val projectNameToDisplay: @NlsSafe String = project.displayName
   override val providerPathToDisplay: @NlsSafe String? get() = project.providerPath
   override val projectPathToDisplay: @NlsSafe String? = project.projectPath
@@ -348,7 +395,7 @@ internal class RemoteRecentProjectAction(val projectId: String, val project: Rec
   override val providerIcon: Icon? get() = project.providerIcon
   override val activationTimestamp: Long? get() = project.activationTimestamp
 
-  override val status: ProjectStatus?
+  override val status: ProjectStatus
     get() {
       val status = project.status
       return ProjectStatus(status.isOpened, status.statusText, status.progressText)

@@ -17,7 +17,7 @@ class LogicalStructureAssembledModel<T> private constructor(
 ) {
 
   companion object {
-    fun <T> getInstance(project: Project, root: T): LogicalStructureAssembledModel<T> {
+    fun <T: Any> getInstance(project: Project, root: T): LogicalStructureAssembledModel<T> {
       return LogicalStructureAssembledModel(project, root, null)
     }
   }

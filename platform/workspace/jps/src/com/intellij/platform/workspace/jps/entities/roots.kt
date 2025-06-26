@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -18,10 +18,11 @@ interface ContentRootEntity : WorkspaceEntity {
   val url: VirtualFileUrl
   val excludedPatterns: List<@NlsSafe String>
 
+  @Parent
   val module: ModuleEntity
 
-  val sourceRoots: List<@Child SourceRootEntity>
-  val excludedUrls: List<@Child ExcludeUrlEntity>
+  val sourceRoots: List<SourceRootEntity>
+  val excludedUrls: List<ExcludeUrlEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -66,15 +67,16 @@ fun MutableEntityStorage.modifyContentRootEntity(
 
 @get:Internal
 @set:Internal
-var ContentRootEntity.Builder.excludeUrlOrder: @Child ExcludeUrlOrderEntity.Builder?
+var ContentRootEntity.Builder.excludeUrlOrder: ExcludeUrlOrderEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ExcludeUrlOrderEntity::class.java)
 
 @get:Internal
 @set:Internal
-var ContentRootEntity.Builder.sourceRootOrder: @Child SourceRootOrderEntity.Builder?
+var ContentRootEntity.Builder.sourceRootOrder: SourceRootOrderEntity.Builder?
   by WorkspaceEntity.extensionBuilder(SourceRootOrderEntity::class.java)
 //endregion
 
+@Parent
 val ExcludeUrlEntity.contentRoot: ContentRootEntity? by WorkspaceEntity.extension()
 
 
@@ -92,6 +94,7 @@ interface SourceRootEntity : WorkspaceEntity {
   val url: VirtualFileUrl
   val rootTypeId: SourceRootTypeId
 
+  @Parent
   val contentRoot: ContentRootEntity
 
   //region generated code
@@ -135,6 +138,6 @@ fun MutableEntityStorage.modifySourceRootEntity(
 
 @get:Internal
 @set:Internal
-var SourceRootEntity.Builder.customSourceRootProperties: @Child CustomSourceRootPropertiesEntity.Builder?
+var SourceRootEntity.Builder.customSourceRootProperties: CustomSourceRootPropertiesEntity.Builder?
   by WorkspaceEntity.extensionBuilder(CustomSourceRootPropertiesEntity::class.java)
 //endregion

@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> implements InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(InspectionTreeModel.class);
   private final InspectionRootNode myRoot = new InspectionRootNode(this);

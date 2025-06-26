@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 
-class AssertProblemsViewCountCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class AssertProblemsViewCountCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val PREFIX: String = "${CMD_PREFIX}assertProblemsViewCount"
@@ -26,7 +26,7 @@ class AssertProblemsViewCountCommand(text: String, line: Int) : PerformanceComma
 
     val actualProblems = ProblemsView
       .getSelectedPanel(context.project)!!
-      .treeModel.root.getFileProblems(editor!!.virtualFile)
+      .treeModel.root.getFileProblems(editor!!.virtualFile!!)
 
     assert(expectedNumberOfErrors == actualProblems.size)
     { "Expected number of errors $expectedNumberOfErrors, actual ${actualProblems.size}\nList of problems:\n$actualProblems" }

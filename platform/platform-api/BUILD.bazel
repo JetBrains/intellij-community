@@ -59,8 +59,6 @@ jvm_library(
   exports = [
     "//platform/util",
     "//platform/forms_rt:java-guiForms-rt",
-    "//platform/projectModel-api:projectModel",
-    "//platform/remote-core",
     "//platform/ide-core",
     "//platform/progress/shared:ide-progress",
   ],

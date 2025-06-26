@@ -163,6 +163,12 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myMethod;
   }
 
+  public CompletableFuture<Integer> getExactRecursiveIndex() {
+    return myMethodOccurrence == null
+           ? CompletableFuture.completedFuture(0)
+           : myMethodOccurrence.getExactRecursiveIndex();
+  }
+
   public int getOccurrenceIndex() {
     return myMethodOccurrence == null ? 0 : myMethodOccurrence.getIndex();
   }

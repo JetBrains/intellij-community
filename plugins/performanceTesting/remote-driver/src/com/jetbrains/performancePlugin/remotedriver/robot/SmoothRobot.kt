@@ -109,6 +109,14 @@ internal class SmoothRobot @JvmOverloads constructor(
     click(c, where, button.toAssertJ(), times)
   }
 
+  fun click(c: Component, where: Point, button: RemoteMouseButton) {
+    click(c, where, button.toAssertJ(), 1)
+  }
+
+  fun click(where: Point, button: RemoteMouseButton) {
+    click(where, button.toAssertJ(), 1)
+  }
+
   fun click(where: Point, button: RemoteMouseButton, times: Int) {
     click(where, button.toAssertJ(), times)
   }

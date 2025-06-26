@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.java.guiForms.designer` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -28,15 +29,18 @@ jvm_library(
     "//java/openapi:java",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/concurrency",
     "//platform/usageView-impl",
     "//platform/util",
     "//java/compiler/forms-compiler:java-guiForms-compiler",
@@ -85,6 +89,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
@@ -92,13 +97,14 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/concurrency",
     "//platform/usageView-impl",
     "//platform/util",
     "//java/compiler/forms-compiler:java-guiForms-compiler",
@@ -148,7 +154,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "java-guiForms-designer_test",
   runtime_deps = [":java-guiForms-designer_test_lib"]
 )

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import java.nio.file.Path
 
 class PoetryProjectOpenProvider() : AbstractOpenProjectProvider() {
@@ -18,7 +19,7 @@ class PoetryProjectOpenProvider() : AbstractOpenProjectProvider() {
   }
 
   private fun isPoetrySpecificPyProjectToml(file: VirtualFile): Boolean {
-    return file.name == PoetryConstants.PYPROJECT_TOML && POETRY_TOOL_TABLE_HEADER.find(file.readText()) != null
+    return file.name == PY_PROJECT_TOML && POETRY_TOOL_TABLE_HEADER.find(file.readText()) != null
   }
 
   override suspend fun linkProject(projectFile: VirtualFile, project: Project) {

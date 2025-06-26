@@ -2,40 +2,37 @@
 package com.jetbrains.python.packaging.toolwindow.model
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import javax.swing.Icon
 
-sealed class DisplayablePackage(val name: @NlsSafe String, open val repository: PyPackageRepository?)
+sealed class DisplayablePackage(val name: @NlsSafe String, open val repository: PyPackageRepository?) {
+  open fun getRequirements(): List<RequirementPackage> = emptyList()
+}
 
-class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository?, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.presentableName, repository) {
+class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository?, val nextVersion: PyPackageVersion? = null, private val requirements: List<RequirementPackage>) : DisplayablePackage(instance.name, repository) {
   val currentVersion: PyPackageVersion? = PyPackageVersionNormalizer.normalize(instance.version)
 
   val isEditMode: Boolean = instance.isEditableMode
-  val sourceRepoIcon: Icon?
-    get() {
-      val condaPackage = instance as? CondaPackage ?: return null
-      return if (condaPackage.installedWithPip) {
-        PythonPsiApiIcons.Python
-      }
-      else {
-        PythonIcons.Python.Anaconda
-      }
-    }
+  val sourceRepoIcon: Icon = instance.sourceRepoIcon
 
   val canBeUpdated: Boolean
     get() {
       currentVersion ?: return false
       return nextVersion != null && PyPackageVersionComparator.compare(nextVersion, currentVersion) > 0
     }
+
+  override fun getRequirements(): List<RequirementPackage> = requirements
 }
 
+class RequirementPackage(val instance: PythonPackage, override val repository: PyPackageRepository, private val requirements: List<RequirementPackage> = emptyList()) : DisplayablePackage(instance.name, repository) {
+  val sourceRepoIcon: Icon = instance.sourceRepoIcon
+
+  override fun getRequirements(): List<RequirementPackage> = requirements
+}
 
 class InstallablePackage(name: String, override val repository: PyPackageRepository) : DisplayablePackage(name, repository)
 

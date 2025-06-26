@@ -31,7 +31,7 @@ public class JUnit5SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
   protected void setupModule() throws Exception {
     super.setupModule();
     ModuleRootModificationUtil.updateModel(myModule, model -> model.addContentEntry(getTestContentRoot())
-      .addSourceFolder(getTestContentRoot() + "/test1", true));
+      .addSourceFolder(getTestContentRoot() + "/test", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.12.0"), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-suite-api", "1.12.2"),

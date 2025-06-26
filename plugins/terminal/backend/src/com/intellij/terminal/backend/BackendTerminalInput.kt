@@ -51,6 +51,8 @@ private suspend fun handleInputEvents(channel: ReceiveChannel<TerminalInputEvent
 private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServices) {
   val terminalStarter = services.terminalStarter
 
+  TerminalActivityTracker.getInstance().registerActivity()
+
   when (event) {
     is TerminalWriteBytesEvent -> {
       val eventTime = TimeSource.Monotonic.markNow()

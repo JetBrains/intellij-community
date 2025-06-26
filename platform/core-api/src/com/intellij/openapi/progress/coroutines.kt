@@ -5,9 +5,11 @@ package com.intellij.openapi.progress
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
 import com.intellij.platform.util.progress.reportRawProgress
@@ -15,6 +17,7 @@ import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.ThreadScopeCheckpoint
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
@@ -630,4 +633,14 @@ private fun rememberElements(job: BlockingJob, context: CoroutineContext) {
   context.fold(Unit) { _, element ->
     job.rememberElement(element)
   }
+}
+
+
+/**
+ * Assigns a title to a write action. Intended to be invoked with write lock
+ */
+@RequiresWriteLock
+@ApiStatus.Experimental
+fun withWriteActionTitle(title: @NlsContexts.ModalProgressTitle String, action: () -> Unit) {
+  service<LockingProgressSupport>().withWriteActionProgress(title, action)
 }

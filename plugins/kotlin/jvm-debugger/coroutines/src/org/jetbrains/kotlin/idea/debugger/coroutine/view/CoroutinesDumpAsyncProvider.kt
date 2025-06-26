@@ -7,13 +7,11 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.ThreadDumpItemsProvider
 import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
+import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.unscramble.DumpItem
-import com.intellij.unscramble.IconsCache
-import com.intellij.unscramble.MergeableDumpItem
-import com.intellij.unscramble.MergeableToken
+import com.intellij.unscramble.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
@@ -29,7 +27,7 @@ import javax.swing.Icon
 @ApiStatus.Internal
 class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     override fun getProvider(context: DebuggerContextImpl): ThreadDumpItemsProvider = object : ThreadDumpItemsProvider {
-        override val progressText: String get() = JavaDebuggerBundle.message("thread.dump.coroutines.progress")
+        override val itemsName: String get() = JavaDebuggerBundle.message("thread.dump.coroutines.name")
 
         private val enabled: Boolean =
             Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel") &&
@@ -39,10 +37,15 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
         override val requiresEvaluation get() = enabled
 
         override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
-            if (!enabled) return emptyList()
-
-            val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutines()
-            return if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+            return (
+              if (!enabled) emptyList()
+              else {
+                val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutines()
+                if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+              })
+              .also {
+                DebuggerStatistics.logCoroutineDump(context.project, it.size)
+              }
         }
     }
 }
@@ -58,12 +61,22 @@ private class CoroutineDumpItem(info: CoroutineInfoData) : MergeableDumpItem {
 
     private val dispatcher = info.dispatcher
 
+    private val lastObservedStackTrace: String = info.lastObservedStackTrace.joinToString(prefix = "\t", separator = "\n\t") {
+        ThreadDumpAction.renderLocation(it)
+    }
+
     override val stackTrace: String =
-        info.coroutineDescriptor + "\n" +
-                info.lastObservedStackTrace.joinToString(prefix = "\t", separator = "\n\t") { ThreadDumpAction.renderLocation(it) }
+        buildString {
+            appendLine(info.coroutineDescriptor)
+            appendLine(lastObservedStackTrace)
+            if (info.asyncStackTrace.isNotEmpty()) {
+                appendLine("\t--------- Async Stack Trace ---------")
+                appendLine(info.asyncStackTrace.joinToString(prefix = "\t", separator = "\n\t") { ThreadDumpAction.renderLocation(it) })
+            }
+        }
 
     override val interestLevel: Int = when {
-        info.lastObservedStackTrace.isEmpty() -> -10
+        stackTrace.isEmpty() -> -10
         else -> stackTrace.count { it == '\n' }
     }
 

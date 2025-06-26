@@ -427,6 +427,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
   
+  public void testDisableOnLocals2() {
+    myInspection.REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = false;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
   public void testOverriddenWithNullMarked() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     addJSpecifyNullMarked(myFixture);

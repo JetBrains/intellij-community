@@ -106,7 +106,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
       }
 
       is SeOptionActionItemPresentation -> {
-        if (!selected && !presentation.isBooleanOption) {
+        if (!presentation.isBooleanOption && switcherState == null) {
           val descriptorBg = if (isUnderDarcula) {
             ColorUtil.brighter(UIUtil.getListBackground(), 1)
           }
@@ -143,10 +143,11 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
     else presentation.commonData.location?.let { location ->
       val groupLabel = JLabel(location)
       groupLabel.border = eastBorder
-      groupLabel.foreground = groupForeground
 
       text(location) {
         align = LcrInitParams.Align.RIGHT
+        foreground = if (selected) NamedColorUtil.getListSelectionForeground(true)
+        else NamedColorUtil.getInactiveTextColor()
       }
     }
   }

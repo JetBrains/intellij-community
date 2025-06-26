@@ -34,6 +34,9 @@ class TextPresentationTransformers : FileTypeExtension<TextPresentationTransform
   companion object {
     val EP: ExtensionPointName<KeyedLazyInstance<TextPresentationTransformer>> = ExtensionPointName("com.intellij.fileEditor.textPresentationTransformer")
 
+    /**
+     * See [TextPresentationTransformer.fromPersistent]
+     */
     @JvmStatic
     fun fromPersistent(text: CharSequence, virtualFile: VirtualFile): CharSequence {
       val transformer = service<TextPresentationTransformers>().forFileType(virtualFile.fileType)
@@ -44,6 +47,9 @@ class TextPresentationTransformers : FileTypeExtension<TextPresentationTransform
       return transformer.fromPersistent(text, virtualFile)
     }
 
+    /**
+     * See [TextPresentationTransformer.toPersistent]
+     */
     @JvmStatic
     fun toPersistent(text: CharSequence, virtualFile: VirtualFile): CharSequence {
       val transformer = service<TextPresentationTransformers>().forFileType(virtualFile.fileType)

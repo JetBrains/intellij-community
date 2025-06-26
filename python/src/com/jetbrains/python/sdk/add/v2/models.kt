@@ -151,10 +151,9 @@ abstract class PythonAddInterpreterModel(
    * Returns error or `null` if no error
    */
   suspend fun detectCondaEnvironments(): PyResult<Unit> = withContext(Dispatchers.IO) {
-    val commandExecutor = targetEnvironmentConfiguration.toExecutor()
     val fullCondaPathOnTarget = state.condaExecutable.get()
     if (fullCondaPathOnTarget.isBlank()) return@withContext PyResult.localizedError(message("python.sdk.conda.no.exec"))
-    val environments = PyCondaEnv.getEnvs(commandExecutor, fullCondaPathOnTarget).getOr { return@withContext it }
+    val environments = PyCondaEnv.getEnvs(fullCondaPathOnTarget).getOr { return@withContext it }
     val baseConda = environments.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
 
     withContext(Dispatchers.EDT) {

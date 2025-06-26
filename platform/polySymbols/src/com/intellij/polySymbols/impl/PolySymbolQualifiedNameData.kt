@@ -10,7 +10,7 @@ import com.intellij.polySymbols.PolySymbolQualifiedName
 internal data class PolySymbolQualifiedNameData(
   override val qualifiedKind: PolySymbolQualifiedKind,
   override val name: @NlsSafe String,
-): PolySymbolQualifiedName {
+) : PolySymbolQualifiedName {
 
   override val kind: @NlsSafe PolySymbolKind get() = qualifiedKind.kind
 

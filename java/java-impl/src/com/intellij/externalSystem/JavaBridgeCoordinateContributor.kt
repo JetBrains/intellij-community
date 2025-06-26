@@ -13,16 +13,19 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jetbrains.annotations.ApiStatus
+
+object JavaBridgeCoordinateEntitySource : EntitySource
 
 @ApiStatus.Internal
 fun IdeModifiableModelsProvider.setModuleCoordinates(module: Module, moduleData: ModuleData) {
   val moduleCoordinates = moduleData.publication?.toMavenCoordinates() ?: return
   val moduleEntity = module.findModuleEntity(actualStorageBuilder) ?: return
   actualStorageBuilder.modifyModuleEntity(moduleEntity) {
-    mavenCoordinates = ModuleMavenCoordinateEntity(moduleCoordinates, entitySource)
+    mavenCoordinates = ModuleMavenCoordinateEntity(moduleCoordinates, JavaBridgeCoordinateEntitySource)
   }
 }
 
@@ -31,11 +34,12 @@ fun IdeModifiableModelsProvider.setLibraryCoordinates(library: Library, libraryD
   val libraryCoordinates = libraryData.toMavenCoordinates() ?: return
   val libraryEntity = library.findLibraryEntity(actualStorageBuilder) ?: return
   actualStorageBuilder.modifyLibraryEntity(libraryEntity) {
-    mavenCoordinates = LibraryMavenCoordinateEntity(libraryCoordinates, entitySource)
+    mavenCoordinates = LibraryMavenCoordinateEntity(libraryCoordinates, JavaBridgeCoordinateEntitySource)
   }
 }
 
-private fun ProjectCoordinate.toMavenCoordinates(): MavenCoordinates? {
+@ApiStatus.Internal
+fun ProjectCoordinate.toMavenCoordinates(): MavenCoordinates? {
   val groupId = groupId ?: return null
   val artifactId = artifactId ?: return null
   val version = version ?: return null

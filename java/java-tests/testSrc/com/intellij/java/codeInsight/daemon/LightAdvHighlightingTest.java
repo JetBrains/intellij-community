@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -243,7 +243,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() { doTest(false); }
   public void testStatementsBeforeSuper() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false)); }
-  public void testFlexibleConstructorBodies() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, () -> doTest(false)); }
+
+  public void testFlexibleConstructorBodies() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, () -> doTest(false));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> doTest(false));
+  }
+
   public void testCastFromVoid() { doTest(false); }
   public void testCatchUnknownMethod() { doTest(false); }
   public void testIDEADEV8822() { doTest(false); }
@@ -289,7 +294,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
       @Override
       public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-        return psiElement instanceof PsiMethod && ((PsiMethod)psiElement).getName().equals("myTestMethod");
+        return psiElement instanceof PsiMethod m && m.getName().equals("myTestMethod");
       }
 
       @Override
@@ -404,6 +409,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStatementWithExpression() { doTest(false); }
   public void testReturnFromConstructor() { doTest(false); }
   public void testInheritFromFinalLocalClass() { doTest(false); }
+  public void testLocalClassInstantiation() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> doTest(false)); }
 
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();

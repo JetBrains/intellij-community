@@ -14,11 +14,14 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/ui.jcef",
     "//platform/platform-impl/bootstrap",
@@ -48,6 +51,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:jna",
     "//platform/workspace/storage",
+    "//platform/platform-impl/concurrency",
     "@lib//:jbr-api",
   ],
   runtime_deps = [":internal_resources"]

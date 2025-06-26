@@ -110,7 +110,7 @@ class SeEmptyResultInfoProvider(
   }
 
   private val toggleAction: SearchEverywhereToggleAction?
-    get() = (filterEditor?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
+    get() = filterEditor?.getActions()?.firstOrNull {
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
 
@@ -122,8 +122,7 @@ class SeEmptyResultInfoProvider(
   }
 
   private val filtersAction: SearchEverywhereFiltersAction<*>? =
-    (filterEditor?.getPresentation() as? SeFilterActionsPresentation)
-      ?.getActions()?.find { it is SearchEverywhereFiltersAction<*> }
+    filterEditor?.getActions()?.find { it is SearchEverywhereFiltersAction<*> }
       ?.let { it as? SearchEverywhereFiltersAction<*> }
 
   private val filter: PersistentSearchEverywhereContributorFilter<*>? = filtersAction?.filter

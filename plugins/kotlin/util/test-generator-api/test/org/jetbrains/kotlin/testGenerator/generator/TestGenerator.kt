@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.generator
 
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestIndexingModeSupporter
@@ -23,8 +25,32 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.nio.file.Files
 import java.util.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 object TestGenerator {
+    fun writeLibrariesVersion(isUpToDateCheck: Boolean = false) {
+        val kotlincKotlinCompilerCliVersion = getLibraryVersion("kotlinc_kotlin_compiler_cli.xml")
+        val kotlincKotlinJpsPluginTests = getLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml")
+        write(File(PathManager.getCommunityHomePath())
+                  .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinCompilerCliVersion.txt"),
+              kotlincKotlinCompilerCliVersion, isUpToDateCheck)
+        write(File(PathManager.getCommunityHomePath())
+                  .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinJpsPluginTests.txt"),
+              kotlincKotlinJpsPluginTests, isUpToDateCheck)
+    }
+
+    private fun getLibraryVersion(fileName: String): String {
+        val libraryPath = Path(PathManager.getCommunityHomePath()).resolve(".idea/libraries/$fileName")
+        if (!libraryPath.exists()) {
+            error("$fileName is not found in .idea/libraries")
+        }
+        val document = JDOMUtil.load(libraryPath)
+        val libraryElement = document.getChildren("library")?.single() ?: error("Invalid $fileName")
+        val propertiesElement = libraryElement.getChildren("properties")?.single() ?: error("Invalid $fileName")
+        return propertiesElement.getAttributeValue("maven-id")?.substringAfterLast(":") ?: error("Invalid $fileName")
+    }
+
     fun write(workspace: TWorkspace, isUpToDateCheck: Boolean = false) {
         for (group in workspace.groups) {
             for (suite in group.suites) {
@@ -50,7 +76,7 @@ object TestGenerator {
             appendGeneratedComment()
             appendAnnotation(TAnnotation<SuppressWarnings>("all"))
             appendAnnotation(TAnnotation<TestRoot>(group.modulePath))
-            appendAnnotation(TAnnotation<TestDataPath>("\$CONTENT_ROOT"))
+            appendAnnotation(TAnnotation<TestDataPath>($$"$CONTENT_ROOT"))
 
             val singleModel = suite.models.singleOrNull()
             if (singleModel != null) {
@@ -123,7 +149,7 @@ internal fun getImports(suite: TSuite, group: TGroup, platform: KMPTestPlatform)
 internal fun postProcessContent(text: String): String {
     return text.lineSequence()
         .map { it.trimEnd() }
-        .joinToString(System.getProperty("line.separator"))
+        .joinToString(System.lineSeparator())
 }
 
 internal fun Code.appendImports(imports: Collection<String>) {
@@ -152,13 +178,15 @@ internal fun write(file: File, content: String, isUpToDateCheck: Boolean) {
 
     if (normalizeContent(content) != normalizeContent(oldContent)) {
         if (isUpToDateCheck) {
+            val tmpFile = Files.createTempFile(file.name, null).toFile()
+            tmpFile.writeText(content)
             if (file.exists()) {
                 throw FileComparisonFailedError(
                     message = "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
                     expected = oldContent,
                     actual = content,
                     expectedFilePath = file.absolutePath,
-                    actualFilePath = file.absolutePath
+                    actualFilePath = tmpFile.absolutePath
                 )
             } else {
                 throw ComparisonFailure(

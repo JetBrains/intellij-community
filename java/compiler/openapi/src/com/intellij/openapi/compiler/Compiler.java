@@ -27,10 +27,11 @@ public interface Compiler {
   String getDescription();
 
   /**
-   * Called before compilation starts. If at least one of registered compilers returned false, compilation won't start.
-   *
-   * @param scope the scope on which the compilation is started.
-   * @return true if everything is ok, false otherwise
+   * @deprecated isn't called by the compilation engine anymore; if the configuration of a specific compiled is invalid, it should report an 
+   * error via {@link CompileContext#addMessage}.
    */
-  boolean validateConfiguration(CompileScope scope);
+  @Deprecated(forRemoval = true)
+  default boolean validateConfiguration(CompileScope scope) {
+    return true;
+  }
 }

@@ -2,6 +2,7 @@
 package com.intellij.platform.pluginManager.backend.rpc
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.getTags
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.api.PluginDto
@@ -22,7 +23,7 @@ object PluginDescriptorConverter {
     with(pluginDto) {
       version = descriptor.version
       isBundled = descriptor.isBundled
-      isDeleted = false
+      isDeleted = (descriptor as? IdeaPluginDescriptorImpl)?.isDeleted ?: false
       category = descriptor.category
       description = descriptor.description
       vendor = descriptor.vendor

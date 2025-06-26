@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.relaxng` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -14,10 +15,12 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//xml/impl",
     "//xml/dom-openapi:dom",
@@ -48,15 +51,16 @@ jvm_library(
   associates = [":relaxng"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//xml/impl",
     "//xml/dom-openapi:dom",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/lang-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -75,7 +79,7 @@ jvm_library(
   runtime_deps = [":relaxng_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "relaxng_test",
   runtime_deps = [":relaxng_test_lib"]
 )

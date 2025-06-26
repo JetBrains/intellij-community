@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +65,11 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
           }
         }
         else {
+          if (Registry.is("code.style.package.entry.table.check.compatibility", false)) {
+            if (!parseStr.isEmpty() && !Character.isJavaIdentifierStart(parseStr.charAt(0))) {
+              continue;
+            }
+          }
           entryTable.addEntry(new PackageEntry(isStatic, parseStr, isWithSubpackages));
         }
       }

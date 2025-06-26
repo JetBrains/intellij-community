@@ -1,5 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
@@ -30,6 +31,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
@@ -48,6 +50,7 @@ jvm_library(
     "//platform/usageView",
     "//plugins/kotlin/frontend-independent",
     "//platform/lang-impl",
+    "//platform/lang-core",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//platform/util:util-ui",
@@ -96,6 +99,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
@@ -124,8 +128,8 @@ jvm_library(
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/frontend-independent",
     "//platform/lang-impl",
+    "//platform/lang-core",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/util:util-ui",
     "//java/java-psi-api:psi",
@@ -160,11 +164,12 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/base/statistics",
     "//plugins/kotlin/bundled-compiler-plugins-support",
+    "//plugins/kotlin/base/scripting.k2",
   ],
   runtime_deps = [":kotlin-code-insight-k2_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "kotlin-code-insight-k2_test",
   runtime_deps = [":kotlin-code-insight-k2_test_lib"]
 )

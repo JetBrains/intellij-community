@@ -828,7 +828,10 @@ public class VfsUtilCore {
       int sepIndex = path.lastIndexOf('/', li - 1);
       CharSequence fileName = file.getNameSequence();
       int fileNameEnd = fileName.length() + (StringUtil.endsWithChar(fileName, '/') ? -1 : 0);
-      if (sepIndex == 6 && StringUtil.startsWith(fileName, "//wsl$")) {
+      if (
+        (sepIndex == 6 && StringUtil.startsWith(fileName, "//wsl$")) ||
+        (sepIndex == 15 && StringUtil.startsWith(fileName, "//wsl.localhost"))
+      ) {
         sepIndex = -1;
       }
       if (!CharArrayUtil.regionMatches(fileName, 0, fileNameEnd, path, sepIndex + 1, li, file.isCaseSensitive())) {

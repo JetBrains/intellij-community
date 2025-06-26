@@ -3,7 +3,7 @@ package com.intellij.platform.eel
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 enum class EelIpPreference {
   PREFER_V4, PREFER_V6, USE_SYSTEM_DEFAULT
 }

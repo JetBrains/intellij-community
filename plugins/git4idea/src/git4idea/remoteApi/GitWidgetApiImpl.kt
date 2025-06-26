@@ -40,6 +40,8 @@ import kotlinx.coroutines.launch
 
 internal class GitWidgetApiImpl : GitWidgetApi {
   override suspend fun getWidgetState(projectId: ProjectId, selectedFile: VirtualFileId?): Flow<GitWidgetState> {
+    requireOwner()
+
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     val file = selectedFile?.virtualFile()
 

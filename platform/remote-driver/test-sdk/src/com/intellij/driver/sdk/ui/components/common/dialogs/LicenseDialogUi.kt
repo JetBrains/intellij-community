@@ -29,8 +29,9 @@ class LicenseDialogUi(data: ComponentData) : UiComponent(data) {
   val startTrialButton = x("//div[@class!='SegmentedButton' and @accessiblename='Start Free 30-Day Trial']")
   val continueButton = x { byAccessibleName("Continue") }
   val removeLicenseButton: UiComponent = x { or(contains(byAccessibleName("Remove License")), contains(byAccessibleName("Deactivate Subscription"))) }
-  val closeButton = x { byAccessibleName("Close") }
+  val closeButton = x { byAccessibleName("Close") and byClass("JButton") }
   val optionsButton = x { byAccessibleName("Options") }
+  val closeErrorBannerButton = x { byAccessibleName("Close") and contains(byClass("InplaceButton")) }
 
   val exitButton: UiComponent = x { byAccessibleName("Quit ${driver.fullProductName}") }
 }
@@ -73,4 +74,13 @@ fun LicenseDialogUi.exitConfirmationDialog(action: ExitConfirmationDialogUi.() -
 class ExitConfirmationDialogUi(data: ComponentData): DialogUiComponent(data) {
   val exitConfirmButton: UiComponent = x { byAccessibleName("Exit") }
   val backToActivationButton: UiComponent = x { byAccessibleName("Back to Activation") }
+}
+
+fun LicenseDialogUi.removeLicenseConfirmationDialog(action: RemoveLicenseConfirmationDialogUi.() -> Unit) {
+  x(RemoveLicenseConfirmationDialogUi::class.java) { byTitle("Remove License") or byTitle("Deactivate Subscription") }.action()
+}
+
+class RemoveLicenseConfirmationDialogUi(data: ComponentData): DialogUiComponent(data) {
+  val confirmButton: UiComponent = x { byAccessibleName("Remove License") or byAccessibleName("Deactivate and Restart") }
+  val cancelRemoveButton: UiComponent = x { byAccessibleName("TODO") or byAccessibleName("Keep Subscription") }
 }

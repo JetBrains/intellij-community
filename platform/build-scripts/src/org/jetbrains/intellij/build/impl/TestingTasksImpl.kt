@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.lang.UrlClassLoader
-import com.jetbrains.plugin.structure.base.utils.isFile
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +52,7 @@ import java.io.File
 import java.io.PrintStream
 import java.lang.reflect.Modifier
 import java.nio.charset.Charset
+import java.nio.file.AccessDeniedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -157,6 +157,17 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     checkOptions(mainModule)
 
     val runConfigurations = loadTestRunConfigurations()
+    if (options.validateMainModule) {
+      checkNotNull(mainModule)
+      val withModuleMismatch = runConfigurations?.filter { it.moduleName != mainModule } ?: emptyList()
+      if (withModuleMismatch.isNotEmpty()) {
+        val errorMessage = withModuleMismatch.joinToString(
+          prefix = "Run configuration module mismatch, expected '$mainModule' (set in option 'intellij.build.test.main.module'), actual:\n",
+          separator = "\n",
+        ) { "  * Run configuration: '${it.name}', module: '${it.moduleName}'" }
+        context.messages.error(errorMessage)
+      }
+    }
 
     try {
       val compilationTasks = CompilationTasks.create(context)
@@ -216,7 +227,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       if (options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
         warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.groups")
       }
-      if (mainModule != null) {
+      if (mainModule != null && !options.validateMainModule) {
         warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.main.module")
       }
     }
@@ -226,6 +237,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (options.batchTestIncludes != null && !isRunningInBatchMode) {
       context.messages.warning(
         "'intellij.build.test.batchTest.includes' option will be ignored as other tests matching options are specified.")
+    }
+
+    if (options.validateMainModule && mainModule.isNullOrEmpty()) {
+      context.messages.error("'intellij.build.test.main.module.validate' option requires 'intellij.build.test.main.module' to be set")
     }
   }
 
@@ -578,7 +593,17 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val ideaSystemPath = Path.of("$tempDir/system")
     if (cleanSystemDir) {
       spanBuilder("idea.system.path cleanup").use(Dispatchers.IO) {
-        NioFiles.deleteRecursively(ideaSystemPath)
+        try {
+          NioFiles.deleteRecursively(ideaSystemPath)
+        }
+        catch (e: AccessDeniedException) {
+          if (SystemInfoRt.isWindows) {
+            context.messages.reportBuildProblem("Cannot delete $ideaSystemPath: ${e.message}")
+          }
+          else {
+            throw e
+          }
+        }
       }
     }
     @Suppress("SpellCheckingInspection")
@@ -1106,7 +1131,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     classpath.forEach { classPathFile ->
       val cpf = Path.of(classPathFile)
-      if (cpf.isFile) {
+      if (cpf.isRegularFile()) {
         //copy the original classpath entry to the directory, which is already included in the resulting classpath above
         cpf.copyTo(muslClassPath.resolve(cpf.fileName.toString()), overwrite = true)
       } else {

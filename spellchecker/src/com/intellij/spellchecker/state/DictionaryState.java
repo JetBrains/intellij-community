@@ -68,8 +68,7 @@ public class DictionaryState implements PersistentStateComponent<DictionaryState
 
   private void retrieveDictionary() {
     assert name != null;
-    dictionary = new UserDictionary(name);
-    dictionary.addToDictionary(words);
+    dictionary = new UserDictionary(name, words);
   }
 
   @Override

@@ -72,9 +72,14 @@ java_binary(
     "--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED",
     "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
     "--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED",
-    "--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED"
+    "--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED",
+    "-Didea.home.path=$${BUILD_WORKSPACE_DIRECTORY}",
   ]
 )
+
+## used to determine community root path in the test
+## see community/build/tests-options.bzl
+exports_files(["intellij.idea.community.main.iml"])
 
 ### auto-generated section `build intellij.idea.community.main` start
 load("@rules_java//java:defs.bzl", "java_library")
@@ -252,6 +257,11 @@ java_library(
     "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
     "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
     "//plugins/git-modal-commit:vcs-git-commit-modal",
+    "//plugins/maven/maven-event-listener:server-eventListener",
+    "//plugins/maven/maven3-server-impl:server-m3-impl",
+    "//plugins/maven/maven36-server-impl:server-m36-impl",
+    "//plugins/maven/maven40-server-impl:server-m40",
+    "//plugins/mcp-server:mcpserver",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

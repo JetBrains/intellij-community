@@ -18,7 +18,7 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   override fun isEnabled(): Boolean {
     val frontendType = FrontendApplicationInfo.getFrontendType()
     return XDebugSessionProxy.useFeProxy() ||
-           (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported) // CWM case
+           (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
   }
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
     val valueId = (value as FrontendXValue).xValueDto.id
@@ -47,7 +47,7 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
 
   override fun canUpdateInlineDebuggerFrames(): Boolean {
     val frontendType = FrontendApplicationInfo.getFrontendType()
-    val isCwm = (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported) // CWM case
+    val isCwm = (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
     return !isCwm
   }
 }

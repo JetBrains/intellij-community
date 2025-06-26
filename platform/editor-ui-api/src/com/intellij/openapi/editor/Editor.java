@@ -17,6 +17,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -354,10 +355,20 @@ public interface Editor extends UserDataHolder {
   @Nullable Project getProject();
 
   /**
-   * Returns the file being edited, if any. Not necessary matching the {@link #getDocument()}, often <code>null</code>.
+   * <h3>Obsolescence notice</h3>
+   * Use {@link #getDocument()}
+   * and {@link com.intellij.openapi.fileEditor.FileDocumentManager#getFile(Document)} instead.
+   * <pre>{@code
+   * Document document = editor.getDocument();
+   * VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+   * }</pre>
    * <p>
-   * See also {@link com.intellij.openapi.fileEditor.FileDocumentManager#getFile(Document)} as a more reliable alternative.
+   * To get {@code PsiFile}, use {@link com.intellij.psi.PsiDocumentManager#getPsiFile(Document)}
+   * <hr>
+   * Returns the file being edited, if any. Often {@code null}.
    */
+  @Nullable
+  @Obsolete
   default VirtualFile getVirtualFile() {
     return null;
   }

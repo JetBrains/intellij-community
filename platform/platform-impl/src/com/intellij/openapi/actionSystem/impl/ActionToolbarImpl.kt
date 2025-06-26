@@ -35,7 +35,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.registry.Registry.Companion.intValue
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.*
@@ -937,8 +937,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
     cancelCurrentUpdate()
 
-    val firstTimeFastTrack = !hasVisibleActions() && componentCount == 1 && getClientProperty(SUPPRESS_FAST_TRACK) == null
-    if (firstTimeFastTrack) putClientProperty(SUPPRESS_FAST_TRACK, true)
+    val firstTimeFastTrack = !hasVisibleActions() && componentCount == 1 && !ClientProperty.isTrue(this, SUPPRESS_FAST_TRACK)
 
     val cs = service<CoreUiCoroutineScopeHolder>().coroutineScope
     val job = cs.launch(
@@ -951,6 +950,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           firstTimeFastTrack || isUnitTestMode)
         myLastNewButtonActionClass = null
         actionsUpdated(forcedActual, actions)
+        if (firstTimeFastTrack) ClientProperty.put(this@ActionToolbarImpl, SUPPRESS_FAST_TRACK, true)
         reportActionButtonChangedEveryTimeIfNeeded()
       }
       catch (ex: CancellationException) {
@@ -1004,7 +1004,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       else {
         val icon = AnimatedIcon.Default.INSTANCE
         label.setIcon(EmptyIcon.create(icon.iconWidth, icon.iconHeight))
-        EdtScheduler.getInstance().schedule(intValue("actionSystem.toolbar.progress.icon.delay", 500)) {
+        EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), UiDispatcherKind.STRICT) {
           label.setIcon(icon)
         }
       }
@@ -1596,7 +1596,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
   companion object {
     const val DO_NOT_ADD_CUSTOMIZATION_HANDLER: String = "ActionToolbarImpl.suppressTargetComponentWarning"
-    const val SUPPRESS_FAST_TRACK: String = "ActionToolbarImpl.suppressFastTrack"
+    val SUPPRESS_FAST_TRACK: Key<Boolean> = Key.create("ActionToolbarImpl.suppressFastTrack")
 
     /**
      * Put `TRUE` into [.putClientProperty] to mark that toolbar

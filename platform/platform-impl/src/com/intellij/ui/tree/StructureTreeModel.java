@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -103,6 +104,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   }
 
   @Override
+  @ApiStatus.Internal
   public final @NotNull Invoker getInvoker() {
     return invoker;
   }

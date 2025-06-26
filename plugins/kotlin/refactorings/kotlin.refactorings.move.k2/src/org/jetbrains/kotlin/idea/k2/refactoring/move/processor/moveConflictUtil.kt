@@ -96,6 +96,7 @@ internal fun findAllMoveConflicts(
         putAllValues(checkUsedTypeParameterFromParentClassConflict(allDeclarationsToMove, target))
         putAllValues(checkFunctionOverriddenInSubclassConflict(allDeclarationsToMove))
         putAllValues(checkRequiresClassInstanceConflict(usages, allDeclarationsToMove, target))
+        putAllValues(checkImplicitPackagePrefixConflict(targetDir, targetPkg))
     }
 }
 

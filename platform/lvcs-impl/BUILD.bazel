@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.platform.lvcs.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -14,6 +15,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -46,6 +48,7 @@ jvm_library(
   associates = [":lvcs-impl"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
@@ -60,7 +63,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/diff-api:diff",
     "//platform/diff-impl",
     "@lib//:fastutil-min",
@@ -82,7 +84,7 @@ jvm_library(
   runtime_deps = [":lvcs-impl_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "lvcs-impl_test",
   runtime_deps = [":lvcs-impl_test_lib"]
 )

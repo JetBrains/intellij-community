@@ -4,10 +4,16 @@ package com.intellij.platform.ide.progress
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.NlsContexts.ProgressText
+import com.intellij.platform.ide.progress.TaskManager.cancelTask
+import com.intellij.platform.ide.progress.TaskManager.pauseTask
+import com.intellij.platform.ide.progress.TaskManager.resumeTask
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
+import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.exists
-import fleet.kernel.*
+import fleet.kernel.change
+import fleet.kernel.isShared
+import fleet.kernel.shared
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -54,32 +60,33 @@ object TaskManager {
 
   private suspend fun TaskInfoEntity.setTaskStatus(newStatus: TaskStatus) {
     // If a task is shared, it should be updated in shared scope, otherwise it should be update in local
+    val taskEntity = this
     change {
       if (isShared) {
-        shared { trySetTaskStatus(newStatus) }
+        shared { trySetTaskStatus(taskEntity, newStatus) }
       }
       else {
-        trySetTaskStatus(newStatus)
+        trySetTaskStatus(taskEntity, newStatus)
       }
     }
   }
 
-  private fun TaskInfoEntity.trySetTaskStatus(newStatus: TaskStatus) {
+  private fun ChangeScope.trySetTaskStatus(taskInfoEntity: TaskInfoEntity, newStatus: TaskStatus) {
     // The task might have been removed by the time we call this method
-    if (!exists()) return
+    if (!taskInfoEntity.exists()) return
 
-    if (!canChangeStatus(from = taskStatus, to = newStatus)) {
+    if (!taskInfoEntity.canChangeStatus(from = taskInfoEntity.taskStatus, to = newStatus)) {
       LOG.trace {
         "Task status cannot be changed to $newStatus." +
-        "Current status=$taskStatus, " +
-        "suspendable=${suspension is TaskSuspension.Suspendable}, " +
-        "cancellable=${cancellation is TaskCancellation.Cancellable}"
+        "Current status=${taskInfoEntity.taskStatus}, " +
+        "suspendable=${taskInfoEntity.suspension is TaskSuspension.Suspendable}, " +
+        "cancellable=${taskInfoEntity.cancellation is TaskCancellation.Cancellable}"
       }
       return
     }
 
-    LOG.trace { "Changing task status from $taskStatus to $newStatus" }
-    taskStatus = newStatus
+    LOG.trace { "Changing task status from ${taskInfoEntity.taskStatus} to $newStatus" }
+    taskInfoEntity[TaskInfoEntity.TaskStatusType] = newStatus
   }
 
   private fun TaskInfoEntity.canChangeStatus(from: TaskStatus, to: TaskStatus): Boolean {

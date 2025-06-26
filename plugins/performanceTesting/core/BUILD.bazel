@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.performanceTesting` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -16,15 +17,18 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/remote-driver/model",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "@lib//:cli-parser-provided",
     "//platform/projectModel-api:projectModel",
+    "//platform/platform-impl/concurrency",
     "//platform/usageView",
     "@lib//:jackson",
     "@lib//:jackson-module-kotlin",
@@ -71,6 +75,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/remote-driver/model",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
@@ -78,9 +83,11 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "@lib//:cli-parser-provided",
     "//platform/projectModel-api:projectModel",
+    "//platform/platform-impl/concurrency",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/usageView",
@@ -104,7 +111,6 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:fastutil-min",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
@@ -126,7 +132,7 @@ jvm_library(
   runtime_deps = [":performanceTesting_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "performanceTesting_test",
   runtime_deps = [":performanceTesting_test_lib"]
 )

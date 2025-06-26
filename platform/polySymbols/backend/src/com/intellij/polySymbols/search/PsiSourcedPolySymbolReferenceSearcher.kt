@@ -4,16 +4,16 @@ package com.intellij.polySymbols.search
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.extensions.ExtensionPointUtil
 import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP
+import com.intellij.polySymbols.utils.qualifiedName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
-import com.intellij.polySymbols.query.PolySymbolNamesProvider
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.polySymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP
-import com.intellij.polySymbols.utils.qualifiedName
 
 internal class PsiSourcedPolySymbolReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
 
@@ -24,7 +24,7 @@ internal class PsiSourcedPolySymbolReferenceSearcher : QueryExecutorBase<PsiRefe
     val foundSymbols = PsiSourcedPolySymbolProvider.getAllSymbols(queryParameters.elementToSearch)
       .filter { it.source == targetElement }
     val names = if (foundSymbols.isNotEmpty()) {
-      val queryExecutor = PolySymbolsQueryExecutorFactory.create(targetElement, true)
+      val queryExecutor = PolySymbolQueryExecutorFactory.create(targetElement, true)
       val namesProvider = queryExecutor.namesProvider
       foundSymbols
         .flatMap { namesProvider.getNames(it.qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY) }

@@ -21,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
@@ -30,7 +29,7 @@ internal fun startTerminalProcess(
   project: Project,
   options: ShellStartupOptions,
 ): Pair<TtyConnector, ShellStartupOptions> {
-  val runner = LocalBlockTerminalRunner(project)
+  val runner = ReworkedLocalTerminalRunner(project)
   val configuredOptions = runner.configureStartupOptions(options)
   val process = runner.createProcess(configuredOptions)
   val connector = runner.createTtyConnector(process)
@@ -94,7 +93,7 @@ internal fun createTerminalSession(
     }
   }
 
-  return BackendTerminalSessionImpl(inputChannel, outputFlow.asSharedFlow(), coroutineScope)
+  return BackendTerminalSessionImpl(inputChannel, outputFlow.asSharedFlow(), coroutineScope, ttyConnector)
 }
 
 private fun createJediTermServices(

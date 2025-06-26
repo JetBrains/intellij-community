@@ -6,12 +6,12 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler
 import com.intellij.polySymbols.impl.scaleToHeight
 import com.intellij.polySymbols.query.PolySymbolDefaultIconProvider
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -179,19 +179,20 @@ internal data class PolySymbolCodeCompletionItemImpl(
   override fun withInsertHandlerAdded(insertHandler: PolySymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem =
     copy(insertHandler = CompoundInsertHandler.merge(this.insertHandler, insertHandler))
 
-  override fun with(
-    name: String,
-    offset: Int,
-    completeAfterInsert: Boolean,
-    completeAfterChars: Set<Char>,
-    displayName: String?,
-    symbol: PolySymbol?,
-    priority: PolySymbol.Priority?,
-    proximity: Int?,
-    apiStatus: PolySymbolApiStatus,
-    icon: Icon?,
-    typeText: String?,
-    tailText: String?,
+
+  fun with(
+    name: String = this.name,
+    offset: Int = this.offset,
+    completeAfterInsert: Boolean = this.completeAfterInsert,
+    completeAfterChars: Set<Char> = this.completeAfterChars,
+    displayName: String? = this.displayName,
+    symbol: PolySymbol? = this.symbol,
+    priority: PolySymbol.Priority? = this.priority,
+    proximity: Int? = this.proximity,
+    apiStatus: PolySymbolApiStatus = this.apiStatus,
+    icon: Icon? = this.icon,
+    typeText: String? = null,
+    tailText: String? = this.tailText,
   ): PolySymbolCodeCompletionItem =
     copy(name = name, offset = offset, completeAfterInsert = completeAfterInsert,
          completeAfterChars = if (!completeAfterInsert) completeAfterChars else emptySet(),
@@ -201,29 +202,31 @@ internal data class PolySymbolCodeCompletionItemImpl(
 
   class BuilderImpl(
     private var name: String,
-    private var offset: Int = 0,
-    private var symbol: PolySymbol? = null,
+    override var offset: Int = 0,
+    override var symbol: PolySymbol? = null,
   ) : PolySymbolCodeCompletionItemBuilder {
 
-    private var completeAfterInsert: Boolean = false
-    private var completeAfterChars: Set<Char> = emptySet()
-    private var displayName: String? = null
-    private var priority: PolySymbol.Priority? = symbol?.priority
-    private var proximity: Int? = null
-    private var apiStatus: PolySymbolApiStatus = symbol?.apiStatus ?: PolySymbolApiStatus.Stable
-    private var aliases: Set<String> = emptySet()
-    private var icon: Icon? = symbol?.let {
+    override var completeAfterInsert: Boolean = false
+    override var completeAfterChars: Set<Char> = emptySet()
+    override var displayName: String? = null
+    override var priority: PolySymbol.Priority? = symbol?.priority
+    override var proximity: Int? = null
+    override var apiStatus: PolySymbolApiStatus = symbol?.apiStatus ?: PolySymbolApiStatus.Stable
+    override var aliases: Set<String> = emptySet()
+    override var icon: Icon? = symbol?.let {
       it.icon
       ?: it.origin.defaultIcon
       ?: PolySymbolDefaultIconProvider.get(it.qualifiedKind)
     }
     private var typeTextStatic: String? = null
     private var typeTextProvider: (() -> String?)? = null
-    private var tailText: String? = null
-    private var insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null
+    override var tailText: String? = null
+    override var insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null
     private var stopSequencePatternEvaluation: Boolean = false
 
-    fun build(): PolySymbolCodeCompletionItem = PolySymbolCodeCompletionItemImpl(
+    override val typeText: String? get() = typeTextProvider?.invoke() ?: typeTextStatic
+
+    override fun build(): PolySymbolCodeCompletionItem = PolySymbolCodeCompletionItemImpl(
       name, offset, completeAfterInsert, completeAfterChars, displayName, symbol, priority, proximity,
       apiStatus, aliases, icon, typeTextStatic, typeTextProvider, tailText, insertHandler, stopSequencePatternEvaluation)
 
@@ -294,6 +297,11 @@ internal data class PolySymbolCodeCompletionItemImpl(
 
     override fun insertHandler(value: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemBuilder {
       insertHandler = value
+      return this
+    }
+
+    override fun insertHandler(value: InsertHandler<LookupElement>?): PolySymbolCodeCompletionItemBuilder {
+      insertHandler = value?.let { PolySymbolCodeCompletionItemInsertHandler.adapt(it, PolySymbol.Priority.NORMAL) }
       return this
     }
 

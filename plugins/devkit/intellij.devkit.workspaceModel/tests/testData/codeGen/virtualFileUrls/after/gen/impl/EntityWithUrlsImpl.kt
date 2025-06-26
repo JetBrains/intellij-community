@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.test.api.DataClassWithUrl
 import com.intellij.workspaceModel.test.api.EntityWithUrls
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : EntityWithUrls, WorkspaceEntityBase(dataSource) {
 

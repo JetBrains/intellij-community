@@ -56,7 +56,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
     private fun KaSession.getTypeName(type: KaType): String {
         val typeName = type.render(
             KaTypeRendererForSource.WITH_SHORT_NAMES,
-            Variance.INVARIANT
+            Variance.IN_VARIANCE,
         )
         return typeName
     }

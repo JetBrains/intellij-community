@@ -94,17 +94,78 @@ enum class JavaFeature {
       return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_21_PREVIEW == useSiteLevel
     }
   },
-  //jep 463,477
-  IMPLICIT_CLASSES(LanguageLevel.JDK_21_PREVIEW, "feature.implicit.classes"),
-  INSTANCE_MAIN_METHOD(LanguageLevel.JDK_21_PREVIEW, "feature.instance.main.method"),
+
+  /**
+   * JEP 512
+   * @see INSTANCE_MAIN_METHOD
+   * @see IMPLICIT_CLASS_NAME_OUT_OF_SCOPE
+   * @see INHERITED_STATIC_MAIN_METHOD
+   * @see IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES
+   * @see JAVA_LANG_IO
+   */
+  IMPLICIT_CLASSES(LanguageLevel.JDK_21_PREVIEW, "feature.implicit.classes") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_21_PREVIEW == useSiteLevel || //jep 445
+             LanguageLevel.JDK_22_PREVIEW == useSiteLevel || // jep 463
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel || // jep 477
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel // jep 495
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
+
+  /**
+   * JEP 512
+   * @see IMPLICIT_CLASSES
+   * @see IMPLICIT_CLASS_NAME_OUT_OF_SCOPE
+   * @see INHERITED_STATIC_MAIN_METHOD
+   * @see IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES
+   * @see JAVA_LANG_IO
+   */
+  INSTANCE_MAIN_METHOD(LanguageLevel.JDK_21_PREVIEW, "feature.instance.main.method") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_21_PREVIEW == useSiteLevel || //jep 445
+             LanguageLevel.JDK_22_PREVIEW == useSiteLevel || // jep 463
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel || // jep 477
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel // jep 495
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
 
   SCOPED_VALUES(LanguageLevel.JDK_21_PREVIEW, "feature.scoped.values"),
   STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
 
-  IMPLICIT_CLASS_NAME_OUT_OF_SCOPE(LanguageLevel.JDK_22_PREVIEW, "feature.implicit.class.name.out.of.scope"),
+  /**
+   * JEP 512
+   * @see IMPLICIT_CLASSES
+   * @see INSTANCE_MAIN_METHOD
+   * @see INHERITED_STATIC_MAIN_METHOD
+   * @see IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES
+   * @see JAVA_LANG_IO
+   */
+  IMPLICIT_CLASS_NAME_OUT_OF_SCOPE(LanguageLevel.JDK_25, "feature.implicit.class.name.out.of.scope") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_22_PREVIEW == useSiteLevel || // jep 463
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel || // jep 477
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel // jep 495
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
+
   CLASSFILE_API(LanguageLevel.JDK_22_PREVIEW, "feature.classfile.api"),
   STREAM_GATHERERS(LanguageLevel.JDK_22_PREVIEW, "feature.stream.gatherers"),
-  STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super"),
+  STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) || useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
   /**
    * Was a preview feature in Java 20 Preview.
    * Keep the implementation, as it could reappear in the future.
@@ -112,21 +173,107 @@ enum class JavaFeature {
   RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each",
                               LanguageLevel.JDK_20_PREVIEW),
 
-  //jep 463,477
-  INHERITED_STATIC_MAIN_METHOD(LanguageLevel.JDK_22_PREVIEW, "feature.inherited.static.main.method"),
-  IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_23_PREVIEW, "feature.implicit.import.in.implicit.classes"),
+
+  /**
+   * JEP 512
+   * @see IMPLICIT_CLASSES
+   * @see INSTANCE_MAIN_METHOD
+   * @see IMPLICIT_CLASS_NAME_OUT_OF_SCOPE
+   * @see IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES
+   * @see JAVA_LANG_IO
+   */
+  INHERITED_STATIC_MAIN_METHOD(LanguageLevel.JDK_22_PREVIEW, "feature.inherited.static.main.method") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_22_PREVIEW == useSiteLevel || // jep 463
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel || // jep 477
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel // jep 495
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
+
+  /**
+   * JEP 512
+   * @see IMPLICIT_CLASSES
+   * @see INSTANCE_MAIN_METHOD
+   * @see IMPLICIT_CLASS_NAME_OUT_OF_SCOPE
+   * @see INHERITED_STATIC_MAIN_METHOD
+   * @see JAVA_LANG_IO
+   */
+  IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_23_PREVIEW, "feature.implicit.import.in.implicit.classes") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel || // jep 477
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel // jep 495
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
+
+  //JEP 507
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
 
-  //see together with PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS and TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
-  MODULE_IMPORT_DECLARATIONS(LanguageLevel.JDK_23_PREVIEW, "feature.module.import.declarations"),
+  /**
+   * JEP 511
+   * @see PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS
+   * @see TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
+   */
+  MODULE_IMPORT_DECLARATIONS(LanguageLevel.JDK_23_PREVIEW, "feature.module.import.declarations") {  //
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel || //jep 494
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel //jep 776
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
 
   /**
    * Usually, this type of comments is shown as Javadoc despite language level.
    * This option can be used only to adjust behavior for cases with conflicts between different types of comments (markdown and old-style)
    */
   MARKDOWN_COMMENT(LanguageLevel.JDK_23, "feature.markdown.comment"),
-  PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_24_PREVIEW, "feature.package.import.shadow.module.import"),
-  TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_24_PREVIEW, "feature.package.transitive.dependency.on.java.base"),
+
+  /**
+   * JEP 511
+   * @see MODULE_IMPORT_DECLARATIONS
+   * @see TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
+   */
+  PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_24_PREVIEW, "feature.package.import.shadow.module.import") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) ||
+             useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel; //jep 494
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
+
+  /**
+   * JEP 511
+   * @see TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
+   * @see PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS
+   */
+  TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_24_PREVIEW, "feature.package.transitive.dependency.on.java.base") { //jep 494
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel//jep 494
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
+  },
+
+  /**
+   * JEP 512
+   * @see IMPLICIT_CLASSES
+   * @see INSTANCE_MAIN_METHOD
+   * @see IMPLICIT_CLASS_NAME_OUT_OF_SCOPE
+   * @see INHERITED_STATIC_MAIN_METHOD
+   * @see JAVA_LANG_IO
+   */
+  JAVA_LANG_IO(LanguageLevel.JDK_25, "feature.java.lang.io"),
+
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;
 
@@ -196,7 +343,7 @@ enum class JavaFeature {
    * Override if feature was preview and then accepted as standard
    */
   @get:Contract(pure = true)
-  val standardLevel: LanguageLevel?
+  open val standardLevel: LanguageLevel?
     get() = if (minimumLevel.isPreview) null else this.minimumLevel
 
   companion object {

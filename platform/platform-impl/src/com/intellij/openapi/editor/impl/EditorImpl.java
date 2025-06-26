@@ -992,6 +992,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
+  @Nullable
+  @ApiStatus.Obsolete
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
@@ -18,9 +19,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
-@ApiStatus.Internal
+
+@ApiStatus.Experimental
 interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 
 @ApiStatus.Internal
@@ -54,17 +56,18 @@ object EelInitialization {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Path.getEelDescriptor(): EelDescriptor {
-  return EelNioBridgeService.getInstanceSync().tryGetEelDescriptor(this) ?: LocalEelDescriptor
+  return EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider -> eelProvider.getEelDescriptor(this) } ?: LocalEelDescriptor
 }
 
 /**
  * Retrieves [EelDescriptor] for the environment where [this] is located.
  * If the project is not the real one (i.e., it is default or not backed by a real file), then [LocalEelDescriptor] will be returned.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Project.getEelDescriptor(): EelDescriptor {
+  @MultiRoutingFileSystemPath
   val filePath = projectFilePath
   if (filePath == null) {
     // The path to project file can be null if the project is default or used in tests.
@@ -78,7 +81,7 @@ fun Project.getEelDescriptor(): EelDescriptor {
   return Path.of(filePath).getEelDescriptor()
 }
 
-@get:ApiStatus.Internal
+@get:ApiStatus.Experimental
 val localEel: LocalEelApi by lazy {
   if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>() else ApplicationManager.getApplication().service<LocalPosixEelApi>()
 }
@@ -87,13 +90,13 @@ val localEel: LocalEelApi by lazy {
 @ApiStatus.Internal
 fun EelDescriptor.upgradeBlocking(): EelApi = toEelApiBlocking()
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelDescriptor.toEelApiBlocking(): EelApi {
   if (this === LocalEelDescriptor) return localEel
   return runBlockingMaybeCancellable { toEelApi() }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 data object LocalEelDescriptor : EelDescriptor {
   private val LOG = logger<LocalEelDescriptor>()
   override val userReadableDescription: @NonNls String = "Local: ${System.getProperty("os.name")}"
@@ -127,7 +130,26 @@ interface EelProvider {
    * This function is called for every opening [Project],
    * so the implementation is expected to exit quickly if it decides that it is not responsible for [path].
    */
-  suspend fun tryInitialize(path: String)
+  suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String)
+
+  /**
+   * Returns the descriptor for some path or `null` if this provider doesn't support such paths.
+   */
+  fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor?
+
+  /**
+   * Makes sense only on Windows, because on Posix there's the only root `/`.
+   *
+   * Returns additional elements to be returned by `FileSystems.getDefault().getRootDirectories()`
+   */
+  fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>?
+
+  // TODO Better name.
+  // TODO Move it into the EelDescriptor?
+  fun getInternalName(eelDescriptor: EelDescriptor): String?
+
+  // TODO Better name.
+  fun getEelDescriptorByInternalName(internalName: String): EelDescriptor?
 }
 
 @ApiStatus.Internal

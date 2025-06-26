@@ -182,6 +182,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
       List<PyType> collect = StreamEx.of(getReference(resolveContext).multiResolve(false))
         .map(ResolveResult::getElement)
+        .filter(e -> e != this)
         .select(PyTypedElement.class)
         .map(context::getType)
         .toList();

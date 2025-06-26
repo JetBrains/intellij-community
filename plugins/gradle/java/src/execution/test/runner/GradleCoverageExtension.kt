@@ -3,8 +3,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.coverage.JavaCoverageEngineExtension
 import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 
 /**
  * Created by Nikita.Skvortsov
@@ -12,6 +11,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
  */
 
 class GradleCoverageExtension: JavaCoverageEngineExtension() {
-  override fun isApplicableTo(conf: RunConfigurationBase<*>?) =
-    conf is ExternalSystemRunConfiguration && GradleConstants.SYSTEM_ID == conf.settings.externalSystemId
+  override fun isApplicableTo(conf: RunConfigurationBase<*>?) = conf is GradleRunConfiguration &&
+                                                                !conf.isCoverageDisabled
+
 }

@@ -52,31 +52,31 @@ fun main() {
 
 // EXPRESSION: x + y
 // RESULT: 'x' is not captured
-// RESULT_K2: 3: I
+// RESULT_K2_COMPILER: 3: I
 // EXPRESSION: x
 // RESULT: 'x' is not captured
-// RESULT_K2: 1: I
+// RESULT_K2_COMPILER: 1: I
 // EXPRESSION: x + y
 // RESULT: 'x' is not captured
-// RESULT_K2: 3: I
+// RESULT_K2_COMPILER: 3: I
 // EXPRESSION: y
 // RESULT: 'y' is not captured
-// RESULT_K2: 2: I
+// RESULT_K2_COMPILER: 2: I
 // EXPRESSION: x + y
 // RESULT: 'x' is not captured
-// RESULT_K2: 3: I
+// RESULT_K2_COMPILER: 3: I
 // EXPRESSION: x + y
 // RESULT: 'x' is not captured
-// RESULT_K2: 3: I
+// RESULT_K2_COMPILER: 3: I
 // EXPRESSION: x + y
 // RESULT: 'x' is not captured
-// RESULT_K2: 3: I
+// RESULT_K2_COMPILER: 3: I
 // EXPRESSION: x + y
 // RESULT: 'x' is not captured
-// RESULT_K2: 3: I
+// RESULT_K2_COMPILER: 3: I
 // EXPRESSION: key + value
 // RESULT: 'key' is not captured
-// RESULT_K2: 3: I
+// RESULT_K2_COMPILER: 3: I
 
 // PRINT_FRAME
 // SHOW_KOTLIN_VARIABLES

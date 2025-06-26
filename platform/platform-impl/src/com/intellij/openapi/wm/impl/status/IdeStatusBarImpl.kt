@@ -12,8 +12,8 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.Stat
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
@@ -312,7 +312,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   internal suspend fun init(project: Project, frame: IdeFrame, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
-    val service = project.service<StatusBarWidgetsManager>()
+    val service = project.serviceAsync<StatusBarWidgetsManager>()
     val items = span("status bar pre-init") {
       service.init(frame)
     }
@@ -467,14 +467,15 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
       BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
     }
     else {
-      val model = ProgressIndicatorModel(indicator, info.title, info.isCancellable)
-      addProgressImpl(model, info)
+      addProgressImpl(ProgressIndicatorModel(indicator, info.title, info.isCancellable), info)
     }
   }
 
   internal fun addProgressImpl(progressModel: ProgressModel, info: TaskInfo) {
-    check(progressFlow.tryEmit(ProgressSetChangeEvent(newProgress = Triple(info, progressModel, ClientId.currentOrNull),
-                                                      existingProgresses = infoAndProgressPanel?.backgroundProcesses ?: emptyList())))
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(
+      newProgress = Triple(info, progressModel, ClientId.currentOrNull),
+      existingProgresses = infoAndProgressPanel?.backgroundProcesses ?: emptyList(),
+    )))
     createInfoAndProgressPanel().addProgress(progressModel, info)
   }
 
@@ -490,14 +491,16 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
    * corrected for potential future usages.
    */
   @ApiStatus.Internal
-  fun getVisibleProcessFlow(): Flow<VisibleProgress> = flow {
-    var firstTime = true
-    progressFlow.collect { event ->
-      if (firstTime) {
-        firstTime = false
-        event.existingVisibleProgresses.forEach { emit(it) }
+  fun getVisibleProcessFlow(): Flow<VisibleProgress> {
+    return flow {
+      var firstTime = true
+      progressFlow.collect { event ->
+        if (firstTime) {
+          firstTime = false
+          event.existingVisibleProgresses.forEach { emit(it) }
+        }
+        event.newVisibleProgress?.let { emit(it) }
       }
-      event.newVisibleProgress?.let { emit(it) }
     }
   }
 
@@ -788,6 +791,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
       })
   }
 
+  @Suppress("RedundantInnerClassModifier")
   protected inner class AccessibleIdeStatusBarImpl : AccessibleJComponent() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
@@ -996,16 +1000,23 @@ private interface StatusBarWidgetWrapper {
   fun beforeUpdate()
 }
 
-internal fun adaptV2Widget(id: String,
-                           dataContext: WidgetPresentationDataContext,
-                           presentationFactory: (CoroutineScope) -> WidgetPresentation): StatusBarWidget {
+internal fun adaptV2Widget(
+  id: String,
+  dataContext: WidgetPresentationDataContext,
+  parentCoroutineScope: CoroutineScope,
+  presentationFactory: (CoroutineScope) -> WidgetPresentation,
+): StatusBarWidget {
   return object : StatusBarWidget, CustomStatusBarWidget {
-    private val coroutineScope = (dataContext.project as ComponentManagerEx).getCoroutineScope().childScope()
+    private val coroutineScope = parentCoroutineScope.childScope(id)
 
     override fun ID(): String = id
 
     override fun getComponent(): JComponent {
-      return createComponentByWidgetPresentation(presentation = presentationFactory(coroutineScope), project = dataContext.project, scope = coroutineScope)
+      return createComponentByWidgetPresentation(
+        presentation = presentationFactory(coroutineScope),
+        project = dataContext.project,
+        scope = coroutineScope,
+      )
     }
 
     override fun dispose() {

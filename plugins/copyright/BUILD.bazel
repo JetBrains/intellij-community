@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.copyright` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -18,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//xml/openapi:xml",
     "//platform/platform-impl:ide-impl",
@@ -48,10 +50,10 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//xml/openapi:xml",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "@lib//:velocity",
@@ -73,7 +75,7 @@ jvm_library(
   runtime_deps = [":copyright_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "copyright_test",
   runtime_deps = [":copyright_test_lib"]
 )

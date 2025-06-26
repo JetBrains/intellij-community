@@ -44,6 +44,7 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
 
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -72,6 +73,7 @@ jvm_library(
     "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
     "@lib//:ion",
     "//platform/core-api:core",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -83,7 +85,7 @@ jvm_library(
   runtime_deps = [":toolingExtension-tests_test_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "toolingExtension-tests_test",
   runtime_deps = [":toolingExtension-tests_test_lib"]
 )

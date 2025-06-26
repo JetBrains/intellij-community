@@ -1,9 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dto
 
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexEx
+import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.diagnostic.*
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingHistory.JsonStatsPerFileType
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingHistory.JsonStatsPerParentLanguage
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension
 import java.time.Duration
 
 fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
@@ -251,14 +255,19 @@ private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerIndexer(): List<Json
     JsonProcessingSpeed(it.value.totalBytes, it.value.totalIndexValueChangerEvaluationTimeInAllThreads)
   }
 
-  return totalStatsPerIndexer.map { (indexId, stats) ->
+  return totalStatsPerIndexer.map { (indexName, stats) ->
+    val indexes = FileBasedIndex.getInstance() as FileBasedIndexEx
+    val indexID = ID.findByName<Any,Any>(indexName)
+    val shardableIndexExtension = indexes.getIndex(indexID).extension as? ShardableIndexExtension
+    val shardsCount = shardableIndexExtension?.shardsCount() ?: 1
     JsonProjectDumbIndexingHistory.JsonStatsPerIndexer(
-      indexId = indexId,
-      partOfTotalIndexingTime = indexIdToIndexingTimePart.getValue(indexId),
+      indexId = indexName,
+      shardsCount = shardsCount,
+      partOfTotalIndexingTime = indexIdToIndexingTimePart.getValue(indexName),
       totalNumberOfFiles = stats.totalNumberOfFiles,
       totalNumberOfFilesIndexedByExtensions = stats.totalNumberOfFilesIndexedByExtensions,
       totalFilesSize = JsonFileSize(stats.totalBytes),
-      indexValueChangerEvaluationSpeed = indexIdToIndexValueChangerEvaluationSpeed.getValue(indexId),
+      indexValueChangerEvaluationSpeed = indexIdToIndexValueChangerEvaluationSpeed.getValue(indexName),
     )
   }
 }

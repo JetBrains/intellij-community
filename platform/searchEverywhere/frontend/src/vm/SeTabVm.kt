@@ -3,18 +3,26 @@ package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
+import com.intellij.ide.rpc.ThrottledItems
+import com.intellij.ide.rpc.ThrottledOneItem
+import com.intellij.ide.rpc.throttledWithAccumulation
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.frontend.*
+import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
+import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -27,9 +35,9 @@ class SeTabVm(
   private val project: Project?,
   coroutineScope: CoroutineScope,
   private val tab: SeTab,
-  searchPattern: StateFlow<String>,
+  private val searchPattern: StateFlow<String>,
 ) {
-  val searchResults: StateFlow<Flow<SeThrottledItems<SeResultEvent>>> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<Flow<ThrottledItems<SeResultEvent>>?> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val tabId: String get() = tab.id
@@ -44,7 +52,7 @@ class SeTabVm(
       shouldLoadMoreFlow.value = value
     }
 
-  private val _searchResults: MutableStateFlow<Flow<SeThrottledItems<SeResultEvent>>> = MutableStateFlow(emptyFlow())
+  private val _searchResults: MutableStateFlow<Flow<ThrottledItems<SeResultEvent>>?> = MutableStateFlow(null)
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
   private val dumbModeStateFlow =
@@ -68,13 +76,14 @@ class SeTabVm(
       isActiveFlow.combine(dumbModeStateFlow) { isActive, _ ->
         isActive
       }.collectLatest { isActive ->
-        if (!isActive) return@collectLatest
+        if (!isActive) {
+          _searchResults.value = null
+          return@collectLatest
+        }
 
-        val searchPatternWithAutoToggle = searchPattern.withNewValueSideEffect { old, new ->
-          if (!new.startsWith(old)) {
-            withContext(Dispatchers.EDT) {
-              (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
-            }
+        val searchPatternWithAutoToggle = searchPattern.onEach {
+          withContext(Dispatchers.EDT) {
+            (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
           }
         }
 
@@ -87,7 +96,7 @@ class SeTabVm(
 
           val resultsFlow = tab.getItems(params).let {
             if (shouldThrottle.load()) it.throttledWithAccumulation()
-            else it.map { event -> SeThrottledOneItem(event) }
+            else it.map { event -> ThrottledOneItem(event) }
           }.map { item ->
             shouldLoadMoreFlow.first { it }
             item
@@ -96,6 +105,7 @@ class SeTabVm(
           shouldThrottle.store(true)
           resultsFlow
         }.collect {
+          if (!isActiveFlow.value) return@collect
           _searchResults.value = it
         }
       }
@@ -145,17 +155,18 @@ class SeTabVm(
     return tab.getEmptyResultInfo(context)
   }
 
+  suspend fun canBeShownInFindResults(): Boolean {
+    return tab.canBeShownInFindResults()
+  }
+
+  suspend fun openInFindWindow(sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): Boolean {
+    val params = SeParams(searchPattern.value, (filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty))
+    return tab.openInFindToolWindow(sessionRef, params, initEvent)
+  }
+
   suspend fun getSearchEverywhereToggleAction(): SearchEverywhereToggleAction? {
-    return (tab.getFilterEditor()?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
+    return tab.getFilterEditor()?.getActions()?.firstOrNull {
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
   }
-
-  private fun StateFlow<String>.withNewValueSideEffect(sideEffect: suspend (String, String) -> Unit): Flow<String> =
-    scan(Pair("", "")) { acc, new -> Pair(acc.second, new) }
-      .drop(1)
-      .map { (old, new) ->
-        sideEffect(old, new)
-        new
-      }
 }

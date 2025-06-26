@@ -211,8 +211,8 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  public void reloadFromDisk(@NotNull PsiFile file) {
-    myFileManager.reloadFromDisk(file);
+  public void reloadFromDisk(@NotNull PsiFile psiFile) {
+    myFileManager.reloadFromDisk(psiFile);
   }
 
   @Override

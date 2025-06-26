@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -78,16 +77,14 @@ internal abstract class CustomNewEnvironmentCreator(
       is ModuleOrProject.ProjectOnly -> null
     }
 
-    val newSdk = withBackgroundProgress(moduleOrProject.project, message("python.sdk.progress.setting.up.environment", name), false) {
-      setupEnvSdk(
-        project = moduleOrProject.project,
-        module = module,
-        baseSdks = ProjectJdkTable.getInstance().allJdks.asList(),
-        projectPath = model.projectPathFlows.projectPathWithDefault.first().toString(),
-        homePath = homePath,
-        installPackages = false
-      )
-    }.getOr { return it }
+    val newSdk = setupEnvSdk(
+      project = moduleOrProject.project,
+      module = module,
+      baseSdks = ProjectJdkTable.getInstance().allJdks.asList(),
+      projectPath = model.projectPathFlows.projectPathWithDefault.first().toString(),
+      homePath = homePath,
+      installPackages = false
+    ).getOr { return it }
 
     newSdk.persist()
     if (module != null) {

@@ -24,7 +24,10 @@ jvm_library(
     "//platform/ide-core-impl",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/indexing-api:indexing",
+    "//platform/platform-impl/concurrency",
     "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/util/diff",
@@ -65,6 +68,7 @@ jvm_library(
 ### auto-generated section `build intellij.java.ui` end
 
 ### auto-generated section `build intellij.java.ui.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -91,6 +95,8 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/platform-tests:tests_test_lib",
     "//platform/core-ui",
@@ -117,7 +123,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "ui-tests_test",
   runtime_deps = [":ui-tests_test_lib"]
 )

@@ -26,7 +26,7 @@ internal abstract class GroovyHighlightingPass(val psiFile: PsiFile, val myGroov
 
   protected fun addInfo(element: PsiElement, attribute: TextAttributesKey) {
     val builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
-    builder.range(element).needsUpdateOnTyping(false).textAttributes(attribute).create()?.let {
+    builder.range(element).textAttributes(attribute).create()?.let {
       myInfos.add(it)
     }
   }

@@ -9,10 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.PatternConditionPlus
-import com.intellij.patterns.PsiClassNamePatternCondition
-import com.intellij.patterns.ValuePatternCondition
+import com.intellij.patterns.*
 import com.intellij.psi.*
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -28,6 +25,7 @@ import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
 import org.intellij.plugins.intelliLang.inject.config.Injection
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
+import org.intellij.plugins.intelliLang.inject.java.InjectionCache
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
 import org.jetbrains.annotations.ApiStatus
@@ -43,6 +41,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.caches.ProbablyInjectedCallableNames
 import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriority
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -53,7 +52,9 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import com.intellij.lang.injection.general.Injection as GeneralInjection
 
@@ -323,17 +324,24 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         if (isAnalyzeOff(configuration)) return null
 
+        val project = host.project
+
         val callee = getNameReference(callExpression.calleeExpression) ?: return null
+
+        if (!project.isProbablyInjected(callee)) {
+            return null
+        }
 
         for (reference in callee.references) {
             ProgressManager.checkCanceled()
+            when (val resolvedTo = resolveReference(reference)) {
+                is PsiMethod ->
+                    injectionForJavaMethod(argument, resolvedTo, configuration)
+                        ?.let { return it }
 
-            val resolvedTo = resolveReference(reference)
-            if (resolvedTo is PsiMethod) {
-                val injectionForJavaMethod = injectionForJavaMethod(argument, resolvedTo, configuration)
-                injectionForJavaMethod?.let { return it }
-            } else if (resolvedTo is KtFunction) {
-                injectionForKotlinCall(argument, resolvedTo, reference, configuration)?.let { return it }
+                is KtFunction ->
+                    injectionForKotlinCall(argument, resolvedTo, reference, configuration)
+                        ?.let { return it }
             }
         }
 
@@ -343,12 +351,14 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     private fun injectWithInfixCallOrOperator(host: KtElement, configuration: Configuration): InjectionInfo? {
         // infix calls and operators are similar from the syntax point of view
         val deparenthesized = host.deparenthesized()
+        val project = host.project
         val arrayAccessExpression = (deparenthesized.parent as? KtContainerNode)?.parent as? KtArrayAccessExpression
         val fixedHost = arrayAccessExpression ?: deparenthesized
         val binaryExpression = fixedHost.parent as? KtBinaryExpression
             ?: return arrayAccessExpression?.let {
                 injectWithArrayReadAccess(
                     deparenthesized,
+                    project,
                     arrayAccessExpression,
                     configuration
                 )
@@ -357,6 +367,11 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         val right = binaryExpression.right
         if (fixedHost != left && fixedHost != right || binaryExpression.isStandardConcatenationExpression()) return null
         val operationExpression = binaryExpression.operationReference
+
+
+        if (!project.isProbablyInjected(operationExpression)) {
+            return null
+        }
         // all kotlin operators have two parameters, so they could be expressed as `left` `operator` `right`
         // exceptions are get and set operators, those use syntax of array access:
         // e.g. `a[key1, key2...]` for getter, and `a[key, key2...] = value` for setter
@@ -406,7 +421,15 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return element
     }
 
-    private fun injectWithArrayReadAccess(host: KtElement, arrayAccessExpression: KtArrayAccessExpression, configuration: Configuration): InjectionInfo? {
+    private fun injectWithArrayReadAccess(
+        host: KtElement,
+        project: Project,
+        arrayAccessExpression: KtArrayAccessExpression,
+        configuration: Configuration
+    ): InjectionInfo? {
+        if (!project.isProbablyInjected("get")) {
+            return null
+        }
         // get operator
         for (reference in arrayAccessExpression.references) {
             ProgressManager.checkCanceled()
@@ -556,49 +579,95 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return InjectionInfo(id, prefix, suffix)
     }
 
-    private fun calculateInjectableTargetClassShortNames(project: Project): CachedValueProvider.Result<Set<String>> {
+    private fun calculateInjectableTargetCallableNames(project: Project): CachedValueProvider.Result<Set<String>> {
         return with(Configuration.getProjectInstance(project)) {
-            val result:MutableSet<String> = mutableSetOf()
+            val result: MutableSet<String> = mutableSetOf()
+            val methodNames: MutableSet<String> = mutableSetOf()
             for (injection in getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
                 for (injectionPlace in injection.injectionPlaces) {
-                    appendJavaPlaceTargetClassShortNames(injectionPlace, result)
+                    appendJavaPlaceTargetCallableNames(injectionPlace, result, methodNames)
                     appendKotlinPlaceTargetClassShortNames(injectionPlace, result)
                 }
             }
             for (injection in getInjections(KOTLIN_SUPPORT_ID)) {
                 for (injectionPlace in injection.injectionPlaces) {
-                    appendJavaPlaceTargetClassShortNames(injectionPlace, result)
+                    appendJavaPlaceTargetCallableNames(injectionPlace, result, methodNames)
                     appendKotlinPlaceTargetClassShortNames(injectionPlace, result)
                 }
             }
-            CachedValueProvider.Result.create(result, this)
+            CachedValueProvider.Result.create(result + methodNames, this)
         }
     }
 
-    private fun getInjectableTargetClassShortNames(project: Project): CachedValue<Set<String>> =
+    private fun getInjectableTargetCallableNames(project: Project): CachedValue<Set<String>> =
         CachedValuesManager.getManager(project).createCachedValue {
-            calculateInjectableTargetClassShortNames(project)
+            calculateInjectableTargetCallableNames(project)
         }
 
     private fun fastCheckInjectionsExists(
-        annotationShortName: String,
-        project: Project
-    ): Boolean = annotationShortName in getInjectableTargetClassShortNames(project).value
+        callableName: String, project: Project
+    ): Boolean = callableName in getInjectableTargetCallableNames(project).value
 
     private fun getCallableShortName(annotationEntry: KtCallElement): String? {
         val referencedName = getNameReference(annotationEntry.calleeExpression)?.getReferencedName() ?: return null
         return KotlinPsiHeuristics.unwrapImportAlias(annotationEntry.containingKtFile, referencedName).singleOrNull() ?: referencedName
     }
 
-    private fun appendJavaPlaceTargetClassShortNames(place: InjectionPlace, classNames: MutableCollection<String>) {
-        val classCondition = place.elementPattern.condition.conditions.firstOrNull { it.debugMethodName == "definedInClass" }
-                as? PatternConditionPlus<*, *> ?: return
-        val psiClassNamePatternCondition =
-            classCondition.valuePattern.condition.conditions.firstIsInstanceOrNull<PsiClassNamePatternCondition>() ?: return
-        val valuePatternCondition =
-            psiClassNamePatternCondition.namePattern.condition.conditions.firstIsInstanceOrNull<ValuePatternCondition<String>>()
-                ?: return
-        valuePatternCondition.values.forEach { classNames.add(StringUtilRt.getShortName(it)) }
+    private fun Project.isProbablyInjected(expression: KtSimpleNameExpression): Boolean =
+        isProbablyInjected(expression.getReferencedName())
+
+    private fun Project.isProbablyInjected(operationExpression: KtOperationReferenceExpression): Boolean {
+        return operationExpression.operationSignTokenType?.let { tokenType ->
+            val operationSymbol =
+                OperatorConventions.getNameForOperationSymbol(tokenType)
+                    ?.takeUnless { it.isSpecial }?.identifier
+                    ?: return true
+            isProbablyInjected(operationSymbol)
+        } ?: true
+    }
+
+    private fun Project.isProbablyInjected(callableName: String): Boolean {
+        if (!Registry.`is`("kotlin.highlighting.injection.use.probably.injected.callable.names", false)) {
+            return true
+        }
+        if (fastCheckInjectionsExists(callableName,this)) return true
+        val probablyInjectedInKotlinCallableName =
+            ProbablyInjectedCallableNames.getInstance(this).isProbablyInjectedCallableName(callableName)
+        if (probablyInjectedInKotlinCallableName) return true
+        val annoIndex = InjectionCache.getInstance(this).annoIndex
+        return callableName in annoIndex
+    }
+
+    private fun appendJavaPlaceTargetCallableNames(place: InjectionPlace, classNames: MutableCollection<String>, methodNames: MutableCollection<String>) {
+        if (!place.isEnabled) return
+
+        // intentionally imperative way is used to avoid intermediate objects on filter/flatMap etc to reduce GC pressure
+        val patternConditions = place.elementPattern.condition.conditions
+        for (condition in patternConditions) {
+            val conditionPlus = condition as? PatternConditionPlus<*, *> ?: continue
+            val methodName = condition.debugMethodName
+            when(methodName) {
+                "ofMethod" -> {
+                    for (patternCondition in conditionPlus.valuePattern.condition.conditions) {
+                        val namePatternCondition = patternCondition as? PsiNamePatternCondition<*> ?: continue
+                        for (item in namePatternCondition.valuePattern.condition.conditions) {
+                            val condition = item as? ValuePatternCondition<*> ?: continue
+                            condition.values.forEach {
+                                methodNames.addIfNotNull(it as? String)
+                            }
+                        }
+                    }
+                }
+                "definedInClass" -> {
+                    val psiClassNamePatternCondition =
+                        conditionPlus.valuePattern.condition.conditions.firstIsInstanceOrNull<PsiClassNamePatternCondition>() ?: return
+                    val valuePatternCondition =
+                        psiClassNamePatternCondition.namePattern.condition.conditions.firstIsInstanceOrNull<ValuePatternCondition<String>>()
+                            ?: return
+                    valuePatternCondition.values.forEach { classNames.add(StringUtilRt.getShortName(it)) }
+                }
+            }
+        }
     }
 
     private fun appendKotlinPlaceTargetClassShortNames(place: InjectionPlace, classNames: MutableCollection<String>) {

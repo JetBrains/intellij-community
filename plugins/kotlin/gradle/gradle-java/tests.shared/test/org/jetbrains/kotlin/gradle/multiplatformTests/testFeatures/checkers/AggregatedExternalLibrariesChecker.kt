@@ -2,16 +2,14 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootManager.getInstance
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
-import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import java.io.File
 import kotlin.collections.flatMap
 import kotlin.test.assertEquals
 
@@ -19,54 +17,26 @@ object AggregatedExternalLibrariesChecker : AbstractTestChecker<AggregatedExtern
 
     override fun createDefaultConfiguration(): AggregatedExternalLibrariesConfiguration = AggregatedExternalLibrariesConfiguration()
 
-    override fun KotlinMppTestsContext.check() {
-        checkLibraryDependencies(
-            testProject,
-            testDataDirectory,
-            kgpVersion,
-            gradleVersion.version,
-            testConfiguration,
-            agpVersion
-        )
-    }
-
-    private fun checkLibraryDependencies(
-        project: Project,
-        expectedTestDataDir: File,
-        kotlinPluginVersion: KotlinToolingVersion,
-        gradleVersion: String,
-        testConfiguration: TestConfiguration,
-        agpClassifier: String?,
-    ) {
-        val expectedFile = findMostSpecificExistingFileOrNewDefault(
-            "aggregatedExternalLibraries",
-            expectedTestDataDir,
-            kotlinPluginVersion,
-            gradleVersion,
-            agpClassifier,
-            testConfiguration
-        )
-
+    override fun KotlinSyncTestsContext.check() {
+        val expectedFile = findMostSpecificExistingFileOrNewDefault("aggregatedExternalLibraries")
         val expectedContent = expectedFile.takeIf { it.exists() }
             ?.readText()
             ?: error("Expected file does not exist")
-
-        val projectLibraries = runReadAction {
-            ModuleManager.getInstance(project).modules.flatMap { module ->
-                ModuleRootManager.getInstance(module).orderEntries
+        val projectLibraries = runReadAction<List<@Nls(capitalization = Nls.Capitalization.Title) String>> {
+            ModuleManager.getInstance(testProject).modules.flatMap<Module, @Nls(capitalization = Nls.Capitalization.Title) String> { module ->
+                getInstance(module).orderEntries
                     .filterIsInstance<LibraryOrderEntry>()
-                    .map { it.presentableName }
+                    .map<LibraryOrderEntry, @Nls(capitalization = Nls.Capitalization.Title) String> { it.presentableName }
             }
         }
-
         val filteredLibraries = projectLibraries
-            .filterNot { it.contains("org.jetbrains") }
-            .distinct()
+            .filterNot<@Nls(capitalization = Nls.Capitalization.Title) String> { it.contains("org.jetbrains") }
+            .distinct<@Nls(capitalization = Nls.Capitalization.Title) String>()
             .sorted()
             .joinToString("\n")
-
         assertEquals(expectedContent, filteredLibraries, "Library dependencies do not match the expected content!")
     }
+
 }
 
 class AggregatedExternalLibrariesConfiguration

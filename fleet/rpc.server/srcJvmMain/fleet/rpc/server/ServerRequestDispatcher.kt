@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.select
 import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.rpc.EndpointKind
 
 class ServerRequestDispatcher(private val connectionListener: ConnectionListener?) : RequestDispatcher {
 

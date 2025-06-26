@@ -14,10 +14,8 @@
     <action id="git.branches.show.tags" class="com.intellij.vcs.git.shared.actions.GitBranchesTreeShowTagsAction"/>
 
     <group id="Git.Branches.Popup.SpeedSearch">
-      <reference ref="EditorBackSpace"/>
       <reference ref="EditorCut"/>
       <reference ref="EditorPaste"/>
-      <reference ref="$Undo"/>
     </group>
 
     <group id="Git.Branches.Popup.Settings" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">

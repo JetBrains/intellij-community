@@ -163,6 +163,8 @@ internal class ReworkedTerminalView(
       alternateBufferEditor = alternateBufferEditor as EditorImpl,
     )
 
+    val terminalAliasesStorage = TerminalAliasesStorage()
+
     controller = TerminalSessionController(
       project,
       sessionModel,
@@ -172,7 +174,9 @@ internal class ReworkedTerminalView(
       settings,
       coroutineScope.childScope("TerminalSessionController"),
       fusActivity,
+      terminalAliasesStorage
     )
+    outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
     controller.addShellIntegrationListener(this, typeAhead)
 
     sessionFuture.thenAccept { session ->
@@ -199,12 +203,8 @@ internal class ReworkedTerminalView(
     terminalInput.sendBytes(bytes)
   }
 
-  override fun isCommandRunning(): Boolean {
-    // Will work only if there is a shell integration.
-    // If there is no shell integration, then it is always false.
-    val session = sessionFuture.getNow(null) ?: return false
-    return blocksModel.blocks.last().outputStartOffset != -1
-           && !session.isClosed
+  override fun getText(): CharSequence {
+    return getCurEditor().document.immutableCharSequence
   }
 
   override fun getTerminalSize(): TermSize? {

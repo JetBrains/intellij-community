@@ -1,4 +1,5 @@
 ### auto-generated section `build kotlin.completion.tests.shared` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -17,6 +18,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:guava",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
@@ -43,7 +45,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "kotlin-completion-tests-shared_test",
   runtime_deps = [":kotlin-completion-tests-shared_test_lib"]
 )

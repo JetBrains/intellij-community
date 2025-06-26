@@ -12,7 +12,7 @@ import java.nio.file.Path
 /**
  * Utility for checking that private plugin modules are not bundled in the build.
  */
-fun checkPrivatePluginModulesAreNotBundled(
+suspend fun checkPrivatePluginModulesAreNotBundled(
   context: BuildContext,
   softly: SoftAssertions,
 ) {
@@ -28,15 +28,15 @@ fun checkPrivatePluginModulesAreNotBundled(
 
   // Also check modules in pluginLayouts
   visited.clear()
-  val pluginLayoutsPrivateModules = context.productProperties.productLayout.pluginLayouts.asSequence()
+  val pluginLayoutsPrivateModules = context.distributionState().pluginsToPublish.asSequence()
     .flatMap { layout -> layout.includedModules.asSequence().map { it.moduleName } }
     .mapNotNull { context.findModule(it) }
     .flatMap { it.transitiveDependencies(visited) }
     .filter { privateModules.contains(it.name) }
     .toList()
 
-  softly.assertThat(bundledPrivateModules).`as`("No private modules should be bundled in bundledPluginModules").isEmpty()
-  softly.assertThat(pluginLayoutsPrivateModules).`as`("No private modules should be bundled in pluginLayouts").isEmpty()
+  softly.assertThat(bundledPrivateModules).`as`("No private modules should be included in bundledPluginModules").isEmpty()
+  softly.assertThat(pluginLayoutsPrivateModules).`as`("No private modules should be included in pluginsToPublish").isEmpty()
 }
 
 /**

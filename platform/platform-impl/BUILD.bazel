@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.platform.ide.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
@@ -33,12 +34,14 @@ jvm_library(
   deps = [
     "@lib//:eawtstub-provided",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "@lib//:oro_matcher",
     "//jps/model-api:model",
+    "//jps/model-serialization",
     "//platform/lang-api:lang",
     "@lib//:jna",
     "@lib//:winp",
@@ -46,6 +49,7 @@ jvm_library(
     "//platform/core-impl",
     "@lib//:miglayout-swing",
     "//platform/indexing-api:indexing",
+    "//platform/lang-core",
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
@@ -125,7 +129,6 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:jetbrains-annotations",
     "@lib//:lz4-java",
-    "//platform/ml-api:ml",
     "@lib//:kotlinx-collections-immutable",
     "//platform/util/storages",
     "//platform/core-nio-fs",
@@ -147,6 +150,7 @@ jvm_library(
     "//platform/eel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",
+    "//platform/platform-impl/concurrency",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -185,12 +189,14 @@ jvm_library(
   deps = [
     "@lib//:eawtstub-provided",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "@lib//:oro_matcher",
     "//jps/model-api:model",
+    "//jps/model-serialization",
     "//platform/lang-api:lang",
     "@lib//:jna",
     "@lib//:winp",
@@ -198,6 +204,7 @@ jvm_library(
     "//platform/core-impl",
     "@lib//:miglayout-swing",
     "//platform/indexing-api:indexing",
+    "//platform/lang-core",
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
@@ -284,7 +291,6 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:jetbrains-annotations",
     "@lib//:lz4-java",
-    "//platform/ml-api:ml",
     "@lib//:kotlinx-collections-immutable",
     "//platform/util/storages",
     "//platform/core-nio-fs",
@@ -306,11 +312,12 @@ jvm_library(
     "//platform/eel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",
+    "//platform/platform-impl/concurrency",
   ],
   runtime_deps = [":ide-impl_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "ide-impl_test",
   runtime_deps = [":ide-impl_test_lib"]
 )

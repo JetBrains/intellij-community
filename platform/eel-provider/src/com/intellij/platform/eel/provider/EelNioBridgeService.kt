@@ -1,112 +1,78 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
-import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
-import java.nio.file.spi.FileSystemProvider
 
 /**
- * A service that is responsible for mapping between instances of [EelPath] and [Path]
- */
-@ApiStatus.Internal
-interface EelNioBridgeService {
-
-  companion object {
-    @JvmStatic
-    @RequiresBlockingContext
-    fun getInstanceSync(): EelNioBridgeService = ApplicationManager.getApplication().service()
-
-    @JvmStatic
-    @RequiresBlockingContext
-    suspend fun getInstance(): EelNioBridgeService = ApplicationManager.getApplication().serviceAsync()
-  }
-
-  /**
-   * @return `null` if [nioPath] belongs to a [java.nio.file.FileSystem] that was not registered as a backend of `MultiRoutingFileSystemProvider`
-   */
-  fun tryGetEelDescriptor(nioPath: Path): EelDescriptor?
-
-  /**
-   * @return `null`  if the Eel API for [eelDescriptor] does not have a corresponding [java.nio.file.FileSystem]
-   */
-  fun tryGetNioRoots(eelDescriptor: EelDescriptor): Set<Path>?
-
-  /**
-   * @return The `internalName` from [register] that was provided alongside [eelDescriptor].
-   */
-  fun tryGetId(eelDescriptor: EelDescriptor): String?
-
-  /**
-   * @return the descriptor that was provided alongside `internalName` during [register].
-   */
-  fun tryGetDescriptorByName(name: String): EelDescriptor?
-
-  /**
-   * Registers custom eel as a nio file system
-   * @param internalName An ascii name of the descriptor that can be used as internal ID of the registered environment.
-   */
-  fun register(localRoot: String, descriptor: EelDescriptor, internalName: @NonNls String, prefix: Boolean, caseSensitive: Boolean, fsProvider: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?)
-
-  /**
-   * Removes the registered NIO File System associated with [descriptor]
-   * Returns `true` if [descriptor] was successfully unregistered.
-   * Returns `false` if [descriptor] had already been removed earlier
-   * or have never been registered.
-   */
-  fun unregister(descriptor: EelDescriptor): Boolean
-}
-
-/**
- * Inverse of [asEelPath].
+ * Converts [EelPath], which is likely a path from a remote machine, to a [Path] for the local machine.
+ *
+ * Example:
+ * ```kotlin
+ * EelPath.parse("/home/user", getWslDescriptorSomewhere()).asNioPath() ==
+ *     Path.of("""\\wsl.localhost\Ubuntu\home\user""")
+ *
+ * EelPath.parse("/home/user", getDocekrDescriptorSomewhere()).asNioPath() ==
+ *     Path.of("""\\docker\f00b4r\home\user""")
+ * ```
  *
  * @throws IllegalArgumentException if the Eel API for [this] does not have a corresponding [java.nio.file.FileSystem]
  */
 @Throws(IllegalArgumentException::class)
 @ApiStatus.Internal
-fun EelPath.asNioPath(): Path =
+fun EelPath.asNioPath(): @MultiRoutingFileSystemPath Path =
   asNioPath(null)
 
 /**
+ * Converts [EelPath], which is likely a path from a remote machine, to a [Path] for the local machine.
+ *
  * The [project] is important for targets like WSL: paths like `\\wsl.localhost\Ubuntu` and `\\wsl$\Ubuntu` are equivalent,
  * but they have different string representation, and some functionality is confused when `wsl.localhost` and `wsl$` are confused.
  * This function helps to choose the proper root according to the base path of the project.
+ *
+ * Example:
+ * ```kotlin
+ * val eelPath = EelPath.parse("/home/user", getWslDescriptorSomewhere())
+ *
+ * eelPath.asNioPath(getProject1()) ==
+ *     Path.of("""\\wsl.localhost\Ubuntu\home\user""")
+ *
+ * eelPath.asNioPath(getProject2()) ==
+ *     Path.of("""\\wsl$\Ubuntu\home\user""")
+ * ```
  */
 @Throws(IllegalArgumentException::class)
 @ApiStatus.Internal
-fun EelPath.asNioPath(project: Project?): Path {
+fun EelPath.asNioPath(project: Project?): @MultiRoutingFileSystemPath Path {
   return asNioPathOrNull(project)
-         ?: throw IllegalArgumentException("Could not convert $this to nio.Path: the corresponding provider for $descriptor is not registered in ${EelNioBridgeService::class.simpleName}")
+         ?: throw IllegalArgumentException("Could not convert $this to NIO path, descriptor is $descriptor")
 }
 
-/**
- * The [project] is important for targets like WSL: paths like `\\wsl.localhost\Ubuntu` and `\\wsl$\Ubuntu` are equivalent,
- * but they have different string representation, and some functionality is confused when `wsl.localhost` and `wsl$` are confused.
- * This function helps to choose the proper root according to the base path of the project.
- */
+/** See docs for [asNioPath] */
+@Deprecated("It never returns null anymore")
 @ApiStatus.Internal
-fun EelPath.asNioPathOrNull(): Path? =
+fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? =
   asNioPathOrNull(null)
 
+/** See docs for [asNioPath] */
+@Deprecated("It never returns null anymore")
 @ApiStatus.Internal
-fun EelPath.asNioPathOrNull(project: Project?): Path? {
+fun EelPath.asNioPathOrNull(project: Project?): @MultiRoutingFileSystemPath Path? {
   if (descriptor === LocalEelDescriptor) {
     return Path.of(toString())
   }
-  val service = EelNioBridgeService.getInstanceSync()
-  val eelRoots = service.tryGetNioRoots(descriptor)?.takeIf { it.isNotEmpty() }
+  val eelRoots = EelProvider.EP_NAME.extensionList
+    .firstNotNullOfOrNull { eelProvider -> eelProvider.getCustomRoots(descriptor) }
+    ?.takeIf { it.isNotEmpty() }
+    ?.map(Path::of)
 
   // Comparing strings because `Path.of("\\wsl.localhost\distro\").equals(Path.of("\\wsl$\distro\")) == true`
   // If the project works with `wsl$` paths, this function must return `wsl$` paths, and the same for `wsl.localhost`.
@@ -127,6 +93,7 @@ fun EelPath.asNioPathOrNull(project: Project?): Path? {
 
   val eelRoot: Path = asNioPathOrNullImpl(projectBasePathNio, eelRoots, this)
 
+  @MultiRoutingFileSystemPath
   val result = parts.fold(eelRoot, Path::resolve)
   LOG.trace {
     "asNioPathOrNull(): path=$this project=$project result=$result"
@@ -158,7 +125,16 @@ private fun asNioPathOrNullImpl(basePath: Path?, eelRoots: Collection<Path>, sou
 }
 
 /**
- * Inverse of [asNioPath].
+ * Converts a path generated by the default NIO filesystem to [EelPath].
+ *
+ * Example:
+ * ```kotlin
+ * Path.of("""C:\Windows""").asEelPath() ==
+ *     EelPath.parse("""C:\Windows""", LocalEelDescriptor)
+ *
+ * Path.of("""\\wsl$\Ubuntu\usr""").asEelPath() ==
+ *     EelPath.parse("/usr", someWslDescriptor)
+ * ```
  *
  * @throws IllegalArgumentException if the passed path cannot be mapped to a path corresponding to Eel.
  * It can happen if [this] belongs to a [java.nio.file.FileSystem] that was not registered as a backend of `MultiRoutingFileSystemProvider`
@@ -169,9 +145,19 @@ fun Path.asEelPath(): EelPath {
   if (fileSystem != FileSystems.getDefault()) {
     throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
   }
-  val service = EelNioBridgeService.getInstanceSync()
-  val descriptor = service.tryGetEelDescriptor(this) ?: return EelPath.parse(toString(), LocalEelDescriptor)
-  val root = service.tryGetNioRoots(descriptor)?.firstOrNull { this.startsWith(it) } ?: error("unreachable") // since the descriptor is not null, the root should be as well
+  val (descriptor, eelProvider) =
+    EelProvider.EP_NAME.extensionList
+      .firstNotNullOfOrNull { eelProvider ->
+        eelProvider.getEelDescriptor(this)?.to(eelProvider)
+      }
+    ?: return EelPath.parse(toString(), LocalEelDescriptor)
+
+  val root =
+    eelProvider.getCustomRoots(descriptor)
+      ?.map { rootStr -> Path.of(rootStr) }
+      ?.firstOrNull { rootCandidate -> startsWith(rootCandidate) }
+    ?: throw NoSuchElementException("No roots for $descriptor match $this: ${eelProvider.getCustomRoots(descriptor)}")
+
   val relative = root.relativize(this)
   if (descriptor.osFamily.isPosix) {
     return relative.fold(EelPath.parse("/", descriptor), { path, part -> path.resolve(part.toString()) })
@@ -183,8 +169,12 @@ fun Path.asEelPath(): EelPath {
 
 @ApiStatus.Internal
 fun EelDescriptor.routingPrefixes(): Set<Path> {
-  return EelNioBridgeService.getInstanceSync().tryGetNioRoots(this)
-         ?: throw IllegalArgumentException("Failure of obtaining prefix: could not convert $this to EelPath. The path does not belong to the default NIO FileSystem")
+  return EelProvider.EP_NAME.extensionList
+    .flatMapTo(HashSet()) { eelProvider ->
+      eelProvider.getCustomRoots(this)?.map(Path::of) ?: emptySet()
+    }
 }
+
+private class EelNioBridgeService
 
 private val LOG = logger<EelNioBridgeService>()

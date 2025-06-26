@@ -35,7 +35,7 @@ internal class ClassicFileViewProviderCache : FileViewProviderCache {
     cache.cache.keys.forEach(block)
   }
 
-  override fun forEach(block: FileViewProviderCache.Consumer) {
+  override fun forEach(block: FileViewProviderCache.CacheEntryConsumer) {
     if (!(cache.isInitialized)) return
     val map = cache.cache
     map.forEach { (file: VirtualFile, provider: FileViewProvider?) -> // provider might be collected

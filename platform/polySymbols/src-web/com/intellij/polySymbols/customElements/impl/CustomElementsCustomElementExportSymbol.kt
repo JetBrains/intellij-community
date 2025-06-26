@@ -10,16 +10,17 @@ import com.intellij.polySymbols.customElements.json.CustomElementExport
 import com.intellij.polySymbols.customElements.json.createPattern
 import com.intellij.polySymbols.customElements.json.toApiStatus
 import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.query.PolySymbolWithPattern
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
 class CustomElementsCustomElementExportSymbol private constructor(
   override val name: String,
   override val origin: PolySymbolOrigin,
-  override val pattern: PolySymbolsPattern,
+  override val pattern: PolySymbolPattern,
   override val apiStatus: PolySymbolApiStatus,
-) : CustomElementsSymbol, StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
+) : CustomElementsSymbol, PolySymbolWithPattern, StaticPolySymbolScopeBase.StaticSymbolContributionAdapter {
 
   override val qualifiedKind: PolySymbolQualifiedKind
     get() = HTML_ELEMENTS
@@ -27,7 +28,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val framework: FrameworkId?
     get() = null
 
-  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolQueryExecutor): PolySymbol =
     this
 
   override fun createPointer(): Pointer<out CustomElementsSymbol> =

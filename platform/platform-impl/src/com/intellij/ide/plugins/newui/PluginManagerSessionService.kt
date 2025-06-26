@@ -60,6 +60,7 @@ class PluginManagerSession {
   val pluginStates: MutableMap<PluginId, PluginEnabledState> = ConcurrentHashMap()
   val statesDiff: MutableMap<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> = ConcurrentHashMap()
   var updateService: PluginUpdatesService? = null
+  var needRestart = false
 
   fun isPluginDisabled(pluginId: PluginId): Boolean {
     return pluginStates[pluginId]?.isDisabled ?: false

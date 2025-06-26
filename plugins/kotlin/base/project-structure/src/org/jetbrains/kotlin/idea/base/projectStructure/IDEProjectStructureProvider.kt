@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
@@ -56,6 +57,11 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
     abstract fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary>
 
     abstract fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule>
+
+    /**
+     * Return tracker which will be incremented when any `KaModule` is invalidated.
+     */
+    abstract fun getCacheDependenciesTracker(): ModificationTracker
 }
 
 

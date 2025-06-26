@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.UnknownFiel
 import java.util.Date
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class UnknownFieldEntityImpl(private val dataSource: UnknownFieldEntityData) : UnknownFieldEntity,
                                                                                         WorkspaceEntityBase(dataSource) {

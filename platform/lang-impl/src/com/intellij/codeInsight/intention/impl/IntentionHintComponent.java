@@ -283,7 +283,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (component == null) return;
     RelativePoint defaultPosition = new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
     List<ActionButton> buttons = UIUtil.findComponentsOfType(toolbar.getHintComponent(), ActionButton.class);
-    ActionButton intentionsButton = ContainerUtil.find(buttons, b -> b.getAction() instanceof ShowIntentionActionsAction);
+
+    final var showIntentionsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+    ActionButton intentionsButton = ContainerUtil.find(buttons, b -> b.getAction() == showIntentionsAction);
     if (intentionsButton == null) return;
     showPopup(defaultPosition, popup -> {
       toolbar.attachPopupToButton(intentionsButton, popup);

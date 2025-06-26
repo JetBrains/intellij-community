@@ -9,15 +9,18 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.*
 
 @ApiStatus.Internal
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 10)
+  private val GROUP = EventLogGroup("java.debugger", 12)
 
   // fields
 
@@ -35,6 +38,8 @@ object DebuggerStatistics : CounterUsagesCollector() {
   private val steppingActionField = EventFields.Enum<SteppingAction>("step_action")
   private val languageField = EventFields.Enum<Engine>("language")
 
+  private val dumpedCoroutinesCounter = Int("coroutines")
+  private val dumpedVirtualThreadsCounter = Int("virtual_threads")
 
   // events
   /** Reports overhead spent on checking where a breakpoint must be installed. */
@@ -51,6 +56,11 @@ object DebuggerStatistics : CounterUsagesCollector() {
   private val smartStepTargetsDetection = GROUP.registerEvent("smart.step.into.targets.detected", languageField, EventFields.Enum<JvmSmartStepIntoHandler.SmartStepIntoDetectionStatus>("status"))
 
   private val breakpointSkipped = GROUP.registerEvent("breakpoint.skipped", EventFields.Enum<DebugProcessEvents.SkippedBreakpointReason>("reason"))
+
+  private val threadDump = GROUP.registerEvent("thread.dump", EventFields.Enum<ThreadDumpStatus>("status"), dumpedCoroutinesCounter, dumpedVirtualThreadsCounter)
+
+  /** Reports successful or failed attempts to get evaluatable context on pause **/
+  private val evaluationOnPause = GROUP.registerEvent("evaluation.on.pause", EventFields.Enum<EvaluationOnPauseStatus>("status"))
 
   /** Reports execution time of debugger commands in buckets, updated at the end of a debugger session. */
   private val timeBucketCount = GROUP.registerEvent("debugger.command.time.bucket.updated", EventFields.Int("bucket_upper_limit_ms"), EventFields.Count, EventFields.Boolean("is_remote"))
@@ -113,6 +123,48 @@ object DebuggerStatistics : CounterUsagesCollector() {
   fun logSmartStepIntoTargetsDetection(project: Project?, language: Engine, status: JvmSmartStepIntoHandler.SmartStepIntoDetectionStatus) {
     smartStepTargetsDetection.log(project, language, status)
   }
-}
 
-private val Breakpoint<*>.type: String? get() = xBreakpoint?.type?.id
+  @JvmStatic
+  fun logEvaluatablePauseSuccess(project: Project?, isDebuggerAgentAvailable: Boolean) =
+    logEvaluatablePauseStatus(project, isDebuggerAgentAvailable, true)
+
+  @JvmStatic
+  fun logEvaluatablePauseFailure(project: Project?, isDebuggerAgentAvailable: Boolean) =
+    logEvaluatablePauseStatus(project, isDebuggerAgentAvailable, false)
+
+  @JvmStatic
+  fun logEvaluatablePauseDisabled(project: Project?) {
+    evaluationOnPause.log(project, EVALUATION_ON_PAUSE_DISABLED)
+  }
+
+  private fun logEvaluatablePauseStatus(project: Project?, isDebuggerAgentAvailable: Boolean, isSuccess: Boolean) {
+    val status = if (isDebuggerAgentAvailable) {
+      if (Registry.`is`("debugger.run.suspend.helper"))
+        if (isSuccess) DEBUGGER_AGENT_HELPER_THREAD_ENABLED_SUCCESS else DEBUGGER_AGENT_HELPER_THREAD_ENABLED_FAILURE
+      else
+        if (isSuccess) DEBUGGER_AGENT_HELPER_THREAD_DISABLED_SUCCESS else DEBUGGER_AGENT_HELPER_THREAD_DISABLED_FAILURE
+    }
+    else {
+      if (isSuccess) NO_DEBUGGER_AGENT_SUCCESS else NO_DEBUGGER_AGENT_FAILURE
+    }
+    evaluationOnPause.log(project, status)
+  }
+
+  @JvmStatic
+  fun logCoroutineDump(project: Project, coroutinesCount: Int) {
+    threadDump.log(project, ThreadDumpStatus.EXTENDED_DUMP, coroutinesCount, -1)
+  }
+
+  @JvmStatic
+  fun logVirtualThreadsDump(project: Project, virtualThreadsCount: Int) {
+    threadDump.log(project, ThreadDumpStatus.EXTENDED_DUMP, -1, virtualThreadsCount)
+  }
+
+  @JvmStatic
+  fun logPlatformThreadDumpFallback(project: Project, status: ThreadDumpStatus) {
+    threadDump.log(project, status, -1, -1)
+  }
+
+
+  private val Breakpoint<*>.type: String? get() = xBreakpoint?.type?.id
+}

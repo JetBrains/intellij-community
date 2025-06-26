@@ -141,11 +141,9 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     runConfiguration.settings.taskNames = taskNames.toList()
     runConfiguration.settings.scriptParameters = scriptParameters
 
-    val tracker = ExternalSystemExecutionTracer()
-    tracker.traceExecution {
+    return ExternalSystemExecutionTracer.traceExecutionOutput {
       executeRunConfiguration(runConfiguration)
     }
-    return tracker.output.joinToString("")
   }
 
   private fun executeRunConfiguration(runConfiguration: GradleRunConfiguration) {

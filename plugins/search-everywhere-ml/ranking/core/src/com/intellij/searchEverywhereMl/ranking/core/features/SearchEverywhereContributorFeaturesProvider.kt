@@ -8,9 +8,9 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ContributorsGlobalSummaryManager
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.ContributorsLocalStatisticsFields
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.getContributorStatistics
-import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker
 
 internal class SearchEverywhereContributorFeaturesProvider {
   companion object {
@@ -43,10 +43,6 @@ internal class SearchEverywhereContributorFeaturesProvider {
         IS_ESSENTIAL_CONTRIBUTOR, ESSENTIAL_CONTRIBUTOR_PREDICTION
       ) + LOCAL_STATISTICS.getFieldsDeclaration() + GLOBAL_STATISTICS.getFieldsDeclaration()
     }
-  }
-
-  fun getContributorIdFeature(contributor: SearchEverywhereContributor<*>): EventPair<*> {
-    return CONTRIBUTOR_INFO_ID.with(contributor.searchProviderId)
   }
 
   /**

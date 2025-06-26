@@ -44,6 +44,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassAttributesIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyTypeAliasNameIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyImportNameIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PyModuleNameIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex"/>
 
@@ -492,6 +493,8 @@
                  description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
     <registryKey key="python.type.hints.literal.string" defaultValue="true"
                  description="When enabled, activates LiteralString inference for Python string literals" />
+    <registryKey key="python.optimized.type.eval.context" defaultValue="true"
+                 description="It optimises cache usage for storing calculated types."/>
     <registryKey key="python.statement.lists.incremental.reparse" defaultValue="false"
                  description="Enables incremental reparse for statement lists"/>
   </extensions>
@@ -561,6 +564,7 @@
     <inspectionExtension implementation="com.jetbrains.python.codeInsight.typing.PyTypingInspectionExtension"/>
     <customPackageIdentifier implementation="com.jetbrains.python.pyi.PyiCustomPackageIdentifier"/>
     <knownDecoratorProvider implementation="com.jetbrains.python.psi.PyStdKnownDecoratorProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.PyAttrsClassMembersProvider"/>
 
     <!-- IPython -->
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyIPythonBuiltinReferenceResolveProvider"/>

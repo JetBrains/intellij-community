@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.polySymbols
 
-import com.intellij.html.polySymbols.elements.PolySymbolElementDescriptor
+import com.intellij.html.polySymbols.elements.HtmlElementSymbolDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
@@ -47,7 +47,7 @@ object HtmlDescriptorUtils {
   private fun getHtmlElementDescriptor(tag: XmlTag): HtmlElementDescriptorImpl? =
     when (val tagDescriptor = tag.descriptor) {
       is HtmlElementDescriptorImpl -> tagDescriptor
-      is PolySymbolElementDescriptor, is AnyXmlElementDescriptor -> {
+      is HtmlElementSymbolDescriptor, is AnyXmlElementDescriptor -> {
         getStandardHtmlElementDescriptor(tag)
         ?: getStandardHtmlElementDescriptor(tag, "div")
       }

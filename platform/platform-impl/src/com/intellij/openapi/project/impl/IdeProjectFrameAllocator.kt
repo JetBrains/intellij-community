@@ -24,10 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.fileEditor.impl.stopOpenFilesActivity
+import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -53,6 +50,7 @@ import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
 import kotlinx.coroutines.*
@@ -382,7 +380,24 @@ private suspend fun postOpenEditors(
 
 private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   val composite = editorComponent.currentWindow?.selectedComposite ?: return
-  composite.waitForAvailable()
+  // TODO: this check for JB Client is made to keep the same behaviour in monolith,
+  //   but in 253 we may remove this check and see what may be broken with async editor focus
+  if (!PlatformUtils.isJetBrainsClient()) {
+    // let's focus the editor synchronously in local mode
+    composite.waitForAvailable()
+    focusSelectedEditorInComposite(composite)
+  }
+  else {
+    // in Remote Dev we cannot wait for composite availability synchronously,
+    // since editors come from the backend and this is a too long process
+    composite.coroutineScope.launch(Dispatchers.EDT + FUSProjectHotStartUpMeasurer.getContextElementToPass()) {
+      composite.waitForAvailable()
+      focusSelectedEditorInComposite(composite)
+    }
+  }
+}
+
+private suspend fun focusSelectedEditorInComposite(composite: EditorComposite) {
   val textEditor = composite.selectedEditor as? TextEditor
   if (textEditor == null) {
     FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.file, System.nanoTime())

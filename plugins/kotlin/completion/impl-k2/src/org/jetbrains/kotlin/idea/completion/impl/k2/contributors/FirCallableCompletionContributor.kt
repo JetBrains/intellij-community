@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.childrenOfType
@@ -51,7 +50,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.exceptions.KotlinIllegalArgumentExceptionWithAttachments
 
 private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
 
@@ -203,7 +201,7 @@ internal open class FirCallableCompletionContributor(
         callables: Sequence<KaCallableSymbol>,
         positionContext: KotlinNameReferencePositionContext,
     ): Sequence<CallableWithMetadataForCompletion> = callables.filter { filter(it) }
-        .filter { runCatchingKnownIssues { visibilityChecker.isVisible(it, positionContext) } == true }
+        .filter { visibilityChecker.isVisible(it, positionContext) }
         .map { it.asSignature() }
         .map { signature ->
             CallableWithMetadataForCompletion(
@@ -291,9 +289,9 @@ internal open class FirCallableCompletionContributor(
                 else if (invocationCount > 1 && prefix.isNotEmpty()) visibilityChecker::canBeVisible
                 else if (expectedType != null) { enumEntry ->
                     visibilityChecker.canBeVisible(enumEntry)
-                            && runCatchingKnownIssues { enumEntry.returnType }
-                        ?.withNullability(KaTypeNullability.NON_NULLABLE)
-                        ?.semanticallyEquals(expectedType) == true
+                            && enumEntry.returnType
+                        .withNullability(KaTypeNullability.NON_NULLABLE)
+                        .semanticallyEquals(expectedType)
                 }
                 else return@sequence
 
@@ -315,9 +313,10 @@ internal open class FirCallableCompletionContributor(
                     it is PsiEnumConstant
                 }.filterIsInstance<KaEnumEntrySymbol>()
                     .filter { enumEntrySymbol ->
-                        expectedType == null || runCatchingKnownIssues { enumEntrySymbol.returnType }
-                            ?.withNullability(KaTypeNullability.NON_NULLABLE)
-                            ?.semanticallyEquals(expectedType) == true
+                        expectedType == null
+                                || enumEntrySymbol.returnType
+                            .withNullability(KaTypeNullability.NON_NULLABLE)
+                            .semanticallyEquals(expectedType)
                     }
                 yieldAll(enumConstants)
             })
@@ -984,20 +983,4 @@ internal class FirKDocCallableCompletionContributor(
             }
         }
     }
-}
-
-context(KaSession)
-private fun <T> runCatchingKnownIssues(
-    action: () -> T,
-): T? = try {
-    action()
-} catch (e: Exception) {
-    val ticketId = when (e) {
-        is NoSuchElementException -> "KT-72988"
-        is KotlinIllegalArgumentExceptionWithAttachments -> "KT-73334"
-        else -> throw e
-    }
-
-    logger<FirCallableCompletionContributor>().debug("Temporal wrapping for $ticketId", e)
-    null
 }

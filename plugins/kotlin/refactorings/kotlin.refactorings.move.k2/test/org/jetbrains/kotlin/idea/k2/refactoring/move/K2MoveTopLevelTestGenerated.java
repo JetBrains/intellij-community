@@ -205,6 +205,41 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
     }
 
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveFromRootToSubpackage/breakPrefixMoveFromRootToSubpackage.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixMoveFromRootToSubpackage_BreakPrefixMoveFromRootToSubpackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/breakPrefixMoveFromRootToSubpackage/breakPrefixMoveFromRootToSubpackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveToDifferentPackage/breakPrefixMoveToDifferentPackage.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixMoveToDifferentPackage_BreakPrefixMoveToDifferentPackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/breakPrefixMoveToDifferentPackage/breakPrefixMoveToDifferentPackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveToRoot/breakPrefixMoveToRoot.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixMoveToRoot_BreakPrefixMoveToRoot() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/breakPrefixMoveToRoot/breakPrefixMoveToRoot.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveToSubpackage/breakPrefixMoveToSubpackage.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixMoveToSubpackage_BreakPrefixMoveToSubpackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/breakPrefixMoveToSubpackage/breakPrefixMoveToSubpackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/keepPrefixChangePackage/keepPrefixChangePackage.test")
+    public void testKotlin_implicitPackagePrefix_keepPrefixChangePackage_KeepPrefixChangePackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/keepPrefixChangePackage/keepPrefixChangePackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/keepPrefixExtendPackage/keepPrefixExtendPackage.test")
+    public void testKotlin_implicitPackagePrefix_keepPrefixExtendPackage_KeepPrefixExtendPackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/keepPrefixExtendPackage/keepPrefixExtendPackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/keepPrefixMoveToRoot/keepPrefixMoveToRoot.test")
+    public void testKotlin_implicitPackagePrefix_keepPrefixMoveToRoot_KeepPrefixMoveToRoot() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/implicitPackagePrefix/keepPrefixMoveToRoot/keepPrefixMoveToRoot.test");
+    }
+
     @TestMetadata("kotlin/innerEnumReferenceWithoutQualifier/innerEnumReferenceWithoutQualifier.test")
     public void testKotlin_innerEnumReferenceWithoutQualifier_InnerEnumReferenceWithoutQualifier() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/innerEnumReferenceWithoutQualifier/innerEnumReferenceWithoutQualifier.test");

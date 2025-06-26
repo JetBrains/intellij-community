@@ -2,6 +2,7 @@
 package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -17,6 +18,7 @@ public interface NotificationGroupManager {
 
   boolean isRegisteredNotificationId(@NotNull String notificationId);
 
+  @RequiresBlockingContext
   static NotificationGroupManager getInstance() {
     return ApplicationManager.getApplication().getService(NotificationGroupManager.class);
   }

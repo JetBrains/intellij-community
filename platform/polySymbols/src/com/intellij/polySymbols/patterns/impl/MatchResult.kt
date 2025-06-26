@@ -4,7 +4,7 @@ package com.intellij.polySymbols.patterns.impl
 import com.intellij.polySymbols.PolySymbolNameSegment
 
 internal open class MatchResult internal constructor(
-  val segments: List<PolySymbolNameSegment>
+  val segments: List<PolySymbolNameSegment>,
 ) {
 
   internal constructor(segment: PolySymbolNameSegment) : this(listOf(segment))

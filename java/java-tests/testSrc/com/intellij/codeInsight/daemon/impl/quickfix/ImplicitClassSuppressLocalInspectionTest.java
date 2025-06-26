@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class ImplicitClassSuppressLocalInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return JavaFeature.IMPLICIT_CLASSES.getMinimumLevel();
+    return JavaFeature.IMPLICIT_CLASSES.getStandardLevel();
   }
 
   @Override

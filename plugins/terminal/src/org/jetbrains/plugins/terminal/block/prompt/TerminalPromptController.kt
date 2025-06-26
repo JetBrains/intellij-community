@@ -44,8 +44,8 @@ class TerminalPromptController(
     editor.putUserData(TerminalPromptModel.KEY, model)
     editor.putUserData(BlockTerminalSession.KEY, session)
     // Used in TerminalPromptFileViewProvider
-    editor.virtualFile.putUserData(TerminalPromptModel.KEY, model)
-    editor.virtualFile.putUserData(ShellType.KEY, session.shellIntegration.shellType)
+    editor.virtualFile!!.putUserData(TerminalPromptModel.KEY, model)
+    editor.virtualFile!!.putUserData(ShellType.KEY, session.shellIntegration.shellType)
 
     val shellRuntimeContextProvider = ShellRuntimeContextProviderImpl(project, session)
     editor.putUserData(ShellRuntimeContextProviderImpl.KEY, shellRuntimeContextProvider)

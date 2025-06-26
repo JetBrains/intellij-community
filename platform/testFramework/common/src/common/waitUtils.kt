@@ -9,7 +9,7 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration
 
-private val DELAY_INTERVAL: Long = 50
+private const val DELAY_INTERVAL: Long = 50
 
 @TestOnly
 suspend fun waitUntil(message: String? = null, timeout: Duration = DEFAULT_TEST_TIMEOUT, condition: suspend CoroutineScope.() -> Boolean) {

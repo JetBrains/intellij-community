@@ -7,25 +7,23 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.impl.selectBest
 import com.intellij.polySymbols.impl.withDisplayName
 import com.intellij.polySymbols.impl.withOffset
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolsScope
-import com.intellij.polySymbols.utils.lastPolySymbol
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.util.applyIf
-import com.intellij.util.containers.Stack
 import kotlin.math.max
 
-internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPattern() {
+internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
   override fun isStaticAndRequired(): Boolean = false
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
     end: Int,
@@ -36,13 +34,13 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
         start, end, emptyList(),
         problem = PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
         displayName = displayName,
-        symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: scopeStack.lastPolySymbol) ?: emptySet()
+        symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: stack.lastPolySymbol) ?: emptySet()
       ))))
     }
 
     ProgressManager.checkCanceled()
     val hits = symbolsResolver
-                 ?.matchName(params.name.substring(start, end), scopeStack, params.queryExecutor)
+                 ?.matchName(params.name.substring(start, end), stack, params.queryExecutor)
                  ?.selectBest(PolySymbol::nameSegments, PolySymbol::priority, PolySymbol::extension)
                ?: emptyList()
 
@@ -63,7 +61,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
           emptyList(),
           problem = PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
           displayName = displayName,
-          symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: scopeStack.lastPolySymbol) ?: emptySet(),
+          symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: stack.lastPolySymbol) ?: emptySet(),
         ))
       }
     ))
@@ -71,12 +69,12 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     symbolsResolver
-      ?.listSymbols(scopeStack, params.queryExecutor, params.expandPatterns)
+      ?.listSymbols(stack, params.queryExecutor, params.expandPatterns)
       ?.groupBy { it.name }
       ?.flatMap { (name, rawList) ->
         val list = rawList.selectBest(PolySymbol::nameSegments, PolySymbol::priority, PolySymbol::extension)
@@ -98,14 +96,14 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,
   ): CompletionResults =
     symbolsResolver
-      ?.codeCompletion(params.name.substring(start, end), max(params.position - start, 0), scopeStack, params.queryExecutor)
+      ?.codeCompletion(params.name.substring(start, end), max(params.position - start, 0), stack, params.queryExecutor)
       ?.let { results ->
         val stop = start == end && start == params.position
         CompletionResults(results.map { it.withOffset(it.offset + start).withStopSequencePatternEvaluation(stop) }, true)

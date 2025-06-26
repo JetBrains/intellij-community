@@ -119,7 +119,7 @@ internal class BranchesVcsLogUi(
                                                           logData.project,
                                                           model,
                                                           selectionHandler,
-                                                          mainFrame.toolbar
+                                                          BranchesDashboardTreeComponent.SearchLook.Inline(mainFrame.toolbar)
     ).apply {
       border = createBorder(SideBorder.LEFT)
     }

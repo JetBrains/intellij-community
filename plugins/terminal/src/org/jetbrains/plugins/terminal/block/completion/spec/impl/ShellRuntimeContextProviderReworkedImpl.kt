@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
+import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -21,6 +22,7 @@ class ShellRuntimeContextProviderReworkedImpl(
       ShellType.ZSH.toShellName()
     ).apply {
       putUserData(PROJECT_KEY, project)
+      putUserData(IS_REWORKED_KEY, true)
     }
   }
 }

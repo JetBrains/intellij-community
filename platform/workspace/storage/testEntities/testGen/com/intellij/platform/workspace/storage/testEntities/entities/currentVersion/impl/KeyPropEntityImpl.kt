@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : KeyPropEntity, WorkspaceEntityBase(dataSource) {
 

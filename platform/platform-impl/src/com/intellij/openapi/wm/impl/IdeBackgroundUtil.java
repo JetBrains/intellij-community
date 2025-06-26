@@ -127,7 +127,7 @@ public final class IdeBackgroundUtil {
       }
 
       @Override
-      public void executePaint(Component component, Graphics2D g) {
+      public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
         if (p == null) {
           p = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
         }
@@ -181,7 +181,7 @@ public final class IdeBackgroundUtil {
       }
 
       @Override
-      public void paint(Component component, Graphics2D g) {
+      public void paint(@NotNull Component component, @NotNull Graphics2D g) {
         painter.paint(component, MyGraphics.unwrap(g));
       }
 

@@ -16,6 +16,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.update
+import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -78,7 +79,7 @@ class NonRecursiveWorkspaceFileSetTest {
   @Test
   fun `non-recursive and recursive file set on one directory`() = runBlocking {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
 
     val file = projectModel.baseProjectDir.newVirtualFile("root/nonRecursiveDir/a.txt")
     val nonRecursiveDir = file.parent
@@ -130,16 +131,6 @@ class NonRecursiveWorkspaceFileSetTest {
 
     override fun registerFileSets(entity: NonRecursiveTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       registrar.registerNonRecursiveFileSet(entity.root, WorkspaceFileKind.CONTENT, entity, NonRecursiveFileCustomData())
-    }
-  }
-
-  private class IndexableKindFileSetContributor : WorkspaceFileIndexContributor<IndexingTestEntity> {
-    override val entityClass: Class<IndexingTestEntity> = IndexingTestEntity::class.java
-
-    override fun registerFileSets(entity: IndexingTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-      for (root in entity.roots) {
-        registrar.registerFileSet(root, WorkspaceFileKind.CONTENT, entity, null)
-      }
     }
   }
 

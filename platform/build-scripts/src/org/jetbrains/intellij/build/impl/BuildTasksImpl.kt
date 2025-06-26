@@ -111,7 +111,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-    buildDistribution(state = createDistributionState(context), context, isUpdateFromSources = true)
+    buildDistribution(context, isUpdateFromSources = true)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -276,7 +276,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
             // todo exclude plugins - layoutAdditionalResources should perform codesign -
             //  that's why we process files and zip in plugins (but not JARs)
             // and also kotlin compiler includes JNA
-            recursivelySignMacBinaries(root = file, context)
+            recursivelySignMacBinaries(coroutineScope = this, file, context)
           }
         }
       }
@@ -364,7 +364,7 @@ private suspend fun buildSourcesArchive(contentReport: ContentReport, context: B
   zipSourcesOfModules(openSourceModules, targetFile = context.paths.artifactDir.resolve(archiveName), includeLibraries = true, context)
 }
 
-private suspend fun createDistributionState(context: BuildContext): DistributionBuilderState {
+internal suspend fun createDistributionState(context: BuildContext): DistributionBuilderState {
   val productLayout = context.productProperties.productLayout
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(productLayout.pluginModulesToPublish, productLayout, toPublish = true)
   filterPluginsToPublish(pluginsToPublish, context)
@@ -445,7 +445,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   context.compileModules(moduleNames = null) // compile all
   logFreeDiskSpace("after compilation", context)
 
-  val distributionState = createDistributionState(context)
+  val distributionState = context.distributionState()
 
   coroutineScope {
     createMavenArtifactJob(context, distributionState)
@@ -464,7 +464,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
     }
 
     val contentReport = spanBuilder("build platform and plugin JARs").use {
-      val contentReport = buildDistribution(distributionState, context)
+      val contentReport = buildDistribution(context)
       if (context.productProperties.buildSourcesArchive) {
         buildSourcesArchive(contentReport, context)
       }

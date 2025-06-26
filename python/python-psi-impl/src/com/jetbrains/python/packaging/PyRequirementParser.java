@@ -22,15 +22,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static com.jetbrains.python.packaging.parser.RequirementsParserHelper.VCS_REGEX_STRING;
+
 /**
  * @see <a href="https://pip.pypa.io/en/stable/reference/pip_install/"><code>pip install</code> documentation</a>
  * @see <a href="https://www.python.org/dev/peps/pep-0508/">PEP-508</a>
  * @see <a href="https://www.python.org/dev/peps/pep-0440/">PEP-440</a>
  * @see PyRequirement
  * @see PyPackageVersionNormalizer
- * @see PyPackageManager#parseRequirement(String)
- * @see PyPackageManager#parseRequirements(String)
- * @see PyPackageManager#parseRequirements(VirtualFile)
  */
 public final class PyRequirementParser {
 
@@ -129,7 +128,7 @@ public final class PyRequirementParser {
 
   // supports: (bzr|git|hg|svn)(+smth)?://...
   private static final @NotNull Pattern VCS_PROJECT_URL =
-    Pattern.compile(VCS_URL_PREFIX + "(bzr|git|hg|svn)(\\+[A-Za-z]+)?://?[^/]+/" + VCS_URL_SUFFIX);
+    Pattern.compile(VCS_URL_PREFIX + VCS_REGEX_STRING + "://?[^/]+/" + VCS_URL_SUFFIX);
 
   // requirement-related regular expressions
   // don't forget to update calculateRequirementInstallOptions(Matcher) after this section changing
@@ -146,8 +145,8 @@ public final class PyRequirementParser {
   private static final @NotNull String REQUIREMENT_VERSION_SPEC_REGEXP = "(<=?|!=|===?|>=?|~=)" + LINE_WS_REGEXP + "*[\\.\\*\\+!\\w-]+";
 
   private static final @NotNull String REQUIREMENT_VERSIONS_SPECS_REGEXP =
-    "(?<" + REQUIREMENT_VERSIONS_SPECS_GROUP + ">" + REQUIREMENT_VERSION_SPEC_REGEXP +
-    "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + REQUIREMENT_VERSION_SPEC_REGEXP + ")*)?";
+    "(?<" + REQUIREMENT_VERSIONS_SPECS_GROUP + ">\\(?" + REQUIREMENT_VERSION_SPEC_REGEXP +
+    "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + REQUIREMENT_VERSION_SPEC_REGEXP + ")*\\)?)?";
 
   private static final @NotNull String REQUIREMENT_OPTIONS_GROUP = "options";
 
@@ -368,6 +367,11 @@ public final class PyRequirementParser {
 
   private static @NotNull List<PyRequirementVersionSpec> parseVersionSpecs(@Nullable String versionSpecs) {
     if (versionSpecs == null) return Collections.emptyList();
+
+    versionSpecs = versionSpecs.trim();
+    if (versionSpecs.startsWith("(") && versionSpecs.endsWith(")")) {
+      versionSpecs = versionSpecs.substring(1, versionSpecs.length() - 1);
+    }
 
     return StreamSupport
       .stream(StringUtil.tokenize(versionSpecs, ",").spliterator(), false)

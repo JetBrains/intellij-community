@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.yaml` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -14,6 +15,7 @@ jvm_library(
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",
@@ -43,6 +45,7 @@ jvm_library(
   associates = [":yaml"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",
@@ -51,7 +54,6 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/refactoring",
@@ -68,7 +70,7 @@ jvm_library(
   runtime_deps = [":yaml_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "yaml_test",
   runtime_deps = [":yaml_test_lib"]
 )

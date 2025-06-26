@@ -5,7 +5,6 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -24,8 +23,8 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   val type: ModuleTypeId?
   val dependencies: List<ModuleDependencyItem>
 
-  val contentRoots: List<@Child ContentRootEntity>
-  val facets: List<@Child FacetEntity>
+  val contentRoots: List<ContentRootEntity>
+  val facets: List<FacetEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -70,28 +69,28 @@ fun MutableEntityStorage.modifyModuleEntity(
 
 @get:Internal
 @set:Internal
-var ModuleEntity.Builder.customImlData: @Child ModuleCustomImlDataEntity.Builder?
+var ModuleEntity.Builder.customImlData: ModuleCustomImlDataEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ModuleCustomImlDataEntity::class.java)
 
 @get:Internal
 @set:Internal
-var ModuleEntity.Builder.exModuleOptions: @Child ExternalSystemModuleOptionsEntity.Builder?
+var ModuleEntity.Builder.exModuleOptions: ExternalSystemModuleOptionsEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ExternalSystemModuleOptionsEntity::class.java)
 
 @get:Internal
 @set:Internal
-var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity.Builder?
+var ModuleEntity.Builder.facetOrder: FacetsOrderEntity.Builder?
   by WorkspaceEntity.extensionBuilder(FacetsOrderEntity::class.java)
 
 @get:Internal
 @set:Internal
-var ModuleEntity.Builder.groupPath: @Child ModuleGroupPathEntity.Builder?
+var ModuleEntity.Builder.groupPath: ModuleGroupPathEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ModuleGroupPathEntity::class.java)
 var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity.Builder>
   by WorkspaceEntity.extensionBuilder(SourceRootEntity::class.java)
 
 @get:Internal
 @set:Internal
-var ModuleEntity.Builder.testProperties: @Child TestModulePropertiesEntity.Builder?
+var ModuleEntity.Builder.testProperties: TestModulePropertiesEntity.Builder?
   by WorkspaceEntity.extensionBuilder(TestModulePropertiesEntity::class.java)
 //endregion

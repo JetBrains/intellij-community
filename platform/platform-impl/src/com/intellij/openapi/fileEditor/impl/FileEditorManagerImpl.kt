@@ -247,7 +247,15 @@ open class FileEditorManagerImpl(
           return@flatMapLatest flowOf(null)
         }
 
-        composite.selectedEditorWithProvider.mapLatest { fileEditorWithProvider ->
+        composite.selectedEditorWithProvider
+          // IJPL-189399: selection change from one composite to the another de facto goes in three steps:
+          // 1. The selection is set to the initial composite
+          // 2. The new composite is added to the splitters, and it is now a selected composite. However, it's not initialized (selectedEditorWithProvider=null)
+          // 3. Model is handled. The selection is set to the new file editor.
+          // However, in monolith the second step is neglected via fast editor loading and `mapLatest`
+          // In RD that's not true due to latency and overhead complexity. So, we've observed a second state, which breaks a history
+          .dropWhile { it == null && !composite.isAvailable() }
+          .mapLatest { fileEditorWithProvider ->
           fileEditorWithProvider?.let {
             SelectionState(composite = composite, fileEditorProvider = it)
           }
@@ -2206,6 +2214,10 @@ open class FileEditorManagerImpl(
           composite.isPreview = true
         }
       }
+      val customizer = { tab: TabInfo ->
+        tab.setIconHolder(CompositeTabIconHolderCreator.getInstance().createTabIconHolder(composite, tab))
+        item.customizer(tab)
+      }
 
       tabs.add(createTabInfo(
         component = composite.component,
@@ -2213,7 +2225,7 @@ open class FileEditorManagerImpl(
         parentDisposable = composite,
         window = window,
         editorActionGroup = editorActionGroup,
-        customizer = item.customizer,
+        customizer = customizer,
       ))
 
       val editorCompositeEntry = EditorCompositeEntry(composite = composite, delayedState = fileEntry)

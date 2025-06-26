@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -92,7 +93,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   /** it's here for compatibility */
-  @SuppressWarnings("unused")
   public void setErrorFoundFlag(@NotNull Project project, @NotNull Document document, boolean errorFound) {
     setErrorFoundFlag(document, CodeInsightContexts.anyContext(), errorFound);
   }
@@ -126,6 +126,15 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
+  @ApiStatus.Internal
+  @TestOnly
+  public void assertFileStatusScopeIsNull(Document document, @NotNull CodeInsightContext context, int passId) {
+    synchronized(myDocumentToStatusMap) {
+      FileStatus status = myDocumentToStatusMap.getStatusOrNull(document, context);
+      assert status != null && status.getDirtyScope(passId) == null : status;
+    }
+  }
+
   private void assertAllowModifications() {
     if (!myAllowDirt) {
       myAllowDirt = true; //give next test a chance
@@ -134,7 +143,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   // used in plugins
-  @SuppressWarnings("unused")
   public void markFileUpToDate(@NotNull Document document, int passId) {
     markFileUpToDate(document, CodeInsightContexts.anyContext(), passId, null);
   }
@@ -156,9 +164,6 @@ public final class FileStatusMap implements Disposable {
           }
         }
         status.setDirtyScope(passId, null);
-      }
-      if (status.allDirtyScopesAreNull()) {
-        disposeDirtyDocumentRangeStorage(document);
       }
     }
   }
@@ -219,13 +224,14 @@ public final class FileStatusMap implements Disposable {
         marker = status.getDirtyScope(passId);
       }
     }
-    if (marker == null) {
-      return null;
-    }
     if (marker == WholeFileDirtyMarker.INSTANCE) {
       return psiFile.getTextRange();
     }
-    return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
+    TextRange compositeDocumentDirtyRange = getCompositeDocumentDirtyRange(document);
+    if (marker == null) {
+      return compositeDocumentDirtyRange;
+    }
+    return marker.isValid() ? compositeDocumentDirtyRange == null ? marker.getTextRange() : compositeDocumentDirtyRange.union(marker.getTextRange()) : new TextRange(0, document.getTextLength());
   }
 
   private static void assertPassIsRegistered(int passId, @NotNull FileStatus status) {
@@ -404,7 +410,7 @@ public final class FileStatusMap implements Disposable {
 
   // store any Document change and combine it with every previous one to form one big dirty change
   @ApiStatus.Internal
-  public void addDocumentDirtyRange(@NotNull DocumentEvent event) {
+  public void addDocumentCompositeDirtyRange(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     RangeMarker oldRange = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
     if (oldRange != WholeFileDirtyMarker.INSTANCE && oldRange != null && oldRange.isValid() && oldRange.getTextRange().containsRange(event.getOffset(), event.getOffset()+event.getNewLength())) {
@@ -422,21 +428,24 @@ public final class FileStatusMap implements Disposable {
     document.putUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, combined);
   }
 
-  // get one big dirty region united from all small document changes before highlighting finished
-  @NotNull
+  /**
+   * get one big dirty region united from all small document changes before highlighting finished
+   * or null if no changes are recorded
+   */
   @ApiStatus.Internal
   public TextRange getCompositeDocumentDirtyRange(@NotNull Document document) {
     RangeMarker change = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
     return change == WholeFileDirtyMarker.INSTANCE ? new TextRange(0, document.getTextLength()) :
-           change == null || !change.isValid() ? TextRange.EMPTY_RANGE :
+           change == null || !change.isValid() ? null :
            change.getTextRange();
   }
+
   @ApiStatus.Internal
   public void disposeDirtyDocumentRangeStorage(@NotNull Document document) {
     RangeMarker marker = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
     if (marker != null) {
       marker.dispose();
-      document.putUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, null);
+      ((UserDataHolderEx)document).replace(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, marker, null);
     }
   }
 }

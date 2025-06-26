@@ -22,6 +22,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nls;
@@ -53,9 +54,9 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
   private static List<DependencyOnPlugin> getRequiredPlugins(@NotNull ExternalDependenciesManager dependencyManager) {
     List<DependencyOnPlugin> dependencies = new ArrayList<>(dependencyManager.getDependencies(DependencyOnPlugin.class));
-    if (!PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) {
-      return dependencies;
-    }
+    if (!PlatformUtils.isPyCharm()) return dependencies;
+    if (!PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) return dependencies;
+
     // Free mode
     List<DependencyOnPlugin> result = new ArrayList<>();
     for (DependencyOnPlugin plugin : dependencies) {

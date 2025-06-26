@@ -39,7 +39,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     final String name = "myClass" + "." + extension;
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, JavaLanguage.INSTANCE, content, false, false);
     LanguageLevel highest = LanguageLevel.HIGHEST;
-    LanguageLevel implicitClassesMinimumLevel = JavaFeature.IMPLICIT_CLASSES.getMinimumLevel();
+    LanguageLevel implicitClassesMinimumLevel = JavaFeature.IMPLICIT_CLASSES.getStandardLevel();
     if (highest.isLessThan(implicitClassesMinimumLevel)) {
       highest = implicitClassesMinimumLevel;
     }

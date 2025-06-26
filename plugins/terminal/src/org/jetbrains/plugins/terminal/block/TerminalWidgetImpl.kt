@@ -124,6 +124,10 @@ internal class TerminalWidgetImpl(
     view.sendCommandToExecute(shellCommand)
   }
 
+  override fun getText(): CharSequence {
+    return view.getText()
+  }
+
   override fun isCommandRunning(): Boolean {
     val connector = ttyConnector ?: return false
     return TerminalUtil.hasRunningCommands(connector)
@@ -179,6 +183,10 @@ internal class TerminalWidgetImpl(
 
     override fun sendCommandToExecute(shellCommand: String) {
       postponedShellCommands.add(shellCommand)
+    }
+
+    override fun getText(): CharSequence {
+      return ""
     }
 
     fun moveTerminationCallbacksTo(destView: TerminalContentView) {

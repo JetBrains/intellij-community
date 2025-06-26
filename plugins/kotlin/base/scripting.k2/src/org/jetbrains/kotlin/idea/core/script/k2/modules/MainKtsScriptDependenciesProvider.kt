@@ -9,26 +9,18 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
-import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
-import kotlin.script.experimental.api.valueOrNull
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider
 
 class MainKtsScriptDependenciesProvider : K2IdeScriptAdditionalIdeaDependenciesProvider {
     override fun getRelatedModules(
-      file: VirtualFile,
-      project: Project
+        file: VirtualFile,
+        project: Project
     ): List<ModuleEntity> {
         val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
-        val importedScriptUrls = (ScriptConfigurationsProvider.getInstance(project) as? ScriptConfigurationsProviderImpl)
-            ?.getConfigurationWithSdk(file)
-            ?.scriptConfiguration?.valueOrNull()
-            ?.importedScripts
-            ?.mapNotNull {
-              (it as? VirtualFileScriptSource)?.virtualFile?.toVirtualFileUrl(virtualFileUrlManager)
-            }
-            ?.toSet() ?: emptySet()
+        MainKtsScriptConfigurationProvider.getInstance(project).getImportedScripts(file)
+        val importedScriptUrls = MainKtsScriptConfigurationProvider.getInstance(project).getImportedScripts(file)
+            .map { it.toVirtualFileUrl(virtualFileUrlManager) }.toSet()
 
         return project.workspaceModel.currentSnapshot.entitiesBySource {
             if (it is KotlinScriptEntitySource) it.virtualFileUrl in importedScriptUrls else false
@@ -36,8 +28,8 @@ class MainKtsScriptDependenciesProvider : K2IdeScriptAdditionalIdeaDependenciesP
     }
 
     override fun getRelatedLibraries(
-      file: VirtualFile,
-      project: Project
+        file: VirtualFile,
+        project: Project
     ): List<LibraryDependency> {
         return getRelatedModules(file, project).flatMap { it.dependencies }.mapNotNull { it as? LibraryDependency }.distinct()
     }

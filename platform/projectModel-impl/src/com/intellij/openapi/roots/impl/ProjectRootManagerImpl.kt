@@ -86,7 +86,7 @@ open class ProjectRootManagerImpl(
     fun extractLocalPath(url: String): String {
       val path = URLUtil.extractPath(url)
       val separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR)
-      return if (separatorIndex > 0) path.substring(0, separatorIndex) else path
+      return if (separatorIndex > 0) path.take(separatorIndex) else path
     }
   }
 
@@ -200,14 +200,16 @@ open class ProjectRootManagerImpl(
 
     override fun copy(changes: Boolean): Boolean = changes
   }
+
   @ApiStatus.Internal
   open val rootsValidityChangedListener: VirtualFilePointerListener = object : VirtualFilePointerListener {}
-  override fun getFileIndex(): ProjectFileIndex {
+
+  final override fun getFileIndex(): ProjectFileIndex {
     return ProjectFileIndex.getInstance(project)
   }
 
   @ApiStatus.Internal
-  override fun getContentRootUrls(): List<String> {
+  final override fun getContentRootUrls(): List<String> {
     val modules = moduleManager.modules
     val result = ArrayList<String>(modules.size)
     for (module in modules) {
@@ -272,16 +274,17 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   final override fun getProjectSdk(): Sdk? {
-    if (projectSdkName == null) {
+    val sdkName = projectSdkName
+    if (sdkName == null) {
       return null
     }
 
     val projectJdkTable = ProjectJdkTable.getInstance(project)
-    if (projectSdkType == null) {
-      return projectJdkTable.findJdk(projectSdkName!!)
-    }
-    else {
-      return projectJdkTable.findJdk(projectSdkName!!, projectSdkType!!)
+    val sdkType = projectSdkType
+    return if (sdkType == null) {
+      projectJdkTable.findJdk(sdkName)
+    } else {
+      projectJdkTable.findJdk(sdkName, sdkType)
     }
   }
 

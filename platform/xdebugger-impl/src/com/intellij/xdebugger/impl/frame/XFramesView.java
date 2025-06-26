@@ -407,8 +407,18 @@ public final class XFramesView extends XDebugView {
   }
 
   @Override
+  protected void sessionStopped() {
+    myFramesList.sessionStopped();
+  }
+
+  @Override
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
     myRefresh = event == SessionEvent.SETTINGS_CHANGED;
+
+    if (event == SessionEvent.STOPPED) {
+      sessionStopped();
+      mySessionRef.clear();
+    }
 
     if (event == SessionEvent.BEFORE_RESUME) {
       if (DebuggerUIUtil.freezePaintingToReduceFlickering(myScrollPane.getParent())) {

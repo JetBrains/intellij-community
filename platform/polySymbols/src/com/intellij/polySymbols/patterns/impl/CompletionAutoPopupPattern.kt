@@ -4,20 +4,19 @@ package com.intellij.polySymbols.patterns.impl
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.hideFromCompletion
-import com.intellij.util.containers.Stack
 
-internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolsPattern() {
+internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolPattern() {
 
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
     end: Int,
@@ -26,16 +25,16 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolsPa
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     emptyList()
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,
@@ -44,7 +43,13 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolsPa
       CompletionResults(emptyList(), true)
     }
     else {
-      CompletionResults(PolySymbolCodeCompletionItem.create("", start, true, displayName = "…"))
+      CompletionResults(
+        PolySymbolCodeCompletionItem
+          .builder("", start)
+          .completeAfterInsert(true)
+          .displayName("…")
+          .build()
+      )
     }
 
   override fun toString(): String {

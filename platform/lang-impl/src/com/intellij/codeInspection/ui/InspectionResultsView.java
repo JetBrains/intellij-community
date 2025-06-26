@@ -106,6 +106,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
   private ToolWindow myToolWindow;
   private ContentManagerListener myContentManagerListener;
 
+  @ApiStatus.Internal
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
     setLayout(new BorderLayout());
@@ -247,7 +248,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
 
   private static DefaultActionGroup createExportActions() {
     var result = new DefaultActionGroup(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.ToolbarDecorator.Export);
-    result.addAll(InspectionResultsExportActionProvider.Companion.getEP_NAME().getExtensionList());
+    result.addAll(InspectionResultsExportActionProvider.EP_NAME.getExtensionList());
     result.setPopup(true);
     return result;
   }
@@ -813,6 +814,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return PsiNavigationSupport.getInstance().createNavigatable(psiElement.getProject(), virtualFile, startOffset);
   }
 
+  @ApiStatus.Internal
   public @NotNull InspectionTree getTree() {
     return myTree;
   }
@@ -821,6 +823,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return myGlobalInspectionContext;
   }
 
+  @ApiStatus.Internal
   public @NotNull InspectionRVContentProvider getProvider() {
     return myProvider;
   }
@@ -861,6 +864,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return hasProblems(myGlobalInspectionContext.getTools().values(), myGlobalInspectionContext, myProvider);
   }
 
+  @ApiStatus.Internal
   public static boolean hasProblems(@NotNull Collection<? extends Tools> tools,
                                     @NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionRVContentProvider contentProvider) {

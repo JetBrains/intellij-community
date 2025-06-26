@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
@@ -24,6 +25,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/analysis-api:analysis",
   ],
   runtime_deps = [":inline-completion_resources"]
 )

@@ -648,6 +648,8 @@ com.intellij.openapi.wm.ToolWindowFactory
 - isApplicableAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - isDoNotActivateOnStart():Z
 - shouldBeAvailable(com.intellij.openapi.project.Project):Z
+a:com.intellij.openapi.wm.ToolWindowManager
+- a:registerToolWindow(com.intellij.openapi.wm.RegisterToolWindowTask):com.intellij.openapi.wm.ToolWindow
 com.intellij.openapi.wm.WelcomeFrameProvider
 - a:createFrame():com.intellij.openapi.wm.IdeFrame
 com.intellij.openapi.wm.WelcomeScreen
@@ -889,6 +891,23 @@ com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 - a:getBottom():I
 - getHeight():I
 - a:getTop():I
+f:com.intellij.ui.navigation.BackAction
+- com.intellij.ui.navigation.NavigationAction
+- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+f:com.intellij.ui.navigation.ForwardAction
+- com.intellij.ui.navigation.NavigationAction
+- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+a:com.intellij.ui.navigation.NavigationAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- p:<init>(javax.swing.JComponent,java.lang.String,com.intellij.openapi.Disposable):V
+- pa:doUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
+- ps:getHistory(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ui.navigation.History
+- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.ui.navigation.Place$Navigator
 - isValid(com.intellij.ui.navigation.Place):Z
 - navigateTo(com.intellij.ui.navigation.Place,Z):com.intellij.openapi.util.ActionCallback

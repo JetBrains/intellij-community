@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocu
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionSelectionListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentListener
+import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
 import com.intellij.openapi.Disposable
@@ -65,6 +66,7 @@ object InlineCompletion {
     editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
     editor.selectionModel.addSelectionListener(InlineCompletionSelectionListener(), disposable)
+    editor.caretModel.addCaretListener(InlineCompletionTypingSessionTracker.TypingSessionCaretListener(), disposable)
 
     application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerInstalled(editor, handler)
 

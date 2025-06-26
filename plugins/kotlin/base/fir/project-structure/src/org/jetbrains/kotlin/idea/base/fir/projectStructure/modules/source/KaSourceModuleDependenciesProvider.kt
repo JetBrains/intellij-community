@@ -11,12 +11,13 @@ import com.intellij.platform.workspace.jps.entities.*
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
+import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.KotlinExportedDependenciesCollector
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.K2IDEProjectStructureProviderCache
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.HmppSourceModuleDependencyFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.NonHmppSourceModuleDependenciesFilter
@@ -84,14 +85,25 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
         kind: KaSourceModuleKind,
         cacheKey: Class<*>,
     ): Set<KaModule> {
+        val projectStructureProviderCache = K2IDEProjectStructureProviderCache.getInstance(project)
         return when (kind) {
-            KaSourceModuleKind.PRODUCTION -> openapiModule.cacheByClassInvalidatingOnRootModifications(cacheKey) {
-                openapiModule.additionalVisibleModules
-                    .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProduction() }
-                    .ifEmpty { emptySet() }
+            KaSourceModuleKind.PRODUCTION -> {
+                openapiModule.cacheByClass(
+                    cacheKey,
+                    projectStructureProviderCache.getCacheSourcesTracker(),
+                    projectStructureProviderCache.getCacheSdkAndLibrariesTracker()
+                    ) {
+                    openapiModule.additionalVisibleModules
+                        .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProduction() }
+                        .ifEmpty { emptySet() }
+                }
             }
 
-            KaSourceModuleKind.TEST -> openapiModule.cacheByClassInvalidatingOnRootModifications(cacheKey) {
+            KaSourceModuleKind.TEST -> openapiModule.cacheByClass(
+                cacheKey,
+                projectStructureProviderCache.getCacheSourcesTracker(),
+                projectStructureProviderCache.getCacheSdkAndLibrariesTracker()
+            ) {
                 val result = linkedSetOf<KaModule>()
                 result.addIfNotNull(openapiModule.toKaSourceModuleForProduction())
                 TestModuleProperties.getInstance(openapiModule).productionModule?.let {

@@ -158,9 +158,14 @@ abstract class BaseJunitAnnotationReference(
           .flatMap { (clazz, methods) -> methods.map { method -> method to clazz } }
           .groupBy({ it.first }, { it.second })
           .map { (method, classes) -> PsiMethodSourceResolveResult(method, classes) }.toTypedArray()
-      }
-      else {
-        return ResolveResult.EMPTY_ARRAY
+      } else {
+        val clazz = literal.getParentOfType(UClass::class.java)
+        if (clazz != null) {
+          val owners = clazz.javaPsi.containingClass?.let { listOf(it) } ?: emptyList()
+          return ref.fastResolveFor(literal, clazz).map { PsiMethodSourceResolveResult(it, owners) }.toTypedArray()
+        } else {
+          return ResolveResult.EMPTY_ARRAY
+        }
       }
     }
   }

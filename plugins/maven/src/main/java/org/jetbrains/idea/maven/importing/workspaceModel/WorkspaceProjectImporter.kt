@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionUtil
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -76,7 +78,7 @@ internal open class WorkspaceProjectImporter(
     return MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList
   }
 
-  override fun importProject(): List<MavenProjectsProcessorTask> {
+  override suspend fun importProject(): List<MavenProjectsProcessorTask> {
     MavenLog.LOG.info("Importing Maven project using Workspace API")
 
     val migratedToExternalStorage = migrateToExternalStorageIfNeeded()
@@ -97,7 +99,7 @@ internal open class WorkspaceProjectImporter(
     val mavenProjectToModuleName = buildModuleNameMap(externalSystemModuleEntities, allProjectsToChanges)
 
     val builder = MutableEntityStorage.create()
-    builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenProjectsTreeEntitySource))
+    builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenEntitySource))
 
     val contextData = UserDataHolderBase()
 
@@ -111,7 +113,7 @@ internal open class WorkspaceProjectImporter(
       }
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
-      tracer.spanBuilder("commitWorkspace").use {
+      tracer.spanBuilder("commitWorkspace").useWithScope {
         commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
       }
     }
@@ -314,7 +316,7 @@ internal open class WorkspaceProjectImporter(
     return allModules.sortedWith(comparator)
   }
 
-  private fun commitModulesToWorkspaceModel(
+  private suspend fun commitModulesToWorkspaceModel(
     mavenProjectsWithModules: List<MavenProjectWithModulesData<ModuleEntity>>,
     newStorage: MutableEntityStorage,
     contextData: UserDataHolderBase,
@@ -380,7 +382,7 @@ internal open class WorkspaceProjectImporter(
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 
-    stats.recordPhase(MavenImportCollector.WORKSPACE_DEPENDENCY_SUBSTITUTION_PHASE) {
+    stats.recordPhaseBlocking(MavenImportCollector.WORKSPACE_DEPENDENCY_SUBSTITUTION_PHASE) {
       DependencySubstitutionUtil.updateDependencySubstitutions(currentStorage)
     }
 
@@ -562,14 +564,14 @@ internal open class WorkspaceProjectImporter(
 
     private fun isMavenEntity(it: EntitySource) =
       (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporter.EXTERNAL_SOURCE_ID
-      || it is MavenProjectsTreeEntitySource
+      || it is MavenEntitySource
 
     private fun readMavenExternalSystemData(storage: EntityStorage) =
       importedEntities(storage, ExternalSystemModuleOptionsEntity::class.java)
         .mapNotNull { WorkspaceModuleImporter.ExternalSystemData.tryRead(it) }
 
     @JvmStatic
-    fun updateTargetFolders(project: Project) {
+    suspend fun updateTargetFolders(project: Project) {
       val stats = WorkspaceImportStats.startFoldersUpdate(project)
       var numberOfModules = 0
       updateProjectModelFastOrSlow(project, stats, { snapshot ->
@@ -609,7 +611,7 @@ internal open class WorkspaceProjectImporter(
       return numberOfModules
     }
 
-    private fun updateProjectModelFastOrSlow(
+    private suspend fun updateProjectModelFastOrSlow(
       project: Project,
       stats: WorkspaceImportStats,
       prepareInBackground: (current: MutableEntityStorage) -> Unit,
@@ -634,7 +636,7 @@ internal open class WorkspaceProjectImporter(
           prepareInBackground(builder)
           durationInBackground += System.nanoTime() - beforeBG
 
-          MavenUtil.invokeAndWaitWriteAction(project) {
+          edtWriteAction {
             val beforeWA = System.nanoTime()
             if (!snapshot.areEntitiesChanged()) {
               updated = true
@@ -655,7 +657,7 @@ internal open class WorkspaceProjectImporter(
       if (!updated) {
         MavenLog.LOG.info("Failed to fast-apply to Workspace Model in $attempts attempts, fallback to slower apply in WriteAction")
         attempts++
-        MavenUtil.invokeAndWaitWriteAction(project) {
+        edtWriteAction {
           val beforeWA = System.nanoTime()
           workspaceModel.updateProjectModel("Maven update project model") { builder -> prepareInBackground(builder) }
           durationOfWorkspaceUpdate = System.nanoTime() - beforeWA

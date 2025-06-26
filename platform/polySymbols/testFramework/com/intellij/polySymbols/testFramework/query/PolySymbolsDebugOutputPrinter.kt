@@ -7,10 +7,11 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.css.PROP_CSS_ARGUMENTS
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
+import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.js.PROP_JS_SYMBOL_KIND
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.polySymbols.utils.completeMatch
@@ -18,6 +19,7 @@ import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
+import com.intellij.util.asSafely
 import java.util.*
 
 open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
@@ -70,7 +72,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       return this
     }
     printObject(topLevel) { level ->
-      if (source.pattern != null) {
+      if (source is PolySymbolWithPattern) {
         printProperty(level, "matchedName", source.qualifiedKind.toString() + "/<pattern>")
         printProperty(level, "name", source.name)
       }
@@ -82,16 +84,19 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "type", source.origin.typeSupport?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.htmlAttributeValue)
       printProperty(level, "complete", source.completeMatch)
-      if (source is PolySymbolWithDocumentation) {
-        printProperty(level, "description", source.description?.ellipsis(45))
-        printProperty(level, "docUrl", source.docUrl)
-        printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
+      val documentation = source.getDocumentationTarget(null)
+        .asSafely<PolySymbolDocumentationTarget>()
+        ?.documentation
+      if (documentation != null) {
+        printProperty(level, "description", documentation.description?.ellipsis(45))
+        printProperty(level, "docUrl", documentation.docUrl)
+        printProperty(level, "descriptionSections", documentation.descriptionSections.takeIf { it.isNotEmpty() })
       }
-      printProperty(level, "accessModifier", source.accessModifier)
-      printProperty(level, "modifiers", source.modifiers.takeIf { it.isNotEmpty() })
+      printProperty(level, "modifiers", source.modifiers.takeIf { it.isNotEmpty() }
+        ?.toSortedSet { a, b -> a.name.compareTo(b.name) })
       printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is PolySymbolApiStatus.Stable || it.since != null })
       printProperty(level, "priority", source.priority ?: PolySymbol.Priority.NORMAL)
-      printProperty(level, "has-pattern", if (source.pattern != null) true else null)
+      printProperty(level, "has-pattern", if (source is PolySymbolWithPattern) true else null)
       printProperty(
         level, "properties",
         propertiesToPrint
@@ -113,7 +118,9 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
     segment: PolySymbolNameSegment,
   ): StringBuilder =
     printObject(topLevel) { level ->
-      printProperty(level, "name-part", parents.peek().let { if (it.pattern == null) segment.getName(parents.peek()) else "" })
+      printProperty(level, "name-part", parents.peek().let {
+        if (it !is PolySymbolWithPattern) segment.getName(parents.peek()) else ""
+      })
       printProperty(level, "display-name", segment.displayName)
       printProperty(level, "apiStatus", segment.apiStatus)
       printProperty(level, "priority", segment.priority?.takeIf { it != PolySymbol.Priority.NORMAL })

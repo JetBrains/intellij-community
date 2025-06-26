@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.devkit.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -25,6 +26,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
@@ -73,7 +75,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "java-tests_test",
   runtime_deps = [":java-tests_test_lib"]
 )

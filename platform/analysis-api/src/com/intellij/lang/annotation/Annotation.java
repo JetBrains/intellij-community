@@ -46,7 +46,6 @@ public final class Annotation implements Segment {
   private TextAttributes myEnforcedAttributes;
 
   private List<QuickFixInfo> myQuickFixes;
-  private Boolean myNeedsUpdateOnTyping;
   private @NlsContexts.Tooltip String myTooltip;
   private boolean myAfterEndOfLine;
   private boolean myIsFileLevelAnnotation;
@@ -201,7 +200,6 @@ public final class Annotation implements Segment {
   }
 
   /**
-   * Register a quickfix which would be available onTheFly and in the batch mode. Should implement both IntentionAction and LocalQuickFix.
    * @deprecated use {@link AnnotationBuilder#newFix(IntentionAction)} instead
    */
   @Deprecated
@@ -209,33 +207,12 @@ public final class Annotation implements Segment {
     registerBatchFix(fix, range, key);
     registerFix(fix, range, key);
   }
+
   /**
-   * Sets a flag indicating what happens with the annotation when the user starts typing.
-   * If the parameter is true, the annotation is removed as soon as the user starts typing
-   * and is possibly restored by a later run of the annotator. If false, the annotation remains
-   * in place while the user is typing.
-   * @deprecated  use {@link AnnotationBuilder#needsUpdateOnTyping(boolean)} instead
-   *
-   * @param b whether the annotation needs to be removed on typing.
-   * @see #needsUpdateOnTyping()
+   * @deprecated do not use, does nothing
    */
   @Deprecated
-  public void setNeedsUpdateOnTyping(boolean b) {
-    myNeedsUpdateOnTyping = b;
-  }
-
-  /**
-   * Gets a flag indicating what happens with the annotation when the user starts typing.
-   *
-   * @return true if the annotation is removed on typing, false otherwise.
-   * @see #setNeedsUpdateOnTyping(boolean)
-   */
-  public boolean needsUpdateOnTyping() {
-    if (myNeedsUpdateOnTyping == null) {
-      return mySeverity != HighlightSeverity.INFORMATION;
-    }
-
-    return myNeedsUpdateOnTyping.booleanValue();
+  public void setNeedsUpdateOnTyping(boolean __) {
   }
 
   /**

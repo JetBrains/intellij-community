@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -116,7 +116,7 @@ public final class ProjectProblemUtils {
     return problems;
   }
 
-  public static void reportProblems(@NotNull Editor editor, @NotNull Map<PsiMember, Set<Problem>> problems) {
+  static void reportProblems(@NotNull Editor editor, @NotNull Map<PsiMember, Set<Problem>> problems) {
     editor.putUserData(PROBLEMS_KEY, problems);
   }
 
@@ -127,7 +127,7 @@ public final class ProjectProblemUtils {
       .getTextRange().getStartOffset();
   }
 
-  public static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+  static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
                                                     @NotNull PsiMember member,
                                                     @NotNull PsiElement identifier) {
     Color textColor = editor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor();

@@ -4,13 +4,13 @@ package com.intellij.polySymbols.search
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.psi.*
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.util.NonCodeUsageInfo
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -68,7 +68,7 @@ class PsiSourcedPolySymbolReference(
       val file = rangePointer.element ?: return null
       val newName = nameRef.get() ?: return null
       val target = targetPointer.dereference() ?: return null
-      val queryExecutor = PolySymbolsQueryExecutorFactory.create(
+      val queryExecutor = PolySymbolQueryExecutorFactory.create(
         PsiTreeUtil.findElementOfClassAtRange(file, range.startOffset, range.endOffset, PsiElement::class.java)
         ?: file
       )

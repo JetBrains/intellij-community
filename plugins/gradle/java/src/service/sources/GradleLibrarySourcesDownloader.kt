@@ -3,8 +3,8 @@ package org.jetbrains.plugins.gradle.service.sources
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.jarFinder.InternetAttachSourceProvider.attachSourceJar
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -16,7 +16,9 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -78,7 +80,7 @@ object GradleLibrarySourcesDownloader {
   }
 
   private suspend fun attachSources(sourcesJar: Path, orderEntries: List<LibraryOrderEntry>) {
-    edtWriteAction {
+    withContext(Dispatchers.EDT) {
       val libraries = HashSet<Library>()
       orderEntries.forEach {
         ContainerUtil.addIfNotNull(libraries, it.library)

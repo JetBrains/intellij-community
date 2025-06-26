@@ -21,30 +21,30 @@ interface PySdkProvider {
   /**
    * Additional info to be displayed with the SDK's name.
    */
-  fun getSdkAdditionalText(sdk: Sdk): String?
+  fun getSdkAdditionalText(sdk: Sdk): String? = null
 
-  fun getSdkIcon(sdk: Sdk): Icon?
+  fun getSdkIcon(sdk: Sdk): Icon? = null
 
   /**
    * Try to load additional data for your SDK. Check for attributes, specific to your SDK before loading it. Return null if there is none.
    */
-  fun loadAdditionalDataForSdk(element: Element): SdkAdditionalData?
+  fun loadAdditionalDataForSdk(element: Element): SdkAdditionalData? = null
 
   // Inspections
   /**
    * Quickfix that makes the existing environment available to the module, or null.
    */
-  fun createEnvironmentAssociationFix(module: Module,
-                                      sdk: Sdk,
-                                      isPyCharm: Boolean,
-                                      associatedModulePath: @NlsSafe String?): PyInterpreterInspectionQuickFixData?
-
-  fun createInstallPackagesQuickFix(module: Module): LocalQuickFix?
+  fun createEnvironmentAssociationFix(
+    module: Module,
+    sdk: Sdk,
+    isPyCharm: Boolean,
+    associatedModulePath: @NlsSafe String?,
+  ): PyInterpreterInspectionQuickFixData? = null
 
 
   companion object {
     @JvmField
-    val EP_NAME  = ExtensionPointName.create<PySdkProvider>("Pythonid.pySdkProvider")
+    val EP_NAME: ExtensionPointName<PySdkProvider> = ExtensionPointName.create<PySdkProvider>("Pythonid.pySdkProvider")
   }
 }
 

@@ -18,11 +18,13 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.VcsProjectLog.Companion.showRevisionInMainLog
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.isAvailable
+import com.intellij.vcs.log.impl.VcsProjectLog.Companion.showRevisionInMainLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 
@@ -34,7 +36,10 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 abstract class VcsProjectLog internal constructor() { // not an interface due to external deps
   open val dataManager: VcsLogData? = null
 
-  open val logManager: VcsLogManager? = null
+  @get:ApiStatus.Experimental
+  abstract val logManagerState: StateFlow<VcsLogManager?>
+  open val logManager: VcsLogManager?
+    get() = logManagerState.value
 
   @Deprecated("Use VcsProjectLog.runInMainLog or get the ui from DataContext via VcsLogDataKeys.VCS_LOG_UI. As a last resort - VcsProjectLog.mainUi")
   open val mainLogUi: VcsLogUiImpl? = null

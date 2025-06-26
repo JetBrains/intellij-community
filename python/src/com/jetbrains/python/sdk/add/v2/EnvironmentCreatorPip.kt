@@ -10,7 +10,7 @@ import com.intellij.util.text.nullize
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.pipenv.pipEnvPath
-import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkUnderProgress
+import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkWithProgressReport
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -25,7 +25,7 @@ internal class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterMod
   }
 
   override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> =
-    setupPipEnvSdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages)
+    setupPipEnvSdkWithProgressReport(project, module, baseSdks, projectPath, homePath, installPackages)
 
   override suspend fun detectExecutable() {
     model.detectPipEnvExecutable()

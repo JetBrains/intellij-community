@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -8,23 +9,39 @@ import com.intellij.openapi.projectRoots.SdkTableProjectViewProvider
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
 import java.nio.file.Path
 
-@ApiStatus.Internal
-class SdkTableProjectViewProviderImpl(val project: Project) : SdkTableProjectViewProvider {
+private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjectViewProvider, Disposable {
   private val descriptor = project.basePath?.toNioPathOrNull()?.getEelDescriptor() ?: LocalEelDescriptor
+
+  private var perEnvironmentModelSeparation: Boolean
+
+  init {
+    val registryValue = Registry.get("ide.workspace.model.per.environment.model.separation")
+    perEnvironmentModelSeparation = registryValue.asBoolean()
+    registryValue.addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        perEnvironmentModelSeparation = value.asBoolean()
+      }
+    }, this)
+  }
 
   override fun getSdkTableView(): ProjectJdkTable {
     val generalTable = ProjectJdkTable.getInstance()
-    if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
-      return generalTable
+    return if (!perEnvironmentModelSeparation) {
+      generalTable
+    } else {
+      ProjectJdkTableProjectView(descriptor, generalTable)
     }
-    return ProjectJdkTableProjectView(descriptor, generalTable)
+  }
+
+  override fun dispose() {
   }
 }
 
@@ -36,7 +53,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
   }
 
   override fun findJdk(name: String, type: String): Sdk? {
-    // sometimes delegate.findJdk can do mutating operations, like in case of ProjectJdkTableImpl
+    // sometimes delegate.findJdk can do mutating operations, like in the case of ProjectJdkTableImpl
     return allJdks.find { it.name == name && it.sdkType.name == type } ?: delegate.findJdk(name, type)
   }
 

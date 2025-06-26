@@ -7,6 +7,9 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.intellij.psi.util.findParentOfType
+import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.packaging.PyPackage
@@ -18,6 +21,7 @@ import com.jetbrains.python.requirements.getPythonSdk
 import com.jetbrains.python.requirements.inspections.quickfixes.InstallAllRequirementsQuickFix
 import com.jetbrains.python.requirements.inspections.quickfixes.InstallRequirementQuickFix
 import com.jetbrains.python.requirements.inspections.quickfixes.PyGenerateRequirementsFileQuickFix
+import org.toml.lang.psi.TomlTable
 
 class NotInstalledRequirementInspection : LocalInspectionTool() {
   override fun buildVisitor(
@@ -28,6 +32,12 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
     override fun visitRequirementsFile(requirementsFile: RequirementsFile) {
       val requirements = requirementsFile.requirements().toList()
       val psiFile = session.file
+
+      psiFile.getUserData(FileContextUtil.INJECTED_IN_ELEMENT)?.let { injectedInElement ->
+        val tomlTableName = injectedInElement.element?.findParentOfType<TomlTable>()?.header?.key?.text
+        if (tomlTableName == PY_PROJECT_TOML_BUILD_SYSTEM) return
+      }
+
       val sdk = getPythonSdk(psiFile) ?: return
 
       if (psiFile.text.isNullOrBlank()) {

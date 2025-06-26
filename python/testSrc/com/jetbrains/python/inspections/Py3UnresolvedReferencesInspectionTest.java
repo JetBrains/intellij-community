@@ -447,4 +447,21 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                          x.<warning descr="Cannot find reference 'is_integer' in 'T'">is_integer</warning>()  # E
                  """);
   }
+
+  // PY-55691
+  public void testAttrsClassMembersProviderAttrsProperty() {
+    runWithAdditionalClassEntryInSdkRoots("packages", () ->
+      doTestByText(
+          """
+            import attrs
+            
+            @attrs.define
+            class User:
+                password: str
+            
+            User().__attrs_attrs__ # OK
+            """)
+    );
+  }
+
 }

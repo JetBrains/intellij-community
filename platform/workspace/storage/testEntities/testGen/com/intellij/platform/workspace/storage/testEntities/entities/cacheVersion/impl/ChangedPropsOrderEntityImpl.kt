@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropsOrderEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsOrderEntityData) : ChangedPropsOrderEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {

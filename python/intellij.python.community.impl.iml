@@ -34,14 +34,19 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.foldings" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
+    <orderEntry type="module" module-name="intellij.platform.macro" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
+    <orderEntry type="module" module-name="intellij.platform.remote.core" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
@@ -157,8 +162,6 @@
     <orderEntry type="module" module-name="intellij.python.syntax" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
-    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
-    <orderEntry type="module" module-name="intellij.libraries.ktor.client.cio" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
@@ -182,6 +185,7 @@
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="library" name="kaml" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" />
   </component>

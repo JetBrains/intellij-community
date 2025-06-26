@@ -2,6 +2,7 @@
   <id>tanvd.grazi</id>
   <name>Natural Languages</name>
   <vendor>JetBrains</vendor>
+  <category>Languages</category>
 
   <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
 

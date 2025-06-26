@@ -9,12 +9,13 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
 interface LibraryMavenCoordinateEntity : WorkspaceEntity {
 
+  @Parent
   val library: LibraryEntity
 
   val coordinates: MavenCoordinates
@@ -54,9 +55,9 @@ fun MutableEntityStorage.modifyLibraryMavenCoordinateEntity(
   return modifyEntity(LibraryMavenCoordinateEntity.Builder::class.java, entity, modification)
 }
 
-var LibraryEntity.Builder.mavenCoordinates: @Child LibraryMavenCoordinateEntity.Builder?
+var LibraryEntity.Builder.mavenCoordinates: LibraryMavenCoordinateEntity.Builder?
   by WorkspaceEntity.extensionBuilder(LibraryMavenCoordinateEntity::class.java)
 //endregion
 
-val LibraryEntity.mavenCoordinates: @Child LibraryMavenCoordinateEntity?
+val LibraryEntity.mavenCoordinates: LibraryMavenCoordinateEntity?
   by WorkspaceEntity.extension()

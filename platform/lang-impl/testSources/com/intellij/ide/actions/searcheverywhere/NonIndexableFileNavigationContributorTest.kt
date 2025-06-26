@@ -3,17 +3,14 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.ide.util.gotoByName.NonIndexableFileNavigationContributor
 import com.intellij.mock.MockProgressIndicator
-import com.intellij.navigation.ChooseByNameContributor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestActionEvent
@@ -24,19 +21,16 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.CommonProcessors
+import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
@@ -45,6 +39,7 @@ import java.nio.file.Files
 
 
 @TestApplication
+@RegistryKey("search.in.non.indexable", "true")
 class NonIndexableFileNavigationContributorTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
@@ -60,8 +55,8 @@ class NonIndexableFileNavigationContributorTest {
 
   @BeforeEach
   fun setUp() {
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetContributor(), disposable)
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
   }
 
 
@@ -254,26 +249,6 @@ class NonIndexableFileNavigationContributorTest {
   }
 }
 
-private class NonIndexableKindFileSetContributor : WorkspaceFileIndexContributor<NonIndexableTestEntity> {
-  override val entityClass: Class<NonIndexableTestEntity> = NonIndexableTestEntity::class.java
-
-  override fun registerFileSets(entity: NonIndexableTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    registrar.registerFileSet(entity.root, WorkspaceFileKind.CONTENT_NON_INDEXABLE, entity, null)
-  }
-}
-
-private class IndexableKindFileSetContributor : WorkspaceFileIndexContributor<IndexingTestEntity> {
-  override val entityClass: Class<IndexingTestEntity> = IndexingTestEntity::class.java
-
-  override fun registerFileSets(entity: IndexingTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    for (root in entity.roots) {
-      registrar.registerFileSet(root, WorkspaceFileKind.CONTENT, entity, null)
-    }
-    for (excludedRoot in entity.excludedRoots) {
-      registrar.registerExcludedRoot(excludedRoot, entity)
-    }
-  }
-}
 
 private fun createEvent(project: Project): AnActionEvent {
   val projectContext = SimpleDataContext.getProjectContext(project)

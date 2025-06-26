@@ -11,7 +11,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
-import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAction
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
@@ -86,56 +85,23 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         }
     }
 
-    override suspend fun getJdiValueForDfaVariable(
-        proxy: StackFrameProxyEx,
-        dfaVar: DfaVariableValue,
-        anchor: PsiElement
-    ): Value? {
+    override suspend fun getJdiValueForDfaVariable(proxy: StackFrameProxyEx, descriptor: VariableDescriptor, anchor: PsiElement): Value? {
         if (anchor !is KtElement) return null
-        if (readAction { (dfaVar.descriptor as? KtBaseDescriptor)?.isInlineClassReference() == true }) return null
-        return runDumbAction(readAction { anchor.project }, null) {
-            getJdiValueInner(proxy, dfaVar, anchor)
-        }
-    }
-    
-    private fun KtElement.getScope(): KtFunction? {
-        var current = this
-        while(true) {
-            val function = current.parentOfType<KtFunction>()
-            if (function != null) {
-                val realFun = function.parent as? KtLambdaExpression ?: function
-                val arg = realFun.parent as? KtValueArgument
-                val call = when(arg) {
-                    is KtLambdaArgument -> arg.parent
-                    else -> arg?.parent?.parent
-                } as? KtCallExpression
-                if (call != null) {
-                    val inline = analyze(call) {
-                        val functionCall = call.resolveToCall()?.singleFunctionCallOrNull()
-                        (functionCall?.partiallyAppliedSymbol?.symbol as? KaNamedFunctionSymbol)?.isInline == true
-                    }
-                    if (inline) {
-                        current = call
-                        continue
-                    }
-                }
+        val value = getJdiValueForDfaVariableInner(proxy, descriptor, anchor)
+        if (value != null) {
+            if (readAction { (descriptor as? KtBaseDescriptor)?.isInlineClassReference() == true }) {
+                return DfaAssistProvider.InlinedValue(value)
             }
-            return function
         }
+        return value
     }
 
-    private suspend fun getJdiValueInner(
-        proxy: StackFrameProxyEx,
-        dfaVar: DfaVariableValue,
-        anchor: KtElement
-    ): Value? {
-        val qualifier = dfaVar.qualifier
-        val descriptor = dfaVar.descriptor
+    private suspend fun getJdiValueForDfaVariableInner(proxy: StackFrameProxyEx, descriptor: VariableDescriptor, anchor: KtElement): Value? {
         val variables = (proxy as StackFrameProxyImpl).visibleVariables()
         val inlineDepth = getInlineDepth(variables)
         val inlineSuffix = KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX.repeat(inlineDepth)
-        if (qualifier == null) {
-            if (descriptor is KtLambdaThisVariableDescriptor) {
+        when (descriptor) {
+            is KtLambdaThisVariableDescriptor -> {
                 val regex = readAction {
                     val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
                     val scopePart = scopeName?.replace(Regex("[^\\p{L}\\d]"), "_")?.let(Regex::escape) ?: ".+"
@@ -147,7 +113,8 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                     return postprocess(proxy.stackFrame.getValue(lambdaThis.first()))
                 }
             }
-            if (descriptor is KtThisDescriptor) {
+
+            is KtThisDescriptor -> {
                 val pointer = descriptor.classDef?.pointer
                 val contextName = descriptor.contextName
                 if (contextName != null) {
@@ -175,8 +142,8 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                             val jvmName = KotlinPsiHeuristics.getJvmName(nameString)
                             if (signature == jvmName) return thisObject
                             thisObject = when (val outerClassField = DebuggerUtils.findField(thisType, "this$0")) {
-                              null -> null
-                              else -> thisObject.getValue(outerClassField) as? ObjectReference
+                                null -> null
+                                else -> thisObject.getValue(outerClassField) as? ObjectReference
                             }
                         }
                     }
@@ -189,7 +156,8 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                     }
                 }
             }
-            if (descriptor is KtVariableDescriptor) {
+
+            is KtVariableDescriptor -> {
                 val pointer = descriptor.pointer
                 val result = readAction {
                     analyze(anchor) {
@@ -265,13 +233,50 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                             }
                             return value
                         }
-                }
+                    }
 
                     null -> {}
                 }
             }
-        } else {
-            val jdiQualifier = getJdiValueInner(proxy, qualifier, anchor)
+        }
+        return null
+    }
+
+    private fun KtElement.getScope(): KtFunction? {
+        var current = this
+        while (true) {
+            val function = current.parentOfType<KtFunction>()
+            if (function != null) {
+                val realFun = function.parent as? KtLambdaExpression ?: function
+                val arg = realFun.parent as? KtValueArgument
+                val call = when (arg) {
+                    is KtLambdaArgument -> arg.parent
+                    else -> arg?.parent?.parent
+                } as? KtCallExpression
+                if (call != null) {
+                    val inline = analyze(call) {
+                        val functionCall = call.resolveToCall()?.singleFunctionCallOrNull()
+                        (functionCall?.partiallyAppliedSymbol?.symbol as? KaNamedFunctionSymbol)?.isInline == true
+                    }
+                    if (inline) {
+                        current = call
+                        continue
+                    }
+                }
+            }
+            return function
+        }
+    }
+
+    override suspend fun getJdiValueForDfaVariable(
+        proxy: StackFrameProxyEx,
+        qualifier: Value,
+        descriptors: List<VariableDescriptor>,
+        anchor: PsiElement
+    ): Map<VariableDescriptor, Value> {
+        if (anchor !is KtElement) return emptyMap()
+        val map = hashMapOf<VariableDescriptor, Value>()
+        for (descriptor in descriptors) {
             if (descriptor is KtVariableDescriptor) {
                 val pointer = descriptor.pointer
                 val result = readAction {
@@ -291,22 +296,23 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                     }
                 }
                 when (result) {
-                    QualifierVariableResult.InlineClassProperty -> return jdiQualifier
+                    QualifierVariableResult.InlineClassProperty -> {
+                        map[descriptor] = if (qualifier is DfaAssistProvider.InlinedValue) qualifier.value else qualifier
+                    }
                     is QualifierVariableResult.NamedVariable -> {
-                        val type = (jdiQualifier as? ObjectReference)?.referenceType()
+                        val type = (qualifier as? ObjectReference)?.referenceType()
                         if (type != null) {
                             val field = DebuggerUtils.findField(type, result.name)
                             if (field != null) {
-                                return postprocess(jdiQualifier.getValue(field))
+                                map[descriptor] = postprocess(qualifier.getValue(field))
                             }
                         }
                     }
-
                     else -> {}
                 }
             }
         }
-        return null
+        return map
     }
 
     private sealed interface VariableResult {

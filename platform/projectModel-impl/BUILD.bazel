@@ -41,7 +41,6 @@ jvm_library(
     "//platform/diagnostic/telemetry-impl",
   ],
   exports = [
-    "//platform/projectModel-api:projectModel",
     "//jps/model-serialization",
     "//platform/util-ex",
   ],

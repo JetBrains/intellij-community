@@ -4,14 +4,13 @@ package com.intellij.polySymbols.patterns.impl
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
-import com.intellij.polySymbols.query.PolySymbolsScope
-import com.intellij.util.containers.Stack
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.util.text.CharSequenceSubSequence
 import java.util.regex.Pattern
 
-internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : PolySymbolsPattern() {
+internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : PolySymbolPattern() {
   private val pattern: Pattern by lazy(LazyThreadSafetyMode.NONE) {
     if (caseSensitive)
       Pattern.compile(regex)
@@ -25,8 +24,8 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
     end: Int,
@@ -43,16 +42,16 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     emptyList()
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    stack: PolySymbolQueryStack,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,
@@ -60,9 +59,19 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     getPatternCompletablePrefix(regex)
       .takeIf { it.isNotBlank() }
       ?.let {
-        CompletionResults(PolySymbolCodeCompletionItem.create(it, start, true, displayName = "$it…", symbol = owner))
+        CompletionResults(
+          PolySymbolCodeCompletionItem.builder(it, start, owner)
+            .completeAfterInsert(true)
+            .displayName("$it…")
+            .build()
+        )
       }
-    ?: CompletionResults(PolySymbolCodeCompletionItem.create("", start, true, displayName = "…", symbol = owner))
+    ?: CompletionResults(
+      PolySymbolCodeCompletionItem.builder("", start, owner)
+        .completeAfterInsert(true)
+        .displayName("…")
+        .build()
+    )
 
 
   override fun toString(): String =

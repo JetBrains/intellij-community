@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.highlighting
 import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.GlobalState
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
@@ -30,14 +29,10 @@ abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTe
     override fun runInDispatchThread(): Boolean = false
 
     override fun setUp() {
-        GlobalState.checkSystemStreams()
-        setupTempDir()
-
         setUpWithKotlinPlugin {
             val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name)
             myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture())
-            val moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder::class.java)
-            moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath())
+            projectBuilder.addModule(JavaModuleFixtureBuilder::class.java)
             myFixture.setUp()
         }
 

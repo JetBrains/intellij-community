@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.groovy` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -24,11 +25,15 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/macro",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/workspace/storage",
@@ -93,12 +98,16 @@ jvm_library(
   associates = [":groovy"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/macro",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
@@ -109,7 +118,6 @@ jvm_library(
     "//plugins/groovy/rt",
     "//platform/observable",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/groovy/spock-rt",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
@@ -174,7 +182,7 @@ jvm_library(
   runtime_deps = [":groovy_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "groovy_test",
   runtime_deps = [":groovy_test_lib"]
 )

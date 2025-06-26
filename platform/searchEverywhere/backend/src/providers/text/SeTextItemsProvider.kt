@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.providers.text
 
+import com.intellij.find.FindManager
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.ui.colors.rpcId
@@ -9,10 +10,14 @@ import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeTextFilter
 import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,13 +39,26 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, 
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider {
+class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider, SeSearchScopesProvider {
   override val id: String get() = SeProviderIdUtils.TEXT_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
+  private val findModel = FindManager.getInstance(project).findInProjectModel
+  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
+
+    val textFilter = SeTextFilter.from(params.filter)
+    val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+      scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+        if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+      }
+    } ?: run {
+      textFilter.selectedScopeId
+    }
+    applyScope(scopeToApply)
+    findModel.fileFilter = textFilter.selectedType
 
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
@@ -73,5 +91,13 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
+  }
+
+  private fun applyScope(scopeId: String?) {
+    scopeProviderDelegate.applyScope(scopeId)
+  }
+
+  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
+    return scopeProviderDelegate.searchScopesInfo.getValue()
   }
 }

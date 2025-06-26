@@ -98,9 +98,14 @@ internal class GitLabShareProjectDialogViewModel(
         return@transformLatest
       }
 
+      // no valid token!
+      if (api == null) {
+        emit(ComputedResult.failure(NoTokenAvailableException(account)))
+        return@transformLatest
+      }
+
       // cache miss -> start loading
       emit(ComputedResult.loading())
-      if (api == null) return@transformLatest
 
       runCatching {
         val glMetadata = serviceAsync<GitLabServersManager>().getMetadata(api)
@@ -129,19 +134,19 @@ internal class GitLabShareProjectDialogViewModel(
     it.fold(
       onInProgress = { false },
       onSuccess = { false },
-      onFailure = { it is HttpStatusErrorException && it.statusCode == 401 }
+      onFailure = { (it is HttpStatusErrorException && it.statusCode == 401) || it is NoTokenAvailableException }
     )
   }
 
-  val hasValidAccount: StateFlow<Boolean> = _account.combineState(reloginRequired) {
-    account, reloginRequired -> account != null && !reloginRequired
+  val hasValidAccount: StateFlow<Boolean> = _account.combineState(reloginRequired) { account, reloginRequired ->
+    account != null && !reloginRequired
   }
   //endregion
 
   //region: validation util
   @OptIn(FlowPreview::class)
   private val isExistingRepository: StateFlow<Boolean> =
-    combine(_repositoryName.debounce(250), _namespace, _account, api) { name, namespace, account, api ->
+    combine(_repositoryName.debounce(500), _namespace, _account, api) { name, namespace, account, api ->
       if (account == null || api == null || namespace == null) return@combine false
 
       LOG.info("Checking for existing repositories at coordinates: ${account.server}/${namespace.fullPath}/$name")
@@ -236,3 +241,6 @@ internal data class GitLabShareProjectDialogResult(
   val isPrivate: Boolean,
   val description: @NlsSafe String,
 )
+
+private class NoTokenAvailableException(account: GitLabAccount)
+  : RuntimeException("No token for account ${account.name}")

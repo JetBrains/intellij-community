@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal data class PolySymbolQualifiedKindData(
   override val namespace: @NlsSafe PolySymbolNamespace,
   override val kind: @NlsSafe PolySymbolKind,
-): PolySymbolQualifiedKind {
+) : PolySymbolQualifiedKind {
 
   override fun withName(name: String): PolySymbolQualifiedName =
     PolySymbolQualifiedNameData(this, name)

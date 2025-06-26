@@ -95,9 +95,25 @@ final class ExpressionChecker {
   void checkCreateInnerClassFromStaticContext(@NotNull PsiElement element,
                                               @NotNull PsiElement placeToSearchEnclosingFrom,
                                               @NotNull PsiClass aClass) {
-    if (!PsiUtil.isInnerClass(aClass)) return;
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return;
     PsiClass outerClass = aClass.getContainingClass();
-    if (outerClass == null) return;
+    if (outerClass == null) {
+      if (!(aClass.getParent() instanceof PsiDeclarationStatement)) return;
+      PsiMember scope = PsiTreeUtil.getParentOfType(aClass, PsiMember.class); // local class
+      if (scope == null) return;
+      if (scope.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(element, null);
+        assert enclosingStaticElement != null;
+        if (enclosingStaticElement != scope) {
+          JavaErrorKinds.LocalClassInstantiationErrorContext context =
+            new JavaErrorKinds.LocalClassInstantiationErrorContext(aClass, enclosingStaticElement);
+          myVisitor.report(JavaErrorKinds.LOCAL_CLASS_INSTANTIATED_FROM_DIFFERENT_STATIC_CONTEXT.create(element, context));
+        }
+        return;
+      }
+      outerClass = scope.getContainingClass();
+      if (outerClass == null) return;
+    }
 
     if (outerClass instanceof PsiSyntheticClass ||
         InheritanceUtil.hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true, false)) {
@@ -425,8 +441,18 @@ final class ExpressionChecker {
   void checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return;
     PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-    if (method == null || !method.isConstructor()) {
+    PsiMethod contextMethod =
+      method != null ? method : PsiTreeUtil.getContextOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    if (contextMethod == null || !contextMethod.isConstructor()) {
       myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_ONLY_ALLOWED_IN_CONSTRUCTOR.create(methodCall));
+      return;
+    }
+    if (JavaPsiRecordUtil.isCompactConstructor(contextMethod) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(contextMethod)) {
+      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_RECORD_IN_CANONICAL.create(methodCall));
+      return;
+    }
+    if (method == null) {
+      // Do not report other errors for detached constructor call, as they are likely non-relevant
       return;
     }
     PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
@@ -437,10 +463,6 @@ final class ExpressionChecker {
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (!(codeBlock instanceof PsiCodeBlock) || !(codeBlock.getParent() instanceof PsiMethod)) {
       myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_MUST_BE_TOP_LEVEL_STATEMENT.create(methodCall));
-      return;
-    }
-    if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
-      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_RECORD_IN_CANONICAL.create(methodCall));
       return;
     }
     PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(methodCall.getParent(), PsiStatement.class);

@@ -110,7 +110,7 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
     myActualValueTemplate = VALUE_IS_NOT_CONST;
   }
 
-  synchronized void updateTemplateValue(UExpression expression, @Nullable PsiElement accessPlace) {
+  synchronized void updateTemplateValue(@Nullable UExpression expression, @Nullable PsiElement accessPlace) {
     myUsageCount++;
     if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 

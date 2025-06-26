@@ -2064,43 +2064,32 @@ public class PyTypeTest extends PyTestCase {
                  def nuf():
                      global a
                      expr = a""");
-  }
 
-  // PY-37755
-  public void testNonLocalType() {
-    doTest("bool",
+    // PY-82115
+    doTest("Any",
            """
-             def fun():
-                 expr = True
+             def outer():
+                 s = "aba"
 
-                 def nuf():
-                     nonlocal expr
-                     expr""");
+                 def inner():
+                     global s
+                     expr = s # 's' is unbound
+             """);
 
-    doTest("bool",
+    // PY-82115
+    doTest("int",
            """
-             a = []
-
-             def fun():
-                 a = True
-
-                 def nuf():
-                     nonlocal a
-                     expr = a""");
-
-    doTest("Union[bool, int]",
-           """
-             a = []
-
-             def fun():
-                 if True:
-                     a = True
-                 else:
-                     a = 5
-
-                 def nuf():
-                     nonlocal a
-                     expr = a""");
+             def outer():
+                 s = "aba"
+             
+                 def inner1():
+                     global s
+                     s = 1
+             
+                 def inner2():
+                     global s
+                     expr = s
+             """);
   }
 
   // PY-21906

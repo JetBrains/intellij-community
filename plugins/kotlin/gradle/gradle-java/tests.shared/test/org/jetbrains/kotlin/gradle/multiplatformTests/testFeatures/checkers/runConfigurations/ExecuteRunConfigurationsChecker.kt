@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.*
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
@@ -50,12 +50,12 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
         return ExecuteRunConfigurationsConfiguration()
     }
 
-    override fun KotlinMppTestsContext.check() {
+    override fun KotlinSyncTestsContext.check() {
         testConfiguration.getConfiguration(ExecuteRunConfigurationsChecker)
             .functionFqNames.combineMultipleFailures { functionFqn -> checkFunction(functionFqn) }
     }
 
-    private fun KotlinMppTestsContext.checkFunction(fqn: String) {
+    private fun KotlinSyncTestsContext.checkFunction(fqn: String) {
         val actualOutput = execute(assertRunConfiguration(fqn)).joinToString("\n")
         val expectedTestDataFile = findMostSpecificExistingFileOrNewDefault(checkerClassifier = "run-output-$fqn")
 
@@ -73,7 +73,7 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
     /**
      * Executes the given [runConfiguration] and returns the output
      */
-    private fun KotlinMppTestsContext.execute(runConfiguration: RunnerAndConfigurationSettings): List<String> =
+    private fun KotlinSyncTestsContext.execute(runConfiguration: RunnerAndConfigurationSettings): List<String> =
         runBlockingWithTimeout(testConfiguration.getConfiguration(ExecuteRunConfigurationsChecker).executionTimeout) { continuation ->
             val output = mutableListOf<String>()
             val disposable = Disposer.newDisposable()
@@ -177,11 +177,11 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
         }
     }
 
-    private fun KotlinMppTestsContext.assertRunConfiguration(functionFqn: String): RunnerAndConfigurationSettings {
+    private fun KotlinSyncTestsContext.assertRunConfiguration(functionFqn: String): RunnerAndConfigurationSettings {
         return findRunConfiguration(functionFqn) ?: fail("Missing runConfiguration for '$functionFqn'")
     }
 
-    private fun KotlinMppTestsContext.findRunConfiguration(functionFqn: String): RunnerAndConfigurationSettings? {
+    private fun KotlinSyncTestsContext.findRunConfiguration(functionFqn: String): RunnerAndConfigurationSettings? {
         ThreadingAssertions.assertBackgroundThread()
         return runBlocking {
             smartReadAction(testProject) {
@@ -194,7 +194,7 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
     /**
      * Finds either the class (by fqn) or test function (by fqn) to execute the test
      */
-    private fun KotlinMppTestsContext.findTestPsiElementByFqn(fqn: String): PsiElement = runReadAction {
+    private fun KotlinSyncTestsContext.findTestPsiElementByFqn(fqn: String): PsiElement = runReadAction {
         val fqName = FqName(fqn)
         KotlinFullClassNameIndex[fqName.asString(), testProject, testProject.allScope()].apply {
             if (size == 1) return@runReadAction single()
@@ -210,5 +210,3 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
             .identifyingElement ?: fail("Missing 'identifyingElement'")
     }
 }
-
-

@@ -4,13 +4,12 @@ package com.intellij.polySymbols.impl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.match
 import com.intellij.polySymbols.utils.toCodeCompletionItems
 import com.intellij.polySymbols.utils.withMatchedName
 import com.intellij.util.SmartList
-import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import java.util.*
 
@@ -21,11 +20,11 @@ internal abstract class SearchMap<T> internal constructor(
   private val patterns: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
   private val statics: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
 
-  internal abstract fun Sequence<T>.mapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol>
+  internal abstract fun Sequence<T>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol>
 
   internal fun add(
     qualifiedName: PolySymbolQualifiedName,
-    pattern: PolySymbolsPattern?,
+    pattern: PolySymbolPattern?,
     item: T,
   ) {
     if (pattern == null) {
@@ -50,17 +49,17 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    params: PolySymbolNameMatchQueryParams,
+    stack: PolySymbolQueryStack,
   ): Sequence<PolySymbol> =
     namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY)
       .asSequence()
       .mapNotNull { statics[SearchMapEntry(qualifiedName.qualifiedKind, it)] }
       .flatMapWithQueryParameters(params)
       .map { it.withMatchedName(qualifiedName.name) }
-      .plus(collectPatternContributions(qualifiedName, params, scope))
+      .plus(collectPatternContributions(qualifiedName, params, stack))
 
-  internal fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolsListSymbolsQueryParams): Sequence<PolySymbol> =
+  internal fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolListSymbolsQueryParams): Sequence<PolySymbol> =
     statics.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true))
       .values.asSequence()
       .plus(patterns.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true)).values)
@@ -69,31 +68,31 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    params: PolySymbolCodeCompletionQueryParams,
+    stack: PolySymbolQueryStack,
   ): Sequence<PolySymbolCodeCompletionItem> =
-    collectStaticCompletionResults(qualifiedName, params, scope)
+    collectStaticCompletionResults(qualifiedName, params, stack)
       .asSequence()
-      .plus(collectPatternCompletionResults(qualifiedName, params, scope))
+      .plus(collectPatternCompletionResults(qualifiedName, params, stack))
       .distinct()
 
   private fun collectStaticCompletionResults(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    params: PolySymbolCodeCompletionQueryParams,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
     statics.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values
       .asSequence()
       .flatMapWithQueryParameters(params)
       .filter { !it.extension && params.accept(it) }
-      .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, scope) }
+      .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, stack) }
       .toList()
 
   private fun collectPatternCompletionResults(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    params: PolySymbolCodeCompletionQueryParams,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
     patterns.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values.asSequence()
@@ -101,13 +100,13 @@ internal abstract class SearchMap<T> internal constructor(
       .distinct()
       .innerMapAndFilter(params)
       .filter { !it.extension && params.accept(it) }
-      .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, scope) }
+      .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, stack) }
       .toList()
 
   private fun collectPatternContributions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    params: PolySymbolNameMatchQueryParams,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     collectPatternsToProcess(qualifiedName)
       .let {
@@ -118,7 +117,7 @@ internal abstract class SearchMap<T> internal constructor(
       }
       .innerMapAndFilter(params)
       .flatMap { rootContribution ->
-        rootContribution.match(qualifiedName.name, params, scope)
+        rootContribution.match(qualifiedName.name, params, stack)
       }
       .toList()
 
@@ -136,12 +135,12 @@ internal abstract class SearchMap<T> internal constructor(
     return toProcess
   }
 
-  private fun Sequence<T>.innerMapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol> =
+  private fun Sequence<T>.innerMapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> =
     mapAndFilter(params)
       .filterByQueryParams(params)
 
 
-  private fun Sequence<Collection<T>>.flatMapWithQueryParameters(params: PolySymbolsQueryParams): Sequence<PolySymbol> =
+  private fun Sequence<Collection<T>>.flatMapWithQueryParameters(params: PolySymbolQueryParams): Sequence<PolySymbol> =
     this.flatMap { it.asSequence().innerMapAndFilter(params) }
 
   private data class SearchMapEntry(

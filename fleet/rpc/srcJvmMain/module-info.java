@@ -4,7 +4,6 @@ module fleet.rpc {
   requires kotlinx.serialization.core;
   requires kotlinx.serialization.json;
   requires kotlin.stdlib;
-  requires kotlin.reflect;
   requires kotlinx.coroutines.core;
   requires java.net.http;
   requires org.jetbrains.annotations;

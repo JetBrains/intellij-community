@@ -15,9 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.testFramework.UsefulTestCase;
-import org.junit.Assume;
-
 /**
  * @author Ekaterina Shliakhovetskaja
  */
@@ -32,23 +29,19 @@ public class XmlWithMistakesInspectionTest extends SpellcheckerInspectionTestCas
   }
 
   public void testCharacterData() {
-    Assume.assumeFalse("This test is skipped on TeamCity", UsefulTestCase.IS_UNDER_TEAMCITY);
     doTest("test.html");
   }
 
   public void testKnownAttributes() {
-    Assume.assumeFalse("This test is skipped on TeamCity", UsefulTestCase.IS_UNDER_TEAMCITY);
     doTest("attributes.html");
   }
 
   public void testXsdEnumerations() {
-    Assume.assumeFalse("This test is skipped on TeamCity", UsefulTestCase.IS_UNDER_TEAMCITY);
     // "evenodd" is correct word in SVG, because it is known enumeration option in SVG
     doTest("enumerations.svg");
   }
 
   public void testLinkIntegrity() {
-    Assume.assumeFalse("This test is skipped on TeamCity", UsefulTestCase.IS_UNDER_TEAMCITY);
     doTest("htmlIntegrity.html");
   }
 }

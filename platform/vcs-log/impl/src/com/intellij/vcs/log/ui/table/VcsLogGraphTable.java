@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.table;
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.bookmark.BookmarksManager;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +42,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.highlighters.VcsLogCommitsHighlighter;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
@@ -713,12 +715,20 @@ public class VcsLogGraphTable extends TableWithProgress
       }
     }
     else {
-      style = createStyle(baseStyle.getForeground(),
-                          selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
-                          VcsLogHighlighter.TextStyle.BOLD);
+      int columnModelIndex = convertColumnIndexToModel(column);
+      if (VcsLogColumnManager.getInstance().getModelIndex(Commit.INSTANCE) == columnModelIndex) {
+        style = createStyle(JBColor.GRAY,
+                            selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
+                            VcsLogHighlighter.TextStyle.NORMAL);
+
+      } else {
+        style = createStyle(baseStyle.getForeground(),
+                            selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
+                            VcsLogHighlighter.TextStyle.BOLD);
+      }
     }
 
-    if (!selected && hovered) {
+    if (!selected && hovered && !AppMode.isRemoteDevHost()) {
       Color background = Objects.requireNonNull(style.getBackground());
       VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(getHoveredBackgroundColor(background));
       style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));

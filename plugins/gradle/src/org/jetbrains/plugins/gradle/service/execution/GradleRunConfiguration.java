@@ -37,12 +37,28 @@ public class GradleRunConfiguration
   private static final String DEBUG_ALL_NAME = "DebugAllEnabled";
   private static final String RUN_AS_TEST_NAME = "RunAsTest";
 
+  private static final String PROFILING_DISABLED_NAME = "GradleProfilingDisabled";
+  private static final String COVERAGE_DISABLED_NAME = "GradleCoverageDisabled";
+
   public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
   public static final Key<Boolean> RUN_AS_TEST_KEY = Key.create("RUN_AS_TEST");
   public static final Key<Boolean> IS_TEST_TASK_RERUN_KEY = Key.create("IS_TEST_TASK_RERUN");
 
   private boolean isDebugAllEnabled = false;
   private boolean isRunAsTest = false;
+
+  /**
+   * Determines if the profiler should be disabled for this run configuration.
+   * @see com.intellij.gradle.profiler.GradleProfilerStarterExtension
+   * When true, this will cause the profiling action to be hidden in the IDE unless another JavaProfilerStarterExtension accepts the run configuration.
+   */
+  private boolean isProfilingDisabled = false;
+  /**
+   * Determines if the CoverageEngine should be disabled for this run configuration.
+   * @see org.jetbrains.plugins.gradle.execution.test.runner.GradleCoverageExtension
+   * When true, this will cause the coverage action to be hidden in the IDE unless another JavaCoverageEngineExtension accepts the run configuration.
+   */
+  private boolean isCoverageDisabled = false;
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(GradleConstants.SYSTEM_ID, project, factory, name);
@@ -67,6 +83,23 @@ public class GradleRunConfiguration
     isRunAsTest = runAsTest;
     putUserData(RUN_AS_TEST_KEY, runAsTest);
     putUserData(IS_TEST_TASK_RERUN_KEY, runAsTest);
+  }
+
+
+  public boolean isProfilingDisabled() {
+    return isProfilingDisabled;
+  }
+
+  public void setProfilingDisabled(boolean profilingDisabled) {
+    this.isProfilingDisabled = profilingDisabled;
+  }
+
+  public boolean isCoverageDisabled() {
+    return isCoverageDisabled;
+  }
+
+  public void setCoverageDisabled(boolean coverageDisabled) {
+    this.isCoverageDisabled = coverageDisabled;
   }
 
   public @NotNull String getRawCommandLine() {
@@ -109,6 +142,9 @@ public class GradleRunConfiguration
       var isRunAsTest = ContainerUtil.exists(tasks, it -> !getTestPatterns(it).isEmpty());
       setRunAsTest(isRunAsTest);
     }
+
+    readExternalBoolean(element, PROFILING_DISABLED_NAME, this::setProfilingDisabled);
+    readExternalBoolean(element, COVERAGE_DISABLED_NAME, this::setCoverageDisabled);
   }
 
   @Override
@@ -116,6 +152,8 @@ public class GradleRunConfiguration
     super.writeExternal(element);
     writeExternalBoolean(element, DEBUG_ALL_NAME, isDebugAllEnabled());
     writeExternalBoolean(element, RUN_AS_TEST_NAME, isRunAsTest());
+    writeExternalBoolean(element, PROFILING_DISABLED_NAME, isProfilingDisabled());
+    writeExternalBoolean(element, COVERAGE_DISABLED_NAME, isCoverageDisabled());
   }
 
   @Override

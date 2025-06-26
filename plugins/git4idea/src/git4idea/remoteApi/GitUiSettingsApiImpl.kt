@@ -4,25 +4,25 @@ package git4idea.remoteApi
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchManager
 
 internal class GitUiSettingsApiImpl : GitUiSettingsApi {
   override suspend fun setGroupingByPrefix(projectId: ProjectId, groupByPrefix: Boolean) {
+    requireOwner()
     val project = projectId.findProjectOrNull() ?: return
-    project.service<GitBranchManager>().setGrouping(GroupingKey.GROUPING_BY_DIRECTORY, groupByPrefix)
+    GitVcsSettings.getInstance(project).setBranchGroupingSettings(GroupingKey.GROUPING_BY_DIRECTORY, groupByPrefix)
     withCurrentThreadCoroutineScope {
       saveSettingsForRemoteDevelopment(project)
     }
   }
 
   override suspend fun initBranchSyncPolicyIfNotInitialized(projectId: ProjectId) {
+    requireOwner()
     val project = projectId.findProjectOrNull() ?: return
 
     DvcsBranchSyncPolicyUpdateNotifier(project,

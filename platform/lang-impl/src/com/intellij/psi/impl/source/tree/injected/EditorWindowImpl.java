@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -648,6 +649,8 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   }
 
   @Override
+  @Nullable
+  @ApiStatus.Obsolete
   public VirtualFile getVirtualFile() {
     return myDelegate.getVirtualFile();
   }

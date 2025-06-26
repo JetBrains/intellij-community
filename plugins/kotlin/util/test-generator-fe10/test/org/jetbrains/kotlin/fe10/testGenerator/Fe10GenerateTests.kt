@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fe10.testGenerator
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
@@ -164,6 +164,7 @@ fun assembleK1Workspace(): TWorkspace = assembleWorkspace()
 
 fun generateK1Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
+    TestGenerator.writeLibrariesVersion(isUpToDateCheck)
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
 
@@ -296,6 +297,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         listOf(AbstractCoroutineDumpTest::class, AbstractK1IdeK2CodeCoroutineDumpTest::class).forEach {
             testClass(it) {
                 model("coroutines")
+            }
+        }
+
+        listOf(AbstractCoroutineViewJobHierarchyTest::class, AbstractK1IdeK2CoroutineViewTest::class).forEach {
+            testClass(it) {
+                model("coroutinesView")
             }
         }
 
@@ -1299,7 +1306,13 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractIdeLightClassesByPsiTest> {
-            model("asJava/lightClasses/lightClassByPsi", pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model(
+                "asJava/lightClasses/lightClassByPsi",
+                pattern = KT_OR_KTS_WITHOUT_DOTS,
+                excludedDirectories = listOf(
+                    "jvmExposeBoxed", // K2 feature
+                )
+            )
         }
 
         testClass<AbstractIdeCompiledLightClassesByFqNameTest> {

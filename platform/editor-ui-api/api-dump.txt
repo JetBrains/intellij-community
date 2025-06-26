@@ -1221,10 +1221,18 @@ c:com.intellij.openapi.actionSystem.AnActionEventVisitor
 - visitGestureFinishEvent(com.intellij.openapi.actionSystem.AnActionEvent):V
 - visitGestureInitEvent(com.intellij.openapi.actionSystem.AnActionEvent):V
 - visitGesturePerformedEvent(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.actionSystem.AnActionResult
-- isFailed():Z
-- isIgnored():Z
-- isPerformed():Z
+a:com.intellij.openapi.actionSystem.AnActionResult
+- f:isFailed():Z
+- f:isIgnored():Z
+- f:isPerformed():Z
+f:com.intellij.openapi.actionSystem.AnActionResult$Failed
+- com.intellij.openapi.actionSystem.AnActionResult
+- f:getCause():java.lang.Throwable
+f:com.intellij.openapi.actionSystem.AnActionResult$Ignored
+- com.intellij.openapi.actionSystem.AnActionResult
+- f:getReason():java.lang.String
+f:com.intellij.openapi.actionSystem.AnActionResult$Performed
+- com.intellij.openapi.actionSystem.AnActionResult
 c:com.intellij.openapi.actionSystem.CommonDataKeys
 - sf:CARET:com.intellij.openapi.actionSystem.DataKey
 - sf:EDITOR:com.intellij.openapi.actionSystem.DataKey

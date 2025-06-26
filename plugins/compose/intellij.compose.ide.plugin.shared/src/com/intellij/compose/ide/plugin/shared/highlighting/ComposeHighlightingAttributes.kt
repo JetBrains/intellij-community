@@ -32,5 +32,4 @@ val COMPOSABLE_CALL_TEXT_TYPE: HighlightInfoType =
   HighlightInfoType.HighlightInfoTypeImpl(
     HighlightInfoType.SYMBOL_TYPE_SEVERITY,
     COMPOSABLE_CALL_TEXT_ATTRIBUTES_KEY,
-    false,
   )

@@ -1761,4 +1761,23 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/getter.before.Main.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter")
+    public static class AddTypeAnnotationToValueParameter extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("platformType.before.Main.kt")
+        public void testPlatformType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addTypeAnnotationToValueParameter/platformType.before.Main.kt");
+        }
+    }
 }

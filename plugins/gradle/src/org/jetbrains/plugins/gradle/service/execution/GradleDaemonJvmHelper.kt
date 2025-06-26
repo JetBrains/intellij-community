@@ -40,7 +40,7 @@ object GradleDaemonJvmHelper {
   }
 
   @JvmStatic
-  fun isDamonJvmVendorCriteriaSupported(gradleVersion: GradleVersion): Boolean {
+  fun isDaemonJvmVendorCriteriaSupported(gradleVersion: GradleVersion): Boolean {
     return gradleVersion >= MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VENDOR_CRITERIA
   }
 

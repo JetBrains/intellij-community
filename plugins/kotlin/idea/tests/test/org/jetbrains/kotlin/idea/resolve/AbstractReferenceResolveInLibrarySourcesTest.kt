@@ -45,7 +45,7 @@ abstract class AbstractReferenceResolveInLibrarySourcesTest : KotlinLightCodeIns
         myFixture.performEditorAction("GotoDeclaration")
         val fileEditorManager = FileEditorManager.getInstance(myFixture.project) as FileEditorManagerEx
         val currentEditor = fileEditorManager.selectedTextEditor ?: throw AssertionFailedError("No text editor is selected")
-        val testedElementFile = currentEditor.virtualFile.getPsiFile(project)
+        val testedElementFile = currentEditor.virtualFile!!.getPsiFile(project)
         assertNotEquals(myFixture.file, testedElementFile, "There were no navigation from initial file to library made")
 
         val lineContext = InTextDirectivesUtils.findStringWithPrefixes(fileText, "CONTEXT:")

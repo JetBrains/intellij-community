@@ -583,7 +583,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertOneElement(highlightErrors());
   }
 
-  public void testWhenTypingOverWrongReferenceItsColorChangesToBlackAndOnlyAfterHighlightingFinishedItReturnsToRed() {
+  public void testWhenTypingOverWrongReferenceIncludingRightAfterTheEndAndRightBeforeStartItsColorMustStayTheRedWithoutAnyBlinking() {
     configureByText(JavaFileType.INSTANCE, """
       class S {  int f() {
           return asfsdfsdfsd<caret>;
@@ -596,9 +596,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type("xxx");
 
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightInfoType.SYMBOL_TYPE_SEVERITY, getProject());
-    for (HighlightInfo info : infos) {
-      assertNotSame(HighlightInfoType.WRONG_REF, info.type);
+    // right after typing, before the highlighting kicked in, its color must stay red
+    for (HighlightInfo info : DaemonCodeAnalyzerImpl.getHighlights(document, HighlightInfoType.SYMBOL_TYPE_SEVERITY, getProject())) {
+      if (TextRange.create(info).intersects(error)) {
+        assertSame(HighlightInfoType.WRONG_REF, info.type);
+        assertEquals("asfsdfsdfsd" + "xxx", info.getText());
+      }
+    }
+
+    getEditor().getCaretModel().moveToOffset(error.startOffset);
+    type("zzz");
+    for (HighlightInfo info : DaemonCodeAnalyzerImpl.getHighlights(document, HighlightInfoType.SYMBOL_TYPE_SEVERITY, getProject())) {
+      if (TextRange.create(info).intersects(error)) {
+        assertSame(HighlightInfoType.WRONG_REF, info.type);
+        assertEquals("zzz" + "asfsdfsdfsd" + "xxx", info.getText());
+      }
     }
 
     HighlightInfo error2 = assertOneElement(highlightErrors());

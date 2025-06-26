@@ -1,4 +1,6 @@
 <idea-plugin>
+  <module value="com.intellij.modules.xml"/>
+
   <content>
     <module name="intellij.xml.dom" loading="embedded"/>
     <module name="intellij.xml.dom.impl" loading="embedded"/>
@@ -7,6 +9,11 @@
     <module name="intellij.xml.psi" loading="embedded"/>
     <module name="intellij.xml.psi.impl" loading="embedded"/>
     <module name="intellij.xml.analysis" loading="embedded"/>
+    <module name="intellij.xml.frontback.impl" loading="embedded"/>
+    <module name="intellij.xml.parser" loading="embedded"/>
     <module name="intellij.relaxng"/>
+    <module name="intellij.xml.impl" loading="embedded"/>
+    <module name="intellij.xml.analysis.impl" loading="embedded"/>
+    <module name="intellij.libraries.xerces" loading="embedded"/>
   </content>
 </idea-plugin>

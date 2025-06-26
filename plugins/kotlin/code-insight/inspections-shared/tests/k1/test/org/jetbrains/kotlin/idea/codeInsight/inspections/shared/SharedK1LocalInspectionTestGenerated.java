@@ -1421,6 +1421,65 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred/wrongAwaitReceiver.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext")
+        public static class PreferCurrentCoroutineContextToCoroutineContext extends AbstractSharedK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("basicUsage.kt")
+            public void testBasicUsage() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/basicUsage.kt");
+            }
+
+            @TestMetadata("basicUsage_asReceiver.kt")
+            public void testBasicUsage_asReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/basicUsage_asReceiver.kt");
+            }
+
+            @TestMetadata("basicUsage_getOperator.kt")
+            public void testBasicUsage_getOperator() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/basicUsage_getOperator.kt");
+            }
+
+            @TestMetadata("coroutineScopeContext_explicitReceiver.kt")
+            public void testCoroutineScopeContext_explicitReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/coroutineScopeContext_explicitReceiver.kt");
+            }
+
+            @TestMetadata("coroutineScopeContext_implicitReceiver.kt")
+            public void testCoroutineScopeContext_implicitReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/coroutineScopeContext_implicitReceiver.kt");
+            }
+
+            @TestMetadata("noCoroutinesDependency.kt")
+            public void testNoCoroutinesDependency() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/noCoroutinesDependency.kt");
+            }
+
+            @TestMetadata("qualifiedUsage.kt")
+            public void testQualifiedUsage() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/qualifiedUsage.kt");
+            }
+
+            @TestMetadata("qualifiedUsage_asReceiver.kt")
+            public void testQualifiedUsage_asReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/qualifiedUsage_asReceiver.kt");
+            }
+
+            @TestMetadata("qualifiedUsage_getOperator.kt")
+            public void testQualifiedUsage_getOperator() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/qualifiedUsage_getOperator.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

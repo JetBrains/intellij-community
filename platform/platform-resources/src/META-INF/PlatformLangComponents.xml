@@ -6,6 +6,7 @@
     <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
     <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier"/>
     <extensionPoint name="noProjectStateHandler" interface="com.intellij.openapi.wm.ex.NoProjectStateHandler"/>
+    <extensionPoint name="welcomeScreenProjectProvider" interface="com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -20,8 +21,6 @@
       serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
       headlessImplementation="com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver"
     />
-    <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
-                        serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
     <!-- no preload="await" - requested by DaemonListeners -->
@@ -95,6 +94,8 @@
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.ClientCurrentEditorProvider"
                         client="remote"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator"
+                        serviceImplementation="com.intellij.openapi.fileEditor.impl.CompositeTabIconHolderCreatorImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"

@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.context.impl
 
-import com.intellij.util.SmartList
 import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.PolyContextKindRules
+import com.intellij.util.SmartList
 import java.util.Collections.unmodifiableList
 
 class PolyContextKindRulesBuilderImpl : PolyContextKindRules.Builder {
@@ -101,10 +101,10 @@ private data class EnablementRulesData(
   override val projectToolExecutables: List<String>,
   override val fileExtensions: List<String>,
   override val ideLibraries: List<String>,
-  override val fileNamePatterns: List<Regex>
+  override val fileNamePatterns: List<Regex>,
 ) : PolyContextKindRules.EnablementRules
 
 private data class DisablementRulesData(
   override val fileExtensions: List<String>,
-  override val fileNamePatterns: List<Regex>
+  override val fileNamePatterns: List<Regex>,
 ) : PolyContextKindRules.DisablementRules

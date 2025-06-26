@@ -63,7 +63,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
   @Override
   public void install(@NotNull String requirementString) throws ExecutionException {
-    install(Collections.singletonList(parseRequirement(requirementString)), Collections.emptyList());
+    install(Collections.singletonList(PyRequirementParser.fromLine(requirementString)), Collections.emptyList());
   }
 
   @Override

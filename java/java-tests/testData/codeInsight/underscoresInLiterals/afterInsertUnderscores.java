@@ -1,4 +1,4 @@
-// "Fix all 'Unreadable numeric literal' problems in file" "true"
+// "Fix all 'Numeric literal can use underscore separators' problems in file" "true"
 
 class C {
   int c = 299_792_000;

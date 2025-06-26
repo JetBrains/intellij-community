@@ -68,6 +68,10 @@ public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrain
 	public fun with (Lorg/jetbrains/jewel/ui/ComponentStyling;)Lorg/jetbrains/jewel/ui/ComponentStyling;
 }
 
+public final class org/jetbrains/jewel/ui/DisabledAppearanceKt {
+	public static final fun disabledAppearance (Landroidx/compose/ui/Modifier;IIILandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+}
+
 public final class org/jetbrains/jewel/ui/DisabledColorFilterKt {
 	public static final fun disabled (Landroidx/compose/ui/graphics/ColorFilter$Companion;)Landroidx/compose/ui/graphics/ColorFilter;
 }
@@ -999,7 +1003,7 @@ public final class org/jetbrains/jewel/ui/component/TabState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/TabStripKt {
-	public static final fun TabStrip (Ljava/util/List;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun TabStrip (Ljava/util/List;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TabStripState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
@@ -2925,6 +2929,15 @@ public final class org/jetbrains/jewel/ui/component/styling/TextFieldStylingKt {
 	public static final fun getLocalTextFieldStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
+public final class org/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior : java/lang/Enum {
+	public static final field Long Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+	public static final field Never Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+	public static final field Normal Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+	public static fun values ()[Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+}
+
 public final class org/jetbrains/jewel/ui/component/styling/TooltipColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TooltipColors$Companion;
@@ -2967,7 +2980,9 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle$Companion;
 	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TooltipColors;Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TooltipColors;Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAutoHideBehavior ()Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/TooltipColors;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
 	public fun hashCode ()I

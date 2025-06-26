@@ -1,0 +1,9 @@
+import java.util.concurrent.ConcurrentHashMap
+
+// WITH_STDLIB
+// PROBLEM: Java collection 'ConcurrentHashMap' is parameterized with nullable types
+// FIX: Replace nullable type(s) with non-nullable
+
+typealias Foo = String?
+
+val queue1 = ConcurrentHashMap<String?, Foo<caret>>()

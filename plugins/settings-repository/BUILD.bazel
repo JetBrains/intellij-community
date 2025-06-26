@@ -56,6 +56,7 @@ jvm_library(
 ### auto-generated section `build intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -68,7 +69,6 @@ jvm_library(
     "//platform/credential-store",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
@@ -94,7 +94,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "settingsRepository-tests_test",
   runtime_deps = [":settingsRepository-tests_test_lib"]
 )

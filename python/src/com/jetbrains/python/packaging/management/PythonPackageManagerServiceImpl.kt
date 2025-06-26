@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
-import com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +26,7 @@ internal class PythonPackageManagerServiceImpl(private val serviceScope: Corouti
 
     return cache.computeIfAbsent(cacheKey) {
       val createdSdk = PythonPackageManagerProvider.EP_NAME.extensionList.firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
-      PythonRequirementTxtUtils.migrateRequirementsTxtPathFromModuleToSdk(project, sdk)
+      PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModuleToSdk(project, sdk)
       createdSdk
     }
   }

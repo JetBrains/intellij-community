@@ -31,6 +31,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.writeText
+import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
@@ -60,12 +61,13 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent,
-      TerminalCommandStartedEvent("pwd"),
-      TerminalCommandFinishedEvent("pwd", 0, cwd),
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent,
+      TerminalAliasesReceivedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class,
+      TerminalCommandStartedEvent::class,
+      TerminalCommandFinishedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class,
     )
 
     assertSameEvents(shellIntegrationEvents, expectedEvents, events)
@@ -81,10 +83,11 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent,
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent
+      TerminalAliasesReceivedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class
     )
 
     assertSameEvents(shellIntegrationEvents, expectedEvents, events)
@@ -111,10 +114,11 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent,
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent
+      TerminalAliasesReceivedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class
     )
 
     assertSameEvents(shellIntegrationEvents, expectedEvents, events)
@@ -145,17 +149,18 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
+      TerminalAliasesReceivedEvent::class,
       // Initialization
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class,
       // Bind command execution
-      TerminalCommandStartedEvent(bindCommand),
-      TerminalCommandFinishedEvent(bindCommand, 0, cwd),
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent,
+      TerminalCommandStartedEvent::class,
+      TerminalCommandFinishedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class,
       // Prompt redraw after completion
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class
     )
 
     assertSameEvents(shellIntegrationEvents, expectedEvents, events)
@@ -170,10 +175,11 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent,
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent
+      TerminalAliasesReceivedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class,
+      TerminalPromptStartedEvent::class,
+      TerminalPromptFinishedEvent::class
     )
 
     assertSameEvents(shellIntegrationEvents, expectedEvents, events)
@@ -450,7 +456,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   private fun assertSameEvents(
     actual: List<TerminalOutputEvent>,
-    expected: List<TerminalOutputEvent>,
+    expected: List<KClass<out TerminalShellIntegrationEvent>>,
     eventsToLog: List<TerminalOutputEvent>,
   ) {
     fun List<TerminalOutputEvent>.asString(): String {
@@ -460,16 +466,16 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val errorMessage = {
       """
         |Expected:
-        |${expected.asString()}
+        |${expected}
         |-------------------------------------------------------------
         |But was:
-        |${actual.asString()}
+        |${actual.map { it::class }}
         |-------------------------------------------------------------
         |${dumpTerminalState(eventsToLog)}
       """.trimMargin()
     }
 
-    assertThat(actual)
+    assertThat(actual.map { it::class })
       .overridingErrorMessage(errorMessage)
       .isEqualTo(expected)
   }

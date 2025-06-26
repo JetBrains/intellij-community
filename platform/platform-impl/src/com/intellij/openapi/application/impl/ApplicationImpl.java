@@ -50,6 +50,7 @@ import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvi
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -168,8 +169,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   private final @Nullable Disposable myLastDisposable;  // the last to be disposed
 
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
-
-  private static final ThreadLocal<Boolean> isForcedWriteAction = ThreadLocal.withInitial(() -> false);
 
   private static final LegacyProgressIndicatorProvider myLegacyIndicatorProvider = () -> {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -743,7 +742,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         return null;
       }
 
-      stopServicePreloading();
+      try {
+        stopServicePreloading();
+      }
+      catch (Throwable t) {
+        logErrorDuringExit("Failed to stop service preloading", t);
+      }
 
       try {
         lifecycleListener.beforeAppWillBeClosed(restart);
@@ -762,10 +766,15 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         }
       }
 
-      if (isInstantShutdownPossible()) {
-        for (Frame frame : Frame.getFrames()) {
-          frame.setVisible(false);
+      try {
+        if (isInstantShutdownPossible()) {
+          for (Frame frame : Frame.getFrames()) {
+            frame.setVisible(false);
+          }
         }
+      }
+      catch (Throwable e) {
+        logErrorDuringExit("Failed to instant shutdown the frames", e);
       }
 
       try {
@@ -775,7 +784,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         logErrorDuringExit("Failed to invoke lifecycle listeners", t);
       }
 
-      LifecycleUsageTriggerCollector.onIdeClose(restart);
+      try {
+        LifecycleUsageTriggerCollector.onIdeClose(restart);
+      }
+      catch (Throwable e) {
+        logErrorDuringExit("Failed to notify usage collector", e);
+      }
 
       boolean success = true;
       ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
@@ -856,8 +870,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   private boolean isInstantShutdownPossible() {
-    InstantShutdown instantShutdown = Objects.requireNonNull(getService(InstantShutdown.class));
-    return instantShutdown.isAllowed() && !ProgressManager.getInstance().hasProgressIndicator();
+    return InstantShutdown.isAllowed() && !ProgressManager.getInstance().hasProgressIndicator();
   }
 
   private @NotNull CompletableFuture<@NotNull ProgressWindow> createProgressWindowAsyncIfNeeded(
@@ -1054,11 +1067,18 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     @NotNull Consumer<? super @Nullable ProgressIndicator> action
   ) {
     return lock.runWriteAction(action.getClass(), () -> {
-      var indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-      indicator.runInSwingThread(() -> {
+      if (JBUIScale.isInitialized()) {
+        var indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+        indicator.runInSwingThread(() -> {
+          action.accept(indicator);
+        });
+        return !indicator.isCanceled();
+      }
+      else {
+        var indicator = new EmptyProgressIndicator();
         action.accept(indicator);
-      });
-      return !indicator.isCanceled();
+        return !indicator.isCanceled();
+      }
     });
   }
 
@@ -1076,10 +1096,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public void runWriteAction(@NotNull Runnable action) {
     checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
-    if (isForcedWriteAction.get()) {
-      action.run();
-      return;
-    }
     try {
       getThreadingSupport().runWriteAction(action.getClass(), runnableUnitFunction(action));
     }
@@ -1092,9 +1108,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
     checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
-    if (isForcedWriteAction.get()) {
-      return computation.compute();
-    }
     try {
       return getThreadingSupport().runWriteAction(computation.getClass(), computation::compute);
     }
@@ -1107,9 +1120,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
-    if (isForcedWriteAction.get()) {
-      return computation.compute();
-    }
     try {
       return getThreadingSupport().runWriteAction(computation.getClass(), rethrowCheckedExceptions(computation));
     }
@@ -1242,7 +1252,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return isForcedWriteAction.get() || getThreadingSupport().isWriteAccessAllowed();
+    return getThreadingSupport().isWriteAccessAllowed();
   }
 
   @Override
@@ -1506,23 +1516,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public void invokeAndWaitWithTransferredWriteAction(Runnable runnable) throws Throwable {
     assert isWriteAccessAllowed() : "Transferring of write action is permitted only if write lock is acquired";
     assert !EDT.isCurrentThreadEdt() : "Transferring of write action is permitted only on background thread";
-    try {
-      EventQueue.invokeAndWait(new SuvorovProgress.ForcedWriteActionRunnable() {
-        @Override
-        public void run() {
-          boolean currentValue = isForcedWriteAction.get();
-          isForcedWriteAction.set(true);
-          try {
-            ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(runnable);
-          }
-          finally {
-            isForcedWriteAction.set(currentValue);
-          }
-        }
-      });
-    }
-    catch (InvocationTargetException e) {
-      throw e.getTargetException();
+    Ref<Throwable> exceptionRef = Ref.create();
+    getThreadingSupport().transferWriteActionAndBlock(toRun -> {
+      try {
+        EventQueue.invokeAndWait(toRun);
+        return Unit.INSTANCE;
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+      catch (InvocationTargetException e) {
+        exceptionRef.set(e.getCause());
+        return Unit.INSTANCE;
+      }
+    }, () -> {
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(runnable);
+    });
+    if (!exceptionRef.isNull()) {
+      throw exceptionRef.get();
     }
   }
 }

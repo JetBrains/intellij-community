@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectModel.poetry
 
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.projectModel.ExternalProject
 import com.jetbrains.python.projectModel.ExternalProjectDependency
 import com.jetbrains.python.projectModel.ExternalProjectGraph
@@ -21,6 +22,8 @@ data class PoetryProject(
 ) : ExternalProject {
   override val sourceRoots: List<Path>
     get() = listOfNotNull((root / "src").takeIf { it.isDirectory() })
+  override val excludedRoots: List<Path>
+    get() = emptyList()
 
   // Poetry projects don't have any declarative hierarchical structure
   override val fullName: String? 
@@ -30,11 +33,11 @@ data class PoetryProject(
 @OptIn(ExperimentalPathApi::class)
 object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
   override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph<PoetryProject>? {
-    if (!root.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
+    if (!root.resolve(PY_PROJECT_TOML).exists()) {
       return null
     }
     val poetryProjects = root.walk()
-      .filter { it.name == PoetryConstants.PYPROJECT_TOML }
+      .filter { it.name == PY_PROJECT_TOML }
       .mapNotNull(::readPoetryPyProjectToml)
       .toList()
     if (poetryProjects.isNotEmpty()) {
@@ -70,7 +73,7 @@ object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
         if (match == null) return@mapNotNull null
         val (depName, depUri) = match.destructured
         val depPath = runCatching { Path.of(URI(depUri)) }.getOrNull() ?: return@mapNotNull null
-        if (!depPath.isDirectory() || !depPath.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
+        if (!depPath.isDirectory() || !depPath.resolve(PY_PROJECT_TOML).exists()) {
           return@mapNotNull null
         }
         return@mapNotNull depName to depPath
@@ -82,7 +85,7 @@ object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
       .mapNotNull { (depName, depSpec) ->
         if (depSpec !is TomlTable || depSpec.getBoolean("develop") != true) return@mapNotNull null
         val depPath = depSpec.getString("path")?.let { pyprojectTomlPath.parent.resolve(it).normalize() }
-        if (depPath == null || !depPath.isDirectory() || !depPath.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
+        if (depPath == null || !depPath.isDirectory() || !depPath.resolve(PY_PROJECT_TOML).exists()) {
           return@mapNotNull null
         }
         return@mapNotNull depName to depPath

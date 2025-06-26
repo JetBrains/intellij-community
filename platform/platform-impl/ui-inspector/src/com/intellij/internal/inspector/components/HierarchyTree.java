@@ -361,7 +361,9 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     }
 
     public void runAccessibilityAudit() {
-      accessibilityAudit.runAccessibilityTests(myAccessible);
+      if (myAccessible != null || myComponent != null) {
+        accessibilityAudit.runAccessibilityTests(myAccessible);
+      }
     }
 
     public void clearAccessibilityAuditResult() {

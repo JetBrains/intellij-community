@@ -1,5 +1,6 @@
 ### auto-generated section `build kotlin.idea.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -24,15 +25,18 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/ide-core-impl",
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/refactoring",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
@@ -203,7 +207,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )

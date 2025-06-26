@@ -9,21 +9,16 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.refactoring.impl.PolySymbolDelegatedRenameTargetImpl
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.search.impl.PolySymbolDelegatedSearchTargetImpl
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.util.containers.Stack
 import javax.swing.Icon
 
-interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolsScope {
+interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
 
   val delegate: T
 
@@ -33,7 +28,7 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolsScope {
     get() = delegate.origin
   override val qualifiedKind: PolySymbolQualifiedKind
     get() = delegate.qualifiedKind
-  override val queryScope: List<PolySymbolsScope>
+  override val queryScope: List<PolySymbolScope>
     get() = delegate.queryScope
   override val name: String
     get() = delegate.name
@@ -43,16 +38,10 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolsScope {
     get() = delegate.apiStatus
   override val modifiers: Set<PolySymbolModifier>
     get() = delegate.modifiers
-  override val accessModifier: PolySymbolAccessModifier?
-    get() = delegate.accessModifier
   override val extension: Boolean
     get() = delegate.extension
-  override val required: Boolean?
-    get() = delegate.required
   override val priority: PolySymbol.Priority?
     get() = delegate.priority
-  override val pattern: PolySymbolsPattern?
-    get() = delegate.pattern
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     delegate[property]
@@ -65,30 +54,30 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolsScope {
 
   override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    params: PolySymbolNameMatchQueryParams,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
-    (delegate as? PolySymbolsScope)?.getMatchingSymbols(qualifiedName, params, scope)
+    (delegate as? PolySymbolScope)?.getMatchingSymbols(qualifiedName, params, stack)
     ?: emptyList()
 
   override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
-    params: PolySymbolsListSymbolsQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    params: PolySymbolListSymbolsQueryParams,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
-    (delegate as? PolySymbolsScope)?.getSymbols(qualifiedKind, params, scope)
+    (delegate as? PolySymbolScope)?.getSymbols(qualifiedKind, params, stack)
     ?: emptyList()
 
   override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    params: PolySymbolCodeCompletionQueryParams,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
-    (delegate as? PolySymbolsScope)?.getCodeCompletions(qualifiedName, params, scope)
+    (delegate as? PolySymbolScope)?.getCodeCompletions(qualifiedName, params, stack)
     ?: emptyList()
 
   override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-    (delegate as? PolySymbolsScope)?.isExclusiveFor(qualifiedKind)
+    (delegate as? PolySymbolScope)?.isExclusiveFor(qualifiedKind)
     ?: false
 
   override val searchTarget: PolySymbolSearchTarget?
@@ -106,7 +95,7 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolsScope {
   override fun createPointer(): Pointer<out PolySymbolDelegate<T>>
 
   override fun getModificationCount(): Long =
-    (delegate as? PolySymbolsScope)?.modificationCount ?: 0
+    (delegate as? PolySymbolScope)?.modificationCount ?: 0
 
   companion object {
 

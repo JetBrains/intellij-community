@@ -4,7 +4,7 @@ class Test {
 
   public void test(int... <warning descr="Parameter 'a' is never used">a</warning>){}
 
-  public static void main(String[] args) {
+  public static void main() {
     new Test().test<error descr="Ambiguous method call: both 'Test.test(String...)' and 'Test.test(int...)' match">()</error>;
   }
 }

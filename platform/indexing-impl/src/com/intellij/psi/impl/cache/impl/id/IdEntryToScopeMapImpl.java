@@ -171,7 +171,8 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
 
   ByteArraySequence ensureSerializedDataCached() {
     if (serializedData == null) {
-      UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream();
+      int estimatedBufferSize = estimatedBufferSize(size());
+      UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream(estimatedBufferSize);
       try (DataOutputStream dos = new DataOutputStream(stream)) {
         writeTo(this, dos);
       }
@@ -216,35 +217,44 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
     // be stored with diff-compression, which is significant space reduction especially with long lists
     // (resulting binary format is fully compatible with that default InputMapExternalizer produces)
 
-    Int2ObjectMap<IntSet> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
+    //Use IntList instead of IntSet because hashes are originally keys in the map, so they guaranteed to be unique
+
+    Int2ObjectMap<IntList> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
     idToScopeMap.forEach((idHash, scopeMask) -> {
-      scopeMaskToHashes.computeIfAbsent(scopeMask, __ -> new IntOpenHashSet()).add(idHash);
+      IntList idHashes = scopeMaskToHashes.computeIfAbsent(scopeMask, __ -> new IntArrayList());
+      idHashes.add(idHash);
       return true;
     });
 
-    //MAYBE RC: use IntArrayList() instead of IntOpenHashSet() -- we sort the resulting set anyway, so we could
-    //          very well skip duplicates after the sort, in O(N)
     for (int scopeMask : scopeMaskToHashes.keySet()) {
       out.writeByte(scopeMask & UsageSearchContext.ANY);
 
-      IntSet idHashes = scopeMaskToHashes.get(scopeMask);
+      IntList idHashes = scopeMaskToHashes.get(scopeMask);
       int hashesCount = idHashes.size();
       if (hashesCount == 0) {
         throw new IllegalStateException("hashesCount(scope: " + scopeMask + ")(=" + hashesCount + ") must be > 0");
       }
-
-      int[] buffer = intsArrayPool.getBuffer(hashesCount);
-      idHashes.toArray(buffer);
-      save(out, buffer, hashesCount);
+      save(out, idHashes);
     }
   }
 
   /** BEWARE: idHashes is _modified_ (sorted) during the method call */
   private static void save(DataOutput out,
-                           int[] idHashes,
-                           int size) throws IOException {
-    Arrays.sort(idHashes, 0, size);
-    DataInputOutputUtil.writeDiffCompressed(out, idHashes, size);
+                           IntList idHashes) throws IOException {
+    idHashes.sort(null);
+    DataInputOutputUtil.writeDiffCompressed(out, idHashes);
+  }
+
+  /** @return estimated size of the serialized form of the map with given size */
+  private static int estimatedBufferSize(int size) {
+    //serialized form:
+    //  <size:varint> (<scopeMask:byte> <idHashes.count: varint> <idHashes:diff-compressed>)[scopeMasks.count]
+
+    int averageScopeMasksCount = 5;//see UsageSearchContext.*
+    int averageVarintSize = 2;     //assume average varint size is 2 bytes
+    int estimatedSize = (1 + averageScopeMasksCount + size) * averageVarintSize
+                        + averageScopeMasksCount;
+    return Math.max(estimatedSize, 32);
   }
 
 
@@ -301,7 +311,6 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
         }
       }
     }
-
   }
 
   private static Int2IntOpenHashMapWithFastMergeInt compactCopyOf(@NotNull Map<IdIndexEntry, Integer> toCopy) {

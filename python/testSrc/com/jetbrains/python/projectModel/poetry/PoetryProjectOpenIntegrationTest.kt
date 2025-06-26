@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.testFramework.fixtures.multiProjectFi
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,7 +27,7 @@ class PoetryProjectOpenIntegrationTest {
   fun `project with top-level legacy pyproject-toml is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
 
-    projectPath.createFile("pyproject.toml").writeText("""
+    projectPath.createFile(PY_PROJECT_TOML).writeText("""
       [tool.poetry]
       name = "project"
     """.trimIndent())
@@ -41,7 +42,7 @@ class PoetryProjectOpenIntegrationTest {
   @Test
   fun `project with top-level PEP-621 pyproject-toml without tool-poetry table is not automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
-    projectPath.createFile("pyproject.toml").writeText("""
+    projectPath.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "project"
     """.trimIndent())
@@ -57,7 +58,7 @@ class PoetryProjectOpenIntegrationTest {
   fun `project with top-level PEP-621 pyproject-toml containing tool-poetry table is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     
-    projectPath.createFile("pyproject.toml").writeText("""
+    projectPath.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "project"
       
@@ -78,7 +79,7 @@ class PoetryProjectOpenIntegrationTest {
     
     projectPath.createFile("poetry.lock").writeText("""""")
 
-    projectPath.createFile("pyproject.toml").writeText("""
+    projectPath.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "project"
     """.trimIndent())

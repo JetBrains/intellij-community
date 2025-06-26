@@ -11,23 +11,24 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionPoint
+import com.intellij.polySymbols.html.HtmlSymbolMatchCustomizer
 import com.intellij.polySymbols.query.impl.CustomElementsManifestMockScopeImpl
-import com.intellij.polySymbols.query.impl.PolySymbolsMockQueryExecutorFactory
+import com.intellij.polySymbols.query.impl.PolySymbolMockQueryExecutorFactory
 import com.intellij.polySymbols.query.impl.WebTypesMockScopeImpl
-import com.intellij.polySymbols.webTypes.filters.PolySymbolsMatchPrefixFilter
-import com.intellij.polySymbols.webTypes.impl.PolySymbolsFilterEP
+import com.intellij.polySymbols.webTypes.filters.PolySymbolMatchPrefixFilter
+import com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP
 import java.io.File
 
 abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
 
   abstract val testPath: String
 
-  val polySymbolsQueryExecutorFactory: PolySymbolsQueryExecutorFactory get() = service()
+  val polySymbolQueryExecutorFactory: PolySymbolQueryExecutorFactory get() = service()
 
   override fun setUp() {
     super.setUp()
     val application = MockApplication.setUp(testRootDisposable)
-    application.registerService(PolySymbolsQueryExecutorFactory::class.java, PolySymbolsMockQueryExecutorFactory())
+    application.registerService(PolySymbolQueryExecutorFactory::class.java, PolySymbolMockQueryExecutorFactory())
     application.registerService(ClientDocumentationSettings::class.java, LocalDocumentationSettings())
     application.extensionArea.registerExtensionPoint(
       "com.intellij.polySymbols.webTypes.filter",
@@ -47,23 +48,32 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       ExtensionPoint.Kind.BEAN_CLASS,
       true
     )
+    application.extensionArea.registerExtensionPoint(
+      "com.intellij.polySymbols.matchCustomizerFactory",
+      PolySymbolMatchCustomizerFactory::class.java.name,
+      ExtensionPoint.Kind.INTERFACE,
+      true
+    )
     val mockPluginDescriptor = DefaultPluginDescriptor(PluginId.getId("mock"),
-                                                       PolySymbolsMatchPrefixFilter::class.java.classLoader)
-    application.extensionArea.getExtensionPoint<PolySymbolsFilterEP>("com.intellij.polySymbols.webTypes.filter")
+                                                       PolySymbolMatchPrefixFilter::class.java.classLoader)
+    application.extensionArea.getExtensionPoint<PolySymbolFilterEP>("com.intellij.polySymbols.webTypes.filter")
       .registerExtension(
-        PolySymbolsFilterEP().also {
+        PolySymbolFilterEP().also {
           it.name = "match-prefix"
           it.implementation = "com.intellij.polySymbols.webTypes.filters.PolySymbolsMatchPrefixFilter"
           it.pluginDescriptor = mockPluginDescriptor
         },
         mockPluginDescriptor, testRootDisposable)
 
+    application.extensionArea.getExtensionPoint<PolySymbolMatchCustomizerFactory>("com.intellij.polySymbols.matchCustomizerFactory")
+      .registerExtension(HtmlSymbolMatchCustomizer.Factory(), testRootDisposable)
+
   }
 
   fun registerFiles(framework: String?, webTypes: List<String>, customElementManifests: List<String>) {
-    framework?.let { (polySymbolsQueryExecutorFactory as PolySymbolsMockQueryExecutorFactory).context[KIND_FRAMEWORK] = it }
+    framework?.let { (polySymbolQueryExecutorFactory as PolySymbolMockQueryExecutorFactory).context[KIND_FRAMEWORK] = it }
     if (webTypes.isNotEmpty()) {
-      polySymbolsQueryExecutorFactory.addScope(WebTypesMockScopeImpl(testRootDisposable).also { scope ->
+      polySymbolQueryExecutorFactory.addScope(WebTypesMockScopeImpl(testRootDisposable).also { scope ->
         webTypes.forEach { file ->
           scope.registerFile(File(testPath, "../$file.web-types.json").takeIf { it.exists() }
                              ?: File(testPath, "../../common/$file.web-types.json"))
@@ -71,7 +81,7 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       }, null, testRootDisposable)
     }
     if (customElementManifests.isNotEmpty()) {
-      polySymbolsQueryExecutorFactory.addScope(CustomElementsManifestMockScopeImpl(testRootDisposable).also { scope ->
+      polySymbolQueryExecutorFactory.addScope(CustomElementsManifestMockScopeImpl(testRootDisposable).also { scope ->
         customElementManifests.forEach { file ->
           scope.registerFile(File(testPath, "../$file.custom-elements-manifest.json").takeIf { it.exists() }
                              ?: File(testPath, "../../common/$file.custom-elements-manifest.json"))

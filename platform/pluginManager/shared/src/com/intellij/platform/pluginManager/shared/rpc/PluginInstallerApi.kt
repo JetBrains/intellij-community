@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun unloadDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean
-  suspend fun uninstallDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean
+  suspend fun uninstallDynamicPlugin(sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean
   suspend fun deletePluginFiles(pluginId: PluginId)
   suspend fun performUninstall(sessionId: String, id: PluginId): Boolean
   suspend fun performInstallOperation(installPluginRequest: InstallPluginRequest): InstallPluginResult

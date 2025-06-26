@@ -9,10 +9,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.eel.impl.provider.EelNioBridgeServiceImpl
 import com.intellij.platform.eel.provider.EelInitialization
-import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
+import com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend
 import com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager
 import com.intellij.platform.ide.impl.wsl.WslEelProvider
 import com.intellij.platform.util.coroutines.childScope
@@ -32,8 +32,8 @@ fun replaceProductionWslIjentManager(newServiceScope: CoroutineScope) {
 
 suspend fun replaceWslServicesAndRunWslEelInitialization(newServiceScope: CoroutineScope, wsl: WSLDistribution) {
   replaceProductionWslIjentManager(newServiceScope)
-  replaceService(EelNioBridgeService::class.java, ::EelNioBridgeServiceImpl, newServiceScope)
-  replaceExtension(newServiceScope, EelProvider.EP_NAME, WslEelProvider(newServiceScope))
+  replaceExtension(newServiceScope, MultiRoutingFileSystemBackend.EP_NAME, EelWslMrfsBackend(newServiceScope))
+  replaceExtension(newServiceScope, EelProvider.EP_NAME, WslEelProvider())
   EelInitialization.runEelInitialization(wsl.getUNCRootPath().toString())
 }
 

@@ -139,7 +139,8 @@ internal class GradleServerEnvironmentSetupImpl(
     val remoteEnvironment = request.prepareEnvironment(progressIndicator)
     targetEnvironment = remoteEnvironment
     EP.forEachExtensionSafe {
-      it.handleCreatedTargetEnvironment(remoteEnvironment, this, progressIndicator)
+      it.handleCreatedTargetEnvironment(remoteEnvironment, this)
+      progressIndicator.checkCanceled()
     }
     if (prepareTaskState) {
       val taskStateInitScript = connection.parameters.taskState?.handleCreatedTargetEnvironment(remoteEnvironment, progressIndicator)
@@ -297,10 +298,11 @@ internal class GradleServerEnvironmentSetupImpl(
   private fun prepareTargetEnvironmentRequest(request: TargetEnvironmentRequest,
                                               consumerOperationParameters: ConsumerOperationParameters,
                                               environmentConfiguration: TargetEnvironmentConfiguration,
-                                              progressIndicator: TargetProgressIndicator): List<Pair<String, TargetValue<String>?>> {
+                                              progressIndicator: GradleServerProgressIndicator): List<Pair<String, TargetValue<String>?>> {
     val targetArguments = requestFileArgumentsUpload(request, consumerOperationParameters, environmentConfiguration)
     EP.forEachExtensionSafe {
-      it.prepareTargetEnvironmentRequest(request, this, progressIndicator)
+      it.prepareTargetEnvironmentRequest(request, this)
+      progressIndicator.checkCanceled()
     }
     if (prepareTaskState) {
       connection.parameters.taskState?.prepareTargetEnvironmentRequest(request, progressIndicator)

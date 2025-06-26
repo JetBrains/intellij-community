@@ -39,6 +39,7 @@ fun KtCallableDeclaration.findAllOverridings(searchScope: SearchScope = runReadA
     return findAllOverridings(withFullHierarchy = false, searchScope)
 }
 
+@RequiresBackgroundThread(generateAssertion = false)
 fun KtCallableDeclaration.hasAnyOverridings(): Boolean =
     CachedValuesManager.getCachedValue(this) {
         val hasAnyInheritors = findAllOverridings().firstOrNull() != null

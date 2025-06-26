@@ -1,6 +1,5 @@
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
@@ -8,7 +7,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.poetry.quickFixes.PoetryAssociationQuickFix
-import com.jetbrains.python.sdk.poetry.quickFixes.PoetryInstallQuickFix
 import org.jdom.Element
 import javax.swing.Icon
 
@@ -33,11 +31,6 @@ class PoetrySdkProvider : PySdkProvider {
       return PyInterpreterInspectionQuickFixData(PoetryAssociationQuickFix(), message)
     }
     return null
-  }
-
-  override fun createInstallPackagesQuickFix(module: Module): LocalQuickFix? {
-    val sdk = PythonSdkUtil.findPythonSdk(module) ?: return null
-    return if (sdk.isPoetry) PoetryInstallQuickFix() else null
   }
 
   override fun getSdkAdditionalText(sdk: Sdk): String? = if (sdk.isPoetry) sdk.versionString else null

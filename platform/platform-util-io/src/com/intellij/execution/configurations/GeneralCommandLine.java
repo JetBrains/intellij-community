@@ -15,7 +15,6 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.platform.eel.EelApi;
-import com.intellij.platform.eel.provider.EelNioBridgeService;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.EnvironmentUtil;
@@ -399,10 +398,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     try {
-      var commands = myProcessCreator != null || tryGetEel() != null
-                     ? ContainerUtil.concat(List.of(myExePath), myProgramParams.getList())
-                     : validateAndPrepareCommandLineForLocalRun();
-      var process = startProcess(commands);
+      var process = startProcess();
       String pidString = null;
       if (LOG.isDebugEnabled()) {
         try {
@@ -424,6 +420,16 @@ public class GeneralCommandLine implements UserDataHolder {
       }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.OverrideOnly
+  protected @NotNull Process startProcess() throws ExecutionException, IOException {
+    var commands = myProcessCreator != null || tryGetEel() != null
+                   ? ContainerUtil.concat(List.of(myExePath), myProgramParams.getList())
+                   : validateAndPrepareCommandLineForLocalRun();
+    var process = startProcess(commands);
+    return process;
   }
 
   /**
@@ -467,11 +473,6 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     final var exePath = Path.of(exe);
-
-    if (ApplicationManager.getApplication().getServiceIfCreated(EelNioBridgeService.class) == null) {
-      // some distributions of the IDE do not include `PlatformExtensions.xml`
-      return null;
-    }
 
     // IJPL-177172: do not use eel for absolute Windows paths (e.g., C:\...).
     // Fallback to the legacy WSL behavior where a local exe is executed in a remote working directory.

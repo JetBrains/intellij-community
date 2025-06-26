@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -13,12 +15,17 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexImpl;
 import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
@@ -35,6 +42,8 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
   private volatile TopLevelFQNames myTopLevelFQNames;
   private volatile TopLevelFQNames myTopLevelScriptFQNames;
 
+  private static final Key<CachedValue<TopLevelFQNames>> TOP_LEVEL_FQNAMES_KEY = Key.create("TOP_LEVEL_FQNAMES");
+
   public GroovyShortNamesCache(Project project) {
     myProject = project;
   }
@@ -45,6 +54,17 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   private @Nullable TopLevelFQNames getTopLevelNames() {
+    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, TOP_LEVEL_FQNAMES_KEY, () -> {
+      TopLevelFQNames topLevelFQNames = calculateTopLevelNames();
+      return CachedValueProvider.Result.create(
+        topLevelFQNames,
+        ProjectRootManager.getInstance(myProject),
+        PsiModificationTracker.getInstance(myProject).forLanguage(GroovyLanguage.INSTANCE)
+      );
+    }, false);
+  }
+
+  private @Nullable TopLevelFQNames calculateTopLevelNames() {
     TopLevelFQNames topLevelFQNames = myTopLevelFQNames;
     StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
     long timestamp = stubIndex.getIndexModificationStamp(GrFullClassNameStringIndex.KEY, myProject) +

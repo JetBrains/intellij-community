@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class NonIndexableTestEntityImpl(private val dataSource: NonIndexableTestEntityData) : NonIndexableTestEntity, WorkspaceEntityBase(
   dataSource) {

@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.java.typeMigration` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -14,6 +15,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
@@ -36,6 +38,7 @@ jvm_library(
   associates = [":typeMigration"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
@@ -56,7 +59,7 @@ jvm_library(
   runtime_deps = [":typeMigration_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "typeMigration_test",
   runtime_deps = [":typeMigration_test_lib"]
 )

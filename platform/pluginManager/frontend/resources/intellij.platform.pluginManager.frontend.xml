@@ -4,7 +4,6 @@
     <module name="intellij.platform.pluginManager.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <uiPluginManagerController implementation="com.intellij.platform.pluginManager.frontend.BackendUiPluginManagerController"
-                               order="first"/>
+    <uiPluginManagerController implementation="com.intellij.platform.pluginManager.frontend.BackendUiPluginManagerController"/>
   </extensions>
 </idea-plugin>

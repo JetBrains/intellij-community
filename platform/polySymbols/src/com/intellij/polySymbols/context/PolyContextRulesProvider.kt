@@ -3,8 +3,8 @@ package com.intellij.polySymbols.context
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.util.containers.MultiMap
 import com.intellij.polySymbols.PolyContextKind
+import com.intellij.util.containers.MultiMap
 
 interface PolyContextRulesProvider : ModificationTracker {
 

@@ -5,6 +5,9 @@ import com.jetbrains.performancePlugin.CommandProvider
 import com.jetbrains.performancePlugin.CreateCommand
 import com.intellij.performanceTesting.frontend.commands.ShowRecentFilesCommand
 
+/**
+ * Provides commands for the frontend side only in cwm/split/remdev installations
+ */
 internal class FrontendCommandProvider : CommandProvider {
   override fun getCommands(): Map<String, CreateCommand> {
     return mapOf(

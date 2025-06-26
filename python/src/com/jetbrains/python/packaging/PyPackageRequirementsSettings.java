@@ -12,6 +12,7 @@ import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModu
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   }
 
   /**
-   * @deprecated Use {@link {@link com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils#findRequirementsTxt(Sdk)}  instead.
+   * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#findRequirementsTxt(Sdk)}  instead.
    */
   @Deprecated(forRemoval = true)
   public final @NotNull String getRequirementsPath() {
@@ -46,7 +47,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   }
 
   /**
-   * @deprecated Use {@link com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils#saveRequirementsTxtPath(Project, Sdk, Path)}  instead.
+   * @deprecated Use {@link PythonRequirementTxtSdkUtils#saveRequirementsTxtPath(Project, Sdk, Path)}  instead.
    */
   @Deprecated(forRemoval = true)
   public void setRequirementsPath(@NotNull String path) {
@@ -99,7 +100,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
 
   public static final class ServiceState {
     /**
-     * @deprecated Use {@link {@link com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils#findRequirementsTxt(Sdk)}  instead.
+     * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#findRequirementsTxt(Sdk)}  instead.
      */
     @Deprecated(forRemoval = true)
     @OptionTag("requirementsPath") public @NotNull String myRequirementsPath = PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT;

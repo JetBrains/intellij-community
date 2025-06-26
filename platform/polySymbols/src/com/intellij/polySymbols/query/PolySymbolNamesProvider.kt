@@ -11,9 +11,11 @@ interface PolySymbolNamesProvider : ModificationTracker {
 
   fun getNames(qualifiedName: PolySymbolQualifiedName, target: Target): List<String>
 
-  fun adjustRename(qualifiedName: PolySymbolQualifiedName,
-                   newName: String,
-                   occurence: String): String
+  fun adjustRename(
+    qualifiedName: PolySymbolQualifiedName,
+    newName: String,
+    occurence: String,
+  ): String
 
   fun withRules(rules: List<PolySymbolNameConversionRules>): PolySymbolNamesProvider
 

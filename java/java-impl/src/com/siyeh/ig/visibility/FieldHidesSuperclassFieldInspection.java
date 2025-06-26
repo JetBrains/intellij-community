@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,7 @@ public final class FieldHidesSuperclassFieldInspection extends BaseInspection {
       }
       PsiClass ancestorClass = aClass.getSuperClass();
       final Set<PsiClass> visitedClasses = new HashSet<>();
+      visitedClasses.add(aClass);
       while (ancestorClass != null) {
         if (!visitedClasses.add(ancestorClass)) {
           return;

@@ -73,7 +73,5 @@ internal open class PyPackageManagerBridge(sdk: Sdk) : PyTargetEnvironmentPackag
     return packageManager.listDependencies().map { pyRequirement(it.name, PyRequirementRelation.EQ, it.version) }
   }
 
-  override fun getDependents(pkg: PyPackage): Set<PyPackage> = emptySet()
-
   private fun guessProject() = getOpenedProjects().firstOrNull() ?: ProjectManager.getInstance().defaultProject
 }

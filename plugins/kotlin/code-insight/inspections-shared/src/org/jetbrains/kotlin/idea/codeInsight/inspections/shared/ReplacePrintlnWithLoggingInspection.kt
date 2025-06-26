@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplacePrintlnWithLoggingInspection.Util.isPrintFunction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -18,12 +18,10 @@ import org.jetbrains.kotlin.psi.callExpressionVisitor
 
 internal class ReplacePrintlnWithLoggingInspection : AbstractKotlinInspection() {
     private object Util {
-        private val kotlinIoPackage: FqName = FqName("kotlin.io")
-
         private val printFunctions: Set<CallableId> = listOf(
             Name.identifier("print"),
             Name.identifier("println"),
-        ).map { name -> CallableId(kotlinIoPackage, name) }.toSet()
+        ).map { name -> CallableId(StandardKotlinNames.KOTLIN_IO_PACKAGE, name) }.toSet()
 
         fun CallableId.isPrintFunction(): Boolean = this in printFunctions
     }

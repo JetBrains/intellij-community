@@ -7857,6 +7857,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("comparingWithObject.kt")
+            public void testComparingWithObject() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/comparingWithObject.kt");
+            }
+
             @TestMetadata("ifElseBranches.kt")
             public void testIfElseBranches() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
@@ -14314,6 +14319,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnReturn.kt");
         }
 
+        @TestMetadata("returnReturnAndStatement.kt")
+        public void testReturnReturnAndStatement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnReturnAndStatement.kt");
+        }
+
         @TestMetadata("returnTryReturn.kt")
         public void testReturnTryReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnTryReturn.kt");
@@ -16471,6 +16481,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/asConstructorParameter.kt");
         }
 
+        @TestMetadata("bothActionsTogether.kt")
+        public void testBothActionsTogether() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/bothActionsTogether.kt");
+        }
+
         @TestMetadata("constructorTypeParameterKey.kt")
         public void testConstructorTypeParameterKey() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/constructorTypeParameterKey.kt");
@@ -16521,6 +16536,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/generic.kt");
         }
 
+        @TestMetadata("genericWithUpperBound.kt")
+        public void testGenericWithUpperBound() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/genericWithUpperBound.kt");
+        }
+
         @TestMetadata("leftAndRight.kt")
         public void testLeftAndRight() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/leftAndRight.kt");
@@ -16539,6 +16559,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("nullableGeneric.kt")
         public void testNullableGeneric() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/nullableGeneric.kt");
+        }
+
+        @TestMetadata("nullableTypeReference.kt")
+        public void testNullableTypeReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/nullableTypeReference.kt");
         }
 
         @TestMetadata("nullableTypealias.kt")
@@ -16564,6 +16589,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("typealias.kt")
         public void testTypealias() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/typealias.kt");
+        }
+
+        @TestMetadata("typealiasAlsoHighlighted.kt")
+        public void testTypealiasAlsoHighlighted() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/typealiasAlsoHighlighted.kt");
         }
 
         @TestMetadata("typealiasInTypeReference.kt")
@@ -17145,6 +17175,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("unnecessaryDefinitelyNonNullableTypeArg.kt")
         public void testUnnecessaryDefinitelyNonNullableTypeArg() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/unnecessaryDefinitelyNonNullableTypeArg.kt");
+        }
+
+        @TestMetadata("valueDeclaration.kt")
+        public void testValueDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/valueDeclaration.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiver.kt")
+        public void testValueDeclarationWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiver.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiverInClasses.kt")
+        public void testValueDeclarationWithReceiverInClasses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverInClasses.kt");
         }
 
         @TestMetadata("variableString.kt")

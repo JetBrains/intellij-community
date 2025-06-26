@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.platform.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -19,21 +20,26 @@ jvm_library(
   srcs = glob(["testGen/**/*.kt", "testGen/**/*.java", "testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/credential-store",
     "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/foldings",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "@lib//:junit4",
     "@lib//:jmock",
     "//platform/observable",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
+    "//platform/remote-core",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",
     "//platform/util/diff",
@@ -43,7 +49,6 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/usageView",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
@@ -79,6 +84,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
+    "//platform/platform-impl/concurrency",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:fastutil-min",
     "@lib//:jcef",
@@ -174,7 +180,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )

@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" />
     <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.markdown.images" />

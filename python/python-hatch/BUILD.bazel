@@ -33,6 +33,7 @@ jvm_library(
     "@lib//:io-github-z4kn4fein-semver-jvm",
     "//platform/projectModel-api:projectModel",
     "//python/python-sdk:sdk",
+    "//python/python-pyproject:pyproject",
   ],
   runtime_deps = [":hatch_resources"]
 )

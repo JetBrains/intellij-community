@@ -10,6 +10,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.breakpointTypes
+import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -32,6 +33,8 @@ interface XBreakpointTypeProxy {
   val isSuspendThreadSupported: Boolean
 
   val defaultSuspendPolicy: SuspendPolicy
+
+  val typeId: XBreakpointTypeId get() = XBreakpointTypeId(id)
 
   fun setDefaultSuspendPolicy(policy: SuspendPolicy)
   fun getVisibleStandardPanels(): Set<XBreakpointType.StandardPanels>

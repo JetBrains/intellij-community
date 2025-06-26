@@ -620,8 +620,8 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
           String rootProjectName = build.getName();
           BuildParticipant buildParticipant = new BuildParticipant();
           String projectPath = toCanonicalPath(build.getBuildIdentifier().getRootDir().getPath());
-          String parentPath = build.getParentBuildIdentifier() != null ?
-                              toCanonicalPath(build.getParentBuildIdentifier().getRootDir().getPath()) : null;
+          String parentPath = build.getParentBuild() != null ?
+                              toCanonicalPath(build.getParentBuild().getBuildIdentifier().getRootDir().getPath()) : null;
           buildParticipant.setRootProjectName(rootProjectName);
           buildParticipant.setRootPath(projectPath);
           buildParticipant.setParentRootPath(parentPath);

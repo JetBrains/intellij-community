@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -28,11 +29,15 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
   override val interpreterType: InterpreterType = InterpreterType.UV
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    val selectedInterpreterPath = tryResolvePath(selectedEnv.get()?.homePath) ?: return PyResult.localizedError("No selected interpreter")
+    val sdkHomePathString = selectedEnv.get()?.homePath
+    val selectedInterpreterPath = tryResolvePath(sdkHomePathString)
+                                  ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePathString))
     val allSdk = ProjectJdkTable.getInstance().allJdks
     val existingSdk = allSdk.find { it.homePath == selectedInterpreterPath.pathString }
     val associatedModule = extractModule(moduleOrProject)
-    val projectDir = tryResolvePath(associatedModule?.basePath ?: moduleOrProject.project.basePath) ?: return PyResult.localizedError("No base path")
+    val basePathString = associatedModule?.basePath ?: moduleOrProject.project.basePath
+    val projectDir = tryResolvePath(basePathString)
+                     ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", basePathString))
 
     // uv sdk in current module
     if (existingSdk != null && existingSdk.isUv && existingSdk.isAssociatedWithModule(associatedModule)) {

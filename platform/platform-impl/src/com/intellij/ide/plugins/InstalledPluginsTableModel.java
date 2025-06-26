@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.InitSessionResult;
 import com.intellij.ide.plugins.newui.PluginManagerSession;
 import com.intellij.ide.plugins.newui.PluginManagerSessionService;
 import com.intellij.ide.plugins.newui.PluginUiModel;
@@ -32,28 +33,12 @@ public class InstalledPluginsTableModel {
   protected final PluginManagerSession mySession = initializeAndGetSession();
 
   public InstalledPluginsTableModel(@Nullable Project project) {
-    this(project, new ArrayList<>(UiPluginManager.getInstance().getPlugins()), UiPluginManager.getInstance().getInstalledPlugins());
-  }
-
-  public InstalledPluginsTableModel(@Nullable Project project,
-                                    @NotNull Collection<PluginUiModel> allPlugins,
-                                    @NotNull Collection<PluginUiModel> installedPlugins) {
     myProject = project;
-    ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    for (PluginUiModel plugin : allPlugins) {
-      PluginId pluginId = plugin.getPluginId();
-      if (appInfo.isEssentialPlugin(pluginId)) {
-        setEnabled(pluginId, PluginEnabledState.ENABLED);
-      }
-      else {
-        view.add(plugin);
-      }
-    }
-    view.addAll(installedPlugins);
-
-    for (PluginUiModel descriptor : view) {
-      setEnabled(descriptor);
-    }
+    InitSessionResult initSessionResult = UiPluginManager.getInstance().initSession(sessionId);
+    view.addAll(initSessionResult.getVisiblePluginsList());
+    initSessionResult.getPluginStates().forEach((pluginId, pluginState) -> {
+      myEnabled.put(pluginId, pluginState ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED);
+    });
   }
 
   protected final @Nullable Project getProject() {
@@ -64,7 +49,7 @@ public class InstalledPluginsTableModel {
     return isLoaded(pluginId, getEnabledMap());
   }
 
-  private PluginManagerSession initializeAndGetSession(){
+  private PluginManagerSession initializeAndGetSession() {
     UiPluginManager.getInstance().createSession(sessionId);
     PluginManagerSession session = PluginManagerSessionService.getInstance().getSession(sessionId);
     if (session == null) {
@@ -86,7 +71,7 @@ public class InstalledPluginsTableModel {
 
   @ApiStatus.NonExtendable
   protected void setEnabled(@NotNull PluginId pluginId,
-                                  @Nullable PluginEnabledState enabled) {
+                            @Nullable PluginEnabledState enabled) {
     myEnabled.put(pluginId, enabled);
   }
 
@@ -122,7 +107,6 @@ public class InstalledPluginsTableModel {
   }
 
 
-
   protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor,
                                                @NotNull Pair<PluginEnableDisableAction, PluginEnabledState> pair) {
   }
@@ -135,7 +119,7 @@ public class InstalledPluginsTableModel {
 
   @ApiStatus.Internal
   public static boolean isDisabled(@NotNull PluginId pluginId,
-                                      @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
+                                   @NotNull Map<PluginId, PluginEnabledState> enabledMap) {
     PluginEnabledState state = enabledMap.get(pluginId);
     return state == null || state.isDisabled();
   }
@@ -162,7 +146,7 @@ public class InstalledPluginsTableModel {
 
   @ApiStatus.Internal
   public static @NotNull @NonNls String getPluginNameOrId(@NotNull PluginId pluginId,
-                                                             @Nullable IdeaPluginDescriptor descriptor) {
+                                                          @Nullable IdeaPluginDescriptor descriptor) {
     return descriptor != null ? descriptor.getName() : pluginId.getIdString();
   }
 }

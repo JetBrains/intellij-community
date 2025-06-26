@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
@@ -49,6 +50,7 @@ jvm_library(
 ### auto-generated section `build intellij.platform.builtInServer.impl` end
 
 ### auto-generated section `build intellij.platform.builtInServer.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -76,10 +78,10 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/lang-impl",
     "//platform/xdebugger-api:debugger",
     "@lib//:guava",
@@ -101,7 +103,7 @@ jvm_library(
   runtime_deps = [":builtInServer-tests_test_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "builtInServer-tests_test",
   runtime_deps = [":builtInServer-tests_test_lib"]
 )

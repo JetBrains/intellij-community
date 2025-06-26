@@ -14,6 +14,7 @@
     <orderEntry type="library" exported="" name="ktor-serialization-kotlinx-json" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-serialization-json-io" level="project" />
     <orderEntry type="library" exported="" name="ktor-client-auth" level="project" />
+    <orderEntry type="library" exported="" name="ktor-client-logging" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
   </component>
 </module>

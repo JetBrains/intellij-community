@@ -6,17 +6,17 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface ProjectModelTestEntity : WorkspaceEntity {
   val info: String
   val descriptor: Descriptor
 
+  @Parent
   val parentEntity: ProjectModelTestEntity?
-  val childrenEntities: List<@Child ProjectModelTestEntity>
+  val childrenEntities: List<ProjectModelTestEntity>
 
-  @Child
   val contentRoot: ContentRootTestEntity?
 
   //region generated code
@@ -60,6 +60,7 @@ fun MutableEntityStorage.modifyProjectModelTestEntity(
 }
 //endregion
 
+@Parent
 private val ContentRootTestEntity.projectModelTestEntity: ProjectModelTestEntity? by WorkspaceEntity.extension()
 
 

@@ -33,6 +33,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,9 +122,6 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private void workspaceModelCommit() {
     ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-
-      DependencySubstitutionUtil.updateDependencySubstitutions(getActualStorageBuilder());
-
       LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
       for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
         Library fromLibrary = entry.getKey();
@@ -192,7 +190,10 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
           LOG.trace("Apply builder in ModifiableModels commit. builder: " + storageBuilder);
         }
         builder.applyChangesFrom(storageBuilder);
-        return null;
+
+        DependencySubstitutionUtil.updateDependencySubstitutions(builder);
+
+        return Unit.INSTANCE;
       });
 
       for (ModifiableRootModel model : rootModels) {

@@ -4,5 +4,5 @@ package com.intellij.platform.eel
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class ExecuteProcessException(val errno: Int, override val message: String) : EelError, IOException()

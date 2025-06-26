@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,6 +37,7 @@ import java.awt.event.MouseEvent;
 public final class InspectionNodeInfo extends JPanel {
   private static final Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
 
+  @ApiStatus.Internal
   public InspectionNodeInfo(final @NotNull InspectionTree tree,
                             final @NotNull Project project) {
     setLayout(new GridBagLayout());

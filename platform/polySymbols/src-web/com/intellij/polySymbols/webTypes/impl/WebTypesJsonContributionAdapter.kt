@@ -7,12 +7,12 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.WebTypesScopeBase
 import com.intellij.polySymbols.webTypes.WebTypesSymbolBase
@@ -27,7 +27,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
   internal val rootScope: WebTypesScopeBase,
   override val qualifiedKind: PolySymbolQualifiedKind,
 ) :
-  StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
+  StaticPolySymbolScopeBase.StaticSymbolContributionAdapter {
 
 
   companion object {
@@ -60,7 +60,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
   open val contributionName: String = contribution.name ?: "<no-name>"
   abstract val jsonPattern: NamePatternRoot?
 
-  override val pattern: PolySymbolsPattern?
+  override val pattern: PolySymbolPattern?
     get() = jsonPattern?.wrap(contribution.name, jsonOrigin)
 
   open val contributionForQuery: GenericContributionsHost get() = contribution
@@ -89,9 +89,11 @@ abstract class WebTypesJsonContributionAdapter private constructor(
      }.also { exclusiveContributions = it }
     ).contains(qualifiedKind)
 
-  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
-    (WebTypesSymbolFactoryEP.get(qualifiedKind)?.create() ?: WebTypesSymbolBase())
-      .also { it.init(this, queryExecutor) }
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolQueryExecutor): PolySymbol =
+    (this.contribution.pattern?.let { WebTypesSymbolBase.WebTypesSymbolWithPattern(it) }
+     ?: WebTypesSymbolFactoryEP.get(qualifiedKind)?.create()
+     ?: WebTypesSymbolBase()
+    ).also { it.init(this, queryExecutor) }
 
   abstract fun createPointer(): Pointer<out WebTypesJsonContributionAdapter>
 

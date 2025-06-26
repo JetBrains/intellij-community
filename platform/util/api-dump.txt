@@ -113,6 +113,11 @@ com.intellij.openapi.util.io.ByteSequence
 - a:length():I
 - a:subSequence(I,I):com.intellij.openapi.util.io.ByteSequence
 - a:toBytes():B[]
+Fc:com.intellij.openapi.util.io.FileUtil
+- s:findFirstPathThatExist(java.lang.String[]):java.nio.file.Path
+- s:findPathsByMask(java.util.regex.Pattern,java.nio.file.Path):java.util.List
+f:com.intellij.openapi.util.io.NioJarUtilKt
+- sf:getJarAttribute(java.nio.file.Path,java.util.jar.Attributes$Name):java.lang.String
 com.intellij.openapi.util.registry.RegistryValueListener
 - afterValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
 - beforeValueChanged(com.intellij.openapi.util.registry.RegistryValue):V

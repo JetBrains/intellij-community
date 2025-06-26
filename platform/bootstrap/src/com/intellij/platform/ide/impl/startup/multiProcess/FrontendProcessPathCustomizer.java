@@ -45,7 +45,6 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
 
   // Leave the folder locked until we exit. Store reference to keep CleanerFactory from releasing the file channel.
   @SuppressWarnings("unused") private static FileLock ourConfigLock;
-  private static volatile boolean enabled;
 
   @Override
   public CustomPaths customizePaths(@NotNull List<String> args) {
@@ -82,6 +81,8 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     cleanDirectory(newConfig);
     cleanDirectory(newSystem);
 
+    P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
+    
     String originalPluginsPath = PathManager.getPluginsPath();
     boolean customizePluginsPath = useCustomPluginsPath(originalPluginsPath);
     String pluginsPath = customizePluginsPath ? originalPluginsPath + File.separator + "frontend" : originalPluginsPath;
@@ -89,8 +90,6 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     PerProcessPathCustomization.prepareConfig(newConfig, PathManager.getConfigDir(), migratePlugins);
 
     Path startupScriptDir = PerProcessPathCustomization.getStartupScriptDir().resolve("frontend");
-    P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
-    enabled = true;
     return new CustomPaths(newConfig.toString(), newSystem.toString(), pluginsPath, newLog.toString(), startupScriptDir);
   }
 
@@ -155,10 +154,6 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     String pathsSelector = PathManager.getPathsSelector();
     return pathsSelector != null && !isGenericJetBrainsClient(pathsSelector) &&
            originalPluginsPath.equals(PathManager.getDefaultPluginPathFor(pathsSelector));
-  }
-
-  public static boolean isEnabled() {
-    return enabled;
   }
 
   private static @Nullable Path computeLogDirPath(Path baseLogDir, int directoryCounter) {

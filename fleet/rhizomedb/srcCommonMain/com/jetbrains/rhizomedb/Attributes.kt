@@ -49,12 +49,6 @@ sealed class Attributes<E : Entity>(
   ) : EntityAttribute<E, V>(ident, attr, serializer, defaultValue) {
     operator fun invoke(entity: E): V = entity[this]
     operator fun getValue(entity: E, property: KProperty<*>): V = entity[this]
-
-    // TODO: to be removed after migration
-    operator fun setValue(entity: E, property: KProperty<*>, value: V): Unit =
-      let { attribute ->
-        requireChangeScope { entity[attribute] = value }
-      }
   }
 
   inner class Optional<V : Any> internal constructor(
@@ -65,12 +59,6 @@ sealed class Attributes<E : Entity>(
   ) : EntityAttribute<E, V>(ident, attr, serializer, defaultValue) {
     operator fun invoke(entity: E): V? = entity[this]
     operator fun getValue(entity: E, property: KProperty<*>): V? = entity[this]
-
-    // TODO: to be removed after migration
-    operator fun setValue(entity: E, property: KProperty<*>, value: V?): Unit =
-      let { attribute ->
-        requireChangeScope { entity[attribute] = value }
-      }
   }
 
   inner class Many<V : Any> internal constructor(

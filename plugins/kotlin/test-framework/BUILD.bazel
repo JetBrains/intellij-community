@@ -1,4 +1,5 @@
 ### auto-generated section `build kotlin.test-framework` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -20,12 +21,14 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/idea-ui:ui",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "@lib//:test_n_g",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",
@@ -67,7 +70,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "test-framework_test",
   runtime_deps = [":test-framework_test_lib"]
 )

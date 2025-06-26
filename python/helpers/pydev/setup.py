@@ -115,6 +115,7 @@ args = dict(
         '_pydev_runfiles',
         '_pydevd_bundle',
         '_pydevd_bundle.smart_step_into',
+        '_pydevd_bundle.tables',
         '_pydevd_frame_eval',
         'pydev_ipython',
         # 'pydev_sitecustomize', -- Not actually a package (not added)

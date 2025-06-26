@@ -30,9 +30,13 @@
             serviceInterface="org.jetbrains.kotlin.idea.caches.project.IdeaModelInfosCache"
             serviceImplementation="org.jetbrains.kotlin.idea.caches.project.FineGrainedIdeaModelInfosCache"/>
 
-      <projectService
+    <projectService
             serviceInterface="org.jetbrains.kotlin.analyzer.LanguageSettingsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.caches.ProbablyInjectedCallableNames"
+            serviceImplementation="org.jetbrains.kotlin.idea.caches.ProbablyInjectedCallableNamesImpl"/>
 
     <psi.treeChangePreprocessor implementation="org.jetbrains.kotlin.idea.caches.KotlinPackageStatementPsiTreeChangePreprocessor"/>
 

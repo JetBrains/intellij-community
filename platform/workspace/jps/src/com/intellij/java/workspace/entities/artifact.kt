@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
@@ -26,9 +26,9 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
   val includeInProjectBuild: Boolean
   val outputUrl: VirtualFileUrl?
 
-  @Child val rootElement: CompositePackagingElementEntity?
-  val customProperties: List<@Child ArtifactPropertiesEntity>
-  @Child val artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
+  val rootElement: CompositePackagingElementEntity?
+  val customProperties: List<ArtifactPropertiesEntity>
+  val artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
   override val symbolicId: ArtifactId
     get() = ArtifactId(name)
 
@@ -79,6 +79,7 @@ fun MutableEntityStorage.modifyArtifactEntity(
 //endregion
 
 interface ArtifactPropertiesEntity : WorkspaceEntity {
+  @Parent
   val artifact: ArtifactEntity
 
   val providerType: @NonNls String
@@ -123,6 +124,7 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
 //endregion
 
 @Abstract interface PackagingElementEntity : WorkspaceEntity {
+  @Parent
   val parentEntity: CompositePackagingElementEntity?
 
   //region generated code
@@ -151,9 +153,10 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
 }
 
 @Abstract interface CompositePackagingElementEntity : PackagingElementEntity {
+  @Parent
   val artifact: ArtifactEntity?
 
-  val children: List<@Child PackagingElementEntity>
+  val children: List<PackagingElementEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -344,10 +347,12 @@ fun MutableEntityStorage.modifyArtifactOutputPackagingElementEntity(
   return modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
 }
 
+@Parent
 var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ArtifactEntity::class.java)
 //endregion
 
+@Parent
 val ArtifactOutputPackagingElementEntity.artifactEntity: ArtifactEntity?
   by WorkspaceEntity.extension()
 

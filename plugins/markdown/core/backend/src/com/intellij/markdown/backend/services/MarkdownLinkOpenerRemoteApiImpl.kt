@@ -27,6 +27,7 @@ import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
 import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
@@ -71,7 +72,6 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
 
   override suspend fun fetchLinkNavigationData(link: String, virtualFileId: VirtualFileId?): MarkdownLinkNavigationData {
     val file = resolveLinkAsFile(link, virtualFileId)
-               ?: virtualFileId?.virtualFile()
                ?: return MarkdownLinkNavigationData(link, null, null, null)
 
     var path = file.url
@@ -96,13 +96,15 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
       }
     }
     val containingFile = virtualFileId?.virtualFile()?.parent ?: return null
-    val targetFile = try {
+    return try {
       containingFile.findFile(link.trimAnchor())
     }
     catch (_: IOException) {
       null
     }
-    return targetFile
+    catch (_: InvalidPathException) {
+      null
+    }
   }
 
   private fun collectHeaders(anchor: String, targetFile: VirtualFile, project: Project): List<MarkdownHeaderInfo>? {

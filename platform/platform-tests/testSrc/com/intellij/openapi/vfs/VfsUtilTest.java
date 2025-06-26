@@ -567,7 +567,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void pathEqualsWorksForWslPaths() {
+  public void pathEqualsWorksForLegacyWslPaths() {
     String wslName = IoTestUtil.assumeWorkingWslDistribution();
     File usrBinFile = new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\");
     assertTrue(usrBinFile + " doesn't exist", usrBinFile.exists());
@@ -578,6 +578,20 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertFalse(VfsUtilCore.pathEqualsTo(usrBin, "//xxx$/" + wslName + "/usr/bin/"));
     assertFalse(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/xxx/usr/bin/"));
     assertFalse(VfsUtilCore.pathEqualsTo(usrBin.getParent(), "//wsl$/xxx/usr"));
+  }
+
+  @Test
+  public void pathEqualsWorksForWslPaths() {
+    String wslName = IoTestUtil.assumeWorkingWslDistribution();
+    File usrBinFile = new File("\\\\wsl.localhost\\" + wslName + "\\usr\\bin\\");
+    assertTrue(usrBinFile + " doesn't exist", usrBinFile.exists());
+    VirtualFile usrBin = LocalFileSystem.getInstance().findFileByIoFile(usrBinFile);
+    assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "\\\\wsl.localhost\\" + wslName + "\\usr\\bin\\"));
+    assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl.localhost/" + wslName + "/usr/bin"));
+    assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl.localhost/" + wslName + "/usr/bin/"));
+    assertFalse(VfsUtilCore.pathEqualsTo(usrBin, "//xxx.localhost/" + wslName + "/usr/bin/"));
+    assertFalse(VfsUtilCore.pathEqualsTo(usrBin, "//wsl.localhost/xxx/usr/bin/"));
+    assertFalse(VfsUtilCore.pathEqualsTo(usrBin.getParent(), "//wsl.localhost/xxx/usr"));
   }
 
   @Test

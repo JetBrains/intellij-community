@@ -117,14 +117,16 @@ abstract class GradleTestCase : GradleBaseTestCase() {
 
   fun projectInfo(
     relativePath: String,
-    useKotlinDsl: Boolean = true,
-    configure: ProjectInfo.Builder.() -> Unit = {}
-  ) = ProjectInfo.create(
-    Path.of(relativePath).name,
-    relativePath,
-    GradleDsl.valueOf(useKotlinDsl),
-    configure
-  )
+    gradleDsl: GradleDsl = GradleDsl.KOTLIN,
+    configure: ProjectInfo.Builder.() -> Unit = {},
+  ): ProjectInfo {
+    return ProjectInfo.create(
+      Path.of(relativePath).name,
+      relativePath,
+      gradleDsl,
+      configure
+    )
+  }
 
   fun getSimpleProjectInfo(relativePath: String) =
     projectInfo(relativePath) {
@@ -175,7 +177,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     filesConfiguration.withSettingsFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 
-  open fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
+  fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     filesConfiguration.withBuildFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 }

@@ -135,6 +135,7 @@ public final class DaemonListeners implements Disposable {
         if (!myProject.isDisposed() && ApplicationManager.getApplication().isDispatchThread() && worthBothering(document, project)) {
           stopDaemon(true, "Document change");
           UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
+          myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirtyDefensively(document, e);
         }
       }
 

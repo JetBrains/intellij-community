@@ -27,6 +27,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -127,7 +128,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   private void implicitIoImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, () -> {
       myFixture.addClass("""
         package java.io;
         
@@ -215,7 +216,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testConflictModuleImportImplicitClassDemandOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("package p1; public class List {}");
       myFixture.addClass("package p1; public class A1 {}");
       myFixture.addClass("package p1; public class A2 {}");
@@ -227,7 +228,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testConflictModuleImportImplicitClassDemandOverModule2() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("package p1; public class List {}");
       myFixture.addClass("package p1; public class A1 {}");
       myFixture.addClass("package p1; public class A2 {}");
@@ -274,7 +275,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testConflictStaticImportWithImplicitClassDemandOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24_PREVIEW, () -> {
 
       myFixture.addClass(
         """
@@ -611,7 +612,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
 
   public void testImportModuleLastWithoutSpace() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package bbb; public class BBB {}");
@@ -630,7 +631,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testImportModuleInTheMiddleWithoutSpace() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package bbb; public class BBB {}");
@@ -651,7 +652,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testImportModuleFirstWithSpace() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package aaa; public class BBB {}");
       myFixture.addClass("package aaa; public class CCC {}");
@@ -684,7 +685,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testIncorrectOrderWithoutModuleImportConfigWithModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package ccc; public class CCC {}");
       JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
@@ -700,7 +701,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testIncorrectOrderWithoutModuleImportMixStaticAndNonStatic() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package ccc; public class CCC {}");
       JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
@@ -715,7 +716,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testImportModuleOverOtherImports() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package aaa; public class BBB {}");
       myFixture.addClass("package aaa; public class CCC {}");
@@ -726,7 +727,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testImportModuleConflictWithPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package aaa; public class BBB {}");
       myFixture.addClass("package aaa; public class CCC {}");
@@ -740,7 +741,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testImportModuleConflictWithSamePackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package aaa; public class BBB {}");
       myFixture.addClass("package aaa; public class CCC {}");
@@ -754,7 +755,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testImportModuleOnDemandConflictWithSamePackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package aaa; public class BBB {}");
       myFixture.addClass("package aaa; public class CCC {}");

@@ -12,6 +12,7 @@ import kotlin.time.measureTime
 /**
  * Note that [lexStarts] and [lexTypes] can be longer than [tokenCount].
  * It's guaranteed that [lexStarts] and [lexTypes] contain all tokens from 0 to [tokenCount] - 1, but tail elements can be empty.
+ * Also, it's guaranteed that [lexStarts] contains the end offset of the last token as `lexStarts[tokenCount]`.
  */
 internal class TokenListImpl(
   internal val lexStarts: IntArray,
@@ -22,7 +23,7 @@ internal class TokenListImpl(
 ) : TokenList {
   init {
     require(tokenCount < lexStarts.size)
-    require(tokenCount < lexTypes.size)
+    require(tokenCount <= lexTypes.size)
   }
 
   fun assertMatches(
@@ -33,15 +34,20 @@ internal class TokenListImpl(
   ) {
     val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
     check(tokenCount == sequence.tokenCount)
-    for (j in 0..tokenCount) {
+    for (j in 0 until tokenCount) {
       if (sequence.lexStarts[j] != lexStarts[j] || sequence.lexTypes[j] !== lexTypes[j]) {
         check(false)
       }
     }
+
+    // check end offsets
+    if (sequence.lexStarts[tokenCount] != lexStarts[tokenCount]) {
+      check(false)
+    }
   }
 
   override fun getTokenType(index: Int): SyntaxElementType? {
-    if (index < 0 || index >= tokenCount) return null
+    if (index !in 0 until tokenCount) return null
     return lexTypes[index]
   }
 
@@ -57,10 +63,12 @@ internal class TokenListImpl(
   }
 
   override fun getTokenStart(index: Int): Int {
+    require(index in 0 until tokenCount)
     return lexStarts[index]
   }
 
   override fun remap(index: Int, newValue: SyntaxElementType) {
+    require(index in 0 until tokenCount)
     lexTypes[index] = newValue
   }
 

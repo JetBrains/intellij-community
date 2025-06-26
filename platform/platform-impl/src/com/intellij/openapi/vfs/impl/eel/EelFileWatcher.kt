@@ -6,8 +6,6 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink
 import com.intellij.openapi.vfs.local.PluggableFileWatcher
-import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
 import com.intellij.platform.eel.fs.EelFileSystemApi.PathChange
@@ -16,16 +14,13 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.upgradeBlocking
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import java.nio.file.FileSystems
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.Volatile
 
+@ApiStatus.Internal
 class EelFileWatcher : PluggableFileWatcher() {
 
   private lateinit var myNotificationSink: FileWatcherNotificationSink
@@ -36,7 +31,7 @@ class EelFileWatcher : PluggableFileWatcher() {
   @Volatile
   private var myShuttingDown = false
 
-  override fun initialize(managingFS: ManagingFS, notificationSink: FileWatcherNotificationSink) {
+  override fun initialize(notificationSink: FileWatcherNotificationSink) {
     if (!useEelFileWatcher()) return
     myNotificationSink = notificationSink
   }
@@ -51,9 +46,10 @@ class EelFileWatcher : PluggableFileWatcher() {
   override fun isSettingRoots(): Boolean = isOperational() && mySettingRoots.get() > 0
 
   override fun setWatchRoots(recursive: List<String>, flat: List<String>, shuttingDown: Boolean) {
-    val recursiveFiltered = recursive.mapNotNull { it.getDevcontainerPathInfo() }
-    val flatFiltered = flat.mapNotNull { it.getDevcontainerPathInfo() }
+    val recursiveFiltered = filterAndNotifyManualWatchRoots(recursive)
+    val flatFiltered = filterAndNotifyManualWatchRoots(recursive)
     if (recursiveFiltered.isEmpty() && flatFiltered.isEmpty()) return
+
     if (shuttingDown) {
       myShuttingDown = true
       shutdownWatcherJobs()
@@ -85,9 +81,18 @@ class EelFileWatcher : PluggableFileWatcher() {
     }
   }
 
-  private fun sortRoots(roots: List<DevcontainerPathInfo>,
-                        devcontainerData: MutableMap<String, DevcontainerData>,
-                        recursive: Boolean) {
+  private fun filterAndNotifyManualWatchRoots(all: List<String>): List<DevcontainerPathInfo> {
+    val (result, ignored) = all.map { it to it.getDevcontainerPathInfo() }.partition { it.second != null }
+    myNotificationSink.notifyManualWatchRoots(this, ignored.map { it.first })
+
+    return result.mapNotNull { it.second }
+  }
+
+  private fun sortRoots(
+    roots: List<DevcontainerPathInfo>,
+    devcontainerData: MutableMap<String, DevcontainerData>,
+    recursive: Boolean,
+  ) {
     roots.forEach { info ->
       val prefix = info.descriptor.toString()
       val data: DevcontainerData = devcontainerData.computeIfAbsent(prefix) { DevcontainerData(prefix, info.descriptor) }

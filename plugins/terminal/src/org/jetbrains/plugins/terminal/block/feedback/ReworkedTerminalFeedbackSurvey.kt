@@ -59,7 +59,7 @@ object ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeed
   override val surveyId: String
     get() = "reworked_terminal"
 
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 7, 15)
+  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 11, 15)
 
   override val requireIdeEAP: Boolean = false
 

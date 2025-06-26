@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
-import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
@@ -92,9 +91,11 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
   }
 
   override fun buildComponent(): JComponent {
-    val recentPaths = RecentProjectsManagerBase.getInstanceEx().getRecentPaths()
-    WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentPaths.size)
-    val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
+    val recentProjectsCount = RecentProjectListActionProvider.getInstance().countLocalProjects()
+    val providerRecentProjectsCount = RecentProjectListActionProvider.getInstance().countProjectsFromProviders()
+    WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentProjectsCount, providerRecentProjectsCount)
+
+    val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentProjectsCount == 0)
 
     return panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {

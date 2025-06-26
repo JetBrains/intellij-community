@@ -142,8 +142,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
-    final List<FileViewProvider> viewProviders = getCachedViewProviders(doc);
+  public boolean isDocumentBlockedByPsi(@NotNull Document document) {
+    final List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     if (viewProviders.isEmpty()) return false;
 
     PostprocessReformattingAspect aspect = PostprocessReformattingAspect.getInstance(myProject);
@@ -157,24 +157,24 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
+  public void doPostponedOperationsAndUnblockDocument(@NotNull Document document) {
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(myProject);
     if (component == null) return;
 
     List<FileViewProvider> viewProviders;
-    if (doc instanceof DocumentWindow) {
+    if (document instanceof DocumentWindow) {
       // todo IJPL-339 implement it
-      Document topDoc = ((DocumentWindow)doc).getDelegate();
+      Document topDoc = ((DocumentWindow)document).getDelegate();
       List<FileViewProvider> topViewProviders = getCachedViewProviders(topDoc);
       if (ContainerUtil.exists(topViewProviders, topViewProvider -> InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider))) { // todo is it correct?
-        viewProviders = getCachedViewProviders(doc);
+        viewProviders = getCachedViewProviders(document);
       }
       else {
         viewProviders = topViewProviders;
       }
     }
     else {
-      viewProviders = getCachedViewProviders(doc);
+      viewProviders = getCachedViewProviders(document);
     }
 
     // todo IJPL-339 is it correct?

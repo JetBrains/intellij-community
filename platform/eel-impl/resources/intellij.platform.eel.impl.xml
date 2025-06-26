@@ -1,12 +1,15 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.eel.provider.EelNioBridgeService"
-                        serviceImplementation="com.intellij.platform.eel.impl.provider.EelNioBridgeServiceImpl"/>
     <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalWindowsEelApi"
                         serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>
     <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalPosixEelApi"
                         serviceImplementation="com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl"/>
 
-    <applicationActivity implementation="com.intellij.platform.eel.impl.fs.EelEarlyAccessApplicationActivity"/>
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend$InitializationService"
+                        serviceImplementation="com.intellij.platform.eel.impl.fs.EelMultiRoutingFileSystemBackendInitializationService"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint name="multiRoutingFileSystemBackend" interface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

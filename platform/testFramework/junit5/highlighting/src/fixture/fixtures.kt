@@ -83,7 +83,7 @@ private class TestDaemonCodeAnalyzerListener(val editor: Editor) : DaemonCodeAna
 }
 
 private fun Editor.extractHighlightingState(fileEditors: Collection<FileEditor>): HighlightingState {
-  if (FileEditorManager.getInstance(project!!).getEditors(virtualFile).intersect(fileEditors).isEmpty()) {
+  if (FileEditorManager.getInstance(project!!).getEditors(virtualFile!!).intersect(fileEditors).isEmpty()) {
     LOG.warn("The tested editor is not among highlighted ones: $this; $fileEditors")
   }
   val state = requireNotNull(getUserData(HIGHLIGHTING_KEY)) {

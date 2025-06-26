@@ -2,11 +2,26 @@
 package com.intellij.polySymbols.customElements
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
+import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 
-interface CustomElementsSymbol : PolySymbolWithDocumentation, PolySymbolsScope {
+interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
+
+  val description: @Nls String? get() = null
+
+  val defaultValue: @NlsSafe String? get() = null
+
+  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
+    PolySymbolDocumentationTarget.create(this, location) { symbol, _ ->
+      description = symbol.description
+      defaultValue = symbol.defaultValue
+    }
 
   override fun createPointer(): Pointer<out CustomElementsSymbol>
 

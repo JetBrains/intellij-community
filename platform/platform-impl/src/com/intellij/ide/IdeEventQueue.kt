@@ -29,7 +29,6 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
 import com.intellij.openapi.keymap.impl.KeyState
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
@@ -45,9 +44,11 @@ import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.unwrapContextRunnable
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -491,8 +492,9 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  // todo: remove when listeners would not acquire WI
   private fun shouldSkipListeners(e: AWTEvent): Boolean {
-    return e is InvocationEvent && SuvorovProgress.ForcedWriteActionRunnable.isMarkedRunnable(e)
+    return e is InvocationEvent && e.toString().contains(ThreadingSupport.RunnableWithTransferredWriteAction.NAME)
   }
 
   private fun isUserActivityEvent(e: AWTEvent): Boolean =
@@ -624,6 +626,8 @@ class IdeEventQueue private constructor() : EventQueue() {
       EDT.assertIsEdt()
       Logs.LOG.debug { "pumpEventsForHierarchy($modalComponent, $exitCondition)" }
 
+      val exceptions = SmartList<Throwable>()
+
       while (!exitCondition.isDone) {
         try {
           val event = nextEvent
@@ -634,8 +638,22 @@ class IdeEventQueue private constructor() : EventQueue() {
           eventConsumer.accept(event)
         }
         catch (e: Throwable) {
-          Logs.LOG.error(e)
+          try {
+            Logs.LOG.error(e)
+          }
+          catch (e: Throwable) {
+            // In tests, LOG.error usually throws
+            // This leads to prompt termination of modal progress, and it can cause very confusing errors that are unrelated to actual failures (MPS-38671)
+            // so here we make exception reporting resilient to errors, and allow modal progress to proceed
+            // Below we anyway rethrow the exceptions that were failed to
+            exceptions.add(e)
+          }
         }
+      }
+      when (exceptions.size) {
+        0 -> Unit
+        1 -> Logs.LOG.error(exceptions[0])
+        else -> Logs.LOG.error(CompoundRuntimeException(exceptions))
       }
       Logs.LOG.debug { "pumpEventsForHierarchy.exit($modalComponent, $exitCondition)" }
     }

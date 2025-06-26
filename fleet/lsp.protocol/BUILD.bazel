@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  context_receivers = True,
+  context_parameters = True,
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlinx.serialization.ExperimentalSerializationApi",
@@ -23,6 +23,9 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//fleet/util/core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:ktor-network-tls",
+    "@lib//:kotlinx-io-core",
   ]
 )
 ### auto-generated section `build fleet.lsp.protocol` end

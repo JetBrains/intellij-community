@@ -20,6 +20,7 @@ fun checkThatContentIsNotChanged(
   projectHome: Path,
   writeFull: Boolean = false,
   isBundled: Boolean,
+  suggestedReviewer: String? = null,
 ) {
   val expected = try {
     deserializeContentData(Files.readString(expectedFile))
@@ -43,7 +44,7 @@ fun checkThatContentIsNotChanged(
     return
   }
 
-  val isReviewRequired = isBundled && (actual.size != expected.size || !actual.asSequence().zip(expected.asSequence()).all {
+  val isReviewRequired = suggestedReviewer != null && isBundled && (actual.size != expected.size || !actual.asSequence().zip(expected.asSequence()).all {
     it.first.compareImportantFields(it.second)
   })
 
@@ -58,11 +59,11 @@ fun checkThatContentIsNotChanged(
   @Suppress("SpellCheckingInspection")
   val resultMessage = if (isReviewRequired) {
     "Distribution content has changed.\n" +
-    "If you are sure that the difference is as expected, ask Vladimir Krivosheev (slack://user?team=T0288D531&id=U03F6KHPW)\n" +
-    "or someone else from the Core team to approve changes.\n\n" +
+    "If you are sure that the difference is as expected, ask $suggestedReviewer to approve changes.\n\n" +
     "Please do not push changes without approval.\n" +
     "For more details, please visit https://youtrack.jetbrains.com/articles/IDEA-A-80/Distribution-Content-Approving.\n\n" +
-    "When the patch is applied (after approval), please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration consistency.\n\n" +
+    "Snapshots for other products may require update, please run 'All Packaging Tests' run configuration to run all packaging tests.\n\n" +
+    "When the patches is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration is up to date.\n\n" +
     "Patch:\n${DiffUtils.generateUnifiedDiff(fileName, fileName, expectedLines, patch, 3).joinToString(separator = "\n")}"
   }
   else {
@@ -70,7 +71,8 @@ fun checkThatContentIsNotChanged(
     "If you are sure that the difference is as expected, please apply and commit a new snapshot.\n" +
     "Approval is not required. For more details, please visit https://youtrack.jetbrains.com/articles/IDEA-A-80/Distribution-Content-Approving.\n\n" +
     "Please copy the patch below and apply it, or open the Diff Viewer to accept the proposed changes.\n\n" +
-    "When the patch is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration consistency.\n\n" +
+    "Snapshots for other products may require update, please run 'All Packaging Tests' run configuration to run all packaging tests.\n\n" +
+    "When the patches is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration is up to date.\n\n" +
     "Patch:\n${DiffUtils.generateUnifiedDiff(fileName, fileName, expectedLines, patch, 3).joinToString(separator = "\n")}"
   }
 

@@ -1,4 +1,5 @@
 ### auto-generated section `build kotlin.project-wizard.core` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -19,6 +20,7 @@ jvm_library(
     "//platform/observable",
     "@lib//:velocity",
     "@lib//:gson",
+    "//platform/lang-core",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-api:core",
     "//plugins/kotlin/base/plugin",
@@ -55,6 +57,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
+    "//platform/lang-core",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-api:core",
     "//plugins/kotlin/base/plugin",
@@ -67,7 +70,6 @@ jvm_library(
     "//plugins/gradle:gradle-common",
     "//java/idea-ui:ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
@@ -79,7 +81,7 @@ jvm_library(
   runtime_deps = [":core_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "core_test",
   runtime_deps = [":core_test_lib"]
 )

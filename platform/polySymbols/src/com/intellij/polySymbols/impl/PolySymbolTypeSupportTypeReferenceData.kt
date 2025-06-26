@@ -6,4 +6,4 @@ import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 data class PolySymbolTypeSupportTypeReferenceData(
   override val module: String?,
   override val name: String,
-): PolySymbolTypeSupport.TypeReference
+) : PolySymbolTypeSupport.TypeReference

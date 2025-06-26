@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -21,7 +22,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import kotlin.coroutines.coroutineContext
 
 @Service(Service.Level.PROJECT)
-class LibraryIdSynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {
+internal class LibraryIdSynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {
   private val synchronizationRequests = Channel<Request>(capacity = Channel.UNLIMITED).apply {
     scope.coroutineContext.job.invokeOnCompletion {
       close()
@@ -31,7 +32,7 @@ class LibraryIdSynchronizationQueue(private val project: Project, private val sc
   private val toSynchronize = mutableSetOf<LibraryId>()
 
   init {
-    scope.launch(Dispatchers.Default) {
+    scope.launch {
       for (request in synchronizationRequests) {
         try {
           when (request) {
@@ -46,10 +47,8 @@ class LibraryIdSynchronizationQueue(private val project: Project, private val sc
               toSynchronize.clear()
             }
             Request.AllLibrariesSynchronization -> {
-              val newLibrariesToSync = readAction {
-                removeDuplicatedUrlsFromRepositoryLibraries(project)
-                collectLibrariesToSync(project)
-              }
+              val newLibrariesToSync = collectLibrariesToSync(project)
+
               toSynchronize.addAll(newLibrariesToSync.map { lib -> (lib as LibraryBridge).libraryId })
               synchronizeLibraries(toSynchronize)
               toSynchronize.clear()
@@ -84,7 +83,7 @@ class LibraryIdSynchronizationQueue(private val project: Project, private val sc
   }
 
   private suspend fun synchronizeLibraries(libraryIds: Collection<LibraryId>) {
-    val currentSnapshot = WorkspaceModel.getInstance(project).currentSnapshot
+    val currentSnapshot = project.serviceAsync<WorkspaceModel>().currentSnapshot
     for (libraryId in libraryIds) {
       if (!coroutineContext.isActive) {
         return

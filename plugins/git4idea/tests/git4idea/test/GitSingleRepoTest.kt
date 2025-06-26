@@ -32,12 +32,12 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
   protected fun VcsConfiguration.StandardConfirmation.doNothing() =
     AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, this, DO_NOTHING_SILENTLY)
 
-  protected fun prepareUnversionedFile(filePath: String): VirtualFile {
+  protected fun prepareUnversionedFile(filePath: String, content: String = "initial\ncontent\n"): VirtualFile {
     val path = projectNioRoot.resolve(filePath)
     Files.createDirectories(path.parent)
     Files.createFile(path)
 
-    FileUtil.writeToFile(path.toFile(), "initial\ncontent\n")
+    FileUtil.writeToFile(path.toFile(), content)
 
     val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.toFile())!!
     updateChangeListManager()

@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
+import com.intellij.idea.TestFor;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCase {
@@ -43,4 +44,7 @@ public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCa
   public void testSameResolveWithConditionalBranches() { doTest(); }
   public void testIgnoreMessageFormatCall() { doTest(); }
   public void testClassCastMethodReference() { doTest(); }
+
+  @TestFor(issues = "IDEA-361212")
+  public void testNestedCallRawInheritance() {doTest();}
 }

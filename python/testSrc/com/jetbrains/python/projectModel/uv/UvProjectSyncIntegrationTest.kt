@@ -4,15 +4,16 @@ package com.jetbrains.python.projectModel.uv
 import com.intellij.openapi.externalSystem.testFramework.fixtures.multiProjectFixture
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.SourceRootAssertions
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -22,6 +23,7 @@ import com.intellij.testFramework.utils.io.createFile
 import com.jetbrains.python.projectModel.BaseProjectModelService.Companion.PYTHON_SOURCE_ROOT_TYPE
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import kotlin.io.path.writeText
 
 @RegistryKey("python.project.model.uv", "true")
@@ -35,7 +37,7 @@ class UvProjectSyncIntegrationTest {
 
   @Test
   fun `src directory is mapped to module source root`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
       dependencies = []
@@ -55,8 +57,37 @@ class UvProjectSyncIntegrationTest {
   }
 
   @Test
+  fun `root dot venv directory is automatically excluded`() = timeoutRunBlocking {
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
+      [project]
+      name = "main"
+      dependencies = []
+      
+      [tool.uv.workspace]
+      members = [
+          "lib",
+      ]
+    """.trimIndent())
+    testRoot.createFile(".venv/pyvenv.cfg")
+
+    testRoot.createFile("lib/pyproject.toml").writeText("""
+      [project]
+      name = "lib"
+      dependencies = []
+    """.trimIndent())
+    testRoot.createFile("lib/.venv/pyvenv.cfg")
+
+    multiprojectFixture.linkProject(project, testRoot, UvConstants.SYSTEM_ID)
+    syncAllProjects(project)
+
+    ModuleAssertions.assertModules(project, "main", "lib")
+    assertExcludedRoots(project, "main", listOf(testRoot.resolve(".venv")))
+    assertExcludedRoots(project, "lib", listOf(testRoot.resolve("lib/.venv")))
+  }
+
+  @Test
   fun `projects inside dot venv are skipped`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
     """.trimIndent())
@@ -74,7 +105,7 @@ class UvProjectSyncIntegrationTest {
 
   @Test
   fun `workspace project with a path dependency`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
       dependencies = [
@@ -167,6 +198,17 @@ class UvProjectSyncIntegrationTest {
         UvProjectModelService.UvWorkspace(module, emptySet()),
         UvProjectModelService.findWorkspace(project, module)
       )
+    }
+  }
+
+  private fun assertExcludedRoots(project: Project, moduleName: String, expectedRoots: List<Path>) {
+    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    val expectedUrls = expectedRoots.map { it.normalize().toVirtualFileUrl(virtualFileUrlManager) }
+    ModuleAssertions.assertModuleEntity(project, moduleName) { moduleEntity ->
+      val actualRoots = moduleEntity.contentRoots
+        .flatMap { it.excludedUrls }
+        .map { it.url }
+      assertEqualsUnordered(expectedUrls, actualRoots)
     }
   }
 

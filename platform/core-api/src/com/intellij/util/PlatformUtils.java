@@ -194,6 +194,10 @@ public final class PlatformUtils {
     return is(GOIDE_PREFIX);
   }
 
+  public static boolean isGitClient() {
+    return is(GITCLIENT_PREFIX);
+  }
+
   public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }
 
   public static boolean isGateway() { return is(GATEWAY_PREFIX); }

@@ -4,8 +4,8 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.function.Consumer
 
@@ -16,12 +16,12 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun addGroup(group: String): Self
   fun addVersion(version: String): Self
 
-  fun registerTask(name: String, type: String?, configure: Consumer<ScriptTreeBuilder>): Self = registerTask(name, type) { configure.accept(this) }
-  fun registerTask(name: String, type: String? = null, configure: ScriptTreeBuilder.() -> Unit = {}): Self
+  fun registerTask(name: String, type: String?, configure: Consumer<GradleScriptTreeBuilder>): Self = registerTask(name, type) { configure.accept(this) }
+  fun registerTask(name: String, type: String? = null, configure: GradleScriptTreeBuilder.() -> Unit = {}): Self
 
-  fun configureTask(name: String, type: String, configure: Consumer<ScriptTreeBuilder>): Self = configureTask(name, type) { configure.accept(this) }
-  fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self
-  fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self
+  fun configureTask(name: String, type: String, configure: Consumer<GradleScriptTreeBuilder>): Self = configureTask(name, type) { configure.accept(this) }
+  fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self
 
   fun addDependency(scope: String, dependency: String): Self = addDependency(scope, dependency, null)
   fun addDependency(scope: String, dependency: Expression): Self = addDependency(scope, dependency, null)
@@ -99,9 +99,9 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun project(name: String): Expression
   fun project(name: String, configuration: String): Expression
 
-  fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder
-  fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder
-  fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder
+  fun GradleScriptTreeBuilder.mavenRepository(url: String): GradleScriptTreeBuilder
+  fun GradleScriptTreeBuilder.mavenCentral(): GradleScriptTreeBuilder
+  fun GradleScriptTreeBuilder.mavenLocal(url: String): GradleScriptTreeBuilder
 
   companion object {
 
@@ -112,10 +112,7 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
 
     @JvmStatic
     fun create(gradleVersion: GradleVersion, gradleDsl: GradleDsl): GradleBuildScriptBuilder<*> {
-      return when (gradleDsl) {
-        GradleDsl.GROOVY -> GroovyDslGradleBuildScriptBuilder.Impl(gradleVersion)
-        GradleDsl.KOTLIN -> KotlinDslGradleBuildScriptBuilder.Impl(gradleVersion)
-      }
+      return AbstractGradleBuildScriptBuilder.Impl(gradleVersion, gradleDsl)
     }
 
     @JvmStatic

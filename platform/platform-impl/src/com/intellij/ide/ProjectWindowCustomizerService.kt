@@ -10,8 +10,9 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -196,7 +197,7 @@ class ProjectWindowCustomizerService : Disposable {
         setupWorkspaceStorage(colorStorage.project)
       }
 
-      // Get custom project color and transform it for toolbar
+      // get the custom project color and transform it for the toolbar
       val customColors = colorStorage.customColor?.takeIf { it.isNotEmpty() }?.let {
         val color = ColorHexUtil.fromHex(it)
         val toolbarColor = ColorUtil.toAlpha(color, 90)
@@ -463,10 +464,7 @@ internal class ProjectWidgetGradientLocationService(private val project: Project
   private val updateFlow = MutableStateFlow<Float?>(null)
 
   init {
-    coroutineScope.launch(
-      Dispatchers.EDT +
-      CoroutineName("ProjectWidgetGradientLocationService.updateFlow")
-    ) {
+    coroutineScope.launch(CoroutineName("ProjectWidgetGradientLocationService.updateFlow")) {
       // This unusual debouncing is needed because the project widget (that determines the location of the gradient)
       // is sometimes removed and immediately re-added to the toolbar by the toolbar's action update mechanism.
       // This causes the gradient to jump to its default position and then back to the project widget,
@@ -477,18 +475,23 @@ internal class ProjectWidgetGradientLocationService(private val project: Project
       // Either it's an action update, and then we hope that it'll be back within 100 milliseconds;
       // or the user actually removed the project widget (an uncommon case),
       // and then it's not the end of the world if the gradient reacts 100 milliseconds later.
-      updateFlow.debounce { if (it == null) 100L else 0L }
+      updateFlow
+        .debounce { if (it == null) 100L else 0L }
         .collectLatest {
-          setValueNow(it)
+          withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+            setValueNow(it)
+          }
         }
     }
   }
 
   private fun setValueNow(value: Float?) {
-    ThreadingAssertions.assertEventDispatchThread()
     val newValue = value ?: DEFAULT_GRADIENT_OFFSET
     // the usual thing: don't compare floating point values with ==
-    if (abs(gradientOffsetRelativeToRootPane - newValue) < 0.1) return
+    if (abs(gradientOffsetRelativeToRootPane - newValue) < 0.1) {
+      return
+    }
+
     gradientOffsetRelativeToRootPane = newValue
     for (repaintRoot in ProjectWindowCustomizerService.getInstance().getGradientRepaintRoots()) {
       if (ProjectUtil.getProjectForComponent(repaintRoot) == project) {
@@ -513,7 +516,7 @@ private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListe
 
   override suspend fun execute(project: Project) {
     val service = serviceAsync<ProjectWindowCustomizerService>()
-    MainScope().async {
+    withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
       service.enableIfNeeded()
       service.setupWorkspaceStorage(project)
     }
@@ -562,24 +565,25 @@ private class WorkspaceProjectColorStorage(val project: Project): ProjectColorSt
 
 private class RecentProjectColorStorage(override val projectPath: String): ProjectColorStorage {
   override var customColor: String?
-    get() = info?.customColor
+    get() = getInfo(RecentProjectsManagerBase.getInstanceEx())?.customColor
     set(value) {
       update { info -> info.customColor = value }
     }
 
   override var associatedIndex: Int?
-    get() = info?.associatedIndex
+    get() = getInfo(RecentProjectsManagerBase.getInstanceEx())?.associatedIndex
     set(value) {
       update { info -> info.associatedIndex = value ?: -1 }
     }
 
   private fun update(block: (RecentProjectColorInfo) -> Unit) {
-    var info = info
-    if (info == null) info = RecentProjectColorInfo()
+    val projectsManager = RecentProjectsManagerBase.getInstanceEx()
+    val info = getInfo(projectsManager) ?: RecentProjectColorInfo()
     block(info)
-    RecentProjectsManagerBase.getInstanceEx().updateProjectColor(projectPath, info)
+    projectsManager.updateProjectColor(projectPath, info)
   }
 
-  private val info: RecentProjectColorInfo? get() =
-    RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectPath)?.colorInfo
+  private fun getInfo(recentProjectManager: RecentProjectsManagerBase): RecentProjectColorInfo? {
+    return recentProjectManager.getProjectMetaInfo(projectPath)?.colorInfo
+  }
 }

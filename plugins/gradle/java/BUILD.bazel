@@ -20,15 +20,18 @@ jvm_library(
     "//plugins/gradle/jps-plugin:jps",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-impl:ide-impl",
     "//java/idea-ui:ui",
     "//platform/observable",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/usageView",
@@ -82,6 +85,7 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.java` end
 
 ### auto-generated section `build intellij.gradle.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -108,9 +112,11 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",
@@ -163,7 +169,7 @@ jvm_library(
   runtime_deps = [":java-tests_test_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "java-tests_test",
   runtime_deps = [":java-tests_test_lib"]
 )

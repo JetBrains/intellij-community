@@ -6,6 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
@@ -17,7 +18,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
-import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvUnderProgress
+import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.CoroutineScope
@@ -70,11 +71,11 @@ internal class EnvironmentCreatorUv(
   override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> {
     val workingDir = module?.basePath?.let { tryResolvePath(it) } ?: project.basePath?.let { tryResolvePath(it) }
     if (workingDir == null) {
-      return PyResult.localizedError("working dir is not specified for uv environment setup")
+      return PyResult.localizedError(PyBundle.message("python.sdk.uv.working.dir.is.not.specified"))
     }
 
     val python = homePath?.let { Path.of(it) }
-    return setupNewUvSdkAndEnvUnderProgress(project, workingDir, baseSdks, python)
+    return setupNewUvSdkAndEnv(workingDir, baseSdks, python)
   }
 
   override suspend fun detectExecutable() {

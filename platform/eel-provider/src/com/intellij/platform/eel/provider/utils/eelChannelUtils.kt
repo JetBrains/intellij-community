@@ -37,21 +37,24 @@ import kotlin.time.Duration.Companion.milliseconds
 // copy functions copy data from/to an eel channel
 
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel = NioReadToEelAdapter(this)
-@ApiStatus.Internal
+
+@ApiStatus.Experimental
 fun WritableByteChannel.asEelChannel(): EelSendChannel = NioWriteToEelAdapter(this)
 
 // Flushes data after each writing.
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun OutputStream.asEelChannel(): EelSendChannel = NioWriteToEelAdapter(Channels.newChannel(this), this)
-@ApiStatus.Internal
+
+@ApiStatus.Experimental
 fun InputStream.consumeAsEelChannel(): EelReceiveChannel = NioReadToEelAdapter(Channels.newChannel(this))
-@ApiStatus.Internal
+
+@ApiStatus.Experimental
 fun EelReceiveChannel.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =
   InputStreamAdapterImpl(this, blockingContext)
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelSendChannel.asOutputStream(blockingContext: CoroutineContext = Dispatchers.IO): OutputStream =
   OutputStreamAdapterImpl(this, blockingContext)
 
@@ -86,11 +89,13 @@ fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChann
  */
 @ApiStatus.Internal
 fun EelReceiveChannel.lines(charset: Charset): Flow<String> = linesImpl(charset)
+
 @ApiStatus.Internal
 fun EelReceiveChannel.lines(): Flow<String> = lines(Charset.defaultCharset())
 
 @ApiStatus.Internal
 fun Socket.consumeAsEelChannel(): EelReceiveChannel = consumeAsEelChannelImpl()
+
 @ApiStatus.Internal
 fun Socket.asEelChannel(): EelSendChannel = asEelChannelImpl()
 
@@ -115,7 +120,7 @@ fun EelPipe(): EelPipe = EelPipeImpl()
  * Reads all data till the end from a channel.
  * Semantics is the same as [InputStream.readAllBytes]
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 suspend fun EelReceiveChannel.readAllBytes(): ByteArray = withContext(Dispatchers.IO) {
   // The current implementation is suboptimal and might be rewritten, but the API should be the same
   consumeAsInputStream().readAllBytes()

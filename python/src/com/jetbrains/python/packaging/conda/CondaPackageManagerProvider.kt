@@ -14,5 +14,5 @@ class CondaPackageManagerProvider : PythonPackageManagerProvider {
     if (sdk.isConda()) createCondaPackageManager(project, sdk) else null
 
   private fun createCondaPackageManager(project: Project, sdk: Sdk): PythonPackageManager =
-    CondaWithPipFallbackPackageManager(project, sdk)
+    CondaPackageManager(project, sdk)
 }
