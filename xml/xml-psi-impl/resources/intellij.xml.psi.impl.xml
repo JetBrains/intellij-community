@@ -7,7 +7,7 @@
   </dependencies>
 
   <projectListeners>
-    <listener class="com.intellij.html.polySymbols.HtmlPolyContextChangeListener"
+    <listener class="com.intellij.polySymbols.html.HtmlPolyContextChangeListener"
               topic="com.intellij.polySymbols.context.PolyContextChangeListener"/>
   </projectListeners>
 
@@ -99,34 +99,34 @@
                                  targetClass="com.intellij.model.Symbol"
                                  implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
 
-    <multiHostInjector implementation="com.intellij.html.polySymbols.HtmlSymbolsTextInjector"
+    <multiHostInjector implementation="com.intellij.polySymbols.html.HtmlSymbolsTextInjector"
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="PolySymbolsHtmlText"/>
 
     <polySymbols.highlightingCustomizer
       id="html"
-      implementation="com.intellij.html.polySymbols.HtmlSymbolHighlightingCustomizer"/>
+      implementation="com.intellij.polySymbols.html.HtmlSymbolHighlightingCustomizer"/>
     <polySymbols.queryScopeContributor
-      implementation="com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor"/>
+      implementation="com.intellij.polySymbols.html.HtmlSymbolQueryScopeContributor"/>
     <polySymbols.codeCompletionItemCustomizer
       id="html"
-      implementation="com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor$HtmlCodeCompletionItemCustomizer"/>
+      implementation="com.intellij.polySymbols.html.HtmlSymbolQueryScopeContributor$HtmlCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider id="html-default"
-      implementation="com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolDescriptorsProvider"/>
+      implementation="com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptorsProvider"/>
     <xml.elementDescriptorProvider
-      implementation="com.intellij.html.polySymbols.elements.HtmlElementSymbolDescriptorsProvider"/>
+      implementation="com.intellij.polySymbols.html.elements.HtmlElementSymbolDescriptorsProvider"/>
 
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                       hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.html.polySymbols.elements.HtmlElementSymbolReferenceProvider"/>
+                                      implementationClass="com.intellij.polySymbols.html.elements.HtmlElementSymbolReferenceProvider"/>
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
                                       hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolReferenceProvider"/>
+                                      implementationClass="com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolReferenceProvider"/>
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
                                       hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.html.polySymbols.attributeValues.HtmlAttributeValueSymbolReferenceProvider"/>
-    <vetoRenameCondition implementation="com.intellij.html.polySymbols.HtmlSymbolRenameHandlerVeto"/>
-    <xml.xmlExtension implementation="com.intellij.html.polySymbols.HtmlSymbolsXmlExtension" id="poly-symbols"
+                                      implementationClass="com.intellij.polySymbols.html.attributeValues.HtmlAttributeValueSymbolReferenceProvider"/>
+    <vetoRenameCondition implementation="com.intellij.polySymbols.html.HtmlSymbolRenameHandlerVeto"/>
+    <xml.xmlExtension implementation="com.intellij.polySymbols.html.HtmlSymbolsXmlExtension" id="poly-symbols"
                       order="before html, after react"/>
   </extensions>
 </idea-plugin>
