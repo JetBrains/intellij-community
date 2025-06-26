@@ -322,7 +322,6 @@ fun CoroutineScope.startApplication(
         }.getOrLogException(log)
       }
 
-      applyIslandsTheme(false)
       executeApplicationStarter(starter, args)
     }
     // no need to use a pool once started

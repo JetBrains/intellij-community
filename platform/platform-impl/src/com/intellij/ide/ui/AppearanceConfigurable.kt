@@ -6,10 +6,13 @@ import com.intellij.application.options.colors.SchemesPanel
 import com.intellij.application.options.colors.SchemesPanelFactory
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
-import com.intellij.ide.*
+import com.intellij.ide.DataManager
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
@@ -18,7 +21,6 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZ
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ThemeAutodetectSelector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.islands.IslandsFeedback
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
@@ -155,11 +157,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }
-  private val islandLafProperty = propertyGraph.lazyProperty { IslandsFeedback.isIslandTheme() }
 
   override fun createPanel(): DialogPanel {
     lafProperty.afterChange(disposable!!) {
-      islandLafProperty.set(IslandsFeedback.isIslandTheme(it.themeId))
       ApplicationManager.getApplication().invokeLater {
         QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it.themeId), true)
         LafManager.getInstance().checkRestart()
@@ -184,14 +184,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           theme.component.isSwingPopup = false
           theme.component.renderer = lafManager.getLookAndFeelCellRenderer(theme.component)
           lafComboBoxModelWrapper.comboBoxComponent = theme.component
-
-          browserLink(message("ide.islands.read.more"), IslandsFeedback.getReadMoreUrl()).visibleIf(islandLafProperty)
-
-          link(message("ide.islands.share.feedback")) {
-            BrowserUtil.browse(IslandsFeedback.getFeedbackUrl(IslandsFeedback.isOneIslandTheme(lafProperty.get().themeId)))
-          }
-            .visibleIf(islandLafProperty)
-            .component.setExternalLinkIcon()
 
           checkBox(message("preferred.theme.autodetect.selector"))
             .bindSelected(syncThemeProperty)
