@@ -1,34 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl.configuration
+package com.intellij.pycharm.community.ide.impl.conda
 
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.CondaEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.ui.JBUI
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.PackagesNotificationPanel
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
@@ -49,12 +37,9 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
-import java.awt.BorderLayout
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import javax.swing.JComponent
-import javax.swing.JPanel
 
-private val LOGGER = Logger.getInstance(PyEnvironmentYmlSdkConfiguration::class.java)
 
 /**
  * This class only supports local, not remote target.
@@ -87,36 +72,34 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
   }
 
-  @RequiresBackgroundThread
-  private fun askForEnvData(module: Module, source: Source): PyAddNewCondaEnvFromFilePanel.Data? {
-    val environmentYml = getEnvironmentYml(module) ?: return null
+  private suspend fun askForEnvData(module: Module, source: Source) = withContext(Dispatchers.Default) {
+    val environmentYml = getEnvironmentYml(module) ?: return@withContext null
     // Again: only local conda is supported for now
-    val condaExecutable = runBlockingCancellable { suggestCondaPath() }?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+    val condaExecutable = suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
     if (source == Source.INSPECTION && CondaEnvSdkFlavor.validateCondaPath(condaExecutable?.path, PlatformAndRoot.local) == null) {
       PySdkConfigurationCollector.logCondaEnvDialogSkipped(module.project, source, executableToEventField(condaExecutable?.path))
-      return PyAddNewCondaEnvFromFilePanel.Data(condaExecutable!!.path, environmentYml.path)
+      return@withContext PyAddNewCondaEnvFromFilePanel.Data(condaExecutable!!.path, environmentYml.path)
     }
 
     var permitted = false
     var envData: PyAddNewCondaEnvFromFilePanel.Data? = null
 
-    ApplicationManager.getApplication().invokeAndWait {
-      val dialog = Dialog(module, condaExecutable, environmentYml)
+    withContext(Dispatchers.EDT) {
+      val dialog = CondaCreateSdkDialog(module, condaExecutable, environmentYml)
 
       permitted = dialog.showAndGet()
       envData = dialog.envData
 
-      LOGGER.debug("Dialog exit code: ${dialog.exitCode}, $permitted")
+      this@PyEnvironmentYmlSdkConfiguration.thisLogger().debug("Dialog exit code: ${dialog.exitCode}, $permitted")
     }
 
     PySdkConfigurationCollector.logCondaEnvDialog(module.project, permitted, source, executableToEventField(envData?.condaPath))
-    return if (permitted) envData else null
+    if (permitted) envData else null
   }
 
   private suspend fun createAndAddCondaEnv(module: Module, condaExecutable: String, environmentYml: String): Sdk? {
-    ProgressManager.progress(PyBundle.message("python.sdk.creating.conda.environment.sentence"))
-    LOGGER.debug("Creating conda environment")
+    thisLogger().debug("Creating conda environment")
 
     val sdk = createCondaEnv(module.project, condaExecutable, environmentYml) ?: return null
     PySdkConfigurationCollector.logCondaEnv(module.project, CondaEnvResult.CREATED)
@@ -124,8 +107,8 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val shared = PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault
     val basePath = module.basePath
 
-    ApplicationManager.getApplication().invokeAndWait {
-      LOGGER.debug("Adding conda environment: ${sdk.homePath}, associated ${shared}}, module path ${basePath})")
+    withContext(Dispatchers.EDT) {
+      this@PyEnvironmentYmlSdkConfiguration.thisLogger().debug("Adding conda environment: ${sdk.homePath}, associated ${shared}}, module path ${basePath})")
       if (!shared) {
         sdk.setAssociationToModuleAsync(module)
       }
@@ -147,18 +130,19 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(Path.of(environmentYml))
     val sdk = PyCondaCommand(condaExecutable, null)
       .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, Dispatchers.EDT, existingSdks.toList(), project).getOr {
-      PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
-      LOGGER.warn("Exception during creating conda environment $it")
-      PackageManagementService.ErrorDescription.fromMessage(it.error.message)?.let { description ->
-        runInEdt {
-          PackagesNotificationPanel.showError(
-            PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.exception.dialog.title"),
-            description
-          )
+        PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
+        thisLogger().warn("Exception during creating conda environment $it")
+        val message = PackageManagementService.ErrorDescription.fromMessage(it.error.message)
+        message?.let { description ->
+          withContext(Dispatchers.EDT) {
+            PackagesNotificationPanel.showError(
+              PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.exception.dialog.title"),
+              description
+            )
+          }
         }
+        return null
       }
-      return null
-    }
 
     val condaEnvironmentsAfter = safelyListCondaEnvironments(project, condaExecutable) ?: return null
     val difference = condaEnvironmentsAfter - condaEnvironmentsBefore.toSet()
@@ -169,7 +153,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
           if (difference.isEmpty()) CondaEnvResult.NO_LISTING_DIFFERENCE else CondaEnvResult.AMBIGUOUS_LISTING_DIFFERENCE
         )
 
-        LOGGER.warn(
+        thisLogger().warn(
           """
           Several or none conda envs found:
           Before: $condaEnvironmentsBefore
@@ -182,49 +166,12 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   }
 
-  private fun safelyListCondaEnvironments(project: Project, condaExecutable: String): List<String>? {
-    val listEnvs = runBlockingCancellable {
-      CondaExecutor.listEnvs(Path.of(condaExecutable)).onFailure {
-        PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.LISTING_FAILURE)
-        it.addMessage(PyCharmCommunityCustomizationBundle.message("sdk.detect.condaenv.exception.dialog.title"))
-        ShowingMessageErrorSync.emit(it)
-      }
+  private suspend fun safelyListCondaEnvironments(project: Project, condaExecutable: String): List<String>? {
+    val listEnvs = CondaExecutor.listEnvs(Path.of(condaExecutable)).onFailure {
+      PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.LISTING_FAILURE)
+      it.addMessage(PyCharmCommunityCustomizationBundle.message("sdk.detect.condaenv.exception.dialog.title"))
+      ShowingMessageErrorSync.emit(it)
     }
     return listEnvs.getOrNull()?.envs?.toList()
-  }
-
-  private class Dialog(module: Module, condaBinary: VirtualFile?, environmentYml: VirtualFile) : DialogWrapper(module.project, false,
-                                                                                                               IdeModalityType.IDE) {
-
-    private val panel = PyAddNewCondaEnvFromFilePanel(module, condaBinary?.toNioPath(), environmentYml)
-
-    val envData
-      get() = panel.envData
-
-    init {
-      title = PyBundle.message("python.sdk.creating.conda.environment.title")
-      init()
-      Disposer.register(disposable) { if (isOK) panel.logData() }
-    }
-
-    override fun createCenterPanel(): JComponent {
-      return JPanel(BorderLayout()).apply {
-        val border = IdeBorderFactory.createEmptyBorder(JBUI.insets(4, 0, 6, 0))
-        val message = PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.permission")
-
-        add(
-          JBUI.Panels.simplePanel(JBLabel(message)).withBorder(border),
-          BorderLayout.NORTH
-        )
-
-        add(panel, BorderLayout.CENTER)
-      }
-    }
-
-    override fun postponeValidation(): Boolean {
-      return false
-    }
-
-    override fun doValidateAll(): List<ValidationInfo> = panel.validateAll()
   }
 }

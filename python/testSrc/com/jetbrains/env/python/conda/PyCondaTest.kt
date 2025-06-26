@@ -14,6 +14,7 @@ import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.EmptyNamedEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile
@@ -128,7 +129,8 @@ internal class PyCondaTest {
 
   @Test
   fun testCondaListUnnamedEnvs(): Unit =  timeoutRunBlocking(90.seconds) {
-    val envsDirs = Path.of(PyCondaEnv.getEnvsDirs(condaRule.condaPathOnTarget).getOrThrow().first())
+    val envDirs = CondaExecutor.listEnvs(Path.of(condaRule.condaPathOnTarget)).mapSuccess { it.envsDirs }.getOrThrow()
+    val envsDirs = Path.of(envDirs.first())
     val childDir = envsDirs.resolve("child")
     val childEnvPrefix = childDir.resolve("childEnv").toString()
     val siblingDir = envsDirs.resolveSibling("${envsDirs.fileName}Sibling")

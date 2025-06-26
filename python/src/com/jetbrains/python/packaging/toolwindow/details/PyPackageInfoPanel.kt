@@ -16,7 +16,6 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -58,7 +57,7 @@ class PyPackageInfoPanel(val project: Project) : Disposable {
     updateJob?.cancel()
 
     val service = project.service<PyPackagingToolWindowService>()
-    updateJob = PyPackageCoroutine.getScope(project).launch {
+    updateJob = PyPackageCoroutine.launch(project) {
       try {
         val packageDetails = service.detailsForPackage(pyPackage) ?: return@launch
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
@@ -42,7 +43,10 @@ object PyProjectSdkConfiguration {
       withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), false) {
         lifetime.use {
           setSdkUsingExtension(module, extension) {
-            extension.createAndAddSdkForInspection(module)
+            reportRawProgress {
+              it.text(extension.getIntention(module) ?: "")
+              extension.createAndAddSdkForInspection(module)
+            }
           }
         }
       }

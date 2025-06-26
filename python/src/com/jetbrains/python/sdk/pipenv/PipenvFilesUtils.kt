@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -36,10 +35,10 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -73,7 +72,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
   private val notificationActive = Key.create<Boolean>("Pipfile.notification.active")
 
   override fun editorCreated(event: EditorFactoryEvent) {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(event.editor.project) {
       val project = event.editor.project
       if (project == null || !isPipFileEditor(event.editor)) return@launch
       val listener = object : DocumentListener {
@@ -81,7 +80,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
           val document = event.document
           val module = document.virtualFile?.getModule(project) ?: return
           if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-            service<PythonSdkCoroutineService>().cs.launch {
+            PyPackageCoroutine.launch(project) {
               notifyPipFileChanged(module)
             }
           }
@@ -129,7 +128,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
   }
 
   private fun runPipEnvInBackground(module: Module, args: List<String>, @ProgressTitle description: String) {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(module.project) {
       withBackgroundProgress(module.project, description) {
         val sdk = module.pythonSdk ?: return@withBackgroundProgress
         runPipEnv(sdk.associatedModulePath?.let { Path.of(it) }, *args.toTypedArray()).onFailure {

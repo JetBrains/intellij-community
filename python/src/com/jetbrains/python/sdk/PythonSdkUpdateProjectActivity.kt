@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -16,8 +15,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkUtil.getSitePackagesDirectory
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -28,7 +27,7 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
     val messageBusConnection = project.messageBus.connect()
     messageBusConnection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun packagesChanged(sdk: Sdk) {
-        service<PythonSdkCoroutineService>().cs.launch {
+        PyPackageCoroutine.launch(project) {
           refreshPaths(project, sdk)
         }.cancelOnDispose(messageBusConnection)
       }

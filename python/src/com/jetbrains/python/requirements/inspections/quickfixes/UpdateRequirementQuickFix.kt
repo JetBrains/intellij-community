@@ -10,7 +10,6 @@ import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.updatePackagesByNamesBackground
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.getPythonSdk
-import kotlinx.coroutines.launch
 
 internal class UpdateRequirementQuickFix(private val packageName: String) : LocalQuickFix {
   override fun getFamilyName() = PyBundle.message("QFIX.NAME.update.requirement", packageName)
@@ -22,7 +21,7 @@ internal class UpdateRequirementQuickFix(private val packageName: String) : Loca
     val sdk = getPythonSdk(file) ?: return
     val manager = PythonPackageManagerUI.forSdk(project, sdk)
 
-    PyPackageCoroutine.getScope(project).launch {
+    PyPackageCoroutine.launch(project) {
       manager.updatePackagesByNamesBackground(listOf(packageName))
     }
   }

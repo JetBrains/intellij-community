@@ -20,8 +20,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiElementFilter
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
 import com.jetbrains.python.sdk.findAmongRoots
@@ -29,7 +29,6 @@ import com.jetbrains.python.sdk.poetry.VersionType.Companion.getVersionType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -95,7 +94,7 @@ private class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
     readAction {
       tomlFile.findDocument()?.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
-          service<PythonSdkCoroutineService>().cs.launch {
+          PyPackageCoroutine.launch(project) {
             val newVersion = poetryFindPythonVersionFromToml(tomlFile, project) ?: return@launch
             val oldVersion = PoetryPyProjectTomlPythonVersionsService.instance.getVersionString(module)
             if (oldVersion != newVersion) {

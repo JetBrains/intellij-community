@@ -150,7 +150,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       if (!coroutineContext.isActive) return@reportRawProgress
 
       if (extension != null) {
-        indicator.text("")
+        indicator.text(extension.getIntention(module) ?: "")
         setSdkUsingExtension(module, extension) { extension.createAndAddSdkForConfigurator(module) }
         return@reportRawProgress
       }

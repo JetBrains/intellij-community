@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry.ui
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -9,11 +8,10 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.validatePoetryExecutable
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
-import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.nio.file.Path
 import javax.swing.JPanel
@@ -26,7 +24,7 @@ class PyAddNewPoetryFromFilePanel(private val module: Module) : JPanel() {
   private val poetryPathField = TextFieldWithBrowseButton()
 
   init {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project = module.project) {
       poetryPathField.apply {
         getPoetryExecutable().getOrNull()?.absolutePathString()?.also { text = it }
         addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()

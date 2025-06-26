@@ -3,7 +3,6 @@ package  com.jetbrains.python.sdk.poetry.ui
 
 import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -27,8 +26,8 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addInterpretersAsync
@@ -38,7 +37,6 @@ import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.ui.pyModalBlocking
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -77,7 +75,7 @@ class PyAddNewPoetryPanel(
 
 
   private val installPackagesCheckBox = JBCheckBox(PyBundle.message("python.sdk.poetry.install.packages.from.toml.checkbox.text")).apply {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project) {
       isVisible = projectPath?.let {
         withContext(Dispatchers.IO) {
           StandardFileSystems.local().findFileByPath(it)?.findChild(PY_PROJECT_TOML)?.let { file -> getPyProjectTomlForPoetry(file) }
@@ -90,7 +88,7 @@ class PyAddNewPoetryPanel(
   private val poetryPathField = TextFieldWithBrowseButton().apply {
     addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileDescriptor())
     val field = textField as? JBTextField ?: return@apply
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project) {
       detectPoetryExecutable().getOrNull()?.let { field.emptyText.text = "Auto-detected: ${it.absolutePathString()}" }
       PropertiesComponent.getInstance().poetryPath?.let {
         field.text = it
@@ -171,7 +169,7 @@ class PyAddNewPoetryPanel(
    * Updates the view according to the current state of UI controls.
    */
   private fun update() {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project) {
       selectedModule?.let {
         installPackagesCheckBox.isEnabled = PyProjectToml.findFile(it) != null
       }

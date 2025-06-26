@@ -12,8 +12,6 @@ import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.getPythonSdk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 internal class InstallAllRequirementsQuickFix(val requirements: List<PyRequirement>) : LocalQuickFix {
   override fun getFamilyName(): String {
@@ -27,7 +25,7 @@ internal class InstallAllRequirementsQuickFix(val requirements: List<PyRequireme
 
     val file = descriptor.psiElement.containingFile ?: return
 
-    PyPackageCoroutine.getScope(project).launch(Dispatchers.Default) {
+    PyPackageCoroutine.launch(project) {
       val sdk = getPythonSdk(file) ?: return@launch
       val manager = PythonPackageManagerUI.forSdk(project, sdk)
       manager.installPyRequirementsBackground(confirmedPackages.toList(), emptyList<String>()

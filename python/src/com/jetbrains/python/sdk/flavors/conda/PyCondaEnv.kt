@@ -36,16 +36,6 @@ data class PyCondaEnv(
     get() = Path(fullCondaPathOnTarget)
 
   companion object {
-    /**
-     * @return list of conda's envs_dirs directories
-     */
-    @ApiStatus.Internal
-    suspend fun getEnvsDirs(
-      fullCondaPathOnTarget: FullPathOnTarget,
-    ): PyResult<Collection<String>> {
-      val info = CondaExecutor.listEnvs(Path(fullCondaPathOnTarget)).getOr { return it }
-      return PyResult.success(info.envsDirs)
-    }
 
     /**
      * @return list of conda environments

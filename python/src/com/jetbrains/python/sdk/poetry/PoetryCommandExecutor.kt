@@ -114,7 +114,7 @@ suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
 @Internal
 suspend fun setupPoetry(projectPath: Path, python: String?, installPackages: Boolean, init: Boolean): PyResult<@SystemDependent String> {
   if (init) {
-    runPoetry(projectPath, *listOf("init", "-n").toTypedArray())
+    runPoetry(projectPath, *listOf("init", "-n").toTypedArray()).getOr { return it }
     if (python != null) { // Replace a python version in toml
       ExecService().execGetStdout(Path.of(python), listOf("-c", REPLACE_PYTHON_VERSION), ExecOptions(workingDirectory = projectPath)).getOr { return it }
     }

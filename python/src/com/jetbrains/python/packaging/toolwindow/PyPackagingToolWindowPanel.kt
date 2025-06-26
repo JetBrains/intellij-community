@@ -20,9 +20,11 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.asDisposable
 import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.inspections.PyInterpreterInspection
@@ -56,7 +58,9 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   internal val packageListController = PyPackagesListController(project, controller = this)
   private val moduleController = PyPackagesSdkController(project)
   private val descriptionController = PyPackageInfoPanel(project)
-  private val packagingScope = PyPackageCoroutine.getIoScope(project)
+  private val packagingScope = PyPackageCoroutine.getScope(project).childScope("Packaging tool window").also {
+    Disposer.register(this, it.asDisposable())
+  }
 
   private lateinit var contentPanel: JPanel
   private lateinit var contentSplitter: OnePixelSplitter

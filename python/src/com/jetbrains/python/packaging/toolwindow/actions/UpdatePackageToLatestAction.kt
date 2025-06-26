@@ -11,7 +11,7 @@ import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 
 internal class UpdatePackageToLatestAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
@@ -22,7 +22,7 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
       return
     }
 
-    PyPackageCoroutine.getIoScope(project).launch {
+    PyPackageCoroutine.launch(project, Dispatchers.IO) {
       val pyPackages = packages.mapNotNull { pkg ->
         pkg.repository?.findPackageSpecification(pkg.name, pkg.nextVersion?.presentableText)
       }

@@ -4,8 +4,7 @@ package com.intellij.pycharm.community.ide.impl.configuration
 import com.intellij.CommonBundle
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -40,6 +39,8 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
 import com.jetbrains.python.sdk.isTargetBased
 import com.jetbrains.python.sdk.showSdkExecutionException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.nio.file.Paths
 import javax.swing.JComponent
@@ -56,7 +57,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
   override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
 
-  private fun createAndAddSdk(module: Module, source: Source): Sdk? {
+  private suspend fun createAndAddSdk(module: Module, source: Source): Sdk? {
     val existingSdks = ProjectJdkTable.getInstance().allJdks.asList()
 
     val data = askForEnvData(module, existingSdks, source) ?: return null
@@ -65,17 +66,15 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     val systemIndependentLocation = Path(location)
     val projectPath = module.basePath ?: module.project.basePath
 
-    ProgressManager.progress(PySdkBundle.message("python.creating.venv.sentence"))
-
     try {
-      val sdk = invokeAndWaitIfNeeded {
+      val sdk = withContext(Dispatchers.EDT) {
         Disposer.newDisposable("Creating virtual environment").use {
           PyTemporarilyIgnoredFileProvider.ignoreRoot(systemIndependentLocation, it)
           createVirtualEnvAndSdkSynchronously(chosenBaseSdk!!, existingSdks, location, projectPath, module.project, module)
         }
       }
 
-      invokeAndWaitIfNeeded {
+      withContext(Dispatchers.EDT) {
         thisLogger().debug("Adding associated virtual environment: ${sdk.homePath}, ${module.basePath}")
         SdkConfigurationUtil.addSdk(sdk)
       }
@@ -116,13 +115,13 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
   private fun getRequirementsTxtOrSetupPy(module: Module) =
     PyPackageUtil.findRequirementsTxt(module) ?: PyPackageUtil.findSetupPy(module)?.virtualFile
 
-  private fun askForEnvData(module: Module, existingSdks: List<Sdk>, source: Source): PyAddNewVirtualEnvFromFilePanel.Data? {
+  private suspend fun askForEnvData(module: Module, existingSdks: List<Sdk>, source: Source): PyAddNewVirtualEnvFromFilePanel.Data? {
     val requirementsTxtOrSetupPy = getRequirementsTxtOrSetupPy(module) ?: return null
 
     var permitted = false
     var envData: PyAddNewVirtualEnvFromFilePanel.Data? = null
 
-    ApplicationManager.getApplication().invokeAndWait {
+    withContext(Dispatchers.EDT) {
       val dialog = Dialog(module, existingSdks, requirementsTxtOrSetupPy)
 
       permitted = dialog.showAndGet()
@@ -184,9 +183,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       }
     }
 
-    override fun postponeValidation(): Boolean {
-      return false
-    }
+    override fun postponeValidation(): Boolean = false
 
     override fun doValidateAll(): List<ValidationInfo> = panel.validateAll(CommonBundle.getOkButtonText())
   }

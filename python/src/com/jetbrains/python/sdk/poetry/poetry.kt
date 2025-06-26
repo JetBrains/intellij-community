@@ -91,8 +91,12 @@ private suspend fun setUpPoetry(projectPath: Path, python: String?, installPacka
   val poetryExecutablePathString = when (poetryPath) {
     is String -> poetryPath
     else -> {
-      val pyProjectToml = withContext(Dispatchers.IO) { StandardFileSystems.local().findFileByPath(projectPath.toString())?.findChild(PY_PROJECT_TOML) }
-      val init = pyProjectToml?.let { getPyProjectTomlForPoetry(it) } == null
+      val pyProjectToml = withContext(Dispatchers.IO) {
+        StandardFileSystems.local().findFileByPath(projectPath.toString())?.findChild(PY_PROJECT_TOML)
+      }
+      val init = pyProjectToml?.let {
+        getPyProjectTomlForPoetry(it)
+      } == null
       setupPoetry(projectPath, python, installPackages, init).getOr { return it }
     }
   }
