@@ -9,13 +9,12 @@ import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.idea.KotlinIconProvider
+import org.jetbrains.kotlin.idea.util.isFileInRoots
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -86,7 +85,7 @@ class KotlinSelectInProjectViewProvider(private val project: Project) : Selectab
         val file = element.containingFile as? KtFile ?: return null
 
         val virtualFile = file.virtualFile
-        if (!fileInRoots(virtualFile)) return file
+        if (!project.isFileInRoots(virtualFile)) return file
 
         var current = element.parentsWithSelf.firstOrNull { it.isSelectable() }
 
@@ -106,16 +105,10 @@ class KotlinSelectInProjectViewProvider(private val project: Project) : Selectab
         is KtDeclaration -> parent is KtFile || ((parent as? KtClassBody)?.parent as? KtClassOrObject)?.isSelectable() ?: false
         else -> false
     }
-
-    private fun fileInRoots(file: VirtualFile?): Boolean {
-        val index = ProjectRootManager.getInstance(project).fileIndex
-        return file != null && (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))
-    }
 }
 
-
 @ApiStatus.Internal
-fun KtClassOrObject.getStructureDeclarations() =
+fun KtClassOrObject.getStructureDeclarations(): List<KtDeclaration> =
     buildList {
         primaryConstructor?.let { add(it) }
         primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
