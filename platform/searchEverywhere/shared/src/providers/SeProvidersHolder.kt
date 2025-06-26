@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -46,6 +43,11 @@ class SeProvidersHolder(
       else -> legacySeparateTabContributors[providerId] ?: legacyAllTabContributors[providerId]
     }
   }
+
+  fun getEssentialAllTabProviderIds(): Set<SeProviderId> =
+    legacyAllTabContributors.filter {
+      allTabProviders.contains(it.key) && EssentialContributor.checkEssential(it.value)
+    }.keys
 
   companion object {
     suspend fun initialize(

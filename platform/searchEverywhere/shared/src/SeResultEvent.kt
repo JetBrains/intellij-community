@@ -10,3 +10,5 @@ sealed interface SeResultEvent
 class SeResultAddedEvent(val itemData: SeItemData) : SeResultEvent
 @Internal
 class SeResultReplacedEvent(val uuidsToReplace: List<String>, val newItemData: SeItemData) : SeResultEvent
+@Internal
+class SeResultEndEvent(val providerId: SeProviderId) : SeResultEvent

@@ -44,7 +44,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     params: SeParams,
     dataContextId: DataContextId?,
     requestedCountChannel: ReceiveChannel<Int>,
-  ): Flow<SeItemData> {
+  ): Flow<SeTransferEvent> {
     val requestedCountState = MutableStateFlow(0)
     val receivingJob = coroutineScope.launch {
       requestedCountChannel.consumeEach { count ->
@@ -54,16 +54,21 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
 
     SeLog.log(SeLog.ITEM_EMIT) { "Backend will request items from providers: ${providerIds.joinToString(", ")}" }
 
-    val itemsFlows = providerIds.mapNotNull {
+    val itemsFlows = providerIds.mapNotNull { providerId ->
       getProvidersHolder(sessionRef, dataContextId)
-        ?.get(it, isAllTab)
+        ?.get(providerId, isAllTab)
         ?.getItems(params)
+        ?.map { SeTransferItem(it) as SeTransferEvent }
+        ?.onCompletion { emit(SeTransferEnd(providerId)) }
     }
 
     val equalityChecker = SeEqualityChecker()
     return flow {
-      itemsFlows.merge().buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND).mapNotNull { itemData ->
-        equalityChecker.checkAndUpdateIfNeeded(itemData)
+      itemsFlows.merge().buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND).mapNotNull { transferEvent ->
+        when (transferEvent) {
+          is SeTransferEnd -> transferEvent
+          is SeTransferItem -> equalityChecker.checkAndUpdateIfNeeded(transferEvent.itemData)?.let { SeTransferItem(it) }
+        }
       }.collect { item ->
         requestedCountState.first { it > 0 }
         requestedCountState.update { it - 1 }
@@ -74,6 +79,18 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       SeLog.log(SeLog.ITEM_EMIT) { "Backend merged flow completed" }
       receivingJob.cancel()
     }
+  }
+
+  suspend fun getAvailableProviderIds(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId
+  ) : Map<String, Set<SeProviderId>> {
+    val providersHolder = getProvidersHolder(sessionRef, dataContextId) ?: return emptyMap()
+
+    val essential = providersHolder.getEssentialAllTabProviderIds()
+    val nonEssential = SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() }.filter { it !in essential }.toSet()
+
+    return mapOf(SeProviderIdUtils.ESSENTIAL_KEY to essential, SeProviderIdUtils.NON_ESSENTIAL_KEY to nonEssential)
   }
 
   private suspend fun getProvidersHolder(
