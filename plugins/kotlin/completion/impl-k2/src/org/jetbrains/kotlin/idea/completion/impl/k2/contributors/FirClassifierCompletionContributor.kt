@@ -191,10 +191,11 @@ internal open class FirClassifierCompletionContributor(
         expectedType: KaType? = null,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
     ): Sequence<LookupElementBuilder> = sequence {
-        if (classifierSymbol is KaNamedClassSymbol
-            && expectedType?.symbol == classifierSymbol
-            && classifierSymbol.modality != KaSymbolModality.SEALED
-            && classifierSymbol.modality != KaSymbolModality.ABSTRACT
+        if (classifierSymbol is KaNamedClassSymbol &&
+            classifierSymbol.modality != KaSymbolModality.SEALED &&
+            classifierSymbol.modality != KaSymbolModality.ABSTRACT &&
+            expectedType != null &&
+            classifierSymbol.defaultType.isSubtypeOf(expectedType)
         ) {
             val constructorSymbols = classifierSymbol.memberScope.constructors
                 .filter { visibilityChecker.isVisible(it, positionContext) }
