@@ -33,6 +33,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager;
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers;
 import com.jetbrains.python.packaging.setupPy.SetupPyManager;
@@ -83,8 +84,12 @@ public final class PyPackageUtil {
 
   public static @Nullable PyFile findSetupPy(@NotNull Module module) {
     Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) return null;
-    return SetupPyManager.getInstance(module.getProject(), sdk).getRequirementsPsiFile();
+    if (sdk == null) {
+      return SetupPyHelpers.detectSetupPyInModule(module);
+    }
+    else {
+      return SetupPyManager.getInstance(module.getProject(), sdk).getRequirementsPsiFile();
+    }
   }
 
   public static boolean hasRequirementsTxt(@NotNull Module module) {
@@ -94,8 +99,12 @@ public final class PyPackageUtil {
   @SuppressWarnings("unused")
   public static @Nullable VirtualFile findRequirementsTxt(@NotNull Module module) {
     Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) return null;
-    return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).getDependenciesFile();
+    if (sdk == null) {
+      return PythonRequirementTxtSdkUtils.detectRequirementsTxtInModule(module);
+    }
+    else {
+      return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).getDependenciesFile();
+    }
   }
 
   @RequiresReadLock(generateAssertion = false)
