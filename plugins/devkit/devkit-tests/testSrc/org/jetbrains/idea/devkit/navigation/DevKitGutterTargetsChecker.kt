@@ -16,7 +16,8 @@ object DevKitGutterTargetsChecker {
     gutterMark: GutterMark?,
     tooltip: String,
     icon: Icon,
-    vararg expectedTargets: String,
+    targetTextMapper: (PsiElement) -> String,
+    vararg expectedTargets: String
   ) {
     TestCase.assertNotNull("gutterMark expected to be not null", gutterMark)
     TestCase.assertEquals(tooltip, gutterMark!!.getTooltipText())
@@ -40,8 +41,13 @@ object DevKitGutterTargetsChecker {
     }
 
     UsefulTestCase.assertSameElements(
-      targetElements.map { SymbolPresentationUtil.getSymbolPresentableText(it) },
+      targetElements.map(targetTextMapper),
       *expectedTargets
     )
+  }
+
+  @JvmStatic
+  fun checkGutterTargets(gutterMark: GutterMark?, tooltip: String, icon: Icon, vararg expectedTargets: String) {
+    checkGutterTargets(gutterMark, tooltip, icon, { SymbolPresentationUtil.getSymbolPresentableText(it) }, *expectedTargets)
   }
 }
