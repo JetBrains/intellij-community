@@ -25,4 +25,6 @@ module fleet.util.core {
   requires fleet.reporting.api;
   requires static fleet.util.multiplatform;
   requires kotlin.codepoints.jvm;
+
+  provides kotlinx.coroutines.CoroutineExceptionHandler with fleet.util.async.UncaughtCoroutineExceptionHandler;
 }
