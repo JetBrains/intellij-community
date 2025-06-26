@@ -3,6 +3,10 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import java.util.concurrent.atomic.AtomicLong
 
+/**
+ * Backend request counter.
+ * It stored the last completed request id that came from the frontend.
+ */
 internal class BackendBreakpointRequestCounter {
   private val lastCompletedRequestId = AtomicLong()
 
@@ -10,6 +14,9 @@ internal class BackendBreakpointRequestCounter {
     return lastCompletedRequestId.get()
   }
 
+  /**
+   * @return true if the update caused the id change
+   */
   fun setRequestCompleted(requestId: Long): Boolean {
     while (true) {
       val current = lastCompletedRequestId.get()
