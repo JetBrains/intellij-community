@@ -12,7 +12,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -298,34 +297,32 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static final class Java24StructuredConcurrency extends JavaCodeContextType {
+  public static final class JavaStructuredConcurrencyConstructors extends JavaCodeContextType {
     private final JavaCodeContextType statementContext = new Statement();
 
-    Java24StructuredConcurrency() {
-      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.24"));
+    JavaStructuredConcurrencyConstructors() {
+      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.constructors"));
     }
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
       return statementContext.isInContext(element) &&
-             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY, element) &&
-             PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_24_PREVIEW);
+             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY_TASK_SCOPE_CONSTRUCTORS, element);
     }
   }
 
 
-  public static final class Java25StructuredConcurrency extends JavaCodeContextType {
+  public static final class JavaStructuredConcurrencyStaticFactoryMethods extends JavaCodeContextType {
     private final JavaCodeContextType statementContext = new Statement();
 
-    Java25StructuredConcurrency() {
-      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.25"));
+    JavaStructuredConcurrencyStaticFactoryMethods() {
+      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.static.factory.methods"));
     }
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
       return statementContext.isInContext(element) &&
-             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY, element) &&
-             PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_25_PREVIEW);
+             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS, element);
     }
   }
 }
