@@ -33,7 +33,7 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
         scopesFlow.collect { scopesInfo ->
           val fetchedScopes = scopesInfo.getScopeDescriptors()
           onFinished(fetchedScopes)
-          ScopesStateService.getInstance(project).getOrCreateScopesState().updateIfNotExists(fetchedScopes)
+          ScopesStateService.getInstance(project).getScopesState().updateIfNotExists(fetchedScopes)
           scopeIdToDescriptor = fetchedScopes
         }
       }

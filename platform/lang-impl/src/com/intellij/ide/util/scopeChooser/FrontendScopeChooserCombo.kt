@@ -40,8 +40,9 @@ class FrontendScopeChooserCombo(project: Project, private val preselectedScopeNa
                                                                                                                                        { TODO() })
   private val loadingExtension: ExtendableTextComponent.Extension = ExtendableTextComponent.Extension.create(AnimatedIcon.Default(), "", { TODO() })
 
-
   init {
+    val cachedScopes = ScopesStateService.getInstance(project).getCachedScopeDescriptors()
+    initItems(cachedScopes)
     loadItemsAsync()
     setEditor(object : BasicComboBoxEditor() {
       override fun createEditorComponent(): JTextField {
@@ -86,6 +87,12 @@ class FrontendScopeChooserCombo(project: Project, private val preselectedScopeNa
     })
   }
 
+  private fun initItems(items: Collection<ScopeDescriptor>) {
+    removeAllItems()
+    items.filterOutSeparators().forEach { addItem(it) }
+    tryToSelectItem(items)
+  }
+
   private fun Collection<ScopeDescriptor>.filterOutSeparators(): List<ScopeDescriptor> {
     var lastItem: ScopeDescriptor? = null
 
@@ -101,7 +108,7 @@ class FrontendScopeChooserCombo(project: Project, private val preselectedScopeNa
   }
 
   private fun tryToSelectItem(items: Collection<ScopeDescriptor>) {
-    items.find { it.displayName == preselectedScopeName }?.let { selectedItem = it }
+    items.find { (selectedItem ?: preselectedScopeName) == it.displayName }?.let { selectedItem = it }
   }
 
   override fun getPreferredSize(): Dimension? {
