@@ -23,6 +23,8 @@ object PluginModelAsyncOperationsExecutor {
   ) {
     cs.launch {
       val needRestart = controller.performUninstall(sessionId, descriptor.pluginId)
+      descriptor.isDeleted = true
+      PluginManagerCustomizer.getInstance()?.onPluginDeleted(descriptor, controller.getTarget())
       val errors = UiPluginManager.getInstance().loadErrors(sessionId)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback(needRestart, errors)
