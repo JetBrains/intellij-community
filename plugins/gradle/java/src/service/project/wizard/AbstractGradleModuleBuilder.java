@@ -43,7 +43,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -149,7 +148,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       return;
     }
     File contentRootDir = new File(contentEntryPath);
-    FileUtilRt.createDirectory(contentRootDir);
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     VirtualFile modelContentRootDir = fileSystem.refreshAndFindFileByIoFile(contentRootDir);
     if (modelContentRootDir == null) {
