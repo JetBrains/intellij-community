@@ -4,6 +4,7 @@ import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clientConfiguration.McpClient
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.settings.McpServerSettingsConfigurable
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -66,23 +67,8 @@ internal class McpClientDetectionActivity : ProjectActivity {
         .setImportant(false)
       notification.setSuppressShowingPopup(true)
       notification
-        .addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")) {
-          override fun actionPerformed(e: AnActionEvent) {
-            notMatchingPort.forEach { it.configure() }
-            val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
-              .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
-                                  McpServerBundle.message("mcp.server.client.restart.info"), NotificationType.INFORMATION)
-              .setImportant(false)
-
-            doneNotification.notify(project)
-            notification.expire()
-          }
-        })
-        .addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.settings.json")) {
-          override fun actionPerformed(e: AnActionEvent) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
-          }
-        }).notify(project)
+        .addAction(AutoconfigureAction(project, notMatchingPort, notification))
+        .addAction(ShowSettingsAction(project)).notify(project)
 
     }
 
@@ -107,6 +93,25 @@ internal class McpClientDetectionActivity : ProjectActivity {
     }
   }
 
+  private class ShowSettingsAction(private val project: Project, text: String = McpServerBundle.message("mcp.unconfigured.clients.detected.configure.settings.json")): AnAction(text) {
+    override fun actionPerformed(e: AnActionEvent) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
+    }
+  }
+
+  private class AutoconfigureAction(private val project: Project, private val unconfiguredClients: List<McpClient>, private val notification: Notification): AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")){
+    override fun actionPerformed(e: AnActionEvent) {
+      unconfiguredClients.forEach { it.configure() }
+      val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
+        .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
+                            McpServerBundle.message("mcp.server.client.restart.info"), NotificationType.INFORMATION)
+        .setImportant(false)
+
+      doneNotification.notify(project)
+      notification.expire()
+    }
+  }
+
   private fun showMcpServerAutomaticConfigurationNotification(project: Project, unconfiguredClients: List<McpClient>) {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("MCP Server")
@@ -116,23 +121,8 @@ internal class McpClientDetectionActivity : ProjectActivity {
         NotificationType.INFORMATION
       )
     notification
-      .addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          unconfiguredClients.forEach { it.configure() }
-          val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
-            .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
-                                McpServerBundle.message("mcp.server.client.restart.info"), NotificationType.INFORMATION)
-            .setImportant(false)
-
-          doneNotification.notify(project)
-          notification.expire()
-        }
-      })
-      .addAction(object : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.settings.json")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
-        }
-      }).notify(project)
+      .addAction(AutoconfigureAction(project, unconfiguredClients, notification))
+      .addAction(ShowSettingsAction(project)).notify(project)
   }
 
   private fun shouldSkipNotification(): Boolean {
@@ -167,11 +157,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
         McpServerBundle.message("mcp.clients.detected.notification.message", clientNames, ApplicationNamesInfo.getInstance().fullProductName),
         NotificationType.INFORMATION
       )
-      .addAction(object : AnAction(McpServerBundle.message("mcp.clients.detected.action.enable")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
-        }
-      })
+      .addAction( ShowSettingsAction(project, McpServerBundle.message("mcp.clients.detected.action.enable")))
       .addAction(object : AnAction(McpServerBundle.message("mcp.clients.detected.action.dont.show")) {
         override fun actionPerformed(e: AnActionEvent) {
           application.service<McpClientDetectionSettings>().state.doNotShowServerDisabledAgain = true
