@@ -3,11 +3,21 @@ package com.intellij.platform.debugger.impl.frontend
 
 import java.util.concurrent.atomic.AtomicLong
 
-
+/**
+ * Request counter on frontend side.
+ */
 internal class BreakpointRequestCounter {
   private val counter = AtomicLong()
 
+  /**
+   * Every breakpoint state update should call this method to get the requestId for a request to the backend.
+   */
   fun increment(): Long = counter.incrementAndGet()
+
+  /**
+   * When an updated state comes from the backend, it should call this method to check whether the update is needed.
+   * If the update is not needed, it means that another request was sent in parallel, so another state update is expected to come.
+   */
   fun isSuitableUpdate(count: Long): Boolean {
     while (true) {
       val currentValue = counter.get()
