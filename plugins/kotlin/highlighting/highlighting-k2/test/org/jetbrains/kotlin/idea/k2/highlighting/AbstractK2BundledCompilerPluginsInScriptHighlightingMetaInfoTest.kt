@@ -61,13 +61,13 @@ abstract class AbstractK2BundledCompilerPluginsInScriptHighlightingMetaInfoTest 
         globalDirectives: Directives,
         configuration: ScriptCompilationConfiguration
     ): ScriptCompilationConfiguration {
-        val compilerArguments = globalDirectives[COMPILER_ARGUMENTS_DIRECTIVE.removeSuffix(":")]
+        val compilerArguments = globalDirectives.listValues(COMPILER_ARGUMENTS_DIRECTIVE.removeSuffix(":"))
         if (compilerArguments == null) {
             return configuration
         }
 
         return configuration.with {
-            compilerOptions.putIfAny(listOf(compilerArguments))
+            compilerOptions.putIfAny(compilerArguments)
         }
     }
 }
