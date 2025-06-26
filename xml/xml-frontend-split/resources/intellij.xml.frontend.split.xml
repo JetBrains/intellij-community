@@ -12,5 +12,6 @@
                         serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
     <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
                         serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
+    <highlightErrorFilter implementation="com.intellij.xml.frontend.split.editor.FrontendHtmlHighlightErrorFilter"/>
   </extensions>
 </idea-plugin>
