@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.util.GradleVersion;
@@ -19,11 +19,12 @@ import java.util.List;
 public class VersionMatcherRule extends TestWatcher {
 
   /**
-   * Note: When adding new versions here change also lists:<br/>
+   * Note: When adding new versions here, change also lists:<br/>
    * - Idea_Tests_BuildToolsTests<br/>
    * - IntelliJ TeamCity configuration<br/>
    * - {@link VersionMatcherRule#BASE_GRADLE_VERSION}<br/>
    * - {@link GradleJvmSupportDefaultDataKt#getDEFAULT_DATA()}<br/>
+   * - "gradle.versions.list" file in the resources<br/>
    */
   public static final String[] SUPPORTED_GRADLE_VERSIONS = {
     "4.5.1", /*"4.6", "4.7", "4.8", "4.9",*/ "4.10.3",
