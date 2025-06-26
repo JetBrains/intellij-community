@@ -79,23 +79,22 @@ class FrontendScopeChooserCombo(project: Project, private val preselectedScopeNa
       scopesMap = scopeIdToScopeDescriptor ?: emptyMap()
       val items = scopesMap.values
       withContext(Dispatchers.EDT) {
-        removeAllItems()
-        items.filterOutSeparators().forEach { addItem(it) }
-        tryToSelectItem(items)
+        initItems(items)
         setLoading(false)
       }
     })
   }
 
   private fun initItems(items: Collection<ScopeDescriptor>) {
+    val previousSelection = selectedItem as? ScopeDescriptor
     removeAllItems()
     items.filterOutSeparators().forEach { addItem(it) }
-    tryToSelectItem(items)
+    tryToSelectItem(items, previousSelection)
   }
 
   private fun Collection<ScopeDescriptor>.filterOutSeparators(): List<ScopeDescriptor> {
     var lastItem: ScopeDescriptor? = null
-
+    scopeToSeparator.clear()
     return this.filter { item ->
       if (item is ScopeSeparator) {
         if (lastItem != null) {
@@ -107,8 +106,8 @@ class FrontendScopeChooserCombo(project: Project, private val preselectedScopeNa
     }
   }
 
-  private fun tryToSelectItem(items: Collection<ScopeDescriptor>) {
-    items.find { (selectedItem ?: preselectedScopeName) == it.displayName }?.let { selectedItem = it }
+  private fun tryToSelectItem(items: Collection<ScopeDescriptor>, previousSelection: ScopeDescriptor?) {
+    items.find { (previousSelection?.displayName ?: preselectedScopeName) == it.displayName }?.let { selectedItem = it }
   }
 
   override fun getPreferredSize(): Dimension? {
