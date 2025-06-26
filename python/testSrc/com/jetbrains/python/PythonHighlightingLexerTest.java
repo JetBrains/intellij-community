@@ -189,6 +189,14 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
                       "Py:DOCSTRING", "Py:LINE_BREAK");
   }
 
+  public void testMetaClass() {
+    doTest(LanguageLevel.getLatest(), """
+               class IOBase(metaclass=abc.ABCMeta):
+                 pass""",
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:EQ", "Py:IDENTIFIER", "Py:DOT", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:PASS_KEYWORD");
+  }
+
   public void testSingleDocStringWithBackslash() {
     doTest(LanguageLevel.PYTHON27, "\"one docstring \" \\\n\"new line of docstring\"\n",
                       "Py:DOCSTRING", "Py:SPACE", "Py:BACKSLASH", "Py:LINE_BREAK", "Py:DOCSTRING", "Py:LINE_BREAK");
@@ -214,6 +222,104 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
              "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:COMMA", "Py:LINE_BREAK", "Py:SPACE", "Py:SINGLE_QUOTED_STRING",
              "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK", "Py:SPACE", "Py:RBRACE");
     }
+
+  public void testDocstringAtModule() {
+    doTest(LanguageLevel.getLatest(), """
+             ""\" module docstring ""\"
+             """,
+           "Py:DOCSTRING", "Py:LINE_BREAK");
+  }
+
+  public void testDocstringAtModuleWithTrailingComment() {
+    doTest(LanguageLevel.getLatest(), """
+             ""\" module docstring ""\" # trailing comment
+             """,
+           "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK");
+  }
+
+  public void testDocstringAtClass() {
+    doTest(LanguageLevel.getLatest(), """
+             class C:
+                 ""\" class docstring ""\"
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK");
+  }
+
+  public void testDocstringAtClassWithTrailingComment() {
+    doTest(LanguageLevel.getLatest(), """
+             class C:
+                 ""\" class docstring ""\" # trailing comment
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK");
+  }
+
+  public void testDocstringAtFunction() {
+    doTest(LanguageLevel.getLatest(), """
+             def fun():
+                 ""\" function docstring ""\"
+             """,
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK");
+  }
+
+  public void testDocstringAtFunctionWithTrailingComment() {
+    doTest(LanguageLevel.getLatest(), """
+             def fun():
+                 ""\" function docstring ""\" # trailing comment
+             """,
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK");
+  }
+
+  // PY-40634
+  public void testDocstringAtVariableDeclaration() {
+    fixme("PY-40634", () -> doTest(LanguageLevel.getLatest(), """
+             VAR = 2
+                 ""\" variable declaration docstring ""\"
+             """,
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK"));
+  }
+
+  // PY-40634
+  public void testDocstringAtVariableDeclarationWithTrailingComment() {
+    fixme("PY-40634", () -> doTest(LanguageLevel.getLatest(), """
+             VAR = 2
+                 ""\" variable declaration docstring ""\" # trailing comment
+             """,
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK"));
+  }
+
+  // PY-40634
+  public void testDocstringAtClassVariableDeclaration() {
+    fixme("PY-40634", () -> doTest(LanguageLevel.getLatest(), """
+             class C:
+               def __init__(self):
+                   self.thing = 42
+                   ""\" class variable declaration docstring ""\"
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:DOT", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK"));
+  }
+
+  // PY-40634
+  public void testDocstringAtClassVariableDeclarationWithTrailingComment() {
+    fixme("PY-40634", () -> doTest(LanguageLevel.getLatest(), """
+             class C:
+               def __init__(self):
+                   self.thing = 42
+                   ""\" class variable declaration docstring ""\" # trailing comment
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:DOT", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:SPACE", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK"));
+  }
 
   // PY-29665
   public void testRawBytesLiteral() {

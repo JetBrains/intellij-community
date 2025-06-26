@@ -91,7 +91,9 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected void tearDown() throws Exception {
     try {
       if (myFixture != null) {
-        PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        if (myFixture.getModule() != null) {
+          PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        }
         PyModuleNameCompletionContributor.ENABLED = true;
         setLanguageLevel(null);
 
