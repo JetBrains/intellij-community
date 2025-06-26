@@ -241,14 +241,17 @@ internal class FilteringBranchesTree(
     }
 
     tree.launchOnShow("Git Dashboard Tree") {
-      updateTree()
-      checkCanceled()
-      model.addListener(listener)
-      try {
-        awaitCancellation()
-      }
-      finally {
-        model.removeListener(listener)
+      // need EDT because of RA in TreeUtil.promiseVisit
+      withContext(Dispatchers.EDT) {
+        updateTree()
+        checkCanceled()
+        model.addListener(listener)
+        try {
+          awaitCancellation()
+        }
+        finally {
+          model.removeListener(listener)
+        }
       }
     }
 
