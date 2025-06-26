@@ -1,49 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.navigation;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.navigation
 
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.codeInsight.daemon.GutterMark
+import com.intellij.codeInsight.daemon.LineMarkerInfo.LineMarkerGutterIconRenderer
+import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
+import com.intellij.psi.PsiElement
+import com.intellij.psi.presentation.java.SymbolPresentationUtil
+import com.intellij.testFramework.UsefulTestCase
+import junit.framework.TestCase
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.Collection;
+object DevKitGutterTargetsChecker {
+  @JvmStatic
+  fun checkGutterTargets(
+    gutterMark: GutterMark?,
+    tooltip: String,
+    icon: Icon,
+    vararg expectedTargets: String,
+  ) {
+    TestCase.assertNotNull("gutterMark expected to be not null", gutterMark)
+    TestCase.assertEquals(tooltip, gutterMark!!.getTooltipText())
+    TestCase.assertEquals(icon, gutterMark.getIcon())
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
+    val targetElements: MutableCollection<PsiElement>
+    if (gutterMark is LineMarkerGutterIconRenderer<*>) {
+      val renderer = UsefulTestCase.assertInstanceOf(gutterMark, LineMarkerGutterIconRenderer::class.java)
+      val lineMarkerInfo = renderer.getLineMarkerInfo()
+      val handler = lineMarkerInfo.getNavigationHandler()
 
-public final class DevKitGutterTargetsChecker {
-
-  public static void checkGutterTargets(final GutterMark gutterMark,
-                                        final String tooltip,
-                                        final Icon icon,
-                                        final String... expectedTargets) {
-    assertNotNull(gutterMark);
-    assertEquals(tooltip, gutterMark.getTooltipText());
-    assertEquals(icon, gutterMark.getIcon());
-
-    final Collection<PsiElement> targetElements;
-    if (gutterMark instanceof LineMarkerInfo.LineMarkerGutterIconRenderer) {
-      final LineMarkerInfo.LineMarkerGutterIconRenderer renderer =
-        UsefulTestCase.assertInstanceOf(gutterMark, LineMarkerInfo.LineMarkerGutterIconRenderer.class);
-      final LineMarkerInfo lineMarkerInfo = renderer.getLineMarkerInfo();
-      GutterIconNavigationHandler handler = lineMarkerInfo.getNavigationHandler();
-
-      if (handler instanceof NavigationGutterIconRenderer) {
-        targetElements = ((NavigationGutterIconRenderer)handler).getTargetElements();
+      if (handler is NavigationGutterIconRenderer) {
+        targetElements = handler.getTargetElements()
       }
       else {
-        throw new IllegalArgumentException(handler + ": handler not supported");
+        throw IllegalArgumentException("$handler: handler not supported")
       }
     }
     else {
-      throw new IllegalArgumentException(gutterMark.getClass() + ": gutter not supported");
+      throw IllegalArgumentException("${gutterMark.javaClass}: gutter not supported")
     }
 
-    UsefulTestCase.assertSameElements(ContainerUtil.map(targetElements, element -> SymbolPresentationUtil.getSymbolPresentableText(element)), expectedTargets);
+    UsefulTestCase.assertSameElements(
+      targetElements.map { SymbolPresentationUtil.getSymbolPresentableText(it) },
+      *expectedTargets
+    )
   }
 }
