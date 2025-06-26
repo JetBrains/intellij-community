@@ -18,6 +18,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+
     <psi.implicitReferenceProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.MainKtsReferenceProvider"/>
 
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.KotlinScriptResolveScopeProvider"/>
@@ -38,7 +39,7 @@
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.ScriptingSupportChecker"/>
 
     <registryKey defaultValue="false" key="kotlin.scripting.show.widget"
-                 description="Enable displaying Kotlin Script definition name in status bar" restartRequired="false" />
+                 description="Enable displaying Kotlin Script definition name in status bar" restartRequired="false"/>
 
     <registryKey defaultValue="false"
                  key="kotlin.k2.scripting.show.modules"
@@ -68,7 +69,12 @@
     <configuration.moduleStructureFilterExtension
             implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptsProjectStructureFilter"/>
 
-    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptTrafficLightRendererContributor"/>
+    <trafficLightRendererContributor
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptTrafficLightRendererContributor"/>
+
+    <editorFloatingToolbarProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationFloatingToolbarProvider"
+            id="ScriptConfigurationFloatingToolbarProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -80,18 +86,23 @@
             order="last"
             implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.BundledScriptDefinitionSource"/>
 
-    <k2IdeScriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.MainKtsScriptDependenciesProvider"/>
+    <k2IdeScriptAdditionalIdeaDependenciesProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.MainKtsScriptDependenciesProvider"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionSource"/>
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource"/>
+    <scriptDefinitionsSource
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource"/>
   </extensions>
 
+
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
+    <group id="KotlinScripts.ReloadConfigurationActionGroup"/>
     <action id="ReloadScriptConfiguration"
             class="org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfiguration"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <keyboard-shortcut keymap="$default" first-keystroke="meta shift C"/>
       <add-to-group group-id="RunContextGroup"/>
+      <add-to-group group-id="KotlinScripts.ReloadConfigurationActionGroup"/>
     </action>
   </actions>
 </idea-plugin>
