@@ -113,6 +113,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
@@ -401,7 +402,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       extendedVM.disableSoftReferences();
       if (mask == VirtualMachine.TRACE_NONE && Registry.is("debugger.log.jdi.in.unit.tests")) {
         mask = VirtualMachine.TRACE_ALL;
-        extendedVM.setDebugTraceConsumer(string -> LOG.debug("[JDI: " + string + "]"));
+        extendedVM.setDebugTraceConsumer(
+          strings -> LOG.debug(strings.stream().map(s -> "[JDI: " + s + "]").collect(Collectors.joining("\n"))));
       }
     }
     vm.setDebugTraceMode(mask);

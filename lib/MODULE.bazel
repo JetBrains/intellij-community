@@ -3562,17 +3562,17 @@ http_file(
 )
 
 http_file(
-  name = "jb-jdi-2_42_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.42/jb-jdi-2.42.jar",
-  sha256 = "cbdf1bf2557c20354b3789e01052b9d7a7163a4cf6e41d1bb9d148f2d49ee53a",
-  downloaded_file_path = "jb-jdi-2.42.jar"
+  name = "jb-jdi-2_43_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.43/jb-jdi-2.43.jar",
+  sha256 = "e63953f5bf770a6614980ca5e6ce84f30d86ca7c19970ca33043b0238acb298e",
+  downloaded_file_path = "jb-jdi-2.43.jar"
 )
 
 http_file(
-  name = "jb-jdi-2_42-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.42/jb-jdi-2.42-sources.jar",
-  sha256 = "826a2837bcf264608f87babead7625e5d49b535be1a07c98d53205a37c06282c",
-  downloaded_file_path = "jb-jdi-2.42-sources.jar"
+  name = "jb-jdi-2_43-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.43/jb-jdi-2.43-sources.jar",
+  sha256 = "08c523333a88f65ae4b156c2faa8aab6ad108a531d1ef904e39dbd354c416cf0",
+  downloaded_file_path = "jb-jdi-2.43-sources.jar"
 )
 
 http_file(
