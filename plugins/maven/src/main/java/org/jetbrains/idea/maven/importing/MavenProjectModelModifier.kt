@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -11,6 +15,8 @@ import com.intellij.openapi.roots.JavaProjectModelModifier
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
@@ -19,7 +25,11 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xml.DomUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.MavenDomUtil.getMavenDomProjectModel
@@ -32,6 +42,7 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import java.util.*
@@ -39,65 +50,79 @@ import java.util.*
 class MavenProjectModelModifier(private val myProject: Project) : JavaProjectModelModifier() {
   private val myProjectsManager = MavenProjectsManager.getInstance(myProject)
 
+  @Service(Service.Level.PROJECT)
+  private class CoroutineScopeService(val cs: CoroutineScope)
+
+  private fun toPromise(block: suspend CoroutineScope.() -> Unit): Promise<Void?> {
+    val result = AsyncPromise<Void?>()
+    myProject.trackActivityBlocking(MavenActivityKey) {
+      myProject.service<CoroutineScopeService>().cs.launchTracked(Dispatchers.IO) {
+        block()
+        result.setResult(null)
+      }
+    }
+    return result
+  }
+
   override fun addModuleDependency(from: Module, to: Module, scope: DependencyScope, exported: Boolean): Promise<Void?>? {
     val toProject = myProjectsManager.findProject(to)
     if (toProject == null) return null
     val mavenId = toProject.mavenId
-    return addDependency(mutableListOf<Module>(from), mavenId, scope)
+    return toPromise {
+      addDependency(mutableListOf<Module>(from), mavenId, scope)
+    }
   }
 
-  private fun addDependency(
+  private suspend fun addDependency(
     fromModules: MutableCollection<Module>,
     mavenId: MavenId,
     scope: DependencyScope,
-  ): Promise<Void?>? {
+  ) {
     return addDependency(fromModules, mavenId, null, null, null, scope)
   }
 
-  private fun addDependency(
+  private suspend fun addDependency(
     fromModules: Collection<Module>,
     mavenId: MavenId,
     minVersion: String?,
     maxVersion: String?,
     preferredVersion: String?, scope: DependencyScope,
-  ): Promise<Void?>? {
+  ) {
     val models: MutableList<Trinity<MavenDomProjectModel?, MavenId?, String?>> = ArrayList<Trinity<MavenDomProjectModel?, MavenId?, String?>>(
       fromModules.size)
     val files: MutableList<XmlFile?> = ArrayList<XmlFile?>(fromModules.size)
     val projectToUpdate: MutableList<MavenProject> = ArrayList<MavenProject>(fromModules.size)
     val mavenScope: String = getMavenScope(scope)
     for (from in fromModules) {
-      if (!myProjectsManager.isMavenizedModule(from)) return null
+      if (!myProjectsManager.isMavenizedModule(from)) return
       val fromProject = myProjectsManager.findProject(from)
-      if (fromProject == null) return null
+      if (fromProject == null) return
 
-      val model = getMavenDomProjectModel(myProject, fromProject.file)
-      if (model == null) return null
+      val model = readAction { getMavenDomProjectModel(myProject, fromProject.file) }
+      if (model == null) return
 
       var scopeToSet: String? = null
       var version: String? = null
       if (mavenId.groupId != null && mavenId.artifactId != null) {
-        val managedDependency =
-          MavenDependencyCompletionUtil.findManagedDependency(model, myProject, mavenId.groupId!!, mavenId.getArtifactId()!!)
+        val managedDependency = readAction {
+          MavenDependencyCompletionUtil.findManagedDependency(model, myProject, mavenId.groupId!!, mavenId.artifactId!!)
+        }
         if (managedDependency != null) {
-          val managedScope = StringUtil.nullize(managedDependency.getScope().getStringValue(), true)
-          scopeToSet = if ((managedScope == null && MavenConstants.SCOPE_COMPILE == mavenScope) ||
-                           StringUtil.equals(managedScope, mavenScope)
-          )
+          val managedScope = readAction { StringUtil.nullize(managedDependency.getScope().getStringValue(), true) }
+          scopeToSet = if ((managedScope == null && MavenConstants.SCOPE_COMPILE == mavenScope) || StringUtil.equals(managedScope, mavenScope))
             null
           else
             mavenScope
         }
 
-        if (managedDependency == null || StringUtil.isEmpty(managedDependency.getVersion().getStringValue())) {
+        val managedDependencyVersion = readAction { managedDependency?.getVersion()?.getStringValue() }
+        if (managedDependency == null || StringUtil.isEmpty(managedDependencyVersion)) {
           version = selectVersion(mavenId, minVersion, maxVersion, preferredVersion)
           scopeToSet = mavenScope
         }
       }
 
-      models.add(
-        Trinity.create<MavenDomProjectModel?, MavenId?, String?>(model, MavenId(mavenId.getGroupId(), mavenId.getArtifactId(), version),
-                                                                 scopeToSet))
+      models.add(Trinity.create<MavenDomProjectModel?, MavenId?, String?>(model, MavenId(mavenId.groupId, mavenId.artifactId, version), scopeToSet))
       files.add(DomUtil.getFile(model))
       projectToUpdate.add(fromProject)
     }
@@ -120,11 +145,13 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
           }
         }
       })
-    return myProjectsManager.forceUpdateProjects(projectToUpdate)
+    val filesToUpdate = projectToUpdate.map { it.file }
+    filesToUpdate.forEach { it.refresh(false, false) }
+    myProjectsManager.updateMavenProjects(MavenSyncSpec.incremental("MavenProjectModelModifier.addDependency", false), filesToUpdate, emptyList())
   }
 
   override fun addExternalLibraryDependency(
-    modules: MutableCollection<out Module>,
+    modules: Collection<Module>,
     descriptor: ExternalLibraryDescriptor,
     scope: DependencyScope,
   ): Promise<Void?>? {
@@ -134,19 +161,21 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
       }
     }
 
-    val mavenId = MavenId(descriptor.getLibraryGroupId(), descriptor.getLibraryArtifactId(), null)
-    return addDependency(modules, mavenId, descriptor.getMinVersion(), descriptor.getMaxVersion(), descriptor.getPreferredVersion(), scope)
+    val mavenId = MavenId(descriptor.libraryGroupId, descriptor.libraryArtifactId, null)
+    return toPromise {
+      addDependency(modules, mavenId, descriptor.minVersion, descriptor.maxVersion, descriptor.preferredVersion, scope)
+    }
   }
 
-  private fun selectVersion(
+  private suspend fun selectVersion(
     mavenId: MavenId,
     minVersion: String?,
     maxVersion: String?,
     preferredVersion: String?,
   ): String {
-    val versions = if (mavenId.groupId == null || mavenId.getArtifactId() == null) mutableSetOf<String?>()
+    val versions = if (mavenId.groupId == null || mavenId.artifactId == null) mutableSetOf<String?>()
     else
-      DependencySearchService.getInstance(myProject).getVersions(mavenId.getGroupId()!!, mavenId.getArtifactId()!!)
+      DependencySearchService.getInstance(myProject).getVersionsAsync(mavenId.groupId!!, mavenId.artifactId!!)
     if (preferredVersion != null && versions.contains(preferredVersion)) {
       return preferredVersion
     }
@@ -159,7 +188,7 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
       }
     }
     if (suitableVersions.isEmpty()) {
-      return (if (mavenId.getVersion() == null) "RELEASE" else mavenId.getVersion())!!
+      return mavenId.version ?: "RELEASE"
     }
     return Collections.max<String>(suitableVersions, VersionComparatorUtil.COMPARATOR)
   }
@@ -169,7 +198,9 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
     if (name != null && name.startsWith(MavenArtifact.MAVEN_LIB_PREFIX)) {
       //it would be better to use RepositoryLibraryType for libraries imported from Maven and fetch mavenId from the library properties instead
       val mavenCoordinates = name.removePrefix(MavenArtifact.MAVEN_LIB_PREFIX)
-      return addDependency(mutableListOf<Module>(from), MavenId(mavenCoordinates), scope)
+      return toPromise {
+        addDependency(mutableListOf<Module>(from), MavenId(mavenCoordinates), scope)
+      }
     }
     return null
   }
@@ -180,29 +211,31 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
     val mavenProject = myProjectsManager.findProject(module)
     if (mavenProject == null) return null
 
-    val model = getMavenDomProjectModel(myProject, mavenProject.file)
-    if (model == null) return null
-
-    WriteCommandAction.writeCommandAction(myProject, DomUtil.getFile(model)).withName(
-      MavenDomBundle.message("fix.add.dependency")).run<RuntimeException?>(
-      ThrowableRunnable {
-        val documentManager = PsiDocumentManager.getInstance(myProject)
-        val document = documentManager.getDocument(DomUtil.getFile(model))
-        if (document != null) {
-          documentManager.commitDocument(document)
-        }
-        val tag: XmlTag = getCompilerPlugin(model).getConfiguration().ensureTagExists()
-        val option = JpsJavaSdkType.complianceOption(level.toJavaVersion())
-        setChildTagValue(tag, "source", option)
-        setChildTagValue(tag, "target", option)
-        if (level.isPreview) {
-          setChildTagValue(tag, "compilerArgs", "--enable-preview")
-        }
-        if (document != null) {
-          FileDocumentManager.getInstance().saveDocument(document)
-        }
-      })
-    return myProjectsManager.forceUpdateProjects(mutableSetOf<MavenProject>(mavenProject))
+    val model = ReadAction.nonBlocking<MavenDomProjectModel?> { getMavenDomProjectModel(myProject, mavenProject.file) }.executeSynchronously() ?: return null
+    return toPromise {
+      WriteCommandAction.writeCommandAction(myProject, DomUtil.getFile(model)).withName(
+        MavenDomBundle.message("fix.add.dependency")).run<RuntimeException?>(
+        ThrowableRunnable {
+          val documentManager = PsiDocumentManager.getInstance(myProject)
+          val document = documentManager.getDocument(DomUtil.getFile(model))
+          if (document != null) {
+            documentManager.commitDocument(document)
+          }
+          val tag: XmlTag = getCompilerPlugin(model).getConfiguration().ensureTagExists()
+          val option = JpsJavaSdkType.complianceOption(level.toJavaVersion())
+          setChildTagValue(tag, "source", option)
+          setChildTagValue(tag, "target", option)
+          if (level.isPreview) {
+            setChildTagValue(tag, "compilerArgs", "--enable-preview")
+          }
+          if (document != null) {
+            FileDocumentManager.getInstance().saveDocument(document)
+          }
+        })
+      val filesToUpdate = listOf(mavenProject.file)
+      filesToUpdate.forEach { it.refresh(false, false) }
+      myProjectsManager.updateMavenProjects(MavenSyncSpec.incremental("MavenProjectModelModifier.changeLanguageLevel", false), filesToUpdate, emptyList())
+    }
   }
 
   private fun setChildTagValue(tag: XmlTag, subTagName: String, value: String) {

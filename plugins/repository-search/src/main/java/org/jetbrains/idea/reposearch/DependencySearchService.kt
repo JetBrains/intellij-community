@@ -297,6 +297,20 @@ class DependencySearchService(private val project: Project, private val cs: Coro
     return result
   }
 
+  suspend fun getVersionsAsync(groupId: String, artifactId: String): Set<String> {
+    val result = mutableSetOf<String>()
+    fulltextSearchAsync("$groupId:$artifactId", SearchParameters(true, true)) {
+      if (it is MavenRepositoryArtifactInfo) {
+        if (groupId == it.groupId && artifactId == it.artifactId) {
+          for (item in it.items) {
+            if (item.version != null) result.add(item.version!!)
+          }
+        }
+      }
+    }
+    return result
+  }
+
   private fun foundInCache(searchString: String, consumer: ResultConsumer): Promise<Int>? {
     val future = cache[searchString]
     if (future != null) {
