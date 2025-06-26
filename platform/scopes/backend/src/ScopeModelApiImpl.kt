@@ -50,7 +50,7 @@ internal class ScopesModelApiImpl : ScopeModelApi {
         override fun scopesUpdated(scopes: ScopesSnapshot) {
           var scopesState = modelIdToScopes[modelId]
           if (scopesState == null) {
-            scopesState = ScopesStateService.getInstance(project).getOrCreateScopesState(project)
+            scopesState = ScopesStateService.getInstance(project).getOrCreateScopesState()
             modelIdToScopes[modelId] = scopesState
           }
           val scopesStateMap = mutableMapOf<String, ScopeDescriptor>()

@@ -3,6 +3,7 @@ package com.intellij.platform.scopes.service
 
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModelService
+import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
@@ -32,6 +33,7 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
         scopesFlow.collect { scopesInfo ->
           val fetchedScopes = scopesInfo.getScopeDescriptors()
           onFinished(fetchedScopes)
+          ScopesStateService.getInstance(project).getOrCreateScopesState().updateIfNotExists(fetchedScopes)
           scopeIdToDescriptor = fetchedScopes
         }
       }

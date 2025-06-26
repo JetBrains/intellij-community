@@ -48,6 +48,16 @@ class ScopesState internal constructor(val project: Project) {
     scopeIdToDescriptor.putAll(scopesStateMap)
   }
 
+  // This function is primarily used on the frontend to maintain actual scope IDs with placeholder descriptors (without a SearchScope).
+  // It helps prevent overriding values in monolithic environments.
+  fun updateIfNotExists(scopesStateMap: Map<String, ScopeDescriptor>) {
+    for ((id, descriptor) in scopesStateMap) {
+      if (!scopeIdToDescriptor.containsKey(id)) {
+        scopeIdToDescriptor[id] = descriptor
+      }
+    }
+  }
+
   fun getScopeDescriptorById(scopeId: String): ScopeDescriptor? {
     return scopeIdToDescriptor[scopeId]
   }
