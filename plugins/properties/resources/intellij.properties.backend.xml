@@ -24,7 +24,7 @@
                     interface="com.intellij.lang.properties.codeInspection.unused.ExtendedUseScopeProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.properties.spellcheckerMnemonicsTokenizer"
-                    interface="com.intellij.lang.properties.spellchecker.tokenizer.MnemonicsTokenizer"
+                    interface="com.intellij.lang.properties.spellchecker.MnemonicsTokenizer"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -105,8 +105,7 @@
 
     <spellchecker.support language="Properties"
                           id="propertiesSpellcheckingStrategy"
-                          implementationClass="com.intellij.lang.properties.spellchecker.tokenizer.PropertiesSpellcheckingStrategy"/>
-    <spellchecker.renamer implementation="com.intellij.lang.properties.spellchecker.handler.PropertySpellcheckingHandler"/>
+                          implementationClass="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
 
     <fileBasedIndex implementation="com.intellij.lang.properties.xml.XmlPropertiesIndex"/>
     <standardResource url="http://java.sun.com/dtd/properties.dtd" path="schemas/properties.dtd"/>
