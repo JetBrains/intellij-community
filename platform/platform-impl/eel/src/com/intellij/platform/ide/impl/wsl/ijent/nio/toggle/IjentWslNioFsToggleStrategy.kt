@@ -3,7 +3,6 @@ package com.intellij.platform.ide.impl.wsl.ijent.nio.toggle
 
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
-import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider
@@ -74,9 +73,8 @@ class IjentWslNioFsToggleStrategy(
   fun switchToIjentFs(distro: WSLDistribution) {
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
     try {
-      val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope) {
-        WslIjentManager.instanceAsync().getIjentApi(distro, null, false)
-      }
+      val distributionId = distro.id
+      val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope, WslEelDescriptor(WSLDistribution(distributionId)))
       ijentFsProvider.newFileSystem(
         URI("ijent", "wsl", "/${distro.id}", null, null),
         IjentNioFileSystemProvider.newFileSystemMap(ijentFs),
