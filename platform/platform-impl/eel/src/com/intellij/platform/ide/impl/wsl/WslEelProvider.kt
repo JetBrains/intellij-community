@@ -32,6 +32,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.FileSystems.getDefault
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
 
 private val WSLDistribution.roots: Set<String>
@@ -56,6 +57,8 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
   private val useNewFileSystem by lazy {
     Registry.`is`("wsl.use.new.filesystem")
   }
+
+  private val reportedNonExistentWslIds = AtomicReference<List<String>>(listOf())
 
   override fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem? {
     try {
@@ -116,34 +119,44 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
         // Nothing.
       }
 
-      val fileSystem = if (Registry.`is`("wsl.use.new.filesystem")) {
-        IjentEphemeralRootAwareFileSystemProvider(
-          root = Path(wslRoot),
-          ijentFsProvider = ijentFsProvider,
-          originalFsProvider = TracingFileSystemProvider(localFS.provider()),
-          // FIXME: is this behavior really correct?
-          //
-          // It is known that `originalFs.rootDirectories` always returns all WSL drives.
-          // Also, it is known that `ijentFs.rootDirectories` returns a single WSL drive,
-          // which is already mentioned in `originalFs.rootDirectories`.
-          //
-          // `ijentFs` is usually represented by `IjentFailSafeFileSystemPosixApi`,
-          // which launches IJent and the corresponding WSL containers lazily.
-          //
-          // This function avoids fetching root directories directly from IJent.
-          // This way, various UI file trees don't start all WSL containers during loading the file system root.
-          useRootDirectoriesFromOriginalFs = true,
-        ).getFileSystem(ijentUri)
+      try {
+        val fileSystem = if (Registry.`is`("wsl.use.new.filesystem")) {
+          IjentEphemeralRootAwareFileSystemProvider(
+            root = Path(wslRoot),
+            ijentFsProvider = ijentFsProvider,
+            originalFsProvider = TracingFileSystemProvider(localFS.provider()),
+            // FIXME: is this behavior really correct?
+            //
+            // It is known that `originalFs.rootDirectories` always returns all WSL drives.
+            // Also, it is known that `ijentFs.rootDirectories` returns a single WSL drive,
+            // which is already mentioned in `originalFs.rootDirectories`.
+            //
+            // `ijentFs` is usually represented by `IjentFailSafeFileSystemPosixApi`,
+            // which launches IJent and the corresponding WSL containers lazily.
+            //
+            // This function avoids fetching root directories directly from IJent.
+            // This way, various UI file trees don't start all WSL containers during loading the file system root.
+            useRootDirectoriesFromOriginalFs = true,
+          ).getFileSystem(ijentUri)
+        }
+        else {
+          IjentWslNioFileSystemProvider(
+            wslId = distributionId,
+            ijentFsProvider = ijentFsProvider,
+            originalFsProvider = TracingFileSystemProvider(localFS.provider()),
+          ).getFileSystem(Path.of(wslRoot).toUri())
+        }
+        LOG.info("Switching $distributionId to IJent WSL nio.FS: $fileSystem")
+        fileSystem
       }
-      else {
-        IjentWslNioFileSystemProvider(
-          wslId = distributionId,
-          ijentFsProvider = ijentFsProvider,
-          originalFsProvider = TracingFileSystemProvider(localFS.provider()),
-        ).getFileSystem(Path.of(wslRoot).toUri())
+      catch (err: FileSystemNotFoundException) {
+        if (
+          distributionId !in reportedNonExistentWslIds.getAndUpdate { prev -> if (distributionId in prev) prev else prev + distributionId }
+        ) {
+          LOG.warn("Attempt to get IJent WSL nio.FS for non-existing WSL distribution $wslRoot", err)
+        }
+        null
       }
-      LOG.info("Switching $distributionId to IJent WSL nio.FS: $fileSystem")
-      fileSystem
     }
   }
 
