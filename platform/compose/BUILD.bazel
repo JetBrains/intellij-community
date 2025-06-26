@@ -13,20 +13,22 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//libraries/skiko",
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
-    "@lib//:jetbrains-annotations",
+    "//platform/jewel/ide-laf-bridge",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/jewel/ide-laf-bridge",
-    "//libraries/compose-foundation-desktop",
+    "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
   ],
-  exports = ["//platform/jewel/ide-laf-bridge"],
+  exports = [
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//platform/jewel/ide-laf-bridge",
+  ],
   runtime_deps = [":compose_resources"],
   plugins = ["@lib//:compose-plugin"]
 )

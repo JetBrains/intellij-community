@@ -383,6 +383,7 @@ platform/collaboration-tools/auth
 platform/collaboration-tools/auth-base
 platform/compose
 platform/compose/compiler-plugin
+platform/compose/markdown
 platform/configuration-store-impl
 platform/core-api
 platform/core-impl
