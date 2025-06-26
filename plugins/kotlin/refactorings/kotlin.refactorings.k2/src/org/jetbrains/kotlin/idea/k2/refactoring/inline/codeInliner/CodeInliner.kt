@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
+import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.NEW_DECLARATION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.RECEIVER_VALUE_KEY
@@ -43,6 +44,13 @@ class CodeInliner(
 ) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, replacement) {
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
         treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private val contextArguments: List<String?>? = analyze(call) {
+        treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.contextArguments?.map {
+            createReplacementForContextArgument(it)
+        }
     }
 
     private fun treeUpToCall(): KtElement {
@@ -318,6 +326,15 @@ class CodeInliner(
             return argumentForPropertySetter()
         }
 
+        if (parameter.isContextParameter) {
+            val exprText = contextArguments?.getOrNull(parameter.parameterIndex()) ?: return null
+            val resultExpression = KtPsiFactory(call.project).createExpressionCodeFragment(exprText, call).getContentElement() ?: return null
+            val expressionType = analyze(resultExpression) {
+                createTypeDescription(resultExpression.expressionType)
+            }
+            return Argument(resultExpression, expressionType, isNamed = false, isDefaultValue = false)
+        }
+
         val argumentExpressionsForParameter = mapping?.entries?.filter { (_, value) ->
             value == parameter.name()
         }?.map { it.key } ?: return null
@@ -451,7 +468,9 @@ class CodeInliner(
         lambdaArgumentExpression.accept(NonLocalJumpVisitor(lambdaArgumentExpression))
     }
 
-    override fun KtDeclaration.valueParameters(): List<KtParameter> = (this as? KtDeclarationWithBody)?.valueParameters ?: emptyList()
+    override fun KtDeclaration.valueParameters(): List<KtParameter> =
+        (this as? KtModifierListOwner)?.modifierList?.contextReceiverList?.contextParameters().orEmpty() +
+                (this as? KtDeclarationWithBody)?.valueParameters.orEmpty()
 
     override fun KtParameter.name(): Name = nameAsSafeName
 

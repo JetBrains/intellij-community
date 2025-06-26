@@ -203,7 +203,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         val target = (resolve as? KtObjectDeclaration)?.let { if (it.isCompanion()) it.containingClass() else it } ?: resolve as? KtNamedDeclaration ?: resolve as? PsiMember
 
         if (target is KtParameter) {
-            fun getParameterName(): Name = if (isAnonymousFunction && target.ownerFunction == originalDeclaration) {
+            fun getParameterName(): Name = if (isAnonymousFunction && target.ownerDeclaration == originalDeclaration) {
                 val shift = if (isAnonymousFunctionWithReceiver) 2 else 1
                 Name.identifier("p${target.parameterIndex() + shift}")
             } else {

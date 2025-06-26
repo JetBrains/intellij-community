@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
 import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
@@ -114,29 +115,7 @@ internal class KotlinFunctionCallUsage(
                 val psiFactory = KtPsiFactory.contextual(element)
                 val map = mutableMapOf<Int, SmartPsiElementPointer<KtExpression>>()
                 functionCall.partiallyAppliedSymbol.contextArguments.forEachIndexed { idx, receiverValue ->
-                    val value = receiverValue.unwrapSmartCasts() as? KaImplicitReceiverValue ?: return@forEachIndexed
-                    val symbol = value.symbol
-                    val replacement = when (symbol) {
-                        is KaReceiverParameterSymbol -> symbol.containingSymbol?.name?.asString()?.let { "this@$it" } ?: "this"
-
-                        is KaContextParameterSymbol -> {
-                            val name = symbol.name
-                            if (!name.isSpecial) {
-                                name.asString()
-                            } else {
-                                val returnTypeSymbol = symbol.returnType.symbol
-                                val superOfAnonymous = (returnTypeSymbol as? KaAnonymousObjectSymbol)?.superTypes?.firstOrNull()?.symbol
-                                val className =
-                                    ((superOfAnonymous ?: returnTypeSymbol) as? KaNamedClassSymbol)?.name
-                                        ?.takeUnless { it.isSpecial }?.asString()
-                                if (className != null) "contextOf<$className>()" else "contextOf()"
-                            }
-                        }
-
-                        else -> {
-                            null
-                        }
-                    } ?: return@forEachIndexed
+                    val replacement = createReplacementForContextArgument(receiverValue) ?: return@forEachIndexed
                     map[idx] = psiFactory.createExpression(replacement).createSmartPointer()
                 }
                 map
