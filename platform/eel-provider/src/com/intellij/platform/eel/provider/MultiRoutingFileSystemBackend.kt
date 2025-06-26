@@ -25,6 +25,8 @@ interface MultiRoutingFileSystemBackend {
 
   /**
    * In contrast with [com.intellij.platform.core.nio.fs.MultiRoutingFileSystem.BackendProvider], it must never return `localFS`.
+   *
+   * *Note:* this function must throw no errors.
    */
   fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem?
 

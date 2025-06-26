@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.impl.fs
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import org.jetbrains.annotations.ApiStatus
@@ -39,7 +40,13 @@ object GlobalEelMrfsBackendProvider {
             ?.getExtensionPointIfRegistered<MultiRoutingFileSystemBackend>(MultiRoutingFileSystemBackend.EP_NAME.name)
             ?.extensionList
             ?.firstNotNullOfOrNull { backend ->
-              backend.compute(localFS, sanitizedPath)
+              try {
+                backend.compute(localFS, sanitizedPath)
+              }
+              catch (err: Exception) {
+                logger<GlobalEelMrfsBackendProvider>().error("$backend threw an error trying to handle $sanitizedPath", err)
+                null
+              }
             }
         if (nonDefaultCandidate != null) {
           return nonDefaultCandidate
