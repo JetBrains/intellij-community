@@ -80,7 +80,7 @@ public final class CreateFromTemplateGroup extends ActionGroup implements DumbAw
       if (!FileTemplateBase.isChild(template) && canCreateFromTemplate(e, template)) {
         AnAction action = replaceAction(template);
         if (action == null) {
-          action = new CreateFromSimpleTemplateAction(template);
+          action = new CreateFromTemplateAction(template);
         }
         result.add(action);
       }
