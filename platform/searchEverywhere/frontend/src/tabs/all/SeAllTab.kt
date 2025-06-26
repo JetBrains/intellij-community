@@ -40,6 +40,8 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
     SeAllFilterEditor(delegate.getProvidersIdToName())
   }
 
+  override suspend fun essentialProviderIds(): Set<SeProviderId> = delegate.essentialProviderIds()
+
   override fun getItems(params: SeParams): Flow<SeResultEvent> {
     val allTabFilter = SeEverywhereFilter.from(params.filter)
     return delegate.getItems(params, allTabFilter.disabledProviderIds)

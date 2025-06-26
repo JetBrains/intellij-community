@@ -41,7 +41,7 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
             providerToSemaphore[it.providerId]?.release()
           }
         }
-        null -> {
+        is SeResultEndEvent, null -> {
           providerSemaphore?.release()
         }
       }
