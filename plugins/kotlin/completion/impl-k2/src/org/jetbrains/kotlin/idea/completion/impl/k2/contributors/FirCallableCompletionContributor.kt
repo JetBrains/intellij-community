@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
@@ -59,7 +60,8 @@ internal open class FirCallableCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
     private val withTrailingLambda: Boolean = false, // TODO find a better solution
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority),
+    ChainCompletionContributor {
 
     context(KaSession)
     protected open fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
@@ -347,6 +349,34 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KaSession)
+    override fun createChainedLookupElements(
+        positionContext: KotlinNameReferencePositionContext,
+        receiverExpression: KtDotQualifiedExpression,
+        importingStrategy: ImportStrategy
+    ): Sequence<LookupElement> {
+        val weighingContext = WeighingContext.create(parameters, positionContext)
+
+        return collectDotCompletion(
+            positionContext = positionContext,
+            scopeContext = weighingContext.scopeContext,
+            explicitReceiver = receiverExpression,
+            extensionChecker = null,
+            showReceiver = true,
+        ).flatMap { callableWithMetadata ->
+            val signature = callableWithMetadata.signature
+
+            createCallableLookupElements(
+                context = weighingContext,
+                signature = signature,
+                options = callableWithMetadata.options.copy(importingStrategy = importingStrategy),
+                scopeKind = callableWithMetadata.scopeKind,
+                presentableText = callableWithMetadata.itemText,
+                withTrailingLambda = true,
+            )
+        }
+    }
+
+    context(KaSession)
     protected open fun collectDotCompletion(
         positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
@@ -375,30 +405,8 @@ internal open class FirCallableCompletionContributor(
                     )
                 }
 
-                if (showReceiver) return@sequence
-                runChainCompletion(positionContext, explicitReceiver) { receiverExpression,
-                                                                        positionContext,
-                                                                        importingStrategy ->
-                    val weighingContext = WeighingContext.create(parameters, positionContext)
-
-                    collectDotCompletion(
-                        positionContext = positionContext,
-                        scopeContext = weighingContext.scopeContext,
-                        explicitReceiver = receiverExpression,
-                        extensionChecker = null,
-                        showReceiver = true,
-                    ).flatMap { callableWithMetadata ->
-                        val signature = callableWithMetadata.signature
-
-                        createCallableLookupElements(
-                            context = weighingContext,
-                            signature = signature,
-                            options = callableWithMetadata.options.copy(importingStrategy),
-                            scopeKind = callableWithMetadata.scopeKind,
-                            presentableText = callableWithMetadata.itemText,
-                            withTrailingLambda = true,
-                        )
-                    }
+                if (!showReceiver) {
+                    sink.registerChainContributor(this@FirCallableCompletionContributor)
                 }
             }
         }

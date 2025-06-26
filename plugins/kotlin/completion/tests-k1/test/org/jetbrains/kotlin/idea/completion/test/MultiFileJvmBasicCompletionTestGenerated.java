@@ -50,6 +50,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/CallablesInExcludedPackage/");
     }
 
+    @TestMetadata("ChainCompletionDontDuplicate")
+    public void testChainCompletionDontDuplicate() throws Exception {
+        runTest("../testData/basic/multifile/ChainCompletionDontDuplicate/");
+    }
+
     @TestMetadata("ClassInExcludedPackage")
     public void testClassInExcludedPackage() throws Exception {
         runTest("../testData/basic/multifile/ClassInExcludedPackage/");

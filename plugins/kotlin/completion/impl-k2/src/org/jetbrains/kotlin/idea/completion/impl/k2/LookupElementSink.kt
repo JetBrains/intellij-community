@@ -11,6 +11,7 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.ChainCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
@@ -30,16 +31,17 @@ internal class LookupElementSink(
     internal val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
     private val contributorClass: Class<FirCompletionContributor<*>>? = null,
+    internal val registerChainContributor: (ChainCompletionContributor) -> Unit,
 ) {
 
     val prefixMatcher: PrefixMatcher
         get() = resultSet.prefixMatcher
 
     fun withPriority(groupPriority: Int): LookupElementSink =
-        LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass, registerChainContributor)
 
     fun withContributorClass(contributorClass: Class<FirCompletionContributor<*>>): LookupElementSink =
-        LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass, registerChainContributor)
 
     fun passResult(result: CompletionResult) {
         resultSet.passResult(result)
