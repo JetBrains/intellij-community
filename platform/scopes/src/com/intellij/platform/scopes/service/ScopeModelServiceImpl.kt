@@ -3,6 +3,7 @@ package com.intellij.platform.scopes.service
 
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModelService
+import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType
 import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -21,10 +22,10 @@ private val LOG = logger<ScopeModelServiceImpl>()
 private class ScopeModelServiceImpl(private val project: Project, private val coroutineScope: CoroutineScope) : ScopeModelService {
   private var scopeIdToDescriptor = mapOf<String, ScopeDescriptor>()
 
-  override fun loadItemsAsync(modelId: String, onFinished: suspend (Map<String, ScopeDescriptor>?) -> Unit) {
+  override fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType, onFinished: suspend (Map<String, ScopeDescriptor>?) -> Unit) {
     coroutineScope.childScope("ScopesStateService.subscribeToScopeStates").launch {
       try {
-        val scopesFlow = ScopeModelApi.getInstance().createModelAndSubscribe(project.projectId(), modelId)
+        val scopesFlow = ScopeModelApi.getInstance().createModelAndSubscribe(project.projectId(), modelId, filterConditionType)
         if (scopesFlow == null) {
           LOG.warn("Failed to subscribe to model updates for modelId: $modelId")
           onFinished(null)
@@ -38,7 +39,7 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
         }
       }
       catch (e: RpcTimeoutException) {
-        LOG.warn("Failed to subscribe to model updates for modelId: $modelId", e)
+        LOG.warn("Failed to subscribe to scopes model updates for modelId: $modelId", e)
         onFinished(null)
       }
     }

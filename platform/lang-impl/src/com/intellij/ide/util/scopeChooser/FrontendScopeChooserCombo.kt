@@ -16,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.util.*
-import javax.swing.Icon
 import javax.swing.JTextField
 import javax.swing.plaf.basic.BasicComboBoxEditor
 import kotlin.math.min
@@ -29,7 +28,7 @@ import kotlin.math.min
  * `getDisposable()` is `DialogWrapper`'s method.
  */
 @ApiStatus.Internal
-class FrontendScopeChooserCombo(project: Project, private val preselectedScopeName: String?) : ComboBox<ScopeDescriptor>(), Disposable {
+class FrontendScopeChooserCombo(project: Project, private val preselectedScopeName: String?, val filterConditionType: ScopesFilterConditionType) : ComboBox<ScopeDescriptor>(), Disposable {
   private val scopeService = ScopeModelService.getInstance(project)
   private val modelId = UUID.randomUUID().toString()
   private var loadingTextComponent: ExtendableTextField? = null
@@ -75,7 +74,7 @@ class FrontendScopeChooserCombo(project: Project, private val preselectedScopeNa
   private fun loadItemsAsync() {
     setLoading(true)
 
-    scopeService.loadItemsAsync(modelId, onFinished = { scopeIdToScopeDescriptor ->
+    scopeService.loadItemsAsync(modelId, filterConditionType, onFinished = { scopeIdToScopeDescriptor ->
       scopesMap = scopeIdToScopeDescriptor ?: emptyMap()
       val items = scopesMap.values
       withContext(Dispatchers.EDT) {
@@ -130,14 +129,11 @@ class FrontendScopeChooserCombo(project: Project, private val preselectedScopeNa
 
 
   override fun dispose() {
-    scopeService.disposeModel(modelId) // ActionListener[] listeners = myBrowseButton.getActionListeners();
+    scopeService.disposeModel(modelId)
+    // ActionListener[] listeners = myBrowseButton.getActionListeners();
     //    for (ActionListener listener : listeners) {
     //      myBrowseButton.removeActionListener(listener);
     //    }
   }
 
 }
-
-
-@ApiStatus.Internal
-data class SearchScopeUiInfo(val id: String, val name: String, val icon: Icon?, val isSeparator: Boolean)
