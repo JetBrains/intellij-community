@@ -1,4 +1,7 @@
 <idea-plugin package="com.intellij.platform.searchEverywhere">
+  <dependencies>
+    <module name="intellij.platform.scopes"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint name="searchEverywhere.itemsProviderFactory"
                     interface="com.intellij.platform.searchEverywhere.SeItemsProviderFactory"

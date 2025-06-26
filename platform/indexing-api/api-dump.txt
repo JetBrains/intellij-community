@@ -3,7 +3,7 @@ c:com.intellij.find.FindModel
 - java.lang.Cloneable
 - sf:Companion:com.intellij.find.FindModel$Companion
 - <init>():V
-- b:<init>(I,java.lang.String,java.lang.String,Z,Z,Z,com.intellij.find.FindModel$SearchContext,Z,Z,Z,Z,I,Z,Z,Z,Z,Z,Z,Z,java.lang.String,java.lang.String,Z,java.lang.String,java.lang.String,Z,Z,Z,Z,kotlinx.serialization.internal.SerializationConstructorMarker):V
+- b:<init>(I,java.lang.String,java.lang.String,Z,Z,Z,com.intellij.find.FindModel$SearchContext,Z,Z,Z,Z,I,Z,Z,Z,Z,Z,Z,Z,java.lang.String,java.lang.String,Z,java.lang.String,java.lang.String,java.lang.String,Z,Z,Z,Z,kotlinx.serialization.internal.SerializationConstructorMarker):V
 - f:addObserver(com.intellij.find.FindModel$FindModelObserver):V
 - clone():com.intellij.find.FindModel
 - f:compileRegExp():java.util.regex.Pattern

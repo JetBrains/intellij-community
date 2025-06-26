@@ -1628,6 +1628,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     model.setModuleName(null);
     model.setCustomScopeName(null);
     model.setCustomScope(null);
+    model.setCustomScopeId(null);
     model.setCustomScope(false);
     myScopeUI.applyTo(model, mySelectedScope);
 
