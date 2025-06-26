@@ -5,8 +5,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
+import java.util.*
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -14,7 +15,15 @@ class ScopesStateService(val project: Project) {
   private var scopesState: ScopesState = ScopesState(project)
 
   fun getScopeById(scopeId: String): SearchScope? {
-    return scopesState.getScopeDescriptorById(scopeId)?.let { return it.scope }
+    try {
+      return scopesState.getScopeDescriptorById(scopeId)?.scope
+    } catch (e: RuntimeException) {
+      // Some scopes require the Event Dispatch Thread (EDT) and cannot be loaded in the background.
+      // These scopes should be filtered out earlier, but if they are not, they will be ignored here.
+      @Suppress("TestOnlyProblems")
+      if (e.message?.startsWith(ThreadingAssertions.MUST_EXECUTE_IN_EDT) == true) return null
+      throw e
+    }
   }
 
   fun getScopesState(): ScopesState {
