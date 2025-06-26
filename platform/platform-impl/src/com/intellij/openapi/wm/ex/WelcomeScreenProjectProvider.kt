@@ -20,17 +20,30 @@ abstract class WelcomeScreenProjectProvider {
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeScreenProjectProvider> = ExtensionPointName("com.intellij.welcomeScreenProjectProvider")
 
-    @JvmStatic
-    fun isSingleWelcomeScreenProject(project: Project): Boolean {
+    private fun getSingleExtension(): WelcomeScreenProjectProvider? {
       val providers = EP_NAME.extensionList
-      if (providers.isEmpty()) return false
+      if (providers.isEmpty()) return null
       if (providers.size > 1) {
         thisLogger().warn("Multiple WelcomeScreenProjectProvider extensions")
-        return false
+        return null
       }
-      return providers.first().isWelcomeScreenProject(project)
+      return providers.first()
+    }
+
+    @JvmStatic
+    fun isSingleWelcomeScreenProject(project: Project): Boolean {
+      val extension = getSingleExtension() ?: return false
+      return extension.isWelcomeScreenProject(project)
+    }
+
+    @JvmStatic
+    fun isSingleForceDisabledFileColors(): Boolean {
+      val extension = getSingleExtension() ?: return false
+      return extension.isForceDisabledFileColors()
     }
   }
 
   protected abstract fun isWelcomeScreenProject(project: Project): Boolean
+
+  protected abstract fun isForceDisabledFileColors(): Boolean
 }
