@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file: ApiStatus.Experimental
+@file:ApiStatus.Experimental
 
 package com.intellij.platform.syntax.scripts
 
 import org.jetbrains.annotations.ApiStatus
-import java.io.OutputStreamWriter
+import java.io.InputStream
+import java.io.Writer
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
@@ -24,7 +25,11 @@ fun main(args: Array<String>) {
     exitProcess(-1)
   }
 
-  generateMapping(args[0], args[1], args[2])
+  generateMapping(
+    properties = args[0],
+    output = args[1],
+    packageName = args[2],
+  )
 }
 
 fun generateMapping(
@@ -47,14 +52,14 @@ fun generateMapping(
   val mappings = loadMappings(propertiesPath)
 
   val fileName = outputPath.nameWithoutExtension
-  outputPath.writer().use { writer ->
+  outputPath.writer().buffered().use { writer ->
     writer.printClass(fileName, packageName, mappings, "<full path to ${propertiesPath.name}> <full path to ${outputPath.name}> $packageName")
   }
 
   println("Done! Result: $outputPath")
 }
 
-private fun OutputStreamWriter.printClass(
+private fun Writer.printClass(
   className: String,
   packageName: String,
   mappings: Map<String, String>,
