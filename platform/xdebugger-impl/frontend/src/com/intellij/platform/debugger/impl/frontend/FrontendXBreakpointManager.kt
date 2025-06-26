@@ -62,7 +62,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   @VisibleForTesting
   val breakpointIdsRemovedLocally: MutableSet<XBreakpointId> = ConcurrentHashMap.newKeySet()
 
-  internal val breakpointRequestCounter = BreakpointRequestCounter()
+  internal val breakpointRequestCounter = FrontendBreakpointRequestCounter()
 
   init {
     cs.launch {

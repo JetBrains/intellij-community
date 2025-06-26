@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.debugger.impl.frontend.BreakpointRequestCounter.Companion.REQUEST_IS_NOT_NEEDED
+import com.intellij.platform.debugger.impl.frontend.FrontendBreakpointRequestCounter.Companion.REQUEST_IS_NOT_NEEDED
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
@@ -49,7 +49,7 @@ internal open class FrontendXBreakpointProxy(
   parentCs: CoroutineScope,
   private val dto: XBreakpointDto,
   override val type: XBreakpointTypeProxy,
-  private val breakpointRequestCounter: BreakpointRequestCounter,
+  private val breakpointRequestCounter: FrontendBreakpointRequestCounter,
   private val _onBreakpointChange: (XBreakpointProxy) -> Unit,
 ) : XBreakpointProxy {
   override val id: XBreakpointId = dto.id
