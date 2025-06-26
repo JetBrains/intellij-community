@@ -19,37 +19,63 @@ private const val DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING: Int = 15
  * Accumulate results until DEFAULT_RESULT_THROTTLING_MS has past or DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING items where received,
  * then send the first batch of items inside ThrottledAccumulatedItems, and then send on demand one by one ThrottledOneItem.
  */
+@ApiStatus.Internal
+fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RESULT_THROTTLING_MS,
+                                          resultCountToStopThrottling: Int = DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING): Flow<ThrottledItems<T>> =
+  throttledWithAccumulation(resultThrottlingMs) { _, accumulatedSize ->
+    if (accumulatedSize >= resultCountToStopThrottling) 0 else null
+  }
+
 @OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Internal
-fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RESULT_THROTTLING_MS, resultCountToStopThrottling: Int = DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING): Flow<ThrottledItems<T>> {
+fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RESULT_THROTTLING_MS,
+                                          shouldStopThrottlingAfterDelay: (T, Int) -> Long?): Flow<ThrottledItems<T>> {
   val originalFlow = this
   return channelFlow {
     var pendingFirstBatch: MutableList<T>? = mutableListOf<T>() // null -> no more throttling
+    var stopRequestWasScheduled = false
     val mutex = Mutex()
-    suspend fun sendFirstBatchIfNeeded() {
-      mutex.withLock {
-        if (isClosedForSend) return
 
-        val firstBatch = pendingFirstBatch
-        pendingFirstBatch = null
-        if (!firstBatch.isNullOrEmpty()) {
-          send(ThrottledAccumulatedItems(firstBatch))
-        }
+    suspend fun sendFirstBatchIfNeeded() {
+      if (isClosedForSend) return
+
+      val firstBatch = pendingFirstBatch
+      pendingFirstBatch = null
+      if (!firstBatch.isNullOrEmpty()) {
+        send(ThrottledAccumulatedItems(firstBatch))
       }
     }
+
     launch {
       delay(resultThrottlingMs)
-      sendFirstBatchIfNeeded()
+
+      mutex.withLock {
+        sendFirstBatchIfNeeded()
+      }
     }
+
+    val parentScope = this
+
     launch {
       originalFlow.collect { item ->
         mutex.withLock {
           val firstBatch = pendingFirstBatch
           if (firstBatch != null) {
             firstBatch += item
-            if (firstBatch.size >= resultCountToStopThrottling) {
-              pendingFirstBatch = null
-              send(ThrottledAccumulatedItems(firstBatch))
+            val stopDelay = shouldStopThrottlingAfterDelay(item, firstBatch.size)
+            if (stopDelay != null) {
+              if (stopDelay > 0) {
+                if (!stopRequestWasScheduled) {
+                  stopRequestWasScheduled = true
+                  parentScope.launch {
+                    delay(stopDelay)
+                    sendFirstBatchIfNeeded()
+                  }
+                }
+              }
+              else {
+                sendFirstBatchIfNeeded()
+              }
             }
           }
           else {

@@ -36,7 +36,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
     params: SeParams,
     dataContextId: DataContextId?,
     requestedCountChannel: ReceiveChannel<Int>,
-  ): Flow<SeItemData>
+  ): Flow<SeTransferEvent>
 
   suspend fun itemSelected(
     projectId: ProjectId,
@@ -70,7 +70,11 @@ interface SeRemoteApi : RemoteApi<Unit> {
     isAllTab: Boolean
   ): Boolean
 
-  suspend fun getAvailableProviderIds(): List<SeProviderId>
+  suspend fun getAvailableProviderIds(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId
+  ): Map<String, Set<SeProviderId>>
 
   suspend fun getSearchScopesInfoForProviders(
     projectId: ProjectId,

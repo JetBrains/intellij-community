@@ -72,6 +72,7 @@ fun SeResultList.handleEvent(event: SeResultEvent) {
         addRow(lastIndexToInsertItem, SeResultListItemRow(event.newItemData))
       }
     }
+    is SeResultEndEvent -> {}// Do nothing
   }
 }
 

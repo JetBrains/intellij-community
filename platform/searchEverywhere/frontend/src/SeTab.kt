@@ -4,10 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.*
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -38,4 +35,6 @@ interface SeTab : Disposable {
   suspend fun canBeShownInFindResults(): Boolean
 
   suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean = false
+
+  suspend fun essentialProviderIds(): Set<SeProviderId> = emptySet()
 }
