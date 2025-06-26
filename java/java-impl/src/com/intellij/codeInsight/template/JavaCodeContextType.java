@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -294,6 +295,21 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       return PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, element) &&
              declarationContext.isInContext(element) &&
              !implicitClassContext.isInContext(element);
+    }
+  }
+
+  public static final class Java25StructuredConcurrency extends JavaCodeContextType {
+    private final JavaCodeContextType statementContext = new Statement();
+
+    Java25StructuredConcurrency() {
+      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.25"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return statementContext.isInContext(element) &&
+             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY, element) &&
+             PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_25_PREVIEW);
     }
   }
 }
