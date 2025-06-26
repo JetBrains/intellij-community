@@ -26,7 +26,7 @@ internal class ScopesModelApiImpl : ScopeModelApi {
   private val modelIdToModel = mutableMapOf<String, AbstractScopeModel>()
   private val modelIdToScopes = mutableMapOf<String, ScopesState>()
 
-  override suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String): Flow<SearchScopesInfo>? {
+  override suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>? {
     val project = projectId.findProjectOrNull()
     if (project == null) {
       LOG.warn("Project not found for projectId: $projectId")
@@ -42,6 +42,8 @@ internal class ScopesModelApiImpl : ScopeModelApi {
     modelIdToModel[modelId] = model
     val flow = subscribeToModelUpdates(model, modelId, project)
     model.refreshScopes(null)
+    val scopeFilter = filterConditionType.getScopeFilterByType()
+    if (scopeFilter != null) model.setFilter(scopeFilter)
 
     NamedScopeManager.getInstance(project).addScopeListener({ model.refreshScopes(null) }, model)
     DependencyValidationManager.getInstance(project).addScopeListener({ model.refreshScopes(null) }, model)

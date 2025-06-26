@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.scopes
 
+import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface ScopeModelApi : RemoteApi<Unit> {
-  suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String): Flow<SearchScopesInfo>?
+  suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>?
 
   suspend fun updateModel(modelId: String, scopesInfo: SearchScopesInfo): Flow<SearchScopesInfo>
   suspend fun dispose(modelId: String)

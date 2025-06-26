@@ -3,13 +3,15 @@ package com.intellij.ide.util.scopeChooser
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.indexing.IndexingBundle
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
 interface ScopeModelService {
 
-  fun loadItemsAsync(modelId: String, onFinished: suspend (Map<String, ScopeDescriptor>?) -> Unit)
+  fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER, onFinished: suspend (Map<String, ScopeDescriptor>?) -> Unit)
 
   fun disposeModel(modelId: String)
 
@@ -19,6 +21,30 @@ interface ScopeModelService {
     @JvmStatic
     fun getInstance(project: Project): ScopeModelService {
       return project.service<ScopeModelService>()
+    }
+  }
+}
+
+@ApiStatus.Internal
+@Serializable
+enum class ScopesFilterConditionType {
+  FIND, OTHER;
+
+  fun getScopeFilterByType(): ((ScopeDescriptor) -> Boolean)? {
+    return when (this) {
+      //moved from FindPopupScopeUIImpl
+      FIND -> {
+        //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
+        val moduleScopeName: String = IndexingBundle.message("search.scope.module", "")
+        val ind = moduleScopeName.indexOf(' ')
+        val moduleFilesScopeName: String = moduleScopeName.take(ind + 1)
+        return scopesFilter@{ descriptor: ScopeDescriptor? ->
+          //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
+          val display = descriptor?.displayName ?: return@scopesFilter true
+          return@scopesFilter  /*!projectFilesScopeName.equals(display) &&*/!display.startsWith(moduleFilesScopeName)
+        }
+      }
+      else -> null
     }
   }
 }

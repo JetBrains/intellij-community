@@ -7,6 +7,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.FrontendScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -26,8 +27,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.EmptyIcon;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,27 +97,14 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   private void initScopeCombo(ActionListener restartSearchListener) {
     String selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     if (FindKey.isEnabled()) {
-      newScopeCombo = new FrontendScopeChooserCombo(myProject, selection);
+      newScopeCombo = new FrontendScopeChooserCombo(myProject, selection, ScopesFilterConditionType.FIND);
       Disposer.register(myFindPopupPanel.getDisposable(), newScopeCombo);
     }
     else {
       myScopeCombo = new ScopeChooserCombo();
-      myScopeCombo.init(myProject, true, true, selection, new Condition<>() {
-        //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
-        final String moduleFilesScopeName;
-
-        {
-          String moduleScopeName = IndexingBundle.message("search.scope.module", "");
-          final int ind = moduleScopeName.indexOf(' ');
-          moduleFilesScopeName = moduleScopeName.substring(0, ind + 1);
-        }
-
-        @Override
-        public boolean value(ScopeDescriptor descriptor) {
-          final String display = descriptor.getDisplayName();
-          return /*!projectFilesScopeName.equals(display) &&*/ !display.startsWith(moduleFilesScopeName);
-        }
-      });
+      Function1<@NotNull ScopeDescriptor, @NotNull Boolean> filterByType = ScopesFilterConditionType.FIND.getScopeFilterByType();
+      Condition<ScopeDescriptor> filterCondition = filterByType == null ? null : descriptor -> filterByType.invoke(descriptor);
+      myScopeCombo.init(myProject, true, true, selection, filterCondition);
       myScopeCombo.setBrowseListener(new ScopeChooserCombo.BrowseListener() {
 
         private FindModel myModelSnapshot;
