@@ -11,17 +11,18 @@ import java.util.UUID
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ScopesStateService(val project: Project) {
-  private var scopesState: ScopesState? = null
+  private var scopesState: ScopesState = ScopesState(project)
 
   fun getScopeById(scopeId: String): SearchScope? {
-    return scopesState?.getScopeDescriptorById(scopeId)?.let { return it.scope }
+    return scopesState.getScopeDescriptorById(scopeId)?.let { return it.scope }
   }
 
-  fun getOrCreateScopesState(): ScopesState {
-    if (scopesState != null) return scopesState!!
-    val state = ScopesState(project)
-    scopesState = state
-    return state
+  fun getScopesState(): ScopesState {
+    return scopesState
+  }
+
+  fun getCachedScopeDescriptors(): List<ScopeDescriptor> {
+    return scopesState.scopeIdToDescriptor.values.toList()
   }
 
   companion object {
