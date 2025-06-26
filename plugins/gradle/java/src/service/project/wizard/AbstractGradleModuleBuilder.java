@@ -70,7 +70,6 @@ import org.jetbrains.plugins.gradle.util.GradleJvmCriteriaUtil;
 import org.jetbrains.plugins.gradle.util.GradleJvmResolutionUtil;
 import org.jetbrains.plugins.gradle.util.GradleJvmValidationUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -128,6 +127,13 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
+  public @NotNull String getContentEntryPath() {
+    String contentEntryPath = super.getContentEntryPath();
+    assert StringUtil.isNotEmpty(contentEntryPath);
+    return FileUtil.toCanonicalPath(contentEntryPath);
+  }
+
+  @Override
   public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, ConfigurationException {
     LOG.assertTrue(getName() != null);
@@ -143,13 +149,12 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   @Override
   public void setupRootModel(final @NotNull ModifiableRootModel modifiableRootModel) throws ConfigurationException {
-    String contentEntryPath = getContentEntryPath();
-    if (StringUtil.isEmpty(contentEntryPath)) {
-      return;
-    }
-    File contentRootDir = new File(contentEntryPath);
+    var contentEntryPath = Path.of(getContentEntryPath());
+
+    rootProjectPath = myParentProject != null ? Paths.get(myParentProject.getLinkedExternalProjectPath()) : contentEntryPath;
+
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    VirtualFile modelContentRootDir = fileSystem.refreshAndFindFileByIoFile(contentRootDir);
+    VirtualFile modelContentRootDir = fileSystem.refreshAndFindFileByNioFile(contentEntryPath);
     if (modelContentRootDir == null) {
       return;
     }
@@ -158,12 +163,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     Project project = modifiableRootModel.getProject();
     Module module = modifiableRootModel.getModule();
-    if (myParentProject != null) {
-      rootProjectPath = Paths.get(myParentProject.getLinkedExternalProjectPath());
-    }
-    else {
-      rootProjectPath = isCreatingNewProject ? Paths.get(Objects.requireNonNull(project.getBasePath())) : modelContentRootDir.toNioPath();
-    }
 
     if (isCreatingBuildScriptFile) {
       buildScriptFile = setupGradleBuildFile(modelContentRootDir);
@@ -181,7 +180,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     if (isCreatingBuildScriptFile) {
       buildScriptBuilder = GradleBuildScriptBuilder.create(gradleVersion, myUseKotlinDSL);
       var scriptDataBuilder = new BuildScriptDataBuilder(buildScriptFile, buildScriptBuilder);
-      modifiableRootModel.getModule().putUserData(BUILD_SCRIPT_DATA, scriptDataBuilder);
+      module.putUserData(BUILD_SCRIPT_DATA, scriptDataBuilder);
     }
   }
 
@@ -669,7 +668,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     ConfigureGradleModuleCallback(@NotNull ImportSpecBuilder importSpecBuilder) {
       this.defaultCallback = new ImportSpecBuilder.DefaultProjectRefreshCallback(importSpecBuilder.build());
       this.sdkName = myJdk == null ? null : myJdk.getName();
-      this.externalConfigPath = FileUtil.toCanonicalPath(getContentEntryPath());
+      this.externalConfigPath = getContentEntryPath();
     }
 
     @Override
