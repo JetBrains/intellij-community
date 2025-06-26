@@ -8,6 +8,7 @@ import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.provider.EelProvider
@@ -16,10 +17,13 @@ import com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend
 import com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager
 import com.intellij.platform.ide.impl.wsl.WslEelProvider
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.testFramework.registerExtension
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.replaceService
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.cancel
 import java.util.concurrent.CancellationException
 
 fun replaceProductionWslIjentManager(disposable: Disposable) {
@@ -39,20 +43,20 @@ suspend fun replaceWslServicesAndRunWslEelInitialization(newServiceScope: Corout
 
 private fun <T : Any> replaceExtension(scope: CoroutineScope, name: BaseExtensionPointName<*>, instance: T) {
   ApplicationManager.getApplication().apply {
-    extensionArea.getExtensionPoint<T>(name.name).unregisterExtension(instance.javaClass)
-    registerExtension(name, instance, scope.asDisposable())
+    val epName = ExtensionPointName.create<T>(name.name)
+    ExtensionTestUtil.maskExtensions(
+      epName,
+      listOf(instance),
+      scope.asDisposable()
+    )
   }
 }
 
 private fun <T : Any> replaceService(iface: Class<T>, constructor: (CoroutineScope) -> T, newServiceScope: CoroutineScope) {
-  val disposable = Disposer.newDisposable(newServiceScope.toString())
-  newServiceScope.coroutineContext.job.invokeOnCompletion {
-    Disposer.dispose(disposable)
-  }
   ApplicationManager.getApplication().replaceService(
     iface,
     constructor(newServiceScope),
-    disposable,
+    newServiceScope.asDisposable(),
   )
 }
 
