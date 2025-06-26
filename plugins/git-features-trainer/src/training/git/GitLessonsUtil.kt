@@ -45,11 +45,11 @@ object GitLessonsUtil {
   // Git tool window must show to reset it
   fun LessonContext.resetGitLogWindow() {
     prepareRuntimeTask {
-      val vcsLogUi = VcsProjectLog.getInstance(project).mainUi
-      vcsLogUi?.filterUi?.clearFilters()
-      PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
-
-      VcsLogContentUtil.selectMainLog(project)
+      VcsProjectLog.runInMainLog(project) { mainLog ->
+        mainLog.filterUi.clearFilters()
+        PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
+        VcsLogContentUtil.selectMainLog(project)
+      }
     }
 
     // clear Git tool window to return it to the default state (needed in case of restarting the lesson)
