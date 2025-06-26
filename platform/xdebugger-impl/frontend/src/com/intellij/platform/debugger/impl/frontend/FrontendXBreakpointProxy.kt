@@ -56,12 +56,19 @@ internal open class FrontendXBreakpointProxy(
 
   protected val cs = parentCs.childScope("FrontendXBreakpointProxy#$id")
 
+  /**
+   * Updates should be performed only via [updateStateIfNeeded].
+   */
   private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 
   private val editorsProvider = dto.localEditorsProvider ?: createFrontendEditorsProvider()
 
   protected val currentState: XBreakpointDtoState get() = _state.value
 
+  /**
+   * Updates breakpoint state if needed.
+   * Returns requestId if state was updated, [REQUEST_IS_NOT_NEEDED] otherwise.
+   */
   private fun <T> getRequestIdForStateUpdate(
     newValue: T,
     getter: (XBreakpointDtoState) -> T,
@@ -83,6 +90,9 @@ internal open class FrontendXBreakpointProxy(
     return requestId
   }
 
+  /**
+   * Updates the breakpoint state if needed and sends a request to the backend.
+   */
   protected fun <T> updateStateIfNeeded(
     newValue: T,
     getter: (XBreakpointDtoState) -> T,
@@ -104,6 +114,8 @@ internal open class FrontendXBreakpointProxy(
 
   init {
     cs.launch {
+      // To avoid races with the backend state updates, we only react to breakpoint state updates
+      // which have the latest requestId. Otherwise, we ignore the update.
       dto.state.toFlow().collectLatest {
         if (breakpointRequestCounter.isSuitableUpdate(it.requestId)) {
           _state.value = it
