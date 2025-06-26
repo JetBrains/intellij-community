@@ -143,7 +143,7 @@ public class BreakpointManager {
   }
 
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
-    DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(myProject, () -> {
       XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
       if (xBreakpoint instanceof XLineBreakpointImpl<?> xLineBreakpoint) {
         RangeHighlighter highlighter = xLineBreakpoint.getHighlighter();

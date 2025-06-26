@@ -101,6 +101,16 @@ public final class DebuggerUIUtil {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
 
+  @ApiStatus.Internal
+  public static void invokeLaterIfNeeded(Runnable runnable) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+    }
+  }
+
   public static @Nullable RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
     if (line > -1) {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));

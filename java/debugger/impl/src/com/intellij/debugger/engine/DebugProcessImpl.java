@@ -224,7 +224,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           myRenderers.addAll(NodeRendererSettings.getInstance().getAllRenderers(project));
         }
         finally {
-          DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+          DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> {
             final DebuggerSession session = mySession;
             if (session != null && session.isAttached()) {
               DebuggerAction.refreshViews(mySession.getXDebugSession());
@@ -763,7 +763,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected void checkVirtualMachineVersion(VirtualMachine vm) {
     final String versionString = vm.version();
     if ("1.4.0".equals(versionString)) {
-      DebuggerInvocationUtil.swingInvokeLater(project, () -> Messages.showMessageDialog(
+      DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> Messages.showMessageDialog(
         project,
         JavaDebuggerBundle.message("warning.jdk140.unstable"), JavaDebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
       ));
@@ -2087,7 +2087,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         super.contextAction(context);
       }
       else {
-        DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+        DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> {
           Messages.showErrorDialog(
             JavaDebuggerBundle.message("error.running.to.cursor.no.executable.code",
                                        myRunToCursorBreakpoint.getFileName(),
@@ -2442,7 +2442,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       if (myStackFrame.isBottom()) {
-        DebuggerInvocationUtil.swingInvokeLater(project, () -> Messages.showMessageDialog(project, JavaDebuggerBundle
+        DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> Messages.showMessageDialog(project, JavaDebuggerBundle
           .message("error.pop.bottom.stackframe"), XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
         return;
       }
@@ -2462,7 +2462,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     private void showError(@NlsContexts.DialogMessage String message) {
-      DebuggerInvocationUtil.swingInvokeLater(project, () ->
+      DebuggerInvocationUtil.invokeLaterAnyModality(project, () ->
         Messages.showMessageDialog(project, message,
                                    XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
     }
@@ -2537,7 +2537,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
 
         private void doReattach() {
-          DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+          DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> {
             ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
             myState.set(State.INITIAL);
             myConnection = connection;
@@ -2665,7 +2665,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   LOG.debug(ex);
                 }
                 fail();
-                DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+                DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
                   // propagate exception only in case we succeeded to obtain execution result,
                   // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user

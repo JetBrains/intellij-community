@@ -61,7 +61,7 @@ class DebuggerConnection(
 
     override fun processStarted(debugProcess: XDebugProcess) {
         if (XDebugSessionProxy.useFeProxy()) return // TODO IDEA-368739
-        DebuggerInvocationUtil.swingInvokeLater(project) {
+        DebuggerInvocationUtil.invokeLaterAnyModality(project) {
             val session = debugProcess.session
             if (debugProcess is JavaDebugProcess &&
                 !isDisposed &&

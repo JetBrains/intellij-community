@@ -33,9 +33,9 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManagerListener;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,7 +178,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     session.getContextManager().addListener(mySessionListener);
 
     // the whole method may still be called from EDT, we need to update the state immediately in this case
-    UIUtil.invokeLaterIfNeeded(() -> {
+    DebuggerUIUtil.invokeLaterIfNeeded(() -> {
       getContextManager()
         .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
                   session.getState(), DebuggerSession.Event.CONTEXT, null);

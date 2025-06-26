@@ -2,6 +2,7 @@
 
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
@@ -80,7 +81,7 @@ public class ThrowExceptionAction extends DebuggerAction {
           showError(debugProcess.getProject(), JavaDebuggerBundle.message("error.throw.exception", e.getLocalizedMessage()));
           return;
         }
-        SwingUtilities.invokeLater(() -> {
+        DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
