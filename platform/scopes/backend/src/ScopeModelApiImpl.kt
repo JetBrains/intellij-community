@@ -48,19 +48,19 @@ internal class ScopesModelApiImpl : ScopeModelApi {
     val flow = channelFlow {
       model.addScopeModelListener(object : ScopeModelListener {
         override fun scopesUpdated(scopes: ScopesSnapshot) {
+          var scopesState = modelIdToScopes[modelId]
+          if (scopesState == null) {
+            scopesState = ScopesStateService.getInstance(project).getOrCreateScopesState(project)
+            modelIdToScopes[modelId] = scopesState
+          }
           val scopesStateMap = mutableMapOf<String, ScopeDescriptor>()
           val scopesData = scopes.scopeDescriptors.mapNotNull { descriptor ->
-            val scopeId = UUID.randomUUID().toString()
+            val scopeId = scopesState.addScope(descriptor)
             val scopeData = SearchScopeData.from(descriptor, scopeId) ?: return@mapNotNull null
             scopesStateMap[scopeData.scopeId] = descriptor
             scopeData
           }
-          var scopeState = modelIdToScopes[modelId]
-          if (scopeState == null) {
-            scopeState = ScopesStateService.getInstance(project).getOrCreateScopesState(project)
-            modelIdToScopes[modelId] = scopeState
-          }
-          scopeState.updateScopes(scopesStateMap)
+          scopesState.updateScopes(scopesStateMap)
 
           val searchScopesInfo = SearchScopesInfo(scopesData, null, null, null)
           launch {

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -13,7 +14,7 @@ class ScopesStateService(val project: Project) {
   private var scopesState: ScopesState? = null
 
   fun getScopeById(scopeId: String): SearchScope? {
-    return scopesState?.scopeIdToDescriptor[scopeId]?.let { return it.scope }
+    return scopesState?.getScopeDescriptorById(scopeId)?.let { return it.scope }
   }
 
   fun getOrCreateScopesState(): ScopesState {
@@ -33,9 +34,21 @@ class ScopesStateService(val project: Project) {
 
 @ApiStatus.Internal
 class ScopesState internal constructor(val project: Project) {
-  var scopeIdToDescriptor: Map<String, ScopeDescriptor> = mapOf()
+  val scopeIdToDescriptor: MutableMap<String, ScopeDescriptor> = mutableMapOf()
+
+  fun addScope(scopeDescriptor: ScopeDescriptor): String {
+    val existingIdToDescriptor = scopeIdToDescriptor.entries.find { it.value.displayName == scopeDescriptor.displayName }
+    val id = existingIdToDescriptor?.key ?: UUID.randomUUID().toString()
+    scopeIdToDescriptor[id] = scopeDescriptor
+    return id
+  }
 
   fun updateScopes(scopesStateMap: Map<String, ScopeDescriptor>) {
-    scopeIdToDescriptor = scopesStateMap
+    scopeIdToDescriptor.clear()
+    scopeIdToDescriptor.putAll(scopesStateMap)
+  }
+
+  fun getScopeDescriptorById(scopeId: String): ScopeDescriptor? {
+    return scopeIdToDescriptor[scopeId]
   }
 }
