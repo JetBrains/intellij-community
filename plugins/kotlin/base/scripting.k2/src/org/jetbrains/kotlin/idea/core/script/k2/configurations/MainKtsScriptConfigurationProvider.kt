@@ -14,7 +14,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportProgressScope
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -40,10 +40,10 @@ import kotlin.script.experimental.jvm.jvm
 class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScope: CoroutineScope) : ScriptRefinedConfigurationResolver,
                                                                                                      ScriptWorkspaceModelManager {
     private val data = ConcurrentHashMap<VirtualFile, ScriptConfigurationWithSdk>()
-    private val importedScripts = TreeMultimap.create(COMPARATOR, COMPARATOR)
-    private val importedScriptsTraverser = Traverser.forTree<VirtualFile> { importedScripts.get(it) }
+    private val visitedScripts = TreeMultimap.create(COMPARATOR, COMPARATOR)
+    private val visitedScriptsTraverser = Traverser.forTree<VirtualFile> { visitedScripts.get(it) }
 
-    fun getImportedScripts(mainKts: VirtualFile): List<VirtualFile> = importedScriptsTraverser.breadthFirst(mainKts) - mainKts
+    fun getImportedScripts(mainKts: VirtualFile): List<VirtualFile> = visitedScriptsTraverser.breadthFirst(mainKts) - mainKts
 
     var reporter: ProgressReporter? = null
         private set
@@ -51,15 +51,16 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data[virtualFile]
 
     override fun remove(virtualFile: VirtualFile) {
-        importedScripts.removeAll(virtualFile)
+        visitedScripts.removeAll(virtualFile)
         data.remove(virtualFile)
     }
 
     override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk? {
         val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
-        if (mainKtsConfiguration.importedScripts.isNotEmpty()) {
-            importedScripts.putAll(virtualFile, mainKtsConfiguration.importedScripts)
-            resolveDeeply(mainKtsConfiguration.importedScripts)
+        val scriptsToResolve = mainKtsConfiguration.importedScripts - visitedScripts.keys()
+        if (scriptsToResolve.isNotEmpty()) {
+            visitedScripts.putAll(virtualFile, scriptsToResolve)
+            resolveDeeply(scriptsToResolve)
         }
 
         data[virtualFile] = mainKtsConfiguration
@@ -88,7 +89,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         }
 
         val result = withBackgroundProgress(project, title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution", mainKts.name)) {
-            reportProgress {
+            reportProgressScope {
                 try {
                     reporter = it
                     smartReadAction(project) {
