@@ -104,9 +104,6 @@ class PyTypedDictType @JvmOverloads constructor(
     INSTANCE
   }
 
-  @Deprecated("Always false", ReplaceWith("false"))
-  fun isInferred(): Boolean = false
-
   override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super<PyClassTypeImpl>.getDeclarationElement()
 
   /**

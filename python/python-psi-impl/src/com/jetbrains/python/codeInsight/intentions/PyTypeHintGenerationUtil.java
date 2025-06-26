@@ -361,17 +361,9 @@ public final class PyTypeHintGenerationUtil {
 
       @Override
       public @NotNull Traversal visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
-        if (typedDictType.isInferred()) {
-          if (useGenericAliasFromTyping) {
-            typingTypes.add("Dict");
-          }
-        }
-        else {
-          symbols.add((PsiNamedElement)typedDictType.getDeclarationElement());
-          // Don't go through its type arguments
-          return Traversal.PRUNE;
-        }
-        return Traversal.CONTINUE;
+        symbols.add((PsiNamedElement)typedDictType.getDeclarationElement());
+        // Don't go through its type arguments
+        return Traversal.PRUNE;
       }
 
       @Override
