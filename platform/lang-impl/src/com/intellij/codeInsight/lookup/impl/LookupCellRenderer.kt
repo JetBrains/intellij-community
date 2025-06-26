@@ -51,6 +51,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.EmptyBorder
@@ -78,7 +79,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   var lookupTextWidth: Int = 50
     private set
   private val widthLock = ObjectUtils.sentinel("lookup width lock")
-  private val lookupWidthUpdater: () -> Unit
+  private val lookupWidthUpdater: (Boolean) -> Unit
   private val shrinkLookup: Boolean
 
   private val asyncRendering: AsyncRendering
@@ -118,27 +119,30 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     boldMetrics = lookup.topLevelEditor.component.getFontMetrics(boldFont)
     asyncRendering = AsyncRendering(lookup)
 
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      // avoid delay in unit tests
-      lookupWidthUpdater = {
-        ApplicationManager.getApplication().invokeLater({ updateLookupWidthFromVisibleItems() }, lookup.project.disposed)
-      }
-    }
-    else {
-      val lookupWidthUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-      val coroutineContext = Dispatchers.EDT + ModalityState.stateForComponent(editorComponent).asContextElement()
-      lookup.coroutineScope.launch {
-        lookupWidthUpdateRequests
-          .throttle(50)
-          .collect {
-            withContext(coroutineContext) {
-              writeIntentReadAction {
-                updateLookupWidthFromVisibleItems()
-              }
+    val lookupWidthUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val coroutineContext = Dispatchers.EDT + ModalityState.stateForComponent(editorComponent).asContextElement()
+    val forceRefreshUi = AtomicBoolean(false)
+    lookup.coroutineScope.launch {
+      lookupWidthUpdateRequests
+        .throttle(50)
+        .collect {
+          withContext(coroutineContext) {
+            writeIntentReadAction {
+              updateLookupWidthFromVisibleItems(forceRefreshUi.getAndSet(false))
             }
           }
+        }
+    }
+
+    lookupWidthUpdater = { setForceRefreshUi ->
+      if (!setForceRefreshUi && ApplicationManager.getApplication().isUnitTestMode) {
+        // avoid delay in unit tests
+        ApplicationManager.getApplication().invokeLater({ updateLookupWidthFromVisibleItems(false) }, lookup.project.disposed)
       }
-      lookupWidthUpdater = {
+      else {
+        if (setForceRefreshUi) {
+          forceRefreshUi.set(true)
+        }
         check(lookupWidthUpdateRequests.tryEmit(Unit))
       }
     }
@@ -498,7 +502,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   /**
    * Update lookup width due to visible in lookup items
    */
-  private fun updateLookupWidthFromVisibleItems() {
+  private fun updateLookupWidthFromVisibleItems(forceRefreshUi: Boolean) {
     val visibleItems = lookup.visibleItems
 
     var maxWidth = if (shrinkLookup) 0 else lookupTextWidth
@@ -520,12 +524,19 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
         lookupTextWidth = maxWidth
         lookup.requestResize()
         lookup.refreshUi(false, false)
+      } else if (forceRefreshUi) {
+        lookup.refreshUi(false, false)
       }
     }
   }
 
   fun scheduleUpdateLookupWidthFromVisibleItems() {
-    lookupWidthUpdater()
+    lookupWidthUpdater(false)
+  }
+
+  @ApiStatus.Internal
+  fun scheduleUpdateLookupAfterElementPresentationChange() {
+    lookupWidthUpdater(true)
   }
 
   fun itemAdded(element: LookupElement, fastPresentation: LookupElementPresentation) {
