@@ -14,12 +14,16 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.application
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
-@Service(Service.Level.PROJECT)
-@State(name = "McpServerSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)],)
+@Service(Service.Level.APP)
+@State(name = "McpNotificationSettings", storages = [Storage("mcpNotification.xml", roamingType = RoamingType.DISABLED)],)
 internal class McpClientDetectionSettings : SimplePersistentStateComponent<McpClientDetectionSettings.MyState>(MyState()) {
   internal class MyState : BaseState() {
     var doNotShowServerDisabledAgain: Boolean by property(false)
+    var latestNotificationTime: String? by string("")
     var doNotShowUnconfiguredAgain: Boolean by property(false)
     var processedClients: MutableSet<String> by stringSet()
   }
@@ -28,7 +32,7 @@ internal class McpClientDetectionSettings : SimplePersistentStateComponent<McpCl
 internal class McpClientDetectionActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (Registry.`is`("mcp.server.detect.mcp.clients")) {
-      val mcpClientDetectionSettings = project.service<McpClientDetectionSettings>()
+      val mcpClientDetectionSettings = application.service<McpClientDetectionSettings>()
 
       val detectedClients = McpClientDetector.detectMcpClients(project)
       if (McpServerSettings.getInstance().state.enableMcpServer) {
@@ -82,23 +86,37 @@ internal class McpClientDetectionActivity : ProjectActivity {
       })
       .addAction(object : AnAction(McpServerBundle.message("mcp.clients.detected.action.dont.show")) {
         override fun actionPerformed(e: AnActionEvent) {
-          project.service<McpClientDetectionSettings>().state.doNotShowUnconfiguredAgain = true
+          application.service<McpClientDetectionSettings>().state.doNotShowUnconfiguredAgain = true
           notification.expire()
         }
     }).notify(project)
   }
 
-  private fun showMcpServerEnablingSuggestionNotification(project: Project, detectedClients: List<McpClient>) {
 
-    val currentProcessedClients = project.service<McpClientDetectionSettings>().state.processedClients
+  private fun shouldSkipNotification(): Boolean {
+    val lastNotificationString = application.service<McpClientDetectionSettings>().state.latestNotificationTime
+    if (lastNotificationString.isNullOrEmpty())  return false
+    val lastNotification = runCatching {
+      Instant.parse(lastNotificationString)
+    }.getOrNull() ?: return false
+    val sevenDaysAgo = Instant.now().minus(7, ChronoUnit.DAYS)
+    return lastNotification.isAfter(sevenDaysAgo)
+  }
+
+  private fun showMcpServerEnablingSuggestionNotification(project: Project, detectedClients: List<McpClient>) {
+    val currentProcessedClients = application.service<McpClientDetectionSettings>().state.processedClients
     val newProcessedClients = (currentProcessedClients + detectedClients.map { it.name }).toMutableSet()
+
     if (currentProcessedClients != newProcessedClients) {
-      project.service<McpClientDetectionSettings>().state.processedClients = newProcessedClients
-      project.service<McpClientDetectionSettings>().state.intIncrementModificationCount()
+      application.service<McpClientDetectionSettings>().state.processedClients = newProcessedClients
+      application.service<McpClientDetectionSettings>().state.intIncrementModificationCount()
     }
     else {
       return
     }
+
+    if (shouldSkipNotification()) return
+    application.service<McpClientDetectionSettings>().state.latestNotificationTime = Instant.now().toString()
 
     val clientNames = detectedClients.joinToString(", ") { it.name }
     NotificationGroupManager.getInstance()
@@ -115,7 +133,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
       })
       .addAction(object : AnAction(McpServerBundle.message("mcp.clients.detected.action.dont.show")) {
         override fun actionPerformed(e: AnActionEvent) {
-          project.service<McpClientDetectionSettings>().state.doNotShowServerDisabledAgain = true
+          application.service<McpClientDetectionSettings>().state.doNotShowServerDisabledAgain = true
         }
       })
       .notify(project)
