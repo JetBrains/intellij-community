@@ -298,6 +298,22 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
+  public static final class Java24StructuredConcurrency extends JavaCodeContextType {
+    private final JavaCodeContextType statementContext = new Statement();
+
+    Java24StructuredConcurrency() {
+      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.24"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return statementContext.isInContext(element) &&
+             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY, element) &&
+             PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_24_PREVIEW);
+    }
+  }
+
+
   public static final class Java25StructuredConcurrency extends JavaCodeContextType {
     private final JavaCodeContextType statementContext = new Statement();
 
