@@ -29,7 +29,7 @@ import kotlin.math.min
  * `getDisposable()` is `DialogWrapper`'s method.
  */
 @ApiStatus.Internal
-class FrontendScopeChooserCombo(project: Project) : ComboBox<ScopeDescriptor>(), Disposable {
+class FrontendScopeChooserCombo(project: Project, private val preselectedScopeName: String?) : ComboBox<ScopeDescriptor>(), Disposable {
   private val scopeService = ScopeModelService.getInstance(project)
   private val modelId = UUID.randomUUID().toString()
   private var loadingTextComponent: ExtendableTextField? = null
@@ -80,6 +80,7 @@ class FrontendScopeChooserCombo(project: Project) : ComboBox<ScopeDescriptor>(),
       withContext(Dispatchers.EDT) {
         removeAllItems()
         items.filterOutSeparators().forEach { addItem(it) }
+        tryToSelectItem(items)
         setLoading(false)
       }
     })
@@ -97,6 +98,10 @@ class FrontendScopeChooserCombo(project: Project) : ComboBox<ScopeDescriptor>(),
       lastItem = item
       item !is ScopeSeparator
     }
+  }
+
+  private fun tryToSelectItem(items: Collection<ScopeDescriptor>) {
+    items.find { it.displayName == preselectedScopeName }?.let { selectedItem = it }
   }
 
   override fun getPreferredSize(): Dimension? {
