@@ -2408,14 +2408,14 @@ fun reopenVirtualFileEditor(project: Project, oldFile: VirtualFile, newFile: Vir
 
 @RequiresEdt
 @Internal
-fun reopenVirtualFileEditor(project: Project, oldFile: VirtualFile, newFile: VirtualFile, saveTabIndex: Boolean) {
+fun reopenVirtualFileEditor(project: Project, oldFile: VirtualFile, newFile: VirtualFile, fullReplacement: Boolean) {
   val editorManager: FileEditorManagerEx = FileEditorManagerEx.getInstanceEx(project)
   val windows: Array<EditorWindow> = editorManager.windows
 
   val currentWindow: EditorWindow? = if (windows.size >= 2) editorManager.currentWindow else null
 
   for (window in windows) {
-    reopenVirtualFileInEditor(editorManager, window, oldFile, newFile, saveTabIndex)
+    reopenVirtualFileInEditor(editorManager, window, oldFile, newFile, fullReplacement)
   }
 
   currentWindow?.requestFocus(false)
@@ -2426,7 +2426,7 @@ private fun reopenVirtualFileInEditor(
   window: EditorWindow,
   oldFile: VirtualFile,
   newFile: VirtualFile,
-  saveTabIndex: Boolean
+  fullReplacement: Boolean
 ) {
   val oldComposite = window.getComposite(oldFile) ?: return // the old file is not opened in this split
   val active = window.selectedComposite == oldComposite
@@ -2446,12 +2446,13 @@ private fun reopenVirtualFileInEditor(
     editorManager.openFile(newFile, window, newOptions)
   }
   else {
-    if (saveTabIndex) {
+    if (fullReplacement) {
       val index = window.files().indexOf(oldFile)
       newOptions = newOptions.copy(index = index)
+      window.closeFile(oldFile)
     }
     val composite = editorManager.openFile(newFile, window, newOptions)
-    if (composite.allEditors.any { it.file == newFile }) {
+    if (composite.allEditors.any { it.file == newFile } && !fullReplacement) {
       window.closeFile(oldFile)
     }
   }
