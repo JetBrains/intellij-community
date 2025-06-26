@@ -30,6 +30,7 @@ a:com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 - a:setExternalId(com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 - a:setExternalModuleType(java.lang.String):V
 - a:setExternalOptions(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.model.project.ModuleData,com.intellij.openapi.externalSystem.model.project.ProjectData):V
+- a:setLinkedProjectId(java.lang.String):V
 - a:setLinkedProjectPath(java.lang.String):V
 - a:setMavenized(Z):V
 - a:setRootProjectPath(java.lang.String):V
