@@ -371,8 +371,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       startSessionAndCollectOutputEvents(options, block = terminalInputActions)
     }
 
-    val regularSessionOutput = calculateResultingOutput(regularSessionEvents.await())
-    val posixSessionOutput = calculateResultingOutput(posixSessionEvents.await())
+    val regularSessionOutput = calculateResultingOutput(regularSessionEvents.await()).trim()
+    val posixSessionOutput = calculateResultingOutput(posixSessionEvents.await()).trim()
 
     // Check that the output of posix and regular sessions is the same
     assertThat(posixSessionOutput).isEqualTo(regularSessionOutput)
