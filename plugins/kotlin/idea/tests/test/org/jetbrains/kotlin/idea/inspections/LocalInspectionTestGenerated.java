@@ -18746,6 +18746,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceCallableReferenceGetterIn1dot9.kt");
             }
 
+            @TestMetadata("dontReplaceForEnum.kt")
+            public void testDontReplaceForEnum() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceForEnum.kt");
+            }
+
             @TestMetadata("dontReplaceGetterNotBuiltInFunctionType.kt")
             public void testDontReplaceGetterNotBuiltInFunctionType() throws Exception {
                 runTest("testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceGetterNotBuiltInFunctionType.kt");

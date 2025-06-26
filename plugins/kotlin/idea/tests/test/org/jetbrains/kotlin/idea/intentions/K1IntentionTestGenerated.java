@@ -18363,6 +18363,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/conflict2.kt");
         }
 
+        @TestMetadata("dontReplaceForEnum.kt")
+        public void testDontReplaceForEnum() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/dontReplaceForEnum.kt");
+        }
+
         @TestMetadata("genericClassMethod.kt")
         public void testGenericClassMethod() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/genericClassMethod.kt");

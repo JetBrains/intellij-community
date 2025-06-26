@@ -8029,6 +8029,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceCallableReferenceGetterIn1dot9.kt");
             }
 
+            @TestMetadata("dontReplaceForEnum.kt")
+            public void testDontReplaceForEnum() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceForEnum.kt");
+            }
+
             @TestMetadata("dontReplaceGetterNotBuiltInFunctionType.kt")
             public void testDontReplaceGetterNotBuiltInFunctionType() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceGetterNotBuiltInFunctionType.kt");
