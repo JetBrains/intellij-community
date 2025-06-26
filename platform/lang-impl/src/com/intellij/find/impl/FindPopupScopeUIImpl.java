@@ -94,13 +94,13 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   }
 
   private void initScopeCombo(ActionListener restartSearchListener) {
+    String selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     if (FindKey.isEnabled()) {
-      newScopeCombo = new FrontendScopeChooserCombo(myProject);
+      newScopeCombo = new FrontendScopeChooserCombo(myProject, selection);
       Disposer.register(myFindPopupPanel.getDisposable(), newScopeCombo);
     }
     else {
       myScopeCombo = new ScopeChooserCombo();
-      Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
       myScopeCombo.init(myProject, true, true, selection, new Condition<>() {
         //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
         final String moduleFilesScopeName;
