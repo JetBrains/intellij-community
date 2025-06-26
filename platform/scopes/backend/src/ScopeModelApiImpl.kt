@@ -5,12 +5,14 @@ import com.intellij.ide.util.scopeChooser.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +42,9 @@ internal class ScopesModelApiImpl : ScopeModelApi {
     modelIdToModel[modelId] = model
     val flow = subscribeToModelUpdates(model, modelId, project)
     model.refreshScopes(null)
+
+    NamedScopeManager.getInstance(project).addScopeListener({ model.refreshScopes(null) }, model)
+    DependencyValidationManager.getInstance(project).addScopeListener({ model.refreshScopes(null) }, model)
     return flow
   }
 
