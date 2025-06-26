@@ -68,6 +68,8 @@
 
     <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
     <ApplicationLoadListener implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>
+
+    <appStarter id="stopTelemetry" implementation="com.jetbrains.performancePlugin.StopTelemetryStarter"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains">

@@ -112,6 +112,16 @@ interface TelemetryManager {
   fun resetExportersBlocking() {
     runBlocking { resetExporters() }
   }
+
+  @TestOnly
+  suspend fun shutdownExporters()
+
+  /** Blocking [resetExporters] counterpart for test purposes and for simplicity of use from Java. */
+  @Suppress("unused")
+  @TestOnly
+  fun shutdownExportersBlocking() {
+    runBlocking { shutdownExporters() }
+  }
 }
 
 private val instance = SynchronizedClearableLazy {
@@ -163,6 +173,10 @@ class NoopTelemetryManager : TelemetryManager {
 
   override suspend fun resetExporters() {
     logger<NoopTelemetryManager>().info("Cannot clean exported metrics for Noop telemetry manager")
+  }
+
+  override suspend fun shutdownExporters() {
+    logger<NoopTelemetryManager>().info("Cannot shutdown metric exporters for Noop telemetry manager")
   }
 }
 
