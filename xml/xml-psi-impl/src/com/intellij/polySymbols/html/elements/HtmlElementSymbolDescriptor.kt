@@ -173,7 +173,7 @@ open class HtmlElementSymbolDescriptor private constructor(
 
   companion object {
 
-    fun HtmlElementSymbolInfo.toElementDescriptor(tag: XmlTag) =
+    fun HtmlElementSymbolInfo.toElementDescriptor(tag: XmlTag): HtmlElementSymbolDescriptor =
       HtmlFrameworkSymbolsSupport.get(this.symbol.origin.framework)
         .createHtmlElementDescriptor(this, tag)
 
