@@ -5,7 +5,6 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -153,9 +152,10 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugS
   val breakpoint = this
   return withContext(Dispatchers.Default) {
     val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl
+    val completedRequestId = manager.requestCounter.getRequestId()
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
-      sourcePosition = readAction { sourcePosition?.toRpc () },
+      sourcePosition = readAction { sourcePosition?.toRpc() },
       isDefault = manager.isDefaultBreakpoint(breakpoint),
       logExpressionObject = logExpressionObject?.toRpc(),
       conditionExpression = conditionExpression?.toRpc(),
@@ -177,7 +177,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugS
       currentSessionCustomPresentation = currentSession?.getBreakpointPresentation(breakpoint)?.toRpc(),
       customPresentation = breakpoint.customizedPresentation?.toRpc(),
       lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() },
-      requestId = manager.requestCounter.getRequestId()
+      requestId = completedRequestId,
     )
   }
 }
