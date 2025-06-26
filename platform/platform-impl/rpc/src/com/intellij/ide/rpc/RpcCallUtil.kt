@@ -20,7 +20,7 @@ suspend fun <T> Logger.performRpcWithRetries(rpcCall: suspend () -> T): T {
     }
     catch (e: RpcTimeoutException) {
       attempt++
-      error("RPC call timed out. (attempt $attempt)", e)
+      this.error("RPC call timed out. (attempt $attempt)", e)
     }
   }
 }
