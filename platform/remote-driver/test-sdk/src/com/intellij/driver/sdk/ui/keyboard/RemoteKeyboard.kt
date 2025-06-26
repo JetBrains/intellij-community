@@ -11,72 +11,80 @@ class RemoteKeyboard(private val robot: Robot) {
       get() = logger<RemoteKeyboard>()
   }
 
-  fun key(key: Int) = robot.pressAndReleaseKey(key)
+  fun key(key: Int) = step("Press key $key") { robot.pressAndReleaseKey(key) }
 
   fun enter() {
-    LOG.info("Pressing enter")
-    key(KeyEvent.VK_ENTER)
+    step("Press enter") {
+      key(KeyEvent.VK_ENTER)
+    }
   }
 
   fun escape() {
-    LOG.info("Pressing escape")
-    key(KeyEvent.VK_ESCAPE)
+    step("Press escape") {
+      key(KeyEvent.VK_ESCAPE)
+    }
   }
 
   fun down() {
-    LOG.info("Pressing down")
-    key(KeyEvent.VK_DOWN)
+    step("Press down") {
+      key(KeyEvent.VK_DOWN)
+    }
   }
 
   fun up() {
-    LOG.info("Pressing up")
-    key(KeyEvent.VK_UP)
+    step("Press up") {
+      key(KeyEvent.VK_UP)
+    }
   }
 
   fun left() {
-    LOG.info("Pressing left")
-    key(KeyEvent.VK_LEFT)
+    step("Press left") {
+      key(KeyEvent.VK_LEFT)
+    }
   }
 
   fun right() {
-    LOG.info("Pressing right")
-    key(KeyEvent.VK_RIGHT)
+    step("Press right") {
+      key(KeyEvent.VK_RIGHT)
+    }
   }
 
   fun backspace() {
-    LOG.info("Pressing backspace")
-    key(KeyEvent.VK_BACK_SPACE)
+    step("Press backspace") {
+      key(KeyEvent.VK_BACK_SPACE)
+    }
   }
 
   fun tab() {
-    LOG.info("Pressing tab")
-    key(KeyEvent.VK_TAB)
+    step("Press tab") {
+      key(KeyEvent.VK_TAB)
+    }
   }
 
   fun space() {
-    LOG.info("Pressing space")
-    key(KeyEvent.VK_SPACE)
+    step("Press space") {
+      key(KeyEvent.VK_SPACE)
+    }
   }
 
   fun hotKey(vararg keyCodes: Int) {
-    LOG.info("Pressing hotkeys ${keyCodes.joinToString(",") { "'$it'" }}.")
+    step("Press hotkeys ${keyCodes.joinToString(",") { "'$it'" }}.") {
+      val lastKey = keyCodes.last()
+      val others = keyCodes.dropLast(1)
+      others.forEach {
+        robot.pressKey(it)
+        Thread.sleep(100)
+      }
+      robot.pressAndReleaseKey(lastKey)
 
-    val lastKey = keyCodes.last()
-    val others = keyCodes.dropLast(1)
-    others.forEach {
-      robot.pressKey(it)
-      Thread.sleep(100)
-    }
-    robot.pressAndReleaseKey(lastKey)
-
-    others.reversed().forEach {
-      robot.releaseKey(it)
+      others.reversed().forEach {
+        robot.releaseKey(it)
+      }
     }
   }
 
   fun typeText(text: String, delayBetweenCharsInMs: Long = 150) {
     step("Type text '$text'") {
-      LOG.info("Entering text '$text'.")
       text.forEach {
         robot.type(it)
         Thread.sleep(delayBetweenCharsInMs)
@@ -85,26 +93,26 @@ class RemoteKeyboard(private val robot: Robot) {
   }
 
   fun pressing(key: Int, doWhilePress: RemoteKeyboard.() -> Unit) {
-    LOG.info("Performing action while pressing $key.")
-
-    try {
-      robot.pressKey(key)
-      this.doWhilePress()
-    }
-    finally {
-      robot.releaseKey(key)
+    step("Pressing $key.") {
+      try {
+        robot.pressKey(key)
+        this.doWhilePress()
+      }
+      finally {
+        robot.releaseKey(key)
+      }
     }
   }
 
   fun doublePressing(key: Int, doWhilePress: RemoteKeyboard.() -> Unit) {
-    LOG.info("Performing action while double pressing $key.")
-
-    try {
-      robot.doublePressKeyAndHold(key)
-      this.doWhilePress()
-    }
-    finally {
-      robot.releaseKey(key)
+    step("Double pressing $key.") {
+      try {
+        robot.doublePressKeyAndHold(key)
+        this.doWhilePress()
+      }
+      finally {
+        robot.releaseKey(key)
+      }
     }
   }
 }
