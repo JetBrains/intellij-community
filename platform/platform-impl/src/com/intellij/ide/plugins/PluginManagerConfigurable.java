@@ -206,7 +206,7 @@ public final class PluginManagerConfigurable
 
       String query = (index == MARKETPLACE_TAB ? myInstalledTab : myMarketplaceTab).getSearchQuery();
       (index == MARKETPLACE_TAB ? myMarketplaceTab : myInstalledTab).setSearchQuery(query);
-    }){
+    }) {
       @Override
       public void uiDataSnapshot(@NotNull DataSink sink) {
         sink.set(PLUGIN_INSTALL_CALLBACK_DATA_KEY, PluginManagerConfigurable.this::onPluginInstalledFromDisk);
@@ -1420,7 +1420,7 @@ public final class PluginManagerConfigurable
                                  @NotNull Project project,
                                  Map<String, @NotNull List<PluginUiModel>> customMap,
                                  @NotNull Map<@NotNull PluginId,
-                                 @NotNull List<@NotNull HtmlChunk>> errors,
+                                   @NotNull List<@NotNull HtmlChunk>> errors,
                                  @NotNull List<@NotNull PluginUiModel> plugins) {
     String groupName = IdeBundle.message("plugins.configurable.suggested");
     LOG.info("Marketplace tab: '" + groupName + "' group load started");
@@ -2040,16 +2040,19 @@ public final class PluginManagerConfigurable
       }
     }
 
-    if (myPluginModelFacade.getModel().apply(myCardPanel)) return;
-
-    if (myPluginModelFacade.getModel().createShutdownCallback) {
-      InstalledPluginsState.getInstance().setShutdownCallback(() -> {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
-          shutdownOrRestartApp();
+    myPluginModelFacade.getModel().applyAsync(myCardPanel, doNotNeedRestart -> {
+      if (doNotNeedRestart) {
+        return;
+      }
+      if (myPluginModelFacade.getModel().createShutdownCallback) {
+        InstalledPluginsState.getInstance().setShutdownCallback(() -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
+            shutdownOrRestartApp();
+          });
         });
-      });
-    }
+      }
+    });
   }
 
   @Override

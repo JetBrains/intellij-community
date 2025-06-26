@@ -252,6 +252,7 @@ fun PluginUiModel.addInstalledSource(pluginSource: PluginSource) {
   source = source.addSource(pluginSource)
 }
 
+@ApiStatus.Internal
 fun PluginSource?.addSource(pluginSource: PluginSource): PluginSource {
   if (this == null || this == pluginSource) {
     return pluginSource

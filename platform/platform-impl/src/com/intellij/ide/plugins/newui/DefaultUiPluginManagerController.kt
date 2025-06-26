@@ -60,7 +60,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         session.pluginStates[pluginId] = PluginEnabledState.ENABLED
       }
       else {
-        val state = if (PluginManagerCore.isDisabled(pluginId)) PluginEnabledState.DISABLED else  PluginEnabledState.ENABLED
+        val state = if (PluginManagerCore.isDisabled(pluginId)) PluginEnabledState.DISABLED else PluginEnabledState.ENABLED
         session.pluginStates[pluginId] = state
         visiblePlugins.add(PluginUiModelAdapter(plugin))
       }
@@ -764,6 +764,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
     result.errors = getPlugins().map { it.pluginId }.associateWith { getErrors(session, it) }
     installCallback(result)
+  }
+
+  override fun getApplyError(sessionId: String): String? {
+    val session = findSession(sessionId) ?: return null
+    return getApplyError(session, buildPluginIdMap())
   }
 
   @Throws(ConfigurationException::class)
