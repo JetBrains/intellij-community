@@ -5,16 +5,11 @@ import com.google.common.collect.Sets;
 import com.intellij.frontend.FrontendApplicationInfo;
 import com.intellij.frontend.FrontendType;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.ide.actions.ShowContentAction;
-import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.dnd.DnDDropHandler;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -27,7 +22,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -404,7 +398,7 @@ public final class TerminalToolWindowManager implements Disposable {
                                                  @Nullable TerminalStartupFusInfo startupFusInfo,
                                                  boolean deferSessionStartUntilUiShown,
                                                  @Nullable TerminalStartupMoment startupMoment) {
-    TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
+    TerminalToolWindowPanel panel = new TerminalToolWindowPanel(toolWindow);
 
     Content content = ContentFactory.getInstance().createContent(panel, null, false);
 
@@ -460,7 +454,6 @@ public final class TerminalToolWindowManager implements Disposable {
 
     TerminalWidget finalWidget = widget;
     myTerminalSetupHandlers.forEach(consumer -> consumer.accept(finalWidget));
-    panel.updateDFState();
 
     content.setPreferredFocusedComponent(() -> finalWidget.getPreferredFocusableComponent());
     return content;
@@ -903,15 +896,9 @@ public final class TerminalToolWindowManager implements Disposable {
 }
 
 
-final class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
-  private final PropertiesComponent myPropertiesComponent;
-  private final ToolWindow myWindow;
-
-  TerminalToolWindowPanel(@NotNull PropertiesComponent propertiesComponent, @NotNull ToolWindow window) {
+final class TerminalToolWindowPanel extends SimpleToolWindowPanel {
+  TerminalToolWindowPanel(@NotNull ToolWindow window) {
     super(false, true);
-
-    myPropertiesComponent = propertiesComponent;
-    myWindow = window;
     installDnD(window);
   }
 
@@ -942,39 +929,8 @@ final class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UIS
   }
 
   @Override
-  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    updateDFState();
-  }
-
-  void updateDFState() {
-    if (isDfmSupportEnabled()) {
-      setDistractionFree(shouldMakeDistractionFree());
-    }
-  }
-
-  private void setDistractionFree(boolean isDistractionFree) {
-    boolean isVisible = !isDistractionFree;
-    setToolbarVisible(isVisible);
-    setToolWindowHeaderVisible(isVisible);
-  }
-
-  private void setToolbarVisible(boolean isVisible) {
-    ToggleToolbarAction.setToolbarVisible(myWindow, myPropertiesComponent, isVisible);
-  }
-
-  private void setToolWindowHeaderVisible(boolean isVisible) {
-    InternalDecorator decorator = ((ToolWindowEx)myWindow).getDecorator();
-    decorator.setHeaderVisible(isVisible);
-  }
-
-  private boolean shouldMakeDistractionFree() {
-    return !myWindow.getAnchor().isHorizontal() && DistractionFreeModeController.isDistractionFreeModeEnabled();
-  }
-
-  @Override
   public void addNotify() {
     super.addNotify();
-    updateDFState();
     InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
   }
 
@@ -982,9 +938,5 @@ final class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UIS
   public void removeNotify() {
     super.removeNotify();
     InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
-  }
-
-  private static boolean isDfmSupportEnabled() {
-    return Registry.get("terminal.distraction.free").asBoolean();
   }
 }
