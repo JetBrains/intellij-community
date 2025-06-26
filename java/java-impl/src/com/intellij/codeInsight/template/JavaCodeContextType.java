@@ -48,7 +48,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   /**
    * Checks whether the element belongs to this context. Could be called inside the dumb mode!
-   * 
+   *
    * @param element element to check
    * @return true if the given element belongs to this context.
    */
@@ -70,7 +70,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(fragment, false);
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
-  
+
   public static final class Generic extends JavaCodeContextType {
     public Generic() {
       super(JavaLanguage.INSTANCE.getDisplayName());
@@ -226,7 +226,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      return isInRecordHeader(element) || 
+      return isInRecordHeader(element) ||
              JavaKeywordCompletion.isSuitableForClass(element) ||
              JavaKeywordCompletion.isInsideParameterList(element) ||
              PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;
@@ -270,6 +270,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static final class JavaLangIOStatement extends JavaCodeContextType {
     private final JavaCodeContextType statementContext = new Statement();
+
     public JavaLangIOStatement() {
       super(JavaBundle.message("live.template.context.statement.java.lang.io"));
     }
