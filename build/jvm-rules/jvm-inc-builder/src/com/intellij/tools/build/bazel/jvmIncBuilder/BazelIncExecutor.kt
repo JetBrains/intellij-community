@@ -8,6 +8,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.bazel.jvm.*
 import org.jetbrains.bazel.jvm.util.*
+import org.jetbrains.jps.javac.ExternalRefCollectorCompilerToolExtension
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import java.io.InputStream
 import java.io.Writer
@@ -29,6 +30,7 @@ internal class BazelIncExecutor : WorkRequestExecutor<WorkRequestWithDigests> {
     }
 
     private fun configureGlobals() {
+      ExternalRefCollectorCompilerToolExtension.enable()
       System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
       System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JS_PROPERTY, "true")
       System.setProperty("kotlin.jps.dumb.mode", "true")
