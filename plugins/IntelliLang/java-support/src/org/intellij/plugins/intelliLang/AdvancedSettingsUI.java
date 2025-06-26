@@ -12,14 +12,11 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 
 /**
  * @author Gregory.Shrago
@@ -36,23 +33,23 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
 
   @Override
   public JComponent createComponent() {
-    myPanel = new AdvancedSettingsPanel();
-    return myPanel.myRoot;
+    myPanel = new AdvancedSettingsPanel(myProject, myConfiguration);
+    return myPanel.content;
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myPanel.apply();
+    myPanel.content.apply();
   }
 
   @Override
   public boolean isModified() {
-    return myPanel.isModified();
+    return myPanel.content.isModified();
   }
 
   @Override
   public void reset() {
-    myPanel.reset();
+    myPanel.content.reset();
   }
 
   @Override
@@ -75,11 +72,11 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
     return "IntelliLang.Advanced";
   }
 
-  private static final class BrowseClassListener implements ActionListener {
+  static final class BrowseClassListener implements ActionListener {
     private final Project myProject;
     private final ReferenceEditorWithBrowseButton myField;
 
-    private BrowseClassListener(Project project, ReferenceEditorWithBrowseButton annotationField) {
+    BrowseClassListener(Project project, ReferenceEditorWithBrowseButton annotationField) {
       myProject = project;
       myField = annotationField;
     }
@@ -102,139 +99,6 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
       final PsiClass psiClass = chooser.getSelected();
       if (psiClass != null) {
         myField.setText(psiClass.getQualifiedName());
-      }
-    }
-  }
-
-  public class AdvancedSettingsPanel {
-    @SuppressWarnings({"UnusedDeclaration"})
-    private JPanel myRoot;
-
-    private JRadioButton myNoInstrumentation;
-    private JRadioButton myAssertInstrumentation;
-    private JRadioButton myExceptionInstrumentation;
-    private JPanel myLanguageAnnotationPanel;
-    private JPanel myPatternAnnotationPanel;
-    private JPanel mySubstAnnotationPanel;
-    private JRadioButton myDfaOff;
-    private JRadioButton myAnalyzeReferences;
-    private JRadioButton myUseDfa;
-    private JRadioButton myLookForAssignments;
-    private JCheckBox myIncludeUncomputableOperandsAsCheckBox;
-    private JCheckBox mySourceModificationAllowedCheckBox;
-
-    private final ReferenceEditorWithBrowseButton myAnnotationField;
-    private final ReferenceEditorWithBrowseButton myPatternField;
-    private final ReferenceEditorWithBrowseButton mySubstField;
-
-    public AdvancedSettingsPanel() {
-      myAnnotationField = new ReferenceEditorWithBrowseButton(null, myProject, s -> PsiUtilEx.createDocument(s, myProject), myConfiguration.getLanguageAnnotationClass());
-      myAnnotationField.addActionListener(new BrowseClassListener(myProject, myAnnotationField));
-      myAnnotationField.setEnabled(!myProject.isDefault());
-      addField(myLanguageAnnotationPanel, myAnnotationField);
-
-      myPatternField = new ReferenceEditorWithBrowseButton(null, myProject, s -> PsiUtilEx.createDocument(s, myProject), myConfiguration.getPatternAnnotationClass());
-      myPatternField.addActionListener(new BrowseClassListener(myProject, myPatternField));
-      myPatternField.setEnabled(!myProject.isDefault());
-      addField(myPatternAnnotationPanel, myPatternField);
-
-      mySubstField = new ReferenceEditorWithBrowseButton(null, myProject, s -> PsiUtilEx.createDocument(s, myProject), myConfiguration.getPatternAnnotationClass());
-      mySubstField.addActionListener(new BrowseClassListener(myProject, mySubstField));
-      mySubstField.setEnabled(!myProject.isDefault());
-      addField(mySubstAnnotationPanel, mySubstField);
-    }
-    //
-
-    /**
-     * Adds textfield into placeholder panel and assigns a directly preceding label
-     */
-    private static void addField(JPanel panel, ReferenceEditorWithBrowseButton field) {
-      panel.add(field, BorderLayout.CENTER);
-
-      final Component[] components = panel.getParent().getComponents();
-      final int index = Arrays.asList(components).indexOf(panel);
-      if (index > 0) {
-        final Component component = components[index - 1];
-        if (component instanceof JLabel) {
-          ((JLabel)component).setLabelFor(field);
-        }
-      }
-    }
-
-
-    public boolean isModified() {
-      if (getInstrumentation() != myConfiguration.getInstrumentation()) {
-        return true;
-      }
-      if (!myAnnotationField.getText().equals(myConfiguration.getLanguageAnnotationClass())) {
-        return true;
-      }
-      if (!myPatternField.getText().equals(myConfiguration.getPatternAnnotationClass())) {
-        return true;
-      }
-      if (!mySubstField.getText().equals(myConfiguration.getSubstAnnotationClass())) {
-        return true;
-      }
-      if (!myConfiguration.getDfaOption().equals(getDfaOption())) {
-        return true;
-      }
-      if (myConfiguration.isIncludeUncomputablesAsLiterals() != myIncludeUncomputableOperandsAsCheckBox.isSelected()) {
-        return true;
-      }
-      if (myConfiguration.isSourceModificationAllowed() != mySourceModificationAllowedCheckBox.isSelected()) {
-        return true;
-      }
-      return false;
-    }
-
-    private @NotNull Configuration.InstrumentationType getInstrumentation() {
-      if (myNoInstrumentation.isSelected()) return Configuration.InstrumentationType.NONE;
-      if (myAssertInstrumentation.isSelected()) return Configuration.InstrumentationType.ASSERT;
-      if (myExceptionInstrumentation.isSelected()) return Configuration.InstrumentationType.EXCEPTION;
-
-      assert false;
-      return null;
-    }
-
-    public void apply() throws ConfigurationException {
-      myConfiguration.setInstrumentationType(getInstrumentation());
-      myConfiguration.setLanguageAnnotation(myAnnotationField.getText());
-      myConfiguration.setPatternAnnotation(myPatternField.getText());
-      myConfiguration.setSubstAnnotation(mySubstField.getText());
-
-      myConfiguration.setDfaOption(getDfaOption());
-      myConfiguration.setIncludeUncomputablesAsLiterals(myIncludeUncomputableOperandsAsCheckBox.isSelected());
-      myConfiguration.setSourceModificationAllowed(mySourceModificationAllowedCheckBox.isSelected());
-    }
-
-    private @NotNull Configuration.DfaOption getDfaOption() {
-      if (myDfaOff.isSelected()) return Configuration.DfaOption.OFF;
-      if (myAnalyzeReferences.isSelected()) return Configuration.DfaOption.RESOLVE;
-      if (myLookForAssignments.isSelected()) return Configuration.DfaOption.ASSIGNMENTS;
-      if (myUseDfa.isSelected()) return Configuration.DfaOption.DFA;
-      return Configuration.DfaOption.OFF;
-    }
-
-    public void reset() {
-      myAnnotationField.setText(myConfiguration.getLanguageAnnotationClass());
-      myPatternField.setText(myConfiguration.getPatternAnnotationClass());
-      mySubstField.setText(myConfiguration.getSubstAnnotationClass());
-
-      myNoInstrumentation.setSelected(myConfiguration.getInstrumentation() == Configuration.InstrumentationType.NONE);
-      myAssertInstrumentation.setSelected(myConfiguration.getInstrumentation() == Configuration.InstrumentationType.ASSERT);
-      myExceptionInstrumentation.setSelected(myConfiguration.getInstrumentation() == Configuration.InstrumentationType.EXCEPTION);
-
-      setDfaOption(myConfiguration.getDfaOption());
-      myIncludeUncomputableOperandsAsCheckBox.setSelected(myConfiguration.isIncludeUncomputablesAsLiterals());
-      mySourceModificationAllowedCheckBox.setSelected(myConfiguration.isSourceModificationAllowed());
-    }
-
-    private void setDfaOption(final @NotNull Configuration.DfaOption dfaOption) {
-      switch (dfaOption) {
-        case OFF -> myDfaOff.setSelected(true);
-        case RESOLVE -> myAnalyzeReferences.setSelected(true);
-        case ASSIGNMENTS -> myLookForAssignments.setSelected(true);
-        case DFA -> myUseDfa.setSelected(true);
       }
     }
   }
