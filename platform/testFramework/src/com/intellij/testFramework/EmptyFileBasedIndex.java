@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -31,6 +32,13 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
+  }
+
+  @Override
+  public boolean iterateNonIndexableFiles(@NotNull Project project,
+                                          @Nullable VirtualFileFilter acceptFilter,
+                                          @NotNull ContentIterator processor) {
+    return true;
   }
 
   @Override

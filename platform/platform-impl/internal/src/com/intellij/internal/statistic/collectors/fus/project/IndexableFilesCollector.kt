@@ -6,17 +6,12 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import kotlinx.coroutines.isActive
 import kotlin.coroutines.coroutineContext
 
@@ -61,41 +56,14 @@ private class IndexableFilesCollector : ProjectUsagesCollector() {
     )
   }
 
-  private suspend fun countNonIndexableFiles(
+  private fun countNonIndexableFiles(
     project: Project,
   ): Int {
-    val roots = mutableSetOf<VirtualFile>()
-    val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
     var allNonIndexableFiles = 0
-
-    readAction {
-      workspaceFileIndex.visitFileSets { fileSet, _ ->
-        if (fileSet.kind == WorkspaceFileKind.CONTENT_NON_INDEXABLE && !workspaceFileIndex.isIndexable(fileSet.root)) {
-          roots.add(fileSet.root)
-        }
-      }
-    }
-
-    allNonIndexableFiles += roots.size
-    roots.forEach { root ->
-      VfsUtil.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>(SKIP_ROOT) {
-        override fun visitFileEx(file: VirtualFile): Result {
-          return runReadAction {
-            if (file in roots || file.isIndexedOrExcluded(workspaceFileIndex)) {
-              SKIP_CHILDREN
-            }
-            else {
-              allNonIndexableFiles++
-              CONTINUE
-            }
-          }
-        }
-      })
+    FileBasedIndex.getInstance().iterateNonIndexableFiles(project, VirtualFileFilter.ALL) {
+      allNonIndexableFiles++
+      true
     }
     return allNonIndexableFiles
-  }
-
-  private fun VirtualFile.isIndexedOrExcluded(workspaceFileIndex: WorkspaceFileIndexEx): Boolean {
-    return workspaceFileIndex.isIndexable(this) || !workspaceFileIndex.isInWorkspace(this)
   }
 }
