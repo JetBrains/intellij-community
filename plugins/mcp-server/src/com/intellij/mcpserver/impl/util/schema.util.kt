@@ -95,6 +95,8 @@ private fun IntermediateJsonSchemaData.removeNumericBounds(): IntermediateJsonSc
   return this
 }
 
+private const val descriptionPropertyNameInschema = "description"
+
 private class JsonSchemaCoreAnnotationMcpDescriptionStep()  {
   fun process(input: IntermediateJsonSchemaData): IntermediateJsonSchemaData {
     input.entries.forEach { process(it, input.typeDataById) }
@@ -103,14 +105,14 @@ private class JsonSchemaCoreAnnotationMcpDescriptionStep()  {
 
   private fun process(schema: JsonSchemaData, typeDataMap: Map<TypeId, TypeData>) {
     val json = schema.json
-    if (json is JsonObject && json.properties["description"] == null) {
+    if (json is JsonObject && json.properties[descriptionPropertyNameInschema] == null) {
       determineDescription(schema.typeData.annotations)?.let { description ->
-        json.properties["description"] = JsonTextValue(description)
+        json.properties[descriptionPropertyNameInschema] = JsonTextValue(description)
       }
     }
     iterateProperties(schema, typeDataMap) { prop, propData, propTypeData ->
       determineDescription(propData.annotations + propTypeData.annotations)?.let { description ->
-        prop.properties["description"] = JsonTextValue(description)
+        prop.properties[descriptionPropertyNameInschema] = JsonTextValue(description)
       }
     }
   }
@@ -118,7 +120,7 @@ private class JsonSchemaCoreAnnotationMcpDescriptionStep()  {
   private fun determineDescription(annotations: Collection<AnnotationData>): String? {
     return annotations
       .filter { it.name == McpDescription::class.qualifiedName }
-      .map { it.values["description"] as String }
+      .map { (it.values[McpDescription::description.name] as String).trimMargin() }
       .firstOrNull()
   }
 }
