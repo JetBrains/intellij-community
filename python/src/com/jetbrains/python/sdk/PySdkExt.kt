@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -26,7 +27,6 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -200,7 +200,9 @@ fun createSdkByGenerateTask(
     }
   }
   else {
-    suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+    runBlockingMaybeCancellable {
+      suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+    }
   }
   return SdkConfigurationUtil.setupSdk(
     existingSdks.toTypedArray(),
@@ -221,10 +223,7 @@ suspend fun createSdk(
   val homeFile = withContext(Dispatchers.IO) { StandardFileSystems.local().refreshAndFindFileByPath(sdkHomePath.pathString) }
                  ?: return PyResult.localizedError(PyBundle.message("python.sdk.directory.not.found", sdkHomePath.pathString))
 
-  val sdkName = suggestedSdkName ?: withContext(Dispatchers.IO) {
-    suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
-  }
-
+  val sdkName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
   val sdk = SdkConfigurationUtil.setupSdk(
     existingSdks.toTypedArray(),
     homeFile,
@@ -289,25 +288,30 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
 
 // For Java only
 internal fun PyDetectedSdk.setupAssociatedLogged(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): Sdk? {
-  return setupAssociated(existingSdks, associatedModulePath, doAssociate).orLogException(LOGGER)
+  return runBlockingMaybeCancellable {
+    setupAssociated(existingSdks, associatedModulePath, doAssociate).orLogException(LOGGER)
+  }
 }
 
 @Internal
-
-fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): PyResult<Sdk> {
+suspend fun PyDetectedSdk.setupAssociated(
+  existingSdks: List<Sdk>,
+  associatedModulePath: String?,
+  doAssociate: Boolean,
+): PyResult<Sdk> = withContext(Dispatchers.IO) {
   if (!sdkSeemsValid) {
-    return PyResult.localizedError(PyBundle.message("python.sdk.error.invalid.interpreter.selected", homePath))
+    return@withContext PyResult.localizedError(PyBundle.message("python.sdk.error.invalid.interpreter.selected", homePath))
   }
 
-  val homePath = this.homePath
+  val homePath = homePath
   if (homePath == null) {
     // e.g. directory is not there anymore
-    return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
+    return@withContext PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
   }
 
-  val homeDir = this.homeDirectory
+  val homeDir = homeDirectory
   if (homeDir == null) {
-    return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
+    return@withContext PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
   }
 
   val suggestedName = if (doAssociate) {
@@ -332,7 +336,7 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
     data,
     suggestedName)
 
-  return PyResult.success(sdk)
+  PyResult.success(sdk)
 }
 
 var Module.pythonSdk: Sdk?
@@ -408,12 +412,11 @@ fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
   }
 }
 
-@RequiresBackgroundThread(generateAssertion = false)
-internal fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
+internal suspend fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? = withContext(Dispatchers.IO) {
   // please don't forget to update com.jetbrains.python.inspections.PyInterpreterInspection.Visitor#getSuitableSdkFix
   // after changing this method
 
-  val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return null
+  val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return@withContext null
   val venvRoot = PythonSdkUtil.getVirtualEnvRoot(sdkHome)?.path
   val condaRoot = CondaEnvSdkFlavor.getCondaEnvRoot(sdkHome)?.path
   val associatedName = when {
@@ -424,9 +427,9 @@ internal fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?):
     PythonSdkUtil.isBaseConda(sdkHome) ->
       "base"
     else ->
-      associatedPath?.let { PathUtil.getFileName(associatedPath) } ?: return null
+      associatedPath?.let { PathUtil.getFileName(associatedPath) } ?: return@withContext null
   }
-  return "$baseSdkName ($associatedName)"
+  return@withContext "$baseSdkName ($associatedName)"
 }
 
 internal val Sdk.isSystemWide: Boolean
