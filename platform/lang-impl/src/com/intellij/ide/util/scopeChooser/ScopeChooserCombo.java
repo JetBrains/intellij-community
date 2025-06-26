@@ -108,7 +108,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     ComboBox<ScopeDescriptor> combo = getComboBox();
     combo.setMinimumAndPreferredWidth(JBUIScale.scale(300));
     combo.setRenderer(
-      ScopeSeparatorKt.createScopeDescriptorRenderer(scopes == null ? null : (descriptor) -> scopes.getSeparatorFor(descriptor)));
+      ScopeSeparatorKt.createScopeDescriptorRenderer(scopes == null ? null : (descriptor) -> scopes.getSeparatorFor(descriptor), ""));
     combo.setSwingPopup(false);
 
     if (selection != null) {

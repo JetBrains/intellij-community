@@ -58,15 +58,15 @@ class FrontendScopeChooserCombo(project: Project, private val preselectedScopeNa
   }
 
   private fun Collection<ScopeDescriptor>.filterOutSeparators(): List<ScopeDescriptor> {
-    var lastItem: ScopeDescriptor? = null
+    var lastSeparator: ScopeSeparator? = null
     scopeToSeparator.clear()
     return this.filter { item ->
       if (item is ScopeSeparator) {
-        if (lastItem != null) {
-          scopeToSeparator[lastItem] = ListSeparator(item.text)
-        }
+        lastSeparator = item
+      } else if (lastSeparator != null) {
+        scopeToSeparator[item] = ListSeparator(lastSeparator.text)
+        lastSeparator = null
       }
-      lastItem = item
       item !is ScopeSeparator
     }
   }
