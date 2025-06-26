@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * Request counter on frontend side.
  */
-internal class BreakpointRequestCounter {
+internal class FrontendBreakpointRequestCounter {
   private val counter = AtomicLong()
 
   /**
@@ -18,12 +18,12 @@ internal class BreakpointRequestCounter {
    * When an updated state comes from the backend, it should call this method to check whether the update is needed.
    * If the update is not needed, it means that another request was sent in parallel, so another state update is expected to come.
    */
-  fun isSuitableUpdate(count: Long): Boolean {
+  fun isSuitableUpdate(requestId: Long): Boolean {
     while (true) {
       val currentValue = counter.get()
-      if (count < currentValue) return false
-      if (count == currentValue) return true
-      if (counter.compareAndSet(currentValue, count)) return true
+      if (requestId < currentValue) return false
+      if (requestId == currentValue) return true
+      if (counter.compareAndSet(currentValue, requestId)) return true
     }
   }
 

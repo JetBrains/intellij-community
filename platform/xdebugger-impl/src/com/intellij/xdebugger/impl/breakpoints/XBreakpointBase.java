@@ -150,8 +150,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     if (updateNeeded) {
       setter.accept(newValue);
     }
-    boolean requestIdChanged = myBreakpointManager.getRequestCounter().setRequestCompleted(requestId);
-    if (updateNeeded || requestIdChanged) {
+    boolean requestCompleted = myBreakpointManager.getRequestCounter().setRequestCompleted(requestId);
+    if (updateNeeded || requestCompleted) {
       fireBreakpointChanged();
     }
   }
