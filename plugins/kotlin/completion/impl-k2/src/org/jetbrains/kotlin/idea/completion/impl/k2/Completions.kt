@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiErrorElement
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -16,15 +18,18 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getEqualityExpectedType
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.renderer.render
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal object Completions {
-
     fun complete(
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
@@ -60,11 +65,17 @@ internal object Completions {
                 else -> WeighingContext.create(parameters, elementInCompletionFile = positionContext.position)
             }
 
-            complete(
-                positionContext = positionContext,
-                sink = LookupElementSink(resultSet, parameters),
-                weighingContext = weighingContext,
-            )
+            val contributors = CopyOnWriteArrayList<ChainCompletionContributor>() // if needed for the multithreaded completion
+            val sink = LookupElementSink(resultSet, parameters) {
+                contributors.addIfAbsent(it)
+            }
+            complete(positionContext, sink, weighingContext)
+
+            if (positionContext is KotlinNameReferencePositionContext
+                && contributors.isNotEmpty()
+                && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) {
+                runChainCompletion(positionContext, sink, contributors)
+            }
         } finally {
             after()
         }
@@ -257,6 +268,54 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirPackageCompletionContributor(sink, priority = 1)
                     .complete(positionContext, weighingContext)
+            }
+        }
+    }
+
+    @OptIn(KaImplementationDetail::class)
+    private fun runChainCompletion(
+        positionContext: KotlinNameReferencePositionContext,
+        sink: LookupElementSink,
+        contributors: List<ChainCompletionContributor>,
+    ) {
+        val explicitReceiver = positionContext.explicitReceiver ?: return
+
+        sink.runRemainingContributors(sink.parameters.delegate) { completionResult ->
+            val lookupElement = completionResult.lookupElement
+            val classifierLookupObject = lookupElement.`object` as? ClassifierLookupObject
+            val nameToImport = when (val importStrategy = classifierLookupObject?.importingStrategy) {
+                is ImportStrategy.AddImport -> importStrategy.nameToImport
+                is ImportStrategy.InsertFqNameAndShorten -> importStrategy.fqName
+                else -> null
+            }
+
+            if (nameToImport == null) {
+                sink.passResult(completionResult)
+                return@runRemainingContributors
+            }
+
+            val expression = KtPsiFactory.contextual(explicitReceiver)
+                .createExpression(nameToImport.render() + "." + positionContext.nameExpression.text) as KtDotQualifiedExpression
+
+            val receiverExpression = expression.receiverExpression as? KtDotQualifiedExpression
+            val nameExpression = expression.selectorExpression as? KtNameReferenceExpression
+
+            if (receiverExpression == null
+                || nameExpression == null
+            ) {
+                sink.passResult(completionResult)
+                return@runRemainingContributors
+            }
+
+            analyze(nameExpression) {
+                val positionContext = KotlinExpressionNameReferencePositionContext(nameExpression)
+                val importingStrategy = ImportStrategy.AddImport(nameToImport)
+
+                val lookupElements = contributors.asSequence()
+                    .flatMap { contributor ->
+                        contributor.createChainedLookupElements(positionContext, receiverExpression, importingStrategy)
+                    }.asIterable()
+                sink.addAllElements(lookupElements)
             }
         }
     }

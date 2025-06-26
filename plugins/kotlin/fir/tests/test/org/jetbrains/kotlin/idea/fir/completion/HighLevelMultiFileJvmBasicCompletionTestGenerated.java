@@ -50,6 +50,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/CallablesInExcludedPackage/");
     }
 
+    @TestMetadata("ChainCompletionDontDuplicate")
+    public void testChainCompletionDontDuplicate() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ChainCompletionDontDuplicate/");
+    }
+
     @TestMetadata("ClassInExcludedPackage")
     public void testClassInExcludedPackage() throws Exception {
         runTest("../../completion/testData/basic/multifile/ClassInExcludedPackage/");

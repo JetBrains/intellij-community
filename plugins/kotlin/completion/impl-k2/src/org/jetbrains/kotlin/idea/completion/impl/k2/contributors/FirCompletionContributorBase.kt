@@ -8,9 +8,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.RegistryManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -32,19 +31,18 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
@@ -180,54 +178,6 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         }
     }
 
-    protected fun runChainCompletion(
-        positionContext: KotlinNameReferencePositionContext,
-        explicitReceiver: KtElement,
-        createLookupElements: KaSession.(
-            receiverExpression: KtDotQualifiedExpression,
-            positionContext: KotlinExpressionNameReferencePositionContext,
-            importingStrategy: ImportStrategy.AddImport,
-        ) -> Sequence<LookupElement>,
-    ) {
-        if (!RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) return
-
-        sink.runRemainingContributors(parameters.delegate) { completionResult ->
-            val lookupElement = completionResult.lookupElement
-            val classifierLookupObject = lookupElement.`object` as? ClassifierLookupObject
-            val nameToImport = when (val importStrategy = classifierLookupObject?.importingStrategy) {
-                is ImportStrategy.AddImport -> importStrategy.nameToImport
-                is ImportStrategy.InsertFqNameAndShorten -> importStrategy.fqName
-                else -> null
-            }
-
-            if (nameToImport == null) {
-                sink.passResult(completionResult)
-                return@runRemainingContributors
-            }
-
-            val expression = KtPsiFactory.contextual(explicitReceiver)
-                .createExpression(nameToImport.render() + "." + positionContext.nameExpression.text) as KtDotQualifiedExpression
-
-            val receiverExpression = expression.receiverExpression as? KtDotQualifiedExpression
-            val nameExpression = expression.selectorExpression as? KtNameReferenceExpression
-
-            if (receiverExpression == null
-                || nameExpression == null
-            ) {
-                sink.passResult(completionResult)
-                return@runRemainingContributors
-            }
-
-            analyze(nameExpression) {
-                createLookupElements(
-                    /* receiverExpression = */ receiverExpression,
-                    /* positionContext = */ KotlinExpressionNameReferencePositionContext(nameExpression),
-                    /* importingStrategy = */ ImportStrategy.AddImport(nameToImport),
-                ).forEach(sink::addElement)
-            }
-        }
-    }
-
     // todo move out
     // todo move to the corresponding assignment
     protected fun LookupElementBuilder.adaptToExplicitReceiver(
@@ -269,4 +219,15 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
         else -> this
     }
+}
+
+@ApiStatus.Experimental // todo reconsider
+internal interface ChainCompletionContributor : FirCompletionContributor<KotlinNameReferencePositionContext> {
+
+    context(KaSession)
+    fun createChainedLookupElements(
+        positionContext: KotlinNameReferencePositionContext,
+        receiverExpression: KtDotQualifiedExpression,
+        importingStrategy: ImportStrategy,
+    ): Sequence<LookupElement>
 }

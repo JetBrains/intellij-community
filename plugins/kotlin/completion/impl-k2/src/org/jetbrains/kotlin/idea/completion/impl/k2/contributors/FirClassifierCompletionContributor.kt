@@ -32,15 +32,16 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.utils.yieldIfNotNull
-import kotlin.sequences.filter
 
 internal open class FirClassifierCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority),
+    ChainCompletionContributor{
 
     context(KaSession)
     protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
@@ -77,29 +78,7 @@ internal open class FirClassifierCompletionContributor(
                             ).map { it.applyWeighs(weighingContext, symbolWithOrigin) }
                         }.forEach(sink::addElement)
                 } else {
-                    runChainCompletion(positionContext, explicitReceiver) { receiverExpression,
-                                                                            positionContext,
-                                                                            importingStrategy ->
-                        val selectorExpression = receiverExpression.selectorExpression
-                            ?: return@runChainCompletion emptySequence()
-
-                        val reference = receiverExpression.reference()
-                            ?: return@runChainCompletion emptySequence()
-
-                        val weighingContext = WeighingContext.create(parameters, positionContext)
-                        reference.resolveToSymbols()
-                            .asSequence()
-                            .mapNotNull { it.staticScope }
-                            .flatMap { it.completeClassifiers(positionContext) }
-                            .flatMap {
-                                createClassifierLookupElement(
-                                    classifierSymbol = it,
-                                    expectedType = weighingContext.expectedType,
-                                    importingStrategy = importingStrategy,
-                                    positionContext = positionContext,
-                                )
-                            }.map { it.withPresentableText(selectorExpression.text + "." + it.lookupString) }
-                    }
+                    sink.registerChainContributor(this@FirClassifierCompletionContributor)
                 }
             }
         }
@@ -177,6 +156,31 @@ internal open class FirClassifierCompletionContributor(
 
         return scopeClassifiers +
                 indexClassifiers
+    }
+
+    context(KaSession)
+    override fun createChainedLookupElements(
+        positionContext: KotlinNameReferencePositionContext,
+        receiverExpression: KtDotQualifiedExpression,
+        importingStrategy: ImportStrategy
+    ): Sequence<LookupElement> {
+        val selectorExpression = receiverExpression.selectorExpression ?: return emptySequence()
+
+        val reference = receiverExpression.reference() ?: return emptySequence()
+
+        val weighingContext = WeighingContext.create(parameters, positionContext)
+        return reference.resolveToSymbols()
+            .asSequence()
+            .mapNotNull { it.staticScope }
+            .flatMap { it.completeClassifiers(positionContext) }
+            .flatMap {
+                createClassifierLookupElement(
+                    classifierSymbol = it,
+                    expectedType = weighingContext.expectedType,
+                    importingStrategy = importingStrategy,
+                    positionContext = positionContext,
+                )
+            }.map { it.withPresentableText(selectorExpression.text + "." + it.lookupString) }
     }
 
 
