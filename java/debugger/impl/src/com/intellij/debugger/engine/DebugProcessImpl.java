@@ -488,7 +488,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    * @param size the step size. One of {@link StepRequest#STEP_LINE} or {@link StepRequest#STEP_MIN}
    * @param hint may be null
    */
-  protected void doStep(@NotNull SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
+  @ApiStatus.Internal
+  public void doStep(@NotNull SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
                         RequestHint hint, Object commandToken) {
     if (stepThread == null) {
       return;

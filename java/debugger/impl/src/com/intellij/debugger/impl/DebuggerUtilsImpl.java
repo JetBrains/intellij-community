@@ -3,6 +3,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.debugger.DebuggerGlobalSearchScope;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.*;
@@ -10,6 +11,8 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.requests.Requestor;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -20,10 +23,12 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -664,5 +669,21 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public static String getRequestorStringForUser(Requestor requestor) {
+    return requestor instanceof Breakpoint<?> breakpoint ? breakpoint.getDisplayName() : requestor.getClass().getSimpleName();
+  }
+
+  @ApiStatus.Internal
+  public static boolean askAboutPauseOnException(Project project, String displayName, String exceptionMessage, @NotNull @NlsContexts.DialogTitle String title) {
+    final boolean[] considerRequestHit = new boolean[]{true};
+    DebuggerInvocationUtil.invokeAndWait(project, () -> {
+      final String message = JavaDebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, exceptionMessage);
+      considerRequestHit[0] = Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon()) == Messages.YES;
+    }, ModalityState.nonModal());
+    boolean r = considerRequestHit[0];
+    return r;
   }
 }
