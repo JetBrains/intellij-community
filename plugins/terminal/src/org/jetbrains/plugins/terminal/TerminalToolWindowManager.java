@@ -504,7 +504,10 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void onSessionClosed() {
-        getContainer(terminalWidget).closeAndHide();
+        TerminalContainer container = getContainer(widget);
+        if (container != null) {
+          container.closeAndHide();
+        }
       }
 
       @Override
@@ -539,22 +542,24 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public boolean canSplit(boolean vertically) {
+        // TODO: delegate to the platform-level tool window split logic
         return true;
       }
 
       @Override
       public void split(boolean vertically) {
-        TerminalToolWindowManager.this.split(widget, vertically);
+        // TODO: delegate to the platform-level tool window split logic
       }
 
       @Override
       public boolean isGotoNextSplitTerminalAvailable() {
-        return isSplitTerminal(terminalWidget);
+        // TODO: delegate to the platform-level tool window split logic
+        return false;
       }
 
       @Override
       public void gotoNextSplitTerminal(boolean forward) {
-        TerminalToolWindowManager.this.gotoNextSplitTerminal(widget, forward);
+        // TODO: delegate to the platform-level tool window split logic
       }
     });
   }
@@ -582,42 +587,6 @@ public final class TerminalToolWindowManager implements Disposable {
     });
   }
 
-  public boolean isSplitTerminal(@NotNull JBTerminalWidget widget) {
-    TerminalContainer container = getContainer(widget);
-    return container.isSplitTerminal();
-  }
-
-  public boolean isSplitTerminal(@NotNull TerminalWidget widget) {
-    TerminalContainer container = getContainer(widget);
-    return container != null && container.isSplitTerminal();
-  }
-
-  public void gotoNextSplitTerminal(@NotNull TerminalWidget widget, boolean forward) {
-    TerminalContainer container = getContainer(widget);
-    if (container != null) {
-      TerminalWidget next = container.getNextSplitTerminal(forward);
-      if (next != null) {
-        next.requestFocus();
-      }
-    }
-  }
-
-  public void split(@NotNull TerminalWidget widget, boolean vertically) {
-    var startupFusInfo = new TerminalStartupFusInfo(TerminalOpeningWay.SPLIT_TOOLWINDOW);
-
-    TerminalContainer container = getContainer(widget);
-    if (container != null) {
-      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
-      ShellStartupOptions startupOptions = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
-      Content content = container.getContent();
-      TerminalEngine engine = TerminalOptionsProvider.getInstance().getTerminalEngine();
-      TerminalWidget newWidget = startShellTerminalWidget(content, myTerminalRunner, startupOptions, engine, null,
-                                                          startupFusInfo, true, false, content);
-      setupTerminalWidget(myToolWindow, myTerminalRunner, newWidget, content);
-      container.split(!vertically, newWidget);
-    }
-  }
-
   public void register(@NotNull TerminalContainer terminalContainer) {
     myContainerByWidgetMap.put(terminalContainer.getTerminalWidget(), terminalContainer);
   }
@@ -641,14 +610,6 @@ public final class TerminalToolWindowManager implements Disposable {
       }
     }
     return any;
-  }
-
-  /**
-   * @deprecated use {@link #getContainer(TerminalWidget)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull TerminalContainer getContainer(@NotNull JBTerminalWidget terminalWidget) {
-    return Objects.requireNonNull(getContainer(terminalWidget.asNewWidget()));
   }
 
   public @Nullable TerminalContainer getContainer(@NotNull TerminalWidget terminalWidget) {
