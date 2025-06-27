@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
-import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 @TestOnly
@@ -132,8 +131,7 @@ public final class ThreadLeakTracker {
       // init zillions of timers in e.g., MacOSXPreferencesFile
       Preferences.userRoot().flush();
     }
-    catch (BackingStoreException e) {
-      throw new RuntimeException(e);
+    catch (Throwable ignored) {
     }
   }
 
