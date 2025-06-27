@@ -8,8 +8,8 @@ interface PyAstAsPattern : PyAstPattern {
     return requireNotNull(findChildByClass(PyAstPattern::class.java)) { "${this}: pattern cannot be null" }
   }
 
-  fun getTarget(): PyAstTargetExpression {
-    return requireNotNull(findChildByClass(PyAstTargetExpression::class.java)) { "${this}: target cannot be null" }
+  fun getTarget(): PyAstTargetExpression? {
+    return findChildByClass(PyAstTargetExpression::class.java)
   }
 
   override fun isIrrefutable(): Boolean {
