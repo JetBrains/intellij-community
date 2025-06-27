@@ -37,8 +37,6 @@ internal class GrazieSpellcheckerLifecycle : SpellcheckerLifecycle {
 @Service(Service.Level.APP)
 class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
-  private val MAX_SUGGESTIONS_COUNT = 3
-
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
 
   private fun filterCheckers(word: String): Set<SpellerTool> {
@@ -53,7 +51,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
       .toSet()
   }
 
-  data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule, val suggestLimit: Int) {
+  data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule) {
     fun check(word: String): Boolean? = synchronized(speller) {
       if (word.isBlank()) return true
 
@@ -80,7 +78,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
               text.replaceRange(match.fromPos, match.toPos, it)
             }
           }
-          .take(suggestLimit).toSet()
+          .toSet()
       }
     }
   }
@@ -105,7 +103,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
       val tool = LangTool.getTool(lang)
       tool.allSpellingCheckRules.firstOrNull()
-        ?.let { set.add(SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT)) }
+        ?.let { set.add(SpellerTool(tool, lang, it)) }
     }
 
     return set
