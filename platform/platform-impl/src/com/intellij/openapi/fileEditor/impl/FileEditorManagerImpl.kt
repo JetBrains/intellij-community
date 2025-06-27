@@ -2449,7 +2449,7 @@ private fun reopenVirtualFileInEditor(
     if (fullReplacement) {
       val index = window.files().indexOf(oldFile)
       newOptions = newOptions.copy(index = index)
-      window.closeFile(oldFile)
+      window.closeFile(oldFile, disposeIfNeeded = false)
     }
     val composite = editorManager.openFile(newFile, window, newOptions)
     if (composite.allEditors.any { it.file == newFile } && !fullReplacement) {
