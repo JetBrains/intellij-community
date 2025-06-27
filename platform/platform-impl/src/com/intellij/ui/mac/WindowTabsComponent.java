@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -92,6 +93,11 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
     createTabActions();
     installDnD();
+
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      customization.configureRendererComponent(this);
+    }
   }
 
   public void selfDispose() {
