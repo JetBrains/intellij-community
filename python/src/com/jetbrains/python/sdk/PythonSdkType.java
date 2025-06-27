@@ -19,7 +19,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -76,7 +75,7 @@ public final class PythonSdkType extends SdkType {
 
   @ApiStatus.Internal public static final @NotNull Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
 
-  @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = KeyWithDefaultValue.create("MOCK_PY_MARKER_KEY", true);
+  @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = Key.create("MOCK_PY_MARKER_KEY");
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
@@ -92,7 +91,7 @@ public final class PythonSdkType extends SdkType {
   private static final @NotNull String LEGACY_TARGET_PREFIX = "target://";
 
   public static PythonSdkType getInstance() {
-    return SdkType.findInstance(PythonSdkType.class);
+    return findInstance(PythonSdkType.class);
   }
 
   private PythonSdkType() {
@@ -373,13 +372,12 @@ public final class PythonSdkType extends SdkType {
   public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, final @Nullable Runnable restartAction) {
     NotificationListener notificationListener;
     String notificationMessage;
-    if (e.getCause() instanceof VagrantNotStartedException) {
+    if (e.getCause() instanceof VagrantNotStartedException cause) {
       notificationListener =
         (notification, event) -> {
           final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
           if (manager != null) {
             try {
-              VagrantNotStartedException cause = (VagrantNotStartedException)e.getCause();
               manager.runVagrant(cause.getVagrantFolder(), cause.getMachineName());
             }
             catch (ExecutionException e1) {
@@ -559,7 +557,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   /**
-   * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(com.intellij.openapi.projectRoots.Sdk)} instead
+   * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(Sdk)} instead
    */
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
