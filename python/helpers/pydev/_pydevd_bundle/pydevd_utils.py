@@ -6,6 +6,16 @@ import signal
 import traceback
 from importlib import import_module
 
+try:
+    import torch
+except ImportError:
+    pass
+
+try:
+    import tensorflow as tf
+except ImportError:
+    pass
+
 import pydevd_file_utils
 
 try:
@@ -607,6 +617,24 @@ def is_pandas_container(type_qualifier, var_type, var):
 def is_numpy_container(type_qualifier, var_type, var):
     return var_type == "ndarray" and type_qualifier == "numpy" and hasattr(var, "shape")
 
+def is_pytorch_tensor(type_qualifier, var):
+    try:
+        import torch
+        return type_qualifier == "torch" and torch.is_tensor(var)
+    except ImportError:
+        return False # Can't be torch if it is not installed
+
+def is_tf_tensor(type_qualifier, var):
+    try:
+        import tensorflow as tf
+        return type_qualifier.startswith("tensorflow") and tf.is_tensor(var)
+    except ImportError:
+        return False # Can't be tensorflow if it is not installed
+
+def is_container_with_shape_dtype(type_qualifier, var_type, var):
+    return (is_numpy_container(type_qualifier, var_type, var)
+            or is_pytorch_tensor(type_qualifier, var)
+            or is_tf_tensor(type_qualifier, var))
 
 def is_builtin(x):
     return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
@@ -641,11 +669,18 @@ def is_safe_to_access(obj, attr_name):
     of attribute access in the most risk-free manner. As an example, it leverages the
     `inspect` module, facilitating attribute retrieval without triggering any
     descriptor functionality.
+
+    Note
+    ----
+    This function performs a strict check for potential side-effects, the access can be safe even if `False` is returned.
+    This might need to be checked more precisely for some special types.
     """
-    if "__getattr__" in dir(obj):
-        return False
 
     attr = inspect.getattr_static(obj, attr_name, None)
+
+    # Filter out objects that don't contain the given attribute
+    if attr is None:
+        return False
 
     # Should we check for other descriptor types here?
     if inspect.isgetsetdescriptor(attr) or isinstance(attr, property):
