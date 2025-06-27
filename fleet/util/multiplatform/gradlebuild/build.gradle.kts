@@ -29,6 +29,7 @@ kotlin {
   // KOTLIN__MARKER_START
   compilerOptions.freeCompilerArgs = listOf(
     "-Xlambdas=class",
+    "-Xconsistent-data-class-copy-visibility",
   )
   jvm {}
   wasmJs {

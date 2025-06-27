@@ -28,6 +28,7 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
     "-Xlambdas=class",
+    "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
     "-Xcontext-parameters",
     "-Xjvm-default=all",

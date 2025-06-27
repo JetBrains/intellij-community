@@ -30,6 +30,7 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
     "-Xlambdas=class",
+    "-Xconsistent-data-class-copy-visibility",
   )
   jvm {}
   wasmJs {

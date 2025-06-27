@@ -31,6 +31,7 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-Xjvm-default=all",
     "-Xlambdas=class",
+    "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
   )
   jvm {}

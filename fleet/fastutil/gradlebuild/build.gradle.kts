@@ -29,6 +29,7 @@ kotlin {
     "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
     "-opt-in=kotlin.ExperimentalStdlibApi",
     "-Xlambdas=class",
+    "-Xconsistent-data-class-copy-visibility",
   )
   jvm {}
   wasmJs {
