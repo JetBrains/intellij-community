@@ -21,6 +21,7 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
 
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         return isConvertibleContextParameter(element)
+                && element.name.orEmpty().any { it != '_' }
                 && (element.parent as? KtContextReceiverList)?.ownerDeclaration is KtNamedFunction
     }
 

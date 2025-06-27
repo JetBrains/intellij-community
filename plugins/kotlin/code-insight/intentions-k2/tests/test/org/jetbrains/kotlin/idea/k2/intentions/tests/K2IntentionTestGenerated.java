@@ -14504,9 +14504,24 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inapplicableProperty.kt");
             }
 
+            @TestMetadata("inapplicableSingleUnderscore.kt")
+            public void testInapplicableSingleUnderscore() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inapplicableSingleUnderscore.kt");
+            }
+
+            @TestMetadata("inapplicableThreeUnderscores.kt")
+            public void testInapplicableThreeUnderscores() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inapplicableThreeUnderscores.kt");
+            }
+
             @TestMetadata("memberFunction1.kt")
             public void testMemberFunction1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/memberFunction1.kt");
+            }
+
+            @TestMetadata("wrappedWithUnderscores.kt")
+            public void testWrappedWithUnderscores() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/wrappedWithUnderscores.kt");
             }
         }
 
