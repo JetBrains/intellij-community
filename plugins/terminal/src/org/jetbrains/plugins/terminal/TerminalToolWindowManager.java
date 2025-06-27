@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -154,6 +155,8 @@ public final class TerminalToolWindowManager implements Disposable {
 
     toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"));
     toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
+
+    toolWindow.getComponent().putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true);
 
     myProject.getMessageBus().connect(toolWindow.getDisposable())
       .subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
