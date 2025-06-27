@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
