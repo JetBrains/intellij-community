@@ -2765,6 +2765,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/withContextParameters.kt");
             }
 
+            @TestMetadata("withContextParameters1.kt")
+            public void testWithContextParameters1() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/withContextParameters1.kt");
+            }
+
             @TestMetadata("withImportAlias.kt")
             public void testWithImportAlias() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/withImportAlias.kt");
