@@ -187,7 +187,7 @@ class TextToolset : McpToolset {
         - oldText: The text to be replaced
         - newText: The replacement text
         Returns one of these responses:
-        - "ok" when replacement happend
+        - "ok" when replacement happened
         - error "project dir not found" if project directory cannot be determined
         - error "file not found" if the file doesn't exist
         - error "could not get document" if the file content cannot be accessed

@@ -98,9 +98,9 @@ class BuiltinGeneralToolset : McpToolset {
     @McpTool
     @McpDescription("""
         Returns a list of run configurations for the current project.
-        Use this tool to query the list of available run configurations in current project.
+        Use this tool to query the list of available run configurations in the current project.
         Then you shall to call "run_configuration" tool if you find anything relevant.
-        Returns JSON list of run configuration names. Empty list if no run configurations found.
+        Returns JSON list of run configuration names. Empty list if no run configurations are found.
     """)
     suspend fun get_run_configurations(): String {
         val project = coroutineContext.project
@@ -228,7 +228,7 @@ class BuiltinGeneralToolset : McpToolset {
 
     @McpTool
     @McpDescription("""
-        Get list of all modules in the project with their dependencies. Returns JSON list of module names.
+        Get a list of all modules in the project with their dependencies. Returns JSON list of module names.
     """)
     suspend fun get_project_modules(): String {
         val project = coroutineContext.project
@@ -239,7 +239,7 @@ class BuiltinGeneralToolset : McpToolset {
 
     @McpTool
     @McpDescription("""
-        Get list of all dependencies defined in the project. Returns JSON list of dependency names.
+        Get a list of all dependencies defined in the project. Returns JSON list of dependency names.
     """)
     suspend fun get_project_dependencies(): String {
         val project = coroutineContext.project
@@ -346,7 +346,7 @@ class BuiltinGeneralToolset : McpToolset {
     @McpTool
     @McpDescription("""
         Waits for a specified number of milliseconds (default: 5000ms = 5 seconds).
-        Optionally accepts a milliseconds parameter to specify the wait duration.
+        Optionally accepts a millisecond parameter to specify the wait duration.
         Returns "ok" after the wait completes.
         Use this tool when you need to pause before executing the next command.
     """)
