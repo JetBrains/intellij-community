@@ -3,6 +3,7 @@ package com.intellij.execution.eel
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.UnixSignal
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.Pty
@@ -19,6 +20,7 @@ import io.mockk.coEvery
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.*
+import kotlinx.coroutines.time.delay
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
@@ -27,6 +29,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.time.Duration.Companion.minutes
@@ -35,6 +38,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 class EelLocalExecApiTest {
   companion object {
+    private val logger = fileLogger()
     private const val PTY_COLS = 42
     private const val PTY_ROWS = 24
 
@@ -128,6 +132,7 @@ class EelLocalExecApiTest {
       PTYManagement.PTY_SIZE_FROM_START -> Unit
       PTYManagement.PTY_RESIZE_LATER -> {
         process.resizePty(PTY_COLS, PTY_ROWS)
+        delay(1.seconds) // Resize might take some time
       }
     }
 
@@ -141,8 +146,14 @@ class EelLocalExecApiTest {
         else {
           process.stdout // stderr is redirected to stdout when launched with PTY
         }
+        val decoder = Charsets.UTF_8.newDecoder()
+          .onMalformedInput(CodingErrorAction.REPORT) // Not to ignore malformed input
+          .onUnmappableCharacter(CodingErrorAction.REPORT)
+        logger.info("Waiting for $HELLO")
         while (helloStream.receive(dirtyBuffer) != ReadResult.EOF) {
-          cleanBuffer.add(dirtyBuffer.flip().decodeString())
+          val line = decoder.decode(dirtyBuffer.flip()).toString()
+          logger.info("Line read: $line")
+          cleanBuffer.add(line)
           dirtyBuffer.clear()
           if (HELLO in cleanBuffer.getString()) {
             break
