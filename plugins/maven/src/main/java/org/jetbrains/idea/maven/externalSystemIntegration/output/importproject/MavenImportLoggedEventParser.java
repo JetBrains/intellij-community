@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenImportEventProcessor;
 import org.jetbrains.idea.maven.importing.output.MavenImportOutputParser;
 import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport;
@@ -34,7 +35,7 @@ public interface MavenImportLoggedEventParser {
   boolean processLogLine(
     @NotNull Project project,
     @NotNull String logLine,
-    @NotNull BuildOutputInstantReader reader,
+    @Nullable BuildOutputInstantReader reader,
     @NotNull Consumer<? super BuildEvent> messageConsumer);
 
 }
