@@ -116,7 +116,9 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
         }
 
         override fun before(events: List<VFileEvent>) {
-            if (mayBuiltinsHaveChanged(events) || !project.isInitialized) {
+            if (!project.isInitialized) return
+
+            if (mayBuiltinsHaveChanged(events)) {
                 KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
                 return
             }
