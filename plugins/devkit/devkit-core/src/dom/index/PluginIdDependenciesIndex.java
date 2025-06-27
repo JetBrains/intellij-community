@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -127,13 +127,16 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       FileBasedIndex.getInstance().getContainingFiles(NAME, getDependsIndexingKey(file.getName()),
                                                       GlobalSearchScopesCore.projectProductionScope(project));
 
-    final Collection<VirtualFile> contentFiles =
-      FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()),
-                                                      GlobalSearchScopesCore.projectProductionScope(project));
+    final Collection<VirtualFile> contentFiles = findContentDependsTo(project, file);
 
     Collection<VirtualFile> allFiles = new ArrayList<>(dependsFiles);
     allFiles.addAll(contentFiles);
     return allFiles;
+  }
+
+  public static Collection<VirtualFile> findContentDependsTo(Project project, VirtualFile file) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()),
+                                                      GlobalSearchScopesCore.projectProductionScope(project));
   }
 
   private static String getDependsIndexingKey(@NotNull String filename) {
