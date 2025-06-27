@@ -13,37 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom.converters;
+package org.jetbrains.idea.maven.dom.converters
 
-import com.intellij.util.xml.ConvertContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import com.intellij.util.xml.ConvertContext
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.maven.dom.MavenDomBundle
+import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
+import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenConstants.*
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import static org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4;
-import static org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0;
-import static org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0;
-
-public class MavenModelVersionConverter extends MavenConstantListConverter {
-  private static final List<String> VALUES_MAVEN_3 = Collections.singletonList(MODEL_VERSION_4_0_0);
-  private static final List<String> VALUES_MAVEN_4 = Arrays.asList(MODEL_VERSION_4_0_0, MODEL_VERSION_4_1_0);
-
-  @Override
-  protected Collection<String> getValues(@NotNull ConvertContext context) {
-    if (isAtLeastMaven4(context.getFile().getVirtualFile(), context.getProject())) {
-      return VALUES_MAVEN_4;
-    } else {
-      return VALUES_MAVEN_3;
+class MavenModelVersionConverter : MavenConstantListConverter() {
+  override fun getValues(context: ConvertContext): Collection<String> {
+    return if (isAtLeastMaven4(context.getFile().getVirtualFile(), context.getProject())) {
+      VALUES_MAVEN_4
+    }
+    else {
+      VALUES_MAVEN_3
     }
   }
 
-  @Override
-  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
-    return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", getValues(context));
+  override fun fromString(s: @NonNls String?, context: ConvertContext): String? {
+    if (s != null) return super.fromString(s, context)
+    val rootTag = context.file.rootTag
+    val xmlns = rootTag?.getAttribute("xmlns")?.value
+    val schemaLocation = rootTag?.getAttribute("xsi:schemaLocation")?.value?.split(' ')
+    if (xmlns == MAVEN_4_XLMNS && schemaLocation != null && schemaLocation.all { it == MAVEN_4_XLMNS || it == MAVEN_4_XSD }) return MODEL_VERSION_4_1_0
+    return null
+  }
+
+  override fun getErrorMessage(s: String?, context: ConvertContext): String? {
+    return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", getValues(context))
+  }
+
+  companion object {
+    private val VALUES_MAVEN_3 = listOf(MavenConstants.MODEL_VERSION_4_0_0)
+    private val VALUES_MAVEN_4 = listOf(MavenConstants.MODEL_VERSION_4_0_0,
+                                        MavenConstants.MODEL_VERSION_4_1_0)
   }
 }
