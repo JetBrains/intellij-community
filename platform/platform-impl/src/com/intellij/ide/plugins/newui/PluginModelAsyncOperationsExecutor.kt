@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -31,6 +32,15 @@ object PluginModelAsyncOperationsExecutor {
       val errors = UiPluginManager.getInstance().loadErrors(sessionId)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback(needRestart, errors)
+      }
+    }
+  }
+
+  fun enablePlugins(cs: CoroutineScope, sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?, callback: (SetEnabledStateResult) -> Unit) {
+    cs.launch(Dispatchers.IO) {
+      val result = UiPluginManager.getInstance().enablePlugins(sessionId, descriptorIds, enable, project)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        callback(result)
       }
     }
   }

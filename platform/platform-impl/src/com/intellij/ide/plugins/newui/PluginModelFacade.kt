@@ -83,7 +83,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   fun setEnabledState(models: Collection<PluginUiModel>, action: PluginEnableDisableAction) {
-    pluginModel.setEnabledState(models.map { it.getDescriptor() }, action)
+    pluginModel.setEnabledStateAsync(models.map { it.getDescriptor() }, action)
   }
 
   @JvmOverloads
