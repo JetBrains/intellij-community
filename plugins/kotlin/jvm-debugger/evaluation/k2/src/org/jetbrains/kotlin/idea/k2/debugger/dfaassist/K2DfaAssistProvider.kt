@@ -97,7 +97,11 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         return value
     }
 
-    private suspend fun getJdiValueForDfaVariableInner(proxy: StackFrameProxyEx, descriptor: VariableDescriptor, anchor: KtElement): Value? {
+    private suspend fun getJdiValueForDfaVariableInner(
+        proxy: StackFrameProxyEx,
+        descriptor: VariableDescriptor,
+        anchor: KtElement
+    ): Value? {
         val variables = (proxy as StackFrameProxyImpl).visibleVariables()
         val inlineDepth = getInlineDepth(variables)
         val inlineSuffix = KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX.repeat(inlineDepth)
@@ -197,11 +201,13 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                         var variable = proxy.visibleVariableByName(result.name)
                         var value: Value? = null
                         if (variable == null) {
-                            val psi = result.psi
-                            val scope = readAction { anchor.getScope() }
-                            if (psi != null && scope != null
-                                && readAction { psi.containingFile == scope.containingFile && !scope.isAncestor(psi) }
-                            ) {
+                            val isValidScope = readAction {
+                                val psi = result.psi ?: return@readAction false
+                                val scope = anchor.getScope()
+                                scope != null && psi.containingFile == scope.containingFile
+                                        && !scope.isAncestor(psi)
+                            }
+                            if (isValidScope) {
                                 // Captured variable
                                 val capturedName = AsmUtil.CAPTURED_PREFIX + result.name
                                 variable = proxy.visibleVariableByName(capturedName)
@@ -301,6 +307,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                     QualifierVariableResult.InlineClassProperty -> {
                         map[descriptor] = if (qualifier is DfaAssistProvider.InlinedValue) qualifier.value else qualifier
                     }
+
                     is QualifierVariableResult.NamedVariable -> {
                         val type = (qualifier as? ObjectReference)?.referenceType()
                         if (type != null) {
@@ -310,6 +317,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                             }
                         }
                     }
+
                     else -> {}
                 }
             }

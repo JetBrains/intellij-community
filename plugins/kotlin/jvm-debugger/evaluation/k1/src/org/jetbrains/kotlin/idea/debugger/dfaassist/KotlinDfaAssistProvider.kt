@@ -93,10 +93,11 @@ private class KotlinDfaAssistProvider : DfaAssistProvider {
                 }
             }
             return null
-        }
-        else if (descriptor is KtVariableDescriptor) {
-            val psiVariable = readAction { descriptor.psiElement }
-            val name = readAction { (psiVariable as KtNamedDeclaration).name }
+        } else if (descriptor is KtVariableDescriptor) {
+            val name = readAction {
+                val psiVariable = descriptor.psiElement as? KtNamedDeclaration ?: return@readAction null
+                psiVariable.name
+            }
             val variable = proxy.visibleVariableByName(name)
             if (variable != null) {
                 return postprocess(proxy.getVariableValue(variable))
@@ -115,14 +116,12 @@ private class KotlinDfaAssistProvider : DfaAssistProvider {
         // Avoid relying on hashCode/equals, as descriptors are known to be deduplicated here
         val map = IdentityHashMap<VariableDescriptor, Value>()
         for (descriptor in descriptors) {
-            val psiVariable = readAction { descriptor.psiElement }
-            if (psiVariable is KtCallableDeclaration) {
-                val name = readAction { psiVariable.name }
-                val field = name?.let { DebuggerUtils.findField(qualifier.referenceType(), it) }
-                if (field != null) {
-                    map[descriptor] = postprocess(qualifier.getValue(field))
-                }
-            }
+            val name = readAction {
+                val psiVariable = descriptor.psiElement as? KtCallableDeclaration ?: return@readAction null
+                psiVariable.name
+            } ?: continue
+            val field = DebuggerUtils.findField(qualifier.referenceType(), name) ?: continue
+            map[descriptor] = postprocess(qualifier.getValue(field))
         }
         return map
     }
