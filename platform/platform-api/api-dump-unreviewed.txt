@@ -7540,7 +7540,6 @@ e:com.intellij.ui.dsl.builder.DslComponentProperty
 - java.lang.Enum
 - sf:ICONS_PROVIDER:com.intellij.ui.dsl.builder.DslComponentProperty
 - sf:INTERACTIVE_COMPONENT:com.intellij.ui.dsl.builder.DslComponentProperty
-- sf:LABEL_FOR:com.intellij.ui.dsl.builder.DslComponentProperty
 - sf:ROW_LABEL:com.intellij.ui.dsl.builder.DslComponentProperty
 - sf:SKIP_LABEL_FOR_ASSIGNMENT:com.intellij.ui.dsl.builder.DslComponentProperty
 - sf:VERTICAL_COMPONENT_GAP:com.intellij.ui.dsl.builder.DslComponentProperty
