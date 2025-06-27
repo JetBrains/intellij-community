@@ -351,7 +351,7 @@
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stss" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_AVAILABLE_24" value="true" />
+      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_CONSTRUCTORS" value="true" />
     </context>
   </template>
 
@@ -359,7 +359,7 @@
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stsf" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_AVAILABLE_24" value="true" />
+      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_CONSTRUCTORS" value="true" />
     </context>
   </template>
 
@@ -367,7 +367,7 @@
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sts" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_AVAILABLE_25" value="true" />
+      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_STATIC_FACTORY_METHODS" value="true" />
     </context>
   </template>
 </templateSet>
