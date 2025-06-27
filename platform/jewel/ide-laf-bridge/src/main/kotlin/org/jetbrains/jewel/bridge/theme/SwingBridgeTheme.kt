@@ -7,7 +7,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
+import org.jetbrains.jewel.bridge.BridgeLabelProvider
 import org.jetbrains.jewel.bridge.BridgePainterHintsProvider
+import org.jetbrains.jewel.bridge.BridgeUriHandler
 import org.jetbrains.jewel.bridge.SwingBridgeReader
 import org.jetbrains.jewel.bridge.clipboard.JewelBridgeClipboard
 import org.jetbrains.jewel.bridge.icon.BridgeNewUiChecker
@@ -17,6 +20,7 @@ import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
 import org.jetbrains.jewel.ui.theme.BaseJewelTheme
+import org.jetbrains.jewel.ui.util.LocalLabelProvider
 
 private val bridgeThemeReader by lazy { SwingBridgeReader() }
 
@@ -35,6 +39,8 @@ public fun SwingBridgeTheme(content: @Composable () -> Unit) {
             LocalNewUiChecker provides BridgeNewUiChecker,
             LocalDensity provides scaleDensityWithIdeScale(LocalDensity.current),
             LocalClipboard provides remember { JewelBridgeClipboard() },
+            LocalUriHandler provides BridgeUriHandler(),
+            LocalLabelProvider provides BridgeLabelProvider(),
         ) {
             content()
         }
