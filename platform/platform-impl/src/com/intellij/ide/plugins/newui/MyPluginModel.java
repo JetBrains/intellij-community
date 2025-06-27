@@ -92,6 +92,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   public MyPluginModel(@Nullable Project project) {
     super(project);
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
+    myCoroutineScope = ApplicationManager.getApplication().getService(FrontendRpcCoroutineContext.class).getCoroutineScope();
     StatusBarEx statusBar = getStatusBar(window);
     myStatusBar = statusBar != null || window == null ?
                   statusBar :
@@ -829,6 +830,23 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     else {
       askToUpdateDependencies(action, result.getPluginNamesToSwitch(), result.getPluginsIdsToSwitch());
     }
+    return true;
+  }
+
+  public boolean setEnabledStateAsync(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+                                 @NotNull PluginEnableDisableAction action) {
+    List<PluginId> pluginIds = ContainerUtil.map(descriptors, it -> it.getPluginId());
+    PluginModelAsyncOperationsExecutor.INSTANCE.enablePlugins(myCoroutineScope, sessionId.toString(), pluginIds, action.isEnable(),
+                                                              getProject(), result -> {
+        if (result.getPluginNamesToSwitch().isEmpty()) {
+          applyChangedStates(result.getChangedStates());
+          updateEnabledStateInUi();
+        }
+        else {
+          askToUpdateDependencies(action, result.getPluginNamesToSwitch(), result.getPluginsIdsToSwitch());
+        }
+        return null;
+      });
     return true;
   }
 
