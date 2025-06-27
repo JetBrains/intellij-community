@@ -30,20 +30,23 @@ import com.intellij.util.PathUtil
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.conda.isConda
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.createDetectedSdk
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
@@ -287,9 +290,29 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
 }
 
 // For Java only
-internal fun PyDetectedSdk.setupAssociatedLogged(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): Sdk? {
-  return runBlockingMaybeCancellable {
-    setupAssociated(existingSdks, associatedModulePath, doAssociate).orLogException(LOGGER)
+internal fun PyDetectedSdk.setupSdkLaunch(
+  module: Module,
+  existingSdks: List<Sdk>,
+  doAssociate: Boolean,
+) {
+  PyPackageCoroutine.launch(project = module.project) {
+    setupSdk(module, existingSdks, doAssociate)
+  }
+}
+
+@Internal
+suspend fun PyDetectedSdk.setupSdk(
+  module: Module,
+  existingSdks: List<Sdk>,
+  doAssociate: Boolean,
+) {
+  val newSdk = setupAssociated(existingSdks, module.basePath, doAssociate).getOr {
+    ShowingMessageErrorSync.emit(it.error)
+    return
+  }
+  withContext(Dispatchers.EDT) {
+    SdkConfigurationUtil.addSdk(newSdk)
+    setReadyToUseSdk(module.project, module, newSdk)
   }
 }
 
@@ -329,13 +352,15 @@ suspend fun PyDetectedSdk.setupAssociated(
     data.associatedModulePath = associatedModulePath
   }
 
-  val sdk = SdkConfigurationUtil.setupSdk(
-    existingSdks.toTypedArray(),
-    homeDir,
-    PythonSdkType.getInstance(),
-    data,
-    suggestedName)
+  val sdk = withContext(Dispatchers.EDT) {
+    SdkConfigurationUtil.setupSdk(
+      existingSdks.toTypedArray(),
+      homeDir,
+      PythonSdkType.getInstance(),
+      data,
+      suggestedName)
 
+  }
   PyResult.success(sdk)
 }
 

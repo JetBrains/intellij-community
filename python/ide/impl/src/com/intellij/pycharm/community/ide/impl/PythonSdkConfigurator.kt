@@ -24,7 +24,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
@@ -133,19 +132,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
       indicator.text(PyBundle.message("looking.for.related.venv"))
       LOGGER.debug("Looking for a virtual environment related to the project")
-      detectAssociatedEnvironments(module, existingSdks, context).firstOrNull()?.let {
-        LOGGER.debug { "Detected virtual environment related to the project: $it" }
-        val newSdk = it.setupAssociated(existingSdks, module.basePath, true).orLogException(LOGGER) ?: return@withContext
+      val env = detectAssociatedEnvironments(module, existingSdks, context).firstOrNull()
 
-        LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
-
-        withContext(Dispatchers.EDT) {
-          SdkConfigurationUtil.addSdk(newSdk)
-          setReadyToUseSdk(project, module, newSdk)
-        }
-
-        return@reportRawProgress
-      }
+      env?.setupSdk(module, existingSdks, true)
 
       if (!coroutineContext.isActive) return@reportRawProgress
 

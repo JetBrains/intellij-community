@@ -31,7 +31,6 @@ import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineStart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.cancellation.CancellationException
 
 
@@ -41,9 +40,10 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
-  @OptIn(ExperimentalAtomicApi::class)
-  private val initializationJob = PyPackageCoroutine.launch(null, start = CoroutineStart.LAZY) {
-    initManager()
+  private val initializationJob by lazy {
+    PyPackageCoroutine.launch(project, start = CoroutineStart.LAZY) {
+      initManager()
+    }
   }
 
 
