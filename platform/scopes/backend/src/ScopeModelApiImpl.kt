@@ -20,12 +20,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<ScopesModelApiImpl>()
 
 internal class ScopesModelApiImpl : ScopeModelApi {
-  private val modelIdToModel = mutableMapOf<String, AbstractScopeModel>()
-  private val modelIdToScopes = mutableMapOf<String, ScopesState>()
+  private val modelIdToModel = ConcurrentHashMap<String, AbstractScopeModel>()
 
   override suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>? {
     val project = projectId.findProjectOrNull()
@@ -51,20 +51,15 @@ internal class ScopesModelApiImpl : ScopeModelApi {
     return flow
   }
 
-
   private fun subscribeToModelUpdates(model: AbstractScopeModel, modelId: String, project: Project): Flow<SearchScopesInfo> {
     val flow = channelFlow {
       model.addScopeModelListener(object : ScopeModelListener {
         override fun scopesUpdated(scopes: ScopesSnapshot) {
-          var scopesState = modelIdToScopes[modelId]
-          if (scopesState == null) {
-            scopesState = ScopesStateService.getInstance(project).getScopesState()
-            modelIdToScopes[modelId] = scopesState
-          }
+          val scopesState = ScopesStateService.getInstance(project).getScopesState()
           val scopesStateMap = mutableMapOf<String, ScopeDescriptor>()
           val scopesData = scopes.scopeDescriptors.mapNotNull { descriptor ->
             // TODO should be removed after support scopes with frontend activity IJPL-194098
-            if (descriptor.isEdtRequired || descriptor.scope is ScratchesSearchScope) return@mapNotNull null
+            if (descriptor.needsUserInputForScope() || descriptor.scope is ScratchesSearchScope) return@mapNotNull null
             val scopeId = scopesState.addScope(descriptor)
             val scopeData = SearchScopeData.from(descriptor, scopeId) ?: return@mapNotNull null
             scopesStateMap[scopeData.scopeId] = descriptor
@@ -79,20 +74,13 @@ internal class ScopesModelApiImpl : ScopeModelApi {
         }
       })
 
-      awaitClose {}
+      awaitClose {
+        val model = modelIdToModel[modelId]
+        model?.let { Disposer.dispose(it) }
+        modelIdToModel.remove(modelId)
+      }
     }
     return flow
-  }
-
-  override suspend fun updateModel(modelId: String, scopesInfo: SearchScopesInfo): Flow<SearchScopesInfo> {
-    TODO("Not yet implemented")
-  }
-
-  override suspend fun dispose(modelId: String) {
-    modelIdToScopes.remove(modelId)
-    val model = modelIdToModel[modelId] ?: return
-    Disposer.dispose(model)
-    modelIdToModel.remove(modelId)
   }
 }
 

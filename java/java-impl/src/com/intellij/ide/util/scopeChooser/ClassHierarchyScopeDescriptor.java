@@ -88,7 +88,7 @@ final class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   }
 
   @Override
-  public boolean isEdtRequired() {
+  public boolean needsUserInputForScope() {
     return true;
   }
 }

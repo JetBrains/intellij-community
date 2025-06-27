@@ -12,7 +12,7 @@ import java.util.*
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ScopesStateService(val project: Project) {
-  private var scopesState: ScopesState = ScopesState(project)
+  private val scopesState: ScopesState = ScopesState(project)
 
   fun getScopeById(scopeId: String): SearchScope? {
     try {
