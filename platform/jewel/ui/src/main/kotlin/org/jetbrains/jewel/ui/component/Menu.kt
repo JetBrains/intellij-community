@@ -166,7 +166,9 @@ public fun MenuContent(
     val selectableItems = remember(items) { items.filterIsInstance<MenuSelectableItem>() }
 
     val anyItemHasIcon = remember { selectableItems.any { it.iconKey != null } }
-    val anyItemHasKeybinding = remember { selectableItems.any { it.keybinding != null || it.itemOptionAction != null } }
+    val anyItemHasKeybinding = remember {
+        selectableItems.any { it.keybinding?.isNotEmpty() == true || it.itemOptionAction != null }
+    }
 
     val localMenuController = LocalMenuController.current
     val localInputModeManager = LocalInputModeManager.current

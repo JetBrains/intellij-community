@@ -88,6 +88,8 @@ f:org.jetbrains.jewel.ui.component.DefaultMenuController
 - onHoveredChange(Z):V
 - registerShortcutAction(javax.swing.KeyStroke,kotlin.jvm.functions.Function0):V
 - submenuController(kotlin.jvm.functions.Function1):org.jetbrains.jewel.ui.component.DefaultMenuController
+f:org.jetbrains.jewel.ui.component.LinkKt
+- sf:ExternalLink-kye4rC8(java.lang.String,java.lang.String,androidx.compose.ui.Modifier,Z,androidx.compose.ui.text.TextStyle,I,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.LinkStyle,androidx.compose.runtime.Composer,I,I):V
 org.jetbrains.jewel.ui.component.MenuController
 - a:clearShortcutActions():V
 - a:close-iuPiT84(I):Z
@@ -372,3 +374,7 @@ org.jetbrains.jewel.ui.painter.PainterProviderScope
 org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
 - org.jetbrains.jewel.ui.painter.PainterProviderScope
 - a:getClassLoaders():java.util.Set
+org.jetbrains.jewel.ui.util.MessageResourceResolver
+- a:resolveIdeBundleMessage(java.lang.String):java.lang.String
+f:org.jetbrains.jewel.ui.util.MessageResourceResolverKt
+- sf:getLocalMessageResourceResolverProvider():androidx.compose.runtime.ProvidableCompositionLocal

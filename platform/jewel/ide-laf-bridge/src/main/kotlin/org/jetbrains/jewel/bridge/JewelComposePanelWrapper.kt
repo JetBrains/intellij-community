@@ -20,6 +20,7 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.LocalPopupRenderer
+import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
 
 public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(config, content)
@@ -73,6 +74,7 @@ public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, conten
             CompositionLocalProvider(
                 LocalComponent provides this@createJewelComposePanel,
                 LocalPopupRenderer provides JBPopupRenderer,
+                LocalMessageResourceResolverProvider provides BridgeMessageResourceResolver(),
             ) {
                 ComponentDataProviderBridge(jewelPanel, content = content)
             }
@@ -97,6 +99,7 @@ public fun JewelToolWindowNoThemeComposePanel(
         CompositionLocalProvider(
             LocalComponent provides this@createJewelComposePanel,
             LocalPopupRenderer provides JBPopupRenderer,
+            LocalMessageResourceResolverProvider provides BridgeMessageResourceResolver(),
         ) {
             ComponentDataProviderBridge(jewelPanel, content = content)
         }
