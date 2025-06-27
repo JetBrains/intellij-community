@@ -31,7 +31,8 @@ object ContextParameterUtils {
     fun isValueParameterConvertibleToContext(ktParameter: KtParameter): Boolean {
         if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
         val valueParameterList = ktParameter.parent as? KtParameterList ?: return false
-        return valueParameterList.ownerFunction != null
+        val ownerFunction = valueParameterList.ownerFunction
+        return ownerFunction != null && ownerFunction !is KtConstructor<*>
     }
 
     /**

@@ -14707,6 +14707,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableFeatureDisabled.kt");
             }
 
+            @TestMetadata("inapplicablePrimaryConstructorParameter.kt")
+            public void testInapplicablePrimaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicablePrimaryConstructorParameter.kt");
+            }
+
+            @TestMetadata("inapplicablePrimaryConstructorProperty.kt")
+            public void testInapplicablePrimaryConstructorProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicablePrimaryConstructorProperty.kt");
+            }
+
+            @TestMetadata("inapplicableSecondaryConstructorParameter.kt")
+            public void testInapplicableSecondaryConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableSecondaryConstructorParameter.kt");
+            }
+
             @TestMetadata("parametersContextsAndReceiver.kt")
             public void testParametersContextsAndReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/parametersContextsAndReceiver.kt");
