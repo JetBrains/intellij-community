@@ -15,9 +15,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.impl.eel.EelFileWatcher;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.util.io.BaseDataReader;
@@ -60,7 +60,7 @@ public final class WslFileWatcher extends PluggableFileWatcher {
 
   @Override
   public void initialize(@NotNull FileWatcherNotificationSink notificationSink) {
-    if (EelFileWatcher.Companion.useEelFileWatcher()) {
+    if (Registry.is("use.eel.file.watcher", false)) {
       myExecutable = null;
       return;
     }
@@ -88,7 +88,7 @@ public final class WslFileWatcher extends PluggableFileWatcher {
 
   @Override
   public boolean isOperational() {
-    if (myExecutable == null || EelFileWatcher.Companion.useEelFileWatcher()) return false;
+    if (myExecutable == null || Registry.is("use.eel.file.watcher", false)) return false;
     var app = ApplicationManager.getApplication();
     return !(app.isCommandLine() || app.isUnitTestMode()) || myTestStarted;
   }

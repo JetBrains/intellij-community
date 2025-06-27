@@ -7,7 +7,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.JEelUtils
 import kotlin.io.path.Path
 
-internal class DevcontainerData(val prefix: String, val descriptor: EelDescriptor) {
+internal class EelData(val descriptor: EelDescriptor) {
 
   val recursive: MutableMap<String, String> = mutableMapOf()
   val flat: MutableMap<String, String> = mutableMapOf()
@@ -15,7 +15,7 @@ internal class DevcontainerData(val prefix: String, val descriptor: EelDescripto
   @Volatile
   var ignored: List<String> = emptyList()
 
-  fun reload(other: DevcontainerData) {
+  fun reload(other: EelData) {
     recursive.clear()
     recursive.putAll(other.recursive)
     flat.clear()
