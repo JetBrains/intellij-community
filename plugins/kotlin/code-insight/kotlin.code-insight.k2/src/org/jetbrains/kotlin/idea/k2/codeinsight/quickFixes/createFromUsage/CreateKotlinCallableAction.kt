@@ -150,11 +150,12 @@ internal class CreateKotlinCallableAction(
         val container = getContainer()
             ?: return null
 
+        val psiFactory = KtPsiFactory(container.project)
         return buildString {
             for (annotation in request.annotations) {
                 if (isNotEmpty()) append(" ")
                 append('@')
-                append(annotation.qualifiedName)
+                append(renderAnnotation(container, annotation, psiFactory))
             }
 
             for (modifier in request.modifiers) {
