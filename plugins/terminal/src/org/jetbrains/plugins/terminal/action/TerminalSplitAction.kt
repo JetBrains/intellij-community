@@ -28,6 +28,7 @@ class TerminalSplitAction private constructor(presentation: TerminalActionPresen
         ActionsBundle.message("action.SplitVertically.text")
       else
         ActionsBundle.message("action.SplitHorizontally.text")
+      // TODO: specify other split action IDs
       val keyStrokes = JBTerminalSystemSettingsProviderBase.getKeyStrokesByActionId(
         if (vertically) "Terminal.SplitVertically" else "Terminal.SplitHorizontally")
       return TerminalSplitAction(TerminalActionPresentation(UIUtil.removeMnemonic(text), keyStrokes), vertically, listener)

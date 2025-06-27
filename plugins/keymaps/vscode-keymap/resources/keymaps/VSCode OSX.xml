@@ -739,10 +739,6 @@
     <keyboard-shortcut first-keystroke="meta a"/>
   </action>
   <action id="ToggleBookmark5" />
-  <action id="Terminal.SplitVertically">
-    <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
-    <keyboard-shortcut first-keystroke="ctrl shift 5"/>
-  </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="meta SEMICOLON" second-keystroke="l" />
     <keyboard-shortcut first-keystroke="meta shift f5" />

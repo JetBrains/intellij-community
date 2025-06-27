@@ -120,8 +120,6 @@
       <reference ref="Terminal.NewTab"/>
       <reference ref="Terminal.CloseTab"/>
       <separator/>
-      <reference ref="Terminal.SplitVertically"/>
-      <reference ref="Terminal.SplitHorizontally"/>
       <reference ref="PreviousTab"/>
       <reference ref="NextTab"/>
       <reference ref="Terminal.MoveToolWindowTabRight"/>

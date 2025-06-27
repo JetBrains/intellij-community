@@ -623,9 +623,6 @@
     <keyboard-shortcut first-keystroke="ctrl a"/>
   </action>
   <action id="ToggleBookmark5" />
-  <action id="Terminal.SplitVertically">
-    <keyboard-shortcut first-keystroke="ctrl shift 5"/>
-  </action>
   <action id="ForceRefresh" />
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="ctrl SEMICOLON" second-keystroke="l" />
