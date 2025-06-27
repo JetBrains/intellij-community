@@ -27,12 +27,13 @@ import org.jetbrains.jewel.ui.theme.linkStyle
 @Composable
 public fun Links() {
     val alwaysUnderline = JewelTheme.linkStyle.copy(underlineBehavior = LinkUnderlineBehavior.ShowAlways)
+    val jewelReadMeLink = "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel/#readme"
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Link(text = "Link", onClick = {})
 
         Link(text = "Always underlined", onClick = {}, style = alwaysUnderline)
 
-        ExternalLink("ExternalLink", {})
+        ExternalLink(text = "ExternalLink", uri = jewelReadMeLink)
 
         val items = remember { listOf("Light", "Dark", "---", "High Contrast", "Darcula", "IntelliJ Light") }
         var selected by remember { mutableStateOf(items.first()) }
@@ -51,7 +52,7 @@ public fun Links() {
 
         Link(text = "Always underlined", onClick = {}, style = alwaysUnderline, enabled = false)
 
-        ExternalLink(text = "ExternalLink", onClick = {}, enabled = false)
+        ExternalLink(text = "ExternalLink", uri = jewelReadMeLink)
 
         DropdownLink(text = "DropdownLink", enabled = false) {}
     }
