@@ -99,6 +99,7 @@ enum class JavaFeature {
   INSTANCE_MAIN_METHOD(LanguageLevel.JDK_21_PREVIEW, "feature.instance.main.method"),
 
   SCOPED_VALUES(LanguageLevel.JDK_21_PREVIEW, "feature.scoped.values"),
+  STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
   STRUCTURED_CONCURRENCY_TASK_SCOPE_CONSTRUCTORS(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency.constructors") {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
       return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
@@ -222,7 +223,7 @@ enum class JavaFeature {
         "STRING_TEMPLATES" -> STRING_TEMPLATES
         "UNNAMED_CLASSES", "IMPLICIT_CLASSES" -> IMPLICIT_CLASSES
         "SCOPED_VALUES" -> SCOPED_VALUES
-        "STRUCTURED_CONCURRENCY" -> STRUCTURED_CONCURRENCY_TASK_SCOPE_CONSTRUCTORS
+        "STRUCTURED_CONCURRENCY" -> STRUCTURED_CONCURRENCY
         "CLASSFILE_API" -> CLASSFILE_API
         "STREAM_GATHERERS" -> STREAM_GATHERERS
         "FOREIGN" -> FOREIGN_FUNCTIONS
