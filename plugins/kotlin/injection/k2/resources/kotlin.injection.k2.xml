@@ -21,7 +21,7 @@
     <registryKey
             key="kotlin.highlighting.injection.use.probably.injected.callable.names"
             description="Use probably.injected.callable.names injection highlighting optimization"
-            defaultValue="true"
+            defaultValue="false"
             restartRequired="false" />
   </extensions>
 
