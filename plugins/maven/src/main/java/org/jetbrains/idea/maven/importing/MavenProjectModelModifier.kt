@@ -68,36 +68,33 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
     val toProject = myProjectsManager.findProject(to)
     if (toProject == null) return null
     val mavenId = toProject.mavenId
+    val fromProject = myProjectsManager.findProject(from) ?: return null
     return toPromise {
-      addDependency(mutableListOf<Module>(from), mavenId, scope)
+      addDependency(listOf(fromProject), mavenId, scope)
     }
   }
 
   private suspend fun addDependency(
-    fromModules: MutableCollection<Module>,
+    fromMavenProjects: Collection<MavenProject>,
     mavenId: MavenId,
     scope: DependencyScope,
   ) {
-    return addDependency(fromModules, mavenId, null, null, null, scope)
+    return addDependency(fromMavenProjects, mavenId, null, null, null, scope)
   }
 
   private suspend fun addDependency(
-    fromModules: Collection<Module>,
+    fromMavenProjects: Collection<MavenProject>,
     mavenId: MavenId,
     minVersion: String?,
     maxVersion: String?,
     preferredVersion: String?, scope: DependencyScope,
   ) {
     val models: MutableList<Trinity<MavenDomProjectModel?, MavenId?, String?>> = ArrayList<Trinity<MavenDomProjectModel?, MavenId?, String?>>(
-      fromModules.size)
-    val files: MutableList<XmlFile?> = ArrayList<XmlFile?>(fromModules.size)
-    val projectToUpdate: MutableList<MavenProject> = ArrayList<MavenProject>(fromModules.size)
+      fromMavenProjects.size)
+    val files: MutableList<XmlFile?> = ArrayList<XmlFile?>(fromMavenProjects.size)
+    val projectToUpdate: MutableList<MavenProject> = ArrayList<MavenProject>(fromMavenProjects.size)
     val mavenScope: String = getMavenScope(scope)
-    for (from in fromModules) {
-      if (!myProjectsManager.isMavenizedModule(from)) return
-      val fromProject = myProjectsManager.findProject(from)
-      if (fromProject == null) return
-
+    for (fromProject in fromMavenProjects) {
       val model = readAction { getMavenDomProjectModel(myProject, fromProject.file) }
       if (model == null) return
 
@@ -155,15 +152,18 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
     descriptor: ExternalLibraryDescriptor,
     scope: DependencyScope,
   ): Promise<Void?>? {
+    val mavenProjects = mutableListOf<MavenProject>()
     for (module in modules) {
       if (!myProjectsManager.isMavenizedModule(module)) {
         return null
       }
+      val mavenProject = myProjectsManager.findProject(module) ?: return null
+      mavenProjects.add(mavenProject)
     }
 
     val mavenId = MavenId(descriptor.libraryGroupId, descriptor.libraryArtifactId, null)
     return toPromise {
-      addDependency(modules, mavenId, descriptor.minVersion, descriptor.maxVersion, descriptor.preferredVersion, scope)
+      addDependency(mavenProjects, mavenId, descriptor.minVersion, descriptor.maxVersion, descriptor.preferredVersion, scope)
     }
   }
 
@@ -198,8 +198,9 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
     if (name != null && name.startsWith(MavenArtifact.MAVEN_LIB_PREFIX)) {
       //it would be better to use RepositoryLibraryType for libraries imported from Maven and fetch mavenId from the library properties instead
       val mavenCoordinates = name.removePrefix(MavenArtifact.MAVEN_LIB_PREFIX)
+      val fromProject = myProjectsManager.findProject(from) ?: return null
       return toPromise {
-        addDependency(mutableListOf<Module>(from), MavenId(mavenCoordinates), scope)
+        addDependency(listOf(fromProject), MavenId(mavenCoordinates), scope)
       }
     }
     return null
