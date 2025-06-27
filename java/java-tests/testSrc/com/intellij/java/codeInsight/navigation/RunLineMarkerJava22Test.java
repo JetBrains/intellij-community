@@ -178,7 +178,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
         class A implements B {}
         """);
       List<GutterMark> marks = myFixture.findAllGutters();
-      assertEquals(1, marks.size());
+      assertEquals(0, marks.size());
     });
   }
 

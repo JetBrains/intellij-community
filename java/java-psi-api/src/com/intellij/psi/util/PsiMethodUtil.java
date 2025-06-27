@@ -112,8 +112,7 @@ public final class PsiMethodUtil {
           continue;
         }
         if (containingClass.isInterface() &&
-            mainMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            !chooseMainMethodByParametersEnabled) {
+            mainMethod.hasModifierProperty(PsiModifier.STATIC)) {
           continue;
         }
       }

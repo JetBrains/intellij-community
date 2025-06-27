@@ -63,9 +63,23 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
-  //todo fix for IDEA-374935
   public void testRunLineMarkerOnInterface() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> {
+    myFixture.configureByText("Main.java", """
+      public class Ma<caret>in implements I {}
+      interface I {    public static void main(String[] args) {}
+      }
+      """);
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    assertEquals(0, myFixture.findGuttersAtCaret().size());
+    List<GutterMark> gutters = myFixture.findAllGutters();
+    assertEquals(2, gutters.size());
+    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    });
+  }
+
+  public void testRunLineMarkerOnInterface25() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
     myFixture.configureByText("Main.java", """
       public class Ma<caret>in implements I {}
       interface I {    public static void main(String[] args) {}
