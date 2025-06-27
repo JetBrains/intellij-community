@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.UnfairTextRange
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -36,7 +37,20 @@ data class IdentifierHighlightingResult(
   This list is used when the caret is moving - if the caret is inside one of the targets, we need to highlight all the occurrences for these targets
    */
   val targets: Collection<Segment>
-)
+) {
+  companion object {
+    /**
+     * This result means that the server is unable to handle request,
+     * either because the identifier highlighting is disabled or the caret is not there or the inline prompt is shown etc
+     */
+    @ApiStatus.Internal
+    val EMPTY_RESULT: IdentifierHighlightingResult = IdentifierHighlightingResult(listOf(), listOf())
 
-@ApiStatus.Internal
-val EMPTY_RESULT: IdentifierHighlightingResult = IdentifierHighlightingResult(listOf(), listOf())
+    /**
+     * This result means that the server has a [com.intellij.openapi.editor.Document] version mismatched with the client version, so all queries will likely be incorrect
+     * The client must decide what to do in this situation, with the most probable reaction would be to restart the query later
+     */
+    @ApiStatus.Internal
+    val WRONG_DOCUMENT_VERSION: IdentifierHighlightingResult = IdentifierHighlightingResult(listOf(IdentifierOccurrence(UnfairTextRange(-1, -1), HighlightInfoType.DEPRECATED)), listOf())
+  }
+}

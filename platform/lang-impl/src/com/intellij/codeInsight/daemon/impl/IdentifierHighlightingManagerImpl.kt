@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl.Companion.EDITOR_IDENT_RESULTS
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
@@ -127,6 +129,9 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
       }
       else {
         val hostRes = IdentifierHighlightingAccessor.getInstance(myProject).getMarkupData(psiFile, editor, visibleRange, offset)
+        if (hostRes == WRONG_DOCUMENT_VERSION) {
+          return WRONG_DOCUMENT_VERSION
+        }
         result = readAction {
           if (document.modificationSequence != modStamp) {
             throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))

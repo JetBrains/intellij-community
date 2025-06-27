@@ -4,6 +4,8 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.application.options.editor.EditorOptionsListener
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
@@ -242,6 +244,12 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         var result = EMPTY_RESULT
         try {
           result = identPass.doCollectInformation(newPsiFile.project, visibleRange)
+          if (result == WRONG_DOCUMENT_VERSION) {
+            launch(Dispatchers.EDT + modalityState) {
+              updateHighlighted(project, hostEditor, coroutineScope)
+            }
+            return@launch
+          }
           infos = readAction {
             identPass.createHighlightInfos(result)
           }

@@ -18,7 +18,7 @@ interface IdentifierHighlightingAccessor {
 
   companion object {
     fun getInstance(project: Project): IdentifierHighlightingAccessor {
-      return project.getService(IdentifierHighlightingAccessor::class.java)
+      return project.getService(IdentifierHighlightingAccessor::class.java)?: IdentifierHighlightingAccessorImpl
     }
   }
 }
