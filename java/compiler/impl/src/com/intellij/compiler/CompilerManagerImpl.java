@@ -41,6 +41,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.EDT;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -540,12 +541,13 @@ public class CompilerManagerImpl extends CompilerManager {
     return projectBuildDir;
   }
 
-  private static final class CompiledClass implements ClassObject {
+  @ApiStatus.Internal
+  public static final class CompiledClass implements ClassObject {
     private final String myPath;
     private final String myClassName;
     private final byte[] myBytes;
 
-    CompiledClass(String path, String className, byte[] bytes) {
+    public CompiledClass(String path, String className, byte[] bytes) {
       myPath = path;
       myClassName = className;
       myBytes = bytes;

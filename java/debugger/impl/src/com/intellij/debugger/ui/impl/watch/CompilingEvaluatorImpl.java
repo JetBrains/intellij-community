@@ -6,7 +6,6 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
@@ -33,6 +32,7 @@ import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedDa
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -60,7 +60,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   }
 
   @Override
-  protected @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
+  public @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
     if (myCompiledClasses == null) {
       List<String> options = new ArrayList<>();
       options.add("-encoding");
@@ -146,9 +146,18 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     return file;
   }
 
-  public static @Nullable ExpressionEvaluator create(@NotNull Project project,
-                                                     @Nullable PsiElement psiContext,
-                                                     @NotNull Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
+  public static @Nullable CompilingEvaluator create(@NotNull Project project,
+                                                    @Nullable PsiElement psiContext,
+                                                    @NotNull Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
+    throws EvaluateException {
+    return create(project, psiContext, null, fragmentFactory);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable CompilingEvaluator create(@NotNull Project project,
+                                                    @Nullable PsiElement psiContext,
+                                                    @Nullable String generatedClassName,
+                                                    @NotNull Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
     throws EvaluateException {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
       return ReadAction.compute(() -> {
@@ -160,8 +169,9 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
             project,
             physicalContext != null ? physicalContext : psiContext,
             fragmentFactory.apply(psiContext),
-            getGeneratedClassName(),
-            javaVersion);
+            generatedClassName != null ? generatedClassName : getGeneratedClassName(),
+            javaVersion,
+            generatedClassName);
           if (data != null) {
             return new CompilingEvaluatorImpl(project, psiContext, data);
           }

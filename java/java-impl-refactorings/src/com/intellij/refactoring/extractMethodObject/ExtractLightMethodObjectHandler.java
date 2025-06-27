@@ -26,6 +26,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,16 @@ public final class ExtractLightMethodObjectHandler {
                                                                                   final @NotNull PsiCodeFragment fragment,
                                                                                   @NotNull String methodName,
                                                                                   @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
+    return extractLightMethodObject(project, originalContext, fragment, methodName, javaVersion, null);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable LightMethodObjectExtractedData extractLightMethodObject(final Project project,
+                                                                                  @Nullable PsiElement originalContext,
+                                                                                  final @NotNull PsiCodeFragment fragment,
+                                                                                  @NotNull String methodName,
+                                                                                  @Nullable JavaSdkVersion javaVersion,
+                                                                                  @Nullable String explicitGeneratedEvaluationClassName) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
@@ -262,7 +273,7 @@ public final class ExtractLightMethodObjectHandler {
         new ReflectionAccessorToEverything(generatedClass, elementFactory).grantAccessThroughReflection(callExpression);
         boolean isJdkAtLeast11 = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_11);
         if (isJdkAtLeast11 || Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
-          generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(generatedClass, elementFactory, anchor);
+          generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(generatedClass, elementFactory, anchor, explicitGeneratedEvaluationClassName);
         }
       }
       else {

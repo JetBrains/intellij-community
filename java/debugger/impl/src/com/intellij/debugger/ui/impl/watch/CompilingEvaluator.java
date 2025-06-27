@@ -15,10 +15,13 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -39,12 +42,18 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     myData = data;
   }
 
+  @ApiStatus.Internal
+  public @NotNull LightMethodObjectExtractedData getLightMethodObjectExtractedData() {
+    return myData;
+  }
+
   @Override
   public Modifier getModifier() {
     return null;
   }
 
-  private TextWithImports getCallCode() {
+  @ApiStatus.Internal
+  public @NotNull TextWithImports getCallCode() {
     return new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, myData.getGeneratedCallText());
   }
 
@@ -88,18 +97,28 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
                              ClassLoaderReference classLoader) throws EvaluateException {
     boolean useMagicAccessorImpl = myData.useMagicAccessor();
 
+    defineClassesForEvaluation(classes, context, process, classLoader, GEN_CLASS_NAME, useMagicAccessorImpl);
+    process.findClass(context, getGenClassQName(), classLoader);
+  }
+
+  @ApiStatus.Internal
+  public static void defineClassesForEvaluation(@NotNull Collection<ClassObject> classes,
+                                                 EvaluationContextImpl context,
+                                                 DebugProcess process,
+                                                 ClassLoaderReference classLoader,
+                                                 @NotNull String generatedClassName,
+                                                 boolean useMagicAccessor) throws EvaluateException {
     for (ClassObject cls : classes) {
-      if (cls.getPath().contains(GEN_CLASS_NAME)) {
+      if (cls.getPath().contains(generatedClassName)) {
         byte[] bytes = cls.getContent();
         if (bytes != null) {
-          if (useMagicAccessorImpl) {
+          if (useMagicAccessor) {
             bytes = changeSuperToMagicAccessor(bytes);
           }
           ClassLoadingUtils.defineClass(cls.getClassName(), bytes, context, classLoader);
         }
       }
     }
-    process.findClass(context, getGenClassQName(), classLoader);
   }
 
   private static byte[] changeSuperToMagicAccessor(byte[] bytes) {
@@ -133,5 +152,5 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
   ///////////////// Compiler stuff
 
-  protected abstract @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
+  public abstract @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
 }

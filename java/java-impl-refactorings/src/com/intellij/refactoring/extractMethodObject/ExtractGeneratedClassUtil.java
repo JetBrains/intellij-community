@@ -14,15 +14,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 final class ExtractGeneratedClassUtil {
-  private static final String GENERATED_CLASS_PACKAGE = "idea.debugger.rt";
   private static final Logger LOG = Logger.getInstance(ExtractGeneratedClassUtil.class);
 
   static PsiClass extractGeneratedClass(@NotNull PsiClass generatedInnerClass,
                                         @NotNull PsiElementFactory elementFactory,
-                                        @NotNull PsiElement anchor) {
+                                        @NotNull PsiElement anchor,
+                                        @Nullable String explicitGeneratedEvaluationClassFullName) {
     Project project = generatedInnerClass.getProject();
 
-    PsiClass extractedClass = elementFactory.createClass("GeneratedEvaluationClass");
+    if (explicitGeneratedEvaluationClassFullName == null) {
+      explicitGeneratedEvaluationClassFullName = "idea.debugger.rt.GeneratedEvaluationClass";
+    }
+
+    int dotIndex = explicitGeneratedEvaluationClassFullName.lastIndexOf('.');
+
+
+    String generatedEvaluationClass = dotIndex == -1 ? explicitGeneratedEvaluationClassFullName : explicitGeneratedEvaluationClassFullName.substring(dotIndex + 1);
+    String packageName = dotIndex == -1 ? "" : explicitGeneratedEvaluationClassFullName.substring(0, dotIndex);
+
+    PsiClass extractedClass = elementFactory.createClass(generatedEvaluationClass);
 
     for (PsiField field : generatedInnerClass.getAllFields()) {
       extractedClass.add(elementFactory.createFieldFromText(field.getText(), anchor)); // TODO: check if null is OK
@@ -34,9 +44,8 @@ final class ExtractGeneratedClassUtil {
 
     PsiJavaFile generatedFile = (PsiJavaFile)PsiFileFactory.getInstance(project)
       .createFileFromText(extractedClass.getName() + ".java", JavaFileType.INSTANCE, extractedClass.getContainingFile().getText());
-    // copy.getModificationStamp(),
-    //false, false);
-    generatedFile.setPackageName(GENERATED_CLASS_PACKAGE);
+
+    generatedFile.setPackageName(packageName);
     extractedClass = PsiTreeUtil.findChildOfType(generatedFile, PsiClass.class);
     copyStaticImports(generatedInnerClass, generatedFile, elementFactory);
     assert extractedClass != null;
