@@ -169,7 +169,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   init {
     nameAndButtons = BaselinePanel(12, false)
     customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
-    pluginManagerCustomizer = if (Registry.`is`("reworked.plugin.manager.enabled")) {
+    pluginManagerCustomizer = if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
       PluginManagerCustomizer.EP_NAME.extensionList.firstOrNull()
     }
     else null
@@ -1477,7 +1477,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun createInstallButton(): PluginInstallButton {
-    if (Registry.`is`("reworked.plugin.manager.enabled")) {
+    if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
       val button = InstallOptionButton()
       setDefaultInstallAction(button)
       return button
