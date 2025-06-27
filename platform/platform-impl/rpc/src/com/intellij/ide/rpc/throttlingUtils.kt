@@ -73,7 +73,10 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
                   stopRequestWasScheduled = true
                   parentScope.launch {
                     delay(stopDelay)
-                    sendFirstBatchIfNeeded()
+
+                    mutex.withLock {
+                      sendFirstBatchIfNeeded()
+                    }
                   }
                 }
               }
@@ -87,8 +90,8 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
           }
         }
       }
-      sendFirstBatchIfNeeded()
       mutex.withLock {
+        sendFirstBatchIfNeeded()
         close()
       }
     }
