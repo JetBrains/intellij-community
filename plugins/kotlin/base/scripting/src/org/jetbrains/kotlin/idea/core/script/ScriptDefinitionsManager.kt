@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsStorage
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -274,7 +274,7 @@ open class ScriptDefinitionsManager(private val project: Project) : IdeScriptDef
         return fromNewEp.dropLast(1) + fromNewEp.last()
     }
 
-    protected open fun getKotlinScriptingSettings(): KotlinScriptingSettings = KotlinScriptingSettings.getInstance(project)
+    protected open fun getKotlinScriptingSettings(): KotlinScriptingSettingsStorage = KotlinScriptingSettingsStorage.getInstance(project)
 
     protected open fun applyDefinitionsUpdate() {
         associateFileExtensionsIfNeeded()

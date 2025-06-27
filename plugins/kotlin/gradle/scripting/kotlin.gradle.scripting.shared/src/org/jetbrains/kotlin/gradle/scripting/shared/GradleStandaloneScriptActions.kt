@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsStorage
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 
 class GradleStandaloneScriptActions(
@@ -26,7 +26,7 @@ class GradleStandaloneScriptActions(
         val scriptDefinition = scriptDefinition
         if (scriptDefinition != null) {
             isAutoReloadAvailable = true
-            isAutoReloadEnabled = KotlinScriptingSettings.getInstance(project)
+            isAutoReloadEnabled = KotlinScriptingSettingsStorage.getInstance(project)
                 .autoReloadConfigurations(scriptDefinition)
         } else {
             isAutoReloadAvailable = false
@@ -35,7 +35,7 @@ class GradleStandaloneScriptActions(
     }
 
     fun enableAutoReload() {
-        KotlinScriptingSettings.getInstance(project).setAutoReloadConfigurations(scriptDefinition!!, true)
+        KotlinScriptingSettingsStorage.getInstance(project).setAutoReloadConfigurations(scriptDefinition!!, true)
         doLoad()
         updateNotification()
     }

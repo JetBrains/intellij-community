@@ -50,7 +50,7 @@
             defaultValue="false"
             restartRequired="true"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings"
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsStorage"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"

@@ -3,9 +3,11 @@ package org.jetbrains.kotlin.idea.core.script.settings
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
-interface KotlinScriptingSettings {
+@ApiStatus.Internal
+interface KotlinScriptingSettingsStorage {
     fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean
     fun setAutoReloadConfigurations(scriptDefinition: ScriptDefinition, autoReloadScriptDependencies: Boolean)
     fun setOrder(scriptDefinition: ScriptDefinition, order: Int)
@@ -13,6 +15,12 @@ interface KotlinScriptingSettings {
     fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int
 
     companion object {
-        fun getInstance(project: Project): KotlinScriptingSettings = project.service()
+        fun getInstance(project: Project): KotlinScriptingSettingsStorage = project.service()
     }
+}
+
+@ApiStatus.Internal
+@Deprecated("marked for deletion")
+abstract class KotlinScriptingSettings : KotlinScriptingSettingsStorage {
+
 }

@@ -5,14 +5,14 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsStorage
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
 @State(
     name = "ScriptDefinitionSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
 class ScriptDefinitionPersistentSettings(val project: Project) :
-    SerializablePersistentStateComponent<ScriptDefinitionPersistentSettings.State>(State()), KotlinScriptingSettings {
+    SerializablePersistentStateComponent<ScriptDefinitionPersistentSettings.State>(State()), KotlinScriptingSettingsStorage {
 
     fun getIndexedSettingsPerDefinition(): Map<String?, IndexedSetting> = state.settings.mapIndexedTo(mutableListOf()) { index, it ->
         it.definitionId to IndexedSetting(index, it)
@@ -51,7 +51,7 @@ class ScriptDefinitionPersistentSettings(val project: Project) :
 
     companion object {
         fun getInstance(project: Project): ScriptDefinitionPersistentSettings =
-            project.service<KotlinScriptingSettings>() as ScriptDefinitionPersistentSettings
+            project.service<KotlinScriptingSettingsStorage>() as ScriptDefinitionPersistentSettings
     }
 
     data class State(

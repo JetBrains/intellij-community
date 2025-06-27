@@ -7,7 +7,7 @@ import com.intellij.util.addOptionTag
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsStorage
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
       Storage(StoragePathMacros.WORKSPACE_FILE)
     ]
 )
-class KotlinScriptingSettingsImpl(private val project: Project) : PersistentStateComponent<Element>, KotlinScriptingSettings {
+class KotlinScriptingSettingsImpl(private val project: Project) : PersistentStateComponent<Element>, KotlinScriptingSettingsStorage {
     /**
      * true if notification about multiple script definition applicable for one script file is suppressed
      */
@@ -185,7 +185,7 @@ class KotlinScriptingSettingsImpl(private val project: Project) : PersistentStat
         getChildren("option").firstOrNull { it.getAttribute("name").value == name }?.getAttributeBooleanValue("value")
 
     companion object {
-        fun getInstance(project: Project): KotlinScriptingSettingsImpl = project.service<KotlinScriptingSettings>() as KotlinScriptingSettingsImpl
+        fun getInstance(project: Project): KotlinScriptingSettingsImpl = project.service<KotlinScriptingSettingsStorage>() as KotlinScriptingSettingsImpl
 
         private const val SCRIPT_DEFINITION_TAG = "scriptDefinition"
         private const val SUPPORT_WARNING_ATTR = "supportWarning"
