@@ -112,7 +112,7 @@ object JavaSuperTypeSearchUtil {
     }
 
     var matchedMethod = psiClass.findMethodBySignature(method, false)
-    // IDEA-374576 findMethodBySignature can fail for methods implemented via default
+    // TODO: remove when IDEA-375102 is fixed (findMethodBySignature can fail for methods implemented via default)
     if (matchedMethod == null) matchedMethod = psiClass
       .findMethodsByName(method.name, false)
       .find { m -> MethodSignatureUtil.isSuperMethod(m, method) }
