@@ -160,7 +160,10 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
                                   indentOptions: CommonCodeStyleSettings.IndentOptions,
                                   uiContributor: CodeStyleStatusBarUIContributor?): WidgetState {
       return if (uiContributor != null) {
-        MyWidgetState(toolTip = uiContributor.tooltip, text = uiContributor.getStatusText(psiFile), uiContributor = uiContributor)
+        // The call below gets a chance to `uiContributor.tooltip` to be dependent from `psiFile`.
+        val statusText = uiContributor.getStatusText(psiFile) // Don't inline this call.
+        
+        MyWidgetState(toolTip = uiContributor.tooltip, text = statusText, uiContributor = uiContributor)
       }
       else {
         val indentInfo = IndentStatusBarUIContributor.getIndentInfo(indentOptions)
