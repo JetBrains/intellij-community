@@ -14,6 +14,7 @@ import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.IntUiMessageResourceResolver
 import org.jetbrains.jewel.intui.standalone.IntUiTypography
 import org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
 import org.jetbrains.jewel.intui.standalone.icon.StandaloneNewUiChecker
@@ -62,6 +63,7 @@ import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
 import org.jetbrains.jewel.ui.theme.BaseJewelTheme
+import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
 
 /**
  * Create a light theme definition.
@@ -320,6 +322,7 @@ public fun IntUiTheme(
             LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
             LocalMenuItemShortcutHintProvider provides StandaloneMenuItemShortcutHintProvider,
             LocalTypography provides IntUiTypography,
+            LocalMessageResourceResolverProvider provides IntUiMessageResourceResolver(),
         ) {
             content()
         }

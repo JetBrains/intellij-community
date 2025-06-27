@@ -26,6 +26,11 @@ f:org.jetbrains.jewel.bridge.BridgeTypography
 - getMedium(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - getRegular(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - getSmall(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+f:org.jetbrains.jewel.bridge.BridgeUriHandler
+- androidx.compose.ui.platform.UriHandler
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.bridge.BridgeUriHandler
+- openUri(java.lang.String):V
 f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:createVerticalBrush-8A-3gB4(java.util.List,F,F,I):androidx.compose.ui.graphics.Brush
 - bs:createVerticalBrush-8A-3gB4$default(java.util.List,F,F,I,I,java.lang.Object):androidx.compose.ui.graphics.Brush
