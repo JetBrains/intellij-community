@@ -91,14 +91,13 @@ class EelLocalExecApiTest {
     return testCases.map { (exitType, ptyManagement) ->
       DynamicTest.dynamicTest("$exitType $ptyManagement") {
         timeoutRunBlocking(1.minutes) {
-          Assumptions.assumeFalse(exitType == ExitType.KILL && ptyManagement == PTYManagement.PTY_SIZE_FROM_START, "IJPL-192895")
           testOutputImpl(ptyManagement, exitType)
         }
       }
     }
   }
 
-  private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType) {
+  private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType): Unit = coroutineScope {
     val builder = executor.createBuilderToExecuteMain(localEel.exec)
     builder.interactionOptions(when (ptyManagement) {
                                  PTYManagement.NO_PTY -> null
@@ -106,6 +105,15 @@ class EelLocalExecApiTest {
                                  PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
                                })
     val process = builder.eelIt()
+    launch {
+      try {
+        process.exitCode.await()
+      }
+      catch (e: CancellationException) {
+        process.kill()
+        throw e
+      }
+    }
 
     // Resize tty
     when (ptyManagement) {
