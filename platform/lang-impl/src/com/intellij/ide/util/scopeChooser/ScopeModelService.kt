@@ -34,14 +34,12 @@ enum class ScopesFilterConditionType {
     return when (this) {
       //moved from FindPopupScopeUIImpl
       FIND -> {
-        //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
         val moduleScopeName: String = IndexingBundle.message("search.scope.module", "")
         val ind = moduleScopeName.indexOf(' ')
         val moduleFilesScopeName: String = moduleScopeName.take(ind + 1)
         return scopesFilter@{ descriptor: ScopeDescriptor? ->
-          //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
           val display = descriptor?.displayName ?: return@scopesFilter true
-          return@scopesFilter  /*!projectFilesScopeName.equals(display) &&*/!display.startsWith(moduleFilesScopeName)
+          return@scopesFilter !display.startsWith(moduleFilesScopeName)
         }
       }
       else -> null
