@@ -38,6 +38,7 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
 
     testGutterTargets(
       testFileRelPath = "test.module/test.module.xml",
+      popupTitle = "'test.module' content module is included in 1 plugin XML descriptors",
       expectedTargets = listOf(
         "declaring.module.xml | <module name=\"test.module\"/>"
       )
@@ -73,6 +74,7 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
 
     testGutterTargets(
       testFileRelPath = "test.module/test.module.xml",
+      popupTitle = "'test.module' content module is included in 2 plugin XML descriptors",
       expectedTargets = listOf(
         "declaring.module.1.xml | <module name=\"test.module\"/>",
         "declaring.module.2.xml | <module name=\"test.module\"/>"
@@ -109,6 +111,7 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
 
     testGutterTargets(
       testFileRelPath = "test.module/test.module.xml",
+      popupTitle = "'test.module' content module is included in 2 plugin XML descriptors",
       expectedTargets = listOf(
         "declaring.module.1.xml | <module name=\"test.module\" loading=\"embedded\"/>",
         "declaring.module.2.xml | <module name=\"test.module\" loading=\"on-demand\"/>"
@@ -156,11 +159,11 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
     myFixture.addFileToProject("$moduleName/$moduleDescriptorName", moduleDescriptorText)
   }
 
-  private fun testGutterTargets(testFileRelPath: String, expectedTargets: List<String>) {
+  private fun testGutterTargets(testFileRelPath: String, popupTitle: String, expectedTargets: List<String>) {
     val gutter = myFixture.findGutter(testFileRelPath)
     DevKitGutterTargetsChecker.checkGutterTargets(
       gutter,
-      DevKitBundle.message("line.marker.descriptors.including.content.module.name"),
+      popupTitle,
       AllIcons.Nodes.Module,
       { renderTargetElement(it) },
       *expectedTargets.toTypedArray()
