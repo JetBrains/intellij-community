@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
+import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
@@ -11,8 +12,12 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
 import com.intellij.psi.util.PropertyUtil
@@ -26,11 +31,15 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtClassOrFile
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
+import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
@@ -48,9 +57,48 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
 
     override fun createRemoveAnnotationActions(
         target: JvmModifiersOwner,
-        request: AnnotationRequest
+        request: AnnotationRequest,
     ): List<IntentionAction> {
-        return super.createRemoveAnnotationActions(target, request)
+        val lightElement = target as? KtLightElement<*, *> ?: return emptyList()
+        val origin = (lightElement.kotlinOrigin as? KtModifierListOwner)?.takeIf {
+            it.language == KotlinLanguage.INSTANCE
+        } ?: return emptyList()
+
+        val classId = ClassId.fromString(request.qualifiedName)
+        val annotation = origin.findAnnotation(classId) ?: return emptyList()
+
+        return listOf(RemoveAnnotationAction(annotation, request.qualifiedName).asIntention())
+    }
+
+    private class RemoveAnnotationAction(
+        element: KtAnnotationEntry,
+        val elementContext: String,
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtAnnotationEntry, String>(element, elementContext) {
+
+        override fun getPresentation(
+            context: ActionContext,
+            element: KtAnnotationEntry,
+        ): Presentation {
+            val shortName = StringUtilRt.getShortName(elementContext)
+            return Presentation.of(QuickFixBundle.message("remove.annotation.fix.text", shortName))
+        }
+
+        override fun getFamilyName(): @IntentionFamilyName String =
+            QuickFixBundle.message("remove.annotation.fix.family")
+
+        override fun invoke(
+            actionContext: ActionContext,
+            element: KtAnnotationEntry,
+            elementContext: String,
+            updater: ModPsiUpdater,
+        ) {
+            val file = element.containingKtFile
+            element.delete()
+            val data = K2OptimizeImportsFacility().analyzeImports(file) ?: return
+            for (importDirective in data.unusedImports) {
+                importDirective.delete()
+            }
+        }
     }
 
     override fun createChangeParametersActions(
