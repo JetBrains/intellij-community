@@ -68,14 +68,6 @@
     <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.NextSplitter" use-shortcut-of="NextSplitter"
-            class="org.jetbrains.plugins.terminal.action.GotoSplitTerminalActionBase$Next">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.PrevSplitter" use-shortcut-of="PrevSplitter"
-            class="org.jetbrains.plugins.terminal.action.GotoSplitTerminalActionBase$Prev">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
     <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>

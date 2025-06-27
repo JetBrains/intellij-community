@@ -225,8 +225,6 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.RenameSession",
       "Terminal.NewTab",
       "Terminal.CloseTab",
-      "Terminal.NextSplitter",
-      "Terminal.PrevSplitter",
       "Terminal.MoveToolWindowTabLeft",
       "Terminal.MoveToolWindowTabRight",
       "Terminal.ClearBuffer",
