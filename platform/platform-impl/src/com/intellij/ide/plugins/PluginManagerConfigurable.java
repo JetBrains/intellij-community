@@ -361,6 +361,13 @@ public final class PluginManagerConfigurable
       @Override
       protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
                                                @Nullable Project project) {
+        if (myPluginManagerCustomizer != null) {
+          myPluginManagerCustomizer.updateAfterModification(() -> {
+            PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
+            return null;
+          });
+          return;
+        }
         PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
       }
     });
