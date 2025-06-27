@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.ui
 
-import javax.swing.*;
+import javax.swing.JProgressBar
 
-/**
- * @deprecated use {@link JProgressBar}
- */
-@Deprecated(forRemoval = true)
-public class JBProgressBar extends JProgressBar {
-}
+@Deprecated("use {@link JProgressBar}", level = DeprecationLevel.HIDDEN)
+open class JBProgressBar : JProgressBar()
