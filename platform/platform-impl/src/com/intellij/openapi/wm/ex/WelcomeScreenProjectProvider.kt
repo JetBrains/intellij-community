@@ -31,19 +31,19 @@ abstract class WelcomeScreenProjectProvider {
     }
 
     @JvmStatic
-    fun isSingleWelcomeScreenProject(project: Project): Boolean {
+    fun isWelcomeScreenProject(project: Project): Boolean {
       val extension = getSingleExtension() ?: return false
-      return extension.isWelcomeScreenProject(project)
+      return extension.doIsWelcomeScreenProject(project)
     }
 
     @JvmStatic
-    fun isSingleForceDisabledFileColors(): Boolean {
+    fun isForceDisabledFileColors(): Boolean {
       val extension = getSingleExtension() ?: return false
-      return extension.isForceDisabledFileColors()
+      return extension.doIsForceDisabledFileColors()
     }
   }
 
-  protected abstract fun isWelcomeScreenProject(project: Project): Boolean
+  protected abstract fun doIsWelcomeScreenProject(project: Project): Boolean
 
-  protected abstract fun isForceDisabledFileColors(): Boolean
+  protected abstract fun doIsForceDisabledFileColors(): Boolean
 }

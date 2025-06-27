@@ -50,5 +50,5 @@ private class PlatformProjectCheckoutListener : CheckoutListener {
 }
 
 private fun willOpenFromWelcomeScreenProject(project: Project): Boolean {
-  return WelcomeScreenProjectProvider.isSingleWelcomeScreenProject(project)
+  return WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
 }

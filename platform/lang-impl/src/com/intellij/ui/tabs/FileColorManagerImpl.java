@@ -52,8 +52,8 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @Override
   public boolean isEnabled() {
-    if (WelcomeScreenProjectProvider.isSingleWelcomeScreenProject(myProject) &&
-        WelcomeScreenProjectProvider.isSingleForceDisabledFileColors()) {
+    if (WelcomeScreenProjectProvider.isWelcomeScreenProject(myProject) &&
+        WelcomeScreenProjectProvider.isForceDisabledFileColors()) {
       return false;
     }
 
