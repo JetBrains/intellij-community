@@ -457,7 +457,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     // So no need to create an additional fail edge
     myBuilder.startNode(node);
     node.acceptChildren(this);
-    myPatternBindingNames.add(node.getTarget().getName());
+    if (node.getTarget() != null) {
+      myPatternBindingNames.add(node.getTarget().getName());
+    }
     myBuilder.updatePendingElementScope(node, node.getParent());
   }
 
