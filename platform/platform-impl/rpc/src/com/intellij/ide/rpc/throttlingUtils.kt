@@ -21,14 +21,16 @@ private const val DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING: Int = 15
  */
 @ApiStatus.Internal
 fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RESULT_THROTTLING_MS,
+                                          shouldPassItem: (T) -> Boolean = { true },
                                           resultCountToStopThrottling: Int = DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING): Flow<ThrottledItems<T>> =
-  throttledWithAccumulation(resultThrottlingMs) { _, accumulatedSize ->
+  throttledWithAccumulation(resultThrottlingMs, shouldPassItem) { _, accumulatedSize ->
     if (accumulatedSize >= resultCountToStopThrottling) 0 else null
   }
 
 @OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Internal
 fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RESULT_THROTTLING_MS,
+                                          shouldPassItem: (T) -> Boolean,
                                           shouldStopThrottlingAfterDelay: (T, Int) -> Long?): Flow<ThrottledItems<T>> {
   val originalFlow = this
   return channelFlow {
@@ -61,7 +63,9 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
         mutex.withLock {
           val firstBatch = pendingFirstBatch
           if (firstBatch != null) {
-            firstBatch += item
+            if (shouldPassItem(item)) {
+              firstBatch += item
+            }
             val stopDelay = shouldStopThrottlingAfterDelay(item, firstBatch.size)
             if (stopDelay != null) {
               if (stopDelay > 0) {
@@ -79,7 +83,7 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
             }
           }
           else {
-            send(ThrottledOneItem(item))
+            if (shouldPassItem(item)) send(ThrottledOneItem(item))
           }
         }
       }

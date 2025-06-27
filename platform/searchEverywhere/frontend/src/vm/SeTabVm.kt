@@ -100,7 +100,7 @@ class SeTabVm(
           val resultsFlow = tab.getItems(params).let {
             val essential = tab.essentialProviderIds()
             if (essential.isEmpty()) {
-              if (shouldThrottle.load()) it.throttledWithAccumulation()
+              if (shouldThrottle.load()) it.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
               else it.map { event -> ThrottledOneItem(event) }
             }
             else it.throttleUntilEssentialsArrive(essential)
@@ -186,7 +186,7 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
   val nonArrivedEssentialProviders = essentialProviderIds.toMutableSet()
 
   SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds"}
-  return throttledWithAccumulation(ESSENTIALS_WAITING_TIMEOUT) { event, size ->
+  return throttledWithAccumulation(ESSENTIALS_WAITING_TIMEOUT, { it !is SeResultEndEvent }) { event, size ->
     val idToRemove = when (event) {
       is SeResultAddedEvent -> event.itemData.providerId
       is SeResultReplacedEvent -> event.newItemData.providerId
