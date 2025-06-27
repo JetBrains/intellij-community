@@ -110,6 +110,7 @@ public final class RepositoryHelper {
   }
 
   @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public static @NotNull List<PluginNode> loadPlugins(
     @Nullable String repositoryUrl,
     @Nullable BuildNumber build,
@@ -127,6 +128,7 @@ public final class RepositoryHelper {
     return loadPluginModels(repositoryUrl, build, indicator, PluginUiModelBuilderFactory.getInstance());
   }
 
+  @ApiStatus.Internal
   public static @NotNull List<PluginUiModel> loadPluginModels(
     @Nullable String repositoryUrl,
     @Nullable BuildNumber build,
