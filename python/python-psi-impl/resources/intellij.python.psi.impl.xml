@@ -497,6 +497,8 @@
                  description="It optimises cache usage for storing calculated types."/>
     <registryKey key="python.statement.lists.incremental.reparse" defaultValue="false"
                  description="Enables incremental reparse for statement lists"/>
+
+    <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>
 
   <extensionPoints>
