@@ -332,7 +332,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
           List<IdeaPluginDescriptor> pluginsToInstall = List.of(pluginUiModel.getDescriptor());
           ApplicationManager.getApplication().invokeAndWait(() -> {
-            PluginManagerMain.suggestToEnableInstalledDependantPlugins(MyPluginModel.this, pluginsToInstall);
+            PluginManagerMain.suggestToEnableInstalledDependantPlugins(MyPluginModel.this, pluginsToInstall, updateDescriptor != null);
           }, modalityState);
 
 
