@@ -784,6 +784,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
+    setCurrentStackFrame(executionStack, frame, isTopFrame, false)
+  }
+
+  @ApiStatus.Experimental
+  fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean, changedByUser: Boolean) {
     if (mySuspendContext.value == null) return
 
     val frameChanged = currentStackFrame !== frame
@@ -792,7 +797,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     myIsTopFrame = isTopFrame
 
     if (frameChanged) {
-      myDispatcher.getMulticaster().stackFrameChanged()
+      myDispatcher.getMulticaster().stackFrameChanged(changedByUser)
     }
 
     if (myDebuggerManager.currentSession == this) {

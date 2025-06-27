@@ -5,7 +5,6 @@ import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
 import com.intellij.ide.ui.colors.rpcId
-import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
@@ -14,8 +13,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
-import com.intellij.ui.ColoredTextContainer
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
@@ -42,7 +39,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
-import javax.swing.Icon
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
@@ -209,12 +205,12 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean) {
+  override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean, changedByUser: Boolean) {
     val session = sessionId.findValue() ?: return
     val executionStackModel = executionStackId.findValue() ?: return
     val stackFrameModel = frameId.findValue() ?: return
     withContext(Dispatchers.EDT) {
-      session.setCurrentStackFrame(executionStackModel.executionStack, stackFrameModel.stackFrame, isTopFrame)
+      session.setCurrentStackFrame(executionStackModel.executionStack, stackFrameModel.stackFrame, isTopFrame, changedByUser = changedByUser)
     }
   }
 

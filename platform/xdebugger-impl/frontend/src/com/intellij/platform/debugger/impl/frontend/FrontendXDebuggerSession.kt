@@ -323,7 +323,7 @@ class FrontendXDebuggerSession private constructor(
       currentExecutionStack.value = executionStack as FrontendXExecutionStack
       currentStackFrame.value = frame as FrontendXStackFrame
       XDebugSessionApi.getInstance().setCurrentStackFrame(id, executionStack.id,
-                                                          frame.id, isTopFrame)
+                                                          frame.id, isTopFrame, changedByUser = true)
     }
   }
 
