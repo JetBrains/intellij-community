@@ -12,11 +12,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.ui.layout.and
@@ -24,11 +25,14 @@ import com.intellij.ui.layout.not
 import com.intellij.util.ui.TextTransferable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import java.awt.event.ActionEvent
 import java.nio.file.Path
+import javax.swing.JCheckBox
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
@@ -43,7 +47,20 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
     val panel = panel {
       row {
-        enabledCheckboxState = checkBox(McpServerBundle.message("enable.mcp.server")).bindSelected(settings.state::enableMcpServer).selected
+        val checkboxWithValidation = CheckboxWithValidation(McpServerBundle.message("enable.mcp.server"), ConsentValidator)
+        cell(checkboxWithValidation).bind(
+          componentGet = { it.isValidatedSelected },
+          componentSet = { component, value -> component.isValidatedSelected = value },
+          prop = MutableProperty(
+            getter = { settings.state.enableMcpServer },
+            setter = { settings.state.enableMcpServer = it }
+          )
+        )
+        enabledCheckboxState = ValueComponentPredicate(checkboxWithValidation.isValidatedSelected).also { predicate ->
+          checkboxWithValidation.addPropertyChangeListener(CheckboxWithValidation.IS_VALIDATED_SELECTED_PROPERTY) { evt ->
+            predicate.set(evt.newValue as Boolean)
+          }
+        }
       }
       panel {
 
@@ -177,4 +194,44 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
   }
 
   override fun getId(): @NonNls String = "com.intellij.mcpserver.settings"
+}
+
+private class CheckboxWithValidation(@Nls checkboxText: String, var validator: CheckboxValidator) : JCheckBox() {
+  companion object {
+    const val IS_VALIDATED_SELECTED_PROPERTY: String = "isValidatedSelected"
+  }
+  var isValidatedSelected: Boolean = false
+    set(value) {
+      val oldValue = field
+      field = value
+      isSelected = value
+      firePropertyChange(IS_VALIDATED_SELECTED_PROPERTY, oldValue, value)
+    }
+
+  init {
+    this.text = checkboxText
+    addActionListener {
+      val newValue = isSelected
+      isSelected = isValidatedSelected
+      SwingUtilities.invokeLater {
+        if (validator.isValidNewValue(newValue)) {
+          isValidatedSelected = newValue
+        }
+      }
+    }
+  }
+}
+
+private object ConsentValidator : CheckboxValidator {
+  override fun isValidNewValue(isSelected: Boolean): Boolean = if (isSelected) {
+    MessageDialogBuilder.yesNo(
+      McpServerBundle.message("dialog.title.mcp.server.consent"),
+      McpServerBundle.message("dialog.message.mcp.server.consent")
+    ).ask(getLastFocusedOrOpenedProject())
+  }
+  else true
+}
+
+private interface CheckboxValidator {
+  fun isValidNewValue(isSelected: Boolean): Boolean
 }
