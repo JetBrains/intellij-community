@@ -207,6 +207,32 @@ class LLMJudgeScore(showByDefault: Boolean = true, private val llmJudge: LLMJudg
 }
 
 class SemanticSimilarityScore(showByDefault: Boolean = true, val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : SimilarityMetric(showByDefault) {
+  override val name = "Semantic Similarity Score"
+  override val description: String = "Calculates the Semantic Similarity score between the reference and AIA response via cosine similarity of text embeddings."
+
+  private val project: Project
+    get() = ProjectManager.getInstance().defaultProject
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
+    val aiaResponse = lookup.additionalInfo[AIA_RESPONSE] as? String ?: return null
+    val reference = lookup.additionalInfo[REFERENCE_PROPERTY] as? String ?: return null
+    val score = runBlockingCancellable {
+      async {
+        cloudSemanticSimilarityCalculator.calculateCosineSimilarity(
+          project,
+          aiaResponse,
+          reference
+        )
+      }.await()
+    }
+    return score
+  }
+
+  override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
+}
+
+
+class ProposalSemanticSimilarityScore(showByDefault: Boolean = true, val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : SimilarityMetric(showByDefault) {
   override val name: String
     get() = NAME
   private val project: Project

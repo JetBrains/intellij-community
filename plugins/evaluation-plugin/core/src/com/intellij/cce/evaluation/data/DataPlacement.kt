@@ -61,6 +61,15 @@ sealed interface DataPlacement<In, Out> {
     override fun restore(props: DataProps): List<Int> = listOfNotNull(props.lookup.additionalInfo[propertyKey] as? Double).map { it.toInt() }
   }
 
+  data class AdditionalListInt(val propertyKey: String) : DataPlacement<List<Int>, List<Int>> {
+    override val serialName: String = "additional_list_int"
+    override fun dump(lookup: Lookup, t: List<Int>): Lookup =
+      // because of json serializes int to double we cast it by ourselves for predictability
+      lookup.copy(additionalInfo = lookup.additionalInfo + mapOf(propertyKey to t.map { it.toDouble() }))
+
+    override fun restore(props: DataProps): List<List<Int>> = listOfNotNull(props.lookup.additionalInfo[propertyKey] as? List<Double>).map { it.map { v -> v.toInt() } }
+  }
+
   data class AdditionalJsonSerializedStrings(val propertyKey: String) : DataPlacement<List<String>, List<String>> {
     override val serialName: String = "additional_concatenated_snippets"
     override fun dump(lookup: Lookup, t: List<String>): Lookup {
@@ -141,6 +150,7 @@ sealed interface DataPlacement<In, Out> {
         "additional_boolean" -> context?.deserialize(json, AdditionalBoolean::class.java)
         "additional_double" -> context?.deserialize(json, AdditionalDouble::class.java)
         "additional_int" -> context?.deserialize(json, AdditionalInt::class.java)
+        "additional_list_int" -> context?.deserialize(json, AdditionalListInt::class.java)
         "additional_concatenated_lines" -> context?.deserialize(json, AdditionalConcatenatedLines::class.java)
         "additional_concatenated_snippets" -> context?.deserialize(json, AdditionalJsonSerializedStrings::class.java)
         "latency" -> Latency

@@ -11,7 +11,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 
-class SemanticSimilarityMetricTest : BasePlatformTestCase() {
+class ProposalSemanticSimilarityMetricTest : BasePlatformTestCase() {
 
   fun `test lookup empty`() {
     val additionalInfo = emptyMap<String, List<*>>()
@@ -107,9 +107,9 @@ class SemanticSimilarityMetricTest : BasePlatformTestCase() {
       )).thenReturn(score)
     }
 
-    val semanticSimilarityScoreCalculator = spy(SemanticSimilarityScore(true, mockedEmbeddingsProvider))
+    val proposalSemanticSimilarityScoreCalculator = spy(ProposalSemanticSimilarityScore(true, mockedEmbeddingsProvider))
 
-    semanticSimilarityScoreCalculator.computeSimilarity(createLookup(additionalInfo), "")
+    proposalSemanticSimilarityScoreCalculator.computeSimilarity(createLookup(additionalInfo), "")
   }
 
   private fun createLookup(additionalInfo: Map<String, Any>): Lookup =
