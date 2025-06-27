@@ -7364,6 +7364,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertPropertyGetterToInitializer/hasComment3.kt");
         }
 
+        @TestMetadata("hasContext.kt")
+        public void testHasContext() throws Exception {
+            runTest("testData/intentions/convertPropertyGetterToInitializer/hasContext.kt");
+        }
+
         @TestMetadata("hasInitializer.kt")
         public void testHasInitializer() throws Exception {
             runTest("testData/intentions/convertPropertyGetterToInitializer/hasInitializer.kt");

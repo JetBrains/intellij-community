@@ -5853,6 +5853,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/hasComment3.kt");
         }
 
+        @TestMetadata("hasContext.kt")
+        public void testHasContext() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/hasContext.kt");
+        }
+
         @TestMetadata("hasInitializer.kt")
         public void testHasInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/hasInitializer.kt");
