@@ -643,11 +643,16 @@
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadJvmConfigEventParser"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadConfigEventParser"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.Maven4UpdateJdkTo17"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelQuickFix"/>
+
     <log.import.parser
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadJvmConfigEventParser"/>
     <log.import.parser
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadConfigEventParser"/>
+    <log.import.parser
+      implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelQuickFix"/>
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.InvalidTargetReleaseQuickFix"/>
+    <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelQuickFix"/>
 
     <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator" order="last"/>
   </extensions>
