@@ -103,7 +103,7 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
             }
         }
 
-        if (Registry.`is`("debugger.async.stack.trace.for.all.threads") && asyncStackTraces == null) {
+        if (asyncStackTraces == null && AsyncStacksUtils.isAgentEnabled() && Registry.`is`("debugger.async.stack.trace.for.all.threads")) {
             log.error("Could not obtain async stack traces, suspendContext = ${executionContext.suspendContext}")
         }
 
