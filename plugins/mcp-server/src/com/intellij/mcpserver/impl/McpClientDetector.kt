@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl
 
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clientConfiguration.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -117,7 +118,7 @@ object McpClientDetector {
     val vscodeConfigPath = Paths.get(projectBasePath, configDirName, "mcp.json")
 
     if (looksLikeMcpJson(vscodeConfigPath)) {
-      return McpClient("$clientName (Project)", vscodeConfigPath)
+      return McpClient(McpServerBundle.message("mcp.project.level.client", clientName), vscodeConfigPath)
     }
     return null
   }
@@ -139,7 +140,7 @@ object McpClientDetector {
     val claudeCodeConfigPath = Paths.get(projectBasePath, ".mcp.json")
 
     if (looksLikeMcpJson(claudeCodeConfigPath)) {
-      return McpClient("Claude Code (Project)", claudeCodeConfigPath)
+      return McpClient(McpServerBundle.message("mcp.claude.code.project.level.client"), claudeCodeConfigPath)
     }
     return null
   }
