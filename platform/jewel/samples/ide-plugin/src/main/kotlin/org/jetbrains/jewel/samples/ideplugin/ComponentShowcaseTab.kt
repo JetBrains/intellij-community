@@ -79,7 +79,7 @@ import org.jetbrains.jewel.ui.component.WarningDefaultBanner
 import org.jetbrains.jewel.ui.component.WarningInlineBanner
 import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
-import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape 
+import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 import org.jetbrains.jewel.ui.painter.hints.Badge
 import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.painter.hints.Stroke

@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import java.awt.Cursor
 import java.awt.datatransfer.StringSelection
+import java.io.IOException
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.thenIf
@@ -60,7 +61,6 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.util.LocalLabelProvider
-import java.io.IOException
 
 /**
  * A clickable text link that follows the standard visual styling with customizable appearance.
@@ -164,7 +164,7 @@ public fun ExternalLink(
  * An external link that follows the standard visual styling, including an external link icon.
  *
  * Please be aware that this ExternalLink will automatically open a link on click, unlike the other.
- * 
+ *
  * Provides a text link with an external link icon that indicates the link leads to external content. The link supports
  * various states including enabled/disabled, focused, and hovered, with optional underline behavior based on the style
  * configuration.
@@ -212,7 +212,7 @@ public fun ExternalLink(
                     label = labelProvider.fetchLabelFromKey("action.text.open.link.in.browser"),
                     onClick = {
                         val success = openLink(uriHandler, link)
-                        
+
                         onLinkOpened(success)
                     },
                 ),
@@ -228,7 +228,7 @@ public fun ExternalLink(
                 text = text,
                 onClick = {
                     val success = openLink(uriHandler, link)
-                    
+
                     onLinkOpened(success)
                 },
                 modifier = modifier,
@@ -239,7 +239,7 @@ public fun ExternalLink(
                 textStyle = textStyle,
                 icon = style.icons.externalLink,
             )
-        }
+        },
     )
 }
 
@@ -247,11 +247,11 @@ private fun openLink(uriHandler: UriHandler, link: String): Boolean {
     return try {
         uriHandler.openUri(link)
         true
-    } catch(e: IllegalArgumentException) {
-        println("Oh no!!!! $e")
+    } catch (e: IllegalArgumentException) {
+        // Log something?
         false
-    } catch(e: IOException) {
-        println("Oh DAMN! $e")
+    } catch (e: IOException) {
+        // Log something?
         false
     }
 }

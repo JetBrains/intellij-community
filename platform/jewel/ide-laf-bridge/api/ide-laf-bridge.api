@@ -2,6 +2,12 @@ public final class org/jetbrains/jewel/bridge/BridgeIconDataKt {
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/theme/ThemeIconData$Companion;)Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;
 }
 
+public final class org/jetbrains/jewel/bridge/BridgeLabelProvider : org/jetbrains/jewel/ui/util/LabelProvider {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun fetchLabelFromKey (Ljava/lang/String;)Ljava/lang/String;
+}
+
 public final class org/jetbrains/jewel/bridge/BridgePainterHintsProvider : org/jetbrains/jewel/ui/painter/PalettePainterHintsProvider {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/bridge/BridgePainterHintsProvider$Companion;
@@ -16,6 +22,12 @@ public final class org/jetbrains/jewel/bridge/BridgePainterHintsProvider$Compani
 public final class org/jetbrains/jewel/bridge/BridgeResourceResolverKt {
 	public static final fun bridgePainterProvider (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/painter/ResourcePainterProvider;
 	public static final fun bridgePainterProvider (Lorg/jetbrains/jewel/ui/icon/IconKey;)Lorg/jetbrains/jewel/ui/painter/ResourcePainterProvider;
+}
+
+public final class org/jetbrains/jewel/bridge/BridgeUriHandler : androidx/compose/ui/platform/UriHandler {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun openUri (Ljava/lang/String;)V
 }
 
 public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {

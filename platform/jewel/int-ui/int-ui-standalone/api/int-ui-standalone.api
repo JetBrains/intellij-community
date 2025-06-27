@@ -16,6 +16,12 @@ public final class org/jetbrains/jewel/intui/core/theme/IntUiLightTheme : org/je
 	public fun isDark ()Z
 }
 
+public final class org/jetbrains/jewel/intui/standalone/IntUiLabelProvider : org/jetbrains/jewel/ui/util/LabelProvider {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun fetchLabelFromKey (Ljava/lang/String;)Ljava/lang/String;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/InterFontKt {
 	public static final fun getInter (Landroidx/compose/ui/text/font/FontFamily$Companion;)Landroidx/compose/ui/text/font/FontFamily;
 }
