@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.blockingContextToIndicator
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * Calls [IdentifierHighlightingComputer] directly
  */
 @ApiStatus.Internal
-private class IdentifierHighlightingAccessorImpl : IdentifierHighlightingAccessor {
+object IdentifierHighlightingAccessorImpl : IdentifierHighlightingAccessor {
   override suspend fun getMarkupData(psiFile: PsiFile, editor: Editor, visibleRange: ProperTextRange, offset: Int): IdentifierHighlightingResult {
     return readAction {
       if (!psiFile.isValid || editor.isDisposed) {
