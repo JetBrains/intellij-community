@@ -12690,31 +12690,31 @@ http_file(
 )
 
 http_file(
-  name = "studio-platform-2025_1_1-alpha07-261_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2025.1.1-alpha07-261/studio-platform-2025.1.1-alpha07-261.jar",
-  sha256 = "ef13a986add94cbf53ef4e567e64fc24c72bda111308e748ace322a9f6f8a246",
-  downloaded_file_path = "studio-platform-2025.1.1-alpha07-261.jar"
+  name = "studio-platform-2025_1_1-rc01-263_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2025.1.1-rc01-263/studio-platform-2025.1.1-rc01-263.jar",
+  sha256 = "d7dd96ac7a6609900816401bd81650e4799ddd7e4c12378f15c1f76001ecf34a",
+  downloaded_file_path = "studio-platform-2025.1.1-rc01-263.jar"
 )
 
 http_file(
-  name = "studio-platform-2025_1_1-alpha07-261-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2025.1.1-alpha07-261/studio-platform-2025.1.1-alpha07-261-sources.jar",
-  sha256 = "31f3bf7302ba9568cb69f6c535c85a4544f7c0cedea8c7a11e32103b055343b8",
-  downloaded_file_path = "studio-platform-2025.1.1-alpha07-261-sources.jar"
+  name = "studio-platform-2025_1_1-rc01-263-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2025.1.1-rc01-263/studio-platform-2025.1.1-rc01-263-sources.jar",
+  sha256 = "82cfa52166437eb03ba927c8b241804fca31d56480971a40b32b84e563e2cacf",
+  downloaded_file_path = "studio-platform-2025.1.1-rc01-263-sources.jar"
 )
 
 http_file(
-  name = "studio-test-platform-2025_1_1-alpha07-261_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2025.1.1-alpha07-261/studio-test-platform-2025.1.1-alpha07-261.jar",
-  sha256 = "8d62429980b37164a1f57acf0f4ab76a714ff80c79ec4d2f568c054fe86eb4b6",
-  downloaded_file_path = "studio-test-platform-2025.1.1-alpha07-261.jar"
+  name = "studio-test-platform-2025_1_1-rc01-263_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2025.1.1-rc01-263/studio-test-platform-2025.1.1-rc01-263.jar",
+  sha256 = "e34fbcb96c82f1b78d9726275f8dcd3a5282626d0b100766150d11faa23b9e79",
+  downloaded_file_path = "studio-test-platform-2025.1.1-rc01-263.jar"
 )
 
 http_file(
-  name = "studio-test-platform-2025_1_1-alpha07-261-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2025.1.1-alpha07-261/studio-test-platform-2025.1.1-alpha07-261-sources.jar",
-  sha256 = "a4e5bbc14c421623fe345e4cce083d2305dbc56f77d5785096d47e6ee95397f3",
-  downloaded_file_path = "studio-test-platform-2025.1.1-alpha07-261-sources.jar"
+  name = "studio-test-platform-2025_1_1-rc01-263-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2025.1.1-rc01-263/studio-test-platform-2025.1.1-rc01-263-sources.jar",
+  sha256 = "d23925f29480cd84933457341988f9b047e0eea1779ce14ceef9c8bf88629ca4",
+  downloaded_file_path = "studio-test-platform-2025.1.1-rc01-263-sources.jar"
 )
 
 http_file(
