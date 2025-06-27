@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.util.coroutines.childScope
-import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -24,18 +23,18 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
   private var scopeIdToDescriptor = mapOf<String, ScopeDescriptor>()
   private var itemsLoadingJob: kotlinx.coroutines.Job? = null
 
-  override fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType, onFinished: suspend (Map<String, ScopeDescriptor>?) -> Unit) {
+  override fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType, onScopesUpdate: suspend (Map<String, ScopeDescriptor>?) -> Unit) {
     itemsLoadingJob = coroutineScope.childScope("ScopesStateService.subscribeToScopeStates").launch {
       LOG.performRpcWithRetries {
         val scopesFlow = ScopeModelApi.getInstance().createModelAndSubscribe(project.projectId(), modelId, filterConditionType)
         if (scopesFlow == null) {
-          LOG.warn("Failed to subscribe to model updates for modelId: $modelId")
-          onFinished(null)
+          LOG.error("Failed to subscribe to model updates for modelId: $modelId")
+          onScopesUpdate(null)
           return@performRpcWithRetries
         }
         scopesFlow.collect { scopesInfo ->
           val fetchedScopes = scopesInfo.getScopeDescriptors()
-          onFinished(fetchedScopes)
+          onScopesUpdate(fetchedScopes)
           ScopesStateService.getInstance(project).getScopesState().updateIfNotExists(fetchedScopes)
           scopeIdToDescriptor = fetchedScopes
         }
@@ -45,14 +44,6 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
 
   override fun disposeModel(modelId: String) {
     itemsLoadingJob?.cancel()
-    coroutineScope.launch {
-      try {
-        ScopeModelApi.getInstance().dispose(modelId)
-      }
-      catch (e: RpcTimeoutException) {
-        LOG.warn("Failed to dispose model for modelId: $modelId", e)
-      }
-    }
   }
 
   override fun getScopeById(scopeId: String): ScopeDescriptor? {

@@ -33,8 +33,11 @@ public class ScopeDescriptor implements ColoredItem {
     return myScope;
   }
 
+  /**
+   * @return true if obtaining this scope requires user interaction (e.g., UI dialog, confirmation); false if it can be resolved programmatically.
+   */
   @ApiStatus.Internal
-  public boolean isEdtRequired() {
+  public boolean needsUserInputForScope() {
     return false;
   }
 

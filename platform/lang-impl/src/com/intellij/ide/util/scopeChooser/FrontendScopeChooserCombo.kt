@@ -24,7 +24,7 @@ import kotlin.math.min
  * `getDisposable()` is `DialogWrapper`'s method.
  */
 @ApiStatus.Internal
-class FrontendScopeChooserCombo(project: Project,  private val preselectedScopeName: String?, val filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER) : ComboBox<ScopeDescriptor>(400), Disposable {
+class FrontendScopeChooserCombo(project: Project,  private val preselectedScopeName: String?, val filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER) : ComboBox<ScopeDescriptor>(300), Disposable {
   private val scopeService = ScopeModelService.getInstance(project)
   private val modelId = UUID.randomUUID().toString()
   private var scopesMap: Map<String, ScopeDescriptor> = emptyMap()
