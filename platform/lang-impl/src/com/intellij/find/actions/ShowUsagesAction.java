@@ -1488,7 +1488,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         .append(hint)
         .br()
         .appendLink(FIND_OPTIONS_HREF_TARGET, UsageViewBundle.message("link.display.name.find.options"));
-      KeyboardShortcut shortcut = getShowUsagesShortcut();
+      KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
       if (shortcut != null) {
         builder.nbsp().append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
       }
