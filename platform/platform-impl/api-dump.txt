@@ -220,6 +220,8 @@ f:com.intellij.ide.plugins.PluginInstallCallbackData
 - f:copy(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z):com.intellij.ide.plugins.PluginInstallCallbackData
 - bs:copy$default(com.intellij.ide.plugins.PluginInstallCallbackData,java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z,I,java.lang.Object):com.intellij.ide.plugins.PluginInstallCallbackData
 - f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
+f:com.intellij.ide.plugins.PluginManagerMain
+- s:suggestToEnableInstalledDependantPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List,java.lang.Boolean):Z
 com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
 - com.intellij.ide.plugins.PluginEnabler
 - disable(java.util.Collection):Z
