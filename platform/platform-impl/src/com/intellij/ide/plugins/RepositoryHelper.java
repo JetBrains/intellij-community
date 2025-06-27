@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
+import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -108,10 +109,29 @@ public final class RepositoryHelper {
     return ContainerUtil.map(loadPluginModels(repositoryUrl, build, indicator), it -> (PluginNode)it.getDescriptor());
   }
 
+  @Deprecated(forRemoval = true)
+  public static @NotNull List<PluginNode> loadPlugins(
+    @Nullable String repositoryUrl,
+    @Nullable BuildNumber build,
+    @Nullable ProgressIndicator indicator,
+    @NotNull PluginUiModelBuilderFactory factory
+  ) throws IOException {
+    return ContainerUtil.map(loadPluginModels(repositoryUrl, build, indicator, factory), it -> (PluginNode)it.getDescriptor());
+  }
+
   public static @NotNull List<PluginUiModel> loadPluginModels(
     @Nullable String repositoryUrl,
     @Nullable BuildNumber build,
     @Nullable ProgressIndicator indicator
+  ) throws IOException {
+    return loadPluginModels(repositoryUrl, build, indicator, PluginUiModelBuilderFactory.getInstance());
+  }
+
+  public static @NotNull List<PluginUiModel> loadPluginModels(
+    @Nullable String repositoryUrl,
+    @Nullable BuildNumber build,
+    @Nullable ProgressIndicator indicator,
+    @NotNull PluginUiModelBuilderFactory factory
   ) throws IOException {
     Path pluginListFile;
     Url url;
@@ -137,7 +157,8 @@ public final class RepositoryHelper {
     }
 
     var message = IdeBundle.message("progress.downloading.list.of.plugins", url.getAuthority());
-    var descriptors = MarketplaceRequests.readOrUpdateFile(pluginListFile, url.toExternalForm(), indicator, message, MarketplaceRequests::parsePluginList);
+    var descriptors = MarketplaceRequests.readOrUpdateFile(pluginListFile, url.toExternalForm(), indicator, message,
+                                                           input -> MarketplaceRequests.parsePluginList(input, factory));
     return process(descriptors, build != null ? build : PluginManagerCore.getBuildNumber(), repositoryUrl);
   }
 
@@ -242,12 +263,18 @@ public final class RepositoryHelper {
    */
   @ApiStatus.Internal
   public static @NotNull List<PluginNode> loadPluginsFromCustomRepositories(@Nullable ProgressIndicator indicator) {
+    return loadPluginsFromCustomRepositories(indicator, PluginUiModelBuilderFactory.getInstance());
+  }
+
+
+  @ApiStatus.Internal
+  public static @NotNull List<PluginNode> loadPluginsFromCustomRepositories(@Nullable ProgressIndicator indicator, @NotNull PluginUiModelBuilderFactory factory) {
     var ids = new HashSet<PluginId>();
     var result = new ArrayList<PluginNode>();
 
     for (var host : getCustomPluginRepositoryHosts()) {
       try {
-        var plugins = loadPlugins(host, null, indicator);
+        var plugins = loadPlugins(host, null, indicator, factory);
         for (var plugin : plugins) {
           if (ids.add(plugin.getPluginId())) {
             result.add(plugin);
