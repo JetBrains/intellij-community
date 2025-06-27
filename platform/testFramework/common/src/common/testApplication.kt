@@ -138,6 +138,7 @@ ${dumpCoroutines(stripDump = false)}
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
   PluginManagerCore.scheduleDescriptorLoading(GlobalScope)
   setupEventQueue.run()
+  injectFileSystemProviders()
   loadAppInUnitTestMode(isHeadless)
 }
 

@@ -1191,6 +1191,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
     }
 
+    args += "--add-opens"
+    args += "java.base/java.nio.file.spi=ALL-UNNAMED"
+
     args += if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite"
 
     if (suiteName != null) {
