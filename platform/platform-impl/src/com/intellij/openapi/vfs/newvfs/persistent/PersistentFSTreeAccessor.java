@@ -258,6 +258,7 @@ public class PersistentFSTreeAccessor {
       return rootsIds[rootIndex];
     }
     int insertionIndex = -rootIndex - 1;
+    //FIXME RC: use fileIdIndexedStorages instead of emptyList()
     int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
     rootsUrlIds = ArrayUtil.insert(rootsUrlIds, insertionIndex, rootUrlId);
     rootsIds = ArrayUtil.insert(rootsIds, insertionIndex, newRootFileId);
