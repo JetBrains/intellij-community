@@ -7,6 +7,7 @@ import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +46,17 @@ public interface JBAccountInfoService {
 
   @Nullable JBAccountInfoService.JBAData getUserData();
 
+  /**
+   * This method may return a cached invalid token issued by an OAuth server other than the current one.
+   * It is possible after switching to a regional JBA deployment, or between staging and production environments.
+   * The call may involve network calls, so it should be performed in a background thread.
+   */
   default @Nullable String getIdToken() {
     return null;
+  }
+
+  default @NotNull CompletableFuture<@Nullable String> getJbaIdToken() {
+    return CompletableFuture.supplyAsync(() -> getIdToken(), AppExecutorUtil.getAppExecutorService());
   }
 
   default @NotNull Future<String> getAccessToken() {
