@@ -17,7 +17,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jackson2x.version>2.12.0</jackson2x.version>
+    <jackson2x.version>2.12.7.1</jackson2x.version>
   </properties>
 
   <build>
