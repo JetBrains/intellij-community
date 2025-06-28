@@ -1,13 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
+
+import static com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet;
 
 public final class UserDictionary implements EditableDictionary {
   private final String name;
@@ -16,12 +17,12 @@ public final class UserDictionary implements EditableDictionary {
 
   public UserDictionary(@NotNull String name) {
     this.name = name;
-    this.words = CollectionFactory.createSmallMemoryFootprintSet();
+    this.words = createSmallMemoryFootprintSet();
   }
 
   public UserDictionary(@NotNull String name, @Nullable Collection<String> words) {
     this.name = name;
-    this.words = CollectionFactory.createSmallMemoryFootprintSet(words == null ? Set.of() : words);
+    this.words = words == null ? createSmallMemoryFootprintSet() : createSmallMemoryFootprintSet(words.size());
     addToDictionary(words);
   }
 
