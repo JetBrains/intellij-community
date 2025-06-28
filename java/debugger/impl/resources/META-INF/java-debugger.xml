@@ -367,11 +367,6 @@
 
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
 
-    <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction"
-            icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges">
-      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
-    </action>
-
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction">
         <override-text place="MainMenu"/>
