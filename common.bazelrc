@@ -81,3 +81,6 @@ common:ci --show_progress_rate_limit=30
 
 # avoid creating a runfiles tree for binaries or tests until it is needed
 build --nobuild_runfile_links
+
+# Non-sandboxed tests by default
+test --strategy=TestRunner=local
