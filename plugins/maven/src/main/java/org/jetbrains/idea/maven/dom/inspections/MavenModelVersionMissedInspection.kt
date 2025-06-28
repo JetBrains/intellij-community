@@ -17,6 +17,7 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.model.MavenConstants.*
 import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenModelVersionMissedInspection : BasicDomElementsInspection<MavenDomProjectModel?>(MavenDomProjectModel::class.java) {
   override fun getGroupDisplayName(): String {
@@ -34,9 +35,9 @@ class MavenModelVersionMissedInspection : BasicDomElementsInspection<MavenDomPro
     val projectModel = domFileElement.getRootElement()
     if (projectModel.modelVersion.exists()) return
     val rootTag = domFileElement.rootTag
-    val xmlns = rootTag?.getAttribute("xmlns")?.value
-    val schemaLocation = rootTag?.getAttribute("xsi:schemaLocation")?.value?.split(' ')
-    if (xmlns == MAVEN_4_XLMNS && schemaLocation != null && schemaLocation.all { it == MAVEN_4_XLMNS || it == MAVEN_4_XSD }) return
+    if (MavenUtil.isMaven410(
+        rootTag?.getAttribute("xmlns")?.value,
+        rootTag?.getAttribute("xsi:schemaLocation")?.value)) return
     holder.createProblem(projectModel,
                          HighlightSeverity.ERROR,
                          MavenDomBundle.message("inspection.missed.model.version"),
