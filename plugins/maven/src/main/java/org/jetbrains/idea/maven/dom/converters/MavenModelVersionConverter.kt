@@ -20,7 +20,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.model.MavenConstants.*
+import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenModelVersionConverter : MavenConstantListConverter() {
   override fun getValues(context: ConvertContext): Collection<String> {
@@ -35,9 +36,9 @@ class MavenModelVersionConverter : MavenConstantListConverter() {
   override fun fromString(s: @NonNls String?, context: ConvertContext): String? {
     if (s != null) return super.fromString(s, context)
     val rootTag = context.file.rootTag
-    val xmlns = rootTag?.getAttribute("xmlns")?.value
-    val schemaLocation = rootTag?.getAttribute("xsi:schemaLocation")?.value?.split(' ')
-    if (xmlns == MAVEN_4_XLMNS && schemaLocation != null && schemaLocation.all { it == MAVEN_4_XLMNS || it == MAVEN_4_XSD }) return MODEL_VERSION_4_1_0
+    if (MavenUtil.isMaven410(
+        rootTag?.getAttribute("xmlns")?.value,
+        rootTag?.getAttribute("xsi:schemaLocation")?.value)) return MODEL_VERSION_4_1_0
     return null
   }
 
