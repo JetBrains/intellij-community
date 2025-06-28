@@ -75,7 +75,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
+import org.jetbrains.idea.maven.model.MavenConstants.*
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.*
@@ -132,8 +132,10 @@ object MavenUtil {
 
   @ApiStatus.Experimental
   const val MAVEN_NAME: @NlsSafe String = "Maven"
+
   @JvmField
   val MAVEN_NAME_UPCASE: @NonNls String = MAVEN_NAME.uppercase(Locale.getDefault())
+
   @JvmField
   val SYSTEM_ID: ProjectSystemId = ProjectSystemId(MAVEN_NAME_UPCASE)
   const val MAVEN_NOTIFICATION_GROUP: String = MAVEN_NAME
@@ -937,7 +939,6 @@ object MavenUtil {
   }
 
 
-
   @JvmStatic
   fun isValidMavenHome(home: Path?): Boolean {
     if (home == null) return false
@@ -1130,7 +1131,7 @@ object MavenUtil {
       return Path.of(forcedM2Home)
     }
 
-    val api = if (path == null|| path.getEelDescriptor() is LocalEelDescriptor) localEel else path.getEelApiBlocking()
+    val api = if (path == null || path.getEelDescriptor() is LocalEelDescriptor) localEel else path.getEelApiBlocking()
     val result: Path = api.resolveM2Dir().resolve(REPOSITORY_DIR)
 
     try {
@@ -1624,16 +1625,16 @@ object MavenUtil {
     return ModuleRootManager.getInstance(module).getSdk()
   }
 
-/*    @JvmStatic
-  fun <K, V : MutableMap<*, *>?> getOrCreate(map: MutableMap<K?, V?>, key: K?): V {
-    var res = map.get(key)
-    if (res == null) {
-      res = HashMap<Any?, Any?>() as V
-      map.put(key, res)
-    }
+  /*    @JvmStatic
+    fun <K, V : MutableMap<*, *>?> getOrCreate(map: MutableMap<K?, V?>, key: K?): V {
+      var res = map.get(key)
+      if (res == null) {
+        res = HashMap<Any?, Any?>() as V
+        map.put(key, res)
+      }
 
-    return res
-  }*/
+      return res
+    }*/
 
   @JvmStatic
   fun isMavenModule(module: Module?): Boolean {
@@ -1974,7 +1975,8 @@ object MavenUtil {
     if (!isRunningFromSources()) return null
     if (archivedClassesLocation != null && mapping != null) {
       return mapping["production/$moduleName"]?.toNioPathOrNull()
-    } else {
+    }
+    else {
       return path?.resolve(moduleName)
     }
   }
@@ -1982,5 +1984,18 @@ object MavenUtil {
   @JvmStatic
   fun isRunningFromSources(): Boolean {
     return path != null && (path.endsWith("production") || path.parent.endsWith("production"))
+  }
+
+  fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {
+    if (xmlns == null || schemaLocation == null) return false
+    val schemaLocations = schemaLocation.split(' ')
+    return (xmlns == MAVEN_4_XLMNS || xmlns == MAVEN_4_XLMNS_HTTPS)
+           && schemaLocations.all {
+      it == MAVEN_4_XLMNS ||
+      it == MAVEN_4_XLMNS_HTTPS ||
+      it == MAVEN_4_XSD ||
+      it == MAVEN_4_XSD_HTTPS
+    }
+
   }
 }
