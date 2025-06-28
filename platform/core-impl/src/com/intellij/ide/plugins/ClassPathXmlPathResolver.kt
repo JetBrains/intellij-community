@@ -70,7 +70,13 @@ class ClassPathXmlPathResolver(
           }
         }
         else -> {
-          throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
+          throw RuntimeException("Cannot resolve $path (" +
+                                 "dataLoader=$dataLoader, " +
+                                 "classLoader=$classLoader, " +
+                                 "isRunningFromSourcesWithoutDevBuild=$isRunningFromSourcesWithoutDevBuild, " +
+                                 "dataLoader.emptyDescriptorIfCannotResolve=${dataLoader.emptyDescriptorIfCannotResolve}, " +
+                                 "path.startsWith(\"intellij.\")=${path.startsWith("intellij.")}, " +
+                                 ")")
         }
       }
     }
