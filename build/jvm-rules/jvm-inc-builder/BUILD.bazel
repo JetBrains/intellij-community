@@ -21,6 +21,7 @@ kt_jvm_library(
     "//dependency-graph",
     "//jps-builders-6:build-javac-rt",
     "//:jps-javac-extension",
+    "//:opentelemetry-api",
     "//:h2-mvstore",
     "//:hash4j",
     "//:asm-all",

@@ -6,6 +6,7 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildContextImpl
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.bazel.jvm.*
 import org.jetbrains.bazel.jvm.util.*
 import org.jetbrains.jps.javac.ExternalRefCollectorCompilerToolExtension
@@ -15,18 +16,30 @@ import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.logging.Level
+import java.util.logging.LogManager
 import java.util.regex.Pattern
 
 internal class BazelIncExecutor : WorkRequestExecutor<WorkRequestWithDigests> {
   private val FLAG_FILE_RE: Regex = Pattern.compile("""^--flagfile=((.*)-(\d+).params)$""").toRegex()
 
   companion object {
+    private val defaultLogLevel = Level.INFO
 
     private fun configureLogging(tracer: Tracer, scope: CoroutineScope) {
-      // todo
-//      val globalSpanForIJLogger = tracer.spanBuilder("global").startSpan()
-//      scope.coroutineContext.job.invokeOnCompletion { globalSpanForIJLogger.end() }
-//      Logger.setFactory { BazelLogger(category = IdeaLogRecordFormatter.smartAbbreviate(it), span = globalSpanForIJLogger) }
+      val globalSpan = tracer.spanBuilder("global").startSpan()
+      scope.coroutineContext.job.invokeOnCompletion { globalSpan.end() }
+
+      // configure logging for the code using IJ Platform logging API
+      com.intellij.openapi.diagnostic.Logger.setFactory { IJPrintStreamLogger(category = it, stream = System.err, span = globalSpan) }
+
+      // configure logging for the code using Java SDK logging API
+      val rootLogger = java.util.logging.Logger.getLogger("")
+      rootLogger.handlers.forEach { rootLogger.removeHandler(it) }
+      LogManager.getLogManager().readConfiguration(".level=${defaultLogLevel.name}".byteInputStream())
+      rootLogger.addHandler(
+        PrintStreamLogHandler(defaultLogLevel, System.err, globalSpan)
+      )
     }
 
     private fun configureGlobals() {
