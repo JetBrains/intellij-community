@@ -439,6 +439,21 @@ public final class JavaSdkImpl extends JavaSdk {
       root = refresh ? lfs.refreshAndFindFileByPath(path) : lfs.findFileByPath(path);
       pathsChecked.add(path);
     }
+    if (root == null) {
+      // Bazel-provided test dependencies, from runfiles tree
+      String testSrcDir = System.getenv("TEST_SRCDIR");
+      if (testSrcDir != null && !testSrcDir.isBlank()) {
+        Path root1 = Path.of(testSrcDir, "community+/java/jdkAnnotations");
+        Path root2 = Path.of(testSrcDir, "_main/java/jdkAnnotations");
+
+        Path rootPath = Files.isDirectory(root1) ? root1 : Files.isDirectory(root2) ? root2 : null;
+        if (rootPath != null) {
+          String path = FileUtil.toSystemIndependentName(rootPath.toString());
+          root = refresh ? lfs.refreshAndFindFileByPath(path) : lfs.findFileByPath(path);
+          pathsChecked.add(path);
+        }
+      }
+    }
     if (root == null && !refresh) {
       pathsChecked.add("<refresh is on now>");
       root = internalJdkAnnotationsPath(pathsChecked, true);
