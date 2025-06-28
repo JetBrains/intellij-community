@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
@@ -266,7 +267,16 @@ public final class IdeaTestUtil {
   }
 
   private static @NotNull File getPathForJdkNamed(@NotNull String name) {
-    return new File(PlatformTestUtil.getCommunityPath(), "java/" + name);
+    // Bazel-provided test dependencies, from runfiles tree
+    if (BazelTestUtil.isUnderBazelTest()) {
+      return BazelTestUtil.findRunfilesDirectoryUnderCommunityOrUltimate("java/" + name).toFile();
+    }
+
+    File file = new File(PlatformTestUtil.getCommunityPath(), "java/" + name);
+    if (!file.isDirectory()) {
+      throw new RuntimeException("Can't find JDK directory for " + name + " at " + file);
+    }
+    return file;
   }
 
   public static void addWebJarsToModule(@NotNull Module module) {

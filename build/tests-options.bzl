@@ -112,6 +112,8 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], **kwargs):
         data = [
             # so com.intellij.tests.JUnit5BazelRunner.guessBazelWorkspaceDir will find a real workspace root
             "@community//:intellij.idea.community.main.iml",
+            # required for com.intellij.openapi.projectRoots.impl.JavaSdkImpl.internalJdkAnnotationsPath
+            "@community//java:mockJDK",
         ],
         use_testrunner = False,
         **kwargs
