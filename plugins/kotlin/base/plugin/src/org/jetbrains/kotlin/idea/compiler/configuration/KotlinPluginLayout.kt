@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
@@ -13,9 +14,11 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.O
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
+import org.jetbrains.kotlin.idea.testFramework.TestKotlinArtifactsProvider
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.ServiceLoader
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
 
@@ -123,43 +126,59 @@ object KotlinPluginLayout {
         }
         when (KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode) {
             KotlinPluginLayoutMode.SOURCES -> {
-                val bundledJpsVersion by lazy {
-                    KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
+                @Suppress("TestOnlyProblems")
+                if (PluginManagerCore.isUnitTestMode) {
+                    val provider = ServiceLoader.load(TestKotlinArtifactsProvider::class.java).singleOrNull()
+                        ?: error("TestKotlinArtifacts service provider is not found. Expected ...") // TODO
+                    kotlincProvider = lazy {
+                        // NOTE: FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider
+                        // requires it should be under KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
+                        provider.getKotlincCompilerCli().toFile()
+                    }
+                    kotlincIdeProvider = kotlincProvider
+                    jpsPluginClasspathProvider = lazy { provider.getJpsPluginClasspath().map { it.toFile() } }
+                    standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
                 }
-
-                kotlincProvider = lazy {
-                    @Suppress("DEPRECATION")
-                    val distJar = downloadArtifactForIdeFromSources(
-                        OLD_KOTLIN_DIST_ARTIFACT_ID,
+                else {
+                    val bundledJpsVersion by lazy {
                         KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
-                    ) ?: error("Can't download dist")
-                    val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
-                    LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
-                }
+                    }
 
-                // TODO: KTIJ-32993
-                kotlincIdeProvider = lazy {
-                    @Suppress("DEPRECATION")
-                    val distJar = downloadArtifactForIdeFromSources(
-                        OLD_KOTLIN_DIST_ARTIFACT_ID,
-                        KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_ide_dist.xml")
-                    ) ?: error("Can't download dist")
-                    val unpackedDistDir =
-                        KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-ide-dist-for-ide-from-sources")
-                    LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
-                }
+                    kotlincProvider = lazy {
+                        @Suppress("DEPRECATION")
+                        val distJar = downloadArtifactForIdeFromSources(
+                            OLD_KOTLIN_DIST_ARTIFACT_ID,
+                            bundledJpsVersion
+                        ) ?: error("Can't download dist")
+                        val unpackedDistDir =
+                            KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
+                        LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
+                    }
 
-                jpsPluginClasspathProvider = lazy {
-                    @Suppress("DEPRECATION")
-                    val jpsPluginArtifact = KotlinMavenUtils.findArtifactOrFail(
-                        KOTLIN_MAVEN_GROUP_ID,
-                        OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-                        bundledJpsVersion
-                    )
+                    // TODO: KTIJ-32993
+                    kotlincIdeProvider = lazy {
+                        @Suppress("DEPRECATION")
+                        val distJar = downloadArtifactForIdeFromSources(
+                            OLD_KOTLIN_DIST_ARTIFACT_ID,
+                            KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_ide_dist.xml")
+                        ) ?: error("Can't download dist")
+                        val unpackedDistDir =
+                            KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-ide-dist-for-ide-from-sources")
+                        LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
+                    }
 
-                    listOf(jpsPluginArtifact.toFile())
+                    jpsPluginClasspathProvider = lazy {
+                        @Suppress("DEPRECATION")
+                        val jpsPluginArtifact = KotlinMavenUtils.findArtifactOrFail(
+                            KOTLIN_MAVEN_GROUP_ID,
+                            OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+                            bundledJpsVersion
+                        )
+
+                        listOf(jpsPluginArtifact.toFile())
+                    }
+                    standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
                 }
-                standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
             }
 
             KotlinPluginLayoutMode.INTELLIJ -> {

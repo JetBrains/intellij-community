@@ -2,35 +2,44 @@
 package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeHostSupportDetector
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import org.jetbrains.kotlin.konan.file.unzipTo
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.io.IOException
-import java.net.URI
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.resolve
 
 object TestKotlinArtifacts {
     private val kotlinCLibrariesVersion by lazy {
-        TestKotlinArtifacts::class.java.classLoader.getResourceAsStream("kotlincKotlinCompilerCliVersion.txt")?.reader()?.readText()
-            ?: error("Test resource not found: kotlincKotlinCompilerCliVersion.txt")
+        TestKotlinArtifacts::class.java.classLoader.getResourceAsStream("kotlincKotlinCompilerCliVersion.txt")?.use {
+            it.reader().readText()
+        } ?: error("Test resource not found: kotlincKotlinCompilerCliVersion.txt")
+    }
+
+    private val kotlincKotlinJpsPluginVersion by lazy {
+        (TestKotlinArtifacts::class.java.classLoader.getResourceAsStream("kotlincKotlinJpsPluginTests.txt")?.use {
+            it.reader().readText()
+        } ?: error("Test resource not found: kotlincKotlinJpsPluginTests.txt"))
     }
 
     private fun areFilesEquals(source: File, destination: File): Boolean {
@@ -41,6 +50,32 @@ object TestKotlinArtifacts {
             return false
         }
         return source.readBytes().contentEquals(destination.readBytes())
+    }
+
+    /**
+     * Returns a directory which will be under KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
+     * to satisfy FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider
+     */
+    internal val kotlinDistForIdeUnpacked: Path by lazy {
+        val artifactId = OLD_KOTLIN_DIST_ARTIFACT_ID
+        val version = kotlincKotlinJpsPluginVersion
+        val archiveFile = downloadArtifact(groupId = KOTLIN_MAVEN_GROUP_ID, artifactId = artifactId, version = version)
+
+        val targetDirectory = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.toPath().resolve("$artifactId-$version")
+        runBlocking(Dispatchers.IO) {
+            extractFile(archiveFile.toPath(), targetDirectory, communityRoot)
+        }
+
+        targetDirectory
+    }
+
+    internal val jpsPluginClasspath: List<Path> by lazy {
+        val fatJar = downloadArtifact(
+            groupId = KOTLIN_MAVEN_GROUP_ID,
+            artifactId = OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+            version = kotlincKotlinJpsPluginVersion,
+        )
+        listOf(fatJar.toPath())
     }
 
     private fun getKotlinJar(artifactId: String): File {
@@ -141,7 +176,7 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibJsLegacyJar: File by lazy {
         val version = "1.9.22"
         val target = File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlin-from-sources-deps").resolve("kotlin-stdlib-js-$version.jar")
-        val artifact = downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib-js", "$version")
+        val artifact = downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib-js", version)
         if (!areFilesEquals(artifact, target)) {
             artifact.copyTo(target, overwrite = true)
         }
@@ -154,7 +189,7 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibLegacy1922: File by lazy {
         val version = "1.9.22"
         val target = File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlin-from-sources-deps").resolve("kotlin-stdlib-$version.jar")
-        val artifact = downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", "$version")
+        val artifact = downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", version)
         if (!areFilesEquals(artifact, target)) {
             artifact.copyTo(target, overwrite = true)
         }
@@ -165,7 +200,7 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibCommonLegacy1922: File by lazy {
         val version = "1.9.22"
         val target = File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlin-from-sources-deps").resolve("kotlin-stdlib-common-$version.jar")
-        val artifact = downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib-common", "$version")
+        val artifact = downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib-common", version)
         if (!areFilesEquals(artifact, target)) {
             artifact.copyTo(target, overwrite = true)
         }
@@ -182,7 +217,7 @@ object TestKotlinArtifacts {
     @JvmStatic val jetbrainsAnnotations: File by lazy {
         val version = "26.0.2"
         val target = File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlin-from-sources-deps").resolve("annotations-$version.jar")
-        val artifact = downloadArtifact("org.jetbrains", "annotations", "$version", repository = KotlinArtifactRepository.MAVEN_CENTRAL)
+        val artifact = downloadArtifact("org.jetbrains", "annotations", version, repository = KotlinArtifactRepository.MAVEN_CENTRAL)
         if (!areFilesEquals(artifact, target)) {
             artifact.copyTo(target, overwrite = true)
         }
@@ -192,7 +227,7 @@ object TestKotlinArtifacts {
     @JvmStatic val jsr305: File by lazy {
         val version = "3.0.2"
         val target = File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlin-from-sources-deps").resolve("jsr305-$version.jar")
-        val artifact = downloadArtifact("com.google.code.findbugs", "jsr305", "$version", repository = KotlinArtifactRepository.MAVEN_CENTRAL)
+        val artifact = downloadArtifact("com.google.code.findbugs", "jsr305", version, repository = KotlinArtifactRepository.MAVEN_CENTRAL)
         if (!areFilesEquals(artifact, target)) {
             artifact.copyTo(target, overwrite = true)
         }
@@ -201,7 +236,7 @@ object TestKotlinArtifacts {
     @JvmStatic val junit3: File by lazy {
         val version = "3.8.2"
         val target = File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlin-from-sources-deps").resolve("junit-$version.jar")
-        val artifact = downloadArtifact("junit", "junit", "$version", repository = KotlinArtifactRepository.MAVEN_CENTRAL)
+        val artifact = downloadArtifact("junit", "junit", version, repository = KotlinArtifactRepository.MAVEN_CENTRAL)
         if (!areFilesEquals(artifact, target)) {
             artifact.copyTo(target, overwrite = true)
         }
@@ -240,8 +275,7 @@ object TestKotlinArtifacts {
     @JvmStatic
     val jsIrRuntimeDir: File by lazy {
         val target = File(PathManager.getCommunityHomePath()).resolve("out").resolve("js-ir-runtime-for-ide").resolve("js-ir-runtime-for-ide.jar")
-        val version = TestKotlinArtifacts::class.java.classLoader.getResourceAsStream("kotlincKotlinJpsPluginTests.txt")?.reader()?.readText()
-            ?: error("Test resource not found: kotlincKotlinJpsPluginTests.txt")
+        val version = kotlincKotlinJpsPluginVersion
         val artifact = downloadArtifact("org.jetbrains.kotlin", "js-ir-runtime-for-ide", version, packaging = "klib")
         if (!areFilesEquals(artifact, target)) {
             artifact.copyTo(target, overwrite = true)
@@ -316,6 +350,10 @@ enum class KotlinArtifactRepository(val url: String) {
     MAVEN_CENTRAL("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/");
 }
 
+private val communityRoot by lazy {
+    BuildDependenciesCommunityRoot(Paths.get(PathManager.getCommunityHomePath()))
+}
+
 @JvmOverloads
 fun downloadArtifact(
     groupId: String,
@@ -334,6 +372,5 @@ fun downloadArtifact(
 
     val url = BuildDependenciesDownloader.getUriForMavenArtifact(
         repository.url, groupId, artifactId, version, classifier, packaging)
-    return BuildDependenciesDownloader.downloadFileToCacheLocation(
-        BuildDependenciesCommunityRoot(Paths.get(PathManager.getCommunityHomePath())), url).toFile()
+    return BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, url).toFile()
 }
