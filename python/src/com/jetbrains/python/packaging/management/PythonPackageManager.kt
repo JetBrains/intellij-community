@@ -216,7 +216,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   @ApiStatus.Internal
   suspend fun waitForInit() {
-    if (PythonSdkType.isMock(sdk))
+    if (shouldBeInitInstantly())
       return
     initializationJob.join()
   }
@@ -236,14 +236,16 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     }
   }
 
+  //Some test on EDT so need to be inited on first create
+  private fun shouldBeInitInstantly(): Boolean = PythonSdkType.isMock(sdk) || ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isUnitTestMode
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
       val manager = pythonPackageManagerService.forSdk(project, sdk)
 
-      //Some test on EDT so need to be inited on first create
-      if (PythonSdkType.isMock(sdk)) {
+
+      if (manager.shouldBeInitInstantly()) {
         runBlockingMaybeCancellable {
           manager.initManager()
         }
