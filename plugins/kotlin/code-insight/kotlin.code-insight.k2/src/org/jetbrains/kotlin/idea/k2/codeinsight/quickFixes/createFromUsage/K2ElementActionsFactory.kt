@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtClassOrFile
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.util.findAnnotation
@@ -52,7 +53,15 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         target: JvmModifiersOwner,
         shouldBePresent: Boolean
     ): List<IntentionAction> {
-        return super.createChangeOverrideActions(target, shouldBePresent)
+        val kModifierOwner = target.sourceElement?.unwrapped as? KtModifierListOwner ?: return emptyList()
+
+        val action = if (shouldBePresent) {
+            AddModifierFix(kModifierOwner, KtTokens.OVERRIDE_KEYWORD)
+        } else {
+            RemoveModifierFixBase(kModifierOwner, KtTokens.OVERRIDE_KEYWORD, isRedundant = false)
+        }
+
+        return listOfNotNull(action.asIntention())
     }
 
     override fun createRemoveAnnotationActions(
