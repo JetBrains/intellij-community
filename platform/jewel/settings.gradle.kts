@@ -43,6 +43,7 @@ include(
     ":markdown:extensions:gfm-alerts",
     ":markdown:extensions:gfm-strikethrough",
     ":markdown:extensions:gfm-tables",
+    ":markdown:extensions:images",
     ":markdown:int-ui-standalone-styling",
     ":markdown:ide-laf-bridge-styling",
     ":samples:ide-plugin",
