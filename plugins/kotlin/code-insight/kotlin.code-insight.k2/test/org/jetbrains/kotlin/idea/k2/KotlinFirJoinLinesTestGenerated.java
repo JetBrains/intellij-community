@@ -586,6 +586,11 @@ public abstract class KotlinFirJoinLinesTestGenerated extends AbstractKotlinFirJ
             runTest("../../idea/tests/testData/joinLines/whenEntry/hasComment5.kt");
         }
 
+        @TestMetadata("hasComment6.kt")
+        public void testHasComment6() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/whenEntry/hasComment6.kt");
+        }
+
         @TestMetadata("in.kt")
         public void testIn() throws Exception {
             runTest("../../idea/tests/testData/joinLines/whenEntry/in.kt");
