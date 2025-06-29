@@ -12,6 +12,8 @@ abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : Serial
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
   }
 
+  abstract fun getHint(): String
+
   fun `test highlighting`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.io.Serializable
@@ -34,7 +36,7 @@ abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : Serial
               private const val serialVersionUID: Long = 7429157667498829299L
           }
       }
-    """.trimIndent(), "Add 'const val' property 'serialVersionUID' to 'Foo'")
+    """.trimIndent(), getHint())
   }
 
   fun `test quickfix companion exists`() {
@@ -56,7 +58,7 @@ abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : Serial
               val bar =  0
           }
       }
-    """.trimIndent(), "Add 'const val' property 'serialVersionUID' to 'Foo'")
+    """.trimIndent(), getHint())
   }
 
   fun `test quickfix @Serial annotation`() {
@@ -75,7 +77,7 @@ abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : Serial
                 private const val serialVersionUID: Long = 7429157667498829299L
             }
         }
-      """.trimIndent(), "Add 'const val' property 'serialVersionUID' to 'Foo'")
+      """.trimIndent(), getHint())
     }
   }
 }
