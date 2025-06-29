@@ -133,8 +133,9 @@ public fun PopupMenu(
         properties = popupProperties,
         onPreviewKeyEvent = { false },
         onKeyEvent = {
-            val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
-            val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
+            val currentFocusManager = focusManager ?: return@Popup false
+            val currentInputModeManager = inputModeManager ?: return@Popup false
+
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
         },
     ) {
