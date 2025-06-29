@@ -60,7 +60,7 @@ private fun _attachGradleProjectAndRefresh(
         ExternalSystemUtil.refreshProject(
             externalProjectPath,
             ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-                .use(ProgressExecutionMode.MODAL_SYNC)
+                .withProgressExecutionMode(ProgressExecutionMode.MODAL_SYNC)
                 .callback(callback)
                 .build()
         )
