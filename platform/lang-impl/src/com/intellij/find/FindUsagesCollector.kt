@@ -2,6 +2,7 @@
 package com.intellij.find
 
 import com.intellij.find.impl.FindPopupPanel
+import com.intellij.find.impl.FindPopupScopeUI
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
@@ -12,7 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 
 internal object FindUsagesCollector : CounterUsagesCollector() {
 
-  private val GROUP = EventLogGroup("find", 6)
+  private val GROUP = EventLogGroup("find", 7)
 
   const val FIND_IN_FILE: String = "FindInFile"
   const val FIND_IN_PATH: String = "FindInPath"
@@ -26,13 +27,15 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
   private val WITH_FILE_FILTER = EventFields.Boolean("with_file_filter")
   private val CONTEXT = EventFields.Enum("context", FindModel.SearchContext::class.java)
   private val TYPE = EventFields.String("type", listOf(FIND_IN_FILE, FIND_IN_PATH))
+  private val SELECTED_SEARCH_SCOPE = EventFields.Enum("selected_scope", SelectedSearchScope::class.java)
   private val SEARCH_SESSION_STARTED = GROUP.registerVarargEvent("search.session.started",
                                                                  TYPE,
                                                                  CASE_SENSITIVE,
                                                                  WHOLE_WORDS_ONLY,
                                                                  REGULAR_EXPRESSIONS,
                                                                  WITH_FILE_FILTER,
-                                                                 CONTEXT
+                                                                 CONTEXT,
+                                                                 SELECTED_SEARCH_SCOPE
   )
 
   private val OPTION_VALUE = EventFields.Boolean("option_value")
@@ -51,16 +54,19 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
   val PIN_TOGGLED: EventId1<Boolean> = GROUP.registerEvent("pin.toggled", OPTION_VALUE)
 
   @JvmStatic
+  @JvmOverloads
   fun triggerUsedOptionsStats(project: Project?,
                               type: String,
-                              model: FindModel) {
+                              model: FindModel,
+                              scopeType: FindPopupScopeUI.ScopeType? = null) {
     SEARCH_SESSION_STARTED.log(project,
                                TYPE.with(type),
                                CASE_SENSITIVE.with(model.isCaseSensitive),
                                WHOLE_WORDS_ONLY.with(model.isWholeWordsOnly),
                                REGULAR_EXPRESSIONS.with(model.isRegularExpressions),
                                WITH_FILE_FILTER.with(model.fileFilter != null),
-                               CONTEXT.with(model.searchContext)
+                               CONTEXT.with(model.searchContext),
+                               SELECTED_SEARCH_SCOPE.with(SelectedSearchScope.getByScopeType(scopeType))
     )
   }
 
@@ -70,4 +76,18 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
   }
 
   override fun getGroup(): EventLogGroup = GROUP
+}
+
+internal enum class SelectedSearchScope { Project, Module, Directory, Scopes, Other, Undefined;
+
+companion object {
+  fun getByScopeType(scopeType: FindPopupScopeUI.ScopeType?): SelectedSearchScope = when (scopeType?.name) {
+    FindPopupScopeUI.PROJECT_SCOPE_NAME -> Project
+    FindPopupScopeUI.MODULE_SCOPE_NAME -> Module
+    FindPopupScopeUI.DIRECTORY_SCOPE_NAME -> Directory
+    FindPopupScopeUI.CUSTOM_SCOPE_SCOPE_NAME -> Scopes
+    null -> Undefined
+    else -> Other
+  }
+}
 }

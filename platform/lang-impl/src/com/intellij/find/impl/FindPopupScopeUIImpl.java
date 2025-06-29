@@ -37,10 +37,10 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 
 final class FindPopupScopeUIImpl implements FindPopupScopeUI {
-  static final ScopeType PROJECT = new ScopeType("Project", FindBundle.messagePointer("find.popup.scope.project"), EmptyIcon.ICON_0);
-  static final ScopeType MODULE = new ScopeType("Module", FindBundle.messagePointer("find.popup.scope.module"), EmptyIcon.ICON_0);
-  static final ScopeType DIRECTORY = new ScopeType("Directory", FindBundle.messagePointer("find.popup.scope.directory"), EmptyIcon.ICON_0);
-  static final ScopeType SCOPE = new ScopeType("Scope", FindBundle.messagePointer("find.popup.scope.scope"), EmptyIcon.ICON_0);
+  static final ScopeType PROJECT = new ScopeType(PROJECT_SCOPE_NAME, FindBundle.messagePointer("find.popup.scope.project"), EmptyIcon.ICON_0);
+  static final ScopeType MODULE = new ScopeType(MODULE_SCOPE_NAME, FindBundle.messagePointer("find.popup.scope.module"), EmptyIcon.ICON_0);
+  static final ScopeType DIRECTORY = new ScopeType(DIRECTORY_SCOPE_NAME, FindBundle.messagePointer("find.popup.scope.directory"), EmptyIcon.ICON_0);
+  static final ScopeType SCOPE = new ScopeType(CUSTOM_SCOPE_SCOPE_NAME, FindBundle.messagePointer("find.popup.scope.scope"), EmptyIcon.ICON_0);
 
   private final @NotNull FindUIHelper myHelper;
   private final @NotNull Project myProject;
@@ -232,6 +232,11 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
       myModuleComboBox.setSelectedItem(findModel.getModuleName());
     }
     return selectedScope;
+  }
+
+  @Override
+  public ScopeType getScopeTypeByModel(@NotNull FindModel findModel) {
+    return getScope(findModel);
   }
 
   private static JComponent shrink(JComponent toShrink) {
