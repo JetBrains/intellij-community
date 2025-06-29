@@ -32,6 +32,9 @@ visibility("private")
 def find_java_toolchain(ctx, target):
     return ctx.toolchains[JAVA_TOOLCHAIN_TYPE].java if JAVA_TOOLCHAIN_TYPE in ctx.toolchains else target[java_common.JavaToolchainInfo]
 
+def _find_python_toolchain(ctx):
+    return ctx.toolchains["@bazel_tools//tools/python:toolchain_type"]
+
 def _java_info(target):
     return target[JavaInfo] if JavaInfo in target else None
 
@@ -297,6 +300,7 @@ def _run_jvm_builder(
     javaCount = len(srcs.java)
     args.add("--java-count", javaCount)
 
+    py3_runtime = _find_python_toolchain(ctx).py3_runtime
     java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
 
     ctx.actions.run(
@@ -307,8 +311,8 @@ def _run_jvm_builder(
         inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
         use_default_shell_env = True,
         outputs = outputs,
-        tools = [ctx.file._jvm_builder],
-        executable = java_runtime.java_executable_exec_path,
+        tools = [ctx.file._jvm_builder_launcher, ctx.file._jvm_builder],
+        executable = py3_runtime.interpreter.path,
         execution_requirements = {
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
@@ -316,11 +320,11 @@ def _run_jvm_builder(
             "supports-path-mapping": "1",
             "supports-multiplex-sandboxing": "1",
         },
-        arguments = ctx.attr._jvm_builder_jvm_flags[BuildSettingInfo].value + [
-            "-jar",
+        arguments = [
+            ctx.file._jvm_builder_launcher.path,
+            java_runtime.java_executable_exec_path,
             ctx.file._jvm_builder.path,
-            args,
-        ],
+        ] + ctx.attr._jvm_builder_jvm_flags[BuildSettingInfo].value + [ "--", args ],
         progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, "" if isIncremental else ", non-incremental"),
     )
 
