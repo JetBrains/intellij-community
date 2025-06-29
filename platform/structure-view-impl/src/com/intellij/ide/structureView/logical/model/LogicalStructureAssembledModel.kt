@@ -43,6 +43,16 @@ class LogicalStructureAssembledModel<T> private constructor(
     return result
   }
 
+  fun hasChildren(): Boolean {
+    if (model is LogicalContainer<*> && model.getElements().isNotEmpty()) {
+      return true
+    }
+    for (provider in LogicalStructureElementsProvider.getProviders(model!!)) {
+      if (provider is ExternalElementsProvider<*, *> || provider.getElements(model).isNotEmpty()) return true
+    }
+    return false
+  }
+
   fun getLogicalPsiDescriptions(): Set<LogicalPsiDescription> {
     return model?.let { getLogicalPsiDescriptions(it) } ?: emptySet()
   }
