@@ -205,7 +205,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     });
 
     initComponents();
-    FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel());
+    FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel(), myScopeUI.getScopeTypeByModel(myHelper.getModel()));
   }
 
   @Override
