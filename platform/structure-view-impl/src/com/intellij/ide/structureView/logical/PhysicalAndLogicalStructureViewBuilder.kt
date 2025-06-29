@@ -7,7 +7,7 @@ import com.intellij.ide.structureView.logical.impl.LogicalStructureViewService.C
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.editor.Editor
@@ -45,7 +45,7 @@ class PhysicalAndLogicalStructureViewBuilder(
   }
 
   override suspend fun createStructureViewSuspend(fileEditor: FileEditor?, project: Project): StructureView {
-    val logicalBuilder = readAction {
+    val logicalBuilder = smartReadAction(project) {
       getInstance(psiFile.project).getLogicalStructureBuilder(psiFile)
     }
     return withContext(Dispatchers.EDT) {

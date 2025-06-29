@@ -30,6 +30,7 @@
 - f:getModel():java.lang.Object
 - f:getParent():com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 - f:getProject():com.intellij.openapi.project.Project
+- f:hasChildren():Z
 - hashCode():I
 *f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
 - f:getInstance(com.intellij.openapi.project.Project,java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
