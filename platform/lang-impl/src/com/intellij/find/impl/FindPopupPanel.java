@@ -1965,6 +1965,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
+        FindUsagesCollector.triggerScopeSelected(myScope);
         mySelectedScope = myScope;
         myScopeSelectionToolbar.updateActionsImmediately();
         updateScopeDetailsPanel();

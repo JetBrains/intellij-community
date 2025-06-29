@@ -37,6 +37,7 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
                                                                  CONTEXT,
                                                                  SELECTED_SEARCH_SCOPE
   )
+  private val SEARCH_SCOPE_CHANGED = GROUP.registerEvent("search.scope.changed", SELECTED_SEARCH_SCOPE)
 
   private val OPTION_VALUE = EventFields.Boolean("option_value")
 
@@ -73,6 +74,11 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
   @JvmStatic
   fun triggerRegexHelpClicked(type: String?) {
     REGEXP_HELP_CLICKED.log(StringUtil.notNullize(type, UNKNOWN))
+  }
+
+  @JvmStatic
+  fun triggerScopeSelected(scopeType: FindPopupScopeUI.ScopeType?) {
+    SEARCH_SCOPE_CHANGED.log(SelectedSearchScope.getByScopeType(scopeType))
   }
 
   override fun getGroup(): EventLogGroup = GROUP
