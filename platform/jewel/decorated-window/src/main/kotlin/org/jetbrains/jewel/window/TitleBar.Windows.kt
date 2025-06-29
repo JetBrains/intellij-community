@@ -10,6 +10,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations.CustomTitleBar
@@ -18,6 +20,7 @@ import kotlinx.coroutines.isActive
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.util.isDark
 import org.jetbrains.jewel.window.styling.TitleBarStyle
+import org.jetbrains.jewel.window.utils.WindowControlArea
 
 @Composable
 internal fun DecoratedWindowScope.TitleBarOnWindows(
@@ -27,7 +30,8 @@ internal fun DecoratedWindowScope.TitleBarOnWindows(
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {
     val titleBar = remember { JBR.getWindowDecorations().createCustomTitleBar() }
-
+    val layoutDirection = LocalLayoutDirection.current
+    val isRtl = layoutDirection == LayoutDirection.Rtl
     TitleBarImpl(
         modifier = modifier,
         gradientStartColor = gradientStartColor,
@@ -35,12 +39,15 @@ internal fun DecoratedWindowScope.TitleBarOnWindows(
         applyTitleBar = { height, _ ->
             titleBar.height = height.value
             titleBar.putProperty("controls.dark", style.colors.background.isDark())
+            if (isRtl) titleBar.putProperty("controls.visible", false)
             JBR.getWindowDecorations().setCustomTitleBar(window, titleBar)
             PaddingValues(start = titleBar.leftInset.dp, end = titleBar.rightInset.dp)
         },
         backgroundContent = { Spacer(modifier = modifier.fillMaxSize().customTitleBarMouseEventHandler(titleBar)) },
-        content = content,
-    )
+    ) { state ->
+        if (isRtl) WindowControlArea(window, state, style)
+        content(state)
+    }
 }
 
 internal fun Modifier.customTitleBarMouseEventHandler(titleBar: CustomTitleBar): Modifier =
