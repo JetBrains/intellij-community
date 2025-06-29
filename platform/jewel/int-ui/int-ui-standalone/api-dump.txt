@@ -1,3 +1,8 @@
+f:org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
+- org.jetbrains.jewel.ui.MenuItemShortcutProvider
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
+- getShortcutKeyStroke(org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction):javax.swing.KeyStroke
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiTooltipStylingKt
 - sf:dark(org.jetbrains.jewel.ui.component.styling.TooltipStyle$Companion,org.jetbrains.jewel.ui.component.styling.TooltipColors,org.jetbrains.jewel.ui.component.styling.TooltipMetrics):org.jetbrains.jewel.ui.component.styling.TooltipStyle
 - sf:dark(org.jetbrains.jewel.ui.component.styling.TooltipStyle$Companion,org.jetbrains.jewel.ui.component.styling.TooltipColors,org.jetbrains.jewel.ui.component.styling.TooltipMetrics,org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior):org.jetbrains.jewel.ui.component.styling.TooltipStyle
