@@ -15,11 +15,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
@@ -114,11 +116,16 @@ class UiPluginManager {
   }
 
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
+    return runBlocking {
+      getController().applySession(sessionId, parent, project)
+    }
+  }
+  suspend fun applySessionAsync(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
     return getController().applySession(sessionId, parent, project)
   }
 
   @NlsSafe
-  fun getApplSessionError(sessionId: String): String? {
+  fun getApplySessionError(sessionId: String): String? {
     return getController().getApplyError(sessionId)
   }
 
