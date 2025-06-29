@@ -1,3 +1,13 @@
+f:org.jetbrains.jewel.bridge.BridgeLabelProvider
+- org.jetbrains.jewel.ui.util.LabelProvider
+- sf:$stable:I
+- <init>():V
+- fetchLabelFromKey(java.lang.String):java.lang.String
+f:org.jetbrains.jewel.bridge.BridgeUriHandler
+- androidx.compose.ui.platform.UriHandler
+- sf:$stable:I
+- <init>():V
+- openUri(java.lang.String):V
 f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:createVerticalBrush-8A-3gB4(java.util.List,F,F,I):androidx.compose.ui.graphics.Brush
 - bs:createVerticalBrush-8A-3gB4$default(java.util.List,F,F,I,I,java.lang.Object):androidx.compose.ui.graphics.Brush

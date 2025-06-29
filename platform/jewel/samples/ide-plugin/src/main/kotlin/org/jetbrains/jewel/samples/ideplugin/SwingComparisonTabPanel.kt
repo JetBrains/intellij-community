@@ -66,6 +66,7 @@ import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.textAreaStyle
+import org.jetbrains.skia.impl.Stats.enabled
 
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     private val mainContent =
@@ -92,24 +93,33 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
             }
 
     private fun Panel.linksRow() {
-        row("Links:") {
-                browserLink("Enabled link", "")
+        val jewelReadmeLink = "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel/#readme"
 
-                compose { ExternalLink(text = "Enabled link", enabled = true, onClick = {}) }
+        row("Links:") {
+                cell(
+                    component =
+                        BrowserLink(
+                                icon = AllIcons.Ide.External_link_arrow,
+                                text = "Enabled link",
+                                tooltip = null,
+                                url = "",
+                            )
+                            .apply { enabled(true) }
+                )
+
+                compose { ExternalLink(text = "Enabled link", link = "", enabled = true, onLinkOpened = {}) }
 
                 cell(
                         component =
                             BrowserLink(
-                                icon = IconLoader.getDisabledIcon(AllIcons.Ide.External_link_arrow),
-                                text = "Disabled link",
-                                tooltip = null,
-                                url = "",
-                            )
+                                    icon = IconLoader.getDisabledIcon(AllIcons.Ide.External_link_arrow),
+                                    text = "Disabled link",
+                                    tooltip = null,
+                                    url = jewelReadmeLink,
+                                )
+                                .apply { isEnabled = false }
                     )
-                    .applyToComponent {
-                        enabled(false)
-                        autoHideOnDisable = false
-                    }
+                    .applyToComponent { autoHideOnDisable = false }
 
                 compose { ExternalLink(text = "Disabled link", enabled = false, onClick = {}) }
             }

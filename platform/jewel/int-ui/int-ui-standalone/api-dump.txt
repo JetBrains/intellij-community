@@ -1,3 +1,8 @@
+f:org.jetbrains.jewel.intui.standalone.IntUiLabelProvider
+- org.jetbrains.jewel.ui.util.LabelProvider
+- sf:$stable:I
+- <init>():V
+- fetchLabelFromKey(java.lang.String):java.lang.String
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiTooltipStylingKt
 - sf:dark(org.jetbrains.jewel.ui.component.styling.TooltipStyle$Companion,org.jetbrains.jewel.ui.component.styling.TooltipColors,org.jetbrains.jewel.ui.component.styling.TooltipMetrics):org.jetbrains.jewel.ui.component.styling.TooltipStyle
 - sf:dark(org.jetbrains.jewel.ui.component.styling.TooltipStyle$Companion,org.jetbrains.jewel.ui.component.styling.TooltipColors,org.jetbrains.jewel.ui.component.styling.TooltipMetrics,org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior):org.jetbrains.jewel.ui.component.styling.TooltipStyle
