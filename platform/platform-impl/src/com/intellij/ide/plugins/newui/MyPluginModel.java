@@ -137,11 +137,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   public void applyAsync(@Nullable JComponent parent, Consumer<Boolean> callback) throws ConfigurationException {
-    String error = UiPluginManager.getInstance().getApplSessionError(sessionId.toString());
+    String error = UiPluginManager.getInstance().getApplySessionError(sessionId.toString());
     if (error != null) {
       throw new ConfigurationException(XmlStringUtil.wrapInHtml(error)).withHtmlMessage();
     }
-    PluginModelAsyncOperationsExecutor.INSTANCE.applySessionResult(myCoroutineScope, sessionId.toString(), getProject(), parent, res -> {
+    PluginModelAsyncOperationsExecutor.INSTANCE.applySessionResult(sessionId.toString(), getProject(), parent, res -> {
       res.getPluginsToEnable().forEach(id -> setEnabled(id, PluginEnabledState.ENABLED));
       myUninstalled.clear();
       updateButtons();

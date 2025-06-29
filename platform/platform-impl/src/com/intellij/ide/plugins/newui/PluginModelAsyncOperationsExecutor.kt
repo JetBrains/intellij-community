@@ -7,8 +7,10 @@ import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,7 +38,14 @@ object PluginModelAsyncOperationsExecutor {
     }
   }
 
-  fun enablePlugins(cs: CoroutineScope, sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?, callback: (SetEnabledStateResult) -> Unit) {
+  fun enablePlugins(
+    cs: CoroutineScope,
+    sessionId: String,
+    descriptorIds: List<PluginId>,
+    enable: Boolean,
+    project: Project?,
+    callback: (SetEnabledStateResult) -> Unit,
+  ) {
     cs.launch(Dispatchers.IO) {
       val result = UiPluginManager.getInstance().enablePlugins(sessionId, descriptorIds, enable, project)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -46,14 +55,13 @@ object PluginModelAsyncOperationsExecutor {
   }
 
   fun applySessionResult(
-    cs: CoroutineScope,
     sessionId: String,
     project: Project?,
     parentComponent: JComponent?,
     callback: (ApplyPluginsStateResult) -> Unit,
   ) {
-    cs.launch(Dispatchers.IO) {
-      val result = UiPluginManager.getInstance().applySession(sessionId, parentComponent, project)
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+      val result = UiPluginManager.getInstance().applySessionAsync(sessionId, parentComponent, project)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback(result)
       }
