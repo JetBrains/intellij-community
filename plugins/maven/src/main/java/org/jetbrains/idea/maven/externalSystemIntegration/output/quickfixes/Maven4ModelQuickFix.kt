@@ -89,16 +89,15 @@ internal class Maven4ModelQuickFix : MavenLoggedEventParser, MavenSpyLoggedEvent
       val fileName = match.groupValues[1]
       val path = Path(fileName)
       if (path.exists()) {
-        val modelAndOffset = getModelFromPath(project, path) ?: continue
-        if (modelAndOffset.first == "4.0.0") {
-          return newBuildIssue(logLine, path, modelAndOffset.second)
-        }
+        val modelAndOffset = getModelFromPath(project, path)
+        if (modelAndOffset == null || modelAndOffset.first == "4.0.0")
+          return newBuildIssue(logLine, path, modelAndOffset?.second)
       }
     }
     return null
   }
 
-  private fun newBuildIssue(line: String, path: Path, offset: Int): BuildIssue {
+  private fun newBuildIssue(line: String, path: Path, offset: Int?): BuildIssue {
     return object : BuildIssue {
       override val title: @BuildEventsNls.Title String
         get() = SyncBundle.message("maven.sync.incorrect.model.version")
@@ -107,14 +106,14 @@ internal class Maven4ModelQuickFix : MavenLoggedEventParser, MavenSpyLoggedEvent
       override val quickFixes: List<BuildIssueQuickFix>
         get() = listOf(UpdateVersionQuickFix(path))
 
-      override fun getNavigatable(project: Project) = PathNavigatable(project, path, offset)
+      override fun getNavigatable(project: Project) = offset?.let { PathNavigatable(project, path, it) }
     }
   }
 
   override fun processLogLine(project: Project, logLine: String, reader: BuildOutputInstantReader?, messageConsumer: Consumer<in BuildEvent>): Boolean {
     val buildIssue = createBuildIssue(logLine, project) ?: return false
     val console = MavenProjectsManager.getInstance(project).syncConsole
-    val kind = if(logLine.contains("ERROR")) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
+    val kind = if (logLine.contains("ERROR")) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
     console.addBuildIssue(buildIssue, kind)
     return true
   }
