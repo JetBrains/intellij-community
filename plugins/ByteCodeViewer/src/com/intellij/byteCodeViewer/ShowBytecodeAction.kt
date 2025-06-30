@@ -6,16 +6,12 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 
-private val JAVA_SOURCE_FILE = Key.create<VirtualFile>("JAVA_SOURCE_FILE")
-private val JAVA_CLASS_FILE = Key.create<VirtualFile>("JAVA_CLASS_FILE")
+internal val JAVA_CLASS_FILE = Key.create<VirtualFile>("JAVA_CLASS_FILE")
 
 internal class ShowBytecodeAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -35,6 +31,10 @@ internal class ShowBytecodeAction : AnAction() {
                        hideOnEmptyContent = true
                        canCloseContent = true
                      }
+    val service = BytecodeToolWindowService.getInstance(project)
+
+    service.ensureContentManagerListenerRegistered(toolWindow)
+
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
     val psiElement = psiFile.findElementAt(editor.caretModel.offset) ?: return
@@ -77,36 +77,11 @@ internal class ShowBytecodeAction : AnAction() {
 
 
     toolWindow.contentManager.addContent(content)
-    deduplicateTabNames(toolWindow)
+    service.deduplicateTabNames(toolWindow)
     content.setDisposer(panel)
     toolWindow.contentManager.setSelectedContent(content)
     toolWindow.setAdditionalGearActions(createActionGroup())
     toolWindow.activate(null)
-  }
-
-  private fun deduplicateTabNames(toolWindow: ToolWindow) {
-    val titlesToContents = mutableMapOf<String, MutableList<Content>>()
-    for (contentEntry in toolWindow.contentManager.contents) {
-      val tabName = contentEntry.getUserData(JAVA_CLASS_FILE)?.name ?: throw IllegalStateException("No title for content entry $contentEntry")
-      titlesToContents.getOrPut(tabName) { mutableListOf() }.add(contentEntry)
-    }
-    for (contents in titlesToContents.values) {
-      if (contents.size > 1) {
-        val paths = contents.map {
-          it.getUserData(JAVA_CLASS_FILE) ?: throw IllegalStateException("No class file path for content entry $it")
-        }
-
-        val commonAncestor = VfsUtil.getCommonAncestor(paths) ?: continue
-
-        for (i in contents.indices) {
-          val content = contents[i]
-          content.displayName = VfsUtil.getRelativePath(
-            content.getUserData(JAVA_CLASS_FILE) ?: throw IllegalStateException("No class file path for content entry $content"),
-            commonAncestor,
-          )
-        }
-      }
-    }
   }
 
   private fun createActionGroup(): ActionGroup {
