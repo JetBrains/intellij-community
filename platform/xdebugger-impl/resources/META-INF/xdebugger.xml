@@ -157,7 +157,6 @@
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
 
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
-    <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>
     <xdebugger.managerProxy implementation="com.intellij.xdebugger.impl.MonolithXDebugManagerProxy" order="last"/>
 
     <registryKey defaultValue="false"

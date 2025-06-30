@@ -337,11 +337,6 @@ c:com.intellij.xdebugger.impl.evaluate.ExpressionInputForm
 - addLanguageComponent(javax.swing.JComponent):V
 - getMainPanel():javax.swing.JPanel
 - setName(java.lang.String):V
-f:com.intellij.xdebugger.impl.evaluate.ValueLookupManagerControllerEntityTypeProvider
-- com.jetbrains.rhizomedb.impl.EntityTypeProvider
-- sf:INSTANCE:com.intellij.xdebugger.impl.evaluate.ValueLookupManagerControllerEntityTypeProvider
-- <init>():V
-- f:getEntityTypes():java.util.List
 c:com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 - com.intellij.openapi.ui.DialogWrapper
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
