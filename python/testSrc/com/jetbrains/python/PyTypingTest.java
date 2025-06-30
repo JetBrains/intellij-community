@@ -247,7 +247,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyStrForUnknown() {
-    doTest("str | bytes | Any",
+    doTest("UnsafeUnion[str | bytes, Any]",
            """
              from typing import AnyStr
 

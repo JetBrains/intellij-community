@@ -293,9 +293,9 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-10893
-  //public void testCustomNewReturnInAnotherModule() {
-  //  doMultiFileTest("a.py");
-  //}
+  public void testCustomNewReturnInAnotherModule() {
+    doMultiFileTest("a.py");
+  }
 
   public void testBytesIOMethods() {
     doTest();

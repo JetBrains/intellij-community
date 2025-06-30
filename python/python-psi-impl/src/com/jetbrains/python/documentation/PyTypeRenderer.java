@@ -46,6 +46,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
      */
     USE_FQN,
     /**
+     * Render internal "unsafe" unions as {@code UnsafeUnion[...]}, otherwise render them as regular union types.
+     */
+    UNSAFE_UNION,
+    /**
      * Render bounds and constraints of TypeVars.
      */
     TYPE_VAR_BOUNDS,
@@ -57,6 +61,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   protected final boolean renderTypeVarBounds() {
     return myRenderingFeatures.contains(Feature.TYPE_VAR_BOUNDS);
+  }
+
+  protected final boolean renderUnsafeUnion() {
+    return myRenderingFeatures.contains(Feature.UNSAFE_UNION);
   }
 
   private PyTypeRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<Feature> features) {
@@ -181,6 +189,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     @Override
     protected @NotNull HtmlChunk visitPyCallableParameter(@NotNull PyCallableParameter param) {
       return render(param.getType(myTypeEvalContext));
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
+      // There is no way to represent weak unions through type hints
+      return visitUnknownType();
     }
   }
 
@@ -314,6 +328,19 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       return renderUnion(List.of(render(unionType.excludeNull()), visitUnknownType()));
     }
     return renderUnion(ContainerUtil.map(unionType.getMembers(), this::render));
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
+    if (renderUnsafeUnion()) {
+      HtmlBuilder result = new HtmlBuilder();
+      result.append(escaped("UnsafeUnion")); //NON-NLS
+      result.append(styled("[", PyHighlighter.PY_BRACKETS));
+      result.append(renderList(ContainerUtil.map(unsafeUnionType.getMembers(), this::render)));
+      result.append(styled("]", PyHighlighter.PY_BRACKETS));
+      return result.toFragment();
+    }
+    return renderUnion(ContainerUtil.map(unsafeUnionType.getMembers(), this::render));
   }
 
   private @NotNull HtmlChunk renderUnionOfLiterals(@NotNull List<PyLiteralType> literals) {

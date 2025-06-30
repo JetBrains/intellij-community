@@ -793,11 +793,11 @@ public class PyTypeTest extends PyTestCase {
       """;
     final PyExpression expr = parseExpr(text);
     assertNotNull(expr);
-    doTest("Union[Union[int, str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+    doTest("UnsafeUnion[Union[int, str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   public void testUpperBoundGeneric() {
-    doTest("Union[Union[int, str], Any]",
+    doTest("UnsafeUnion[Union[int, str], Any]",
            """
              def foo(x):
                  '''
@@ -1637,7 +1637,7 @@ public class PyTypeTest extends PyTestCase {
 
     doTest("List[Union[str, int]]", "expr = ['1', 1, 1]");
 
-    doTest("List[Union[Union[str, int], Any]]", "expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]");
+    doTest("List[UnsafeUnion[Union[str, int], Any]]", "expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]");
   }
 
   public void testSetLiteral() {
@@ -1645,7 +1645,7 @@ public class PyTypeTest extends PyTestCase {
 
     doTest("Set[Union[str, int]]", "expr = {'1', 1, 1}");
 
-    doTest("Set[Union[Union[str, int], Any]]", "expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}");
+    doTest("Set[UnsafeUnion[Union[str, int], Any]]", "expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}");
   }
 
   public void testDictLiteral() {
@@ -2769,23 +2769,23 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
-        doTest("Union[int, Any]",
+        doTest("UnsafeUnion[int, Any]",
                """
                  from typing import Any
                  x: Any
                  expr = x * 2""");
 
-        doTest("Union[int, Any]",
+        doTest("UnsafeUnion[int, Any]",
                """
                  from typing import Any
                  x: Any
                  expr = 2 * x""");
 
-        doTest("Union[int, Any]",
+        doTest("UnsafeUnion[int, Any]",
                "def f(x):\n" +
                "    expr = x * 2");
 
-        doTest("Union[int, Any]",
+        doTest("UnsafeUnion[int, Any]",
                "def f(x):\n" +
                "    expr = 2 * x");
       }

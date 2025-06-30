@@ -118,6 +118,9 @@ public final class PyTypeUtil {
     if (type instanceof PyUnionType unionType) {
       return StreamEx.of(unionType.getMembers());
     }
+    if (type instanceof PyUnsafeUnionType weakUnionType) {
+      return StreamEx.of(weakUnionType.getMembers());
+    }
     return StreamEx.of(type);
   }
 

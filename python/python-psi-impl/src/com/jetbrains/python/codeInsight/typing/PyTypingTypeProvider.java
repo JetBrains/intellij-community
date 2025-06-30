@@ -1103,6 +1103,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     // Represent Type[Union[str, int]] internally as Union[Type[str], Type[int]]
     if (type instanceof PyUnionType unionType &&
         ContainerUtil.all(unionType.getMembers(), t -> t instanceof PyClassType clsType && !clsType.isDefinition())) {
+      //noinspection DataFlowIssue
       return Ref.create(unionType.map(clsType -> ((PyClassType)clsType).toClass()));
     }
     return Ref.create();

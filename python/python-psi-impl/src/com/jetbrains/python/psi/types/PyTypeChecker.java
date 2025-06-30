@@ -181,6 +181,14 @@ public final class PyTypeChecker {
       return Optional.of(match((PyUnionType)expected, actual, context));
     }
 
+    if (actual instanceof PyUnsafeUnionType weakUnionType) {
+      return Optional.of(match(expected, weakUnionType, context));
+    }
+
+    if (expected instanceof PyUnsafeUnionType weakUnionType) {
+      return Optional.of(match(weakUnionType, actual, context));
+    }
+
     if (expected instanceof PyClassType && actual instanceof PyClassType) {
       Optional<Boolean> match = match((PyClassType)expected, (PyClassType)actual, context);
       if (match.isPresent()) {
@@ -476,6 +484,10 @@ public final class PyTypeChecker {
     return ContainerUtil.and(actual.getMembers(), type -> match(expected, type, context).orElse(false));
   }
 
+  private static boolean match(@NotNull PyType expected, @NotNull PyUnsafeUnionType actual, @NotNull MatchContext context) {
+    return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
+  }
+
   private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected, @NotNull PyUnionType actual, @NotNull MatchContext context) {
     final int elementCount = expected.getElementCount();
 
@@ -490,6 +502,13 @@ public final class PyTypeChecker {
   }
 
   private static boolean match(@NotNull PyUnionType expected, @NotNull PyType actual, @NotNull MatchContext context) {
+    if (expected.getMembers().contains(actual)) {
+      return true;
+    }
+    return ContainerUtil.or(expected.getMembers(), type -> match(type, actual, context).orElse(true));
+  }
+
+  private static boolean match(@NotNull PyUnsafeUnionType expected, @NotNull PyType actual, @NotNull MatchContext context) {
     if (expected.getMembers().contains(actual)) {
       return true;
     }
@@ -1045,6 +1064,9 @@ public final class PyTypeChecker {
         return ContainerUtil.exists(union.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
       }
       return ContainerUtil.all(union.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
+    }
+    if (type instanceof PyUnsafeUnionType weakUnion) {
+      return ContainerUtil.exists(weakUnion.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
     }
     return false;
   }

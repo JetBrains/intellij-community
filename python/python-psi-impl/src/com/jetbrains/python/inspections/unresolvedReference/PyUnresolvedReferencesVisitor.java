@@ -397,6 +397,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       // this almost always means that we don't know the type, so don't show an error in this case
       return true;
     }
+    if (type instanceof PyUnsafeUnionType weakUnionType) {
+      return ContainerUtil.exists(weakUnionType.getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
+    }
     if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
       return true;
     }

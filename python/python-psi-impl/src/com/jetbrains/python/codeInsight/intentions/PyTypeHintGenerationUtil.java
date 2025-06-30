@@ -312,6 +312,8 @@ public final class PyTypeHintGenerationUtil {
   public static void checkPep484Compatibility(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type == null ||
         isNoneType(type) ||
+        // Will be rendered as just Any
+        type instanceof PyUnsafeUnionType || 
         type instanceof PyTypeParameterType) {
       return;
     }

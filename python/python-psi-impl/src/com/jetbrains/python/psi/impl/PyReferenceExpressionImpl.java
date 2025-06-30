@@ -337,6 +337,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
     }
+    else if (qualifierType instanceof PyUnsafeUnionType unionType) {
+      for (PyType type : unionType.getMembers()) {
+        final Ref<PyType> result = getTypeOfProperty(type, name, context);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
 
     return null;
   }

@@ -134,6 +134,11 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   }
 
   @Override
+  public PyType visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
+    return PyUnsafeUnionType.unsafeUnion(ContainerUtil.map(unsafeUnionType.getMembers(), type -> clone(type)));
+  }
+
+  @Override
   public PyType visitPyTypingNewType(@NotNull PyTypingNewType typingNewType) {
     return typingNewType;
   }

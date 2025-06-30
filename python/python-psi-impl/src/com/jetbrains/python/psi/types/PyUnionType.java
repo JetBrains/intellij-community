@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -134,11 +135,16 @@ public class PyUnionType implements PyType {
         return unionType;
       }
     }
+    if (Registry.is("python.typing.strict.unions", true)) {
+      return PyUnsafeUnionType.unsafeUnion(type, null);
+    }
     return union(type, null);
   }
 
   public static @Nullable PyType toNonWeakType(@Nullable PyType type) {
-    return type instanceof PyUnionType ? ((PyUnionType)type).excludeNull() : type;
+    return type instanceof PyUnionType unionType ? unionType.excludeNull() :
+           type instanceof PyUnsafeUnionType weakUnionType ? PyUnsafeUnionType.unsafeUnion(ContainerUtil.skipNulls(weakUnionType.getMembers()))
+                                                           : type;
   }
 
   public boolean isWeak() {

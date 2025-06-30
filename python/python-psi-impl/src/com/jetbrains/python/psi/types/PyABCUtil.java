@@ -130,6 +130,9 @@ public final class PyABCUtil {
       }
       return PyTypeUtil.toStream(type).nonNull().allMatch(it -> isSubtype(it, superClassName, context));
     }
+    if (type instanceof PyUnsafeUnionType) {
+      return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
+    }
     return false;
   }
 
