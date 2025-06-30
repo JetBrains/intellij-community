@@ -7845,7 +7845,179 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertFunctionToProperty")
+    public static class ConvertFunctionToProperty extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("addExplicitAnonymousType.kt")
+        public void testAddExplicitAnonymousType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/addExplicitAnonymousType.kt");
+        }
+
+        @TestMetadata("addExplicitLocalType.kt")
+        public void testAddExplicitLocalType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/addExplicitLocalType.kt");
+        }
+
+        @TestMetadata("addExplicitType.kt")
+        public void testAddExplicitType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/addExplicitType.kt");
+        }
+
+        @TestMetadata("annotationLineBreak.kt")
+        public void testAnnotationLineBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/annotationLineBreak.kt");
+        }
+
+        @TestMetadata("blockBody.kt")
+        public void testBlockBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/blockBody.kt");
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/comments.kt");
+        }
+
+        @TestMetadata("existingPropertyConflict.kt")
+        public void testExistingPropertyConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/existingPropertyConflict.kt");
+        }
+
+        @TestMetadata("existingPropertyJavaConflict.kt")
+        public void testExistingPropertyJavaConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/existingPropertyJavaConflict.kt");
+        }
+
+        @TestMetadata("expressionBody.kt")
+        public void testExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/expressionBody.kt");
+        }
+
+        @TestMetadata("extraArgumentsConflict.kt")
+        public void testExtraArgumentsConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/extraArgumentsConflict.kt");
+        }
+
+        @TestMetadata("funInterface.kt")
+        public void testFunInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/funInterface.kt");
+        }
+
+        @TestMetadata("funInterface2.kt")
+        public void testFunInterface2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/funInterface2.kt");
+        }
+
+        @TestMetadata("funWithParameters.kt")
+        public void testFunWithParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/funWithParameters.kt");
+        }
+
+        @TestMetadata("invoke.kt")
+        public void testInvoke() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/invoke.kt");
+        }
+
+        @TestMetadata("iterator.kt")
+        public void testIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/iterator.kt");
+        }
+
+        @TestMetadata("javaUsages.kt")
+        public void testJavaUsages() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/javaUsages.kt");
+        }
+
+        @TestMetadata("javaUsagesGet.kt")
+        public void testJavaUsagesGet() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/javaUsagesGet.kt");
+        }
+
+        @TestMetadata("javaUsagesIs.kt")
+        public void testJavaUsagesIs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/javaUsagesIs.kt");
+        }
+
+        @TestMetadata("localFun.kt")
+        public void testLocalFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/localFun.kt");
+        }
+
+        @TestMetadata("noExplicitType.kt")
+        public void testNoExplicitType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/noExplicitType.kt");
+        }
+
+        @TestMetadata("nothingFun.kt")
+        public void testNothingFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/nothingFun.kt");
+        }
+
+        @TestMetadata("onFunKeyword.kt")
+        public void testOnFunKeyword() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/onFunKeyword.kt");
+        }
+
+        @TestMetadata("otherRefs.kt")
+        public void testOtherRefs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/otherRefs.kt");
+        }
+
+        @TestMetadata("otherRefsGet.kt")
+        public void testOtherRefsGet() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/otherRefsGet.kt");
+        }
+
+        @TestMetadata("otherRefsIs.kt")
+        public void testOtherRefsIs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/otherRefsIs.kt");
+        }
+
+        @TestMetadata("overrides.kt")
+        public void testOverrides() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/overrides.kt");
+        }
+
+        @TestMetadata("recursiveFunction.kt")
+        public void testRecursiveFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/recursiveFunction.kt");
+        }
+
+        @TestMetadata("sameNameFunWithDifferentReceiver.kt")
+        public void testSameNameFunWithDifferentReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/sameNameFunWithDifferentReceiver.kt");
+        }
+
+        @TestMetadata("typeArgumentsConflict.kt")
+        public void testTypeArgumentsConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/typeArgumentsConflict.kt");
+        }
+
+        @TestMetadata("unaryOp.kt")
+        public void testUnaryOp() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/unaryOp.kt");
+        }
+
+        @TestMetadata("unchangedElements.kt")
+        public void testUnchangedElements() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/unchangedElements.kt");
+        }
+
+        @TestMetadata("unitFun.kt")
+        public void testUnitFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/unitFun.kt");
+        }
+    }
 
 
 

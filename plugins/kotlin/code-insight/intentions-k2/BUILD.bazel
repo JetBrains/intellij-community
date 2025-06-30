@@ -64,6 +64,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//plugins/kotlin/kotlin.searching:searching-k2",
+    "@lib//:guava",
   ],
   runtime_deps = [":kotlin-code-insight-intentions-k2_resources"]
 )
