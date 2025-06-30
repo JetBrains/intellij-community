@@ -142,7 +142,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     LOG.debug { "Reload entities from changed files:\n$changes" }
 
-    val unloadedModuleNameHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
+    val unloadedModuleNameHolder = project.serviceAsync<UnloadedModulesListStorage>().unloadedModuleNameHolder
     val reloadingResult = loadAndReportErrors {
       serializers.reloadFromChangedFiles(changes, fileContentReader, unloadedModuleNameHolder, it)
     }
@@ -382,7 +382,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
     else if (TrustedProjects.isProjectTrusted(project)) {
       childActivity = childActivity?.endAndStart("loading entities from files")
-      val unloadedModuleNamesHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
+      val unloadedModuleNamesHolder = project.serviceAsync<UnloadedModulesListStorage>().unloadedModuleNameHolder
       val sourcesToUpdate = loadAndReportErrors {
         serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNamesHolder, it)
       }
