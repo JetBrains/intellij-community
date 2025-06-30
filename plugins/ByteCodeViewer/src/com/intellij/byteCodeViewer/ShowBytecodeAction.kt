@@ -6,12 +6,16 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 
-
-private val JAVA_SOURCE_FILE = Key.create<String>("JAVA_SOURCE_FILE")
+private val JAVA_SOURCE_FILE = Key.create<VirtualFile>("JAVA_SOURCE_FILE")
+private val JAVA_CLASS_FILE = Key.create<VirtualFile>("JAVA_CLASS_FILE")
 
 internal class ShowBytecodeAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -35,10 +39,9 @@ internal class ShowBytecodeAction : AnAction() {
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
     val psiElement = psiFile.findElementAt(editor.caretModel.offset) ?: return
     val psiClass = ByteCodeViewerManager.getContainingClass(psiElement) ?: return
-    val javaSourceFile = psiFile.virtualFile?.path ?: return
-    val clsFile = ByteCodeViewerManager.findClassFile(psiClass)
+    val javaClassFile = ByteCodeViewerManager.findClassFile(psiClass)
 
-    if (clsFile == null) {
+    if (javaClassFile == null) {
       val title = BytecodeViewerBundle.message("bytecode.not.found.title")
       val content = BytecodeViewerBundle.message("please.build.project")
       val notification = Notification("Bytecode Viewer Errors", title, content, NotificationType.WARNING).setImportant(false)
@@ -64,19 +67,46 @@ internal class ShowBytecodeAction : AnAction() {
       return
     }
 
-    val panel = BytecodeToolWindowPanel(project, psiClass, clsFile)
+    val panel = BytecodeToolWindowPanel(project, psiClass, javaClassFile)
 
-    val content = toolWindow.contentManager.contents.firstOrNull { it.getUserData(JAVA_SOURCE_FILE) == javaSourceFile }
-                  ?: ContentFactory.getInstance().createContent(panel, clsFile.presentableName, false).apply {
-                    description = clsFile.presentableUrl // appears on tab hover
-                    putUserData(JAVA_SOURCE_FILE, javaSourceFile)
+    val content = toolWindow.contentManager.contents.firstOrNull { it.getUserData(JAVA_CLASS_FILE) == javaClassFile }
+                  ?: ContentFactory.getInstance().createContent(panel, javaClassFile.presentableName, false).apply {
+                    description = javaClassFile.presentableUrl // appears on tab hover
+                    putUserData(JAVA_CLASS_FILE, javaClassFile)
                   }
 
+
     toolWindow.contentManager.addContent(content)
+    deduplicateTabNames(toolWindow)
     content.setDisposer(panel)
     toolWindow.contentManager.setSelectedContent(content)
     toolWindow.setAdditionalGearActions(createActionGroup())
     toolWindow.activate(null)
+  }
+
+  private fun deduplicateTabNames(toolWindow: ToolWindow) {
+    val titlesToContents = mutableMapOf<String, MutableList<Content>>()
+    for (contentEntry in toolWindow.contentManager.contents) {
+      val tabName = contentEntry.getUserData(JAVA_CLASS_FILE)?.name ?: throw IllegalStateException("No title for content entry $contentEntry")
+      titlesToContents.getOrPut(tabName) { mutableListOf() }.add(contentEntry)
+    }
+    for (contents in titlesToContents.values) {
+      if (contents.size > 1) {
+        val paths = contents.map {
+          it.getUserData(JAVA_CLASS_FILE) ?: throw IllegalStateException("No class file path for content entry $it")
+        }
+
+        val commonAncestor = VfsUtil.getCommonAncestor(paths) ?: continue
+
+        for (i in contents.indices) {
+          val content = contents[i]
+          content.displayName = VfsUtil.getRelativePath(
+            content.getUserData(JAVA_CLASS_FILE) ?: throw IllegalStateException("No class file path for content entry $content"),
+            commonAncestor,
+          )
+        }
+      }
+    }
   }
 
   private fun createActionGroup(): ActionGroup {
