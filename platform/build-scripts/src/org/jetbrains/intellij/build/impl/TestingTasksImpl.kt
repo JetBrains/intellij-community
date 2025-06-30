@@ -635,7 +635,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     systemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG] = options.bucketIndex.toString()
     systemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG] = options.bucketsCount.toString()
 
-    System.getProperties().forEach { key, value ->
+    System.getProperties().forEach { (key, value) ->
       key as String
 
       if (key.startsWith("pass.")) {

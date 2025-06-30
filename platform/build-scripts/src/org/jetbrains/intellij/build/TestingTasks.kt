@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -15,12 +15,12 @@ interface TestingTasks {
     }
 
     /**
-     * Determines whether the current JVM process is a process which runs tests.
+     * Determines whether the current JVM process is a process that runs tests.
      */
     val isInTestsProcess: Boolean
       get() = System.getProperty(BOOTSTRAP_TESTCASES_PROPERTY) != null
     
-    const val BOOTSTRAP_TESTCASES_PROPERTY = "bootstrap.testcases" 
+    const val BOOTSTRAP_TESTCASES_PROPERTY: String = "bootstrap.testcases"
   }
 
   /**
@@ -42,7 +42,7 @@ interface TestingTasks {
   /**
    *
    * Updates given jvm args, system properties and classpath with common parameters used for running tests
-   * (Xmx, debugging, config path) etc.
+   * (Xmx, debugging, a config path) etc.
    *
    *
    * The values passed as parameters have priority over the default ones, added in this method.
