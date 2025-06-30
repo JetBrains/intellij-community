@@ -20,6 +20,13 @@ class FreezeAnalyzerTest {
   }
 
   @Test
+  fun testBackgroundWrite() {
+    val threadDump = getResourceContent("freezes/readWriteLock/backgroundWrite.txt")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider.checkAccess")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.first()?.stackTrace?.lineSequence()?.first().shouldBe("\"DefaultDispatcher-worker-71\" prio=0 tid=0x0 nid=0x0 runnable")
+  }
+
+  @Test
   fun testDeadlockWithSuvorovIndicator() {
     val threadDump = getResourceContent("freezes/readWriteLock/deadLock.txt")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.idea.maven.buildtool.MavenSyncConsole.doFinish")
