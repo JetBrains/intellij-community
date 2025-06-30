@@ -4,6 +4,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
@@ -13,6 +15,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
 public abstract class GrSwitchElementBase extends GroovyPsiElementImpl implements GrSwitchElement {
 
@@ -32,6 +36,19 @@ public abstract class GrSwitchElementBase extends GroovyPsiElementImpl implement
       if (cur instanceof GrCaseSection) result.add((GrCaseSection)cur);
     }
     return result.toArray(new GrCaseSection[0]);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!shouldProcessLocals(processor)) return true;
+    GrExpression expression = getCondition();
+    if (expression != null) {
+      return expression.processDeclarations(processor, state, null, place);
+    }
+    return true;
   }
 
   @Override

@@ -1,0 +1,23 @@
+a instanceof b
+ c as Integer
+-----
+Groovy script
+  Instanceof expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(instanceof)('instanceof')
+    PsiWhiteSpace(' ')
+    Type element
+      Reference element
+        PsiElement(identifier)('b')
+  PsiElement(new line)('\n ')
+  Safe cast expression
+    Reference expression
+      PsiElement(identifier)('c')
+    PsiWhiteSpace(' ')
+    PsiElement(as)('as')
+    PsiWhiteSpace(' ')
+    Type element
+      Reference element
+        PsiElement(identifier)('Integer')

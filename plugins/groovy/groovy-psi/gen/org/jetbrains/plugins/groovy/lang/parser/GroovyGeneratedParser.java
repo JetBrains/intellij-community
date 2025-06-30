@@ -1,5 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -4468,7 +4466,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ('instanceof' | '!instanceof') mb_nl (type_element | expect_type)
+  // ('instanceof' | '!instanceof') mb_nl (pattern_test | expect_type)
   static boolean instanceof_expression_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "instanceof_expression_tail")) return false;
     if (!nextTokenIsFast(b, KW_INSTANCEOF, T_NOT_INSTANCEOF)) return false;
@@ -4491,11 +4489,11 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // type_element | expect_type
+  // pattern_test | expect_type
   private static boolean instanceof_expression_tail_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "instanceof_expression_tail_2")) return false;
     boolean r;
-    r = type_element(b, l + 1);
+    r = pattern_test(b, l + 1);
     if (!r) r = expect_type(b, l + 1);
     return r;
   }
@@ -6128,6 +6126,80 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   // <<parseTailLeftFlat parameter_start parameter>>
   static boolean parse_parameter(PsiBuilder b, int l) {
     return parseTailLeftFlat(b, l + 1, GroovyGeneratedParser::parameter_start, GroovyGeneratedParser::parameter);
+  }
+
+  /* ********************************************************** */
+  // type_element (mb_nl pattern_variable)?
+  static boolean pattern_test(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_test")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = type_element(b, l + 1);
+    r = r && pattern_test_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (mb_nl pattern_variable)?
+  private static boolean pattern_test_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_test_1")) return false;
+    pattern_test_1_0(b, l + 1);
+    return true;
+  }
+
+  // mb_nl pattern_variable
+  private static boolean pattern_test_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_test_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && pattern_variable(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // (IDENTIFIER | weak_keyword_identifiers) !(T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword)
+  public static boolean pattern_variable(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_variable")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, PATTERN_VARIABLE, "<pattern variable>");
+    r = pattern_variable_0(b, l + 1);
+    r = r && pattern_variable_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // IDENTIFIER | weak_keyword_identifiers
+  private static boolean pattern_variable_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_variable_0")) return false;
+    boolean r;
+    r = consumeToken(b, IDENTIFIER);
+    if (!r) r = weak_keyword_identifiers(b, l + 1);
+    return r;
+  }
+
+  // !(T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword)
+  private static boolean pattern_variable_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_variable_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !pattern_variable_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword
+  private static boolean pattern_variable_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_variable_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_DOT);
+    if (!r) r = consumeToken(b, T_SAFE_DOT);
+    if (!r) r = consumeToken(b, T_LPAREN);
+    if (!r) r = parseReservedKeyword(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

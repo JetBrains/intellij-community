@@ -22,8 +22,10 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrPatternVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -103,7 +105,12 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
           // don't go deeper
         }
         else if (element instanceof GrVariable variable && !(element instanceof GrField)) {
-          if (checked.contains(variable) || variable.getInitializerGroovy() != null) return;
+          if (checked.contains(variable)) return;
+          GrExpression initializer = variable.getInitializerGroovy();
+          if (initializer != null) {
+            super.visitElement(initializer);
+            return;
+          }
           if (ReferencesSearch.search(variable, variable.getUseScope()).findFirst() == null) {
             process(variable, checked, problemsHolder, GroovyBundle.message("unused.variable"));
           }
@@ -121,10 +128,14 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
                               final @InspectionMessage String message) {
     if (element == null) return;
     if (!checked.add(element)) return;
-    if (isLocalAssignment(element) && isUsedInTopLevelFlowOnly(element) && !isIncOrDec(element)) {
+    if ((isPatternVariable(element) || isLocalAssignment(element)) && isUsedInTopLevelFlowOnly(element) && !isIncOrDec(element)) {
       PsiElement toHighlight = getHighlightElement(element);
       problemsHolder.registerProblem(toHighlight, message);
     }
+  }
+
+  private static boolean isPatternVariable(@Nullable PsiElement element) {
+    return element instanceof GrPatternVariable;
   }
 
   private static PsiElement getHighlightElement(PsiElement element) {

@@ -825,4 +825,30 @@ public class RenameTest extends GroovyLatestTest implements BaseTest {
         """,
       usage.getText());
   }
+
+  @Test
+  public void patternVariableWithContextualKeyword() {
+    JavaCodeInsightTestFixture fixture = getFixture();
+    fixture.configureByText("a.groovy", """
+      class A{}
+      class B extends A{}
+      def foo() {
+        A a = new B()
+        if (a instanceof B some<caret>Name) {
+          someName.toString()
+        }
+      }
+      """);
+    fixture.renameElementAtCaret("var");
+    fixture.checkResult("""
+      class A{}
+      class B extends A{}
+      def foo() {
+        A a = new B()
+        if (a instanceof B var) {
+          var.toString()
+        }
+      }
+      """);
+  }
 }

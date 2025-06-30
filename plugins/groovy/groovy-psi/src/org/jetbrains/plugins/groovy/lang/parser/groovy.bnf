@@ -1155,7 +1155,10 @@ relational_expression ::= expression mb_nl relational_operator mb_nl <<disableNl
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
 in_expression ::= expression mb_nl ('in' | '!in') mb_nl <<disableNlBeforeClosure>> expression
 instanceof_expression ::= expression mb_nl instanceof_expression_tail
-private instanceof_expression_tail ::= ('instanceof' | '!instanceof') mb_nl (type_element | expect_type) { pin = 1 }
+private instanceof_expression_tail ::= ('instanceof' | '!instanceof') mb_nl (pattern_test | expect_type) { pin = 1 }
+private pattern_test ::= (type_element (mb_nl pattern_variable)?)
+pattern_variable ::= (IDENTIFIER | weak_keyword_identifiers) !(T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword)
+
 as_expression ::= expression mb_nl ('as') mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
@@ -1434,6 +1437,7 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 
 // region Generated parser util
 private external keyword ::= parseKeyword
+private external reserved_keyword ::= parseReservedKeyword
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants
 private external clear_error ::= clearError

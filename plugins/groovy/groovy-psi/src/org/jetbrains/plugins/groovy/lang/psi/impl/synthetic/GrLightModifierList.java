@@ -23,7 +23,7 @@ import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP;
 
-public final class GrLightModifierList extends LightElement implements GrModifierList {
+public class GrLightModifierList extends LightElement implements GrModifierList {
   private int myModifiers;
   private final List<GrAnnotation> myAnnotations = new ArrayList<>();
 
