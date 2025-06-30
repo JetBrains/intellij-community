@@ -204,14 +204,6 @@ public final class JdkUtil {
     return PropertiesComponent.getInstance().getBoolean("idea.dynamic.classpath.jar", true);
   }
 
-  private static boolean isCompatibleWithOs(@NotNull EelDescriptor descriptor) {
-    EelOsFamily os = descriptor.getOsFamily();
-    return switch (os) {
-      case Windows -> SystemInfo.isWindows;
-      case Posix -> SystemInfo.isUnix;
-    };
-  }
-
   //<editor-fold desc="Deprecated stuff.">
 
   private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {
