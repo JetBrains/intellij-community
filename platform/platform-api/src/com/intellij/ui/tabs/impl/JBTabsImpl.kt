@@ -1206,7 +1206,7 @@ open class JBTabsImpl internal constructor(
   protected open fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
     return when {
       info.isPinned -> AllIcons.Actions.PinTab
-      !info.tabLabelActions?.getChildren(null).isNullOrEmpty() -> if (isHovered) AllIcons.Actions.CloseHovered else AllIcons.Actions.Close
+      (info.tabLabelActions as? DefaultActionGroup)?.getChildActionsOrStubs()?.isNotEmpty() ?: false -> if (isHovered) AllIcons.Actions.CloseHovered else AllIcons.Actions.Close
       else -> EmptyIcon.ICON_16
     }
   }
