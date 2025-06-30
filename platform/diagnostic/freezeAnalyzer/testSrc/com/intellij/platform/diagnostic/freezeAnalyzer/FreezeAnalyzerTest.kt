@@ -20,6 +20,13 @@ class FreezeAnalyzerTest {
   }
 
   @Test
+  fun testDeadlockWithSuvorovIndicator() {
+    val threadDump = getResourceContent("freezes/readWriteLock/deadLock.txt")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.idea.maven.buildtool.MavenSyncConsole.doFinish")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.first()?.stackTrace?.lineSequence()?.first().shouldBe("\"java\" prio=0 tid=0x0 nid=0x0 blocked")
+  }
+
+  @Test
   fun testSuvorovIndicator() {
     val threadDump = getResourceContent("freezes/readWriteLock/suvorov-indicator.txt")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.codeInsight.NullabilitySource\$MultiSource.hashCode")

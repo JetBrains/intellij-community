@@ -107,7 +107,8 @@ object FreezeAnalyzer {
         it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getReadPermit") ||
         it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit") ||
         it.startsWith("at com.intellij.openapi.application.impl.ComputationState.acquireReadPermit") ||
-        it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
+        it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit") ||
+        it.startsWith("at com.intellij.platform.locking.impl.RunSuspend.await")
       }
 
   private fun isReadWriteLockTaken(stackTrace: String): Boolean =
