@@ -111,8 +111,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private var activity: Activity? = null
   private var childActivity: Activity? = null
 
-  fun needToReloadProjectEntities(): Boolean {
-    if (StoreReloadManager.getInstance(project).isReloadBlocked() || serializers.get() == null) {
+  suspend fun needToReloadProjectEntities(): Boolean {
+    if (project.serviceAsync<StoreReloadManager>().isReloadBlocked() || serializers.get() == null) {
       return false
     }
 
@@ -123,7 +123,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   @OptIn(EntityStorageInstrumentationApi::class)
   suspend fun reloadProjectEntities(): Unit = reloadProjectEntitiesTimeMs.addMeasuredTime {
-    if (StoreReloadManager.getInstance(project).isReloadBlocked()) {
+    if (project.serviceAsync<StoreReloadManager>().isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
       return@addMeasuredTime
     }
@@ -533,7 +533,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val newSerializers = createSerializers()
     val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
     backgroundWriteAction {
-      workspaceModel.updateProjectModel("Convert to directory based format") {
+      workspaceModel.updateProjectModel("Convert to a directory-based format") {
         newSerializers.changeEntitySourcesToDirectoryBasedFormat(it)
       }
       val moduleSources = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).map { it.entitySource }
