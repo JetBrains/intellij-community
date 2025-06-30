@@ -10,6 +10,7 @@ internal class SemiOpenLineRange(val startLine: Int, val endLine: Int) {
     }
   }
 
+
   /**
    * Checks if the semi-opened range is empty.
    */
