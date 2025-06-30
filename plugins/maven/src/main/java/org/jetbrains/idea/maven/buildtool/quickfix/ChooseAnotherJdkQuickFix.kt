@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -13,7 +14,9 @@ import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import kotlinx.coroutines.launch
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import java.util.concurrent.CompletableFuture
@@ -45,6 +48,8 @@ class ChooseAnotherJdkQuickFix : BuildIssueQuickFix {
         }
       }.onPopupClosed {
         result.complete(null)
+        MavenProjectsManager.getInstance(project).scheduleUpdateAllMavenProjects(MavenSyncSpec.full("ChooseAnotherJdkQuickFix", true))
+        ProjectRefreshAction.Manager.refreshProject(project)
       }.buildPopup()
 
     popup.showCenteredInCurrentWindow(project)
