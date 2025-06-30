@@ -36,7 +36,7 @@ import javax.swing.UIManager
  */
 @ApiStatus.Internal
 class NiceOverlayUi(
-  component: Component,
+  val rootPane: JRootPane,
   /**
    * "Close" button requires making a screenshot (see [com.intellij.openapi.progress.util.ui.NiceOverlayUi.screenshot])
    * The screenshot via Robot provokes an alert on MacOS, and it does not work nice on multi-monitor linux setup
@@ -44,7 +44,6 @@ class NiceOverlayUi(
    */
   val showCloseButton: Boolean,
 ) {
-  private val rootPane: JRootPane = SwingUtilities.getRootPane(component)
 
 
   private val mainText = DiagnosticBundle.message("freeze.popup.application.is.not.responding", ApplicationInfo.getInstance().versionName)
