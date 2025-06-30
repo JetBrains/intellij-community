@@ -106,9 +106,7 @@ class BatchEvaluator private constructor() {
               var count = 0
               while (dis.available() > 0) {
                 val error = dis.readBoolean()
-                val data = ByteArray(dis.readInt())
-                dis.readFully(data)
-                val message = String(data, Charsets.UTF_8)
+                val message = dis.readUTF()
                 if (count >= requests.size) {
                   LOG.error("Invalid number of results: required " + requests.size + ", reply = " + bytes.contentToString())
                   return false
