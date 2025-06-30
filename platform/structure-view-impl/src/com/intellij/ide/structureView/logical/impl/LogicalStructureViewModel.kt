@@ -38,7 +38,7 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
   }
 
   override fun isAlwaysLeaf(element: StructureViewTreeElement?): Boolean {
-    return element is ElementsBuilder.PropertyStructureElement || element is ElementsBuilder.EmptyChildrenElement
+    return element is ElementsBuilder.PropertyStructureElement || element is ElementsBuilder.EmptyChildrenElement<*>
   }
 
   override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
@@ -291,7 +291,7 @@ private class ElementsBuilder {
 
     private val cashedChildren: Array<TreeElement> by lazy {
       val result = calculateChildren()
-      if (result.isEmpty()) return@lazy arrayOf(EmptyChildrenElement())
+      if (result.isEmpty()) return@lazy arrayOf(EmptyChildrenElement(parentAssembledModel))
       result
     }
 
@@ -392,7 +392,9 @@ private class ElementsBuilder {
     }
   }
 
-  class EmptyChildrenElement: StructureViewTreeElement {
+  class EmptyChildrenElement<T>(
+    val parentAssembledModel: LogicalStructureAssembledModel<T>,
+  ): LogicalStructureViewTreeElement<T> {
     override fun getPresentation(): ItemPresentation {
       return PresentationData(null, null, null, null).apply {
         this.addText(StructureViewBundle.message("node.structureview.empty"), SimpleTextAttributes.GRAY_SMALL_ATTRIBUTES)
@@ -401,5 +403,7 @@ private class ElementsBuilder {
 
     override fun getChildren(): Array<out TreeElement?> = emptyArray()
     override fun getValue(): Any? = Any()
+    override fun getLogicalAssembledModel() = parentAssembledModel
+    override fun isHasNoOwnLogicalModel(): Boolean = true
   }
 }

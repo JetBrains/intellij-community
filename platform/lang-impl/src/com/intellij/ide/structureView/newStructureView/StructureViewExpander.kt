@@ -27,6 +27,7 @@ internal class StructureViewExpander(val project: Project): TreeExpander {
   override fun collapseAll() {
     val tree = getActualTree() ?: return
     TreeUtil.collapseAll(tree, true, 1)
+    afterExpandOrCollapse()
   }
 
   override fun expandAll() {
@@ -40,19 +41,28 @@ internal class StructureViewExpander(val project: Project): TreeExpander {
         is PsiTarget if rootFile != null && pathObject.isValid -> pathObject.navigationElement.containingFile?.virtualFile == rootFile
         else -> true
       }
-    }
+    }.onSuccess { afterExpandOrCollapse() }
+  }
+
+  private fun afterExpandOrCollapse() {
+    val myLayeredPane = getActualStructureView()?.content as? StructureViewComponent.MyLayeredPane
+    myLayeredPane?.hideToolbar()
   }
 
   private fun getActualTree(): JTree? {
+    return getActualStructureView()?.tree
+  }
+
+  private fun getActualStructureView(): StructureViewComponent? {
     val wrapper = (StructureViewFactory.getInstance(project) as? StructureViewFactoryEx)
                     ?.structureViewWrapper as? StructureViewWrapperImpl ?: return null
     val structureView = wrapper.getStructureView() ?: return null
-    if (structureView is StructureViewComponent) return structureView.tree
+    if (structureView is StructureViewComponent) return structureView
     if (structureView is StructureViewComposite) {
       for (descriptor in structureView.structureViews) {
         val oneOfViews = descriptor.structureView as? StructureViewComponent ?: continue
         val tree = oneOfViews.tree
-        if (tree.isShowing) return tree
+        if (tree.isShowing) return oneOfViews
       }
     }
     return null
