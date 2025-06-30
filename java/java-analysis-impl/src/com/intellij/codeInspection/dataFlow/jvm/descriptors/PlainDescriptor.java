@@ -34,7 +34,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
 
   public PlainDescriptor(@NotNull PsiVariable variable) {
     myVariable = variable;
-    myHash = Objects.hashCode(variable.getName());
+    myHash = System.identityHashCode(variable);
   }
 
   @Override
