@@ -21,7 +21,9 @@
     <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher" dynamic="true"/>
   </extensionPoints>
 
-  <extensions defaultExtensionNs="com.intellij"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Bytecode Viewer Errors" displayType="BALLOON" key="notification.group.error.report"/>
+  </extensions>
 
   <actions>
     <group id="ByeCodeViewerGroup">
