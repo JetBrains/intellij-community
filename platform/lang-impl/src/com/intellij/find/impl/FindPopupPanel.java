@@ -949,6 +949,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           } else {
             removeRow(p);
             insertRow(p, v);
+            if (p == 0) {
+              myResultsPreviewTable.getSelectionModel().setSelectionInterval(0, 0);
+            }
           }
         }
       }
