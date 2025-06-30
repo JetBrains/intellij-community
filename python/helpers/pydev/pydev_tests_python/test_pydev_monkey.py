@@ -8,11 +8,6 @@ except ImportError:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     from _pydev_bundle import pydev_monkey
 
-try:
-    from mock import patch  # Python 2.7 or when backported
-except ImportError:
-    from unittest.mock import patch  # Python 3.3+
-
 from pydevd import SetupHolder
 from _pydev_bundle.pydev_monkey import pydev_src_dir
 from _pydevd_bundle.pydevd_command_line_handling import get_pydevd_file
@@ -105,7 +100,11 @@ class TestCase(unittest.TestCase):
         ])
 
     # PY-60819
+    @unittest.skipIf(sys.version_info < (3,),
+                     "Test skipped on Python versions less than 3")
     def test_monkey_patch_args_quotes_managed_path_windows(self):
+        from unittest.mock import patch
+
         SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
         check = ['C:\\Python\\python.exe',
             '"C:/path with spaces/pydevd.py"',]
