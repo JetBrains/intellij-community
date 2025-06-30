@@ -12289,6 +12289,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/rangeCountWithPredicate.kt");
             }
 
+            @TestMetadata("safeQualifiedExpression.kt")
+            public void testSafeQualifiedExpression() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/safeQualifiedExpression.kt");
+            }
+
             @TestMetadata("string.kt")
             public void testString() throws Exception {
                 runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/string.kt");
@@ -12416,6 +12421,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("rangeCountWithPredicate.kt")
             public void testRangeCountWithPredicate() throws Exception {
                 runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/rangeCountWithPredicate.kt");
+            }
+
+            @TestMetadata("safeQualifiedExpression.kt")
+            public void testSafeQualifiedExpression() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/safeQualifiedExpression.kt");
             }
 
             @TestMetadata("string.kt")

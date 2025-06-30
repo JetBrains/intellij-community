@@ -46,6 +46,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 
     final override fun KaSession.prepareContext(element: KtBinaryExpression): ReplacementInfo? {
         val replaceableCall = extractTargetExpressionFromPsi(element)
+            ?.takeUnless { it is KtSafeQualifiedExpression }
             ?.resolveToCall()
             ?.singleCallOrNull<KaCallableMemberCall<*, *>>()
             ?.findReplaceableOverride()
