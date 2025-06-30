@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.FrequentEventDetector
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -18,6 +18,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.concurrency.createBoundedTaskExecutor
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.ui.EDT
@@ -87,8 +90,48 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     myEventCounter.eventHappened(session)
   }
 
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  private fun collectChangeAppliersInReadAction(
+    session: RefreshSessionImpl,
+    events: Collection<VFileEvent>,
+    evQueuedAt: Long,
+    evTimeInQueue: AtomicLong,
+    evRetries: AtomicLong,
+    evListenerTime: AtomicLong,
+  ): Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> {
+    if (LOG.isDebugEnabled()) LOG.debug("Start non-blocking action for session with id=" + session.hashCode())
+    evTimeInQueue.compareAndSet(-1, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - evQueuedAt))
+    evRetries.incrementAndGet()
+    val t = System.nanoTime()
+    try {
+      val result: Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> = runAsyncListeners(events)
+      if (LOG.isDebugEnabled()) LOG.debug("Successful finish of non-blocking read action for session with id=" + session.hashCode())
+      return result
+    }
+    finally {
+      if (LOG.isDebugEnabled()) LOG.debug("Final block of non-blocking read action for  session with id=" + session.hashCode())
+      evListenerTime.addAndGet(System.nanoTime() - t)
+    }
+  }
+
+  @RequiresWriteLock
+  private fun doFireEvents(
+    session: RefreshSessionImpl,
+    evTimeInQueue: AtomicLong,
+    evListenerTime: AtomicLong,
+    evRetries: AtomicLong,
+    events: List<CompoundVFileEvent>,
+    changeAppliers: List<AsyncFileListener.ChangeApplier>,
+  ) {
+    var t = System.nanoTime()
+    session.fireEvents(events, changeAppliers, true)
+    t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
+    VfsUsageCollector.logEventProcessing(evTimeInQueue.toLong(), TimeUnit.NANOSECONDS.toMillis(evListenerTime.toLong()), evRetries.toInt(), t, events.size)
+  }
+
   private fun processEvents(session: RefreshSessionImpl, modality: ModalityState, events: Collection<VFileEvent>) {
-    if (`is`("vfs.async.event.processing", true) && !events.isEmpty()) {
+    if (Registry.`is`("vfs.async.event.processing", true) && !events.isEmpty()) {
       val evQueuedAt = System.nanoTime()
       val evTimeInQueue = AtomicLong(-1)
       val evListenerTime = AtomicLong(-1)
@@ -96,31 +139,13 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
       startIndicator(IdeCoreBundle.message("async.events.progress"))
       ReadAction
         .nonBlocking<Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>>> {
-          if (LOG.isDebugEnabled()) LOG.debug("Start non-blocking action for session with id=" + session.hashCode())
-          evTimeInQueue.compareAndSet(-1, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - evQueuedAt))
-          evRetries.incrementAndGet()
-          val t = System.nanoTime()
-          try {
-            val result: Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> = runAsyncListeners(events)
-            if (LOG.isDebugEnabled()) LOG.debug("Successful finish of non-blocking read action for session with id=" + session.hashCode())
-            return@nonBlocking result
-          }
-          finally {
-            if (LOG.isDebugEnabled()) LOG.debug("Final block of non-blocking read action for  session with id=" + session.hashCode())
-            evListenerTime.addAndGet(System.nanoTime() - t)
-          }
+          collectChangeAppliersInReadAction(session, events, evQueuedAt, evTimeInQueue, evRetries, evListenerTime)
         }
         .expireWith(this)
         .wrapProgress(myRefreshIndicator)
-        .finishOnUiThread(modality,
-                          Consumer { data: Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> ->
-                            var t = System.nanoTime()
-                            session.fireEvents(data.first, data.second, true)
-                            t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
-                            VfsUsageCollector.logEventProcessing(
-                              evTimeInQueue.toLong(), TimeUnit.NANOSECONDS.toMillis(evListenerTime.toLong()), evRetries.toInt(), t,
-                              data.second.size)
-                          })
+        .finishOnUiThread(modality) { data: Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> ->
+          doFireEvents(session, evTimeInQueue, evListenerTime, evRetries, data.first, data.second)
+        }
         .submit(myEventProcessingQueue)
         .onProcessed { stopIndicator() }
         .onError(Consumer { t: Throwable ->
@@ -188,7 +213,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     private fun fireEvents(events: Collection<VFileEvent>, session: RefreshSessionImpl) {
       var t = System.nanoTime()
       val compoundEvents = events.map { event: VFileEvent -> CompoundVFileEvent(event) }
-      session.fireEvents(compoundEvents, mutableListOf<AsyncFileListener.ChangeApplier?>(), false)
+      session.fireEvents(compoundEvents, listOf(), false)
       t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
       VfsUsageCollector.logEventProcessing(-1L, -1L, -1, t, compoundEvents.size)
     }
