@@ -308,13 +308,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         if (dialogProvider == null) {
           LOG.warn("Accepting dialog wasn't shown, because DialogProvider in unavailable now");
         } else {
-          accepted = CertificateManager.Companion.showAcceptDialog(() -> {
+          @Nullable Boolean dialogResult = CertificateManager.Companion.showAcceptDialog(() -> {
             // TODO may be another kind of warning, if default trust store is missing
             return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, certificateProvider);
           });
-          if (!accepted) {
+          if (Boolean.FALSE.equals(dialogResult)) {
             myRejectedCertificates.add(endPoint);
           }
+          accepted = dialogResult != null && dialogResult.booleanValue();
         }
       }
     }
