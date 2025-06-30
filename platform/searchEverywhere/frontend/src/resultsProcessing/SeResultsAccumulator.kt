@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import kotlinx.coroutines.sync.Mutex
@@ -51,6 +52,8 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
   }
 
   private fun calculateEventType(newItem: SeItemData): SeResultEvent? {
+    val newItem = filterOutRecentFilesToReplaceIfNecessary(newItem) ?: return null
+
     val topHitUuidToReplace =
       if (newItem.providerId.isTopHit()) {
         // Handle TopHit items: frontend items have higher priority, and they are preferred over backend items.
@@ -73,6 +76,18 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
       SeResultReplacedEvent(toReplace, newItem)
     }
     else SeResultAddedEvent(newItem)
+  }
+
+  private fun filterOutRecentFilesToReplaceIfNecessary(newItem: SeItemData): SeItemData? {
+    if  (!AdvancedSettings.getBoolean("search.everywhere.recent.at.top") || newItem.uuidsToReplace.isEmpty()) return newItem
+
+    val recentContributorID = SeProviderIdUtils.RECENT_FILES_ID.toProviderId()
+    val itemsToReplace = newItem.uuidsToReplace.mapNotNull { items[it] }
+    val itemsWithoutRecentFiles = itemsToReplace.filter { it.providerId != recentContributorID }.map { it.uuid }
+
+    return if (itemsWithoutRecentFiles.size == itemsToReplace.size) newItem
+    else if (itemsWithoutRecentFiles.isEmpty()) null
+    else newItem.withUuidToReplace(itemsWithoutRecentFiles)
   }
 
   private fun SeProviderId.isTopHit(): Boolean =
