@@ -25,6 +25,8 @@
     </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="devkit.workspaceModel.code.generation" defaultValue="false" restartRequired="false"
+                 description="Enable code generation for workspace model entities"/>
     <localInspection language="kotlin"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
@@ -53,5 +55,8 @@
     <notificationGroup id="Incompatible codegen api versions"
                        displayType="BALLOON"
                        key="notification.workspace.incompatible.codegen.api.versions"/>
+    <notificationGroup id="Workspace code generation not available"
+                       displayType="BALLOON"
+                       key="notification.workspace.code.generation.not.available"/>
   </extensions>
 </idea-plugin>
