@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.coverage
 
+import com.intellij.rt.coverage.aggregate.api.AggregatorApi
 import com.intellij.rt.coverage.instrumentation.CoverageArgs
 import com.intellij.rt.coverage.report.api.Filters
 import com.intellij.rt.coverage.report.api.ReportApi
@@ -8,6 +9,7 @@ import com.intellij.rt.coverage.util.ErrorReporter
 import com.intellij.util.io.Compressor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -34,6 +36,8 @@ interface Coverage {
   fun enable(jvmOptions: MutableList<String>, systemProperties: MutableMap<String, String>)
 
   suspend fun generateReport()
+
+  suspend fun aggregateAndReport(dataToMerge: List<Path>)
 }
 
 @OptIn(ExperimentalPathApi::class)
@@ -42,7 +46,9 @@ internal class CoverageImpl(
   coveredModuleNames: List<String>,
   private val coveredClasses: List<Regex>,
 ) : Coverage {
-  private val data: Path = context.paths.tempDir.resolve("coverage.ic")
+  private val buildId: String = TeamCityHelper.allProperties["teamcity.build.id"] ?: ""
+
+  private val data: Path = context.paths.tempDir.resolve("coverage$buildId.ic")
 
   init {
     require(coveredModuleNames.any()) {
@@ -200,5 +206,19 @@ internal class CoverageImpl(
       generateReport(outputRoots = outputRoots(), sourceRoots = sourceRoots)
       publishReport()
     }
+  }
+
+  override suspend fun aggregateAndReport(dataToMerge: List<Path>) {
+    require(dataToMerge.any()) {
+      "No coverage data files to merge"
+    }
+    block("Merging coverage data files") {
+      @Suppress("IO_FILE_USAGE")
+      AggregatorApi.merge(
+        dataToMerge.map { it.toFile() },
+        data.toFile(),
+      )
+    }
+    generateReport()
   }
 }

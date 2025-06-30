@@ -13,6 +13,7 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.io.path.createFile
 import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.readText
@@ -44,8 +45,7 @@ class CoverageTest {
   @Test
   fun test() {
     runBlocking(Dispatchers.Default) {
-      val context = context()
-      val tests = TestingTasks.create(context, testingOptions)
+      val tests = TestingTasks.create(context(), testingOptions)
       if (isAlreadyUnderCoverage) return@runBlocking
       tests.runTests(additionalSystemProperties = mapOf(coverageFlag to "true"))
       assertCoverage(coveredClassName = coveredClass.simpleName, reportDir = tests.coverage.reportDir)
@@ -71,6 +71,17 @@ class CoverageTest {
         }.any()
     ) {
       "$coveredClassName is expected to be called by this test class but 0% coverage is detected"
+    }
+  }
+
+  @Test
+  fun `test aggregating reports`() {
+    if (isAlreadyUnderCoverage) return
+    runBlocking(Dispatchers.Default) {
+      val tests = TestingTasks.create(context(), testingOptions)
+      tests.coverage.aggregateAndReport((1..2).map {
+        tempDir.resolve("coverage-report-$it.ic").createFile()
+      })
     }
   }
 }

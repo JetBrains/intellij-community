@@ -2,6 +2,7 @@
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.createCompilationContext
 
@@ -22,7 +23,9 @@ object CommunityRunTestsBuildTarget {
         projectHome = COMMUNITY_ROOT.communityRoot,
         defaultOutputRoot = COMMUNITY_ROOT.communityRoot.resolve("out/tests")
       )
-      TestingTasks.create(context).runTests(defaultMainModule = "intellij.idea.community.main")
+      val options = TestingOptions()
+      options.mainModule = options.mainModule ?: "intellij.idea.community.main"
+      TestingTasks.create(context, options).runTests()
     }
   }
 }

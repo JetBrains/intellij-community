@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package org.jetbrains.intellij.build
 
 import org.jetbrains.annotations.ApiStatus
@@ -29,10 +27,22 @@ interface TestingTasks {
    * @param defaultMainModule    the main module to be used if [TestingOptions.mainModule] is not specified
    * @param rootExcludeCondition if not `null`, tests from modules which sources are fit this predicate will be skipped
    */
-  suspend fun runTests(additionalJvmOptions: List<String> = java.util.List.of(),
-                       additionalSystemProperties: Map<String, String> = java.util.Map.of(),
-                       defaultMainModule: String? = null,
-                       rootExcludeCondition: ((Path) -> Boolean)? = null)
+  @Deprecated(message = "the `defaultMainModule` should be passed via `TestingOptions#mainModule`")
+  suspend fun runTests(
+    additionalJvmOptions: List<String> = emptyList(),
+    additionalSystemProperties: Map<String, String> = emptyMap(),
+    defaultMainModule: String? = null,
+    rootExcludeCondition: ((Path) -> Boolean)? = null,
+  )
+
+  /**
+   * @param rootExcludeCondition if not `null`, tests from modules which sources are fit this predicate will be skipped
+   */
+  suspend fun runTests(
+    additionalJvmOptions: List<String> = emptyList(),
+    additionalSystemProperties: Map<String, String> = emptyMap(),
+    rootExcludeCondition: ((Path) -> Boolean)? = null,
+  )
 
   /**
    * Run all tests annotated with [com.intellij.testFramework.SkipInHeadlessEnvironment]

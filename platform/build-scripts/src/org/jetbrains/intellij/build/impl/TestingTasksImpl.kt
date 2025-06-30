@@ -34,6 +34,7 @@ import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.impl.coverage.Coverage
 import org.jetbrains.intellij.build.impl.coverage.CoverageImpl
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
@@ -72,7 +73,19 @@ private const val NO_TESTS_ERROR = 42
 
 internal class TestingTasksImpl(context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private val context: CompilationContext = if (options.useArchivedCompiledClasses) context.asArchived else context
-  override lateinit var coverage: CoverageImpl
+
+  override val coverage: Coverage by lazy {
+    CoverageImpl(
+      context = this.context,
+      coveredModuleNames = runConfigurations
+                             .map { it.moduleName }
+                             .takeIf { it.any() }
+                           ?: listOfNotNull(options.mainModule),
+      coveredClasses = requireNotNull(options.coveredClassesPatterns) {
+        "Test coverage is enabled but the classes pattern is not specified"
+      }.splitToSequence(';').map(::Regex).toList(),
+    )
+  }
 
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
     return try {
@@ -99,31 +112,38 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
   }
 
-  private fun loadTestRunConfigurations(): List<JUnitRunConfigurationProperties>? {
-    val testConfigurationsOption = options.testConfigurations ?: return null
-    return testConfigurationsOption
-      .splitToSequence(';')
-      .filter(String::isNotEmpty)
-      .flatMap(::loadRunConfigurations)
-      .toList()
+  private val runConfigurations: List<JUnitRunConfigurationProperties> by lazy {
+    options.testConfigurations
+      ?.splitToSequence(';')
+      ?.filter(String::isNotEmpty)
+      ?.flatMap(::loadRunConfigurations)
+      ?.toList() ?: emptyList()
   }
 
+  @Deprecated("the `defaultMainModule` should be passed via `TestingOptions#mainModule`")
   override suspend fun runTests(
     additionalJvmOptions: List<String>,
     additionalSystemProperties: Map<String, String>,
     defaultMainModule: String?,
     rootExcludeCondition: ((Path) -> Boolean)?,
   ) {
+    require(defaultMainModule == null) {
+      "The `defaultMainModule` parameter is deprecated, please use `TestingOptions#mainModule` instead."
+    }
+    runTests(additionalJvmOptions, additionalSystemProperties, rootExcludeCondition)
+  }
+
+  override suspend fun runTests(additionalJvmOptions: List<String>, additionalSystemProperties: Map<String, String>, rootExcludeCondition: ((Path) -> Boolean)?) {
     if (options.redirectStdOutToFile && !TeamCityHelper.isUnderTeamCity) {
       context.messages.warning("'${TestingOptions.REDIRECT_STDOUT_TO_FILE}' can be set only for a TeamCity build, ignored.")
     }
     if (TeamCityHelper.isUnderTeamCity && options.redirectStdOutToFile) {
       redirectStdOutToFile {
-        runTestsImpl(additionalJvmOptions, additionalSystemProperties, defaultMainModule, rootExcludeCondition)
+        runTestsImpl(additionalJvmOptions, additionalSystemProperties, rootExcludeCondition)
       }
     }
     else {
-      runTestsImpl(additionalJvmOptions, additionalSystemProperties, defaultMainModule, rootExcludeCondition)
+      runTestsImpl(additionalJvmOptions, additionalSystemProperties, rootExcludeCondition)
     }
   }
 
@@ -148,7 +168,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
   private suspend fun runTestsImpl(additionalJvmOptions: List<String>,
                                    additionalSystemProperties: Map<String, String>,
-                                   defaultMainModule: String?,
                                    rootExcludeCondition: ((Path) -> Boolean)?) {
     if (options.enableCoverage && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Coverage, {build.status.text}")
@@ -159,13 +178,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       return
     }
 
-    val mainModule = options.mainModule ?: defaultMainModule
+    val mainModule = options.mainModule
     checkOptions(mainModule)
 
-    val runConfigurations = loadTestRunConfigurations()
     if (options.validateMainModule) {
       checkNotNull(mainModule)
-      val withModuleMismatch = runConfigurations?.filter { it.moduleName != mainModule } ?: emptyList()
+      val withModuleMismatch = runConfigurations.filter { it.moduleName != mainModule }
       if (withModuleMismatch.isNotEmpty()) {
         val errorMessage = withModuleMismatch.joinToString(
           prefix = "Run configuration module mismatch, expected '$mainModule' (set in option 'intellij.build.test.main.module'), actual:\n",
@@ -181,7 +199,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         compilationTasks.buildProjectArtifacts(it)
       }
 
-      if (runConfigurations != null) {
+      if (runConfigurations.any()) {
         compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
                                         listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
         compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
@@ -211,16 +229,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)
       }
       if (options.enableCoverage) {
-        coverage = CoverageImpl(
-          context,
-          coveredModuleNames = runConfigurations?.map { it.moduleName } ?: listOfNotNull(mainModule),
-          coveredClasses = requireNotNull(options.coveredClassesPatterns) {
-            "Test coverage is enabled but the classes pattern is not specified"
-          }.splitToSequence(';').map(::Regex).toList(),
-        )
         coverage.enable(jvmOptions = effectiveAdditionalJvmOptions, systemProperties = systemProperties)
       }
-      if (runConfigurations == null) {
+      if (runConfigurations.none()) {
         runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, checkNotNull(mainModule) {
           "Main module is not specified"
         }, rootExcludeCondition, systemProperties)
