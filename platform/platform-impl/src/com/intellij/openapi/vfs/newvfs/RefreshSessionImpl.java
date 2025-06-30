@@ -23,6 +23,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.progress.CancellationUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,8 @@ import java.util.*;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-final class RefreshSessionImpl extends RefreshSession {
+@ApiStatus.Internal
+public final class RefreshSessionImpl extends RefreshSession {
   @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
   private static final int RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry.limit", 3);

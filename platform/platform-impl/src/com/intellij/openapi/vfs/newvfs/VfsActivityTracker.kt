@@ -14,7 +14,7 @@ class VfsActivityTracker : ActivityTracker {
   override val presentableName: @Nls String = IdeBundle.message("vfs.activity.tracker.name")
 
   override suspend fun isInProgress(project: Project): Boolean {
-    return RefreshQueueImpl.isRefreshInProgress()
+    return RefreshQueueImpl.isRefreshInProgress
   }
 
   override suspend fun awaitConfiguration(project: Project) {

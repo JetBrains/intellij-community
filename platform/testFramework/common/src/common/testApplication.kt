@@ -382,7 +382,7 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
   val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
   stubIndex?.waitUntilStubIndexedInitialized()
 
-  while (RefreshQueue.getInstance() != null && (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress())) {
+  while (RefreshQueue.getInstance() != null && (RefreshQueueImpl.isRefreshInProgress || RefreshQueueImpl.isEventProcessingInProgress)) {
     if (EDT.isCurrentThreadEdt()) {
       EDT.dispatchAllInvocationEvents()
     }
