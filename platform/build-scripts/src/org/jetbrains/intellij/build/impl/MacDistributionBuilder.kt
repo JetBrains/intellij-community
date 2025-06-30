@@ -567,9 +567,7 @@ class MacDistributionBuilder(
       notarize(sitFile, context)
     }
 
-    buildDmg(sitFile, dmgName = "${baseName}.dmg", notarize)
-
-    check(Files.exists(sitFile)) { "$sitFile wasn't created" }
+    buildDmg(sitFile, "${baseName}.dmg", notarize)
 
     if (publishSitArchive) {
       context.notifyArtifactBuilt(sitFile)
