@@ -1,7 +1,7 @@
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.AndroidStudioProperties
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 
@@ -10,7 +10,7 @@ object AndroidStudioBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     runBlocking {
-      val home = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
+      val home = BuildPaths.COMMUNITY_ROOT
       val properties = AndroidStudioProperties(home.communityRoot)
       val buildContext = BuildContextImpl.createContext(home.communityRoot, properties)
       validateProductVersion(buildContext)

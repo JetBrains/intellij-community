@@ -14,7 +14,7 @@ object TestModuleTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     runBlocking {
-      val home = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
+      val home = BuildPaths.COMMUNITY_ROOT
       val properties = AndroidStudioProperties(home.communityRoot)
       val context = BuildContextImpl.createContext(home.communityRoot, properties)
       val tasks = CompilationTasks.create(context)
