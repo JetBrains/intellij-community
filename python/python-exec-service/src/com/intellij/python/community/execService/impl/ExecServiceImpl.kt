@@ -31,7 +31,7 @@ import kotlin.time.Duration
 
 internal object ExecServiceImpl : ExecService {
 
-  override suspend fun <T> executeAdvanced(binary: Path, argsBuilder: suspend ArgsBuilder.() -> Unit, options: ExecOptions, processInteractiveHandler: ProcessInteractiveHandler<T>): PyResult<T> {
+  override suspend fun <T> executeAdvanced(binary: Path, argsBuilder: suspend ArgsBuilder.() -> Unit, options: ExecOptions, processInteractiveHandler: ProcessInteractiveHandler<T>): PyExecResult<T> {
     val args = ArgsBuilderImpl(binary.getEelDescriptor().toEelApi()).apply { argsBuilder() }.args
     val description = options.processDescription
                       ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(binary.pathString) + args).joinToString(" "))

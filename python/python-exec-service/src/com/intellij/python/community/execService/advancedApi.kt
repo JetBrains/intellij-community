@@ -6,6 +6,7 @@ import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.python.community.execService.impl.ProcessSemiInteractiveHandlerImpl
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
@@ -41,7 +42,7 @@ interface ExecService {
     argsBuilder: suspend ArgsBuilder.() -> Unit = {},
     options: ExecOptions = ExecOptions(),
     processInteractiveHandler: ProcessInteractiveHandler<T>,
-  ): PyResult<T>
+  ): PyExecResult<T>
 }
 
 
