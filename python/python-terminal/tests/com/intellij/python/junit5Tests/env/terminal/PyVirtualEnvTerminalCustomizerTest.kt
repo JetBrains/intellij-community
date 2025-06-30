@@ -9,6 +9,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.provider.utils.sendWholeText
@@ -86,6 +88,7 @@ class PyVirtualEnvTerminalCustomizerTest {
   }
 
 
+  @ThrowsChecked(ExecuteProcessException::class)
   @CartesianTest
   fun shellActivationTest(
     @CartesianTest.Values(booleans = [true, false]) useConda: Boolean,
@@ -139,7 +142,7 @@ class PyVirtualEnvTerminalCustomizerTest {
     val execOptions = localEel.exec.spawnProcess(exe)
       .args(args)
       .env(shellOptions.envVariables + mapOf(Pair("TERM", "dumb")))
-      // Unix shells do not activate with out tty
+      // Unix shells do not activate without tty
       .interactionOptions(if (SystemInfo.isWindows) null else EelExecApi.Pty(100, 100, true))
     val process = execOptions.eelIt()
     try {
@@ -175,6 +178,9 @@ class PyVirtualEnvTerminalCustomizerTest {
       process.exitCode.await()
     }
     finally {
+      if (SystemInfo.isWindows) {
+        deleteCheckLocking(tempDirFixture.get())
+      }
       process.kill()
       process.exitCode.await()
     }
