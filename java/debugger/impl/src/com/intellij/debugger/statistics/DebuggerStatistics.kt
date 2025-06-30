@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 12)
+  private val GROUP = EventLogGroup("java.debugger", 13)
 
   // fields
 
