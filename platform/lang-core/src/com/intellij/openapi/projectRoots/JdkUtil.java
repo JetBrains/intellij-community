@@ -137,8 +137,7 @@ public final class JdkUtil {
    * @return if the JDK can be run on this machine.
    */
   public static boolean isCompatible(@NotNull Path jdkHomePath, @NotNull Project project) {
-    EelDescriptor jdkDescriptor = EelProviderUtil.getEelDescriptor(jdkHomePath);
-    return jdkDescriptor == EelProviderUtil.getEelDescriptor(project);
+    return EelProviderUtil.getEelDescriptor(jdkHomePath).equals(EelProviderUtil.getEelDescriptor(project));
   }
 
   public static boolean checkForJre(@NotNull String homePath) {
