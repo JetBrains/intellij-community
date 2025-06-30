@@ -145,7 +145,6 @@ def process_net_command(py_db, cmd_id, seq, text):
                 pydevd_file_utils.set_ide_os(ide_os)
 
                 cmd = py_db.cmd_factory.make_version_message(seq)
-                py_db.set_enable_thread_notifications(True)
 
             elif cmd_id == CMD_LIST_THREADS:
                 # response is a list of threads

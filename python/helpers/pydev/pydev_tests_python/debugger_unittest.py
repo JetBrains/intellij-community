@@ -554,7 +554,8 @@ class AbstractWriterThread(threading.Thread):
             'Sending suspend',
             'Sending resume',
             'Suspend not sent',
-            'Resume not sent'
+            'Resume not sent',
+            'Connected to:'
         )):
             return True
 
@@ -1081,6 +1082,7 @@ class AbstractWriterThread(threading.Thread):
             if accept_message(last):
                 if expect_xml:
                     # Extract xml and return untangled.
+                    xml = ""
                     try:
                         xml = last[last.index('<xml>'):]
                         if isinstance(xml, bytes):
@@ -1131,55 +1133,30 @@ class AbstractDispatcherThread(AbstractWriterThread):
         self.writers = []
         self._sequence = -1
         self._breakpoints = []
-        self.thread_communications = []
 
-    def run_thread_communication(self):
-        server_socket = self.server_socket
-        breakpoints = self._breakpoints
-        writers = self.writers
-        test_file = self.get_main_filename()
+    def run(self):
+        server_socket = _create_socket()
+        server_socket.listen(1)
+        self.port = server_socket.getsockname()[1]
+        self.finished_initialization = True
 
-        class _SecondaryProcessWriterThread(AbstractWriterThread):
-            TEST_FILE = test_file
-            _sequence = -1
+        while True:
+            self.sock, addr = server_socket.accept()
+            new_writer = AbstractWriterThread()
+            new_writer.TEST_FILE = self.TEST_FILE
+            new_writer.start()
+            wait_for_condition(lambda: hasattr(new_writer, 'port'))
+            self.write('99\t-1\t%d' % new_writer.port)
+            wait_for_condition(lambda: new_writer.finished_initialization)
 
-        class _SecondaryProcessThreadCommunication(threading.Thread):
-            def run(self):
-                server_socket.listen(1)
-                self.server_socket = server_socket
-                new_sock, addr = server_socket.accept()
+            for args, kwargs in self._breakpoints:
+                new_writer.write_add_breakpoint(*args, **kwargs)
 
-                reader_thread = ReaderThread(new_sock)
-                reader_thread.start()
+            self.writers.append(new_writer)
 
-                writer2 = _SecondaryProcessWriterThread()
+    def write_add_breakpoint(self, *args, **kwargs):
+        self._breakpoints.append((args, kwargs))
 
-                writer2.reader_thread = reader_thread
-                writer2.sock = new_sock
-
-                writer2.write_version()
-                for args, kwargs in breakpoints:
-                    writer2.write_add_breakpoint(*args, **kwargs)
-                writers.append(writer2)
-
-        secondary_process_thread_communication = _SecondaryProcessThreadCommunication()
-        secondary_process_thread_communication.start()
-        self.thread_communications.append(secondary_process_thread_communication)
-        return secondary_process_thread_communication
-
-    def join_communication(self, comm):
-        comm.join(10)
-        if comm.is_alive():
-            raise AssertionError(
-                'The SecondaryProcessThreadCommunication did not finish')
-        self.thread_communications.remove(comm)
-
-    def stop_thread_communication(self, comm=None):
-        if comm is not None:
-            self.join_communication(comm)
-        else:
-            for comm in self.thread_communications:
-                self.join_communication(comm)
 
 def _get_debugger_test_file(filename):
     try:

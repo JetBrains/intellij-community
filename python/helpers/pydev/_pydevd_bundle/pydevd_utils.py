@@ -4,7 +4,6 @@ import ctypes
 import os
 import signal
 import traceback
-from importlib import import_module
 
 try:
     import torch
@@ -732,30 +731,6 @@ def kill_thread(thread):
                         % thread_id)
     pydev_log.debug("Thread with ID '%s' is stopped" % thread_id)
 
-def import_attr_from_module(import_with_attr_access):
-    if "." not in import_with_attr_access:
-        # We need at least one '.' (we don't support just the module import, we need the attribute access too).
-        raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
-
-    module_name, attr_name = import_with_attr_access.rsplit(".", 1)
-
-    while True:
-        try:
-            mod = import_module(module_name)
-        except ImportError:
-            if "." not in module_name:
-                raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
-
-            module_name, new_attr_part = module_name.rsplit(".", 1)
-            attr_name = new_attr_part + "." + attr_name
-        else:
-            # Ok, we got the base module, now, get the attribute we need.
-            try:
-                for attr in attr_name.split("."):
-                    mod = getattr(mod, attr)
-                return mod
-            except:
-                raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
 
 def interrupt_main_thread(main_thread=None):
     """
