@@ -374,7 +374,10 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
  *
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
  *
- * This dispatcher is also installed as [Dispatchers.Main]. Prefer [Dispatchers.UI] for computations on EDT.
+ * IntelliJ Platform also overrides [Dispatchers.Main], which has an important distinction from [Dispatchers.EDT]: the default modality state is
+ * [ModalityState.any] with [Dispatchers.Main]. It means that one cannot run write actions inside [Dispatchers.Main].
+ *
+ * Prefer [Dispatchers.UI] for computations on EDT.
  */
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().uiDispatcher(UiDispatcherKind.LEGACY, false)
