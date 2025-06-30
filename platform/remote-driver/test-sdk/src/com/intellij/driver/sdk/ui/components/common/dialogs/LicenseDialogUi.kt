@@ -48,7 +48,7 @@ class AuthDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val backButton = x { byText("← Back") }
   val loginToJBAButton = x { byVisibleText("Log in to JetBrains Account") }
   val getStartedButton = x { byVisibleText("Get Started") }
-  val copyLinkButton get() = x { contains(byVisibleText("copy the link")) }.getAllTexts { it.text.contains("copy the link") }[0]
+  val copyLinkButton get() = x { contains(byVisibleText("copy the link")) }.getAllTexts().single { it.text.contains("copy the link") }
 }
 
 
@@ -64,7 +64,7 @@ fun Finder.educationalLicenseExpirationDialog(action: EducationalLicenseExpirati
 class EducationalLicenseExpirationDialogUi(data: ComponentData) : UiComponent(data) {
   val renewLicenseButton = x { contains(byText("Renew license")) }
   val dismissButton = x { byText("Dismiss") }
-  val discountLink get() = x { contains(byVisibleText("40%")) }.getAllTexts { it.text.contains("40%") }[0]
+  val discountLink get() = x { contains(byVisibleText("40%")) }.getAllTexts().single { it.text.contains("40%") }
 }
 
 fun LicenseDialogUi.exitConfirmationDialog(action: ExitConfirmationDialogUi.() -> Unit) {
