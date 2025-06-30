@@ -11249,8 +11249,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
-
-
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/removeRedundantLabel")
     public static class RemoveRedundantLabel extends AbstractHighLevelQuickFixTest {
@@ -11614,8 +11612,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/removeUseSiteTarget/whitespaces.kt");
         }
     }
-
-
 
 
 
