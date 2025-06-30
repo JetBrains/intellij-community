@@ -8,45 +8,6 @@ from _pydevd_bundle.pydevd_constants import IS_PY3K
 LIB_FILE = 1
 PYDEV_FILE = 2
 
-DONT_TRACE_DIRS = {
-    '_pydev_bundle': PYDEV_FILE,
-    '_pydev_comm': PYDEV_FILE,
-    '_pydev_imps': PYDEV_FILE,
-    '_pydev_runfiles': PYDEV_FILE,
-    '_pydevd_bundle': PYDEV_FILE,
-    '_pydevd_frame_eval': PYDEV_FILE,
-    '_pydev_console': PYDEV_FILE,
-    'pydev_ipython': LIB_FILE,
-    'test_pydevd_reload': PYDEV_FILE,
-    'pydev_tests': PYDEV_FILE,
-    'pydev_tests_mainloop': PYDEV_FILE,
-    'pydev_tests_python': PYDEV_FILE,
-    'pydev_test_tables': PYDEV_FILE,
-    'pydevd_attach_to_process': PYDEV_FILE,
-    'pydevd_concurrency_analyser': PYDEV_FILE,
-    'pydevd_plugins': PYDEV_FILE,
-}
-
-LIB_FILES_IN_DONT_TRACE_DIRS = {
-    '__init__.py',
-    'inputhook.py',
-    'inputhookglut.py',
-    'inputhookgtk.py',
-    'inputhookgtk3.py',
-    'inputhookpyglet.py',
-    'inputhookqt4.py',
-    'inputhookqt5.py',
-    'inputhookqt6.py',
-    'inputhooktk.py',
-    'inputhookwx.py',
-    'matplotlibtools.py',
-    'qt.py',
-    'qt_for_kernel.py',
-    'qt_loaders.py',
-    'version.py',
-}
-
-
 DONT_TRACE = {
     # commonly used things from the stdlib that we don't want to trace
     'Queue.py':LIB_FILE,

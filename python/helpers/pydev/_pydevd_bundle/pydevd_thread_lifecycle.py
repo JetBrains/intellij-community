@@ -1,4 +1,5 @@
 #  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+import threading
 
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
@@ -6,7 +7,6 @@ from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_INTO, CMD_THREAD_SUSPE
 from _pydevd_bundle.pydevd_constants import PYTHON_SUSPEND, STATE_SUSPEND, USE_LOW_IMPACT_MONITORING
 from _pydev_bundle import pydev_log
 import sys
-
 
 def mark_thread_suspended(thread, stop_reason):
     info = set_additional_thread_info(thread)
@@ -21,11 +21,6 @@ def mark_thread_suspended(thread, stop_reason):
     info.pydev_state = STATE_SUSPEND
 
     return info
-
-
-from _pydevd_bundle.pydevd_constants import ForkSafeLock
-
-suspend_threads_lock = ForkSafeLock()
 
 
 def suspend_all_threads(py_db, except_thread):

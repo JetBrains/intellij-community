@@ -584,10 +584,10 @@ def py_start_callback(code, instruction_offset):
                     and frame is not info.pydev_step_stop):
                 if frame.f_back is info.pydev_step_stop:
                     _enable_return_tracing(code)
-            if (py_db.is_files_filter_enabled
+            if (py_db.is_filter_enabled
                     and py_db.is_ignored_by_filters(filename)):
                 return monitoring.DISABLE
-            if (py_db._is_libraries_filter_enabled
+            if (py_db.is_filter_libraries
                     and not py_db.in_project_scope(filename)):
                 return monitoring.DISABLE
             # We are stepping, and there is no reason to skip the frame
@@ -721,11 +721,11 @@ def py_line_callback(code, line_number):
                         return
             else:
                 if step_cmd != -1:
-                    if (py_db.is_files_filter_enabled
+                    if (py_db.is_filter_enabled
                             and py_db.is_ignored_by_filters(filename)):
                         # ignore files matching stepping filters
                         return monitoring.DISABLE
-                    if (py_db._is_libraries_filter_enabled
+                    if (py_db.is_filter_libraries
                             and not py_db.in_project_scope(filename)):
                         # ignore library files while stepping
                         return monitoring.DISABLE
@@ -853,7 +853,7 @@ def py_raise_callback(code, instruction_offset, exception):
         py_db = None
 
     if py_db is None:
-        return monitoring.DISABLE
+        return
 
     try:
         try:
