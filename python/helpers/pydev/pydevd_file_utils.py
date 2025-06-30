@@ -633,9 +633,3 @@ def get_package_dir(mod_name):
         if os.path.isdir(mod_path):
             return mod_path
     return None
-
-def absolute_path(filename):
-    """
-    Provides a version of the filename that's absolute (and NOT normalized).
-    """
-    return get_abs_path_real_path_and_base_from_file(filename)[0]
