@@ -149,4 +149,21 @@ class MergingUpdateQueuePropagationTest {
     delay(300)
     assertThat(counter.get()).isEqualTo(1)
   }
+
+  @Test
+  fun `frequent flush of merging queue retains progress while adding new tasks`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val queueProcessingJob = Job()
+    val queue = MergingUpdateQueue("test queue", 200, true, null, null, null, Alarm.ThreadToUse.POOLED_THREAD, coroutineScope = CoroutineScope(queueProcessingJob))
+    val counter = AtomicInteger()
+    val repeats = 1000
+    repeat(repeats) {
+      val update = Update.create(it) {
+        counter.incrementAndGet()
+      }
+      queue.queue(update)
+      queue.sendFlush()
+    }
+    delay(1000)
+    assertThat(counter.get()).isEqualTo(repeats)
+  }
 }
