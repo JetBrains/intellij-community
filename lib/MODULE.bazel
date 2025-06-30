@@ -2204,6 +2204,48 @@ http_file(
 )
 
 http_file(
+  name = "language-be-6_5_0_12_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-be/6.5.0.12/language-be-6.5.0.12.jar",
+  sha256 = "bd1887ce9a41765b30098c4e1de1b7fb44f85a2753c38e9ab6f809c5462904a8",
+  downloaded_file_path = "language-be-6.5.0.12.jar"
+)
+
+http_file(
+  name = "linguistics_grammardb_spell_languagetool-1_0_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/belarus/linguistics.grammardb.spell.languagetool/1.0.2/linguistics.grammardb.spell.languagetool-1.0.2.jar",
+  sha256 = "1d1a55e905faa9740d648144cf05c4a460f0f26416d2ee01157bad0877be31c2",
+  downloaded_file_path = "linguistics.grammardb.spell.languagetool-1.0.2.jar"
+)
+
+http_file(
+  name = "language-be-6_5_0_12-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-be/6.5.0.12/language-be-6.5.0.12-sources.jar",
+  sha256 = "a179feba0e4ba6af0d30494c4c06a1a7b60553027259fc95af876b3b77bc001c",
+  downloaded_file_path = "language-be-6.5.0.12-sources.jar"
+)
+
+http_file(
+  name = "language-uk-6_5_0_12_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-uk/6.5.0.12/language-uk-6.5.0.12.jar",
+  sha256 = "d1d6335aa10c9a109d64b9eb05128e5993fb2f88549f446b9b2b91a728a95da2",
+  downloaded_file_path = "language-uk-6.5.0.12.jar"
+)
+
+http_file(
+  name = "morfologik-ukrainian-lt-6_5_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/ua/net/nlp/morfologik-ukrainian-lt/6.5.2/morfologik-ukrainian-lt-6.5.2.jar",
+  sha256 = "6f720beda15abe1c3517d2105043e33da3786dcc92a6803e42f1b246de6af3ac",
+  downloaded_file_path = "morfologik-ukrainian-lt-6.5.2.jar"
+)
+
+http_file(
+  name = "language-uk-6_5_0_12-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-uk/6.5.0.12/language-uk-6.5.0.12-sources.jar",
+  sha256 = "872e8c9852e6b17ecfdf57942731122abdd04fdb1c0c17e67943afcd1b9bb3ab",
+  downloaded_file_path = "language-uk-6.5.0.12-sources.jar"
+)
+
+http_file(
   name = "language-de-6_5_0_12_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-de/6.5.0.12/language-de-6.5.0.12.jar",
   sha256 = "75cb2c34c15ef013a3b910bd072e006dec9128f5f39060202addcb7f85961714",
