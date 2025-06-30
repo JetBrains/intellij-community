@@ -34,7 +34,7 @@ internal fun deleteCheckLockingImpl(path: Path, vararg processesToKill: Regex) {
         val fileName = Path.of(command).fileName.toString()
         if (processesToKill.any { it.matches(fileName) }) {
           val processInfo = WinProcessInfo.get(process.pid())
-          fileLogger().info("Killing ${process.pid()} ${processInfo}")
+          fileLogger().warn("Killing ${process.pid()} ${processInfo}")
           killProcess(process)
         }
       }

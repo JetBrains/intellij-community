@@ -18,6 +18,7 @@ import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -67,6 +68,9 @@ class PyVirtualEnvTerminalCustomizerTest {
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
     sdkToDelete?.let { sdk ->
+      if (SystemInfo.isWindows) {
+        deleteCheckLocking(Path.of(sdk.homePath!!))
+      }
       edtWriteAction {
         ProjectJdkTable.getInstance().removeJdk(sdk)
       }
