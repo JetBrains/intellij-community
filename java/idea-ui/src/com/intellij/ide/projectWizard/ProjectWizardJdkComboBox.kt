@@ -18,7 +18,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.module.StdModuleTypes.JAVA
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -44,6 +44,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
 import com.intellij.ui.components.JBLabel
@@ -67,6 +68,8 @@ import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JList
 import kotlin.io.path.Path
+
+private val selectedJdkProperty = "jdk.selected.${JAVA.id}"
 
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
@@ -96,9 +99,6 @@ fun projectWizardJdkComboBox(
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  val sdkPropertyId = StdModuleTypes.JAVA
-  val selectedJdkProperty = "jdk.selected.${sdkPropertyId.id}"
-
   val combo = ProjectWizardJdkComboBox(projectJdk, disposable)
 
   locationProperty.afterPropagation {
@@ -119,6 +119,7 @@ fun projectWizardJdkComboBox(
       component.addItemListener {
         commentCell.comment?.let { it.text = component.comment }
       }
+      updateIntentProperty(combo, intentProperty)
     }
     .validationInfo {
       val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return@validationInfo null
@@ -146,23 +147,13 @@ fun projectWizardJdkComboBox(
       updateIntentProperty(combo, intentProperty)
     }
     .onApply {
-      when (val selected = combo.selectedItem) {
+      val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return@onApply
+      when (intent) {
         is NoJdk -> JdkComboBoxCollector.noJdkSelected()
-        is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((selected.task as JdkDownloadTask).jdkItem)
+        is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((intent.task as JdkDownloadTask).jdkItem)
+        else -> Unit
       }
-    }
-    .apply {
-      val lastSelected = PropertiesComponent.getInstance().getValue(selectedJdkProperty)
-      if (lastSelected != null) {
-        combo.selectedItem = lastSelected
-      } else {
-        combo.registered
-          .maxByOrNull { JavaSdkVersion.fromVersionString(it.jdk.versionString ?: "")?.ordinal ?: 0 }
-          ?.let { combo.selectedItem = it }
-      }
-    }
-    .apply {
-      updateIntentProperty(combo, intentProperty)
+      PropertiesComponent.getInstance().setValue(selectedJdkProperty, intent.name)
     }
 }
 
@@ -342,7 +333,7 @@ class ProjectWizardJdkComboBox(
     model.add(computeRegisteredSdks(key))
     model.add(computeHelperJdks(registered))
 
-    selectedIndex = 0
+    selectDefaultItem()
 
     downloadOpenJdkJob?.cancel()
     isLoadingDownloadItem = false
@@ -354,6 +345,36 @@ class ProjectWizardJdkComboBox(
     isLoadingExistingJdks = false
     addExistingJdkJob?.cancel()
     addExistingJdkJob = coroutineScope.findExistingJdks(currentEelDescriptor, this)
+  }
+
+  private fun selectDefaultItem() {
+    var intent: ProjectWizardJdkIntent? = null
+
+    if (projectJdk != null) {
+      // If we are creating a new module, select the project JDK
+      intent = model.items.find { intent -> intent is ExistingJdk && intent.name == projectJdk.name }
+    }
+
+    if (intent == null) {
+      // Select the last JDK used to create a project
+      val lastSelected = PropertiesComponent.getInstance().getValue(selectedJdkProperty)
+      intent = model.items.find { intent -> intent is ExistingJdk && intent.name == lastSelected }
+    }
+
+    if (intent == null) {
+      // Select the JDK with the highest compatible and released version
+      intent = model.items
+        .map { intent -> intent to intent.javaVersion }
+        .filter { (_, version) -> version != null && canSuggestVersion(version) }
+        .maxByOrNull { (_, version) -> version!!.feature }
+        ?.first
+    }
+
+    if (intent == null) {
+      intent = model.items.firstOrNull()
+    }
+
+    if (intent != null) selectedItem = intent
   }
 
   @RequiresEdt
@@ -377,12 +398,21 @@ class ProjectWizardJdkComboBox(
       }
     if ((selectedItem is NoJdk || selectedItem is DownloadJdk) && detected.any()) {
       detected
-        .map { it to JavaVersion.tryParse(it.version) }
-        .filter { it.second?.isAtLeast(8) ?: false }
-        .maxBy { it.second!!.feature }
+        .mapNotNull {
+          when (val version = it.javaVersion) {
+            null -> null
+            else -> it to version
+          }
+        }
+        .filter { (_, version) -> canSuggestVersion(version) }
+        .maxBy { (_, version) -> version.feature }
         .let { selectedItem = it.first }
     }
     isLoadingExistingJdks = false
+  }
+
+  private fun canSuggestVersion(version: JavaVersion): Boolean {
+    return version.isAtLeast(8) && version.feature <= LanguageLevel.HIGHEST.feature()
   }
 
   override fun setSelectedItem(anObject: Any?) {
