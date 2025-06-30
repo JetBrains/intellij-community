@@ -9,17 +9,14 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ShPsiImplUtil {
   static PsiReference @NotNull [] getReferences(@NotNull ShLiteral o) {
-    ShPsiReferenceSupport service = ApplicationManager.getApplication().getService(ShPsiReferenceSupport.class);
-    return service != null ? service.getReferences(o) : PsiReference.EMPTY_ARRAY;
+    return ApplicationManager.getApplication().getService(ShPsiReferenceSupport.class).getReferences(o);
   }
 
   static PsiReference @NotNull [] getReferences(@NotNull ShLiteralExpression o) {
-    ShPsiReferenceSupport service = ApplicationManager.getApplication().getService(ShPsiReferenceSupport.class);
-    return service != null ? service.getReferences(o) : PsiReference.EMPTY_ARRAY;
+    return ApplicationManager.getApplication().getService(ShPsiReferenceSupport.class).getReferences(o);
   }
 
   static PsiReference @NotNull [] getReferences(@NotNull ShVariable o) {
-    ShPsiReferenceSupport service = ApplicationManager.getApplication().getService(ShPsiReferenceSupport.class);
-    return service != null ? service.getReferences(o) : PsiReference.EMPTY_ARRAY;
+    return ApplicationManager.getApplication().getService(ShPsiReferenceSupport.class).getReferences(o);
   }
 }
