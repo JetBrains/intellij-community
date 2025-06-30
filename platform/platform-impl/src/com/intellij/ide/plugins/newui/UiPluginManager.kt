@@ -116,12 +116,8 @@ class UiPluginManager {
   }
 
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
-    return runBlocking {
-      getController().applySession(sessionId, parent, project)
-    }
-  }
-  suspend fun applySessionAsync(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
     return getController().applySession(sessionId, parent, project)
+
   }
 
   @NlsSafe

@@ -1427,7 +1427,7 @@ public final class PluginManagerConfigurable
                                  @NotNull Project project,
                                  Map<String, @NotNull List<PluginUiModel>> customMap,
                                  @NotNull Map<@NotNull PluginId,
-                                   @NotNull List<@NotNull HtmlChunk>> errors,
+                                 @NotNull List<@NotNull HtmlChunk>> errors,
                                  @NotNull List<@NotNull PluginUiModel> plugins) {
     String groupName = IdeBundle.message("plugins.configurable.suggested");
     LOG.info("Marketplace tab: '" + groupName + "' group load started");
@@ -2018,6 +2018,7 @@ public final class PluginManagerConfigurable
     pluginsState.resetChangesAppliedWithoutRestart();
 
     if (myDisposer != null) {
+      Disposer.dispose(myDisposer);
       CoroutineScopeKt.cancel(myCoroutineScope, null);
       myDisposer = null;
     }
@@ -2047,19 +2048,16 @@ public final class PluginManagerConfigurable
       }
     }
 
-    myPluginModelFacade.getModel().applyAsync(myCardPanel, doNotNeedRestart -> {
-      if (doNotNeedRestart) {
-        return;
-      }
-      if (myPluginModelFacade.getModel().createShutdownCallback) {
-        InstalledPluginsState.getInstance().setShutdownCallback(() -> {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
-            shutdownOrRestartApp();
-          });
+    if (myPluginModelFacade.getModel().apply(myCardPanel)) return;
+
+    if (myPluginModelFacade.getModel().createShutdownCallback) {
+      InstalledPluginsState.getInstance().setShutdownCallback(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
+          shutdownOrRestartApp();
         });
-      }
-    });
+      });
+    }
   }
 
   @Override

@@ -53,18 +53,4 @@ object PluginModelAsyncOperationsExecutor {
       }
     }
   }
-
-  fun applySessionResult(
-    sessionId: String,
-    project: Project?,
-    parentComponent: JComponent?,
-    callback: (ApplyPluginsStateResult) -> Unit,
-  ) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
-      val result = UiPluginManager.getInstance().applySessionAsync(sessionId, parentComponent, project)
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(result)
-      }
-    }
-  }
 }
