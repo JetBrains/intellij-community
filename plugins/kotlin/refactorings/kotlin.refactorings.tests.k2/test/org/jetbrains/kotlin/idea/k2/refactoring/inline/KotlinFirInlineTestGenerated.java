@@ -844,6 +844,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 public void testWhen() throws Exception {
                     runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/when.kt");
                 }
+
+                @TestMetadata("withContextParameters.kt")
+                public void testWithContextParameters() throws Exception {
+                    runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/withContextParameters.kt");
+                }
+
+                @TestMetadata("withContextParametersNamed.kt")
+                public void testWithContextParametersNamed() throws Exception {
+                    runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/withContextParametersNamed.kt");
+                }
             }
         }
 

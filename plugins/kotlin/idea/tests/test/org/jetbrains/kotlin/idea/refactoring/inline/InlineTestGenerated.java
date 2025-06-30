@@ -844,6 +844,16 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 public void testWhen() throws Exception {
                     runTest("testData/refactoring/inline/inlineVariableOrProperty/property/when.kt");
                 }
+
+                @TestMetadata("withContextParameters.kt")
+                public void testWithContextParameters() throws Exception {
+                    runTest("testData/refactoring/inline/inlineVariableOrProperty/property/withContextParameters.kt");
+                }
+
+                @TestMetadata("withContextParametersNamed.kt")
+                public void testWithContextParametersNamed() throws Exception {
+                    runTest("testData/refactoring/inline/inlineVariableOrProperty/property/withContextParametersNamed.kt");
+                }
             }
         }
 

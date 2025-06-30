@@ -48,7 +48,7 @@ class CodeInliner(
 
     @OptIn(KaExperimentalApi::class)
     private val contextArguments: List<String?>? = analyze(call) {
-        treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.contextArguments?.map {
+        treeUpToCall().resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.contextArguments?.map {
             createReplacementForContextArgument(it)
         }
     }
