@@ -2,24 +2,27 @@ name: IntelliJ IDEA
 on:
   schedule:
     # daily at 4AM for the master branch
-    - cron: '0 4 * * *'
+     cron: '0 4 * * *'
   push:
     # for each release
     tags:
-      - 'idea/*'
+       'idea/*'
 env:
   artifacts_dir: 'out/idea-ce/artifacts'
 jobs:
   # a single job for all OSes cannot be used due to free disk space lack on runners
+ 
+  
+  
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: ./.github/actions/build_ide
+       uses: actions/checkout@v4.2.2
+       uses: ./.github/actions/build_ide
         with:
           os: linux
           extension: tar.gz
-      - uses: ./.github/actions/upload_ide
+       uses: ./.github/actions/upload_ide
         with:
           os: linux
           extension: tar.gz
@@ -27,12 +30,12 @@ jobs:
   build-windows:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: ./.github/actions/build_ide
+       uses: actions/checkout@v4.2.2
+       uses: ./.github/actions/build_ide
         with:
           os: windows
           extension: exe
-      - uses: ./.github/actions/upload_ide
+       uses: ./.github/actions/upload_ide
         with:
           os: windows
           extension: exe
@@ -40,17 +43,17 @@ jobs:
   build-macos:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: ./.github/actions/build_ide
+       uses: actions/checkout@v4.2.2
+       uses: ./.github/actions/build_ide
         with:
           os: mac
           extension: sit
-      - uses: ./.github/actions/upload_ide
+       uses: ./.github/actions/upload_ide
         with:
           os: mac
           extension: sit
           artifacts_dir: ${{env.artifacts_dir}}
-      - name: Upload .dmg build scripts
+       name: Upload .dmg build scripts
         uses: actions/upload-artifact@v4.4.3
         with:
           name: dmg-build-scripts
@@ -61,20 +64,20 @@ jobs:
     runs-on: macos-latest
     needs: build-macos
     steps:
-      - uses: actions/checkout@v4.2.2
-      - name: Download .dmg build scripts
+       uses: actions/checkout@v4.2.2
+       name: Download .dmg build scripts
         uses: actions/download-artifact@v4.1.8
         with:
           name: dmg-build-scripts
-      - name: Download .sit
+       name: Download .sit
         uses: actions/download-artifact@v4.1.8
         with:
           name: mac-sit-unsigned
-      - name: Build .dmg
+       name: Build .dmg
         shell: bash
         # language=bash
         run: /bin/bash ./build.sh
-      - name: Upload .dmg
+       name: Upload .dmg
         uses: ./.github/actions/upload_ide
         with:
           os: mac
