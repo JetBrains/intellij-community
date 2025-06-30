@@ -38,6 +38,9 @@ internal fun deleteCheckLockingImpl(path: Path, vararg processesToKill: Regex) {
           fileLogger.warn("Killing ${process.pid()} ${processInfo}")
           killProcess(process)
         }
+        else {
+          fileLogger.warn("Process ${WinProcessInfo.get(process.pid())} locks file $child, but I can't kill it as it doesnt match ${processesToKill.joinToString(",")}")
+        }
       }
     }
 
