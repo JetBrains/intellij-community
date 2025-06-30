@@ -6,6 +6,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassCanBeRecordInspectionTest extends LightQuickFixParameterizedTestCase {
@@ -16,6 +18,11 @@ public class ClassCanBeRecordInspectionTest extends LightQuickFixParameterizedTe
     inspection.myIgnoredAnnotations.add("my.annotation1.MyAnn");
     inspection.myIgnoredAnnotations.add("my.annotation2.*");
     return new LocalInspectionTool[]{inspection};
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 
   @Override
