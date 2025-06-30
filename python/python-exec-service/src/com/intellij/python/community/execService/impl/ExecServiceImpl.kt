@@ -85,7 +85,7 @@ private suspend fun EelExecutableProcess.run(): PyExecResult<EelProcess> {
 
 private fun EelExecutableProcess.failAsCantStart(executeProcessError: ExecuteProcessException): Result.Failure<ExecError> {
   return ExecError(
-    exe = exe,
+    exe = Exe.OnEel(exe),
     args = args.toTypedArray(),
     additionalMessageToUser = PyExecBundle.message("py.exec.start.error", description, executeProcessError.message, executeProcessError.errno),
     errorReason = ExecErrorReason.CantStart(executeProcessError.errno, executeProcessError.message)
@@ -96,7 +96,7 @@ private suspend fun EelExecutableProcess.killProcessAndFailAsTimeout(eelProcess:
   eelProcess.kill()
 
   return ExecError(
-    exe = exe,
+    exe = Exe.OnEel( exe),
     args = args.toTypedArray(),
     additionalMessageToUser = PyExecBundle.message("py.exec.timeout.error", description, timeout),
     errorReason = ExecErrorReason.Timeout
@@ -109,7 +109,7 @@ private fun EelExecutableProcess.failAsExecutionFailed(processOutput: ExecErrorR
   }
 
   return ExecError(
-    exe = exe,
+    exe = Exe.OnEel(exe),
     args = args.toTypedArray(),
     additionalMessageToUser = additionalMessage,
     errorReason = processOutput

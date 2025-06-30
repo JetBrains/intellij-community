@@ -4,11 +4,9 @@ package com.jetbrains.python.packaging
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.eel.provider.asEelPath
 import com.jetbrains.python.errorProcessing.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import kotlin.io.path.Path
 
 /**
  * Wraps [PyError] for cases where [ExecutionException] is used.
@@ -31,7 +29,7 @@ class PyExecutionException private constructor(
       additionalMessageToUser: @NlsContexts.DialogMessage String?,
       command: String,
       args: List<String>,
-    ): PyExecutionException = PyExecutionException(ExecError(Path(command).asEelPath(), args.toTypedArray(), ExecErrorReason.Timeout, additionalMessageToUser))
+    ): PyExecutionException = PyExecutionException(ExecError(Exe.fromString(command), args.toTypedArray(), ExecErrorReason.Timeout, additionalMessageToUser))
   }
 
 
@@ -65,7 +63,7 @@ class PyExecutionException private constructor(
     args: List<String>,
     fixes: List<PyExecutionFix> = listOf<PyExecutionFix>(),
   ) : this(
-    pyError = ExecError(Path(command).asEelPath(), args.toTypedArray(), ExecErrorReason.CantStart(null, startException.localizedMessage), additionalMessage),
+    pyError = ExecError(Exe.fromString(command), args.toTypedArray(), ExecErrorReason.CantStart(null, startException.localizedMessage), additionalMessage),
     fixes = fixes,
     ioException = startException)
 
@@ -84,7 +82,7 @@ class PyExecutionException private constructor(
     output: ProcessOutput,
     fixes: List<PyExecutionFix> = listOf<PyExecutionFix>(),
   ) : this(
-    pyError = ExecError(Path(command).asEelPath(), args.toTypedArray(), output.asExecutionFailed()),
+    pyError = ExecError(Exe.fromString(command), args.toTypedArray(), output.asExecutionFailed()),
     fixes = fixes)
 
   /**

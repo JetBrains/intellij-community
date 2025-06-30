@@ -36,13 +36,15 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
-internal class PipPackageManagerEngine(
+
+@ApiStatus.Internal
+class PipPackageManagerEngine(
   private val project: Project,
   private val sdk: Sdk,
 ) : PythonPackageManagerEngine {
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val manager = PythonPackageManager.forSdk(project, sdk)
-    PipManagementInstaller(sdk, manager).installManagementIfNeeded()
+      PipManagementInstaller(sdk, manager).installManagementIfNeeded()
     val result = runPackagingTool(
       operation = "install",
       arguments = installRequest.indexUrlIfApplicable() + options
