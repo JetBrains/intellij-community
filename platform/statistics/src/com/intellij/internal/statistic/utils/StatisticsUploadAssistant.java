@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider;
 
@@ -29,6 +30,10 @@ public final class StatisticsUploadAssistant {
   private StatisticsUploadAssistant() {}
 
   public static boolean isSendAllowed() {
+    return isSendAllowed(() -> isAllowedByUserConsent());
+  }
+
+  public static boolean isSendAllowed(@NotNull BooleanSupplier isAllowedByUserConsent) {
     if (isSuppressStatisticsReport() || isLocalStatisticsWithoutReport()) {
       return false;
     }
@@ -37,16 +42,20 @@ public final class StatisticsUploadAssistant {
       return isHeadlessStatisticsEnabled();
     }
 
-    return isAllowedByUserConsent();
+    return isAllowedByUserConsent.getAsBoolean();
   }
 
   public static boolean isCollectAllowed() {
+    return isCollectAllowed(() -> isAllowedByUserConsent());
+  }
+
+  public static boolean isCollectAllowed(@NotNull BooleanSupplier isAllowedByUserConsent) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return isHeadlessStatisticsEnabled();
     }
 
     if (!isDisableCollectStatistics() && !isCollectionForceDisabled()) {
-      if (isAllowedByUserConsent() || isLocalStatisticsWithoutReport()) {
+      if (isAllowedByUserConsent.getAsBoolean() || isLocalStatisticsWithoutReport()) {
         return true;
       }
     }
