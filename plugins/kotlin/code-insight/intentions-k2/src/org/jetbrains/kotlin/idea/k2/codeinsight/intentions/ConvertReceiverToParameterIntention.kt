@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -13,10 +12,9 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.renameParameterInPlace
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntention<KtTypeReference>(
     KtTypeReference::class.java,
@@ -47,10 +45,7 @@ internal class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndepend
                     if (function.isValid && editor != null && !editor.isDisposed) {
                         val firstParameter = function.valueParameterList?.parameters?.get(0)
                         if (firstParameter != null) {
-                            editor.caretModel.moveToOffset(firstParameter.startOffset)
-                            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-
-                            KotlinMemberInplaceRenameHandler().doRename(firstParameter, editor, null)
+                            renameParameterInPlace(firstParameter, editor)
                         }
                     }
                 }
