@@ -172,23 +172,29 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
 
     override fun createChangeTypeActions(
         target: JvmMethod,
-        request: ChangeTypeRequest
+        request: ChangeTypeRequest,
     ): List<IntentionAction> {
-        return super.createChangeTypeActions(target, request)
+        val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration
+            ?: return emptyList()
+        return listOf(ChangeType(ktCallableDeclaration, request).asIntention())
     }
 
     override fun createChangeTypeActions(
         target: JvmParameter,
-        request: ChangeTypeRequest
+        request: ChangeTypeRequest,
     ): List<IntentionAction> {
-        return super.createChangeTypeActions(target, request)
+        val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration
+            ?: return emptyList()
+        return listOf(ChangeType(ktCallableDeclaration, request).asIntention())
     }
 
     override fun createChangeTypeActions(
         target: JvmField,
-        request: ChangeTypeRequest
+        request: ChangeTypeRequest,
     ): List<IntentionAction> {
-        return super.createChangeTypeActions(target, request)
+        val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration
+            ?: return emptyList()
+        return listOf(ChangeType(ktCallableDeclaration, request).asIntention())
     }
 
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
