@@ -59,9 +59,23 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
       init?.invoke(builder)
       return builder
     }
+
+    @Deprecated(
+      message = "This method is deprecated and will be removed in next major release",
+      replaceWith = ReplaceWith("invoke(moduleId, name, typeId, entitySource, init)"),
+    )
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    fun create(
+      name: String,
+      moduleId: ModuleId,
+      typeId: FacetEntityTypeId,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder = invoke(moduleId, name, typeId, entitySource, init)
   }
   //endregion
-
 }
 
 //region generated code
