@@ -13878,6 +13878,45 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/namedLambdaContextParameter")
+    public static class NamedLambdaContextParameter extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("noNameAlready.kt")
+        public void testNoNameAlready() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/namedLambdaContextParameter/noNameAlready.kt");
+        }
+
+        @TestMetadata("notLambdaContext.kt")
+        public void testNotLambdaContext() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/namedLambdaContextParameter/notLambdaContext.kt");
+        }
+
+        @TestMetadata("oneContext.kt")
+        public void testOneContext() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/namedLambdaContextParameter/oneContext.kt");
+        }
+
+        @TestMetadata("twoContexts.kt")
+        public void testTwoContexts() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/namedLambdaContextParameter/twoContexts.kt");
+        }
+
+        @TestMetadata("withComments.kt")
+        public void testWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/namedLambdaContextParameter/withComments.kt");
+        }
+    }
+
 
 
 
