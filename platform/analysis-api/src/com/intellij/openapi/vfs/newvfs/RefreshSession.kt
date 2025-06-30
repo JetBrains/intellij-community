@@ -1,26 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs;
+package com.intellij.openapi.vfs.newvfs
 
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
+import java.util.List
 
-import java.util.Collection;
-import java.util.List;
+abstract class RefreshSession {
+  abstract fun addFile(file: VirtualFile)
 
-public abstract class RefreshSession {
-  public abstract void addFile(@NotNull VirtualFile file);
+  abstract fun addAllFiles(files: Collection<VirtualFile>)
 
-  public abstract void addAllFiles(@NotNull Collection<? extends @NotNull VirtualFile> files);
-
-  public void addAllFiles(@NotNull VirtualFile @NotNull ... files) {
-    addAllFiles(List.of(files));
+  fun addAllFiles(vararg files: VirtualFile) {
+    addAllFiles(listOf(*files))
   }
 
-  public abstract void launch();
+  abstract fun launch()
 
-  public abstract void cancel();
+  abstract fun cancel()
 
   @ApiStatus.Internal
-  public abstract Object metric(@NotNull String key);
+  abstract fun metric(key: String): Any?
 }
