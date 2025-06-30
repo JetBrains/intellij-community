@@ -243,7 +243,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         var infos = listOf<HighlightInfo>()
         var result = EMPTY_RESULT
         try {
-          result = identPass.doCollectInformation(newPsiFile.project, visibleRange)
+          result = identPass.doCollectInformation(project, visibleRange)
           if (result == WRONG_DOCUMENT_VERSION) {
             launch(Dispatchers.EDT + modalityState) {
               updateHighlighted(project, hostEditor, coroutineScope)

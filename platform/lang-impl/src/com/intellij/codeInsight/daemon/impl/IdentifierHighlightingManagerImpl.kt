@@ -93,6 +93,7 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   }
 
   override suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult {
+    val start = System.currentTimeMillis()
     val document = editor.getDocument()
     val modStamp = (document as DocumentEx).modificationSequence
     var result: IdentifierHighlightingResult? = null
@@ -130,35 +131,42 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
       else {
         val hostRes = IdentifierHighlightingAccessor.getInstance(myProject).getMarkupData(psiFile, editor, visibleRange, offset)
         if (hostRes == WRONG_DOCUMENT_VERSION) {
-          return WRONG_DOCUMENT_VERSION
+          result = WRONG_DOCUMENT_VERSION
         }
-        result = readAction {
-          if (document.modificationSequence != modStamp) {
-            throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))
+        else {
+          result = readAction {
+            if (document.modificationSequence != modStamp) {
+              throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))
+            }
+            val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
+            val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
+            val cache = mutableMapOf<TextRange, RangeMarker>()
+            val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
+              val marker = createMarker(hostDocument, o.range, cache)
+              occurrenceRangeMarkers.add(marker)
+              IdentifierOccurrence(marker, o.highlightInfoType)
+            }
+            val rangeMarkerTargets = hostRes.targets.map { r ->
+              createMarker(hostDocument, r, cache)
+            }
+            val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
+            for (marker in cache.values) {
+              marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
+            }
+            val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
+              ConcurrentCollectionFactory.createConcurrentSet()
+            }
+            editorResults.add(rangeMarkerResult)
+            rangeMarkerResult
           }
-          val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
-          val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
-          val cache = mutableMapOf<TextRange, RangeMarker>()
-          val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
-            val marker = createMarker(hostDocument, o.range, cache)
-            occurrenceRangeMarkers.add(marker)
-            IdentifierOccurrence(marker, o.highlightInfoType)
-          }
-          val rangeMarkerTargets = hostRes.targets.map { r ->
-            createMarker(hostDocument, r, cache)
-          }
-          val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
-          for (marker in cache.values) {
-            marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
-          }
-          val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
-            ConcurrentCollectionFactory.createConcurrentSet()
-          }
-          editorResults.add(rangeMarkerResult)
-          rangeMarkerResult
         }
       }
     }
+    val end = System.currentTimeMillis()
+    val file = readAction {
+      FileDocumentManager.getInstance().getFile(editor.document)
+    }
+    IdentifierHighlightingFUSReporter.report(myProject, file, offset, result, bestMarker != null, end-start)
     return result
   }
 
