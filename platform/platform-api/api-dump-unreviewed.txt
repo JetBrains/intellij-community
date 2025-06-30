@@ -9505,7 +9505,6 @@ f:com.intellij.util.net.ssl.CertificateManager$Companion
 - f:getDefaultKeyManagers():javax.net.ssl.KeyManager[]
 - f:getInstance():com.intellij.util.net.ssl.CertificateManager
 - f:getSystemSslContext():javax.net.ssl.SSLContext
-- f:showAcceptDialog(java.util.concurrent.Callable):Z
 f:com.intellij.util.net.ssl.CertificateManager$Config
 - ACCEPT_AUTOMATICALLY:Z
 - <init>():V

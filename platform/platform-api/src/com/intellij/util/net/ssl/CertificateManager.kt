@@ -15,6 +15,7 @@ import com.intellij.util.io.DigestUtil.sha256Hex
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -26,7 +27,6 @@ import java.security.*
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.crypto.BadPaddingException
 import javax.net.ssl.HttpsURLConnection
@@ -220,10 +220,14 @@ class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateCompon
       return null
     }
 
-    fun showAcceptDialog(dialogFactory: Callable<out DialogWrapper>): Boolean {
+    /**
+     * @return `null` if the dialog was not shown (e.g., due to timeout)
+     */
+    @ApiStatus.Internal
+    fun showAcceptDialog(dialogFactory: Callable<out DialogWrapper>): Boolean? {
       val app = ApplicationManager.getApplication()
-      val proceeded = CountDownLatch(1)
-      val accepted = AtomicBoolean()
+      val proceeded = CountDownLatch(1) // FIXME may race
+      val accepted = AtomicReference<Boolean>()
       val dialogRef = AtomicReference<DialogWrapper>()
       val showDialog = Runnable {
         // skip if certificate was already rejected due to timeout or interrupt
@@ -261,7 +265,7 @@ class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateCompon
               "After " + DIALOG_VISIBILITY_TIMEOUT + " ms dialog was not shown. " +
               "Rejecting certificate. Current thread: " + Thread.currentThread().name)
             proceeded.countDown()
-            return false
+            return null
           }
           else {
             // if dialog is already shown continue waiting
