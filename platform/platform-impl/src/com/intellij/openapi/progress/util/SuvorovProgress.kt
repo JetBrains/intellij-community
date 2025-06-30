@@ -28,11 +28,11 @@ import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.KeyboardFocusManager
-import java.util.concurrent.atomic.AtomicReference
 import java.awt.event.InvocationEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
@@ -121,7 +121,7 @@ object SuvorovProgress {
   }
 
   private fun showNiceOverlay(awaitedValue: Deferred<*>, currentFocusOwner: Component) {
-    val niceOverlay = NiceOverlayUi(currentFocusOwner)
+    val niceOverlay = NiceOverlayUi(currentFocusOwner, false)
 
     val disposable = Disposer.newDisposable()
     val stealer = PotemkinProgress.startStealingInputEvents(
