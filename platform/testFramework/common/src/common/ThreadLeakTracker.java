@@ -423,7 +423,9 @@ public final class ThreadLeakTracker {
     if (System.getProperty("ide.testFramework.share.ijent.application.wide", "false").equals("true")) {
       return ContainerUtil.exists(stackTrace, element ->
         element.getClassName().contains("com.intellij.platform.ijent.spi.IjentSessionMediatorKt") ||
-        element.getClassName().contains("com.intellij.platform.ijent.spi.IjentThreadPool$IjentThreadFactory"));
+        element.getClassName().contains("com.intellij.platform.ijent.spi.IjentThreadPool$IjentThreadFactory") ||
+        element.getClassName().contains("com.intellij.platform.ijent.impl.hyperv.HyperV")
+      );
     }
     return false;
   }
