@@ -145,7 +145,6 @@ interface InlineCompletionEvent {
       return getRequest(event = this, editor = editor)
     }
 
-    @ApiStatus.Internal
     companion object
   }
 
