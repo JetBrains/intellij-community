@@ -1223,8 +1223,10 @@ plugins/search-everywhere-ml/typos
 plugins/settings-repository
 plugins/settings-sync/jba
 plugins/sh
+plugins/sh/backend
 plugins/sh/copyright
 plugins/sh/core
+plugins/sh/frontend
 plugins/sh/markdown
 plugins/sh/python
 plugins/sh/terminal
