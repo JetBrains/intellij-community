@@ -3510,6 +3510,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/DoWhile.kt");
         }
 
+        @TestMetadata("DontIncreaseInvocationCountIfSomethingFound.kt")
+        public void testDontIncreaseInvocationCountIfSomethingFound() throws Exception {
+            runTest("../../completion/testData/basic/common/DontIncreaseInvocationCountIfSomethingFound.kt");
+        }
+
         @TestMetadata("DontPreferNothingType.kt")
         public void testDontPreferNothingType() throws Exception {
             runTest("../../completion/testData/basic/common/DontPreferNothingType.kt");
@@ -3813,6 +3818,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
         @TestMetadata("InTypeAnnotation.kt")
         public void testInTypeAnnotation() throws Exception {
             runTest("../../completion/testData/basic/common/InTypeAnnotation.kt");
+        }
+
+        @TestMetadata("IncreaseInvocationCountIfNothingFound.kt")
+        public void testIncreaseInvocationCountIfNothingFound() throws Exception {
+            runTest("../../completion/testData/basic/common/IncreaseInvocationCountIfNothingFound.kt");
         }
 
         @TestMetadata("InfixCall.kt")

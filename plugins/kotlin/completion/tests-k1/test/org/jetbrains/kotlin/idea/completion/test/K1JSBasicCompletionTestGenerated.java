@@ -3311,6 +3311,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/DoWhile.kt");
             }
 
+            @TestMetadata("DontIncreaseInvocationCountIfSomethingFound.kt")
+            public void testDontIncreaseInvocationCountIfSomethingFound() throws Exception {
+                runTest("../testData/basic/common/DontIncreaseInvocationCountIfSomethingFound.kt");
+            }
+
             @TestMetadata("DontPreferNothingType.kt")
             public void testDontPreferNothingType() throws Exception {
                 runTest("../testData/basic/common/DontPreferNothingType.kt");
@@ -3614,6 +3619,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("InTypeAnnotation.kt")
             public void testInTypeAnnotation() throws Exception {
                 runTest("../testData/basic/common/InTypeAnnotation.kt");
+            }
+
+            @TestMetadata("IncreaseInvocationCountIfNothingFound.kt")
+            public void testIncreaseInvocationCountIfNothingFound() throws Exception {
+                runTest("../testData/basic/common/IncreaseInvocationCountIfNothingFound.kt");
             }
 
             @TestMetadata("InfixCall.kt")

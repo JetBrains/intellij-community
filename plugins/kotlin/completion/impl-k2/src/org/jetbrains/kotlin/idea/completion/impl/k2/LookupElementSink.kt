@@ -23,36 +23,46 @@ import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class LookupElementSink(
     private val resultSet: CompletionResultSet,
     internal val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
     private val contributorClass: Class<FirCompletionContributor<*>>? = null,
+    private val addedElementCounter: AtomicInteger = AtomicInteger(0),
     internal val registerChainContributor: (ChainCompletionContributor) -> Unit,
 ) {
 
     val prefixMatcher: PrefixMatcher
         get() = resultSet.prefixMatcher
 
+    val addedElementCount: Int
+        get() = addedElementCounter.get()
+
     fun withPriority(groupPriority: Int): LookupElementSink =
-        LookupElementSink(resultSet, parameters, groupPriority, contributorClass, registerChainContributor)
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass, addedElementCounter, registerChainContributor)
 
     fun withContributorClass(contributorClass: Class<FirCompletionContributor<*>>): LookupElementSink =
-        LookupElementSink(resultSet, parameters, groupPriority, contributorClass, registerChainContributor)
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass, addedElementCounter, registerChainContributor)
 
     fun passResult(result: CompletionResult) {
         resultSet.passResult(result)
     }
 
     fun addElement(element: LookupElement) {
-        decorateLookupElement(element)
-            .let(resultSet::addElement)
+        decorateLookupElement(element).let {
+            addedElementCounter.incrementAndGet()
+            resultSet.addElement(it)
+        }
     }
 
     fun addAllElements(elements: Iterable<LookupElement>) {
         val decoratedElements = elements.asSequence()
-            .map(::decorateLookupElement)
+            .map {
+                addedElementCounter.incrementAndGet()
+                decorateLookupElement(it)
+            }
             .asIterable()
         resultSet.addAllElements(decoratedElements)
     }

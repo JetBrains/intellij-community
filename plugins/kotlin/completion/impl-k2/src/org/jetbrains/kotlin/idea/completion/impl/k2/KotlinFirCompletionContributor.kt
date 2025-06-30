@@ -85,14 +85,22 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         // no completion inside number literals
         if (AFTER_NUMBER_LITERAL.accepts(position)) return
         val positionContext = KotlinPositionContextDetector.detect(position)
+        val resultSet = result
+            .withRelevanceSorter(parameters, positionContext)
+            .withPrefixMatcher(parameters)
 
-        Completions.complete(
+        val addedResults = Completions.complete(
             parameters = parameters,
             positionContext = positionContext,
-            resultSet = result
-                .withRelevanceSorter(parameters, positionContext)
-                .withPrefixMatcher(parameters),
+            resultSet = resultSet,
         )
+
+        // If we have not found any results and we have an invocation count 1, we want to re-run completion because
+        // it will also start looking in nested objects etc.
+        if (!addedResults && parameters.invocationCount == 1) {
+            val newParameters = KotlinFirCompletionParameters.Original.create(parameters.delegate.withInvocationCount(2)) ?: return
+            Completions.complete(newParameters, positionContext, resultSet)
+        }
     }
 
     private fun CompletionResultSet.withPrefixMatcher(

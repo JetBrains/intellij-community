@@ -30,15 +30,18 @@ import org.jetbrains.kotlin.renderer.render
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal object Completions {
+    /**
+     * Returns whether any elements were added to the [resultSet].
+     */
     fun complete(
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
         resultSet: CompletionResultSet,
         before: KaSession.() -> Boolean = { true },
         after: KaSession.() -> Boolean = { true },
-    ): Unit = analyze(parameters.completionFile) {
+    ): Boolean = analyze(parameters.completionFile) {
         try {
-            if (!before()) return@analyze
+            if (!before()) return@analyze false
 
             val weighingContext = when (positionContext) {
                 is KotlinNameReferencePositionContext -> {
@@ -57,7 +60,7 @@ internal object Completions {
                     }
                     if (parameters.completionType == CompletionType.SMART
                         && expectedType == null
-                    ) return@analyze // todo move out
+                    ) return@analyze false // todo move out
 
                     WeighingContext.create(parameters, positionContext, expectedType)
                 }
@@ -76,6 +79,8 @@ internal object Completions {
                 && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) {
                 runChainCompletion(positionContext, sink, contributors)
             }
+
+            sink.addedElementCount > 0
         } finally {
             after()
         }
