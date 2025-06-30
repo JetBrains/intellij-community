@@ -27,6 +27,7 @@ import java.security.*
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.crypto.BadPaddingException
 import javax.net.ssl.HttpsURLConnection
@@ -226,16 +227,17 @@ class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateCompon
     @ApiStatus.Internal
     fun showAcceptDialog(dialogFactory: Callable<out DialogWrapper>): Boolean? {
       val app = ApplicationManager.getApplication()
-      val proceeded = CountDownLatch(1) // FIXME may race
+      val shouldShow = AtomicBoolean(true)
+      val finishedShowing = CountDownLatch(1)
       val accepted = AtomicReference<Boolean>()
       val dialogRef = AtomicReference<DialogWrapper>()
       val showDialog = Runnable {
-        // skip if certificate was already rejected due to timeout or interrupt
-        if (proceeded.count == 0L) {
-          return@Runnable
-        }
-
         try {
+          // skip if certificate was already rejected due to timeout or interrupt
+          if (!shouldShow.compareAndSet(true, false)) {
+            return@Runnable
+          }
+          // the initiating thread will wait for us to finish
           val dialog = dialogFactory.call()
           dialogRef.set(dialog)
           accepted.set(dialog.showAndGet())
@@ -244,7 +246,7 @@ class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateCompon
           LOG.error(e)
         }
         finally {
-          proceeded.countDown()
+          finishedShowing.countDown()
         }
       }
 
@@ -257,25 +259,20 @@ class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateCompon
 
       try {
         // IDEA-123467 and IDEA-123335 workaround
-        val inTime = proceeded.await(DIALOG_VISIBILITY_TIMEOUT, TimeUnit.MILLISECONDS)
-        if (!inTime) {
-          val dialog = dialogRef.get()
-          if (dialog == null || !dialog.isShowing) {
-            LOG.debug(
-              "After " + DIALOG_VISIBILITY_TIMEOUT + " ms dialog was not shown. " +
-              "Rejecting certificate. Current thread: " + Thread.currentThread().name)
-            proceeded.countDown()
-            return null
-          }
-          else {
-            // if dialog is already shown continue waiting
-            proceeded.await()
-          }
+        val inTime = finishedShowing.await(DIALOG_VISIBILITY_TIMEOUT, TimeUnit.MILLISECONDS)
+        if (!inTime && shouldShow.compareAndSet(true, false)) {
+          LOG.debug("After " + DIALOG_VISIBILITY_TIMEOUT + " ms dialog was not shown. " +
+                    "Rejecting certificate. Current thread: " + Thread.currentThread().name)
+          return null
+        }
+        else {
+          // if CAS has failed, then showDialog got it first, and we must wait for it to finish
+          finishedShowing.await()
         }
       }
       catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
-        proceeded.countDown()
+        shouldShow.set(false)
       }
       return accepted.get()
     }
