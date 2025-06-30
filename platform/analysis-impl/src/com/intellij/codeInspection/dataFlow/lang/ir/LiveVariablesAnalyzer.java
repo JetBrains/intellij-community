@@ -35,30 +35,30 @@ final class LiveVariablesAnalyzer {
     return !instruction.isLinear() || instruction instanceof FinishElementInstruction;
   }
 
-  private @Nullable Map<FinishElementInstruction, Set<VariableDescriptor>> findLiveVars() {
-    final Map<FinishElementInstruction, Set<VariableDescriptor>> result = new HashMap<>();
+  private @Nullable Map<FinishElementInstruction, ProcessedState> findLiveVars() {
+    final Map<FinishElementInstruction, ProcessedState> result = new HashMap<>();
 
     boolean ok = runDfa(false, (instruction, liveVars) -> {
       if (instruction instanceof FinishElementInstruction finishInstruction) {
-        Set<VariableDescriptor> set = result.get(instruction);
+        ProcessedState set = result.get(instruction);
         if (set != null) {
           set.addAll(liveVars);
-          return new HashSet<>(set);
+          return new ProcessedState(set);
         }
         else if (!liveVars.isEmpty()) {
-          result.put(finishInstruction, new HashSet<>(liveVars));
+          result.put(finishInstruction, liveVars);
         }
       }
 
       var processor = new Consumer<VariableDescriptor>() {
         boolean cloned = false;
-        Set<VariableDescriptor> newVars = liveVars;
+        ProcessedState newVars = liveVars;
 
         @Override
         public void accept(VariableDescriptor value) {
           if (!newVars.contains(value)) {
             if (!cloned) {
-              newVars = new HashSet<>(newVars);
+              newVars = new ProcessedState(newVars);
               cloned = true;
             }
             newVars.add(value);
@@ -72,18 +72,18 @@ final class LiveVariablesAnalyzer {
   }
 
   void flushDeadVariablesOnStatementFinish() {
-    final Map<FinishElementInstruction, Set<VariableDescriptor>> liveVars = findLiveVars();
+    final Map<FinishElementInstruction, ProcessedState> liveVars = findLiveVars();
     if (liveVars == null) return;
 
     final MultiMap<FinishElementInstruction, VariableDescriptor> toFlush = MultiMap.createSet();
 
     boolean ok = runDfa(true, (instruction, prevLiveVars) -> {
       if (instruction instanceof FinishElementInstruction finishInstruction) {
-        Set<VariableDescriptor> currentlyLive = liveVars.get(instruction);
+        ProcessedState currentlyLive = liveVars.get(instruction);
         if (currentlyLive == null) {
-          currentlyLive = new HashSet<>();
+          currentlyLive = new ProcessedState();
         }
-        for (VariableDescriptor var : prevLiveVars) {
+        for (VariableDescriptor var : prevLiveVars.processedVars) {
           if (!currentlyLive.contains(var)) {
             toFlush.putValue(finishInstruction, var);
           }
@@ -141,8 +141,7 @@ final class LiveVariablesAnalyzer {
   /**
    * @return true if completed, false if "too complex"
    */
-  private boolean runDfa(boolean forward,
-                         BiFunction<? super Instruction, ? super Set<VariableDescriptor>, ? extends Set<VariableDescriptor>> handleState) {
+  private boolean runDfa(boolean forward, BiFunction<? super Instruction, ProcessedState, ProcessedState> handleState) {
     List<Instruction> entryPoints;
     if (forward) {
       entryPoints = List.of(myInstructions[0]);
@@ -155,11 +154,11 @@ final class LiveVariablesAnalyzer {
     
     Deque<InstructionState> queue = new ArrayDeque<>(10);
     for (Instruction i : entryPoints) {
-      queue.addLast(new InstructionState(i, new HashSet<>()));
+      queue.addLast(new InstructionState(i, new ProcessedState()));
     }
 
     int limit = myForwardMap.size() * 100;
-    Map<Set<VariableDescriptor>, IntSet> processed = new HashMap<>();
+    Map<ProcessedState, IntSet> processed = new HashMap<>();
     int steps = 0;
     while (!queue.isEmpty()) {
       if (steps > limit) {
@@ -171,7 +170,7 @@ final class LiveVariablesAnalyzer {
       InstructionState state = queue.removeFirst();
       Instruction instruction = state.instruction;
       Collection<Instruction> nextInstructions = forward ? myForwardMap.get(instruction) : myBackwardMap.get(instruction);
-      Set<VariableDescriptor> nextVars = handleState.apply(instruction, state.nextVars);
+      ProcessedState nextVars = handleState.apply(instruction, state.nextVars);
       for (Instruction next : nextInstructions) {
         IntSet instructionSet = processed.computeIfAbsent(nextVars, k -> new IntOpenHashSet());
         int index = next.getIndex() + 1;
@@ -185,6 +184,63 @@ final class LiveVariablesAnalyzer {
     return true;
   }
 
-  private record InstructionState(Instruction instruction, Set<VariableDescriptor> nextVars) {
+  private static final class ProcessedState {
+    private final HashSet<VariableDescriptor> processedVars;
+    private int hash;
+
+    ProcessedState() {
+      this.processedVars = new HashSet<>();
+      this.hash = 0;
+    }
+    
+    ProcessedState(ProcessedState state) {
+      this.processedVars = new HashSet<>(state.processedVars);
+      this.hash = state.hash;
+    }
+    
+    boolean isEmpty() { 
+      return processedVars.isEmpty(); 
+    }
+    
+    boolean contains(VariableDescriptor descriptor) { 
+      return processedVars.contains(descriptor); 
+    }
+    
+    void add(VariableDescriptor descriptor) { 
+      if (processedVars.add(descriptor)) {
+        // Rely on the fact that set hashCode is the sum of elements hashCodes
+        hash += descriptor.hashCode();
+      }
+    }
+
+    void addAll(ProcessedState vars) {
+      for (VariableDescriptor descriptor : vars.processedVars) {
+        add(descriptor);
+      }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (obj == null || obj.getClass() != this.getClass()) return false;
+      var that = (ProcessedState)obj;
+      return this.hash == that.hash &&
+             this.processedVars.equals(that.processedVars);
+    }
+
+    @Override
+    public int hashCode() {
+      return hash;
+    }
+
+    @Override
+    public String toString() {
+      return "ProcessedState[" +
+             "processedVars=" + processedVars + ", " +
+             "hash=" + hash + ']';
+    }
+  }
+
+  private record InstructionState(Instruction instruction, ProcessedState nextVars) {
   }
 }
