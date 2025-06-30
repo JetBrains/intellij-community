@@ -1,289 +1,286 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs;
+package com.intellij.openapi.vfs.newvfs
 
-import com.intellij.codeInsight.daemon.impl.FileStatusMap;
-import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.progress.CancellationUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import com.intellij.codeInsight.daemon.impl.FileStatusMap
+import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.PerformanceWatcher.Companion.takeSnapshot
+import com.intellij.ide.IdeCoreBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
+import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.progress.waitForMaybeCancellable
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
+import kotlin.concurrent.Volatile
+import kotlin.math.min
 
 @ApiStatus.Internal
-public final class RefreshSessionImpl extends RefreshSession {
-  @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshSession.class);
+class RefreshSessionImpl internal constructor(
+  val isAsynchronous: Boolean,
+  private val myIsRecursive: Boolean,
+  private val myIsBackground: Boolean,
+  private val myFinishRunnable: Runnable?,
+  modality: ModalityState
+) : RefreshSession() {
+  val modality: ModalityState = getSaneModalityState(modality)
+  private val myStartTrace: Throwable?
+  private val mySemaphore = Semaphore()
 
-  private static final int RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry.limit", 3);
-  private static final long DURATION_REPORT_THRESHOLD_MS =
-    SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1) * 1_000L;
-  private static final int PROGRESS_THRESHOLD_MILLIS = 5_000;
+  private var myWorkQueue: MutableList<VirtualFile> = ArrayList<VirtualFile>()
+  private val myEvents: MutableList<VFileEvent> = ArrayList<VFileEvent>()
 
-  private final boolean myIsAsync;
-  private final boolean myIsRecursive;
-  private final boolean myIsBackground;
-  private final Runnable myFinishRunnable;
-  private final ModalityState myModality;
-  private final @Nullable Throwable myStartTrace;
-  private final Semaphore mySemaphore = new Semaphore();
+  @Volatile
+  private var myWorker: RefreshWorker? = null
 
-  private List<VirtualFile> myWorkQueue = new ArrayList<>();
-  private final List<VFileEvent> myEvents = new ArrayList<>();
-  private volatile RefreshWorker myWorker;
-  private volatile boolean myCancelled;
-  private volatile boolean myLaunched;
-  private volatile int myEventCount;
+  @Volatile
+  private var myCancelled = false
 
-  RefreshSessionImpl(boolean async, boolean recursive, boolean background, @Nullable Runnable finishRunnable, @NotNull ModalityState modality) {
-    myIsAsync = async;
-    myIsRecursive = recursive;
-    myIsBackground = background;
-    myFinishRunnable = finishRunnable;
-    myModality = getSaneModalityState(modality);
-    TransactionGuard.getInstance().assertWriteSafeContext(myModality);
-    var app = ApplicationManager.getApplication();
-    myStartTrace = app.isUnitTestMode() && (async || !app.isDispatchThread()) ? new Throwable() : null;
+  @Volatile
+  private var myLaunched = false
+
+  @Volatile
+  private var myEventCount = 0
+
+  init {
+    TransactionGuard.getInstance().assertWriteSafeContext(this.modality)
+    val app = ApplicationManager.getApplication()
+    myStartTrace = if (app.isUnitTestMode() && (isAsynchronous || !app.isDispatchThread())) Throwable() else null
     if (LOG.isDebugEnabled()) {
-      LOG.debug("RefreshSessionImpl created. Trace.", new Throwable());
+      LOG.debug("RefreshSessionImpl created. Trace.", Throwable())
     }
   }
 
-  RefreshSessionImpl(List<VirtualFile> files) {
-    this(false, true, true, null, getSaneModalityState(ModalityState.defaultModalityState()));
-    addAllFiles(files);
+  internal constructor(files: List<VirtualFile>) : this(false, true, true, null, ModalityState.defaultModalityState()) {
+    addAllFiles(files)
   }
 
-  RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
-    this(async, false, false, null, getSaneModalityState(ModalityState.defaultModalityState()));
-    var filtered = events.stream().filter(Objects::nonNull).toList();
-    if (filtered.size() < events.size()) LOG.error("The list of events must not contain null elements");
-    myEvents.addAll(filtered);
+  internal constructor(async: Boolean, events: List<VFileEvent>) : this(async, false, false, null, ModalityState.defaultModalityState()) {
+    val filtered: List<VFileEvent> = events.filter { obj: Any? -> Objects.nonNull(obj) }
+    if (filtered.size < events.size) LOG.error("The list of events must not contain null elements")
+    myEvents.addAll(filtered)
   }
 
-  private static ModalityState getSaneModalityState(ModalityState state) {
-    return state != ModalityState.any() ? state : ModalityState.nonModal();
+  override fun addFile(file: VirtualFile) {
+    checkState()
+    doAddFile(file)
   }
 
-  @Override
-  public void addFile(@NotNull VirtualFile file) {
-    checkState();
-    doAddFile(file);
+   override fun addAllFiles(files: Collection<VirtualFile>) {
+    checkState()
+    for (file in files) doAddFile(file)
   }
 
-  @Override
-  public void addAllFiles(@NotNull Collection<? extends @NotNull VirtualFile> files) {
-    checkState();
-    for (VirtualFile file : files) doAddFile(file);
+  private fun checkState() {
+    check(!myCancelled) { "Already cancelled" }
+    check(!myLaunched) { "Already launched" }
   }
 
-  private void checkState() {
-    if (myCancelled) throw new IllegalStateException("Already cancelled");
-    if (myLaunched) throw new IllegalStateException("Already launched");
-  }
-
-  private void doAddFile(VirtualFile file) {
-    if (file instanceof NewVirtualFile) {
-      myWorkQueue.add(file);
+  private fun doAddFile(file: VirtualFile) {
+    if (file is NewVirtualFile) {
+      myWorkQueue.add(file)
     }
     else {
-      LOG.debug("skipped: " + file + " / " + file.getClass());
+      LOG.debug("skipped: " + file + " / " + file.javaClass)
     }
   }
 
-  boolean isAsynchronous() {
-    return myIsAsync;
-  }
-
-  @Override
-  public void launch() {
-    checkState();
+  override fun launch() {
+    checkState()
     if (myWorkQueue.isEmpty() && myEvents.isEmpty()) {
-      if (myFinishRunnable == null) return;
-      LOG.warn(new Exception("no files to refresh"));
+      if (myFinishRunnable == null) return
+      LOG.warn(Exception("no files to refresh"))
     }
-    myLaunched = true;
-    mySemaphore.down();
-    ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
+    myLaunched = true
+    mySemaphore.down()
+    (RefreshQueue.getInstance() as RefreshQueueImpl).execute(this)
   }
 
-  boolean isEventSession() {
-    return myWorkQueue.isEmpty() && !myEvents.isEmpty();
-  }
+  val isEventSession: Boolean
+    get() = myWorkQueue.isEmpty() && !myEvents.isEmpty()
 
-  Collection<VFileEvent> scan(long timeInQueue) {
-    if (myWorkQueue.isEmpty()) return myEvents;
-    var workQueue = myWorkQueue;
-    myWorkQueue = List.of();
-    var forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g., project config files on open)
+  fun scan(timeInQueue: Long): Collection<VFileEvent> {
+    if (myWorkQueue.isEmpty()) return myEvents
+    val workQueue = myWorkQueue
+    myWorkQueue = mutableListOf()
+    val forceRefresh = !myIsRecursive && !this.isAsynchronous // shallow sync refresh (e.g., project config files on open)
 
-    var fs = LocalFileSystem.getInstance();
-    if (!forceRefresh && fs instanceof LocalFileSystemImpl) {
-      ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
+    val fs = LocalFileSystem.getInstance()
+    if (!forceRefresh && fs is LocalFileSystemImpl) {
+      fs.markSuspiciousFilesDirty(workQueue)
     }
 
-    if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
+    if (LOG.isTraceEnabled) LOG.trace("scanning $workQueue")
 
-    var t = System.nanoTime();
-    PerformanceWatcher.Snapshot snapshot = null;
-    Map<String, Integer> types = null;
+    var t = System.nanoTime()
+    var snapshot: PerformanceWatcher.Snapshot? = null
+    var types: MutableMap<String?, Int?>? = null
     if (DURATION_REPORT_THRESHOLD_MS > 0) {
-      snapshot = PerformanceWatcher.takeSnapshot();
-      types = new HashMap<>();
+      snapshot = takeSnapshot()
+      types = HashMap<String?, Int?>()
     }
 
-    var refreshRoots = new ArrayList<NewVirtualFile>(workQueue.size());
-    for (var file : workQueue) {
-      if (myCancelled) break;
+    val refreshRoots = ArrayList<NewVirtualFile>(workQueue.size)
+    for (file in workQueue) {
+      if (myCancelled) break
 
-      var nvf = (NewVirtualFile)file;
+      val nvf = file as NewVirtualFile
       if (forceRefresh) {
-        nvf.markDirty();
+        nvf.markDirty()
       }
       if (!nvf.isDirty()) {
-        continue;
+        continue
       }
-      refreshRoots.add(nvf);
+      refreshRoots.add(nvf)
 
       if (types != null) {
-        var type = !file.isDirectory() ? "file" : file.getFileSystem() instanceof ArchiveFileSystem ? "arc" : "dir";
-        types.put(type, types.getOrDefault(type, 0) + 1);
+        val type = if (!file.isDirectory()) "file" else if (file.getFileSystem() is ArchiveFileSystem) "arc" else "dir"
+        types[type] = types.getOrDefault(type, 0)!! + 1
       }
     }
 
-    var count = 0;
-    var events = new ArrayList<VFileEvent>();
+    var count = 0
+    val events = ArrayList<VFileEvent?>()
     do {
-      if (myCancelled) break;
-      if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
+      if (myCancelled) break
+      if (LOG.isTraceEnabled) LOG.trace("try=$count")
 
-      var worker = new RefreshWorker(refreshRoots, myIsRecursive);
-      myWorker = worker;
-      events.addAll(worker.scan());
-      myWorker = null;
+      val worker = RefreshWorker(refreshRoots, myIsRecursive)
+      myWorker = worker
+      events.addAll(worker.scan())
+      myWorker = null
 
-      count++;
-      if (LOG.isTraceEnabled()) LOG.trace("events=" + events.size());
+      count++
+      if (LOG.isTraceEnabled) LOG.trace("events=${events.size}")
     }
-    while (myIsRecursive && !myIsBackground && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
+    while (myIsRecursive && !myIsBackground && count < RETRY_LIMIT && workQueue.any { f -> (f as NewVirtualFile).isDirty() })
 
-    t = NANOSECONDS.toMillis(System.nanoTime() - t);
-    int localRoots = 0, archiveRoots = 0, otherRoots = 0;
-    for (var file : refreshRoots) {
-      if (file.getFileSystem() instanceof LocalFileSystem) localRoots++;
-      else if (file.getFileSystem() instanceof ArchiveFileSystem) archiveRoots++;
-      else otherRoots++;
+    t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
+    var localRoots = 0
+    var archiveRoots = 0
+    var otherRoots = 0
+    for (file in refreshRoots) {
+      if (file.getFileSystem() is LocalFileSystem) localRoots++
+      else if (file.getFileSystem() is ArchiveFileSystem) archiveRoots++
+      else otherRoots++
     }
-    VfsUsageCollector.logRefreshSession(myIsRecursive, localRoots, archiveRoots, otherRoots, myCancelled, timeInQueue, t, count);
-    if (LOG.isTraceEnabled()) {
-      LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + events);
+    VfsUsageCollector.logRefreshSession(myIsRecursive, localRoots, archiveRoots, otherRoots, myCancelled, timeInQueue, t, count)
+    if (LOG.isTraceEnabled) {
+      LOG.trace((if (myCancelled) "cancelled, " else "done, ") + t + " ms, tries " + count + ", events " + events)
     }
     else if (snapshot != null && t > DURATION_REPORT_THRESHOLD_MS) {
       snapshot.logResponsivenessSinceCreation(String.format(
         "Refresh session (queue size: %s, scanned: %s, result: %s, tries: %s, events: %d)",
-        workQueue.size(), types, myCancelled ? "cancelled" : "done", count, events.size()));
+        workQueue.size, types, if (myCancelled) "cancelled" else "done", count, events.size))
     }
 
-    var result = events.isEmpty() ? List.<VFileEvent>of() : new LinkedHashSet<>(events);
-    myEventCount = result.size();
-    return result;
+    val result = if (events.isEmpty()) mutableListOf() else LinkedHashSet<VFileEvent>(events)
+    myEventCount = result.size
+    return result
   }
 
-  @Override
-  public void cancel() {
-    myCancelled = true;
+  override fun cancel() {
+    myCancelled = true
 
-    var worker = myWorker;
-    if (worker != null) {
-      worker.cancel();
-    }
+    val worker = myWorker
+    worker?.cancel()
   }
 
-  void fireEvents(@NotNull List<CompoundVFileEvent> events, @NotNull List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
+  fun fireEvents(
+    events: MutableList<CompoundVFileEvent?>,
+    appliers: MutableList<AsyncFileListener.ChangeApplier?>,
+    asyncProcessing: Boolean
+  ) {
     try {
-      var app = ApplicationManagerEx.getApplicationEx();
+      val app = ApplicationManagerEx.getApplicationEx()
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
-        if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
-        app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
-          indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
-          if (indicator instanceof ProgressIndicatorWithDelayedPresentation withDelayedPresentation) {
-            withDelayedPresentation.setDelayInMillis(PROGRESS_THRESHOLD_MILLIS);
-          }
-          var t = System.nanoTime();
-          fireEventsInWriteAction(events, appliers, asyncProcessing);
-          t = NANOSECONDS.toMillis(System.nanoTime() - t);
-          if (t > PROGRESS_THRESHOLD_MILLIS) {
-            LOG.warn("Long VFS change processing (" + t + "ms, " + events.size() + " events): " + StringUtil.trimLog(events.subList(0, Math.min(events.size(), 100)).toString(), 10_000));
-          }
-        });
+        if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: $events")
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"),
+                                                                     null, null, Consumer { indicator: ProgressIndicator? ->
+            indicator!!.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size))
+            if (indicator is ProgressIndicatorWithDelayedPresentation) {
+              indicator.setDelayInMillis(PROGRESS_THRESHOLD_MILLIS)
+            }
+            var t = System.nanoTime()
+            fireEventsInWriteAction(events, appliers, asyncProcessing)
+            t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
+            if (t > PROGRESS_THRESHOLD_MILLIS) {
+              LOG.warn("Long VFS change processing (" + t + "ms, " + events.size + " events): " + StringUtil.trimLog(
+                events.subList(0, min(events.size, 100)).toString(), 10000))
+            }
+          })
       }
     }
     finally {
-      mySemaphore.up();
+      mySemaphore.up()
     }
   }
 
-  private void fireEventsInWriteAction(List<CompoundVFileEvent> events, List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
-    var manager = (VirtualFileManagerImpl)VirtualFileManager.getInstance();
+  private fun fireEventsInWriteAction(
+    events: MutableList<CompoundVFileEvent?>,
+    appliers: MutableList<AsyncFileListener.ChangeApplier?>,
+    asyncProcessing: Boolean
+  ) {
+    val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
 
-    manager.fireBeforeRefreshStart(myIsAsync);
+    manager.fireBeforeRefreshStart(this.isAsynchronous)
     try {
-      AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncProcessing);
+      AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncProcessing)
     }
-    catch (AssertionError e) {
-      if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING.equals(e.getMessage())) {
-        throw new AssertionError("VFS changes are not allowed during highlighting", myStartTrace);
+    catch (e: AssertionError) {
+      if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING == e.message) {
+        throw AssertionError("VFS changes are not allowed during highlighting", myStartTrace)
       }
-      throw e;
+      throw e
     }
     finally {
       try {
-        manager.fireAfterRefreshFinish(myIsAsync);
+        manager.fireAfterRefreshFinish(this.isAsynchronous)
       }
       finally {
-        if (myFinishRunnable != null) {
-          myFinishRunnable.run();
-        }
+        myFinishRunnable?.run()
       }
     }
   }
 
-  void waitFor() {
-    CancellationUtil.waitForMaybeCancellable(mySemaphore);
+  fun waitFor() {
+    mySemaphore.waitForMaybeCancellable()
   }
 
-  @NotNull ModalityState getModality() {
-    return myModality;
+  override fun metric(key: String): Any {
+    if (key == "events") return myEventCount
+    throw IllegalArgumentException()
   }
 
-  @Override
-  public Object metric(@NotNull String key) {
-    if (key.equals("events")) return myEventCount;
-    throw new IllegalArgumentException();
+  override fun toString(): String {
+    return "RefreshSessionImpl: canceled=" + myCancelled + " launched=" + myLaunched + " queue=" + myWorkQueue.size + " events=" + myEventCount
   }
 
-  @Override
-  public String toString() {
-    return "RefreshSessionImpl: canceled=" + myCancelled + " launched=" + myLaunched + " queue=" + myWorkQueue.size() + " events=" + myEventCount;
+  companion object {
+    private val LOG = Logger.getInstance(RefreshSession::class.java)
+
+    private val RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry.limit", 3)
+    private val DURATION_REPORT_THRESHOLD_MS = SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1) * 1000L
+    private const val PROGRESS_THRESHOLD_MILLIS = 5000
+
+    private fun getSaneModalityState(state: ModalityState): ModalityState {
+      return if (state !== ModalityState.any()) state else ModalityState.nonModal()
+    }
   }
 }
