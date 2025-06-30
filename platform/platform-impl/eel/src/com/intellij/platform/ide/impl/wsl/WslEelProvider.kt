@@ -4,7 +4,6 @@ package com.intellij.platform.ide.impl.wsl
 import com.intellij.execution.eel.MultiRoutingFileSystemUtils
 import com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider
 import com.intellij.execution.wsl.*
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
@@ -104,12 +103,17 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
     return providersCache.computeIfAbsent(key) {
       service<EelEarlyAccessChecker>().check(sanitizedPath)
 
+      val descriptor = WslEelDescriptor(WSLDistribution(distributionId))
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Triggered initialization of IJent for $descriptor, the path is $sanitizedPath", Throwable())
+      }
+
       val ijentUri = URI("ijent", "wsl", "/$distributionId", null, null)
 
       val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
 
       try {
-        val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope, WslEelDescriptor(WSLDistribution(distributionId)))
+        val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope, descriptor)
         val fs = ijentFsProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
 
         coroutineScope.coroutineContext.job.invokeOnCompletion {
