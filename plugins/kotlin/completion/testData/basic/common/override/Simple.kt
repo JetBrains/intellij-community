@@ -1,5 +1,4 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
+// IGNORE_K1
 interface I {
     infix fun foo(p: Int)
     val someVal: Int
@@ -20,7 +19,7 @@ class A : Base2(), I {
 }
 
 // EXIST: { lookupString: "override", itemText: "override"}
-// EXIST: { itemText: "override suspend fun bar() {...}", lookupString: "override", allLookupStrings: "bar, override", tailText: null, typeText: "Base1", attributes: "", icon: "Method" }
+// EXIST: { itemText: "override suspend fun bar() {...}", lookupString: "override", allLookupStrings: "bar, override", tailText: null, typeText: "Base1", attributes: "", icon: "org/jetbrains/kotlin/idea/icons/expui/suspendMethod.svg" }
 // EXIST: { itemText: "override fun baz() {...}", lookupString: "override", allLookupStrings: "baz, override", tailText: null, typeText: "Base2", attributes: "", icon: "Method" }
 // EXIST: { itemText: "override fun equals(other: Any?): Boolean {...}", lookupString: "override", allLookupStrings: "equals, override", tailText: null, typeText: "Any", attributes: "", icon: "Method" }
 // EXIST: { itemText: "override fun foo(p: Int) {...}", lookupString: "override", allLookupStrings: "foo, override", tailText: null, typeText: "I", attributes: "bold", icon: "nodes/abstractMethod.svg" }
