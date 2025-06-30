@@ -11,6 +11,7 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -113,8 +114,9 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
       updateAllRequests
         .debounce(100.milliseconds)
         .collectLatest {
+          val fileEditorManager = project.serviceAsync<FileEditorManager>()
           withContext(Dispatchers.EDT) {
-            doUpdateAllNotifications()
+            doUpdateAllNotifications(fileEditorManager)
           }
         }
     }
@@ -163,8 +165,9 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   @Deprecated("Deprecated in Java")
   override fun updateNotifications(provider: EditorNotificationProvider) {
     // TODO: run [updateEditors] instead to check for the new notifications
-    for (file in FileEditorManager.getInstance(project).openFilesWithRemotes) {
-      for (editor in getEditors(file).toList()) {
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    for (file in fileEditorManager.openFilesWithRemotes) {
+      for (editor in getEditors(file, fileEditorManager).toList()) {
         updateNotification(fileEditor = editor, provider = provider, component = null)
       }
     }
@@ -173,7 +176,8 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   override fun updateNotifications(file: VirtualFile) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       if (file.isValid) {
-        doUpdateNotifications(file)
+        val fileEditorManager = project.serviceAsync<FileEditorManager>()
+        doUpdateNotifications(file, fileEditorManager)
       }
     }
   }
@@ -192,8 +196,8 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   }
 
   @RequiresEdt
-  private fun doUpdateNotifications(file: VirtualFile) {
-    var editors = getEditors(file)
+  private fun doUpdateNotifications(file: VirtualFile, fileEditorManager: FileEditorManager) {
+    var editors = getEditors(file, fileEditorManager)
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       editors = editors.filter { fileEditor ->
         val visible = UIUtil.isShowing(fileEditor.component)
@@ -206,19 +210,21 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     updateEditors(file = file, fileEditors = editors.toList())
   }
 
-  private fun getEditors(file: VirtualFile): Sequence<FileEditor> {
-    return FileEditorManager.getInstance(project).getAllEditorList(file).asSequence().filter { it !is TextEditor || isEditorLoaded(it.editor) }
+  private fun getEditors(file: VirtualFile, fileEditorManager: FileEditorManager): Sequence<FileEditor> {
+    return fileEditorManager.getAllEditorList(file).asSequence().filter { it !is TextEditor || isEditorLoaded(it.editor) }
   }
 
   private fun updateEditors(file: VirtualFile, fileEditors: List<FileEditor>) {
-    if (fileEditors.isEmpty()) return
+    if (fileEditors.isEmpty()) {
+      return
+    }
 
     val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
       // delay for debouncing
       delay(100)
 
-      // Please don't remove this readAction {} here, it's needed for checking of validity of injected files,
-      // and many unpleasant exceptions appear in case if validity check is not wrapped.
+      // Please don't remove this readAction {} here, it's necessary for checking of validity of injected files,
+      // and many unpleasant exceptions appear in case if the validity check is not wrapped.
       if (!readAction { file.isValid }) {
         return@launch
       }
@@ -330,7 +336,8 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      doUpdateAllNotifications()
+      val fileEditorManager = FileEditorManager.getInstance(project) ?: throw IllegalStateException("No FileEditorManager for $project")
+      doUpdateAllNotifications(fileEditorManager)
     }
     else {
       check(updateAllRequests.tryEmit(Unit))
@@ -338,10 +345,9 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   }
 
   @RequiresEdt
-  private fun doUpdateAllNotifications() {
-    val fileEditorManager = FileEditorManager.getInstance(project) ?: throw IllegalStateException("No FileEditorManager for $project")
+  private fun doUpdateAllNotifications(fileEditorManager: FileEditorManager) {
     for (file in fileEditorManager.openFilesWithRemotes) {
-      doUpdateNotifications(file)
+      doUpdateNotifications(file, fileEditorManager)
     }
   }
 }
