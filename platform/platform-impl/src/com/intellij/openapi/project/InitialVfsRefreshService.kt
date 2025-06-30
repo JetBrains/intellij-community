@@ -44,11 +44,8 @@ class InitialVfsRefreshService(private val project: Project, private val corouti
         logger.info("$projectId: marking roots for initial VFS refresh")
         val roots = ProjectRootManagerEx.getInstanceEx(project).markRootsForRefresh()
         logger.info("$projectId: starting initial VFS refresh of ${roots.size} roots")
-        val session = RefreshQueue.getInstance().createSession(false, true, null)
-        coroutineScope.awaitCancellationAndInvoke { session.cancel() }
-        session.addAllFiles(roots)
         val t = System.nanoTime()
-        session.launch()
+        RefreshQueue.getInstance().refresh(true, roots)
         val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
         logger.info("${projectId}: initial VFS refresh finished in ${duration} ms")
         VfsUsageCollector.logInitialRefresh(project, duration)

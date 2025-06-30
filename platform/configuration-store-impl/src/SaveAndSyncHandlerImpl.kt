@@ -371,10 +371,8 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
       while (true) {
         delay(interval)
         if (!isSyncBlockedTemporarily() || roots.any { it is NewVirtualFile && it.isDirty }) {
-          val session = queue.createBackgroundRefreshSession(roots)
-          session.launch()
+          queue.refresh(true, roots)
           sessions.incrementAndGet()
-          events.addAndGet(session.metric("events") as Int)
         }
       }
     }

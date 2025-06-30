@@ -66,7 +66,7 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
         saveSession(saveSession, syncList, saveResult)
       }
       if (!events.isNullOrEmpty()) {
-        RefreshQueue.getInstance().processEvents(false, events)
+        RefreshQueue.getInstance().processEvents(events)
       }
     }
   }
