@@ -141,15 +141,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
            session.statesDiff.isNotEmpty()
   }
 
-  override suspend fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
-    val contextElement = parent?.let { ModalityState.stateForComponent(it) }?.asContextElement()
-                         ?: ModalityState.any().asContextElement()
-    return withContext(Dispatchers.EDT + contextElement) {
-      return@withContext doApplySession(sessionId, parent, project)
-    }
-  }
-
-  fun doApplySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
+  override fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
     val session = findSession(sessionId) ?: return ApplyPluginsStateResult()
     var needRestart = session.needRestart
     if (ApplicationManager.getApplication().isExitInProgress) {
