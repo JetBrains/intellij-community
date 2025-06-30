@@ -115,6 +115,31 @@ public final class HintUtil {
       .setStatus(HintHint.Status.Info);
   }
 
+  public static JComponent createWarningLabel(@NotNull @HintText String text,
+                                              @Nullable HyperlinkListener hyperlinkListener,
+                                              @Nullable MouseListener mouseListener) {
+    Color bg = getWarningColor();
+    HintHint hintHint = getWarningHint();
+    HintLabel label = createLabel(text, null, bg, hintHint);
+    configureLabel(label, hyperlinkListener, mouseListener, null);
+    return label;
+  }
+
+  public static @NotNull HintHint getWarningHint() {
+    HintHint hintHint = new HintHint()
+      .setBorderColor(getHintBorderColor())
+      .setTextBg(getWarningColor())
+      .setTextFg(JBColor.foreground())
+      .setFont(getBoldFont())
+      .setAwtTooltip(true)
+      .setStatus(HintHint.Status.Warning);
+    return hintHint;
+  }
+
+  public static @NotNull JComponent createWarningLabel(@NotNull @HintText String text) {
+    return createWarningLabel(text, null, null);
+  }
+
   public static @NotNull HintHint getSuccessHint() {
     return new HintHint().setAwtTooltip(true).applyStatus(HintHint.Status.Success);
   }
@@ -207,31 +232,6 @@ public final class HintUtil {
 
   public static @NotNull JComponent createErrorLabel(@NotNull @HintText String text) {
     return createErrorLabel(text, null, null);
-  }
-
-  public static JComponent createWarningLabel(@NotNull @HintText String text,
-                                              @Nullable HyperlinkListener hyperlinkListener,
-                                              @Nullable MouseListener mouseListener) {
-    Color bg = getWarningColor();
-    HintHint hintHint = getWarningHint();
-    HintLabel label = createLabel(text, null, bg, hintHint);
-    configureLabel(label, hyperlinkListener, mouseListener, null);
-    return label;
-  }
-
-  public static @NotNull HintHint getWarningHint() {
-    HintHint hintHint = new HintHint()
-      .setBorderColor(getHintBorderColor())
-      .setTextBg(getWarningColor())
-      .setTextFg(JBColor.foreground())
-      .setFont(getBoldFont())
-      .setAwtTooltip(true)
-      .setStatus(HintHint.Status.Warning);
-    return hintHint;
-  }
-
-  public static @NotNull JComponent createWarningLabel(@NotNull @HintText String text) {
-    return createWarningLabel(text, null, null);
   }
 
   @ApiStatus.Internal

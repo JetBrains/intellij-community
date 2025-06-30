@@ -1484,47 +1484,52 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         return;
       }
 
-      HtmlBuilder builder = new HtmlBuilder()
-        .append(hint)
-        .br()
-        .appendLink(FIND_OPTIONS_HREF_TARGET, UsageViewBundle.message("link.display.name.find.options"));
-      KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
-      if (shortcut != null) {
-        builder.nbsp().append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
-      }
-      @NlsContexts.HintText String secondInvocationHintHtml = builder.toString();
-      if (!actionHandler.isValid()) {
-        cancel(popupToCancel);
-        return;
-      }
-
-      JEditorPane label = IdeTooltipManager.initPane(
-        new Html(secondInvocationHintHtml), isWarning ? HintUtil.getWarningHint() : HintUtil.getInformationHint(),
-        null, true);
-
-      label.addHyperlinkListener(new HyperlinkAdapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-          if (FIND_OPTIONS_HREF_TARGET.equals(e.getDescription())) {
-            showDialogAndRestart(parameters, actionHandler);
+      ReadAction.nonBlocking(() -> getSecondInvocationHint(actionHandler))
+        .finishOnUiThread(ModalityState.nonModal(), (@NlsContexts.HintText String restartHint) -> {
+          HtmlBuilder builder = new HtmlBuilder().append(hint);
+          if (restartHint != null) {
+            HtmlChunk chunk = HtmlChunk.text(restartHint);
+            builder.br().append(ExperimentalUI.isNewUI() ? chunk.wrapWith("p").style("margin-top:5pt;") : chunk.wrapWith("small"));
           }
-        }
-      });
-      label.setEditable(false);
+          builder.br().appendLink(FIND_OPTIONS_HREF_TARGET, UsageViewBundle.message("link.display.name.find.options"));
+          KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
+          if (shortcut != null) {
+            builder.nbsp().append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
+          }
+          @NlsContexts.HintText String secondInvocationHintHtml = builder.toString();
+          if (!actionHandler.isValid()) {
+            cancel(popupToCancel);
+            return;
+          }
 
-      Runnable clearContinuation = actionHandler.enableMaximalScopeSearch(parameters);
-      // canceling here, as the action handler becomes not fully valid after the cancellation
-      // in case of rem-dev (FrontendShowUsagesActionHandler), and the above call won't work as expected
-      cancel(popupToCancel);
+          JEditorPane label = IdeTooltipManager.initPane(
+            new Html(secondInvocationHintHtml), isWarning ? HintUtil.getWarningHint() : HintUtil.getInformationHint(),
+            null, true);
 
-      if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
-        label.setBorder(JBUI.Borders.empty(5));
-        int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-        HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
-      }
-      else {
-        HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
-      }
+          label.addHyperlinkListener(new HyperlinkAdapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+              if (FIND_OPTIONS_HREF_TARGET.equals(e.getDescription())) {
+                showDialogAndRestart(parameters, actionHandler);
+              }
+            }
+          });
+          label.setEditable(false);
+
+          Runnable clearContinuation = actionHandler.enableMaximalScopeSearch(parameters);
+          // canceling here, as the action handler becomes not fully valid after the cancellation
+          // in case of rem-dev (FrontendShowUsagesActionHandler), and the above call won't work as expected
+          cancel(popupToCancel);
+
+          if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
+            label.setBorder(JBUI.Borders.empty(5));
+            int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+            HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
+          }
+          else {
+            HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
+          }
+        }).submit(AppExecutorUtil.getAppExecutorService());
     };
 
     if (editor == null) {
