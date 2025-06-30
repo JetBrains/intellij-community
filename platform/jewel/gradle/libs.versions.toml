@@ -1,7 +1,7 @@
 [versions]
 coil = "3.1.0"
 commonmark = "0.24.0"
-composeDesktop = "1.8.1"
+composeDesktop = "1.8.2"
 detekt = "1.23.6"
 dokka = "2.0.0"
 filepicker = "3.1.0"
