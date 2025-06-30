@@ -14,6 +14,12 @@ import kotlinx.serialization.json.JsonObject
 /** This number should be increased when [BlockBasedFeedbackDialogWithEmail] fields changing */
 const val BLOCK_BASED_FEEDBACK_WITH_EMAIL_VERSION = 1
 
+/**
+ * The base class for building feedback dialogs with e-mail.
+ *
+ * If your dialog doesn't need to provide any system data in addition to [CommonFeedbackSystemData],
+ * consider using [CommonBlockBasedFeedbackDialogWithEmail] instead.
+ */
 abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>(
   myProject: Project?, forTest: Boolean) : BlockBasedFeedbackDialog<T>(myProject, forTest) {
 

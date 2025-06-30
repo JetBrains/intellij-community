@@ -27,6 +27,12 @@ import javax.swing.JComponent
 /** This number should be increased when [BlockBasedFeedbackDialog] fields changing */
 const val BLOCK_BASED_FEEDBACK_VERSION = 1
 
+/**
+ * The base class for building feedback dialogs.
+ *
+ * If your dialog doesn't need to provide any system data in addition to [CommonFeedbackSystemData],
+ * consider using [CommonBlockBasedFeedbackDialog] instead.
+ */
 abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   protected val myProject: Project?,
   protected val myForTest: Boolean

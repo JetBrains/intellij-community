@@ -4,9 +4,7 @@ package com.intellij.platform.feedback.general.general
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.CommonBlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
@@ -16,7 +14,7 @@ import javax.swing.Action
 
 internal class GeneralFeedbackDialog(project: Project?,
                                      forTest: Boolean
-) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
+) : CommonBlockBasedFeedbackDialogWithEmail(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 3
@@ -36,13 +34,6 @@ internal class GeneralFeedbackDialog(project: Project?,
         GeneralFeedbackBundle.message("general.dialog.text.area.details"), tellUsMoreJsonElementName
       ).requireNotEmpty(GeneralFeedbackBundle.message("general.dialog.text.area.details.require"))
     )
-  }
-
-  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-    CommonFeedbackSystemData.getCurrentData()
-  }
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
   }
 
   init {
