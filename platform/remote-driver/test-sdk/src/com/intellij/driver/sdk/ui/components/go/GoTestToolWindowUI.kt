@@ -7,7 +7,7 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 
 fun Finder.goTestToolWindow(action: GoTestToolWindowUI.() -> Unit = {}) {
   x(GoTestToolWindowUI::class.java) {
-    byClass("InternalDecoratorImpl")
+    byClass("TestsConsoleViewImpl")
   }.apply(action)
 }
 
