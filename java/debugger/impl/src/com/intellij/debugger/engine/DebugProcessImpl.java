@@ -60,7 +60,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -71,7 +70,6 @@ import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -96,7 +94,9 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
+import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Job;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -159,7 +159,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
-  private final SingleEdtTaskScheduler statusUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private final CoroutineScope myCoroutineScope;
+  private final ShowStatusManager myShowStatusManager;
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, disposable);
 
@@ -178,7 +179,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   protected DebugProcessImpl(Project project) {
     this.project = project;
+    CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
+    myCoroutineScope = com.intellij.platform.util.coroutines.CoroutineScopeKt
+      .childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
     myDebuggerManagerThread = createManagerThread();
+    myShowStatusManager = new ShowStatusManager(project, myCoroutineScope);
     requestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, disposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, disposable);
@@ -722,11 +727,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void showStatusText(final @Nls String text) {
     LOG.debug("Show status text: " + text);
-    statusUpdateAlarm.cancelAndRequest(50, () -> {
-      if (!project.isDisposed()) {
-        StatusBarUtil.setStatusBarInfo(project, text);
-      }
-    });
+    myShowStatusManager.showStatus(text);
   }
 
   private Connector getConnector() throws ExecutionException {
@@ -1101,7 +1102,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void dispose() {
-    statusUpdateAlarm.dispose();
+    CoroutineScopeKt.cancel(myCoroutineScope, null);
     LOG.debug("Debug has been finished");
     Disposer.dispose(disposable);
     requestManager.setThreadFilter(null);
