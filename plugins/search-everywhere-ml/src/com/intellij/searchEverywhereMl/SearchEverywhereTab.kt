@@ -148,7 +148,8 @@ sealed interface SearchEverywhereTab {
     override val currentExperimentType: ExperimentType
       get() {
         val experimentType = super.currentExperimentType
-        if (experimentType == ExperimentType.EssentialContributorPrediction) {
+        if (experimentType == ExperimentType.EssentialContributorPrediction ||
+            experimentType == ExperimentType.CombinedExperiment) {
           if (SearchEverywhereMlRegistry.disableEssentialContributorsExperiment) {
             return ExperimentType.NoExperiment
           }
