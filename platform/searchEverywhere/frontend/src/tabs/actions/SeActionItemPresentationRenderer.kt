@@ -93,6 +93,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
         if (UISettings.getInstance().showInplaceCommentsInternal && actionId != null) {
           text(actionId) {
+            accessibleName = null
             attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
           }
         }
@@ -100,6 +101,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
         presentation.shortcut?.let { shortcutText ->
           @Suppress("HardCodedStringLiteral")
           text(shortcutText) {
+            accessibleName = null
             attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER or SimpleTextAttributes.STYLE_BOLD, groupForeground)
           }
         }
@@ -145,6 +147,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
       groupLabel.border = eastBorder
 
       text(location) {
+        accessibleName = null
         align = LcrInitParams.Align.RIGHT
         foreground = if (selected) NamedColorUtil.getListSelectionForeground(true)
         else NamedColorUtil.getInactiveTextColor()

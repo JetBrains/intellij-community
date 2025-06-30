@@ -13,17 +13,20 @@ import org.intellij.lang.annotations.Language
 import kotlin.time.Duration.Companion.seconds
 
 
-fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}) =
+fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}): SearchEverywherePopupUI =
   x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) }, SearchEverywherePopupUI::class.java).apply(block)
 
-class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
-  val resultsList = accessibleList()
-  val searchField: JTextFieldUI = textField { byType("com.intellij.ide.actions.BigPopupUI${"$"}SearchField") }
-  val includeNonProjectItemsCheckBox = checkBox { byAccessibleName("Include non-project items") }
+fun Finder.searchEverywhereSplitPopup(@Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}): SearchEverywherePopupUI =
+  x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SePopupContentPane")) }, SearchEverywhereSplitPopupUI::class.java).apply(block)
+
+open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
+  val resultsList: JListUiComponent = accessibleList()
+  open val searchField: JTextFieldUI = textField { byType("com.intellij.ide.actions.BigPopupUI${"$"}SearchField") }
+  val includeNonProjectItemsCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Include non-project items") }
   val openInFindToolWindowButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Open in Find Tool Window") })
-  val previewButton = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
-  val searchEverywhereUi = x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
-  val openInRightSplitActionLink = x { byAccessibleName("Open In Right Split") }
+  val previewButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
+  val searchEverywhereUi: SearchEveryWhereUi = x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
+  val openInRightSplitActionLink: UiComponent = x { byAccessibleName("Open In Right Split") }
 
   fun invokeSelectAction() {
     invokeActionWithShortcut("[pressed ENTER]")
@@ -102,4 +105,8 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
     fun getSelectedTabID(): String
     fun closePopup()
   }
+}
+
+class SearchEverywhereSplitPopupUI(data: ComponentData) : SearchEverywherePopupUI(data) {
+  override val searchField: JTextFieldUI = textField { byClass("SeTextField") }
 }
