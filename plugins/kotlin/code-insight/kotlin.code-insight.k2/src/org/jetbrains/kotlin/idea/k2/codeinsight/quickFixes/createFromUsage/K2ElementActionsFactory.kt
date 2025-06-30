@@ -194,7 +194,16 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
         val kModifierOwner = target.sourceElement?.unwrapped as? KtModifierListOwner ?: return emptyList()
 
-        if (request.modifier == JvmModifier.FINAL && !request.shouldBePresent()) {
+        val modifier = request.modifier
+        val shouldPresent = request.shouldBePresent()
+
+        if (modifier == JvmModifier.PUBLIC && shouldPresent && kModifierOwner is KtProperty) {
+            return listOf(
+                MakeFieldPublicFix(kModifierOwner).asIntention()
+            )
+        }
+
+        if (modifier == JvmModifier.FINAL && !shouldPresent) {
             return listOf(
                 AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD).asIntention()
             )
