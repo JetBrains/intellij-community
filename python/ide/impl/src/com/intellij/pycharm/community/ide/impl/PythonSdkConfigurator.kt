@@ -134,7 +134,10 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       LOGGER.debug("Looking for a virtual environment related to the project")
       val env = detectAssociatedEnvironments(module, existingSdks, context).firstOrNull()
 
-      env?.setupSdk(module, existingSdks, true)
+      if (env != null) {
+        env.setupSdk(module, existingSdks, true)
+        return@reportRawProgress
+      }
 
       if (!coroutineContext.isActive) return@reportRawProgress
 
