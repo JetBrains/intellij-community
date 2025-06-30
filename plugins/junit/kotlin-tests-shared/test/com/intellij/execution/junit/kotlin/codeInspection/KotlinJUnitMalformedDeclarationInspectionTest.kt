@@ -609,6 +609,47 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         fun injectTestReporter(x: Int, testReporter: org.junit.jupiter.api.TestReporter) { 
           System.out.println("${'$'}x, ${'$'}testReporter") 
         }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
+        fun intStreamProvider(x: Int, testReporter: org.junit.jupiter.api.TestReporter) { System.out.println("${'$'}x, ${'$'}testReporter") }
+        
+        @PerClass
+        abstract class PerClassBase1 {
+            fun getParameters() = java.util.stream.Stream.of("Another execution", "Last execution")
+        }
+
+        class PerClassTest1 : PerClassBase1() {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.MethodSource("getParameters")
+            fun shouldExecuteWithParameterizedMethodSource(arguments: String) = Unit
+        }
+
+        abstract class PerClassBase2 {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.MethodSource("getParameters")
+            fun shouldExecuteWithParameterizedMethodSource(arguments: String) = Unit
+        }
+
+        @PerClass
+        class PerClassTest2 : PerClassBase2() {
+            fun getParameters() = java.util.stream.Stream.of("Another execution", "Last execution")
+        }
+
+        abstract class PerClassBase3 {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.MethodSource("getParameters")
+            fun shouldExecuteWithParameterizedMethodSource(arguments: String) = Unit
+
+            fun getParameters() = java.util.stream.Stream.of("Another execution", "Last execution")
+        }
+
+        @PerClass
+        class PerClassTest3 : PerClassBase3()
+
+        @kotlin.annotation.Retention(kotlin.annotation.AnnotationRetention.RUNTIME)
+        @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
+        annotation class PerClass
 
         companion object {
           @JvmStatic

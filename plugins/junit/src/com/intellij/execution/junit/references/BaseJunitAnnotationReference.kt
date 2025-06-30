@@ -46,6 +46,12 @@ abstract class BaseJunitAnnotationReference(
     return if (results.size == 1) results[0].element else null
   }
 
+  private fun filteredMethod(clazzMethods: Array<PsiMethod>, uClass: UClass, testMethod: UMethod?): List<PsiMethod> {
+    val noStaticProblem = clazzMethods.filter { hasNoStaticProblem(it, uClass, testMethod) }
+    if (noStaticProblem.isNotEmpty()) return noStaticProblem
+    return clazzMethods.toList()
+  }
+
   override fun getVariants(): Array<Any> {
     val myLiteral = element.toUElement(UExpression::class.java) ?: return emptyArray()
     val topLevelClass = myLiteral.getParentOfType(UClass::class.java) ?: return emptyArray()
@@ -76,24 +82,24 @@ abstract class BaseJunitAnnotationReference(
    * @param scope The class scope used to resolve the method reference.
    * @return The resolved `PsiMethod` if found, or `null` if the method cannot be resolved or the link is not direct.
    */
-  private fun directLink(literal: UExpression, scope: UClass): PsiMethod? {
+  private fun directLink(literal: UExpression, scope: UClass, testMethod: UMethod?): PsiMethod? {
     val string = literal.evaluate() as String? ?: return null
     val className = StringUtil.getPackageName(string, '#')
     if (className.isEmpty()) return null
     val methodName = StringUtil.getShortName(string, '#')
     if (methodName.isEmpty()) return null
     val directClass = ClassUtil.findPsiClass(scope.javaPsi.manager, className, null, false, scope.javaPsi.resolveScope) ?: return null
-    return directClass.findMethodsByName(methodName, false).firstOrNull()
+    return filteredMethod(directClass.findMethodsByName(methodName, false), scope, testMethod).firstOrNull()
   }
 
-  private fun fastResolveFor(literal: UExpression, scope: UClass): Set<PsiMethod> {
+  private fun fastResolveFor(literal: UExpression, scope: UClass, testMethod: UMethod?): Set<PsiMethod> {
     val methodName = literal.evaluate() as String? ?: return setOf()
     val psiClazz = scope.javaPsi
-    val clazzMethods = psiClazz.findMethodsByName(methodName, true)
+    val clazzMethods = filteredMethod(psiClazz.findMethodsByName(methodName, true), scope, testMethod)
 
     val methods = ClassInheritorsSearch.search(psiClazz, psiClazz.resolveScope, true)
-      .findAll()
-      .flatMap { aClazz -> aClazz.findMethodsByName(methodName, true).toList() }
+      .mapNotNull { aClazz -> aClazz.toUElement(UClass::class.java) }
+      .flatMap { uClazz -> filteredMethod(uClazz.javaPsi.findMethodsByName(methodName, true), uClazz, testMethod) }
       .toMutableSet()
     methods.addAll(clazzMethods)
     return methods
@@ -106,10 +112,10 @@ abstract class BaseJunitAnnotationReference(
   private fun fastResolveFor(testMethod: UMethod): Set<PsiMethod> {
     val literal = element.toUElement(UExpression::class.java) ?: return setOf()
     val scope = literal.getParentOfType(UClass::class.java) ?: return setOf()
-    val directLink = directLink(literal, scope)
+    val directLink = directLink(literal, scope, testMethod)
     if (directLink != null) return setOf(directLink)
     val currentClass = testMethod.getParentOfType(UClass::class.java) ?: return setOf()
-    return fastResolveFor(literal, currentClass)
+    return fastResolveFor(literal, currentClass, testMethod)
   }
 
   /**
@@ -125,10 +131,10 @@ abstract class BaseJunitAnnotationReference(
     override fun resolve(ref: BaseJunitAnnotationReference, incompleteCode: Boolean): Array<ResolveResult> {
       val literal = ref.element.toUElement(UExpression::class.java) ?: return ResolveResult.EMPTY_ARRAY
       val uClass = literal.getParentOfType(UClass::class.java) ?: return ResolveResult.EMPTY_ARRAY
-      val directLink = ref.directLink(literal, uClass)
+      val method = literal.getParentOfType(UMethod::class.java)
+      val directLink = ref.directLink(literal, uClass, method)
       if (directLink != null) return arrayOf(PsiMethodSourceResolveResult(directLink, listOf()))
 
-      val method = literal.getParentOfType(UMethod::class.java)
       if (method != null) { // direct annotation
         val owners = method.javaPsi.containingClass?.let { listOf(it) } ?: emptyList()
         return ref.fastResolveFor(method).map { PsiMethodSourceResolveResult(it, owners) }.toTypedArray()
@@ -154,7 +160,7 @@ abstract class BaseJunitAnnotationReference(
           .mapNotNull { method -> method.toUElement(UMethod::class.java) }
           .mapNotNull { method -> method.getParentOfType(UClass::class.java) }
           .distinct() // process only classes
-          .map{ clazz -> clazz to ref.fastResolveFor(literal, clazz) }
+          .map{ clazz -> clazz to ref.fastResolveFor(literal, clazz, method) }
           .flatMap { (clazz, methods) -> methods.map { method -> method to clazz } }
           .groupBy({ it.first }, { it.second })
           .map { (method, classes) -> PsiMethodSourceResolveResult(method, classes) }.toTypedArray()
@@ -162,7 +168,7 @@ abstract class BaseJunitAnnotationReference(
         val clazz = literal.getParentOfType(UClass::class.java)
         if (clazz != null) {
           val owners = clazz.javaPsi.containingClass?.let { listOf(it) } ?: emptyList()
-          return ref.fastResolveFor(literal, clazz).map { PsiMethodSourceResolveResult(it, owners) }.toTypedArray()
+          return ref.fastResolveFor(literal, clazz, method).map { PsiMethodSourceResolveResult(it, owners) }.toTypedArray()
         } else {
           return ResolveResult.EMPTY_ARRAY
         }

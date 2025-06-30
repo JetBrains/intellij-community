@@ -669,6 +669,10 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
         void injectTestReporter(int x, org.junit.jupiter.api.TestReporter testReporter) { System.out.println(x); }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
+        void intStreamProvider(int x, org.junit.jupiter.api.TestReporter testReporter) { System.out.println(x); }
 
         static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> stream() { return null; }
         static java.util.Iterator<org.junit.jupiter.params.provider.Arguments> iterator() { return null; }
@@ -704,6 +708,44 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       
         public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
       }
+      
+      @PerClass
+      abstract class PerClassBase1 {
+        public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
+      }
+      
+      class PerClassTest1 extends PerClassBase1 {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("getParameters")
+        public void shouldExecuteWithParameterizedMethodSource(String arguments) { }
+      }
+      
+      abstract class PerClassBase2 {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("getParameters")
+        public void shouldExecuteWithParameterizedMethodSource(String arguments) { }
+      }
+      
+      @PerClass
+      class PerClassTest2 extends PerClassBase2 {
+        public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
+      }
+      
+      abstract class PerClassBase3 {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("getParameters")
+        public void shouldExecuteWithParameterizedMethodSource(String arguments) { }
+
+        public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
+      }
+
+      @PerClass
+      class PerClassTest3 extends PerClassBase3 {
+      }
+      
+      @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+      @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
+      @interface PerClass { }
       
       class EnumSource { 
         @org.junit.jupiter.params.ParameterizedTest
