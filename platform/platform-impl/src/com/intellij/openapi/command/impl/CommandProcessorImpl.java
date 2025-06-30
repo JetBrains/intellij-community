@@ -12,10 +12,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class CommandProcessorImpl extends CoreCommandProcessor {
+@ApiStatus.Internal
+public final class CommandProcessorImpl extends CoreCommandProcessor {
   @Override
   public void finishCommand(final @NotNull CommandToken command, final @Nullable Throwable throwable) {
     if (myCurrentCommand != command) return;
