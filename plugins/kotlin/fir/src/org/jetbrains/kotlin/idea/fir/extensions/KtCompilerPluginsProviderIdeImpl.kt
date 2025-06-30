@@ -53,6 +53,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgu
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerPluginsScriptConfigurationListener
 import org.jetbrains.kotlin.idea.util.getOriginalOrDelegateFileOrSelf
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.makeScriptCompilerArguments
@@ -102,6 +103,14 @@ internal class KtCompilerPluginsProviderIdeImpl(
                 }
             }
         )
+        messageBusConnection.subscribe(
+            KotlinCompilerPluginsScriptConfigurationListener.TOPIC,
+            object : KotlinCompilerPluginsScriptConfigurationListener {
+                override fun scriptConfigurationsChanged() {
+                    resetScriptCache(pluginsCacheCachedValue.valueIfInitialized ?: return)
+                }
+            }
+        )
 
         onlyBundledPluginsEnabledRegistryValue.addListener(
             object : RegistryValueListener {
@@ -126,7 +135,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
         return PluginsCache(
             pluginsClassLoader,
             ContainerUtil.createConcurrentWeakMap(),
-            ContainerUtil.createConcurrentWeakMap()
+            SynchronizedClearableLazy { ContainerUtil.createConcurrentWeakMap() }
         )
     }
 
@@ -137,7 +146,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
          * As scripts might be associated with injections,
          * it's better to have a more stable anchor such as a top-level file.
          */
-        val registrarForScriptModule: ConcurrentMap<VirtualFile, Optional<CompilerPluginRegistrar.ExtensionStorage>>
+        val registrarForScriptModule: SynchronizedClearableLazy<ConcurrentMap<VirtualFile, Optional<CompilerPluginRegistrar.ExtensionStorage>>>
     )
 
     @OptIn(KaExperimentalApi::class)
@@ -150,7 +159,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
                 module.getExtensionsForModule(registrarForModule, module, extensionType)
             }
             is KaScriptModule -> {
-                val registrarForModule = pluginsCache?.registrarForScriptModule ?: return emptyList()
+                val registrarForModule = pluginsCache?.registrarForScriptModule?.value ?: return emptyList()
                 val cacheKey = module.file.virtualFile
                     .getOriginalOrDelegateFileOrSelf()
 
@@ -328,8 +337,16 @@ internal class KtCompilerPluginsProviderIdeImpl(
         droppedCache.registrarForSourceModule
             .values.mapNotNull { it.orNull() }.disposeAll()
 
-        droppedCache.registrarForScriptModule
-            .values.mapNotNull { it.orNull() }.disposeAll()
+        resetScriptCache(droppedCache)
+    }
+
+    /**
+     * Throws away only part of the cache related to the scripts, leaving other storage intact.
+     */
+    private fun resetScriptCache(pluginsCache: PluginsCache) {
+        val scriptsCache = pluginsCache.registrarForScriptModule.drop() ?: return
+
+        scriptsCache.values.mapNotNull { it.orNull() }.disposeAll()
     }
 
     private fun Collection<CompilerPluginRegistrar.ExtensionStorage>.disposeAll() {
