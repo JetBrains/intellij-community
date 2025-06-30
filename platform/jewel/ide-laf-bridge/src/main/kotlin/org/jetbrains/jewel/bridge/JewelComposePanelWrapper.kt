@@ -18,6 +18,13 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.util.JewelLogger
 
+public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
+    JewelComposePanel(config, content)
+
+@ExperimentalJewelApi
+public fun JBPanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
+    JewelComposePanel(config, content)
+
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     createJewelComposePanel { jewelPanel ->
@@ -48,6 +55,11 @@ public fun JewelToolWindowComposePanel(
 }
 
 @ExperimentalJewelApi
+@Suppress("ktlint:standard:function-naming") // Swing to Compose bridge API
+public fun composeWithoutTheme(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
+    JewelComposeNoThemePanel(config, content)
+
+@ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     createJewelComposePanel { jewelPanel ->
@@ -58,6 +70,13 @@ public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, conten
             }
         }
     }
+
+@ExperimentalJewelApi
+@Suppress("ktlint:standard:function-naming") // Swing to Compose bridge API
+public fun composeForToolWindowWithoutTheme(
+    config: ComposePanel.() -> Unit = {},
+    content: @Composable () -> Unit,
+): JComponent = JewelToolWindowNoThemeComposePanel(config, content)
 
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
