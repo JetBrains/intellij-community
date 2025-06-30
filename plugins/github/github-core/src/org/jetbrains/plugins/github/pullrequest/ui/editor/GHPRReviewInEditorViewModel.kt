@@ -68,7 +68,7 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewEditorThreadViewModel.MappingData>> =
     threadsVm.threadMappingData.combineState(discussionsViewOption) { mappingDataMap, viewOption ->
       mappingDataMap.mapValues { (_, mappingData) ->
-        val isVisible = mappingData.threadData.isVisible(viewOption)
+        val isVisible = !mappingData.threadData.isOutdated && mappingData.threadData.isVisible(viewOption)
 
         val diffData = mappingData.diffData
                        ?: return@mapValues MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, null)
