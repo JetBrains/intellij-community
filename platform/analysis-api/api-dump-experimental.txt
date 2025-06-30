@@ -328,3 +328,5 @@ a:com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - com.intellij.openapi.vfs.VirtualFileWithId
 - *a:isOffline():Z
 - *a:setOffline(Z):V
+a:com.intellij.openapi.vfs.newvfs.RefreshQueue
+- *a:refresh(Z,java.util.List,kotlin.coroutines.Continuation):java.lang.Object

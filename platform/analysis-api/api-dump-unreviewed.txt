@@ -2656,7 +2656,6 @@ a:com.intellij.openapi.vfs.newvfs.RefreshQueue
 - <init>():V
 - f:createSession(Z,Z,java.lang.Runnable):com.intellij.openapi.vfs.newvfs.RefreshSession
 - a:createSession(Z,Z,java.lang.Runnable,com.intellij.openapi.application.ModalityState):com.intellij.openapi.vfs.newvfs.RefreshSession
-- s:getInstance():com.intellij.openapi.vfs.newvfs.RefreshQueue
 - f:refresh(Z,Z,java.lang.Runnable,com.intellij.openapi.application.ModalityState,java.util.Collection):V
 - f:refresh(Z,Z,java.lang.Runnable,com.intellij.openapi.application.ModalityState,com.intellij.openapi.vfs.VirtualFile[]):V
 - f:refresh(Z,Z,java.lang.Runnable,java.util.Collection):V
@@ -2664,7 +2663,6 @@ a:com.intellij.openapi.vfs.newvfs.RefreshQueue
 a:com.intellij.openapi.vfs.newvfs.RefreshSession
 - <init>():V
 - a:addAllFiles(java.util.Collection):V
-- addAllFiles(com.intellij.openapi.vfs.VirtualFile[]):V
 - a:addFile(com.intellij.openapi.vfs.VirtualFile):V
 - a:cancel():V
 - a:launch():V

@@ -34,6 +34,38 @@ abstract class RefreshQueue {
     session.launch()
   }
 
+  /**
+   * Runs VFS refresh for [files] and suspends until refresh is completed.
+   *
+   * The refresh process gets canceled when the context [kotlinx.coroutines.Job] gets canceled.
+   *
+   * VFS refresh depends on modality states (see [ModalityState]). By default, it runs with [ModalityState.nonModal].
+   * To execute suspending VFS refresh in the context of a modal dialog, consider using [com.intellij.util.ui.launchOnShow]:
+   * ```kotlin
+   * mySwingComponent.launchOnShow("myScope") {
+   *   // this code runs with the modality of `component`
+   *   RefreshQueue.getInstance().refresh(true, listOf(file))
+   * }
+   * ```
+   * Alternatively, VFS refresh launched inside a modal progress will use the modality of the progress:
+   * ```
+   * runWithModalProgressBlocking(project, "Modal Title") {
+   *   // this code runs with the modality of the progress
+   *   RefreshQueue.getInstance().refresh(true, listOf(file))
+   * }
+   * ```
+   *
+   * This refresh is executed with the help of [com.intellij.openapi.application.backgroundWriteAction]
+   */
+  @ApiStatus.Experimental
+  abstract suspend fun refresh(recursive: Boolean, files: List<VirtualFile>)
+
+  /**
+   * Processes [events] in background write action and suspends until the processing is completed.
+   */
+  @ApiStatus.Internal
+  abstract suspend fun processEvents(events: List<VFileEvent>)
+
   @ApiStatus.Internal
   abstract fun processEvents(async: Boolean, events: List<VFileEvent>)
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation
+import com.intellij.openapi.progress.withWriteActionTitle
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -23,6 +24,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.progress.waitForMaybeCancellable
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -37,7 +41,7 @@ class RefreshSessionImpl internal constructor(
   private val myIsRecursive: Boolean,
   private val myIsBackground: Boolean,
   private val myFinishRunnable: Runnable?,
-  modality: ModalityState
+  modality: ModalityState,
 ) : RefreshSession() {
   val modality: ModalityState = getSaneModalityState(modality)
   private val myStartTrace: Throwable?
@@ -74,7 +78,7 @@ class RefreshSessionImpl internal constructor(
   internal constructor(async: Boolean, events: List<VFileEvent>) : this(async, false, false, null, ModalityState.defaultModalityState()) {
     val filtered: List<VFileEvent> = events.filter { obj: Any? -> Objects.nonNull(obj) }
     if (filtered.size < events.size) LOG.error("The list of events must not contain null elements")
-    myEvents.addAll(filtered)
+    addEvents(filtered)
   }
 
   override fun addFile(file: VirtualFile) {
@@ -102,14 +106,24 @@ class RefreshSessionImpl internal constructor(
   }
 
   override fun launch() {
+    if (prepareExecution()) return
+    (RefreshQueue.getInstance() as RefreshQueueImpl).execute(this)
+  }
+
+  override suspend fun executeInBackgroundWriteAction() {
+    if (prepareExecution()) return
+    (RefreshQueue.getInstance() as RefreshQueueImpl).executeSuspending(this)
+  }
+
+  fun prepareExecution(): /* if nothing to do */ Boolean {
     checkState()
     if (myWorkQueue.isEmpty() && myEvents.isEmpty()) {
-      if (myFinishRunnable == null) return
+      if (myFinishRunnable == null) return true
       LOG.warn(Exception("no files to refresh"))
     }
     myLaunched = true
     mySemaphore.down()
-    (RefreshQueue.getInstance() as RefreshQueueImpl).execute(this)
+    return false
   }
 
   val isEventSession: Boolean
@@ -195,6 +209,10 @@ class RefreshSessionImpl internal constructor(
     return result
   }
 
+  override fun addEvents(events: List<VFileEvent>) {
+    myEvents.addAll(events)
+  }
+
   override fun cancel() {
     myCancelled = true
 
@@ -202,10 +220,12 @@ class RefreshSessionImpl internal constructor(
     worker?.cancel()
   }
 
+  @RequiresEdt
+  @RequiresWriteLock
   fun fireEvents(
-    events: MutableList<CompoundVFileEvent?>,
-    appliers: MutableList<AsyncFileListener.ChangeApplier?>,
-    asyncProcessing: Boolean
+    events: List<CompoundVFileEvent>,
+    appliers: List<AsyncFileListener.ChangeApplier>,
+    asyncProcessing: Boolean,
   ) {
     try {
       val app = ApplicationManagerEx.getApplicationEx()
@@ -217,13 +237,7 @@ class RefreshSessionImpl internal constructor(
             if (indicator is ProgressIndicatorWithDelayedPresentation) {
               indicator.setDelayInMillis(PROGRESS_THRESHOLD_MILLIS)
             }
-            var t = System.nanoTime()
-            fireEventsInWriteAction(events, appliers, asyncProcessing)
-            t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
-            if (t > PROGRESS_THRESHOLD_MILLIS) {
-              LOG.warn("Long VFS change processing (" + t + "ms, " + events.size + " events): " + StringUtil.trimLog(
-                events.subList(0, min(events.size, 100)).toString(), 10000))
-            }
+           doFireEvents(events, appliers, asyncProcessing)
           })
       }
     }
@@ -232,10 +246,14 @@ class RefreshSessionImpl internal constructor(
     }
   }
 
+  /**
+   * Can work in both EDT and BGT
+   */
+  @RequiresWriteLock
   private fun fireEventsInWriteAction(
-    events: MutableList<CompoundVFileEvent?>,
-    appliers: MutableList<AsyncFileListener.ChangeApplier?>,
-    asyncProcessing: Boolean
+    events: List<CompoundVFileEvent>,
+    appliers: List<AsyncFileListener.ChangeApplier>,
+    asyncProcessing: Boolean,
   ) {
     val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
 
@@ -256,6 +274,37 @@ class RefreshSessionImpl internal constructor(
       finally {
         myFinishRunnable?.run()
       }
+    }
+  }
+
+
+  @RequiresWriteLock
+  @RequiresBackgroundThread
+  fun fireEventsInBackgroundWriteAction(
+    events: List<CompoundVFileEvent>,
+    appliers: List<AsyncFileListener.ChangeApplier>,
+  ) {
+    try {
+      val app = ApplicationManagerEx.getApplicationEx()
+      if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
+        if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events)
+        withWriteActionTitle(IdeCoreBundle.message("progress.title.file.system.synchronization"), {
+          doFireEvents(events, appliers, true)
+        })
+      }
+    }
+    finally {
+      mySemaphore.up()
+    }
+  }
+
+  @RequiresWriteLock
+  private fun doFireEvents(events: List<CompoundVFileEvent>, appliers: List<AsyncFileListener.ChangeApplier>, asyncProcessing: Boolean) {
+    var t = System.nanoTime()
+    fireEventsInWriteAction(events, appliers, asyncProcessing)
+    t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
+    if (t > PROGRESS_THRESHOLD_MILLIS) {
+      LOG.warn("Long VFS change processing (" + t + "ms, " + events.size + " events): " + StringUtil.trimLog(events.subList(0, min(events.size, 100)).toString(), 10000))
     }
   }
 

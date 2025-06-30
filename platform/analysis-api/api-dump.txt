@@ -739,6 +739,13 @@ com.intellij.openapi.vfs.newvfs.FileSystemInterface
 - a:resolveSymLink(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - a:setTimeStamp(com.intellij.openapi.vfs.VirtualFile,J):V
 - a:setWritable(com.intellij.openapi.vfs.VirtualFile,Z):V
+a:com.intellij.openapi.vfs.newvfs.RefreshQueue
+- sf:Companion:com.intellij.openapi.vfs.newvfs.RefreshQueue$Companion
+- sf:getInstance():com.intellij.openapi.vfs.newvfs.RefreshQueue
+f:com.intellij.openapi.vfs.newvfs.RefreshQueue$Companion
+- f:getInstance():com.intellij.openapi.vfs.newvfs.RefreshQueue
+a:com.intellij.openapi.vfs.newvfs.RefreshSession
+- f:addAllFiles(com.intellij.openapi.vfs.VirtualFile[]):V
 com.intellij.problems.Problem
 - a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 com.intellij.problems.ProblemListener
