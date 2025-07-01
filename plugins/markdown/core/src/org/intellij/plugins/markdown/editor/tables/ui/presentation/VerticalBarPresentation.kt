@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -108,15 +109,17 @@ internal class VerticalBarPresentation(
     if (editor.isDisposed || boundsState == initialState) {
       return
     }
-    SlowOperations.knownIssue("IJPL-162800").use {
-      if (!row.isValid) {
-        return
+    runReadAction {
+      SlowOperations.knownIssue("IJPL-162800").use {
+        if (!row.isValid) {
+          return@runReadAction
+        }
       }
-    }
-    graphics.useCopy { local ->
-      GraphicsUtil.setupAntialiasing(local)
-      GraphicsUtil.setupRoundedBorderAntialiasing(local)
-      paintRow(local, rowLocation)
+      graphics.useCopy { local ->
+        GraphicsUtil.setupAntialiasing(local)
+        GraphicsUtil.setupRoundedBorderAntialiasing(local)
+        paintRow(local, rowLocation)
+      }
     }
   }
 
