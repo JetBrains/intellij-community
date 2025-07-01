@@ -64,7 +64,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         session.pluginStates[pluginId] = PluginEnabledState.ENABLED
       }
       else {
-        val state = if (PluginManagerCore.isDisabled(pluginId)) PluginEnabledState.DISABLED else PluginEnabledState.ENABLED
+        val state = if (PluginManagerCore.isDisabled(pluginId) || !plugin.isEnabled) PluginEnabledState.DISABLED else PluginEnabledState.ENABLED
         session.pluginStates[pluginId] = state
         visiblePlugins.add(PluginUiModelAdapter(plugin))
       }
