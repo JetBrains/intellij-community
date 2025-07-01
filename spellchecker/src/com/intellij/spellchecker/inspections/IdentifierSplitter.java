@@ -20,7 +20,7 @@ public class IdentifierSplitter extends BaseSplitter {
     return INSTANCE;
   }
 
-  private static final @NonNls Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
+  private static final @NonNls Pattern WORD = Pattern.compile("(?U)\\b\\p{L}*'?\\p{L}*");
   private static final @NonNls Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
 
   @Override
