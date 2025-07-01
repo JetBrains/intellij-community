@@ -47,15 +47,18 @@ internal class JpsModuleToBazel {
       val project = JpsSerializationManager.getInstance().loadProject(projectDir.toString(), mapOf("MAVEN_REPOSITORY" to m2Repo.toString()), true)
       val jarRepositories = loadJarRepositories(projectDir)
 
-      val ultimateUrlCache = ultimateRoot?.let { UrlCache(cacheFile = it.resolve("build/lib-lock.json")) }
-      val communityUrlCache = UrlCache(cacheFile = communityRoot.resolve("build/lib-lock.json"))
+      val modulesBazel = listOfNotNull(
+        ultimateRoot?.resolve("lib/MODULE.bazel"),
+        communityRoot.resolve("lib/MODULE.bazel"),
+      )
+
+      val urlCache = UrlCache(modulesBazel, jarRepositories)
 
       val generator = BazelBuildFileGenerator(
         ultimateRoot = ultimateRoot,
         communityRoot = communityRoot,
         project = project,
-        ultimateUrlCache = ultimateUrlCache,
-        communityUrlCache = communityUrlCache,
+        urlCache = urlCache,
       )
       val moduleList = generator.computeModuleList()
       // first, generate community to collect libs, that used by community (to separate community and ultimate libs)
@@ -63,6 +66,12 @@ internal class JpsModuleToBazel {
       val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false)
       generator.save(communityResult.moduleBuildFiles)
       generator.save(ultimateResult.moduleBuildFiles)
+
+      generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
+
+      // Check that after all workings of generator, all checksums from urls with checksums
+      // are saved to MODULE.bazel correctly
+      verifyHttpFileTargetsGeneration(urlCache, modulesBazel, jarRepositories)
 
       deleteOldFiles(
         projectDir = communityRoot,
@@ -82,16 +91,46 @@ internal class JpsModuleToBazel {
         )
       }
 
-      generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
-
       if (ultimateRoot != null) {
         val targetsFile = ultimateRoot.resolve("build/bazel-targets.json")
         saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList.skippedModules)
       }
+    }
 
-      // save cache only on success. do not surround with try/finally
-      communityUrlCache.save()
-      ultimateUrlCache?.save()
+    private fun verifyHttpFileTargetsGeneration(
+      urlCache: UrlCache,
+      modulesBazel: List<Path>,
+      jarRepositories: List<JarRepository>,
+    ) {
+      val usedEntries = urlCache.getUsedEntries()
+      val mapOnDisk = readModules(modulesBazel, jarRepositories, warningsAsErrors = true)
+
+      if (mapOnDisk != usedEntries) {
+        for (path in usedEntries.keys - mapOnDisk.keys) {
+          error("Cannot find http_file for $path in $modulesBazel, but $path was used in maven libraries")
+        }
+
+        for (path in mapOnDisk.keys - usedEntries.keys) {
+          error("There is an http_file for $path in $modulesBazel, but $path was not used in jps-to-bazel")
+        }
+
+        for (path in mapOnDisk.keys.intersect(usedEntries.keys)) {
+          val onDisk = mapOnDisk[path]
+          val usedEntry = usedEntries[path]
+          if (onDisk != usedEntry) {
+            error(
+              "Different cache entries on disk ($modulesBazel) and what was used in jps-to-bazel." +
+              "on disk $onDisk, used entry $usedEntry"
+            )
+          }
+        }
+
+        // SHOULD NOT BE REACHED
+        error(
+          "http_file entries on disk in $modulesBazel are different from maven libraries used in jps-to-bazel." +
+          "Also, there is a bug in calculating difference between them."
+        )
+      }
     }
 
     @OptIn(ExperimentalSerializationApi::class)
