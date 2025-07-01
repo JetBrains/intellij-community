@@ -180,6 +180,7 @@ class PyVirtualEnvTerminalCustomizerTest {
     finally {
       if (SystemInfo.isWindows) {
         deleteCheckLocking(tempDirFixture.get())
+        deleteCheckLocking(venvPath)
       }
       process.kill()
       process.exitCode.await()
