@@ -705,8 +705,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     ): List<PrepareRequest> {
         val kotlinRequests = getKotlinClassPrepareRequests(requestor, position)
         return if (isInsideProjectWithCompose) {
-            val singletonRequestPattern = getClassPrepareRequestPatternForComposableSingletons(file)
-            kotlinRequests + PrepareRequest(requestor, singletonRequestPattern)
+            val composableSingletonPatterns = getClassPrepareRequestPatternsForComposableSingletons(file)
+            kotlinRequests + composableSingletonPatterns.map { PrepareRequest(requestor, it) }
         } else {
             kotlinRequests
         }
