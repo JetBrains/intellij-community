@@ -14,20 +14,17 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightField
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.getAddJvmStaticApplicabilityRange
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.util.addAnnotation
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 class AddJvmStaticIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
@@ -37,22 +34,8 @@ class AddJvmStaticIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
 
     override fun startInWriteAction(): Boolean = false
 
-    override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
-        if (element !is KtNamedFunction && element !is KtProperty) return null
-
-        if (element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
-        if (element.hasModifier(KtTokens.OPEN_KEYWORD)) return null
-        if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
-
-        val containingObject = element.containingClassOrObject as? KtObjectDeclaration ?: return null
-        if (containingObject.isObjectLiteral()) return null
-        if (element is KtProperty) {
-            if (element.hasModifier(KtTokens.CONST_KEYWORD)) return null
-            if (KotlinPsiHeuristics.hasJvmFieldAnnotation(element)) return null
-        }
-        if (KotlinPsiHeuristics.hasJvmStaticAnnotation(element)) return null
-        return element.nameIdentifier?.textRange
-    }
+    override fun applicabilityRange(element: KtNamedDeclaration): TextRange? =
+        getAddJvmStaticApplicabilityRange(element)
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
         val target = getTarget(editor, file) ?: return IntentionPreviewInfo.EMPTY

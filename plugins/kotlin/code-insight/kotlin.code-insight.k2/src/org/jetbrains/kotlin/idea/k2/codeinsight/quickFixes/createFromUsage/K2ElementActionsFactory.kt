@@ -35,14 +35,17 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtClassOrFile
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.util.findAnnotation
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 class K2ElementActionsFactory : JvmElementActionsFactory() {
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
@@ -204,17 +207,39 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         val shouldPresent = request.shouldBePresent()
 
         if (modifier == JvmModifier.PUBLIC && shouldPresent && kModifierOwner is KtProperty) {
-            return listOf(
-                MakeFieldPublicFix(kModifierOwner).asIntention()
-            )
+            return listOf(MakeFieldPublicFix(kModifierOwner).asIntention())
+        }
+        if (modifier == JvmModifier.STATIC && shouldPresent && kModifierOwner is KtNamedDeclaration) {
+            return listOf(MakeMemberStaticFix(kModifierOwner).asIntention())
         }
 
-        if (modifier == JvmModifier.FINAL && !shouldPresent) {
-            return listOf(
-                AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD).asIntention()
-            )
+        val (kToken, shouldPresentMapped) = when (modifier) {
+            JvmModifier.FINAL -> KtTokens.OPEN_KEYWORD to !shouldPresent
+            JvmModifier.STATIC if !shouldPresent && kModifierOwner is KtClass && !kModifierOwner.isTopLevel() ->
+                KtTokens.INNER_KEYWORD to true
+
+            JvmModifier.PUBLIC if shouldPresent ->
+                kModifierOwner.visibilityModifierType()
+                    ?.takeIf { it != KtTokens.DEFAULT_VISIBILITY_KEYWORD }
+                    ?.let { it to false } ?: return emptyList()
+
+            else -> javaPsiModifiersMapping[modifier] to shouldPresent
         }
-        return emptyList()
+        if (kToken == null) return emptyList()
+        return createChangeModifierActions(kModifierOwner, kToken, shouldPresentMapped)
+    }
+
+    private fun createChangeModifierActions(
+        modifierListOwners: KtModifierListOwner,
+        token: KtModifierKeywordToken,
+        shouldBePresent: Boolean
+    ): List<IntentionAction> {
+        val action = if (shouldBePresent) {
+            AddModifierFixMpp.createIfApplicable(modifierListOwners, token)
+        } else {
+            RemoveModifierFixBase(modifierListOwners, token, false)
+        }
+        return listOfNotNull(action?.asIntention())
     }
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
@@ -553,3 +578,10 @@ private fun createAddPropertyActions(
     }
     return actions
 }
+
+private val javaPsiModifiersMapping: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
+    JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
+    JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD,
+    JvmModifier.PROTECTED to KtTokens.PUBLIC_KEYWORD,
+    JvmModifier.ABSTRACT to KtTokens.ABSTRACT_KEYWORD
+)
