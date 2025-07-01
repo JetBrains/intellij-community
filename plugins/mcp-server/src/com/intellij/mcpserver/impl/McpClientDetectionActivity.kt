@@ -101,13 +101,21 @@ internal class McpClientDetectionActivity : ProjectActivity {
 
   private class AutoconfigureAction(private val project: Project, private val unconfiguredClients: List<McpClient>, private val notification: Notification): AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")){
     override fun actionPerformed(e: AnActionEvent) {
-      unconfiguredClients.forEach { it.configure() }
+      val clientsWithErrorDuringConfiguration = mutableSetOf<McpClient>()
+      unconfiguredClients.forEach { client -> runCatching { client.configure() }.onFailure { clientsWithErrorDuringConfiguration.add(client) } }
       val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
         .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
                             McpServerBundle.message("mcp.server.client.restart.info"), NotificationType.INFORMATION)
         .setImportant(false)
-
       doneNotification.notify(project)
+
+      if (clientsWithErrorDuringConfiguration.isNotEmpty()) {
+        val errorNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
+          .createNotification(McpServerBundle.message("mcp.client.error.autoconfigured"),
+                              McpServerBundle.message("mcp.server.error.autoconfigured.info", clientsWithErrorDuringConfiguration.joinToString(", ") { it.name.displayName }), NotificationType.WARNING)
+          .setImportant(false)
+        errorNotification.notify(project)
+      }
       notification.expire()
     }
   }

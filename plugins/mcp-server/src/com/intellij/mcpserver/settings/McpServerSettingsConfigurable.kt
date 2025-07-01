@@ -94,18 +94,29 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
               text(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
             }
             val autoconfiguredPressed = ValueComponentPredicate(false)
+            val errorDuringConfiguration = ValueComponentPredicate(false)
             val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
             row {
               icon(AllIcons.General.Information)
               comment(McpServerBundle.message("mcp.server.client.restart.info"))
             }.visibleIf(autoconfiguredPressed)
             row {
+              icon(AllIcons.General.Error)
+              comment(McpServerBundle.message("mcp.server.client.autoconfig.error"))
+            }.visibleIf(errorDuringConfiguration)
+            row {
               button(McpServerBundle.message("autoconfigure.mcp.server"), {
-                mcpClient.configure()
-                isConfigured.set(true)
-                isPortCorrect.set(true)
-                configExists.set(true)
-                autoconfiguredPressed.set(true)
+                runCatching {
+                  mcpClient.configure()
+                }.onFailure {
+                  errorDuringConfiguration.set(true)
+                }.onSuccess {
+                  errorDuringConfiguration.set(false)
+                  isConfigured.set(true)
+                  isPortCorrect.set(true)
+                  configExists.set(true)
+                  autoconfiguredPressed.set(true)
+                }
               })
               button(McpServerBundle.message("open.settings.json"), { openFileInEditor(mcpClient.configPath) }).visibleIf(configExists)
               button(McpServerBundle.message("copy.mcp.server.configuration"), {
