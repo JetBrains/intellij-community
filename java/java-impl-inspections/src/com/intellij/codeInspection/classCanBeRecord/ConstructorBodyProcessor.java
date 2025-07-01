@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
-import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.MultiMap;
@@ -51,11 +52,17 @@ final class ConstructorBodyProcessor {
     }
     final PsiExpression expression = expressionStatement.getExpression();
 
+    if (expression instanceof PsiMethodCallExpression methodCallExpr) {
+      if (JavaPsiConstructorUtil.isChainedConstructorCall(methodCallExpr)) {
+        delegating = true;
+        return;
+      }
+    }
+
     // Is it an assignment expression to an instance field?
     // If not, then all instance variables must already be assigned.
-    if (!expressionIsAssignmentToInstanceField(expression) && !expressionIsDelegatingConstructorCall(expression) && !delegating) {
+    if (!expressionIsAssignmentToInstanceField(expression) && !delegating) {
       otherStatements.add(statement);
-
       // If not all instance fields are assigned up to this point,
       // then this constructor cannot be converted to a non-canonical record constructor.
       if (fieldNamesToInitializers.size() < instanceFields.size()) {
@@ -63,13 +70,6 @@ final class ConstructorBodyProcessor {
         // It is OK to have statements before all fields are assigned if this constructor is a canonical constructor.
       }
       return;
-    }
-
-    if (expression instanceof PsiMethodCallExpression methodCallExpr) {
-      if (JavaPsiConstructorUtil.isChainedConstructorCall(methodCallExpr)) {
-        delegating = true;
-        return;
-      }
     }
 
     if (!(expression instanceof PsiAssignmentExpression assignExpr)) return;
@@ -218,17 +218,11 @@ final class ConstructorBodyProcessor {
     return true;
   }
 
-  private static boolean expressionIsDelegatingConstructorCall(PsiExpression expr) {
-    if (!(expr instanceof PsiMethodCallExpression methodCallExpr)) return false;
-    return JavaKeywords.THIS.equals(methodCallExpr.getMethodExpression().getReferenceName()) ||
-           JavaKeywords.SUPER.equals(methodCallExpr.getMethodExpression().getReferenceName());
-  }
-
   private static boolean expressionIsAssignmentToInstanceField(PsiExpression expr) {
     if (!(expr instanceof PsiAssignmentExpression assignExpr)) return false;
     PsiExpression leftExpr = assignExpr.getLExpression();
-    if (!(leftExpr instanceof PsiReferenceExpression)) return false;
-    PsiElement resolved = ((PsiReferenceExpression)leftExpr).resolve();
-    return resolved instanceof PsiField && !((PsiField)resolved).hasModifierProperty(STATIC);
+    if (!(leftExpr instanceof PsiReferenceExpression referenceExpr)) return false;
+    PsiElement resolved = referenceExpr.resolve();
+    return resolved instanceof PsiField psiField && !psiField.hasModifierProperty(STATIC);
   }
 }
