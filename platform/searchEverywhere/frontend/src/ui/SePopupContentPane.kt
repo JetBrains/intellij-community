@@ -207,7 +207,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
               // Freeze back if it was frozen before
               if (wasFrozen) resultListModel.freezer.enable()
-              resultListModel.freezer.freezeIfEnabled(indexToFreezeFromListOffset())
+              updateFrozenCount()
 
               // Autoselect the first element if there were no selection preserved during the update
               if (resultListModel.size > 0 && resultList.selectedIndices.isEmpty()) {
@@ -243,10 +243,10 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     val isScrolledAlmostToAnEnd = MutableStateFlow(false)
     val verticalScrollBar = resultsScrollPane.verticalScrollBar
     verticalScrollBar.addAdjustmentListener { adjustmentEvent ->
-      val yetToScrollHeight = verticalScrollBar.maximum - verticalScrollBar.model.extent - adjustmentEvent.value
+      updateFrozenCount()
 
+      val yetToScrollHeight = verticalScrollBar.maximum - verticalScrollBar.model.extent - adjustmentEvent.value
       if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < 50) {
-        resultListModel.freezer.freezeAllIfEnabled()
         isScrolledAlmostToAnEnd.value = true
       }
       else if (yetToScrollHeight > resultsScrollPane.height / 2) {
@@ -279,6 +279,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       override fun componentResized(e: ComponentEvent?) {
         if (project != null && !isCompactViewMode) {
           popupExtendedSize = size
+          updateFrozenCount()
         }
       }
     })
@@ -289,8 +290,13 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, this)
   }
 
-  private fun indexToFreezeFromListOffset(): Int =
-    (resultList.visibleRect.y.toDouble() / JBUI.CurrentTheme.List.rowHeight()).roundToInt() + DEFAULT_FROZEN_COUNT
+  private fun updateFrozenCount() {
+    // All rows above the visible rect plus DEFAULT_FROZEN_VISIBLE_PART of the visible rect
+    val indexToFreezeFromListOffset = ((resultsScrollPane.verticalScrollBar.value.toDouble() +
+                                        resultsScrollPane.height * DEFAULT_FROZEN_VISIBLE_PART) / JBUI.CurrentTheme.List.rowHeight()).roundToInt()
+
+    resultListModel.freezer.freezeIfEnabled(indexToFreezeFromListOffset)
+  }
 
   private fun createListPane(resultList: JBList<*>): JScrollPane {
     val resultsScroll: JScrollPane = object : JBScrollPane(resultList) {
@@ -719,7 +725,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   override fun dispose() {}
 
   companion object {
-    const val DEFAULT_FROZEN_COUNT: Int = 10
+    const val DEFAULT_FROZEN_VISIBLE_PART: Double = 0.7
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
 
     @JvmStatic
