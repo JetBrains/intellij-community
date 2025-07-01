@@ -424,8 +424,14 @@ public final class EditorPainter implements TextDrawingCallback {
                 ));
               }
               if (attributes != null) {
-                Color color = attributes.getForegroundColor();
-                if (color != null) {
+                Color foregroundColor = attributes.getForegroundColor();
+                if (foregroundColor != null) {
+                  if (attributes.getEffectType() == EffectType.FADED) {
+                    foregroundColor = ColorUtil.faded(foregroundColor);
+                  }
+
+                  Color color = foregroundColor;
+
                   myTextDrawingTasks.add(g -> g.setColor(color));
                   myTextDrawingTasks.add(fragment.draw(xStart, y + myAscent, start, end));
                 }
