@@ -348,7 +348,7 @@
   </template>
 
   <template name="stss" value="try (var scope = new java.util.concurrent.StructuredTaskScope.ShutdownOnSuccess()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stss" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.stss" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_CONSTRUCTORS" value="true" />
@@ -356,7 +356,7 @@
   </template>
 
   <template name="stsf" value="try (var scope = new java.util.concurrent.StructuredTaskScope.ShutdownOnFailure()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stsf" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.stsf" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_CONSTRUCTORS" value="true" />
@@ -364,7 +364,7 @@
   </template>
 
   <template name="sts" value="try (var scope = java.util.concurrent.StructuredTaskScope.open()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sts" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.sts" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_STATIC_FACTORY_METHODS" value="true" />
