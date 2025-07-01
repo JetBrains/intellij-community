@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
-import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStamp
+import com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -18,40 +18,13 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
-import java.util.Collections
+import java.util.*
 
 @ApiStatus.Internal
-abstract class CompositeDeclarativeHintWithMarginsView<Model, SubView>(private val ignoreInitialMargin: Boolean)
-  : DeclarativeHintView<Model>
-  where SubView : DeclarativeHintViewWithMargins {
-  protected abstract fun getSubView(index: Int): SubView
-
-  protected abstract val subViewCount: Int
-
-  private var computedSubViewMetrics: SubViewMetrics? = null
-  private var inlayTextMetricsStamp: InlayTextMetricsStamp? = null
-
-  private fun getSubViewMetrics(fontMetricsStorage: InlayTextMetricsStorage): SubViewMetrics {
-    val metrics = computedSubViewMetrics
-    val currentStamp = getCurrentTextMetricsStamp(fontMetricsStorage)
-    val areFontMetricsActual = areFontMetricsActual(currentStamp)
-    if (metrics == null || !areFontMetricsActual) {
-      val computed = computeSubViewMetrics(ignoreInitialMargin, fontMetricsStorage, !areFontMetricsActual)
-      computedSubViewMetrics = computed
-      inlayTextMetricsStamp = currentStamp
-      return computed
-    }
-    return metrics
-  }
-
-  protected open fun getCurrentTextMetricsStamp(fontMetricsStorage: InlayTextMetricsStorage): InlayTextMetricsStamp? {
-    return fontMetricsStorage.getCurrentStamp()
-  }
-
-  protected open fun areFontMetricsActual(currentStamp: InlayTextMetricsStamp?): Boolean {
-    return inlayTextMetricsStamp == currentStamp
-  }
-
+abstract class CompositeDeclarativeHintWithMarginsView<Model, SubView, SubViewModel>(ignoreInitialMargin: Boolean)
+  : DeclarativeHintView<Model>, ViewWithMarginsCompositeBase<SubView>(ignoreInitialMargin)
+  where SubView : DeclarativeHintView<SubViewModel>,
+        SubView : ViewWithMargins {
   override fun calcWidthInPixels(inlay: Inlay<*>, fontMetricsStorage: InlayTextMetricsStorage): Int {
     return getSubViewMetrics(fontMetricsStorage).fullWidth
   }
@@ -89,75 +62,14 @@ abstract class CompositeDeclarativeHintWithMarginsView<Model, SubView>(private v
     }
     return null
   }
-
-  private inline fun forSubViewAtPoint(
-    pointInsideInlay: Point,
-    fontMetricsStorage: InlayTextMetricsStorage,
-    action: (SubView, Point) -> Unit,
-  ) {
-    val x = pointInsideInlay.x.toInt()
-    forEachSubViewBounds(fontMetricsStorage) { subView, leftBound, rightBound ->
-      if (x in leftBound..<rightBound) {
-        action(subView, Point(x - leftBound, pointInsideInlay.y))
-        return
-      }
-    }
-  }
-
-  private inline fun forEachSubViewBounds(
-    fontMetricsStorage: InlayTextMetricsStorage,
-    action: (SubView, Int, Int) -> Unit,
-  ) {
-    val sortedBounds = getSubViewMetrics(fontMetricsStorage).sortedBounds
-    for (index in 0..<subViewCount) {
-      val leftBound = sortedBounds[2 * index]
-      val rightBound = sortedBounds[2 * index + 1]
-      action(getSubView(index), leftBound, rightBound)
-    }
-  }
-
-  private fun computeSubViewMetrics(
-    ignoreInitialMargin: Boolean,
-    fontMetricsStorage: InlayTextMetricsStorage,
-    forceUpdate: Boolean
-  ): SubViewMetrics {
-    val sortedBounds = IntArray(subViewCount * 2)
-    var xSoFar = 0
-    var previousMargin = 0
-    getSubView(0).let { subView ->
-      val margin = subView.margin
-      sortedBounds[0] = if (ignoreInitialMargin) 0 else subView.margin
-      sortedBounds[1] = sortedBounds[0] + subView.getBoxWidth(fontMetricsStorage, forceUpdate)
-      previousMargin = margin
-    }
-    xSoFar = sortedBounds[1]
-    for (index in 1..<subViewCount) {
-      val subView = getSubView(index)
-      val margin = subView.margin
-      val leftBound = xSoFar + maxOf(previousMargin, margin)
-      val rightBound = leftBound + subView.getBoxWidth(fontMetricsStorage, forceUpdate)
-      sortedBounds[2 * index] = leftBound
-      sortedBounds[2 * index + 1] = rightBound
-      previousMargin = margin
-      xSoFar = rightBound
-    }
-    return SubViewMetrics(sortedBounds, sortedBounds.last() + previousMargin)
-  }
-
-  internal fun invalidateComputedSubViewMetrics() {
-    computedSubViewMetrics = null
-  }
 }
 
-private fun CompositeDeclarativeHintWithMarginsView<*, *>.createPresentationList(inlayData: InlayData): InlayPresentationList {
+private fun CompositeDeclarativeHintWithMarginsView<*, *, InlayData>.createPresentationList(inlayData: InlayData): InlayPresentationList {
   return InlayPresentationList(inlayData, this::invalidateComputedSubViewMetrics)
 }
 
-@ApiStatus.Internal
-class SubViewMetrics(val sortedBounds: IntArray, val fullWidth: Int)
-
 internal class SingleDeclarativeHintView(inlayData: InlayData)
-  : CompositeDeclarativeHintWithMarginsView<InlayData, InlayPresentationList>(false) {
+  : CompositeDeclarativeHintWithMarginsView<InlayData, InlayPresentationList, InlayData>(false) {
   val presentationList = createPresentationList(inlayData)
 
   override val subViewCount: Int get() = 1
@@ -166,7 +78,7 @@ internal class SingleDeclarativeHintView(inlayData: InlayData)
 }
 
 internal class MultipleDeclarativeHintsView(inlayData: List<InlayData>)
-  : CompositeDeclarativeHintWithMarginsView<List<InlayData>, InlayPresentationList>(true) {
+  : CompositeDeclarativeHintWithMarginsView<List<InlayData>, InlayPresentationList, InlayData>(true) {
   var presentationLists: List<InlayPresentationList> =
     if (inlayData.size == 1) {
       Collections.singletonList(createPresentationList(inlayData[0]))

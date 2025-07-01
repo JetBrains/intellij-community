@@ -2,7 +2,8 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.impl.views.CompositeDeclarativeHintWithMarginsView
-import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintViewWithMargins
+import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintView
+import com.intellij.codeInsight.hints.declarative.impl.views.ViewWithMargins
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStamp
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.editor.Editor
@@ -64,7 +65,7 @@ class CompositeDeclarativeHintWithMarginsViewTest {
 }
 
 private class TestCompositeView(val subViews: List<MockPresentationList>)
-  : CompositeDeclarativeHintWithMarginsView<InlayData, MockPresentationList>(false) {
+  : CompositeDeclarativeHintWithMarginsView<List<InlayData>, MockPresentationList, InlayData>(false) {
   override fun getSubView(index: Int): MockPresentationList = subViews[index]
 
   override val subViewCount: Int = subViews.size
@@ -77,8 +78,10 @@ private class TestCompositeView(val subViews: List<MockPresentationList>)
     return false
   }
 
-  override fun updateModel(newModel: InlayData) = fail("Should not be called")
+  override fun updateModel(newModel: List<InlayData>) = fail("Should not be called")
 }
+
+interface DeclarativeHintViewWithMargins : DeclarativeHintView<InlayData>, ViewWithMargins
 
 private val mockDeclarativeHintViewWithMargins = context.mock(DeclarativeHintViewWithMargins::class.java)
 private class MockPresentationList(override val margin: Int, val boxWidth: Int)

@@ -1,13 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.hints.declarative.impl.views
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayActionService
-import com.intellij.codeInsight.hints.declarative.impl.InlayData
-import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
-import com.intellij.codeInsight.hints.declarative.impl.InlayTags
-import com.intellij.codeInsight.hints.declarative.impl.views.PresentationEntryBuilder
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintView
+import com.intellij.codeInsight.hints.declarative.impl.views.ViewWithMargins
 import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
@@ -31,20 +28,14 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.geom.Rectangle2D
 
-@ApiStatus.Internal
-interface DeclarativeHintViewWithMargins: DeclarativeHintView<InlayData> {
-  val margin: Int
-  fun getBoxWidth(storage: InlayTextMetricsStorage, forceUpdate: Boolean = false): Int
-}
-
 /**
- * @see com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
+ * @see PresentationTreeBuilderImpl
  */
 @ApiStatus.Internal
 class InlayPresentationList(
   @ApiStatus.Internal var model: InlayData,
   private val onStateUpdated: () -> Unit
-) : DeclarativeHintViewWithMargins {
+) : DeclarativeHintView<InlayData>, ViewWithMargins {
   private var entries: Array<InlayPresentationEntry> = model.tree.buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
 
