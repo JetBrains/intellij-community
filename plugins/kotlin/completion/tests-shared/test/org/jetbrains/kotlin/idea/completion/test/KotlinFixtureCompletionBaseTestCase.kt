@@ -27,7 +27,11 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
     }
 
     protected open fun complete(completionType: CompletionType, invocationCount: Int): Array<LookupElement>? =
-        myFixture.complete(completionType, invocationCount)
+        myFixture.complete(completionType, invocationCount)?.also { result ->
+            result.forEach { lookupElement -> extraLookupElementCheck(lookupElement) }
+        }
+
+    protected open fun extraLookupElementCheck(lookupElement: LookupElement) {}
 
     protected abstract fun defaultCompletionType(): CompletionType
     protected open fun defaultInvocationCount(): Int = 0

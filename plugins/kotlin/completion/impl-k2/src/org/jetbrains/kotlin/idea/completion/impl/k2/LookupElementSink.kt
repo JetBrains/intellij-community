@@ -8,10 +8,12 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.util.elementType
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.ChainCompletionContributor
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
@@ -95,12 +97,13 @@ internal class LookupElementSink(
 
         return LookupElementDecorator.withDelegateInsertHandler(
             LookupElementDecorator.withDelegateInsertHandler(element, bracesInsertHandler),
-            CompletionCharInsertHandler(parameters.delegate),
+            CompletionCharInsertHandler(parameters.delegate.isAutoPopup),
         )
     }
 }
 
-private object WrapSingleStringTemplateEntryWithBracesInsertHandler : InsertHandler<LookupElement> {
+@Serializable
+internal object WrapSingleStringTemplateEntryWithBracesInsertHandler : SerializableInsertHandler {
 
     override fun handleInsert(
         context: InsertionContext,

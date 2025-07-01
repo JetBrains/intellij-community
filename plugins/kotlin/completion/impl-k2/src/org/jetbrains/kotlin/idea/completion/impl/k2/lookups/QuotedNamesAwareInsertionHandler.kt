@@ -5,10 +5,15 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.isTextAt
 import org.jetbrains.kotlin.renderer.render
 
-internal open class QuotedNamesAwareInsertionHandler : InsertHandler<LookupElement> {
+@Serializable
+@Polymorphic
+internal open class QuotedNamesAwareInsertionHandler : SerializableInsertHandler {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val lookupElement = item.`object` as KotlinLookupObject
 

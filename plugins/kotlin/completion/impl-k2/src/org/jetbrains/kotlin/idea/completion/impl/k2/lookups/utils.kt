@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.*
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -20,6 +23,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForCallable
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForClassifier
@@ -27,8 +32,10 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookup
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
 context(KaSession)
 internal fun withClassifierSymbolInfo(
@@ -84,17 +91,33 @@ internal fun updateLookupElementBuilderToInsertTypeQualifierOnSuper(
     builder: LookupElementBuilder,
     insertionStrategy: CallableInsertionStrategy.WithSuperDisambiguation
 ) =
-    builder.withInsertHandler { context, item ->
-        builder.insertHandler?.handleInsert(context, item)
-        val superExpression = insertionStrategy.superExpressionPointer.element ?: return@withInsertHandler
-        superExpression.setSuperTypeQualifier(context, insertionStrategy.superClassId)
-    }.appendTailText(" for ${insertionStrategy.superClassId.relativeClassName}", true)
+    builder.withInsertHandler(
+        UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler(
+            builder.insertHandler?.ensureSerializable(), insertionStrategy,
+        )
+    ).appendTailText(" for ${insertionStrategy.superClassId.relativeClassName}", true)
 
+@Serializable
+internal data class UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler(
+    val delegate: SerializableInsertHandler?,
+    val insertionStrategy: CallableInsertionStrategy.WithSuperDisambiguation,
+): SerializableInsertHandler {
+    override fun handleInsert(
+        context: InsertionContext,
+        item: LookupElement
+    ) {
+        delegate?.handleInsert(context, item)
+        val nameReferenceExpression = context.file.findElementAt(context.startOffset)?.parent as? KtNameReferenceExpression ?: return
+        val superExpression = nameReferenceExpression.getReceiverExpression() as? KtSuperExpression ?: return
+        superExpression.setSuperTypeQualifier(context, insertionStrategy.superClassId)
+    }
+}
 
 private fun KtSuperExpression.setSuperTypeQualifier(
     context: InsertionContext,
     superClassId: ClassId
 ) {
+    val pointer = this.createSmartPointer()
     superTypeQualifier?.let { typeReference ->
         val rangeToRemove = getSuperTypeQualifierRange(typeReference)
         context.document.deleteString(rangeToRemove.startOffset, rangeToRemove.endOffset)
@@ -102,7 +125,8 @@ private fun KtSuperExpression.setSuperTypeQualifier(
     val typeQualifier = "<${superClassId.asFqNameString()}>"
     context.insertString(typeQualifier, instanceReference.endOffset, moveCaretToEnd = false)
     context.commitDocument()
-    shortenReferencesInRange(context.file as KtFile, TextRange(this.endOffset, this.endOffset + typeQualifier.length))
+    val newSuperExpression = pointer.element ?: return
+    shortenReferencesInRange(context.file as KtFile, newSuperExpression.textRange)
 }
 
 private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRange = TextRange(

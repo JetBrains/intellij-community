@@ -10,6 +10,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.applyIf
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -20,8 +21,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -328,16 +331,18 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 }
 
-private data class WhenConditionLookupObject(
-    override val shortName: Name,
-    val fqName: FqName?,
+@Serializable
+internal data class WhenConditionLookupObject(
+    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
+    @Serializable(with = KotlinFqNameSerializer::class) val fqName: FqName?,
     val needIsPrefix: Boolean,
     val isSingleCondition: Boolean,
     val typeArgumentsCount: Int,
 ) : KotlinLookupObject
 
 
-private object WhenConditionInsertionHandler : InsertionHandlerBase<WhenConditionLookupObject>(WhenConditionLookupObject::class) {
+@Serializable
+internal object WhenConditionInsertionHandler : InsertionHandlerBase<WhenConditionLookupObject>(WhenConditionLookupObject::class) {
     override fun handleInsert(context: InsertionContext, item: LookupElement, ktFile: KtFile, lookupObject: WhenConditionLookupObject) {
         context.insertName(lookupObject, ktFile)
         context.addTypeArguments(lookupObject.typeArgumentsCount)

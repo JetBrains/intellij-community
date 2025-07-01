@@ -222,5 +222,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.serialization" exported="" />
   </component>
 </module>

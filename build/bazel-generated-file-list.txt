@@ -905,6 +905,7 @@ plugins/kotlin/base/indices
 plugins/kotlin/base/indices/tests
 plugins/kotlin/base/jps
 plugins/kotlin/base/kdoc
+plugins/kotlin/base/kotlin.base.serialization
 plugins/kotlin/base/obsolete-compat
 plugins/kotlin/base/platforms
 plugins/kotlin/base/plugin

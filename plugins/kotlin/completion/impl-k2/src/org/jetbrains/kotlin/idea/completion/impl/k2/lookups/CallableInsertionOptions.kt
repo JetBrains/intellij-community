@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 
 @ApiStatus.Internal
+@Serializable
 data class CallableInsertionOptions(
     val importingStrategy: ImportStrategy,
     val insertionStrategy: CallableInsertionStrategy,

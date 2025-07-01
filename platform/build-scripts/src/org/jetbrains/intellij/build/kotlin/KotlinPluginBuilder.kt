@@ -210,6 +210,7 @@ object KotlinPluginBuilder {
     "kotlin.bundled-compiler-plugins-support",
     "kotlin.jsr223",
     "kotlin.k2.internal",
+    "kotlin.base.serialization",
   )
 
   private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(

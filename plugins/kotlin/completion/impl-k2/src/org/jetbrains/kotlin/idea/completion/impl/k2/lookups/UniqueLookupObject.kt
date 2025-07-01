@@ -2,7 +2,13 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
+
 /**
  * This is a temporary hack to prevent clash of the lookup elements with same names.
  */
-internal class UniqueLookupObject
+@Serializable
+@ApiStatus.Internal
+class UniqueLookupObject : SerializableLookupObject

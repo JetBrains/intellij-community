@@ -39,6 +39,9 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/code-insight/utils",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//plugins/kotlin/base/kotlin.base.serialization:kotlin-base-serialization",
   ]
 )
 ### auto-generated section `build kotlin.completion.impl.shared` end

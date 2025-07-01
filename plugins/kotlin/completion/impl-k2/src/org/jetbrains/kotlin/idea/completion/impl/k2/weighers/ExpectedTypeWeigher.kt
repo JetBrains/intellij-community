@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -69,6 +70,7 @@ internal object ExpectedTypeWeigher {
 
     internal var LookupElement.matchesExpectedType by UserDataProperty(Key<MatchesExpectedType>("MATCHES_EXPECTED_TYPE"))
 
+    @Serializable
     enum class MatchesExpectedType {
         MATCHES_PREFERRED, // Matches and is also more likely to be something the user wants to use (e.g. enum entries when an enum is expected)
         MATCHES,

@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.core.moveCaret
@@ -27,10 +28,6 @@ import javax.swing.Icon
 
 class PsiTreeCompletion {
     private val methodIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Method)
-
-    private class ParameterData(val name: String, val type: String) {
-        override fun toString(): String = "$name: $type"
-    }
 
     /**
      * We currently model four types of scopes.
@@ -136,18 +133,7 @@ class PsiTreeCompletion {
         fun toLookupElement(): LookupElementBuilder {
             val parameterNamesStr = parameters.joinToString()
             var builder = LookupElementBuilder.create(name)
-                .withInsertHandler(object : InsertHandler<LookupElement> {
-                    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-                        if (!isFunction) return
-                        val endOffset = context.startOffset + name.length
-                        context.document.insertString(endOffset, "()")
-                        if (parameters.isNotEmpty()) {
-                            context.editor.moveCaret(endOffset + 1)
-                        } else {
-                            context.editor.moveCaret(endOffset + 2)
-                        }
-                    }
-                })
+                .withInsertHandler(PsiTreeCompletionInsertionHandler(name, isFunction, parameters))
                 .withTypeText(type)
                 .withIcon(icon)
 
@@ -336,4 +322,27 @@ class PsiTreeCompletion {
             consumer(PrioritizedLookupElement.withPriority(lookupElementBuilder, priority))
         }
     }
+}
+
+@Serializable
+internal class PsiTreeCompletionInsertionHandler(
+    val name: String,
+    val isFunction: Boolean,
+    val parameters: List<ParameterData>,
+) : InsertHandler<LookupElement> {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        if (!isFunction) return
+        val endOffset = context.startOffset + name.length
+        context.document.insertString(endOffset, "()")
+        if (parameters.isNotEmpty()) {
+            context.editor.moveCaret(endOffset + 1)
+        } else {
+            context.editor.moveCaret(endOffset + 2)
+        }
+    }
+}
+
+@Serializable
+internal class ParameterData(val name: String, val type: String) {
+    override fun toString(): String = "$name: $type"
 }

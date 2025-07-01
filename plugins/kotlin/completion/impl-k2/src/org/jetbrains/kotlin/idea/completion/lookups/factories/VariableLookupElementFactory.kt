@@ -6,6 +6,8 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -15,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
@@ -110,14 +113,18 @@ internal object VariableLookupElementFactory {
 /**
  * Simplest lookup object so two lookup elements for the same property will clash.
  */
-private data class VariableLookupObject(
-    override val shortName: Name,
+@Serializable
+internal data class VariableLookupObject(
+    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
     override val options: CallableInsertionOptions,
     override val renderedDeclaration: String,
 ) : KotlinCallableLookupObject()
 
-private object VariableInsertionHandler : CallableIdentifierInsertionHandler()
+@Serializable
+internal object VariableInsertionHandler : CallableIdentifierInsertionHandler()
 
+@Serializable
+@Polymorphic
 internal open class CallableIdentifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val targetFile = context.file as? KtFile ?: return

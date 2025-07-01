@@ -89,6 +89,10 @@ jvm_library(
     "//java/execution/impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2_test_lib",
+    "//plugins/kotlin/completion/api",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
   ]
 )
 

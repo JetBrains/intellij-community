@@ -898,7 +898,7 @@ internal class FirInfixCallableCompletionContributor(
 ) : FirCallableCompletionContributor(sink, priority) {
 
     override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
-        infixCallableInsertionStrategy
+        CallableInsertionStrategy.InfixCallableInsertionStrategy
 
     context(KaSession)
     @KaExperimentalApi
@@ -911,16 +911,6 @@ internal class FirInfixCallableCompletionContributor(
         symbol is KaNamedFunctionSymbol
                 && symbol.isInfix
                 && super.filter(symbol)
-
-    companion object {
-        private val infixCallableInsertionStrategy = CallableInsertionStrategy.AsIdentifierCustom {
-            if (completionChar == ' ') {
-                setAddCompletionChar(false)
-            }
-
-            insertStringAndInvokeCompletion(" ")
-        }
-    }
 }
 
 internal class FirKDocCallableCompletionContributor(

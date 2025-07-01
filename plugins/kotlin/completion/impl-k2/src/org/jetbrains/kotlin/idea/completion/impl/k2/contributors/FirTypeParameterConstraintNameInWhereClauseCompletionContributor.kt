@@ -1,14 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
@@ -43,10 +45,14 @@ internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
     }
 }
 
-private class TypeParameterInWhenClauseILookupObject(override val shortName: Name) : KotlinLookupObject
+@Serializable
+internal data class TypeParameterInWhenClauseILookupObject(
+    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
+) : KotlinLookupObject
 
 
-private object TypeParameterInWhenClauseInsertionHandler : InsertHandler<LookupElement> {
+@Serializable
+internal object TypeParameterInWhenClauseInsertionHandler : SerializableInsertHandler {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val lookupElement = item.`object` as TypeParameterInWhenClauseILookupObject
         val name = lookupElement.shortName.render()

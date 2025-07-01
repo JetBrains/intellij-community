@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import com.intellij.util.applyIf
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
@@ -22,7 +23,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 internal object CallableMetadataProvider {
 
-    class CallableMetadata(
+    @Serializable
+    data class CallableMetadata(
         val kind: CallableKind,
         /**
          * In case of the local callable, the index of local scope in scope tower.

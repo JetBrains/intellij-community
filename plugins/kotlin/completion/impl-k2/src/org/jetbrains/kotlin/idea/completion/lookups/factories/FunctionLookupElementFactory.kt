@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -28,7 +29,10 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher.hasTrailingLambda
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -165,22 +169,12 @@ internal object FunctionLookupElementFactory {
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> builder.withInsertHandler(FunctionInsertionHandler)
             CallableInsertionStrategy.AsIdentifier -> builder.withInsertHandler(CallableIdentifierInsertionHandler())
-            is CallableInsertionStrategy.AsIdentifierCustom -> builder.withInsertHandler(object : CallableIdentifierInsertionHandler() {
-                override fun handleInsert(context: InsertionContext, item: LookupElement) {
-                    super.handleInsert(context, item)
-                    insertionStrategy.insertionHandlerAction(context)
-                }
-            })
+            is CallableInsertionStrategy.InfixCallableInsertionStrategy -> builder.withInsertHandler(AsIdentifierCustomInsertionHandler)
 
             is CallableInsertionStrategy.WithCallArgs -> {
                 val argString = insertionStrategy.args.joinToString(", ", prefix = "(", postfix = ")")
                 builder.withInsertHandler(
-                    object : QuotedNamesAwareInsertionHandler() {
-                        override fun handleInsert(context: InsertionContext, item: LookupElement) {
-                            super.handleInsert(context, item)
-                            context.insertString(argString)
-                        }
-                    }
+                    WithCallArgsInsertionHandler(argString)
                 ).withTailText(argString, false)
             }
 
@@ -189,6 +183,28 @@ internal object FunctionLookupElementFactory {
                 updateLookupElementBuilderToInsertTypeQualifierOnSuper(resultBuilder, insertionStrategy)
             }
         }
+    }
+}
+
+@Serializable
+internal object AsIdentifierCustomInsertionHandler : CallableIdentifierInsertionHandler() {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        super.handleInsert(context, item)
+        if (context.completionChar == ' ') {
+            context.setAddCompletionChar(false)
+        }
+
+        context.insertStringAndInvokeCompletion(" ")
+    }
+}
+
+@Serializable
+internal data class WithCallArgsInsertionHandler(
+    val argString: String,
+): QuotedNamesAwareInsertionHandler() {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        super.handleInsert(context, item)
+        context.insertString(argString)
     }
 }
 
@@ -265,8 +281,9 @@ object FunctionInsertionHelper {
     }
 }
 
+@Serializable
 internal data class FunctionCallLookupObject(
-    override val shortName: Name,
+    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
     override val options: CallableInsertionOptions,
     override val renderedDeclaration: String,
     val hasReceiver: Boolean, // todo find a better solution
@@ -283,6 +300,7 @@ internal data class FunctionCallLookupObject(
     }
 }
 
+@Serializable
 internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
     private fun addArguments(context: InsertionContext, offsetElement: PsiElement, lookupObject: FunctionCallLookupObject) {

@@ -275,6 +275,7 @@
   - name: kotlin.bundled-compiler-plugins-support
   - name: kotlin.jsr223
   - name: kotlin.k2.internal
+  - name: kotlin.base.serialization
   - name: kotlin-ultimate.common-native
   - name: kotlin-ultimate.native-debugger
   - name: kotlin-ultimate.javascript.debugger

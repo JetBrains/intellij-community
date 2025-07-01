@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -12,6 +13,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -64,15 +67,17 @@ internal object ClassLookupElementFactory {
 }
 
 
+@Serializable
 internal data class ClassifierLookupObject(
-    override val shortName: Name,
+    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
     val importingStrategy: ImportStrategy
 ) : KotlinLookupObject
 
 /**
  * The simplest implementation of the insertion handler for a classifiers.
  */
-private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
+@Serializable
+internal object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val targetFile = context.file as? KtFile ?: return

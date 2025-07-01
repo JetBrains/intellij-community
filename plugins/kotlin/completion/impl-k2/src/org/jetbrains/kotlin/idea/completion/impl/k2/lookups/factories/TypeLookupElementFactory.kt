@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -18,6 +19,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
@@ -102,9 +105,13 @@ internal object TypeLookupElementFactory {
     }
 }
 
-data class TypeLookupObject(val fqRenderedType: String)
+@Serializable
+data class TypeLookupObject(
+    val fqRenderedType: String,
+): SerializableLookupObject
 
-private object TypeInsertHandler : InsertHandler<LookupElement> {
+@Serializable
+internal object TypeInsertHandler : SerializableInsertHandler {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val lookupObject = item.`object` as TypeLookupObject
         context.insertAndShortenReferencesInStringUsingTemporarySuffix(lookupObject.fqRenderedType)

@@ -1,17 +1,35 @@
 ### auto-generated section `build kotlin.completion.api` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
 
 jvm_library(
   name = "api",
   module_name = "kotlin.completion.api",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-api:core",
     "//platform/analysis-api:analysis",
     "//platform/projectModel-impl",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//plugins/kotlin/base/kotlin.base.serialization:kotlin-base-serialization",
   ]
 )
 ### auto-generated section `build kotlin.completion.api` end

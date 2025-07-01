@@ -108,7 +108,7 @@ class LookupElementsCollector(
         }
 
         val decorated = element
-            .let { LookupElementDecorator.withDelegateInsertHandler(it, CompletionCharInsertHandler(completionParameters)) }
+            .let { LookupElementDecorator.withDelegateInsertHandler(it, CompletionCharInsertHandler(completionParameters.isAutoPopup)) }
             .let { InsertExplicitTypeArgumentsLookupElementDecorator(it) }
 
         var result: LookupElement = decorated

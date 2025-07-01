@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -72,7 +71,6 @@ internal class FirSuperMemberCompletionContributor(
 
         nonExtensionMembers.flatMap {
             collectCallToSuperMember(
-                superReceiver = superReceiver,
                 callableInfo = it,
                 context = weighingContext,
                 namesNeedDisambiguation = namesNeedDisambiguation,
@@ -142,7 +140,6 @@ internal class FirSuperMemberCompletionContributor(
 
     context(KaSession)
     private fun collectCallToSuperMember(
-        superReceiver: KtSuperExpression,
         callableInfo: CallableInfo,
         context: WeighingContext,
         namesNeedDisambiguation: Set<Name>
@@ -158,7 +155,6 @@ internal class FirSuperMemberCompletionContributor(
                     superType = callableInfo.type,
                     callableSignature = signature,
                     namesNeedDisambiguation = namesNeedDisambiguation,
-                    superReceiver = superReceiver,
                 )
             ),
             scopeKind = callableInfo.scopeKind,
@@ -236,7 +232,6 @@ internal class FirSuperMemberCompletionContributor(
                             callableInfo.type,
                             callableInfo.signature,
                             namesNeedDisambiguation,
-                            superReceiver,
                         )
                     ),
                     scopeKind = callableInfo.scopeKind,
@@ -255,13 +250,12 @@ internal class FirSuperMemberCompletionContributor(
         insertionStrategy: CallableInsertionStrategy,
         superType: KaType,
         callableSignature: KaCallableSignature<*>,
-        namesNeedDisambiguation: Set<Name>,
-        superReceiver: KtSuperExpression
+        namesNeedDisambiguation: Set<Name>
     ): CallableInsertionStrategy {
         val superClassId = (superType as? KaUsualClassType)?.classId
         val needDisambiguation = callableSignature.callableId?.callableName in namesNeedDisambiguation
         return if (needDisambiguation && superClassId != null) {
-            CallableInsertionStrategy.WithSuperDisambiguation(superReceiver.createSmartPointer(), superClassId, insertionStrategy)
+            CallableInsertionStrategy.WithSuperDisambiguation(superClassId, insertionStrategy)
         } else {
             insertionStrategy
         }

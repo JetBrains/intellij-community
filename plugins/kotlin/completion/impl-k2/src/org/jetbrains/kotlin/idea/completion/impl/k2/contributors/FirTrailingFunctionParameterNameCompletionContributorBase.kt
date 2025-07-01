@@ -2,12 +2,16 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.sequenceOfNotNull
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -27,7 +31,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
@@ -41,6 +48,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -236,16 +244,9 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                     addImport.nameToImport
                 }
 
-                createCompoundLookupElement(suggestedNames, isDestructuring = true)?.withChainedInsertHandler { context, item ->
-                    val targetFile = context.file
-                    if (targetFile !is KtFile) throw IllegalStateException("Target file '${targetFile.name}' is not a Kotlin file")
-
-                    for (nameToImport in fqNames) {
-                        addImportIfRequired(context, nameToImport)
-                    }
-                    context.commitDocument()
-                    context.doPostponedOperationsAndUnblockDocument()
-                }?.let { yield(it) }
+                createCompoundLookupElement(suggestedNames, isDestructuring = true)?.withChainedInsertHandler(
+                    WithImportInsertionHandler(fqNames)
+                )?.let { yield(it) }
 
                 val lookupObject = classSymbol.psi
                     ?: return@sequence
@@ -260,6 +261,27 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
 
             else -> emptySequence()
         }
+    }
+
+    @Serializable
+    internal data class WithImportInsertionHandler(
+        @Serializable(with = FqNameListSerializer::class) val namesToImport: List<FqName>,
+    ): SerializableInsertHandler {
+        override fun handleInsert(
+            context: InsertionContext,
+            item: LookupElement
+        ) {
+            val targetFile = context.file
+            if (targetFile !is KtFile) throw IllegalStateException("Target file '${targetFile.name}' is not a Kotlin file")
+
+            for (nameToImport in namesToImport) {
+                addImportIfRequired(context, nameToImport)
+            }
+            context.commitDocument()
+            context.doPostponedOperationsAndUnblockDocument()
+        }
+
+        object FqNameListSerializer : KSerializer<List<FqName>> by ListSerializer(KotlinFqNameSerializer)
     }
 
     context(KaSession)
@@ -344,17 +366,35 @@ private const val TailText: @NlsSafe String = " -> "
 
 private fun LookupElementBuilder.withTailTextInsertHandler() = this
     .withTailText(TailText, true)
-    .withInsertHandler { context, item ->
+    .withInsertHandler(TailTextInsertHandler)
+
+@Serializable
+internal object TailTextInsertHandler : SerializableInsertHandler {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
         context.document.insertString(context.tailOffset, TailText)
         context.commitDocument()
         context.editor.caretModel.moveToOffset(context.tailOffset)
     }
+}
 
 private fun LookupElementBuilder.withChainedInsertHandler(
-    delegate: InsertHandler<LookupElement>,
-) = withInsertHandler { context, item ->
-    delegate.handleInsert(context, item)
-    insertHandler?.handleInsert(context, item)
+    delegate: SerializableInsertHandler,
+): LookupElementBuilder {
+    return when (val insertHandler = insertHandler?.ensureSerializable()) {
+        null -> withInsertHandler(delegate)
+        else -> withInsertHandler(ChainedInsertHandler(delegate, insertHandler))
+    }
+}
+
+@Serializable
+data class ChainedInsertHandler(
+    val first: SerializableInsertHandler,
+    val second: SerializableInsertHandler,
+) : SerializableInsertHandler {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        first.handleInsert(context, item)
+        second.handleInsert(context, item)
+    }
 }
 
 context(KaSession)
@@ -383,10 +423,17 @@ private fun createCompoundLookupElement(
         .withTypeText(typeText)
         .withLookupStrings(lookupStrings)
         .withTailTextInsertHandler()
-        .withChainedInsertHandler { context, item ->
-            context.document.replaceString(context.startOffset, context.tailOffset, presentableText)
-            context.commitDocument()
-        }
+        .withChainedInsertHandler(CompoundInsertionHandler(presentableText))
+}
+
+@Serializable
+internal data class CompoundInsertionHandler(
+    val presentableText: String,
+): SerializableInsertHandler {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        context.document.replaceString(context.startOffset, context.tailOffset, presentableText)
+        context.commitDocument()
+    }
 }
 
 context(KaSession)

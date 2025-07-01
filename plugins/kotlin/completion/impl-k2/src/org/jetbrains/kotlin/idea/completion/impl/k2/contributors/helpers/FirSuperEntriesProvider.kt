@@ -8,9 +8,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.nextLeafs
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,7 +32,8 @@ internal object FirSuperEntriesProvider {
     }
 }
 
-internal object SuperCallInsertionHandler : InsertHandler<LookupElement> {
+@Serializable
+internal object SuperCallInsertionHandler : SerializableInsertHandler {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val lookupObject = item.`object` as SuperCallLookupObject
 

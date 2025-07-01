@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.keywords
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
@@ -12,6 +13,8 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsert
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinClassIdSerializer
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -49,7 +52,11 @@ internal object SuperKeywordHandler : CompletionKeywordHandler<KaSession>(KtToke
     }
 }
 
-private class SuperKeywordLookupObject(val className: Name, val classId: ClassId?) : KeywordLookupObject(), SuperCallLookupObject {
+@Serializable
+internal class SuperKeywordLookupObject(
+    @Serializable(with = KotlinNameSerializer::class) val className: Name,
+    @Serializable(with = KotlinClassIdSerializer::class) val classId: ClassId?
+) : KeywordLookupObject(), SuperCallLookupObject {
     override val replaceTo: String?
         get() = classId?.let { "super<${it.asSingleFqName().asString()}>" }
 

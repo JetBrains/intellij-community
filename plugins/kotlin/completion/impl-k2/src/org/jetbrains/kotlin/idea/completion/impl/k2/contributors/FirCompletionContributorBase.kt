@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
@@ -8,6 +9,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.RegistryManager
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -23,6 +26,8 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -183,22 +188,44 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected fun LookupElementBuilder.adaptToExplicitReceiver(
         receiver: KtElement,
         typeText: String,
-    ): LookupElement = withInsertHandler { context, item ->
-        // Insert type cast if the receiver type does not match.
-
-        val explicitReceiverRange = context.document
-            .createRangeMarker(receiver.textRange)
-        insertHandler?.handleInsert(context, item)
-
-        val newReceiver = "(${receiver.text} as $typeText)"
-        context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
-        context.commitDocument()
-
-        shortenReferencesInRange(
-            file = context.file as KtFile,
-            selection = explicitReceiverRange.textRange.grown(newReceiver.length),
+    ): LookupElement = withInsertHandler(
+        AdaptToExplicitReceiverInsertionHandler(
+            insertHandler = insertHandler?.ensureSerializable(),
+            receiverTextRangeStart = receiver.textRange.startOffset,
+            receiverTextRangeEnd = receiver.textRange.endOffset,
+            receiverText = receiver.text,
+            typeText = typeText,
         )
-        context.doPostponedOperationsAndUnblockDocument()
+    )
+
+    @Serializable
+    internal data class AdaptToExplicitReceiverInsertionHandler(
+        val insertHandler: SerializableInsertHandler?,
+        val receiverTextRangeStart: Int,
+        val receiverTextRangeEnd: Int,
+        val receiverText: String,
+        val typeText: String,
+    ): SerializableInsertHandler {
+        override fun handleInsert(
+            context: InsertionContext,
+            item: LookupElement
+        ) {
+            // Insert type cast if the receiver type does not match.
+
+            val explicitReceiverRange = context.document
+                .createRangeMarker(receiverTextRangeStart, receiverTextRangeEnd)
+            insertHandler?.handleInsert(context, item)
+
+            val newReceiver = "(${receiverText} as $typeText)"
+            context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
+            context.commitDocument()
+
+            shortenReferencesInRange(
+                file = context.file as KtFile,
+                selection = explicitReceiverRange.textRange.grown(newReceiver.length),
+            )
+            context.doPostponedOperationsAndUnblockDocument()
+        }
     }
 
     // todo move to the corresponding assignment

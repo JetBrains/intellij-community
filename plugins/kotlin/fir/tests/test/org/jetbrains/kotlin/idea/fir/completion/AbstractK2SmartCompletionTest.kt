@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.completion
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
@@ -19,6 +20,10 @@ abstract class AbstractK2SmartCompletionTest : AbstractJvmSmartCompletionTest() 
             super.executeTest(test)
             IgnoreTests.cleanUpIdenticalK2TestFile(dataFile(), IgnoreTests.FileExtension.FIR)
         }
+    }
+
+    override fun extraLookupElementCheck(lookupElement: LookupElement) {
+        SerializabilityChecker.checkLookupElement(lookupElement, myFixture.project)
     }
 
     override fun tearDown() {

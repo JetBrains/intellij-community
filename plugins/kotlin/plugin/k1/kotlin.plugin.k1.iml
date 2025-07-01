@@ -166,5 +166,6 @@
     <orderEntry type="module" module-name="kotlin.jsr223" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" />
+    <orderEntry type="module" module-name="kotlin.base.serialization" />
   </component>
 </module>
