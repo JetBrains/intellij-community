@@ -1022,7 +1022,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         Rectangle pathBounds = getPathBounds(path);
         if (pathBounds == null) return;
         lastHoveredPath = path;
-        myLayeredPane.repaintFloatingToolbar(pathBounds.y);
+        myLayeredPane.repaintFloatingToolbar(pathBounds.y, (path.getPathCount() - 1) / 2 + 1);
         repaint();
       }
     }
@@ -1286,10 +1286,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     }
 
-    public void repaintFloatingToolbar(int y) {
+    public void repaintFloatingToolbar(int y, int size) {
       if (floatingToolbar != null) {
         int scrollDy = mainComponent.getVerticalScrollBar().getValue();
-        floatingToolbar.repaintOnYWithDy(y, scrollDy);
+        floatingToolbar.repaintOnYWithDy(y, scrollDy, size);
       }
     }
 
