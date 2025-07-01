@@ -102,6 +102,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private void updateUI(long now) {
     if (myApp.isUnitTestMode()) {
       if (now - myLastUiUpdate > delayInMillis) {
+        myEventStealer.dispatchAllExistingEvents();
         drainUndispatchedInputEvents();
       }
       return;
