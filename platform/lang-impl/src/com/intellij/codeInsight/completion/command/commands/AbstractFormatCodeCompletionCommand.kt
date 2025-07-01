@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
@@ -32,6 +33,15 @@ abstract class AbstractFormatCodeCompletionCommandProvider :
 abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), CompletionCommandWithPreview {
   final override val synonyms: List<String>
     get() = listOf("Format")
+
+  override val additionalInfo: String?
+    get() {
+      val shortcutText = KeymapUtil.getFirstKeyboardShortcutText("ReformatCode")
+      if (shortcutText.isNotEmpty()) {
+        return shortcutText
+      }
+      return null
+    }
 
   @Suppress("HardCodedStringLiteral")
   final override val presentableName: @Nls String
