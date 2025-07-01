@@ -42,6 +42,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
 
   public List<@NlsSafe String> myIgnoredAnnotations = new ArrayList<>();
 
+  @SuppressWarnings("unused") // See IDEA-371903
   public ClassCanBeRecordInspection() {
     myIgnoredAnnotations.addAll(IGNORED_ANNOTATIONS);
   }
