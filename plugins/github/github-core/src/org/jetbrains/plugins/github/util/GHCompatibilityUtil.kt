@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 
@@ -21,18 +22,19 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
  */
 object GHCompatibilityUtil {
   @JvmStatic
-  fun requestNewAccountForServer(serverPath: GithubServerPath, project: Project): GithubAccount? =
-    GHAccountsUtil.requestNewAccount(serverPath, login = null, project = project)?.account
+  fun requestNewAccountForServer(serverPath: GithubServerPath, project: Project, loginSource: GHLoginSource): GithubAccount? =
+    GHAccountsUtil.requestNewAccount(serverPath, login = null, project = project, loginSource = loginSource)?.account
 
   @RequiresBackgroundThread
   @JvmStatic
-  fun getOrRequestToken(account: GithubAccount, project: Project): String? {
+  @JvmOverloads
+  fun getOrRequestToken(account: GithubAccount, project: Project, loginSource: GHLoginSource = GHLoginSource.UNKNOWN): String? {
     val accountManager = service<GHAccountManager>()
     val modality = ProgressManager.getInstance().currentProgressModality ?: ModalityState.any()
     return runBlocking {
       accountManager.findCredentials(account)
       ?: withContext(Dispatchers.EDT + modality.asContextElement()) {
-        GHAccountsUtil.requestNewToken(account, project)
+        GHAccountsUtil.requestNewToken(account, project, loginSource = loginSource)
       }
     }
   }

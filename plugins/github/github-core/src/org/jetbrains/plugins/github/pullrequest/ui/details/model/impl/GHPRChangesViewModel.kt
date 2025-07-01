@@ -16,6 +16,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -42,7 +43,7 @@ internal class GHPRChangesViewModelImpl(
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope()
 
-  override val changesLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
+  override val changesLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account, GHLoginSource.PR_CHANGES) {
     cs.launch {
       dataProvider.changesData.signalChangesNeedReload()
     }

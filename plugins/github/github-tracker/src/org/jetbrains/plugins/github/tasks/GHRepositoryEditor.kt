@@ -4,7 +4,9 @@ package org.jetbrains.plugins.github.tasks
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginData
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.ui.GHLoginModel
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 
@@ -21,7 +23,7 @@ internal object GHRepositoryEditor {
         this.token = token
       }
     }
-    GHAccountsUtil.login(model, GHLoginRequest(server = server), project, null)
+    GHAccountsUtil.login(model, GHLoginRequest(server = server, loginData = GHLoginData(GHLoginSource.TRACKER)), project, null)
     return model.token
   }
 
