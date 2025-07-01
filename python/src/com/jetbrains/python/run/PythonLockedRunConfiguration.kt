@@ -11,7 +11,9 @@ import com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAc
 import com.intellij.facet.impl.invalid.FacetIgnorer
 import com.intellij.facet.impl.invalid.InvalidFacet
 import com.intellij.icons.AllIcons
+import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.SettingsEditor
@@ -19,10 +21,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.WriteExternalException
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ui.JBFont
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.icons.PythonIcons
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -30,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.JComponent
 
-private class PythonLockedRunConfigurationEditor : SettingsEditor<PythonLockedRunConfiguration>() {
+private class PythonLockedRunConfigurationEditor : SettingsEditor<PythonLockedRunConfiguration>(null, true) {
 
   override fun resetEditorFrom(s: PythonLockedRunConfiguration) {}
 
@@ -38,7 +41,25 @@ private class PythonLockedRunConfigurationEditor : SettingsEditor<PythonLockedRu
 
   protected override fun createEditor(): JComponent = panel {
     row {
-      label(PyBundle.message("python.run.configuration.is.not.editable.in.this.mode")).align(AlignX.CENTER)
+      icon(PythonIcons.Python.Pycharm32).resizableColumn().align(AlignX.RIGHT + AlignY.TOP)
+      panel {
+        row {
+          @Suppress("DialogTitleCapitalization") // PyCharm Pro is literally how we want to see it
+          text(PyBundle.message("pycharm.free.mode.upgrade.title")).align(AlignY.BOTTOM).applyToComponent {
+            font = JBFont.h1()
+          }
+        }
+        row {
+          text(PyBundle.message("pycharm.free.mode.upgrade.body")).align(AlignY.TOP).applyToComponent { putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(top = false, bottom = false)) }
+        }
+        row {
+          button(PyBundle.message("pycharm.free.mode.upgrade.button")) {
+            BrowserLauncher.instance.open("https://www.jetbrains.com/pycharm/buy/?section=commercial&billing=yearly")
+          }.applyToComponent {
+            putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+          }
+        }
+      }.resizableColumn().align(AlignX.LEFT)
     }
   }
 }
@@ -136,8 +157,7 @@ private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls 
     // Do not enable "lock" configs for non PyCharm or Idea (as it's capable of running the Python plugin) IDEs or if the Python plugin is enabled.
     if ((!PlatformUtils.isPyCharm() && !PlatformUtils.isIntelliJ()) ||
         PluginManager.getInstance().findEnabledPlugin(PluginId.getId("Pythonid")) != null ||
-        PlatformUtils.isDataSpell())
-    {
+        PlatformUtils.isDataSpell()) {
       throw ExtensionNotApplicableException.create()
     }
   }
