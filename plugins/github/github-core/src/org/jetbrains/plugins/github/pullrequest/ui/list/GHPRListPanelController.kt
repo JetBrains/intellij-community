@@ -15,6 +15,7 @@ import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -85,7 +86,7 @@ internal class GHPRListPanelController(
   }
 
   private fun createErrorStatusPresenter(project: Project, account: GithubAccount): ErrorStatusPresenter.Text<Throwable> {
-    val errorHandler = GHApiLoadingErrorHandler(project, account) {
+    val errorHandler = GHApiLoadingErrorHandler(project, account, GHLoginSource.PR_LIST) {
       listVm.reload()
     }
 

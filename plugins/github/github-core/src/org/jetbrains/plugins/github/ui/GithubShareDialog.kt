@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueValidator
@@ -128,7 +129,7 @@ class GithubShareDialog(
           .resizableColumn()
 
         if (accountsModel.size == 0) {
-          cell(GHAccountsUtil.createAddAccountLink(project, accountsModel))
+          cell(GHAccountsUtil.createAddAccountLink(project, accountsModel, GHLoginSource.SHARE))
         }
       }
     }
