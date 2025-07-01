@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -111,14 +110,10 @@ private suspend fun getChunkFileSpec(
 @RequiresWriteLock
 private suspend fun writeAccessors(moduleDir: String, fileName: String, content: String): Unit = writeAction {
   val path = Path.of(moduleDir, fileName)
-  runUndoTransparentWriteAction {
-    Files.writeString(path, content)
-  }
-
-  path.toVirtualFile()?.let { virtualFile ->
-    virtualFile.refresh(false, false)
-    FileDocumentManager.getInstance().reloadFiles(virtualFile)
-  }
+  val documentManager = FileDocumentManager.getInstance()
+  val document = path.toVirtualFile()?.let { virtualFile -> documentManager.getDocument(virtualFile) } ?: return@writeAction
+  runUndoTransparentWriteAction { document.setText(content) }
+  documentManager.saveDocument(document)
 }
 
 
