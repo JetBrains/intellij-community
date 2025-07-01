@@ -405,6 +405,8 @@ com.intellij.openapi.ui.GenericListComponentUpdater
 com.intellij.openapi.ui.MasterDetailsComponent$ActionGroupWithPreselection
 - a:getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - getDefaultIndex():I
+Fc:com.intellij.openapi.ui.Messages
+- s:showInputDialog(java.awt.Component,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator,com.intellij.openapi.util.TextRange,java.lang.String):java.lang.String
 com.intellij.openapi.ui.Namer
 - a:canRename(java.lang.Object):Z
 - a:getName(java.lang.Object):java.lang.String

@@ -874,6 +874,17 @@ public class Messages {
     return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
   }
 
+  public static @Nullable @NlsSafe String showInputDialog(@NotNull Component parentComponent,
+                                                          @DialogMessage String message,
+                                                          @DialogTitle String title,
+                                                          @Nullable Icon icon,
+                                                          @Nullable @NonNls String initialValue,
+                                                          @Nullable InputValidator validator,
+                                                          @Nullable TextRange selection,
+                                                          @Nullable @DetailedDescription String comment) {
+    return MessagesService.getInstance().showInputDialog(null, parentComponent, message, title, icon, initialValue, validator, selection, comment);
+  }
+
   public static @Nullable @NlsSafe String showInputDialog(@NotNull Component parent,
                                                           @DialogMessage String message,
                                                           @DialogTitle String title,
