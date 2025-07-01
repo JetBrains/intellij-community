@@ -111,7 +111,6 @@
                                 implementationClass="com.jetbrains.python.documentation.PythonExternalDocumentationProvider"
                                 order="before pythonDocumentationProvider"/>
     <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
 
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
