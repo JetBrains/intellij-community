@@ -71,7 +71,9 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
     val rangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset + temporarySuffix.length)
     val fqNameRangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset)
 
-    if (shortenCommand != null) {
+    if (shortenCommand != null
+        && editor.caretModel.caretCount == 1
+    ) {
         ShortenCommandWrapper(
             delegate = shortenCommand,
             copy = file,
