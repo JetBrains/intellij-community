@@ -80,6 +80,7 @@ import com.intellij.util.io.Decompressor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
+import kotlin.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -380,7 +381,10 @@ public final class PlatformTestUtil {
     long start = System.currentTimeMillis();
     while (true) {
       if (promise.getState() == Promise.State.PENDING) {
-        UIUtil.dispatchAllInvocationEvents();
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+          UIUtil.dispatchAllInvocationEvents();
+          return Unit.INSTANCE;
+        });
       }
       try {
         return promise.blockingGet(20, TimeUnit.MILLISECONDS);
