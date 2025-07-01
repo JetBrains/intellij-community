@@ -10,6 +10,7 @@ import com.intellij.python.community.execService.ProcessEvent.OutputType.STDERR
 import com.intellij.python.community.execService.ProcessEvent.OutputType.STDOUT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.FlowCollector
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Awaits of process result and reports its stdout/stderr as a progress.
@@ -24,6 +25,10 @@ internal suspend fun EelProcess.awaitWithReporting(progressListener: FlowCollect
       }
       catch (e: CancellationException) {
         withContext(NonCancellable) {
+          interrupt()
+          withTimeoutOrNull(1.seconds) {
+            exitCode.await()
+          }
           kill()
           exitCode.await()
         }
