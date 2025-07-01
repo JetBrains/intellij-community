@@ -240,6 +240,7 @@ grid/images
 grid/impl
 grid/json
 grid/types
+idea/customization/backend
 idea/customization/base
 images
 images/backend.svg
