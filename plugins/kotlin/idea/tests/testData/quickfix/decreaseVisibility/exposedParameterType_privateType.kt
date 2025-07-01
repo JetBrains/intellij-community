@@ -7,7 +7,7 @@
 // ERROR: 'internal' function exposes its 'private-in-class' parameter type argument Nested
 // ERROR: Cannot access 'Nested': it is private in 'Outer'
 // K2_AFTER_ERROR: 'internal' function exposes its 'private-in-class' parameter type argument 'Nested'.
-// K2_AFTER_ERROR: Cannot access 'class Nested : Any': it is private in '/Outer'.
+// K2_AFTER_ERROR: Cannot access 'class Nested : Any': it is private in 'Outer'.
 
 class Outer {
     private class Nested

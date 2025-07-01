@@ -1,5 +1,5 @@
 // "Create class 'XImpl'" "true"
-// K2_AFTER_ERROR: Return type of 'f' is not a subtype of the return type of the overridden member 'fun f(): X' defined in '/A'.
+// K2_AFTER_ERROR: Return type of 'f' is not a subtype of the return type of the overridden member 'fun f(): X' defined in 'A'.
 interface X
 interface A {
     fun f(): X
