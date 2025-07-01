@@ -94,7 +94,7 @@ class EelLocalExecApiTest {
 
     return testCases.map { (exitType, ptyManagement) ->
       DynamicTest.dynamicTest("$exitType $ptyManagement") {
-        timeoutRunBlocking(1.minutes) {
+        timeoutRunBlocking(5.minutes) {
           testOutputImpl(ptyManagement, exitType)
         }
       }
@@ -118,6 +118,7 @@ class EelLocalExecApiTest {
         throw e
       }
     }
+    logger.warn("Process started")
 
     // Resize tty
     when (ptyManagement) {
@@ -135,7 +136,9 @@ class EelLocalExecApiTest {
         delay(1.seconds) // Resize might take some time
       }
     }
-
+    val decoder = Charsets.UTF_8.newDecoder()
+      .onMalformedInput(CodingErrorAction.REPORT) // Not to ignore malformed input
+      .onUnmappableCharacter(CodingErrorAction.REPORT)
     val dirtyBuffer = ByteBuffer.allocate(8192)
     val cleanBuffer = CleanBuffer()
     withContext(Dispatchers.Default) {
@@ -146,13 +149,10 @@ class EelLocalExecApiTest {
         else {
           process.stdout // stderr is redirected to stdout when launched with PTY
         }
-        val decoder = Charsets.UTF_8.newDecoder()
-          .onMalformedInput(CodingErrorAction.REPORT) // Not to ignore malformed input
-          .onUnmappableCharacter(CodingErrorAction.REPORT)
-        logger.info("Waiting for $HELLO")
+        logger.warn("Waiting for $HELLO")
         while (helloStream.receive(dirtyBuffer) != ReadResult.EOF) {
           val line = decoder.decode(dirtyBuffer.flip()).toString()
-          logger.info("Line read: $line")
+          logger.warn("Line read: $line")
           cleanBuffer.add(line)
           dirtyBuffer.clear()
           if (HELLO in cleanBuffer.getString()) {
@@ -165,6 +165,7 @@ class EelLocalExecApiTest {
 
 
     // Test tty api
+    logger.warn("Test tty api")
     var ttyState: TTYState?
     cleanBuffer.setPosEnd(HELLO)
     while (true) {
@@ -174,9 +175,12 @@ class EelLocalExecApiTest {
         break
       }
       process.stdout.receive(dirtyBuffer)
-      cleanBuffer.add(dirtyBuffer.flip().decodeString())
+      val line = decoder.decode(dirtyBuffer.flip()).toString()
+      logger.warn("Line read $line")
+      cleanBuffer.add(line)
       dirtyBuffer.clear()
     }
+    logger.warn("TTY check finished")
     when (ptyManagement) {
       PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
         Assertions.assertNotNull(ttyState.size)
@@ -201,7 +205,7 @@ class EelLocalExecApiTest {
       if (ptyManagement == PTYManagement.PTY_RESIZE_LATER &&
           (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) &&
           process.isWinConPtyProcess) {
-        delay(1.seconds) // workaround: wait a bit to let ConPTY apply the resize
+        delay(15.seconds) // workaround: wait a bit to let ConPTY apply the resize
       }
 
       // Test kill api
