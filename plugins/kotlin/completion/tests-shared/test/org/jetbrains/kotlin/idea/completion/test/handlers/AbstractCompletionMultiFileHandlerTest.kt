@@ -52,6 +52,7 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
     fun testKTIJ_32792() = doTest { tailText == " -> " && typeText == "(Int, String)" }
     fun testExplicitReceiverCast() = doTest()
     fun testCovariantExtensionFunction() = doTest()
+    fun testKDocClassifier() = doTest { tailText == " (bar)" }
 
     protected fun getTestFileName(): String = "${getTestName(false)}-1.kt"
 
