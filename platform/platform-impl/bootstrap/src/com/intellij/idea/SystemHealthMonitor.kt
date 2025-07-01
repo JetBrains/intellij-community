@@ -310,14 +310,17 @@ internal object SystemHealthMonitor {
     }
   }
 
-  private fun checkEelVmOptions() {
-    // TODO: remove this check
+  private suspend fun checkEelVmOptions() {
     if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return
 
     val changedOptions = MultiRoutingFileSystemVmOptionsSetter.ensureInVmOptions()
     when {
-      changedOptions.isEmpty() -> Unit
-      
+      changedOptions.isEmpty() -> {
+        // Since IjentWslNioFsToggler was moved from the core to the module, it can't be accessed here anymore.
+        // And probably, it's not required anymore.
+        // IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
+      }
+
       PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
         logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
           changedOptions.joinToString(
