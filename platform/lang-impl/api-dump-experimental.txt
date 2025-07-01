@@ -189,6 +189,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - <init>():V
 - f:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - a:findTargetToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getAdditionalInfo():java.lang.String
 - f:getPresentableName():java.lang.String
 - getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - f:getSynonyms():java.util.List
