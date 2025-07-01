@@ -13,7 +13,6 @@ if USE_LOW_IMPACT_MONITORING:
 
 
 class PyDBDaemonThread(threading.Thread):
-
     def __init__(self, py_db=None, target_and_args=None):
         """
         :param target_and_args:
