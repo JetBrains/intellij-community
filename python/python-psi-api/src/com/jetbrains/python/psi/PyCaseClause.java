@@ -4,7 +4,7 @@ package com.jetbrains.python.psi;
 import com.jetbrains.python.ast.PyAstCaseClause;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyCaseClause extends PyAstCaseClause, PyStatementPart {
+public interface PyCaseClause extends PyAstCaseClause, PyStatementPart, PyCaptureContext {
   @Override
   default @Nullable PyPattern getPattern() {
     return (PyPattern)PyAstCaseClause.super.getPattern();

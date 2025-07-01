@@ -8,7 +8,7 @@ import java.util.List;
 
 import static com.jetbrains.python.ast.PyAstElementKt.findChildrenByClass;
 
-public interface PySequencePattern extends PyAstSequencePattern, PyPattern {
+public interface PySequencePattern extends PyAstSequencePattern, PyPattern, PyCaptureContext {
   default @NotNull List<@NotNull PyPattern> getElements() {
     return List.of(findChildrenByClass(this, PyPattern.class));
   }
