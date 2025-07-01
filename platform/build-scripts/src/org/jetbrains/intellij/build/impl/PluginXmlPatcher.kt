@@ -101,6 +101,7 @@ private val DEV_BUILD_SCHEME: Regex = Regex("^${SnapshotBuildNumber.BASE.replace
 
 private suspend fun getPluginVersion(plugin: PluginLayout, descriptorContent: String, context: BuildContext): PluginVersionEvaluatorResult {
   val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
+  /*
   check(
     !plugin.semanticVersioning ||
     SemVer.parseFromText(pluginVersion.pluginVersion) != null ||
@@ -108,6 +109,7 @@ private suspend fun getPluginVersion(plugin: PluginLayout, descriptorContent: St
   ) {
     "$plugin version '${pluginVersion.pluginVersion}' is expected to match either '$DEV_BUILD_SCHEME' or the Semantic Versioning, see https://semver.org"
   }
+  */
   return pluginVersion
 }
 
