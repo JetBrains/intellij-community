@@ -32,7 +32,6 @@ jvm_library(
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//java/testFramework",
-    "@lib//:xerces",
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
     "//platform/editor-ui-ex:editor-ex",
@@ -62,6 +61,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//images/backend.svg",
     "//platform/polySymbols:polySymbols-testFramework",
+    "//libraries/xerces",
   ],
   runtime_deps = [
     ":tests_test_resources",

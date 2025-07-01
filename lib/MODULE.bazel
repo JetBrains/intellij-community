@@ -6831,6 +6831,20 @@ http_file(
 )
 
 http_file(
+  name = "xercesImpl-2_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2.jar",
+  sha256 = "6fc991829af1708d15aea50c66f0beadcd2cfeb6968e0b2f55c1b0909883fe16",
+  downloaded_file_path = "xercesImpl-2.12.2.jar"
+)
+
+http_file(
+  name = "xercesImpl-2_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2-sources.jar",
+  sha256 = "3c531edfc074e3e0885e5d4a777a9e7317e108028be50ef6e893a5a9cf3e12c2",
+  downloaded_file_path = "xercesImpl-2.12.2-sources.jar"
+)
+
+http_file(
   name = "libthrift-0_19_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/thrift/libthrift/0.19.0/libthrift-0.19.0.jar",
   sha256 = "2b6e6550b40467ede7b3034a1a9eb9148fbf920cfdae5bf0b1d2bb3d4e780625",
@@ -13184,20 +13198,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2-sources.jar",
   sha256 = "b2e72350ce8b2f287c0cd435a338c17705f9047857c52a709e223af2f5cbb0de",
   downloaded_file_path = "mxparser-1.2.2-sources.jar"
-)
-
-http_file(
-  name = "xercesImpl-2_12_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2.jar",
-  sha256 = "6fc991829af1708d15aea50c66f0beadcd2cfeb6968e0b2f55c1b0909883fe16",
-  downloaded_file_path = "xercesImpl-2.12.2.jar"
-)
-
-http_file(
-  name = "xercesImpl-2_12_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2-sources.jar",
-  sha256 = "3c531edfc074e3e0885e5d4a777a9e7317e108028be50ef6e893a5a9cf3e12c2",
-  downloaded_file_path = "xercesImpl-2.12.2-sources.jar"
 )
 
 http_file(

@@ -11,10 +11,10 @@ jvm_resources(
 java_library(
   name = "xerces",
   visibility = ["//visibility:public"],
-  exports = ["@lib//:xerces"],
+  exports = ["@lib//:libraries-xerces-_xerces"],
   runtime_deps = [
     ":xerces_resources",
-    "@lib//:xerces",
+    "@lib//:libraries-xerces-_xerces",
   ]
 )
 ### auto-generated section `build intellij.libraries.xerces` end

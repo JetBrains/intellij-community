@@ -4837,6 +4837,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-xerces-_xerces",
+  jar = "@xercesImpl-2_12_2_http//file",
+  source_jar = "@xercesImpl-2_12_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libthrift",
   jar = "@libthrift-0_19_0_http//file",
   source_jar = "@libthrift-0_19_0-sources_http//file",
@@ -9091,13 +9098,6 @@ jvm_import(
 jvm_import(
   name = "xmlpull-1_1_3_1_http_import",
   jar = "@xmlpull-1_1_3_1_http//file"
-)
-
-jvm_import(
-  name = "xerces",
-  jar = "@xercesImpl-2_12_2_http//file",
-  source_jar = "@xercesImpl-2_12_2-sources_http//file",
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
