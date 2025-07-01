@@ -16,8 +16,19 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.outputStream
 import kotlin.reflect.jvm.javaMethod
 
+enum class MCPClientNames(val displayName: String){
+  VS_CODE_PROJECT("VSCode (Project)"),
+  VS_CODE_GLOBAL("VSCode (Global)"),
+  CLAUDE_APP_PROJECT("Claude App (Project)"),
+  CLAUDE_APP_GLOBAL("Claude App (Global)"),
+  WINDSURF_PROJECT("WindSurf (Project)"),
+  WINDSURF_GLOBAL("WindSurf (Global)"),
+  CURSOR_PROJECT("Cursor (Project)"),
+  CURSOR_GLOBAL("Cursor (Global)"),
+}
+
 open class McpClient(
-  @NlsContexts.BorderTitle val name: String,
+  @NlsContexts.BorderTitle val name: MCPClientNames,
   val configPath: Path,
 ) {
 
@@ -27,7 +38,7 @@ open class McpClient(
   }
 
   override fun toString(): String {
-    return name
+    return name.displayName
   }
 
   val json by lazy {
@@ -149,11 +160,11 @@ open class McpClient(
   }
 }
 
-class ClaudeMcpClient(name: String, configPath: Path) : McpClient(name, configPath) {
+class ClaudeMcpClient(configPath: Path) : McpClient(MCPClientNames.CLAUDE_APP_GLOBAL, configPath) {
   override fun isConfigured(): Boolean? = isStdIOConfigured()
 }
 
-class CursorClient(name: String, configPath: Path) : McpClient(name, configPath) {
+class CursorClient(configPath: Path) : McpClient(MCPClientNames.CURSOR_GLOBAL, configPath) {
   override fun isConfigured(): Boolean? {
     val stdio = isStdIOConfigured() ?: return null
     val sse = isSSEConfigured() ?: return null
@@ -162,7 +173,7 @@ class CursorClient(name: String, configPath: Path) : McpClient(name, configPath)
   override fun getSSEConfig(): ServerConfig = CursorSSEConfig(url = sseUrl)
 }
 
-class WindsurfClient(name: String, configPath: Path) : McpClient(name, configPath) {
+class WindsurfClient(configPath: Path) : McpClient(MCPClientNames.WINDSURF_GLOBAL, configPath) {
   override fun isConfigured(): Boolean? {
     val stdio = isStdIOConfigured() ?: return null
     val sse = isSSEConfigured() ?: return null
@@ -171,7 +182,7 @@ class WindsurfClient(name: String, configPath: Path) : McpClient(name, configPat
   override fun getSSEConfig(): ServerConfig = WindsurfSSEConfig(serverUrl = sseUrl)
 }
 
-class VSCodeClient(name: String, configPath: Path) : McpClient(name, configPath) {
+class VSCodeClient(configPath: Path) : McpClient(MCPClientNames.VS_CODE_GLOBAL, configPath) {
   override fun isConfigured(): Boolean? {
     val stdio = isStdIOConfigured() ?: return null
     val sse = isSSEConfigured() ?: return null

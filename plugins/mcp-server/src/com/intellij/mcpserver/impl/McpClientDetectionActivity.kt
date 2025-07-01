@@ -60,7 +60,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
         .getNotificationGroup("MCP Server")
         .createNotification(
           McpServerBundle.message("mcp.clients.with.wrong.port.detected.notification.title"),
-          McpServerBundle.message("mcp.clients.with.wrong.port.detected.notification.message", notMatchingPort.joinToString(", ") { it.name }),
+          McpServerBundle.message("mcp.clients.with.wrong.port.detected.notification.message", notMatchingPort.joinToString(", ") { it.name.displayName }),
           NotificationType.INFORMATION
         )
         .setSuggestionType(true)
@@ -79,14 +79,14 @@ internal class McpClientDetectionActivity : ProjectActivity {
     project: Project,
   ) {
     val currentProcessedClients = application.service<McpClientDetectionSettings>().state.processedClients.toMutableSet()
-    val newProcessedClients = (currentProcessedClients + detectedClients.map { it.name }).toMutableSet()
+    val newProcessedClients = (currentProcessedClients + detectedClients.map { it.name.displayName }).toMutableSet()
 
     if (currentProcessedClients != newProcessedClients) {
       application.service<McpClientDetectionSettings>().state.processedClients = newProcessedClients
       application.service<McpClientDetectionSettings>().state.intIncrementModificationCount()
 
       val newClients = newProcessedClients.filter { !currentProcessedClients.contains(it) }
-      val unconfiguredNewClients = detectedClients.filter { it.name in newClients }.filterNot { it.isConfigured() ?: false }
+      val unconfiguredNewClients = detectedClients.filter { it.name.displayName in newClients }.filterNot { it.isConfigured() ?: false }
       if (unconfiguredNewClients.isNotEmpty()) {
         showMcpServerAutomaticConfigurationNotification(project, unconfiguredNewClients)
       }
@@ -117,7 +117,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
       .getNotificationGroup("MCP Server")
       .createNotification(
         McpServerBundle.message("mcp.unconfigured.clients.detected.notification.title"),
-        McpServerBundle.message("mcp.unconfigured.clients.detected.notification.message", unconfiguredClients.joinToString(", ") { it.name }),
+        McpServerBundle.message("mcp.unconfigured.clients.detected.notification.message", unconfiguredClients.joinToString(", ") { it.name.displayName }),
         NotificationType.INFORMATION
       )
     notification
@@ -137,7 +137,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
 
   private fun showMcpServerEnablingSuggestionNotification(project: Project, detectedClients: List<McpClient>) {
     val currentProcessedClients = application.service<McpClientDetectionSettings>().state.processedClients.toMutableSet()
-    val newProcessedClients = (currentProcessedClients + detectedClients.map { it.name }).toMutableSet()
+    val newProcessedClients = (currentProcessedClients + detectedClients.map { it.name.displayName }).toMutableSet()
 
     if (currentProcessedClients != newProcessedClients) {
       application.service<McpClientDetectionSettings>().state.processedClients = newProcessedClients
