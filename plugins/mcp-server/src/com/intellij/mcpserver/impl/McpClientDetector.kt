@@ -26,19 +26,19 @@ object McpClientDetector {
     val globalClients = mutableListOf<McpClient>()
 
     runCatching {
-      globalClients.addIfNotNull(detectClaudeDesktop())
+      globalClients.addIfNotNull(detectVSCode())
     }
     runCatching {
       globalClients.addIfNotNull(detectCursorGlobal())
     }
     runCatching {
-      globalClients.addIfNotNull(detectWindsurf())
-    }
-    runCatching {
-      globalClients.addIfNotNull(detectVSCode())
+      globalClients.addIfNotNull(detectClaudeDesktop())
     }
     runCatching {
       globalClients.addIfNotNull(detectClaudeCode())
+    }
+    runCatching {
+      globalClients.addIfNotNull(detectWindsurf())
     }
 
     return globalClients
