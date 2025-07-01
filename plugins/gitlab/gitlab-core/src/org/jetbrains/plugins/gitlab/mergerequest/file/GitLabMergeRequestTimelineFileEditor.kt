@@ -28,10 +28,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.beans.PropertyChangeListener
@@ -119,7 +120,8 @@ class GitLabMergeRequestTimelineEditorFactory(private val project: Project, pare
               projectVm.accountVm,
               swingAction(GitLabBundle.message("merge.request.reload")) {
                 projectVm.reloadMergeRequestDetails(mergeRequestId)
-              })
+              },
+              GitLabLoginSource.MR_TIMELINE)
             val errorPanel = ErrorStatusPanelFactory.create(error, errorPresenter).let {
               CollaborationToolsUIUtil.moveToCenter(it)
             }

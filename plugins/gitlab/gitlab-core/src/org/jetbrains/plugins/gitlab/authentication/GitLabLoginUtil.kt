@@ -31,13 +31,15 @@ object GitLabLoginUtil {
   fun logInViaToken(
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER,
+    loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
-  ): LoginResult = logInViaToken(project, parentComponent, serverPath, null, uniqueAccountPredicate)
+  ): LoginResult = logInViaToken(project, parentComponent, serverPath, null, loginSource, uniqueAccountPredicate)
 
   @RequiresEdt
   internal fun logInViaToken(
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER, requiredUsername: String? = null,
+    loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
   ): LoginResult {
 
@@ -50,6 +52,8 @@ object GitLabLoginUtil {
     return when (exitCode) {
       DialogWrapper.OK_EXIT_CODE -> {
         val loginResult = model.loginState.value.asSafely<LoginModel.LoginState.Connected>() ?: return LoginResult.Failure
+        val loginData = GitLabLoginData(loginSource, isReLogin = false, isGitLabDotCom = serverPath.isDefault)
+        GitLabLoginCollector.login(loginData)
         return LoginResult.Success(GitLabAccount(name = loginResult.username, server = model.getServerPath()), model.token)
       }
       DialogWrapper.NEXT_USER_EXIT_CODE -> LoginResult.OtherMethod
@@ -62,13 +66,16 @@ object GitLabLoginUtil {
   fun updateToken(
     project: Project, parentComponent: JComponent?,
     account: GitLabAccount,
+    loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
-  ): LoginResult = updateToken(project, parentComponent, account, null, uniqueAccountPredicate)
+  ): LoginResult = updateToken(project, parentComponent, account, null, loginSource, uniqueAccountPredicate)
 
   @RequiresEdt
   internal fun updateToken(
     project: Project, parentComponent: JComponent?,
-    account: GitLabAccount, requiredUsername: String? = null,
+    account: GitLabAccount,
+    requiredUsername: String? = null,
+    loginSource: GitLabLoginSource,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
   ): LoginResult {
     val predicateWithoutCurrent: (GitLabServerPath, String) -> Boolean = { serverPath, username ->
@@ -83,6 +90,8 @@ object GitLabLoginUtil {
     val exitState = showLoginDialog(project, parentComponent, model, title, true)
     val loginState = model.loginState.value
     if (exitState == DialogWrapper.OK_EXIT_CODE && loginState is LoginModel.LoginState.Connected) {
+      val loginData = GitLabLoginData(loginSource, isReLogin = true, isGitLabDotCom = model.getServerPath().isDefault)
+      GitLabLoginCollector.login(loginData)
       return LoginResult.Success(
         GitLabAccount(id = account.id, name = loginState.username, server = model.getServerPath()),
         model.token

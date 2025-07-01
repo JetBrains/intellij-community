@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.GitLabMergeRequestCreateComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
@@ -61,7 +62,7 @@ internal class GitLabReviewTabComponentFactory(
       launchOnShow("SelectorsComponent") {
         bindChildIn(this, vm.selectorVm, BorderLayout.NORTH) { selectorVm ->
           if (selectorVm == null) return@bindChildIn null
-          GitLabMergeRequestSelectorsComponentFactory.createSelectorsComponent(this, selectorVm)
+          GitLabMergeRequestSelectorsComponentFactory.createSelectorsComponent(this, selectorVm, GitLabLoginSource.MR_TW)
         }
       }
     }
