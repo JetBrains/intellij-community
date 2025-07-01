@@ -214,6 +214,7 @@ private class ElementsBuilder {
       presentationData.addText(item)
     }
     presentationData.setIcon(presentationProvider.getIcon(model))
+    presentationData.tooltip = presentationProvider.getTooltipText(model)
     return presentationData
   }
 
