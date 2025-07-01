@@ -18,7 +18,6 @@ interface EelApi {
   @get:ApiStatus.Experimental
   val descriptor: EelDescriptor
 
-  // TODO: should it be extension property?
   val platform: EelPlatform
 
   /** Docs: [EelFileSystemApi] */

@@ -3,7 +3,6 @@ package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.directorySeparators
 
 internal class ArrayListEelAbsolutePath private constructor(
   override val descriptor: EelDescriptor,
@@ -53,7 +52,7 @@ internal class ArrayListEelAbsolutePath private constructor(
   }
 
   override fun resolve(other: String): EelPath {
-    val delimiters = this.platform.directorySeparators
+    val delimiters = this.os.directorySeparators
     val otherParts = other.split(*delimiters).filter(String::isNotEmpty)
     for (name in otherParts) {
       if (name.isNotEmpty()) {
@@ -116,6 +115,12 @@ internal class ArrayListEelAbsolutePath private constructor(
 
     return nameCount - other.nameCount
   }
+
+  override val os: EelPath.OS
+    get() = when (this._root) {
+      Root.Unix -> EelPath.OS.UNIX
+      is Root.Windows -> EelPath.OS.WINDOWS
+    }
 
   override fun equals(other: Any?): Boolean =
     other is EelPath &&

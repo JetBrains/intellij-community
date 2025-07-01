@@ -9,7 +9,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
@@ -25,7 +24,7 @@ import java.nio.file.Path
 
 @TestApplication
 class ProjectWizardJdkComboBoxTest {
-  val eelFixture = eelFixture(EelPlatform.Linux(EelPlatform.Arch.Unknown))
+  val eelFixture = eelFixture(EelPath.OS.UNIX)
 
   @Test
   fun `changing eel changes available sdks`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {

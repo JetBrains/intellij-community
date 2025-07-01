@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.execution.CommandLineUtil.posixQuote
@@ -58,14 +58,10 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     context
   }
 
-  private val myTargetPlatform = scope.async(start = CoroutineStart.LAZY) {
-    myContext.await().execCommand {
+  override suspend fun getTargetPlatform(): EelPlatform.Posix {
+    return myContext.await().execCommand {
       getTargetPlatform()
     }
-  }
-
-  override suspend fun getTargetPlatform(): EelPlatform.Posix {
-    return myTargetPlatform.await()
   }
 
   final override suspend fun createProcess(binaryPath: String): IjentSessionMediator {
