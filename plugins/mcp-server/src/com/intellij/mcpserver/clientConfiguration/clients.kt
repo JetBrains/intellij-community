@@ -2,11 +2,16 @@
 
 package com.intellij.mcpserver.clientConfiguration
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.util.ExecUtil
 import com.intellij.mcpserver.createStdioMcpServerCommandLine
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PORT
 import com.intellij.mcpserver.stdio.main
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
 import java.nio.file.Path
@@ -56,7 +61,7 @@ open class McpClient(
 
   open fun isConfigured(): Boolean? = true
   open fun mcpServersKey() = "mcpServers"
-  fun configure() = updateServerConfig(getConfig())
+  open fun configure() = updateServerConfig(getConfig())
   fun getConfig(): ServerConfig = getSSEConfig() ?: getStdioConfig()
 
   protected open fun getSSEConfig(): ServerConfig? = null
@@ -107,6 +112,7 @@ open class McpClient(
       matchResult?.groupValues?.get(1)?.toIntOrNull()?.let { configuredPort ->
         return configuredPort == targetPort
       }
+      return false
     }
 
     if (serverConfig.command?.contains("java") == true &&
@@ -166,6 +172,22 @@ class ClaudeCodeMcpClient(configPath: Path) : McpClient(MCPClientNames.CLAUDE_CO
     val stdio = isStdIOConfigured() ?: return null
     val sse = isSSEConfigured() ?: return null
     return stdio || sse
+  }
+
+  override fun configure() {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), "Configuring MCP Client...", TaskCancellation.nonCancellable()) {
+      val claudeAddMCP = GeneralCommandLine()
+        .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+        .withExePath("claude")
+        .withParameters("mcp", "add", "--scope", "user", "--transport", "sse", JETBRAINS_SERVER_KEY, sseUrl)
+
+      val execAndGetOutput = ExecUtil.execAndGetOutput(claudeAddMCP, 1000)
+
+      if (execAndGetOutput.exitCode != 0) {
+        throw Exception("Claude failed with exit code ${execAndGetOutput.exitCode}: ${execAndGetOutput.stderr}")
+      }
+    }
+
   }
   override fun getSSEConfig(): ServerConfig = ClaudeCodeSSEConfig(type="sse", url = sseUrl)
 }
