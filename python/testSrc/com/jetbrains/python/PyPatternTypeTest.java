@@ -672,6 +672,26 @@ match x:
         assert_type(z, str)
                    """);
   }
+  
+  // PY-81861
+  public void testDataclassPartialCapture() {
+    doTestByText("""
+from dataclasses import dataclass
+from typing import assert_type
+
+
+@dataclass
+class A:
+    a: int
+    b: str
+
+
+x = A(1, "a")
+match x:
+    case A(y):
+        assert_type(y, int)
+                   """);
+  }
 
   // PY-79832
   public void testMatchClassPatternSelfCaptureParameterized() {
