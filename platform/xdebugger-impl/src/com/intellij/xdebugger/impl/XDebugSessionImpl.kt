@@ -434,9 +434,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
   override fun getUI(): RunnerLayoutUi? {
-    return if (useFeProxy() && showFeWarnings()) {
+    return if (useFeProxy()) {
       // See "TODO [Debugger.RunnerLayoutUi]" to see usages which are not yet properly migrated.
-      LOG.error("RunnerLayoutUi should not be used in split mode from XDebugSession")
+      if (showFeWarnings()) {
+        LOG.error("RunnerLayoutUi should not be used in split mode from XDebugSession")
+      }
       null
     }
     else {
