@@ -9,11 +9,11 @@ import com.intellij.openapi.project.Project
  * @see CommonBlockBasedFeedbackDialogWithEmail
  */
 abstract class CommonBlockBasedFeedbackDialog(myProject: Project?, myForTest: Boolean) : BlockBasedFeedbackDialog<CommonFeedbackSystemData>(myProject, myForTest) {
-  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-    CommonFeedbackSystemData.getCurrentData()
+  override suspend fun computeSystemInfoData(): CommonFeedbackSystemData {
+    return CommonFeedbackSystemData.getCurrentData()
   }
 
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+  override fun showFeedbackSystemInfoDialog(systemInfoData: CommonFeedbackSystemData) {
+    showFeedbackSystemInfoDialog(myProject, systemInfoData)
   }
 }

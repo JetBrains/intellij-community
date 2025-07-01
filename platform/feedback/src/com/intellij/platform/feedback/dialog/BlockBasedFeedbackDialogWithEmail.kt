@@ -27,7 +27,9 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
   abstract val zendeskTicketTitle: String
   abstract val zendeskFeedbackType: String
 
-  protected val emailBlockWithAgreement = EmailBlock(myProject) { myShowFeedbackSystemInfoDialog() }
+  protected val emailBlockWithAgreement = EmailBlock(myProject) {
+    showFeedbackSystemInfoDialog(mySystemInfoDataComputation.getComputationResult())
+  }
 
   /**
    * A Zendesk ticket will only be created if the user specifies an email.
@@ -87,7 +89,7 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
 
     stringBuilder.appendLine()
     stringBuilder.appendLine()
-    stringBuilder.appendLine(mySystemInfoData.toString())
+    stringBuilder.appendLine(mySystemInfoDataComputation.getComputationResult().toString())
     return stringBuilder.toString()
   }
 }

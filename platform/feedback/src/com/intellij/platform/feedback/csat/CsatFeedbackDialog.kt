@@ -45,15 +45,13 @@ internal class CsatFeedbackDialog(
 
   override val myFeedbackReportId: String = "csat_feedback"
 
-  override val mySystemInfoData: CsatFeedbackSystemData by lazy {
-    getCsatSystemInfo()
-  }
+  override suspend fun computeSystemInfoData(): CsatFeedbackSystemData = getCsatSystemInfo()
 
   @Suppress("HardCodedStringLiteral")
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData.systemInfo) {
+  override fun showFeedbackSystemInfoDialog(systemInfoData: CsatFeedbackSystemData) {
+    showFeedbackSystemInfoDialog(myProject, systemInfoData.systemInfo) {
       row("Is new installation:") {
-        label(mySystemInfoData.isNewUser.toString())
+        label(systemInfoData.isNewUser.toString())
       }
     }
   }

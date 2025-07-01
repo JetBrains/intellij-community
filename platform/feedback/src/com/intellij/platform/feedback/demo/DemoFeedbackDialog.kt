@@ -16,12 +16,10 @@ class DemoFeedbackDialog(
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
   override val myFeedbackReportId: String = "demo_feedback"
 
-  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-    CommonFeedbackSystemData.getCurrentData()
-  }
+  override suspend fun computeSystemInfoData(): CommonFeedbackSystemData = CommonFeedbackSystemData.getCurrentData()
 
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+  override fun showFeedbackSystemInfoDialog(systemInfoData: CommonFeedbackSystemData) {
+    showFeedbackSystemInfoDialog(myProject, systemInfoData)
   }
 
   override val myTitle: String = DemoFeedbackBundle.message("dialog.top.title")
