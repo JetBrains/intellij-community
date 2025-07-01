@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
@@ -39,7 +40,7 @@ public class PySequencePatternImpl extends PyElementImpl implements PySequencePa
     final ArrayList<PyType> types = new ArrayList<>();
     for (PyPattern pattern : getElements()) {
       if (pattern instanceof PySingleStarPattern starPattern) {
-        types.addAll(starPattern.getCapturedTypesFromSequenceType(sequenceCaptureType, context));
+        types.addAll(getCapturedTypesFromSequenceType(starPattern, sequenceCaptureType, context));
       }
       else {
         types.add(context.getType(pattern));
@@ -74,6 +75,40 @@ public class PySequencePatternImpl extends PyElementImpl implements PySequencePa
     return true;
   }
 
+  @Override
+  public @Nullable PyType getCaptureTypeForChild(@NotNull PyPattern pattern, @NotNull TypeEvalContext context) {
+    final PyType sequenceType = getSequenceCaptureType(this, context);
+    if (sequenceType == null) return null;
+
+    // This is done to skip group- and as-patterns
+    final var sequenceMember = PsiTreeUtil.findFirstParent(pattern, el -> this == el.getParent());
+    if (sequenceMember instanceof PySingleStarPattern starPattern) {
+      final PyType iteratedType = PyTypeUtil.toStream(sequenceType)
+        .flatMap(it -> getCapturedTypesFromSequenceType(starPattern, it, context).stream()).collect(PyTypeUtil.toUnion());
+      return wrapInListType(iteratedType, pattern);
+    }
+    final List<PyPattern> elements = getElements();
+    final int idx = elements.indexOf(sequenceMember);
+    final int starIdx = ContainerUtil.indexOf(elements, it2 -> it2 instanceof PySingleStarPattern);
+
+    return PyTypeUtil.toStream(sequenceType).map(it -> {
+      if (it instanceof PyTupleType tupleType && !tupleType.isHomogeneous()) {
+        if (starIdx == -1 || idx < starIdx) {
+          return tupleType.getElementType(idx);
+        }
+        else {
+          final int starSpan = tupleType.getElementCount() - elements.size();
+          return tupleType.getElementType(idx + starSpan);
+        }
+      }
+      var upcast = PyTypeUtil.convertToType(it, "typing.Sequence", pattern, context);
+      if (upcast instanceof PyCollectionType collectionType) {
+        return collectionType.getIteratedItemType();
+      }
+      return null;
+    }).collect(PyTypeUtil.toUnion());
+  }
+
   static @Nullable PyType wrapInListType(@Nullable PyType elementType, @NotNull PsiElement resolveAnchor) {
     final PyClass list = PyBuiltinCache.getInstance(resolveAnchor).getClass("list");
     return list != null ? new PyCollectionTypeImpl(list, false, Collections.singletonList(upcastLiteralToClass(elementType))) : null;
@@ -86,12 +121,12 @@ public class PySequencePatternImpl extends PyElementImpl implements PySequencePa
   }
 
   /**
-   * Similar to {@link PyCapturePatternImpl#getCaptureType(PyPattern, TypeEvalContext)},
+   * Similar to {@link PyCaptureContext#getCaptureType(PyPattern, TypeEvalContext)},
    * but only chooses types that would match to typing.Sequence, and have correct length
    */
   @Nullable
   static PyType getSequenceCaptureType(@NotNull PySequencePattern pattern, @NotNull TypeEvalContext context) {
-    final PyType captureTypes = PyCapturePatternImpl.getCaptureType(pattern, context);
+    final PyType captureTypes = PyCaptureContext.getCaptureType(pattern, context);
     final boolean hasStar = ContainerUtil.exists(pattern.getElements(), it -> it instanceof PySingleStarPattern);
 
     List<PyType> types = new ArrayList<>();
@@ -130,5 +165,21 @@ public class PySequencePatternImpl extends PyElementImpl implements PySequencePa
       }
     }
     return PyUnionType.union(types);
+  }
+
+  private static @NotNull List<@Nullable PyType> getCapturedTypesFromSequenceType(@NotNull PySingleStarPattern starPattern,
+                                                                                  @Nullable PyType sequenceType,
+                                                                                  @NotNull TypeEvalContext context) {
+    if (starPattern.getParent() instanceof PySequencePattern sequenceParent) {
+      final int idx = sequenceParent.getElements().indexOf(starPattern);
+      if (sequenceType instanceof PyTupleType tupleType && !tupleType.isHomogeneous()) {
+        return tupleType.getElementTypes().subList(idx, idx + tupleType.getElementCount() - sequenceParent.getElements().size() + 1);
+      }
+      var upcast = PyTypeUtil.convertToType(sequenceType, "typing.Sequence", starPattern, context);
+      if (upcast instanceof PyCollectionType collectionType) {
+        return Collections.singletonList(collectionType.getIteratedItemType());
+      }
+    }
+    return List.of();
   }
 }

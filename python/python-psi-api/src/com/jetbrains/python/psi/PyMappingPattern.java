@@ -3,5 +3,5 @@ package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstMappingPattern;
 
-public interface PyMappingPattern extends PyAstMappingPattern, PyPattern {
+public interface PyMappingPattern extends PyAstMappingPattern, PyPattern, PyCaptureContext {
 }

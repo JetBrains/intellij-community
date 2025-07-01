@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class PyMappingPatternImpl extends PyElementImpl implements PyMappingPatt
 
     PyType patternMappingType = wrapInMappingType(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes), this);
 
-    PyType captureTypes = PyCapturePatternImpl.getCaptureType(this, context);
+    PyType captureTypes = PyCaptureContext.getCaptureType(this, context);
     PyType filteredType = PyTypeUtil.toStream(captureTypes).filter(captureType -> {
       var mappingType = PyTypeUtil.convertToType(captureType, "typing.Mapping", this, context);
       if (mappingType == null) return false;
@@ -54,6 +55,39 @@ public class PyMappingPatternImpl extends PyElementImpl implements PyMappingPatt
     }).collect(PyTypeUtil.toUnion());
 
     return filteredType == null ? patternMappingType : filteredType;
+  }
+
+  @Override
+  public @Nullable PyType getCaptureTypeForChild(@NotNull PyPattern pattern, @NotNull TypeEvalContext context) {
+    final var sequenceMember = PsiTreeUtil.findFirstParent(pattern, el -> this == el.getParent());
+    if (sequenceMember instanceof PyDoubleStarPattern) {
+      var mappingType = PyTypeUtil.convertToType(context.getType(this), "typing.Mapping", pattern, context);
+      if (mappingType instanceof PyCollectionType collectionType) {
+        final PyClass dict = PyBuiltinCache.getInstance(pattern).getClass("dict");
+        return dict != null ? new PyCollectionTypeImpl(dict, false, collectionType.getElementTypes()) : null;
+      }
+      return null;
+    }
+    else if (sequenceMember instanceof PyKeyValuePattern keyValuePattern) {
+      return PyTypeUtil.toStream(PyCaptureContext.getCaptureType(this, context)).map(type -> {
+        if (type instanceof PyTypedDictType typedDictType) {
+          if (context.getType(keyValuePattern.getKeyPattern()) instanceof PyLiteralType l &&
+              l.getExpression() instanceof PyStringLiteralExpression str) {
+            return typedDictType.getElementType(str.getStringValue());
+          }
+        }
+
+        PyType mappingType = PyTypeUtil.convertToType(type, "typing.Mapping", pattern, context);
+        if (mappingType == null) {
+          return PyNeverType.NEVER;
+        }
+        else if (mappingType instanceof PyCollectionType collectionType) {
+          return collectionType.getElementTypes().get(1);
+        }
+        return null;
+      }).collect(PyTypeUtil.toUnion());
+    }
+    return null;
   }
 
   private static @Nullable PyType wrapInMappingType(@Nullable PyType keyType, @Nullable PyType valueType, @NotNull PsiElement resolveAnchor) {
