@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation
@@ -28,6 +29,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.progress.waitForMaybeCancellable
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -257,7 +259,9 @@ class RefreshSessionImpl internal constructor(
   ) {
     val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
 
-    manager.fireBeforeRefreshStart(this.isAsynchronous)
+    invokeOnEdt {
+      manager.fireBeforeRefreshStart(this.isAsynchronous)
+    }
     try {
       AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncProcessing)
     }
@@ -268,12 +272,23 @@ class RefreshSessionImpl internal constructor(
       throw e
     }
     finally {
-      try {
-        manager.fireAfterRefreshFinish(this.isAsynchronous)
+      invokeOnEdt {
+        try {
+          manager.fireAfterRefreshFinish(this.isAsynchronous)
+        }
+        finally {
+          myFinishRunnable?.run()
+        }
       }
-      finally {
-        myFinishRunnable?.run()
-      }
+    }
+  }
+
+  private fun invokeOnEdt(r: Runnable) {
+    if (EDT.isCurrentThreadEdt()) {
+      r.run()
+    }
+    else {
+      InternalThreading.invokeAndWaitWithTransferredWriteAction(r)
     }
   }
 
