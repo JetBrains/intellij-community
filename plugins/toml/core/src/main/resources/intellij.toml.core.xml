@@ -17,9 +17,6 @@
         <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
 
-
-        <virtualFileCustomDataProvider implementation="org.toml.ide.formatter.settings.TomlCodeStyleSettingsSynchronizer"/>
-
         <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
         <!--<editor.rd.localSupport filetype="TOML"/> IJPL-189393 -->
     </extensions>
