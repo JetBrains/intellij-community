@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.vim.VimConfigurationDetector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
@@ -74,11 +75,7 @@ internal class EditorsCollector : ApplicationUsagesCollector() {
 
     return withContext(Dispatchers.IO) {
       buildSet {
-        if (
-          Files.exists(homeDir.resolve(".vimrc")) ||
-          Files.exists(homeDir.resolve("_vimrc")) ||
-          Files.exists(homeDir.resolve(".vim/vimrc"))
-        ) {
+        if (VimConfigurationDetector.detectVimrcConfiguration() != null) {
           add(CONFIG_EXISTS.metric(VIMRC_ID))
         }
 
