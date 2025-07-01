@@ -1138,7 +1138,12 @@ fun <T: CommandChain> T.vcsDisableConfirmationPopup(): T = apply {
   addCommand("${CMD_PREFIX}vcsDisableConfirmationPopup")
 }
 
-fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? = null, newText: String? = null): T = apply {
+fun <T : CommandChain> T.replaceText(
+  startOffset: Int? = null,
+  endOffset: Int? = null,
+  newText: String? = null,
+  calculateAnalysisTime: Boolean = false,
+): T = apply {
   val options = StringBuilder()
   if (startOffset != null) {
     options.append(" -startOffset ${startOffset}")
@@ -1148,6 +1153,9 @@ fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? =
   }
   if (newText != null) {
     options.append(" -newText ${newText}")
+  }
+  if (calculateAnalysisTime) {
+    options.append(" -calculateAnalysisTime ${true}")
   }
   addCommand("${CMD_PREFIX}replaceText ${options}")
 }
