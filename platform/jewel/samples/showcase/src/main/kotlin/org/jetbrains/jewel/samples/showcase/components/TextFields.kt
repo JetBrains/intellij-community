@@ -91,6 +91,15 @@ private fun TextFieldsRows(readOnly: Boolean) {
 
             val state2 = rememberTextFieldState("Disabled")
             TextField(state = state2, enabled = false, modifier = Modifier.width(200.dp), readOnly = readOnly)
+
+            val state3 = rememberTextFieldState("")
+            TextField(
+                state = state3,
+                placeholder = { Text("Undecorated") },
+                modifier = Modifier.width(200.dp),
+                readOnly = readOnly,
+                undecorated = true,
+            )
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
