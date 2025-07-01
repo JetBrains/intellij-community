@@ -1,9 +1,9 @@
 package twoDumps
 
-// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.3.8)-javaagent
+// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2)-javaagent
+// REGISTRY: debugger.async.stacks.coroutines=false
 
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 
 suspend fun foo() {
     //Breakpoint!
@@ -21,5 +21,3 @@ fun main() = runBlocking<Unit> {
         bar()
     }
 }
-
-// REGISTRY: debugger.async.stacks.coroutines=false
