@@ -2277,6 +2277,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/LocalClassCompletion.kt");
         }
 
+        @TestMetadata("Multicaret.kt")
+        public void testMulticaret() throws Exception {
+            runTest("../../completion/testData/handlers/Multicaret.kt");
+        }
+
         @TestMetadata("NamedParameterBeforeAnotherNamedParameter.kt")
         public void testNamedParameterBeforeAnotherNamedParameter() throws Exception {
             runTest("../../completion/testData/handlers/NamedParameterBeforeAnotherNamedParameter.kt");
