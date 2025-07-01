@@ -20,6 +20,7 @@ import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.*;
@@ -335,19 +337,23 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type
    */
   public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context)).toString();
+    return getTypeName(type, context, EnumSet.noneOf(Feature.class));
   }
 
+  public static @NotNull String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context, @NotNull EnumSet<Feature> features) {
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, features)).toString();
+  }
+  
   /**
    * Returns the provided type in PEP 484 compliant format.
    */
   public static @NotNull String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, false)).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, EnumSet.noneOf(Feature.class))).toString();
   }
 
   @ApiStatus.Experimental
   public static @NotNull String getFullyQualifiedTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, true)).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, EnumSet.of(Feature.USE_FQN))).toString();
   }
 
   /**
@@ -359,7 +365,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * such as bounds for TypeVar types in ' ≤: *bound*' format
    */
   public static @NotNull String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.VerboseDocumentation(context)).toString();
+    return getTypeName(type, context, EnumSet.of(Feature.TYPE_VAR_BOUNDS));
   }
 
   /**
