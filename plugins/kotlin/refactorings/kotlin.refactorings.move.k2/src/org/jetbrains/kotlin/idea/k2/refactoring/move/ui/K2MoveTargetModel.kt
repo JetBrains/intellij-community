@@ -6,6 +6,8 @@ import com.intellij.ide.util.DirectoryChooser
 import com.intellij.ide.util.TreeJavaClassChooserDialog
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.MutableBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -60,7 +62,7 @@ sealed interface K2MoveTargetModel {
 
         protected lateinit var destinationChooser: KotlinDestinationFolderComboBox
 
-        protected lateinit var explicitPkgWarning: Row
+        private val isPkgWarningShown: MutableBooleanProperty = AtomicBooleanProperty(isMoveToExplicitPackage())
 
         protected fun Panel.installPkgChooser(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = directory.project
@@ -77,13 +79,12 @@ sealed interface K2MoveTargetModel {
                 }
                 pkgChooser.prependItem(pkgName.asString())
             }
-            explicitPkgWarning = row("") {
+            row("") {
                 icon(AllIcons.General.Warning).align(AlignX.LEFT).gap(RightGap.SMALL)
                 label(RefactoringBundle.message(
                     "create.explicit.package.warning", explicitPkgMoveFqName?.asString().orEmpty()
                 ))
-            }
-            updateExplicitPackageWarningVisibility()
+            }.visibleIf(isPkgWarningShown)
 
             row(KotlinBundle.message("label.text.destination")) {
                 destinationChooser = cell(object : KotlinDestinationFolderComboBox() {
@@ -127,7 +128,7 @@ sealed interface K2MoveTargetModel {
         }
 
         private fun updateExplicitPackageWarningVisibility() {
-            explicitPkgWarning.visible(isVisible = isMoveToExplicitPackage())
+            isPkgWarningShown.set(isMoveToExplicitPackage())
         }
 
         private companion object {
@@ -144,7 +145,8 @@ sealed interface K2MoveTargetModel {
     ) : SourceDirectoryChooser(pkgName, directory, explicitPkgMoveFqName) {
         override fun toDescriptor(): K2MoveTargetDescriptor.Directory {
             return K2MoveTargetDescriptor.Directory(
-                pkgName, directory,
+                pkgName = pkgName,
+                baseDirectory = directory,
                 isMoveToExplicitPackage = isMoveToExplicitPackage(),
             )
         }
@@ -218,7 +220,9 @@ sealed interface K2MoveTargetModel {
         FileChooser(fileName, pkg, directory, explicitPkgMoveFqName) {
         override fun toDescriptor(): K2MoveTargetDescriptor.File =
             K2MoveTargetDescriptor.File(
-                fileName, pkgName, directory,
+                fileName = fileName,
+                pkgName = pkgName,
+                baseDirectory = directory,
                 isMoveToExplicitPackage = isMoveToExplicitPackage(),
             )
 

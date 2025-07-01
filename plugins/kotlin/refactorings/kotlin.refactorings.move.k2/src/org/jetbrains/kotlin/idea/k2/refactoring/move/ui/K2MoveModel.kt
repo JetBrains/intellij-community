@@ -318,7 +318,9 @@ sealed class K2MoveModel {
                     val target = if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
                         K2MoveTargetModel.SourceDirectory(
-                            pkg, targetContainer, explicitPkgMoveFqName
+                            pkgName = pkg,
+                            directory = targetContainer,
+                            explicitPkgMoveFqName = explicitPkgMoveFqName,
                         )
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val file = elementsToMove.firstOrNull { it.containingFile != null }?.containingFile
@@ -338,7 +340,10 @@ sealed class K2MoveModel {
                     } else if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
                         K2MoveTargetModel.File(
-                            findSourceFileNameByMovedElements(elementsToMove), pkg, targetContainer, explicitPkgMoveFqName,
+                            fileName = findSourceFileNameByMovedElements(elementsToMove),
+                            pkg = pkg,
+                            directory = targetContainer,
+                            explicitPkgMoveFqName = explicitPkgMoveFqName,
                         )
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val firstElem = elementsToMove.firstOrNull() as KtElement
