@@ -21,6 +21,9 @@ class WindsurfSSEConfig(val serverUrl: String) : ServerConfig()
 class VSCodeSSEConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
+class ClaudeCodeSSEConfig(val url: String, val type: String) : ServerConfig()
+
+@Serializable
 class STDIOServerConfig(
   val command: String? = null,
   val args: List<String>? = null,

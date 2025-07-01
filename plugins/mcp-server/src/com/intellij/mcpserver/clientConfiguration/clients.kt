@@ -19,12 +19,13 @@ import kotlin.reflect.jvm.javaMethod
 enum class MCPClientNames(val displayName: String){
   VS_CODE_PROJECT("VSCode (Project)"),
   VS_CODE_GLOBAL("VSCode (Global)"),
-  CLAUDE_APP_PROJECT("Claude App (Project)"),
   CLAUDE_APP_GLOBAL("Claude App (Global)"),
   WINDSURF_PROJECT("WindSurf (Project)"),
   WINDSURF_GLOBAL("WindSurf (Global)"),
   CURSOR_PROJECT("Cursor (Project)"),
   CURSOR_GLOBAL("Cursor (Global)"),
+  CLAUDE_CODE_PROJECT("Claude Code (Project)"),
+  CLAUDE_CODE_GLOBAL("Claude Code (Global)"),
 }
 
 open class McpClient(
@@ -158,6 +159,15 @@ open class McpClient(
       json.encodeToStream(config, outputStream)
     }
   }
+}
+
+class ClaudeCodeMcpClient(configPath: Path) : McpClient(MCPClientNames.CLAUDE_CODE_GLOBAL, configPath) {
+  override fun isConfigured(): Boolean? {
+    val stdio = isStdIOConfigured() ?: return null
+    val sse = isSSEConfigured() ?: return null
+    return stdio || sse
+  }
+  override fun getSSEConfig(): ServerConfig = ClaudeCodeSSEConfig(type="sse", url = sseUrl)
 }
 
 class ClaudeMcpClient(configPath: Path) : McpClient(MCPClientNames.CLAUDE_APP_GLOBAL, configPath) {

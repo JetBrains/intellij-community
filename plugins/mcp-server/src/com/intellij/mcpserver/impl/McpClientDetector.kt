@@ -37,6 +37,9 @@ object McpClientDetector {
     runCatching {
       globalClients.addIfNotNull(detectVSCode())
     }
+    runCatching {
+      globalClients.addIfNotNull(detectClaudeCode())
+    }
 
     return globalClients
   }
@@ -76,6 +79,22 @@ object McpClientDetector {
     val path = Paths.get(FileUtil.expandUserHome(configPath))
     if (path.exists() && path.isRegularFile()) {
       return VSCodeClient(path)
+    }
+    return null
+  }
+
+  private fun detectClaudeCode(): McpClient? {
+    val configPath = when {
+      SystemInfo.isMac -> "~/.claude.json"
+      SystemInfo.isWindows -> null
+      SystemInfo.isLinux -> "~/.claude.json"
+      else -> null
+    }
+    if (configPath == null) return null
+    val path = Paths.get(FileUtil.expandUserHome(configPath))
+
+    if (path.exists() && path.isRegularFile()) {
+      return ClaudeCodeMcpClient( path)
     }
     return null
   }
@@ -124,13 +143,11 @@ object McpClientDetector {
 
   private fun detectVSCode(project: Project): McpClient? {
     val configDirName = ".vscode"
-    val clientName = "VSCode"
     return detectProjectLevelClient(project, configDirName, MCPClientNames.VS_CODE_PROJECT)
   }
 
   private fun detectCursorProject(project: Project): McpClient? {
     val configDirName = ".cursor"
-    val clientName = "Cursor"
     return detectProjectLevelClient(project, configDirName, MCPClientNames.CURSOR_PROJECT)
   }
 
@@ -139,7 +156,7 @@ object McpClientDetector {
     val claudeCodeConfigPath = Paths.get(projectBasePath, ".mcp.json")
 
     if (looksLikeMcpJson(claudeCodeConfigPath)) {
-      return McpClient(MCPClientNames.CLAUDE_APP_PROJECT, claudeCodeConfigPath)
+      return McpClient(MCPClientNames.CLAUDE_CODE_PROJECT, claudeCodeConfigPath)
     }
     return null
   }
