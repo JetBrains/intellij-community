@@ -113,7 +113,7 @@ internal class Maven4ModelQuickFix : MavenLoggedEventParser, MavenSpyLoggedEvent
   override fun processLogLine(project: Project, logLine: String, reader: BuildOutputInstantReader?, messageConsumer: Consumer<in BuildEvent>): Boolean {
     val buildIssue = createBuildIssue(logLine, project) ?: return false
     val console = MavenProjectsManager.getInstance(project).syncConsole
-    val kind = if (logLine.contains("ERROR")) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
+    val kind = MessageEvent.Kind.WARNING
     console.addBuildIssue(buildIssue, kind)
     return true
   }
