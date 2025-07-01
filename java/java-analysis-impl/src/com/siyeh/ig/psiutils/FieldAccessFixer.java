@@ -104,6 +104,7 @@ public record FieldAccessFixer(@NotNull String accessorName, @NotNull AccessorKi
       setter = false;
       accessor = Arrays.stream(containingClass.getMethods())
         .filter(method -> PropertyUtil.getFieldOfGetter(method) == field && accessTest.test(method))
+        // Prefer record component accessor if available
         .max(Comparator.comparing(m -> JavaPsiRecordUtil.getRecordComponentForAccessor(m) != null))
         .orElse(null);
       if (accessor == null) {
