@@ -7450,154 +7450,154 @@
     "sha256": "86b9d2a2378cff951f3bd0750d56ff4cef64f78dbb33e9f7abd9c7e6e14d99de"
   },
   {
-    "path": "org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-6511/allopen-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-6511/allopen-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-7472/allopen-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-7472/allopen-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "3f03ca748a7acdeb8cefd6601bfd601828fa344154c12479f62642d821dacc65"
   },
   {
-    "path": "org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-6511/allopen-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-6511/allopen-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
+    "path": "org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-7472/allopen-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-7472/allopen-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
     "sha256": "ae93b9423113700f909d0eb250bf44249968e5522050ff0501397dab4de651b4"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-6511/analysis-api-fe10-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-6511/analysis-api-fe10-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "cf66fc85bb59183c91249a22c44c8b44c66bc9f825eda21dca1067ff03ed4b83"
+    "path": "org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-7472/analysis-api-fe10-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-7472/analysis-api-fe10-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "5c299cb519e01a0e3c285f3a94d036a20e8cda7d23758b3722c17c291bb0dfa6"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-6511/analysis-api-fe10-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-6511/analysis-api-fe10-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "30592fe1e7f487982d80bf96284db3a45084977b19142f294d40c6e3285e3e4b"
+    "path": "org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-7472/analysis-api-fe10-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-7472/analysis-api-fe10-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "7898ee5b5bc3a66978a53618873a8dd573ca2528913bbdf23fa77aec3bf20704"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-6511/analysis-api-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-6511/analysis-api-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "945914027da8f33437ebbcb0d049327a1e3d322a14adbfedcf3fa9a3b27e36f8"
+    "path": "org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-7472/analysis-api-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-7472/analysis-api-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "86cc0736f58e01b3e73dbd0c802f55805bab773917d898675da59afa0d48867b"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-6511/analysis-api-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-6511/analysis-api-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "d3c172a7ffc1869aaf3b2dacf213a8a14d71dc4a76c6dcac607f21dcc73742d9"
+    "path": "org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-7472/analysis-api-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-7472/analysis-api-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "c3653af30c730668f0fa9ffb121eb4d2761e1a46bb5e52ae73a2b08dfb20cc3e"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-6511/analysis-api-impl-base-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-6511/analysis-api-impl-base-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "560a965e52a1a422e53754b81a1d25c78a668c35cc393a5e017809e8025a6e6d"
+    "path": "org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-7472/analysis-api-impl-base-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-7472/analysis-api-impl-base-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "36cd6d710e93fce0bf9a117ff6ee38ed758d4f3a766315b17c2991d18b73a265"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-6511/analysis-api-impl-base-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-6511/analysis-api-impl-base-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "3103b50deda02455022e31ff775e721dc6122ce27b9a6d8933bcc938e4a3fc61"
+    "path": "org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-7472/analysis-api-impl-base-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-7472/analysis-api-impl-base-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "87a9b476051ed9aa3bf8a6f40b94c1b9590ac1f47046f880837656b4a4ac6caa"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-6511/analysis-api-impl-base-tests-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-6511/analysis-api-impl-base-tests-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-7472/analysis-api-impl-base-tests-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-7472/analysis-api-impl-base-tests-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "4f8419cb786aa6dc055da7500d6013449d124f9aed1a2d8ecea34c1d02da0e5c"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-6511/analysis-api-impl-base-tests-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-6511/analysis-api-impl-base-tests-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "5810d8271a1fc7408020414403e7b18dfec1c64a9cbfd0aa4961813525bc43c2"
+    "path": "org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-7472/analysis-api-impl-base-tests-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-7472/analysis-api-impl-base-tests-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "0fa09ebc667aa0d7195909fff2d593121cce5c60279089cab474e1a84db74f56"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-6511/analysis-api-k2-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-6511/analysis-api-k2-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "e596fac36dc1d2667e49f60bd65e7b88e2ee47e9a5ebf7c2a498491a87e0b257"
+    "path": "org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-7472/analysis-api-k2-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-7472/analysis-api-k2-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "bd8a0b35185a34ceccefff04175a594e6b79a967a248c4e74e2f82dcc212b573"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-6511/analysis-api-k2-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-6511/analysis-api-k2-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "b0e38bf477a37cb122d399c3cdf0bdd21199048f45bedaf682437dce7b7be597"
+    "path": "org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-7472/analysis-api-k2-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-7472/analysis-api-k2-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "4f2024217b361bf5320150affc954c75d466cbdf5dcd0ee85a650a3da827cd86"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-6511/analysis-api-k2-tests-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-6511/analysis-api-k2-tests-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "70e3bf1529671b320d624932877d70df2a712e43940dbfe1b2c38a23d945e63c"
+    "path": "org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-7472/analysis-api-k2-tests-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-7472/analysis-api-k2-tests-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "476dd739128703e2cb98ee37769517866e61a632e7e009fd779bff7a5ca6aad6"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-6511/analysis-api-k2-tests-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-6511/analysis-api-k2-tests-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "f4f99edc88be519daea60393a7f18545423cd501931f98ee1408111e58a1714e"
+    "path": "org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-7472/analysis-api-k2-tests-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-7472/analysis-api-k2-tests-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "34911c3fa64fc9e610de01ba759a46c49212801111d4d6b6bc8104c0c02228b2"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-6511/analysis-api-platform-interface-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-6511/analysis-api-platform-interface-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "23fb0add901a42f2fb7b44710b9768bbb2cd0fbc2b49c7a56e9d4d724973318b"
+    "path": "org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-7472/analysis-api-platform-interface-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-7472/analysis-api-platform-interface-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "c1a753ca318cada96664d14a85f2fab2a0f1e6bef71384389d806effde5ddcf2"
   },
   {
-    "path": "org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-6511/analysis-api-platform-interface-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-6511/analysis-api-platform-interface-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "a6f38266907707df3847135bb97766ee1b363f7b63c704a107f89270640c776b"
+    "path": "org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-7472/analysis-api-platform-interface-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-7472/analysis-api-platform-interface-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "93d84ea824ee8ef0353688e8c258e074b6e9e7a8d95cd0730ddc0f69808d3c13"
   },
   {
-    "path": "org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-6511/assignment-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-6511/assignment-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-7472/assignment-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-7472/assignment-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "e3ad68e934a09eea195196609bbb2c1648df500003cd29d4515a01d33416080b"
   },
   {
-    "path": "org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-6511/assignment-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-6511/assignment-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "330ab47b3d1b6c718ece924b2bcb22076d7693a525e2f49a515ec6ccd3af1e26"
+    "path": "org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-7472/assignment-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-7472/assignment-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "dcba7e697ad626f808c059617dffaa91a4f732b17fa0a0406d015152ce82d889"
   },
   {
-    "path": "org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-6511/compose-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-6511/compose-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "54fd836700ce85a448f52801be85535ec1e7e5b5bbc46929c2a0dd0c3c8e91bd"
+    "path": "org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-7472/compose-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-7472/compose-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "80624a280de2bd3af3ce0be03188802cfcf46d58fa534fc67edf1a0f8264c069"
   },
   {
-    "path": "org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-6511/compose-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-6511/compose-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "b30d69a7deeec466f155f27518a3a389994ffa2a6c98795b736df51c7b8af24f"
+    "path": "org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-7472/compose-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-7472/compose-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "d45efd06082041e0b0be03174eb1b25692baf1efa17317549efc7bce3dd179a0"
   },
   {
-    "path": "org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-6511/incremental-compilation-impl-tests-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-6511/incremental-compilation-impl-tests-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-7472/incremental-compilation-impl-tests-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-7472/incremental-compilation-impl-tests-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "fafc5b5357ef0999a0a83b33a87582dc512cae10d769f5405d83bf0d51f895f5"
   },
   {
-    "path": "org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-6511/incremental-compilation-impl-tests-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-6511/incremental-compilation-impl-tests-for-ide-2.2.20-dev-6511.jar",
+    "path": "org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-7472/incremental-compilation-impl-tests-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-7472/incremental-compilation-impl-tests-for-ide-2.2.20-dev-7472.jar",
     "sha256": "100c5e20ef2096f44a2629804aa5a7c20a4ca2bb9af76fd684e044f119089c0f"
   },
   {
-    "path": "org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-6511/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-6511/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-7472/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-7472/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "524309b11e0c828b2691d16c8912afa12fc2903d15e0e20c8b4971cdb34229e2"
   },
   {
-    "path": "org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-6511/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-6511/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "6362a3698b3e41340e221e87d188c56cd8345460e49b8015af53edc4b60197f4"
+    "path": "org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-7472/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-7472/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "6613a6897a77c3e6435bf74a65b2741bfb57b30fa6ff854fcafd68f888719fae"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-6511/kotlin-build-common-tests-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-6511/kotlin-build-common-tests-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-7472/kotlin-build-common-tests-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-7472/kotlin-build-common-tests-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "d6713e3c6036b28b1ade7d4899d79a8ae19aac3d75181c10bec542f7a2c4d8d4"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-6511/kotlin-build-common-tests-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-6511/kotlin-build-common-tests-for-ide-2.2.20-dev-6511.jar",
+    "path": "org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-7472/kotlin-build-common-tests-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-7472/kotlin-build-common-tests-for-ide-2.2.20-dev-7472.jar",
     "sha256": "00e255ddba5342be88542cd591e425122e4bd90e4cded5032e8e342db2b72b73"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-6511/kotlin-compiler-cli-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-6511/kotlin-compiler-cli-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "d7436c4cebee395f7480aa2a0da352e25714f5064001ce41d690f609afe76e50"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-7472/kotlin-compiler-cli-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-7472/kotlin-compiler-cli-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "f27006c94aab64c4c5b6716235c809e43633e396ef91f6c1251e7c58aecad88b"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-6511/kotlin-compiler-cli-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-6511/kotlin-compiler-cli-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "b8894d671d36c5118b73330d7a08d51a841e6dbe90dcfc8c2373108d018f5fc5"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-7472/kotlin-compiler-cli-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-7472/kotlin-compiler-cli-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "7824c7678c7b188134e352da53f8b6b09eb94bbec78ac4108ffcc6830bc5180e"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-6511/kotlin-compiler-common-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-6511/kotlin-compiler-common-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "69fa9381dee3c5ade686b1e3065b089468406c9930542812b3c1e63ddb42ebfa"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-7472/kotlin-compiler-common-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-7472/kotlin-compiler-common-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "6860f6c16d3526406dd33b0bbcf681997c9690b72dcf154bd98012e451ffb627"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-6511/kotlin-compiler-common-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-6511/kotlin-compiler-common-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "5b1eed1f32f9a86dbfebb3c9735b455bad414093ad6771458a472306cda4a81f"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-7472/kotlin-compiler-common-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-7472/kotlin-compiler-common-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "11052d3b189a93ffac724c2981d788800f793645b15ea3eb8a664636be1752a6"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10-sources.jar",
@@ -7610,44 +7610,44 @@
     "sha256": "ea76850ffe3b84c92654a73f8e366964857f7e95687ca158882241cebef591e8"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-6511/kotlin-compiler-fe10-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-6511/kotlin-compiler-fe10-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "9a5c3d484702e1ad41f12de994f4345eda8658bd4a76fc6e71ebc8f37c63d0c2"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-7472/kotlin-compiler-fe10-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-7472/kotlin-compiler-fe10-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "01a55168b281de09f22dae99aeb5bfc13e8fb7feed7ef2c12180a9869f58b209"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-6511/kotlin-compiler-fe10-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-6511/kotlin-compiler-fe10-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "017172c8f45a6d81385f160b84f194aac0ed2af1c4e79e5340d6bff09fdd6af5"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-7472/kotlin-compiler-fe10-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-7472/kotlin-compiler-fe10-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "117aab75bbf08ac02936cc659948176b86218da35f4c26daaee1b87662dc5a4e"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-6511/kotlin-compiler-fir-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-6511/kotlin-compiler-fir-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "cdaef5bfacff78ab0d04fe5081a7993cb0719f6a0038bffa14fa96e86578f5bb"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-7472/kotlin-compiler-fir-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-7472/kotlin-compiler-fir-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "e22459e38ef23ff1edbf952c9ceca9376b2a1edbd62c6f26887b911c381f6781"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-6511/kotlin-compiler-fir-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-6511/kotlin-compiler-fir-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "88414f4dc6943bbebed65695204a59fc995b71e973bfad8c3f0b7bc452083b3e"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-7472/kotlin-compiler-fir-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-7472/kotlin-compiler-fir-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "d5fe9daae4e149c32e7e1c794b899a3af637916e60cfb3b0864b38c9c5b8c422"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-6511/kotlin-compiler-ir-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-6511/kotlin-compiler-ir-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "7da62e573b7949802978e884777a868aa55e0afe9213a488b2681a43e36bcfa4"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-7472/kotlin-compiler-ir-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-7472/kotlin-compiler-ir-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "79d81c4537f06e5f17830ca887d459d57c7cdd759082e541da225d5efd8c1921"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-6511/kotlin-compiler-ir-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-6511/kotlin-compiler-ir-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "66dd2cfb20245b5e32f44b59643ad1709fa4a1095b29e53cb0fd6922c852a26e"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-7472/kotlin-compiler-ir-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-7472/kotlin-compiler-ir-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "3b83ee08a0dfb4077186ddc8d05fb5bf1189d5be845558caae223423bc598a87"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-6511/kotlin-compiler-tests-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-6511/kotlin-compiler-tests-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "2dae41c615c1beda28f6d0b65c3ce3a5b2ab04338bd92bfd7cd70a8f41d41c9f"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-7472/kotlin-compiler-tests-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-7472/kotlin-compiler-tests-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "6ac71d84e0a47eed2574f8e33fa460400dcc83889c633042e6afa929d7339ba5"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-6511/kotlin-compiler-tests-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-6511/kotlin-compiler-tests-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "4739fca2244e2a45c0917383cd6e1a330bc63d727fd3d7c382d8372b54c556f2"
+    "path": "org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-7472/kotlin-compiler-tests-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-7472/kotlin-compiler-tests-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "7f6148a025f605ad49fbcfa95371acfefaa06c323000fd70a89f734cbc6a6977"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0-RC2/kotlin-compose-compiler-plugin-2.2.0-RC2-sources.jar",
@@ -7670,14 +7670,14 @@
     "sha256": "a500d6f7bb2152a8387a9e24b886d0654fdbdb6662ec264c544ce9346f186141"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-6511/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-6511/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "1daf2ecdb413021a931c9cefe8914815aa2dd23e09e11e3b52e4c70ae91fec18"
+    "path": "org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-7472/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-7472/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "adf97e5132ea7dc3f10803514e5650f890d9fbcdf44e62fc94037d7400876a2f"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-6511/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-6511/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "e824b359b522eb487f99c2f2c5c351b0bab1d0c7918bf09161065955a047d4bf"
+    "path": "org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-7472/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-7472/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "071ea4396c789923dcb7af1247bb2e1e2a7e73e83042d326387787abb1225229"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-dist-for-ide/2.1.21/kotlin-dist-for-ide-2.1.21-sources.jar",
@@ -7690,14 +7690,14 @@
     "sha256": "afc456c6ff50abb192624f4424324d7c9a1c927fcc03896b93b08ad1f0800a46"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-6511/kotlin-dist-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-6511/kotlin-dist-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-7472/kotlin-dist-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-7472/kotlin-dist-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-6511/kotlin-dist-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-6511/kotlin-dist-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "fa8ba534606b71af8c71ece5bbc66d256cf74a61b0411546999ab2d7ad715a55"
+    "path": "org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-7472/kotlin-dist-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-7472/kotlin-dist-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "c9782d3a09c3e4dc72cb83aa78513e1b75efe3bd348c10e146c64361a10c25ca"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar",
@@ -7720,23 +7720,23 @@
     "sha256": "8d1af87632d95148f122a9fa0ae2903c19ee6fab7d01e017f76e0d2c9a022c20"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-6511/kotlin-gradle-statistics-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-6511/kotlin-gradle-statistics-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "1c43c0cc96847254f780c9200a8f3c2eb3775c389ed48351ad0c86b2558223c4"
+    "path": "org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-7472/kotlin-gradle-statistics-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-7472/kotlin-gradle-statistics-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "ffa31351e5f8ac4862320ef713c35df2660466c2bbf9ae91d4e5557a4836209b"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-6511/kotlin-gradle-statistics-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-6511/kotlin-gradle-statistics-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "075c65e1d89b61c7889ea26f855c97ac54a143be165320579c772c80e7d8a82d"
+    "path": "org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-7472/kotlin-gradle-statistics-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-7472/kotlin-gradle-statistics-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "8aec9f88b76a1eb62eb549b1f85e24b2e3f76dc5f80581120737f746574f34fb"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-6511/kotlin-jps-common-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-6511/kotlin-jps-common-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-7472/kotlin-jps-common-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-7472/kotlin-jps-common-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "2c37fcf3410f186f9f333e4610069ebba9074976209d5595e0db4f4650dbe5e2"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-6511/kotlin-jps-common-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-6511/kotlin-jps-common-for-ide-2.2.20-dev-6511.jar",
+    "path": "org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-7472/kotlin-jps-common-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-7472/kotlin-jps-common-for-ide-2.2.20-dev-7472.jar",
     "sha256": "90297f18bfea7c9dd35a1909413a019cfe0f5416f3c01f0cd75b621e6338d317"
   },
   {
@@ -7750,14 +7750,14 @@
     "sha256": "c05e38ca6de3cfdb77b315c1488e0e860082670642592b897d93e41ce0ffb0ac"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-6511/kotlin-jps-plugin-classpath-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-6511/kotlin-jps-plugin-classpath-2.2.20-dev-6511-sources.jar",
-    "sha256": "4bb8e2fa32845e085a48f94aeaccbafeeb7a0c3beeeceb879acf0663f5f2ecdf"
+    "path": "org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-7472/kotlin-jps-plugin-classpath-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-7472/kotlin-jps-plugin-classpath-2.2.20-dev-7472-sources.jar",
+    "sha256": "4fdb66257722f9880d2a73154ed6a24b3e7dc7290400e0d6e6cbcb5a7be7bab4"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-6511/kotlin-jps-plugin-classpath-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-6511/kotlin-jps-plugin-classpath-2.2.20-dev-6511.jar",
-    "sha256": "c425283c3caf19a38de858dc16976c5770aa02099c58fc6f1e28c3821863b539"
+    "path": "org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-7472/kotlin-jps-plugin-classpath-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-7472/kotlin-jps-plugin-classpath-2.2.20-dev-7472.jar",
+    "sha256": "5a6a7208684b994c34ffaa5abd15f29f5a38bfbcb228a49c7698079f0f8bc770"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.1.21/kotlin-jps-plugin-tests-for-ide-2.1.21-sources.jar",
@@ -7870,14 +7870,14 @@
     "sha256": "7bc3926cb79dd6b38a9c7ea10f853533983622dbfebf0678dd922e3af30fb5d7"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-6511/kotlin-script-runtime-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-6511/kotlin-script-runtime-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-7472/kotlin-script-runtime-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-7472/kotlin-script-runtime-2.2.20-dev-7472-sources.jar",
     "sha256": "d9d6b416bf1267d5d9a2fffb309c8d02fa707608154d7b0d7dd318d2dd7daa96"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-6511/kotlin-script-runtime-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-6511/kotlin-script-runtime-2.2.20-dev-6511.jar",
-    "sha256": "5c61bee603521eb9e8b37962cc14efa49727fd05e0bdfe29247536d721bd9936"
+    "path": "org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-7472/kotlin-script-runtime-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-7472/kotlin-script-runtime-2.2.20-dev-7472.jar",
+    "sha256": "6bfd98cd6b97058c3b24fbc3e4d109878234e8d60ad72a0e37a83c642e96f816"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-scripting-common/2.0.10/kotlin-scripting-common-2.0.10-sources.jar",
@@ -7890,14 +7890,14 @@
     "sha256": "37d4671e73ca6599f597aba464577ebb3b8771a31ee9d7dcb52d916762d16871"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-6511/kotlin-scripting-common-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-6511/kotlin-scripting-common-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-7472/kotlin-scripting-common-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-7472/kotlin-scripting-common-2.2.20-dev-7472-sources.jar",
     "sha256": "f35d6e3213353fd4a115986e56fe222dbaddab56510c6c96b2bd2d9bd5e130de"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-6511/kotlin-scripting-common-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-6511/kotlin-scripting-common-2.2.20-dev-6511.jar",
-    "sha256": "0132a1903b157e645d5cac91c044ec18fbd5156e0ca93ace59bb9c769d4696e7"
+    "path": "org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-7472/kotlin-scripting-common-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-7472/kotlin-scripting-common-2.2.20-dev-7472.jar",
+    "sha256": "4f4e58f8b15ece14aecb965f2ff5d3699e998ef203ca7c9f4adc384c476bd101"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/2.0.10/kotlin-scripting-compiler-embeddable-2.0.10-sources.jar",
@@ -7920,24 +7920,24 @@
     "sha256": "97749ff32fce25ac35b2fd333080d34b6fc4d7a6b6ffb0499ece09ffebd123c8"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-6511/kotlin-scripting-compiler-impl-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-6511/kotlin-scripting-compiler-impl-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-7472/kotlin-scripting-compiler-impl-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-7472/kotlin-scripting-compiler-impl-2.2.20-dev-7472-sources.jar",
     "sha256": "db6db10045202326e1ca641a9f74fe5245d0f89baa423c5a4542c73e833166ff"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-6511/kotlin-scripting-compiler-impl-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-6511/kotlin-scripting-compiler-impl-2.2.20-dev-6511.jar",
-    "sha256": "b5f57537c11314d42fb56dbd86bfd2afb632f6503f4769dbb2352c0f725797ba"
+    "path": "org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-7472/kotlin-scripting-compiler-impl-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-7472/kotlin-scripting-compiler-impl-2.2.20-dev-7472.jar",
+    "sha256": "45b942e5be70126d28216d184874e37f03e68be9f8690ab2bad6b7e4e6ed973c"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-6511/kotlin-scripting-dependencies-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-6511/kotlin-scripting-dependencies-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-7472/kotlin-scripting-dependencies-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-7472/kotlin-scripting-dependencies-2.2.20-dev-7472-sources.jar",
     "sha256": "844d95fec92f336551e901b597588494252966315efffe7815dc3cda1f4b4f1d"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-6511/kotlin-scripting-dependencies-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-6511/kotlin-scripting-dependencies-2.2.20-dev-6511.jar",
-    "sha256": "2f2f74efceec1af5a3d2116ef6c20a766564e11d5a55caf7e8017f869df018a6"
+    "path": "org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-7472/kotlin-scripting-dependencies-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-7472/kotlin-scripting-dependencies-2.2.20-dev-7472.jar",
+    "sha256": "45616b3feececc3c8389fcf90321ecf5107b3611b7e1feb2cd97359c50f2822f"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.10/kotlin-scripting-jvm-2.0.10-sources.jar",
@@ -7950,14 +7950,14 @@
     "sha256": "5259a5173e2ea1b0256fb5ab994be50c18fdc15ed4f5b62edcf7e2579ecc9a7a"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-6511/kotlin-scripting-jvm-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-6511/kotlin-scripting-jvm-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-7472/kotlin-scripting-jvm-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-7472/kotlin-scripting-jvm-2.2.20-dev-7472-sources.jar",
     "sha256": "2a647e6f709da1792192b264c5742b95147d8287d3354e61a020b4f715408c0c"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-6511/kotlin-scripting-jvm-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-6511/kotlin-scripting-jvm-2.2.20-dev-6511.jar",
-    "sha256": "08eccffd2b4f03be4b9c6a26c671afac3b6dea9df492253fd8b50c27bd26f335"
+    "path": "org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-7472/kotlin-scripting-jvm-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-7472/kotlin-scripting-jvm-2.2.20-dev-7472.jar",
+    "sha256": "c20b5e0f198281a6028998620af9bef36f80724d766519b76237e4f5c25688a8"
   },
   {
     "path": "org/jetbrains/kotlin/kotlin-stdlib/2.2.0-RC2/kotlin-stdlib-2.2.0-RC2-sources.jar",
@@ -8000,84 +8000,84 @@
     "sha256": "8938eb97e36320daa3e6fb2a60fd2a05b232ff4a557173c5019f045b8832d9f4"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-6511/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-6511/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-7472/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-7472/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "767a95556dcf0cb49ac7a261e0f24dccce996edadaffaa7c22bb649e0e5848c5"
   },
   {
-    "path": "org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-6511/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-6511/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "8259f5f64e5d904a0da41fc25129d498f1be548533b5c8e0d86c37875be3658d"
+    "path": "org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-7472/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-7472/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "ddf708d1aff069402d7c8fdd12bf83ce338ea1fd1b610886728268dbeac1047c"
   },
   {
-    "path": "org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-6511/lombok-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-6511/lombok-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-7472/lombok-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-7472/lombok-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "f9b74b886b087d395410b477ed675f1b3d87cb35aa029d93d915099cac5e78f4"
   },
   {
-    "path": "org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-6511/lombok-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-6511/lombok-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
+    "path": "org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-7472/lombok-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-7472/lombok-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
     "sha256": "924e19483c3aebc6ef38cae2533f956b3b14656d2419e92999263748d96b8e3b"
   },
   {
-    "path": "org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-6511/low-level-api-fir-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-6511/low-level-api-fir-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "700dac6e10568a7236908c2f5377f3efd9bafdbc448c7f455ef38de6007af424"
+    "path": "org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-7472/low-level-api-fir-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-7472/low-level-api-fir-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "7d0fbd49b2c5991ac00254738f7c35662d29aa23d82e104ad44c6c6637ad715e"
   },
   {
-    "path": "org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-6511/low-level-api-fir-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-6511/low-level-api-fir-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "34e050bb0400e759e41fd014f68749c0b51d9b76b82dea72b141d4586a1596fe"
+    "path": "org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-7472/low-level-api-fir-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-7472/low-level-api-fir-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "ebea9aa53fe83c402e630d933e1f81bb58bfedad5815e45c0c759ebb20a5bdc0"
   },
   {
-    "path": "org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-6511/noarg-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-6511/noarg-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-7472/noarg-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-7472/noarg-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "54202ad2621e47c5e1e773114248800145b9b663bb4a0f77fde56f01ca59dc5e"
   },
   {
-    "path": "org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-6511/noarg-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-6511/noarg-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "eef047a6cbd34ad3db4edd9c934ea5896924f14e856e9c52fb5c4c50e83117f4"
+    "path": "org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-7472/noarg-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-7472/noarg-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "1f64a5caac5d6a5ce85aa2fa9f20fc38414cd09c40cc15b6f0bf254cb34cf3ea"
   },
   {
-    "path": "org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-6511/parcelize-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-6511/parcelize-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-7472/parcelize-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-7472/parcelize-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "fe3598f53e3a3913ce4b7c06273670e9794623bd8e33672cf6831d8acfa38a2f"
   },
   {
-    "path": "org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-6511/parcelize-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-6511/parcelize-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "227569ff4ab6f9d89baa6c5a808af1ebd08f37b7ff40671393dfd5e4cb65f36b"
+    "path": "org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-7472/parcelize-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-7472/parcelize-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "514bd3664703a58d7b9577508af6a7f7d488ea128700aec66cbbb45b80ac77bc"
   },
   {
-    "path": "org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-6511/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-6511/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
+    "path": "org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-7472/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-7472/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
     "sha256": "192e34a33ffc7c7b757658d94d4e272c9b887982c4b4c17f2efa8e3676f6c739"
   },
   {
-    "path": "org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-6511/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-6511/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
+    "path": "org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-7472/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-7472/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
     "sha256": "fe9c4aa6c6fcf23f9deec7ad1261703f06b7d1e725c63c694e5bf86492a8400b"
   },
   {
-    "path": "org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-6511/scripting-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-6511/scripting-compiler-plugin-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "e6b5f012a466a2e8edd29bc0126c9267fb08a647eff1632923c3752f5522ae00"
+    "path": "org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-7472/scripting-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-7472/scripting-compiler-plugin-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "08a22fab1f88b0c7a3ae93d05c207277166ded23534087bb3363ace0fefb8d35"
   },
   {
-    "path": "org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-6511/scripting-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-6511/scripting-compiler-plugin-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "f414fd99d78a9cd7661d44ed32fe61be7c31108d17e11122deedcd5543d1955e"
+    "path": "org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-7472/scripting-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-7472/scripting-compiler-plugin-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "1effb6adec2b738f4931445c8a2a3caa6d6e7b628bb5544c8bc61651251369d3"
   },
   {
-    "path": "org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-6511/symbol-light-classes-for-ide-2.2.20-dev-6511-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-6511/symbol-light-classes-for-ide-2.2.20-dev-6511-sources.jar",
-    "sha256": "fee9042eb4db6f2471c55cdabb41c29fe5f6ea914f859f2d4904a64d6c2977b9"
+    "path": "org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-7472/symbol-light-classes-for-ide-2.2.20-dev-7472-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-7472/symbol-light-classes-for-ide-2.2.20-dev-7472-sources.jar",
+    "sha256": "ed9abccd5fcfede06d065fb625bf34cddfce62aea8ce8e126251d384e80e9ef7"
   },
   {
-    "path": "org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-6511/symbol-light-classes-for-ide-2.2.20-dev-6511.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-6511/symbol-light-classes-for-ide-2.2.20-dev-6511.jar",
-    "sha256": "2bc7fc00c41e13895897c35d2127b3854a657b41826847853ea2dcab93007c74"
+    "path": "org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-7472/symbol-light-classes-for-ide-2.2.20-dev-7472.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-7472/symbol-light-classes-for-ide-2.2.20-dev-7472.jar",
+    "sha256": "30be6c4ec7370bab50fe77f9bac0ab7a356061ca31b1ef7f190e761a720906d0"
   },
   {
     "path": "org/jetbrains/kotlinx/atomicfu-jvm/0.20.2/atomicfu-jvm-0.20.2-sources.jar",
