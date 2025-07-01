@@ -31,6 +31,7 @@ import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineStart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
 
@@ -40,6 +41,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
+  private val isInited = AtomicBoolean(false)
   private val initializationJob by lazy {
     PyPackageCoroutine.launch(project, start = CoroutineStart.LAZY) {
       initManager()
@@ -216,13 +218,18 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   @ApiStatus.Internal
   suspend fun waitForInit() {
-    if (shouldBeInitInstantly())
-      return
-    initializationJob.join()
+    if (shouldBeInitInstantly()) {
+      initManager()
+    }
+    else {
+      initializationJob.join()
+    }
   }
 
   private suspend fun initManager() {
     try {
+      if (isInited.getAndSet(true))
+        return
       repositoryManager.initCaches()
       if (installedPackages.isEmpty()) {
         reloadPackages()
