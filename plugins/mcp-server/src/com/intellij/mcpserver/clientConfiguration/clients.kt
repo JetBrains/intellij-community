@@ -4,6 +4,7 @@ package com.intellij.mcpserver.clientConfiguration
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.createStdioMcpServerCommandLine
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PORT
@@ -175,7 +176,7 @@ class ClaudeCodeMcpClient(configPath: Path) : McpClient(MCPClientNames.CLAUDE_CO
   }
 
   override fun configure() {
-    runWithModalProgressBlocking(ModalTaskOwner.guess(), "Configuring MCP Client...", TaskCancellation.nonCancellable()) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), McpServerBundle.message("autoconfigure.progress.title"), TaskCancellation.nonCancellable()) {
       val claudeAddMCP = GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
         .withExePath("claude")
