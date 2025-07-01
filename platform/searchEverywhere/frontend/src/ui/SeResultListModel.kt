@@ -64,6 +64,7 @@ class SeResultListModel(private val selectionModelProvider: () -> ListSelectionM
 
     fun enable() {
       isEnabled = true
+      SeLog.log(SeLog.FROZEN_COUNT) { "frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
     }
 
     fun freezeIfEnabled(count: Int) {
@@ -71,10 +72,6 @@ class SeResultListModel(private val selectionModelProvider: () -> ListSelectionM
         frozenCountToApply = count
         SeLog.log(SeLog.FROZEN_COUNT) { "frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
       }
-    }
-
-    fun freezeAllIfEnabled() {
-      freezeIfEnabled(listSize())
     }
 
     fun reset() {
