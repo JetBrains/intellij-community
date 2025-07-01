@@ -130,7 +130,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     if (error != null) {
       throw new ConfigurationException(XmlStringUtil.wrapInHtml(error)).withHtmlMessage();
     }
-    applyResult.getPluginsToEnable().forEach(id -> setEnabled(id, PluginEnabledState.ENABLED));
+    applyResult.getPluginsToEnable().forEach(id -> super.setEnabled(id, PluginEnabledState.ENABLED));
     myUninstalled.clear();
     updateButtons();
     return !applyResult.getNeedRestart();
