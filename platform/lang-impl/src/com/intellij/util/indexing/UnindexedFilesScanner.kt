@@ -483,7 +483,7 @@ class UnindexedFilesScanner(
           }
           PushedFilePropertiesUpdaterImpl.finishVisitors(fileScannerVisitors)
           tracer.spanBuilder("Scanning gathered files").use { span ->
-            scanFiles(provider, scanningStatistics, sharedExplanationLogger, files, span)
+            scanFiles(scanningStatistics, sharedExplanationLogger, files, span)
           }
         }
       }
@@ -510,7 +510,6 @@ class UnindexedFilesScanner(
     }
 
     private suspend fun scanFiles(
-      provider: IndexableFilesIterator,
       scanningStatistics: ScanningStatistics,
       sharedExplanationLogger: IndexingReasonExplanationLogger,
       files: ArrayDeque<VirtualFile>,
@@ -534,11 +533,6 @@ class UnindexedFilesScanner(
                 val finder =
                   if (ourTestMode == TestMode.PUSHING) null
                   else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
-                val pushingUtil = PushingUtil(project, provider)
-                if (!pushingUtil.mayBeUsed()) {
-                  LOG.warn("Iterator based on $provider can't be used.")
-                  return@readAction
-                }
                 var file = mutex.withLock { files.removeFirstOrNull() }
                 while (file != null) {
                   try {
@@ -546,7 +540,6 @@ class UnindexedFilesScanner(
                       if (file is VirtualFileWithId) {
                         filterHandler.addFileId(project, file.id)
                       }
-                      pushingUtil.applyPushers(file)
                       val status = finder?.getFileStatus(file)
                       if (status != null) {
                         if (status.shouldIndex && ourTestMode == null) {
@@ -583,10 +576,20 @@ class UnindexedFilesScanner(
       thisProviderDeduplicateFilter: IndexableFilesDeduplicateFilter,
     ): ArrayDeque<VirtualFile> {
       val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
+      // We want to apply FilePropertyPusher sequentially, otherwise we might encounter incorrect behavior.
+      // FilePropertyPusher can be applied to a directory, and all its members must inherit the applied property.
+      // This means that we have to apply pusher first to a directory and then to all its child files,
+      // which is not guaranteed when scanning files in parallel.
+      val pushingUtil = PushingUtil(project, provider)
       val singleProviderIteratorFactory = ContentIterator { fileOrDir: VirtualFile ->
         // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
         // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
         PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
+        if (!pushingUtil.mayBeUsed()) {
+          LOG.warn("Iterator based on $provider can't be used.")
+          return@ContentIterator false
+        }
+        pushingUtil.applyPushers(fileOrDir)
         files.add(fileOrDir)
       }
 
