@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -60,7 +59,7 @@ class GlobalWorkspaceModel(
    */
   private val eelDescriptor: EelDescriptor,
   private val internalEnvironmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
-) : Disposable {
+)  {
 
   /**
    * Store link to the project from which changes came from. It's needed to avoid redundant changes application at [applyStateToProject]
@@ -181,9 +180,6 @@ class GlobalWorkspaceModel(
   fun resetVirtualFileUrlManager() {
     virtualFileManager = IdeVirtualFileUrlManagerImpl()
     globalWorkspaceModelCache?.setVirtualFileUrlManager(virtualFileManager)
-  }
-
-  override fun dispose() {
   }
 
   @RequiresWriteLock
