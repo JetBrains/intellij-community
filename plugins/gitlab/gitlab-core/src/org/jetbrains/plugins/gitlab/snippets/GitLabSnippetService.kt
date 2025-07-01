@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -105,7 +106,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
   private suspend fun attemptLogin(accountManager: GitLabAccountManager): Boolean {
     return coroutineScope {
       async(Dispatchers.Main) {
-        val (account, token) = GitLabLoginUtil.logInViaToken(project, null) { server, name ->
+        val (account, token) = GitLabLoginUtil.logInViaToken(project, null, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async false
 
@@ -124,7 +125,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
                                      result: GitLabCreateSnippetResult): GitLabApi? {
     return coroutineScope {
       async(Dispatchers.EDT) {
-        val loginResult = GitLabLoginUtil.updateToken(project, null, result.account) { server, name ->
+        val loginResult = GitLabLoginUtil.updateToken(project, null, result.account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async null
 
