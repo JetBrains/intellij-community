@@ -3,7 +3,9 @@ package com.intellij.java.codeserver.core
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
@@ -37,15 +39,8 @@ sealed interface JpmsModuleInfo {
   /**
    * Represents the details of a target module
    */
-  class TargetModuleInfo(element: PsiElement?, val packageName: String) : JpmsModuleInfo {
-    override val jpsModule: Module? by lazy {
-      if (element == null) return@lazy null
-      ModuleUtilCore.findModuleForPsiElement(element)
-    }
-    override val module: PsiJavaModule? by lazy {
-      JavaPsiModuleUtil.findDescriptorByElement(element)
-    }
-
+  interface TargetModuleInfo: JpmsModuleInfo {
+    val packageName: String
     /**
      * @return access information when the specified target module is accessed at a given place
      */
@@ -53,6 +48,23 @@ sealed interface JpmsModuleInfo {
       val useModule = JavaPsiModuleUtil.findDescriptorByElement(place).let { if (it is LightJavaModule) null else it }
       val current = CurrentModuleInfo(useModule, place)
       return JpmsModuleAccessInfo(current, this)
+    }
+  }
+
+  class TargetModuleInfoByJavaModule(override val module: PsiJavaModule?, override val packageName: String) : TargetModuleInfo {
+    override val jpsModule: Module? by lazy {
+      if (module == null) return@lazy null
+      ModuleUtilCore.findModuleForPsiElement(module)
+    }
+  }
+
+  class TargetModuleInfoByFile(virtualFile: VirtualFile, project: Project, override val packageName: String) : TargetModuleInfo {
+    override val jpsModule: Module? by lazy {
+      ModuleUtilCore.findModuleForFile(virtualFile, project)
+    }
+
+    override val module: PsiJavaModule? by lazy {
+      JavaPsiModuleUtil.findDescriptorByFile(virtualFile, project)
     }
   }
 
@@ -70,15 +82,15 @@ sealed interface JpmsModuleInfo {
      */
     @JvmStatic
     fun findTargetModuleInfos(targetPackageName: String, targetFile: PsiFile?, place: PsiFile): List<TargetModuleInfo>? {
-      val originalTargetFile = targetFile?.navigationElement
       if (!PsiUtil.isAvailable(JavaFeature.MODULES, place)) return null
 
       val useVFile = place.virtualFile
       val project = place.project
       val index = ProjectFileIndex.getInstance(project)
       if (useVFile != null && index.isInLibrarySource(useVFile)) return null
-      if (originalTargetFile != null && originalTargetFile.isPhysical) {
-        return listOf(TargetModuleInfo(originalTargetFile, targetPackageName))
+      val targetVirtualFile = targetFile?.virtualFile
+      if (targetVirtualFile != null && index.isInProject(targetVirtualFile)) {
+        return listOf(TargetModuleInfoByFile(targetVirtualFile, project, targetPackageName))
       }
       if (useVFile == null) return null
 
@@ -97,7 +109,7 @@ sealed interface JpmsModuleInfo {
         }
       }
 
-      return dirs.map { dir -> TargetModuleInfo(dir, packageName) }
+      return dirs.map { dir -> TargetModuleInfoByFile(dir.virtualFile, project, packageName) }
     }
   }
 }
