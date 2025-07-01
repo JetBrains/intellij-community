@@ -22,18 +22,14 @@ import java.net.URI
 import java.net.http.HttpResponse
 import java.util.concurrent.atomic.AtomicReference
 
-private const val CONNECTION_TIMEOUT_MS = 10000
-private const val READ_TIMEOUT_MS = 50000
-
-internal open class CloudConfigServerCommunicator(private val serverUrl: String? = null,
-  private val jbaAuthService: JBAAuthService
-) : AbstractServerCommunicator() {
-
+internal open class CloudConfigServerCommunicator(private val serverUrl: String?, private val jbaAuthService: JBAAuthService)
+  : AbstractServerCommunicator()
+{
   private val clientVersionContext = CloudConfigVersionContext()
 
   @VisibleForTesting
   @Volatile
-  internal var _currentIdTokenVar: String? = null
+  internal var currentIdTokenVar: String? = null
 
   private val clientRef = AtomicReference<CloudConfigFileClientV2>()
 
@@ -66,7 +62,7 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
 
         val actualVersion: String? = clientVersionContext.get(filePath)
         if (actualVersion == null) {
-          LOG.warn("Version not stored in the context for $filePath")
+          LOG.warn("Version not stored in the context for ${filePath} [r]")
         }
 
         Pair(stream, actualVersion)
@@ -93,7 +89,7 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
       }
     }
     else if (e is UnauthorizedException) {
-      _currentIdTokenVar?.also {
+      currentIdTokenVar?.also {
         LOG.warn("Got \"Unauthorized\" from Settings Sync server. Settings Sync will be disabled. Please login to JBA again")
         setAuthActionRequired()
         jbaAuthService.invalidateJBA(it)
@@ -117,9 +113,7 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     return stream
   }
 
-  override fun getLatestVersion(filePath: String): String? {
-    return client.getLatestVersion(filePath)?.versionId
-  }
+  override fun getLatestVersion(filePath: String): String? = client.getLatestVersion(filePath)?.versionId
 
   override fun deleteFileInternal(filePath: String) {
     client.delete(filePath)
@@ -128,53 +122,52 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
   override val userId: String
     get() = "jba"
 
-
   override fun writeFileInternal(filePath: String, versionId: String?, content: InputStream) : String? {
     return clientVersionContext.doWithVersion(filePath, versionId) { filePath ->
       client.write(filePath, content)
 
       val actualVersion: String? = clientVersionContext.get(filePath)
       if (actualVersion == null) {
-        LOG.warn("Version not stored in the context for $filePath")
+        LOG.warn("Version not stored in the context for ${filePath} [w]")
       }
       actualVersion
     }
   }
 
   @Throws(Exception::class)
-  fun fetchHistory(filePath: String): List<FileVersionInfo> {
-    return client.getVersions(filePath)
-  }
+  fun fetchHistory(filePath: String): List<FileVersionInfo> = client.getVersions(filePath)
 
   @VisibleForTesting
   internal open fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2? {
     val conf = createConfiguration() ?: return null
-    return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
+    return CloudConfigFileClientV2(url, conf, DUMMY_E_TAG_STORAGE, versionContext)
   }
 
   private fun createConfiguration(): Configuration? {
     val configuration = Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS)
     val idToken = jbaAuthService.idToken
-    _currentIdTokenVar = idToken
+    currentIdTokenVar = idToken
     if (idToken == null) {
       if (jbaAuthService.getAccountInfoService()?.userData != null) {
         setAuthActionRequired()
       }
       return null
-    } else {
+    }
+    else {
       configuration.auth(JbaJwtTokenAuthProvider(idToken))
     }
     return configuration
   }
 
   private fun setAuthActionRequired() {
-    if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
-      return
+    @Suppress("DEPRECATION")
+    if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) return
+
     jbaAuthService.authRequiredAction = SettingsSyncAuthService.PendingUserAction(
       message = SettingsSyncJbaBundle.message("action.settingsSync.authRequired"),
       actionTitle = SettingsSyncBundle.message("config.button.login"),
       actionDescription = SettingsSyncJbaBundle.message("action.settingsSync.authRequired.text")
-      ) {
+    ) {
       val userData = jbaAuthService.login(it)
       if (userData != null) {
         jbaAuthService.authRequiredAction = null
@@ -188,10 +181,13 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
       LOG.debug("Disposing...")
     }
     clientRef.set(null)
-    _currentIdTokenVar = null
+    currentIdTokenVar = null
   }
 
   companion object {
+    private const val CONNECTION_TIMEOUT_MS = 10000
+    private const val READ_TIMEOUT_MS = 50000
+
     private const val URL_PROVIDER = "https://www.jetbrains.com/config/IdeaCloudConfig.xml"
     private const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
     private const val DEFAULT_DEBUG_URL = "https://stgn.cloudconfig.jetbrains.com/cloudconfig"
@@ -227,22 +223,10 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     private val LOG = logger<CloudConfigServerCommunicator>()
 
     @VisibleForTesting
-    internal val DUMMY_ETAG_STORAGE: ETagStorage = object : ETagStorage {
-      override fun get(path: String): String? {
-        return null
-      }
-
-      override fun store(path: String, value: String) {
-        // do nothing
-      }
-
-      override fun remove(path: String?) {
-        // do nothing
-      }
+    internal val DUMMY_E_TAG_STORAGE: ETagStorage = object : ETagStorage {
+      override fun get(path: String): String? = null
+      override fun store(path: String, value: String) { }
+      override fun remove(path: String?) { }
     }
   }
-}
-
-internal fun enabledOrDisabled(value: Boolean?): String {
-  return if (value == null) "null" else if (value) "enabled" else "disabled"
 }
