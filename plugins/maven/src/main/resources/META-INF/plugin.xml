@@ -231,6 +231,16 @@
                      groupKey="inspection.group" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection"/>
 
+    <localInspection language="XML" shortName="MavenNewElementsInOldSchema" bundle="messages.MavenDomBundle"
+                     key="inspection.wrong.model.version"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNewElementsInOldSchemaInspection"/>
+
+    <localInspection language="XML" shortName="MavenNewModelVersionInOldSchema" bundle="messages.MavenDomBundle"
+                     key="inspection.wrong.model.version"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNewModelVersionInOldSchemaInspection"/>
+
     <xml.xmlExtension implementation="org.jetbrains.idea.maven.dom.MavenXmlExtension"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
