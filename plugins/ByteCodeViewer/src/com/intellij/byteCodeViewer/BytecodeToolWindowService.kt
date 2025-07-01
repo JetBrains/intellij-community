@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -35,17 +36,22 @@ class BytecodeToolWindowService(private val project: Project) {
 
     val listener = object : ContentManagerListener {
       override fun contentAdded(event: ContentManagerEvent) {
-        deduplicateTabNames(toolWindow)
+        if (UISettings.getInstance().showDirectoryForNonUniqueFilenames) {
+          deduplicateTabNames(toolWindow)
+        }
       }
 
       override fun contentRemoved(event: ContentManagerEvent) {
-        deduplicateTabNames(toolWindow)
+        if (UISettings.getInstance().showDirectoryForNonUniqueFilenames) {
+          deduplicateTabNames(toolWindow)
+        }
       }
     }
     contentManager.addContentManagerListener(listener)
     registeredListeners[toolWindow] = listener
 
     Disposer.register(toolWindow.disposable) {
+      // The bytecode tool window cannot be "closed"  
       contentManager.removeContentManagerListener(listener)
       registeredListeners.remove(toolWindow)
     }

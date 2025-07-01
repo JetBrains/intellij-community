@@ -31,9 +31,7 @@ internal class ShowBytecodeAction : AnAction() {
                        hideOnEmptyContent = true
                        canCloseContent = true
                      }
-    val service = BytecodeToolWindowService.getInstance(project)
-
-    service.ensureContentManagerListenerRegistered(toolWindow)
+    BytecodeToolWindowService.getInstance(project).ensureContentManagerListenerRegistered(toolWindow)
 
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
@@ -77,7 +75,6 @@ internal class ShowBytecodeAction : AnAction() {
 
 
     toolWindow.contentManager.addContent(content)
-    service.deduplicateTabNames(toolWindow)
     content.setDisposer(panel)
     toolWindow.contentManager.setSelectedContent(content)
     toolWindow.setAdditionalGearActions(createActionGroup())
