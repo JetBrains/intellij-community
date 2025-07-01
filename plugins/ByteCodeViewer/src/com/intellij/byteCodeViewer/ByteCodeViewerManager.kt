@@ -58,9 +58,9 @@ object ByteCodeViewerManager {
       if (aClass != null) return aClass
     }
 
-    var containingClass = PsiTreeUtil.getParentOfType<PsiClass?>(psiElement, PsiClass::class.java, false)
+    var containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass::class.java, false)
     while (containingClass is PsiTypeParameter) {
-      containingClass = PsiTreeUtil.getParentOfType<PsiClass?>(containingClass, PsiClass::class.java)
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass::class.java)
     }
     if (containingClass != null) return containingClass
 
