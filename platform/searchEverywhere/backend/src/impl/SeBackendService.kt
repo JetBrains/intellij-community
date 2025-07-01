@@ -103,12 +103,16 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       sessionIdToProviderHolders[session.eid]?.let { return@withLock it }
 
       if (dataContextId == null) {
-        throw IllegalStateException("Cannot create providers on the backend: no serialized data context")
+        SeLog.error("Cannot create providers on the backend: no serialized data context")
+        return@withLock null
       }
 
       val dataContext = withContext(Dispatchers.EDT) {
         dataContextId.dataContext()
-      } ?: throw IllegalStateException("Cannot create providers on the backend: couldn't deserialize data context")
+      } ?: run {
+        SeLog.error("Cannot create providers on the backend: couldn't deserialize data context")
+        return@withLock null
+      }
 
       val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
       val providersHolder = SeProvidersHolder.initialize(actionEvent, project, sessionRef, "Backend")

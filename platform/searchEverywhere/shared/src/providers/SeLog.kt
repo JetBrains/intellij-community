@@ -54,6 +54,10 @@ enum class SeLog {
       logger.warn(message.withSePrefix(WARNING))
     }
 
+    fun error(message: String) {
+      logger.error(message)
+    }
+
     private fun String.withSePrefix(category: SeLog): String = "SearchEverywhere2 ($category): $this"
   }
 }
