@@ -527,20 +527,11 @@ open class PluginAdvertiserServiceImpl(
         )
       }
       else {
-        if (feature.value.size <= 1) {
-          IdeBundle.message(
-            "plugins.advertiser.missing.feature.dependency",
-            pluginsNumber,
-            pluginNames
-          )
-        }
-        else {
-          IdeBundle.message(
-            "plugins.advertiser.missing.features.dependency",
-            pluginsNumber,
-            pluginNames
-          )
-        }
+        IdeBundle.message(
+          "plugins.advertiser.missing.features.dependency",
+          pluginsNumber,
+          pluginNames
+        )
       }
     }
     else {
