@@ -1447,18 +1447,6 @@ class PyDB(object):
                 return
 
             pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads (first call)")
-
-            # Wait until a time when there are no commands being processed to kill the threads.
-            started_at = time.time()
-            while time.time() < started_at + timeout:
-                with self._main_lock:
-                    writer = self.writer
-                    if writer is None or writer.empty():
-                        pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads no commands being processed.")
-                        break
-            else:
-                pydev_log.debug("PyDB.dispose_and_kill_all_pydevd_threads timed out waiting for writer to be empty.")
-
             pydb_daemon_threads = set(self.created_pydb_daemon_threads)
             for t in pydb_daemon_threads:
                 if hasattr(t, "do_kill_pydev_thread"):

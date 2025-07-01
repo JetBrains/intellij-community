@@ -522,8 +522,9 @@ class NetCommand:
             sock.sendall(('Content-Length: %s\r\n\r\n' % len(as_bytes)).encode('ascii'))
         try:
             sock.sendall(as_bytes)
-        except BrokenPipeError:
-            print("Connection closed unexpectedly!")
+        except OSError as e:
+            if not IS_PY2 and isinstance(e, ConnectionError):
+                print("Connection error: %s" % (e,))
 
     @classmethod
     def _show_debug_info(cls, cmd_id, seq, text):
