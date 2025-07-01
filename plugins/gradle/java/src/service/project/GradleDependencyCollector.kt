@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.ide.plugins.DependencyInformation
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
@@ -18,7 +19,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 
 internal class GradleDependencyCollector : DependencyCollector {
 
-  override suspend fun collectDependencies(project: Project): Collection<String> {
+  override suspend fun collectDependencies(project: Project): Collection<DependencyInformation> {
     val projectStructures = readAction {
       ProjectDataManager.getInstance()
         .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
@@ -42,7 +43,7 @@ internal class GradleDependencyCollector : DependencyCollector {
       }
     }
 
-    return allDependencies.map { (g, a) -> "$g:$a" }
+    return allDependencies.map { (g, a) -> DependencyInformation("$g:$a") }
   }
 
   private fun <T> DataNode<*>.getChildrenSequence(key: Key<T>) = ExternalSystemApiUtil.getChildren(this, key).asSequence()

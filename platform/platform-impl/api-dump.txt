@@ -214,6 +214,17 @@ com.intellij.ide.navigationToolbar.NavBarModelExtension
 - normalizeChildren():Z
 - processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+f:com.intellij.ide.plugins.DependencyInformation
+- <init>(java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.ide.plugins.DependencyInformation
+- bs:copy$default(com.intellij.ide.plugins.DependencyInformation,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ide.plugins.DependencyInformation
+- equals(java.lang.Object):Z
+- f:getCoordinate():java.lang.String
+- f:getReason():java.lang.String
+- hashCode():I
 f:com.intellij.ide.plugins.InstalledPluginsState
 - getInstalledWithoutRestartPlugins():java.util.Collection
 com.intellij.ide.plugins.PluginEnableStateChangedListener

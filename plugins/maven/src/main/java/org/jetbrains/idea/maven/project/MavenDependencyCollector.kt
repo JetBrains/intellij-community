@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.ide.plugins.DependencyInformation
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -9,13 +10,13 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 
 internal class MavenDependencyCollector : DependencyCollector {
 
-  override suspend fun collectDependencies(project: Project): Set<String> {
+  override suspend fun collectDependencies(project: Project): Set<DependencyInformation> {
     return readAction {
       MavenProjectsManager.getInstance(project).projects.asSequence()
         .flatMap { p -> p.dependencies }
         .map { it.groupId to it.artifactId }
         .distinct()
-        .map { (g, a) -> "$g:$a" }
+        .map { (g, a) -> DependencyInformation("$g:$a") }
         .toSet()
     }
   }
