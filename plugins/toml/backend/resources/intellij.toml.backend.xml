@@ -32,5 +32,7 @@
             <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
             <categoryKey>intention.category.toml</categoryKey>
         </intentionAction>
+
+        <virtualFileCustomDataProvider implementation="org.toml.ide.formatter.settings.TomlCodeStyleSettingsSynchronizer"/>
     </extensions>
 </idea-plugin>
