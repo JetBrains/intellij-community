@@ -16,12 +16,14 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleContainingElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
@@ -137,8 +139,8 @@ internal fun checkVisibilityConflictForNonMovedUsages(
                 val usageElement = usageInfo.element ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
                 analyze(referencedDeclaration) {
-                    val usageKaModule = usageElement.module?.toKaSourceModuleForProductionOrTest()
-                    val referencedDeclarationKaModule = targetDir.module?.toKaSourceModuleForProductionOrTest()
+                    val usageKaModule = usageElement.module?.toKaSourceModuleContainingElement(usageElement)
+                    val referencedDeclarationKaModule = targetDir.module?.toKaSourceModuleContainingElement(targetDir)
                     val isVisible = when (referencedDeclaration.symbol.visibility) {
                         KaSymbolVisibility.PRIVATE -> {
                             target != null && isPrivateVisibleAt(referencedDeclaration, target)
@@ -198,7 +200,7 @@ fun checkVisibilityConflictsForInternalUsages(
     targetDir: PsiDirectory,
     target: K2MoveTargetDescriptor.Declaration<*>? = null
 ): MultiMap<PsiElement, String> {
-    val usageKaModule = targetDir.module?.toKaSourceModuleForProductionOrTest()
+    val usageKaModule = targetDir.module?.toKaSourceModuleContainingElement(targetDir)
 
     return topLevelDeclarationsToMove
         .flatMap { it.internalUsageElements() }
@@ -210,7 +212,10 @@ fun checkVisibilityConflictsForInternalUsages(
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
                 val isVisible = if (referencedDeclaration is KtNamedDeclaration) {
                     analyze(usageElement) {
-                        val referencedDeclarationKaModule = referencedDeclaration.module?.toKaSourceModuleForProductionOrTest()
+                        val referencedDeclarationKaModule = referencedDeclaration.getKaModuleOfTypeSafe<KaSourceModule>(
+                            referencedDeclaration.project,
+                            useSiteModule = null,
+                        )
                         val symbol = referencedDeclaration.symbol
                         val visibility = if (symbol is KaConstructorSymbol) {
                             (symbol.containingSymbol as? KaClassSymbol)?.let { classSymbol ->

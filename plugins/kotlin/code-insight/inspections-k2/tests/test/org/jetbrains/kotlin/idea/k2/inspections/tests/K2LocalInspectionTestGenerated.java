@@ -101,19 +101,9 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/internalInPrivateClass.kt");
         }
 
-        @TestMetadata("onlyPrivateIsOkForSealedConstructor.kt")
-        public void testOnlyPrivateIsOkForSealedConstructor() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/onlyPrivateIsOkForSealedConstructor.kt");
-        }
-
         @TestMetadata("overridePropertySetter.kt")
         public void testOverridePropertySetter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/overridePropertySetter.kt");
-        }
-
-        @TestMetadata("privateIsDefaultForSealedConstructor.kt")
-        public void testPrivateIsDefaultForSealedConstructor() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier/privateIsDefaultForSealedConstructor.kt");
         }
 
         @TestMetadata("privateIsOkForSealedConstructor.kt")

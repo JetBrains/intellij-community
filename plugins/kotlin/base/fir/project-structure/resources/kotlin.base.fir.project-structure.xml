@@ -1,9 +1,4 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.fir.projectStructure">
-  <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.base.fir.projectStructure.FirOrderedWorkspaceModelChangeListener"
-              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
-  </projectListeners>
-
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.projectStructure.K1KotlinLibraryDeduplicator"
                     serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinLibraryDeduplicator"/>

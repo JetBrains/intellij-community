@@ -8,7 +8,6 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.computeTransitiveDependsOnDependencies
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 
 /**
@@ -30,7 +29,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
  * @see com.intellij.platform.workspace.storage.WorkspaceEntity
  */
 @ApiStatus.Internal
-abstract class KaEntityBasedModule<E : WorkspaceEntityWithSymbolicId, EID : SymbolicEntityId<E>> : KaModule, KaModuleBase() {
+abstract class KaEntityBasedModule<E : WorkspaceEntityWithSymbolicId, EID : SymbolicEntityId<E>> : KaModuleBase() {
     abstract val entityId: EID
 
     protected val workspaceModel: WorkspaceModel get() = project.workspaceModel

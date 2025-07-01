@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
@@ -17,7 +16,6 @@ import java.io.File
  * This test ensures that cached transitive dependents of the IDE's [KotlinModuleDependentsProvider] are properly invalidated.
  */
 class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest() {
-
     override fun getTestDataDirectory(): File = error("Should not be called")
 
     override val pluginMode: KotlinPluginMode
@@ -37,14 +35,14 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
         val ktModuleA = moduleA.toKaSourceModuleForProduction()!!
 
         Assert.assertEquals(
-            setOf("b", "c"),
+            setOf("a (test)", "b (production)", "b (test)", "c (production)", "c (test)"),
             ktModuleA.getTransitiveDependentNames(),
         )
 
         moduleD.addDependency(moduleA)
 
         Assert.assertEquals(
-            setOf("b", "c", "d"),
+            setOf("a (test)", "b (production)", "b (test)", "c (production)", "c (test)", "d (production)", "d (test)"),
             ktModuleA.getTransitiveDependentNames(),
         )
     }
@@ -61,18 +59,18 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
         val ktModuleA = libraryA.toKaLibraryModules(project).first()
 
         Assert.assertEquals(
-            setOf("b", "c"),
+            setOf("b (production)", "b (test)", "c (production)", "c (test)"),
             ktModuleA.getTransitiveDependentNames(),
         )
 
         moduleD.addDependency(libraryA)
 
         Assert.assertEquals(
-            setOf("b", "c", "d"),
+            setOf("b (production)", "b (test)", "c (production)", "c (test)", "d (production)", "d (test)"),
             ktModuleA.getTransitiveDependentNames(),
         )
     }
 
     private fun KaModule.getTransitiveDependentNames(): Set<String> =
-        moduleDependentsProvider.getTransitiveDependents(this).mapTo(mutableSetOf()) { (it as KaSourceModule).name }
+        moduleDependentsProvider.getTransitiveDependents(this).mapTo(mutableSetOf()) { renderModuleName(it) }
 }

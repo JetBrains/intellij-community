@@ -1,29 +1,91 @@
 graph TD
   KaLibraryModule_0(["KaLibraryModule(SDK)"])
   KaSourceModule_1["KaSourceModule(common)<br />production<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
-  KaSourceModule_2["KaSourceModule(js)<br />production<br />JS"]
-  KaSourceModule_3["KaSourceModule(jvm)<br />production<br />JVM (1.8)"]
-  KaSourceModule_4["KaSourceModule(native)<br />production<br />Native (general)"]
-  KaSourceModule_5["KaSourceModule(wasm)<br />production<br />Wasm (general)"]
+  KaSourceModule_2["KaSourceModule(common)<br />test<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
+  KaSourceModule_3["KaSourceModule(js)<br />production<br />JS"]
+  KaSourceModule_4["KaSourceModule(js)<br />test<br />JS"]
+  KaSourceModule_5["KaSourceModule(jvm)<br />production<br />JVM (1.8)"]
+  KaSourceModule_6["KaSourceModule(jvm)<br />test<br />JVM (1.8)"]
+  KaSourceModule_7["KaSourceModule(native)<br />production<br />Native (general)"]
+  KaSourceModule_8["KaSourceModule(native)<br />test<br />Native (general)"]
+  KaSourceModule_9["KaSourceModule(wasm)<br />production<br />Wasm (general)"]
+  KaSourceModule_10["KaSourceModule(wasm)<br />test<br />Wasm (general)"]
   style KaLibraryModule_0 fill:#CC2B52
   style KaSourceModule_1 fill:#608BC1
-  style KaSourceModule_2 fill:#608BC1
+  style KaSourceModule_2 fill:#31511E
   style KaSourceModule_3 fill:#608BC1
-  style KaSourceModule_4 fill:#608BC1
+  style KaSourceModule_4 fill:#31511E
   style KaSourceModule_5 fill:#608BC1
+  style KaSourceModule_6 fill:#31511E
+  style KaSourceModule_7 fill:#608BC1
+  style KaSourceModule_8 fill:#31511E
+  style KaSourceModule_9 fill:#608BC1
+  style KaSourceModule_10 fill:#31511E
+  KaSourceModule_10 --> KaSourceModule_1
+  KaSourceModule_10 --> KaSourceModule_2
+  KaSourceModule_10 --> KaSourceModule_9
   KaSourceModule_2 --> KaSourceModule_1
   KaSourceModule_3 --> KaSourceModule_1
   KaSourceModule_4 --> KaSourceModule_1
+  KaSourceModule_4 --> KaSourceModule_2
+  KaSourceModule_4 --> KaSourceModule_3
   KaSourceModule_5 --> KaSourceModule_1
-  KaSourceModule_2 --dependsOn--> KaSourceModule_1
+  KaSourceModule_6 --> KaSourceModule_1
+  KaSourceModule_6 --> KaSourceModule_2
+  KaSourceModule_6 --> KaSourceModule_5
+  KaSourceModule_7 --> KaSourceModule_1
+  KaSourceModule_8 --> KaSourceModule_1
+  KaSourceModule_8 --> KaSourceModule_2
+  KaSourceModule_8 --> KaSourceModule_7
+  KaSourceModule_9 --> KaSourceModule_1
+  KaSourceModule_10 --friend--> KaSourceModule_1
+  KaSourceModule_10 --friend--> KaSourceModule_9
+  KaSourceModule_2 --friend--> KaSourceModule_1
+  KaSourceModule_4 --friend--> KaSourceModule_1
+  KaSourceModule_4 --friend--> KaSourceModule_3
+  KaSourceModule_6 --friend--> KaSourceModule_1
+  KaSourceModule_6 --friend--> KaSourceModule_5
+  KaSourceModule_8 --friend--> KaSourceModule_1
+  KaSourceModule_8 --friend--> KaSourceModule_7
+  KaSourceModule_10 --dependsOn--> KaSourceModule_2
   KaSourceModule_3 --dependsOn--> KaSourceModule_1
-  KaSourceModule_4 --dependsOn--> KaSourceModule_1
+  KaSourceModule_4 --dependsOn--> KaSourceModule_2
   KaSourceModule_5 --dependsOn--> KaSourceModule_1
+  KaSourceModule_6 --dependsOn--> KaSourceModule_2
+  KaSourceModule_7 --dependsOn--> KaSourceModule_1
+  KaSourceModule_8 --dependsOn--> KaSourceModule_2
+  KaSourceModule_9 --dependsOn--> KaSourceModule_1
   linkStyle 0 stroke:black
   linkStyle 1 stroke:black
   linkStyle 2 stroke:black
   linkStyle 3 stroke:black
-  linkStyle 4 stroke:#8967B3
-  linkStyle 5 stroke:#8967B3
-  linkStyle 6 stroke:#8967B3
-  linkStyle 7 stroke:#8967B3
+  linkStyle 4 stroke:black
+  linkStyle 5 stroke:black
+  linkStyle 6 stroke:black
+  linkStyle 7 stroke:black
+  linkStyle 8 stroke:black
+  linkStyle 9 stroke:black
+  linkStyle 10 stroke:black
+  linkStyle 11 stroke:black
+  linkStyle 12 stroke:black
+  linkStyle 13 stroke:black
+  linkStyle 14 stroke:black
+  linkStyle 15 stroke:black
+  linkStyle 16 stroke:black
+  linkStyle 17 stroke:#E6C767
+  linkStyle 18 stroke:#E6C767
+  linkStyle 19 stroke:#E6C767
+  linkStyle 20 stroke:#E6C767
+  linkStyle 21 stroke:#E6C767
+  linkStyle 22 stroke:#E6C767
+  linkStyle 23 stroke:#E6C767
+  linkStyle 24 stroke:#E6C767
+  linkStyle 25 stroke:#E6C767
+  linkStyle 26 stroke:#8967B3
+  linkStyle 27 stroke:#8967B3
+  linkStyle 28 stroke:#8967B3
+  linkStyle 29 stroke:#8967B3
+  linkStyle 30 stroke:#8967B3
+  linkStyle 31 stroke:#8967B3
+  linkStyle 32 stroke:#8967B3
+  linkStyle 33 stroke:#8967B3
