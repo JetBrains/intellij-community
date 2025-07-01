@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -94,7 +95,7 @@ internal class GHPRTimelineViewModelImpl(
   private val timelineLoader = dataProvider.acquireTimelineLoader(cs)
 
   override val loadingErrorHandler: GHLoadingErrorHandler =
-    GHApiLoadingErrorHandler(project, securityService.account, timelineLoader::reset)
+    GHApiLoadingErrorHandler(project, securityService.account, GHLoginSource.PR_TIMELINE, timelineLoader::reset)
 
   override val commentVm: GHPRNewCommentViewModel? =
     if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {

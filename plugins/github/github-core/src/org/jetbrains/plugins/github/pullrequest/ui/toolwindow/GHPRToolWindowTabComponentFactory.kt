@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.yield
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListPanelFactory
@@ -28,7 +29,7 @@ internal class GHPRToolWindowTabComponentFactory(
 ) : ReviewTabsComponentFactory<GHPRToolWindowTabViewModel, GHPRToolWindowProjectViewModel> {
 
   override fun createEmptyTabContent(cs: CoroutineScope): JComponent {
-    val selector = GHRepositoryAndAccountSelectorComponentFactory(project, vm.selectorVm, service<GHAccountManager>()).create(cs)
+    val selector = GHRepositoryAndAccountSelectorComponentFactory(project, vm.selectorVm, service<GHAccountManager>(), GHLoginSource.PR_TW).create(cs)
     return JPanel(BorderLayout()).apply {
       background = UIUtil.getListBackground()
       add(selector, BorderLayout.NORTH)

@@ -13,6 +13,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
@@ -122,4 +123,7 @@ internal class GithubLoginPanel(
 
   fun setOAuthUi() = applyUi(oauthUi)
   fun setTokenUi() = applyUi(tokenUi)
+
+  @ApiStatus.Internal
+  fun isOAuthUi() = currentUi == oauthUi
 }
