@@ -489,19 +489,18 @@ interface EelFileSystemApi {
    * Adds the watched paths from the specified set of file paths and provides a flow of change events.
    * A path is watched till [unwatch] method is explicitly called for it.
    *
-   * Use [WatchOptionsBuilder] to construct the watch configuration. Example:
+   * Use [WatchOptionsBuilder] to construct the watch configuration. An example of recursive watch for the given `eelPath`:
    * ```
    * val flow = eel.fs.watchChanges(
    *     WatchOptionsBuilder()
    *         .changeTypes(setOf(EelFileSystemApi.FileChangeType.CHANGED))
-   *         .paths(setOf(eelPath))
+   *         .paths(setOf(WatchedPath.from(eelPath).recursive()))
    *         .build())
    * ```
    *
    * @param watchOptions The options to use for file watching. See [WatchOptions]
    * @return A flow emitting [PathChange] instances that indicate the path and type of change.
    *         Each path is an absolute path on the target system (container), for example, `/home/myproject/myfile.txt`
-   * @throws UnsupportedOperationException if the method isn't implemented for the file system.
    */
   @Throws(UnsupportedOperationException::class)
   suspend fun watchChanges(@GeneratedBuilder watchOptions: WatchOptions): Flow<PathChange> {
@@ -553,18 +552,21 @@ interface EelFileSystemApi {
    * @property recursive Whether the file system changes should be monitored recursively within the specified path.
    * @see [watchChanges]
    */
-  interface WatchedPath {
-    val path: EelPath
-    val recursive: Boolean
-
-    interface Builder {
-      fun build(): WatchedPath
-      fun recursive(boolean: Boolean): Builder
-    }
-
+  class WatchedPath internal constructor(val path: EelPath, val recursive: Boolean) {
     companion object {
-      fun Builder(path: EelPath): Builder = WatchedPathBuilder(path)
+      /**
+       * Creates a WatchedPath from EelPath with recursive monitoring disabled.
+       *
+       * @param path the EelPath instance to be converted
+       * @return a new *non-recursive* WatchedPath instance created from the provided EelPath.
+       */
+      fun from(path: EelPath): WatchedPath = WatchedPath(path, false)
     }
+
+    /**
+     * @return a `WatchedPath` instance with the same `path` as the current object, but with recursive monitoring enabled.
+     */
+    fun recursive(): WatchedPath = WatchedPath(path, true)
   }
 
   /**

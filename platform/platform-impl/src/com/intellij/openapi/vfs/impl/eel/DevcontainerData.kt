@@ -25,9 +25,9 @@ internal class DevcontainerData(val prefix: String, val descriptor: EelDescripto
 
   fun getWatchedPaths(): Set<WatchedPath> {
     return (recursive.values.mapNotNull {
-      toContainerPath(it)?.let { eelPath -> WatchedPath.Builder(eelPath).recursive(true).build() }
+      toContainerPath(it)?.let { eelPath -> WatchedPath.from(eelPath).recursive() }
     } + flat.values.mapNotNull {
-      toContainerPath(it)?.let { eelPath -> WatchedPath.Builder(eelPath).recursive(false).build() }
+      toContainerPath(it)?.let { eelPath -> WatchedPath.from(eelPath) }
     }).toSet()
   }
 

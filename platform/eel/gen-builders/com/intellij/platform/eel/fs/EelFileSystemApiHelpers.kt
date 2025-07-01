@@ -124,19 +124,18 @@ fun EelFileSystemApi.unwatch(
  * Adds the watched paths from the specified set of file paths and provides a flow of change events.
  * A path is watched till [unwatch] method is explicitly called for it.
  *
- * Use [WatchOptionsBuilder] to construct the watch configuration. Example:
+ * Use [WatchOptionsBuilder] to construct the watch configuration. An example of recursive watch for the given `eelPath`:
  * ```
  * val flow = eel.fs.watchChanges(
  *     WatchOptionsBuilder()
  *         .changeTypes(setOf(EelFileSystemApi.FileChangeType.CHANGED))
- *         .paths(setOf(eelPath))
+ *         .paths(setOf(WatchedPath.from(eelPath).recursive()))
  *         .build())
  * ```
  *
  * @param watchOptions The options to use for file watching. See [WatchOptions]
  * @return A flow emitting [PathChange] instances that indicate the path and type of change.
  *         Each path is an absolute path on the target system (container), for example, `/home/myproject/myfile.txt`
- * @throws UnsupportedOperationException if the method isn't implemented for the file system.
  */
 @GeneratedBuilder.Result
 @ApiStatus.Internal
