@@ -104,13 +104,13 @@ private class GradleJvmResolutionContext(
 private fun GradleJvmResolutionContext.canUseGradleJavaHomeJdk(): Boolean {
   val properties = GradlePropertiesFile.getProperties(project, externalProjectPath)
   val javaHome = properties.javaHomeProperty?.value
-  val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
+  val validationStatus = validateGradleJavaHome(project, gradleVersion, javaHome)
   return validationStatus is Success
 }
 
 private fun GradleJvmResolutionContext.canUseJavaHomeJdk(): Boolean {
   val javaHome = ExternalSystemJdkUtil.getJavaHome()
-  val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
+  val validationStatus = validateGradleJavaHome(project, gradleVersion, javaHome)
   return validationStatus is Success
 }
 
