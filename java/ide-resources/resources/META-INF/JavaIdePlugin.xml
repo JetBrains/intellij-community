@@ -25,10 +25,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="/META-INF/RegExpPlugin.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <xi:include href="/META-INF/structuralsearch.xml">
     <xi:fallback/>
   </xi:include>

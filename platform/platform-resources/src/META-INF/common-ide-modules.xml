@@ -40,6 +40,8 @@
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
     <module name="intellij.platform.polySymbols.backend" loading="embedded"/> <!--todo: move to essential modules when not embedded-->
+
+    <module name="intellij.regexp" loading="embedded"/>
   </content>
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>
