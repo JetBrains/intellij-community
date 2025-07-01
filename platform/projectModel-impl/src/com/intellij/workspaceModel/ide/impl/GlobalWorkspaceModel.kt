@@ -235,12 +235,15 @@ class GlobalWorkspaceModel(
     }
   }
 
-  fun applyStateToProjectBuilder(project: Project,
-                                 targetBuilder: MutableEntityStorage): Unit = applyStateToProjectBuilderTimeMs.addMeasuredTime {
+  fun applyStateToProjectBuilder(
+    targetBuilder: MutableEntityStorage,
+    workspaceModel: WorkspaceModelImpl
+  ): Unit = applyStateToProjectBuilderTimeMs.addMeasuredTime {
     LOG.info("Sync global entities with mutable entity storage")
-    targetBuilder.replaceBySource(globalEntitiesFilter,
-                                  copyEntitiesToEmptyStorage(entityStorage.current,
-                                                             WorkspaceModel.getInstance(project).getVirtualFileUrlManager()))
+    targetBuilder.replaceBySource(
+      sourceFilter = globalEntitiesFilter,
+      replaceWith = copyEntitiesToEmptyStorage(entityStorage.current, workspaceModel.getVirtualFileUrlManager()),
+    )
   }
 
   @RequiresWriteLock
