@@ -78,7 +78,9 @@ class BackendPluginInstallerApi : PluginInstallerApi {
   }
 
   override suspend fun applyPluginSession(sessionId: String, projectId: ProjectId?): ApplyPluginsStateResult {
-    return DefaultUiPluginManagerController.applySession(sessionId, null, projectId?.findProjectOrNull())
+    return withContext(Dispatchers.EDT) {
+      DefaultUiPluginManagerController.applySession(sessionId, null, projectId?.findProjectOrNull())
+    }
   }
 
   override suspend fun performInstallOperation(installPluginRequest: InstallPluginRequest): InstallPluginResult {
