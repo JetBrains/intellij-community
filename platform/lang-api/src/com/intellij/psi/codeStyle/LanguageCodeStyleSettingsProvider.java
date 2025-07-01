@@ -38,7 +38,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @TestOnly
   @ApiStatus.Internal
   public static void mockLanguageCodeStyleSettingsProviderService(BiConsumer<Class<?>, Object> registrar) {
-    registrar.accept(LanguageCodeStyleSettingsProviderService.class, new LanguageCodeStyleSettingsProviderService());
+    registrar.accept(LanguageCodeStyleSettingsProviderService.class, new LanguageCodeStyleSettingsProviderService(true));
   }
 
   public static @NotNull List<LanguageCodeStyleSettingsProvider> getAllProviders() {
