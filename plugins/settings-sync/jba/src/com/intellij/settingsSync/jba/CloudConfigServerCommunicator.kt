@@ -1,27 +1,25 @@
 package com.intellij.settingsSync.jba
 
+import com.intellij.ide.RegionUrlMapper
 import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.settingsSync.core.AbstractServerCommunicator
-import com.intellij.settingsSync.core.SettingsSyncBundle
-import com.intellij.settingsSync.core.SettingsSyncEventListener
-import com.intellij.settingsSync.core.SettingsSyncEvents
-import com.intellij.settingsSync.core.SettingsSyncStatusTracker
+import com.intellij.settingsSync.core.*
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.auth.JBAAuthService
-import com.intellij.util.io.HttpRequests
+import com.intellij.util.net.PlatformHttpClient
 import com.jetbrains.cloudconfig.CloudConfigFileClientV2
 import com.jetbrains.cloudconfig.Configuration
 import com.jetbrains.cloudconfig.ETagStorage
 import com.jetbrains.cloudconfig.FileVersionInfo
 import com.jetbrains.cloudconfig.auth.JbaJwtTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.UnauthorizedException
-import org.jdom.JDOMException
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
+import java.net.URI
+import java.net.http.HttpResponse
 import java.util.concurrent.atomic.AtomicReference
 
 private const val CONNECTION_TIMEOUT_MS = 10000
@@ -199,37 +197,31 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     private const val DEFAULT_DEBUG_URL = "https://stgn.cloudconfig.jetbrains.com/cloudconfig"
     private const val URL_PROPERTY = "idea.settings.sync.cloud.url"
 
-    internal val defaultUrl get() = _url.value
-
-    private val _url = lazy {
+    internal val defaultUrl: String by lazy {
       val explicitUrl = System.getProperty(URL_PROPERTY)
-      when {
-        explicitUrl != null -> {
-          LOG.info("Using SettingSync server URL (from properties): $explicitUrl")
-          explicitUrl
-        }
-        isRunningFromSources() -> {
-          LOG.info("Using SettingSync server URL (DEBUG): $DEFAULT_DEBUG_URL")
-          DEFAULT_DEBUG_URL
-        }
-        else -> getProductionUrl()
+      if (explicitUrl != null) {
+        LOG.info("Using SettingSync server URL (from properties): ${explicitUrl}")
+        return@lazy explicitUrl
       }
-    }
 
-    private fun getProductionUrl(): String {
-      val configUrl = HttpRequests.request(URL_PROVIDER)
-        .productNameAsUserAgent()
-        .connect({ request: HttpRequests.Request ->
-          try {
-            val documentElement = JDOMUtil.load(request.inputStream)
-            documentElement.getAttributeValue("baseUrl")
-          }
-          catch (e: JDOMException) {
-            throw IOException(e)
-          }
-        }, DEFAULT_PRODUCTION_URL, LOG)
-      LOG.info("Using SettingSync server URL: $configUrl")
-      return configUrl
+      if (isRunningFromSources()) {
+        LOG.info("Using SettingSync server URL (DEBUG): ${DEFAULT_DEBUG_URL}")
+        return@lazy DEFAULT_DEBUG_URL
+      }
+
+      try {
+        val regionalUrl = RegionUrlMapper.tryMapUrlBlocking(URL_PROVIDER)
+        val request = PlatformHttpClient.request(URI(regionalUrl))
+        val response = PlatformHttpClient.checkResponse(PlatformHttpClient.client().send(request, HttpResponse.BodyHandlers.ofByteArray()))
+        val configUrl = JDOMUtil.load(response.body()).getAttributeValue("baseUrl")
+        LOG.info("Using SettingSync server URL: ${configUrl}")
+        configUrl
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to obtain a SettingSync server URL", e)
+        LOG.info("Using SettingSync server URL (fallback): ${DEFAULT_PRODUCTION_URL}")
+        DEFAULT_PRODUCTION_URL
+      }
     }
 
     private val LOG = logger<CloudConfigServerCommunicator>()
