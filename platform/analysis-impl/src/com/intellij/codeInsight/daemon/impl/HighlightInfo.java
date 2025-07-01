@@ -675,7 +675,7 @@ public class HighlightInfo implements Segment {
     /**
      * @deprecated Does nothing
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @NotNull Builder needsUpdateOnTyping(boolean update);
 
     @NotNull Builder severity(@NotNull HighlightSeverity severity);
