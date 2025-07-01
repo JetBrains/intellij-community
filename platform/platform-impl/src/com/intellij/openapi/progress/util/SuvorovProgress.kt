@@ -155,6 +155,7 @@ object SuvorovProgress {
         }
       }, disposable)
 
+    repostAllEvents()
     try {
       while (!awaitedValue.isCompleted) {
         niceOverlay.redrawMainComponent()
