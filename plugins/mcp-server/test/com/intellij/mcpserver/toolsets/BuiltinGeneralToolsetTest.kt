@@ -63,27 +63,6 @@ class BuiltinGeneralToolsetTest : McpToolsetTestBase() {
     )
   }
 
-  @Test
-  fun list_available_actions() = runBlocking {
-    testMcpTool(
-      BuiltinGeneralToolset::list_available_actions.name,
-      buildJsonObject {}
-    ) {
-      assert(it.textContent.text?.contains(""""id": "About"""") == true) { "'About' action not found"}
-    }
-  }
-
-  @Test
-  fun execute_action_by_id() = runBlocking {
-    testMcpTool(
-      BuiltinGeneralToolset::execute_action_by_id.name,
-      buildJsonObject {
-        put("actionId", JsonPrimitive("SaveAll"))
-      },
-      "ok"
-    )
-  }
-
   @Disabled("IMHO Useless tool. To remove")
   @Test
   fun get_progress_indicators() = runBlocking {
@@ -91,18 +70,6 @@ class BuiltinGeneralToolsetTest : McpToolsetTestBase() {
       BuiltinGeneralToolset::get_progress_indicators.name,
       buildJsonObject {},
       "[]"
-    )
-  }
-
-  @Test
-  @Disabled("Imho useless tool. To remove")
-  fun wait_tool() = runBlocking {
-    testMcpTool(
-      BuiltinGeneralToolset::wait.name,
-      buildJsonObject {
-        put("milliseconds", JsonPrimitive(100)) // Short wait for testing
-      },
-      "ok"
     )
   }
 }
