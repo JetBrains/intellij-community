@@ -13,6 +13,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -23,7 +24,7 @@ open class WhatsNewInVisionContentProvider {
 
   companion object {
     suspend fun getInstance(): WhatsNewInVisionContentProvider = serviceAsync()
-    private const val visionFileName = "vision.json"
+    const val DEFAULT_VISION_JSON_FILE_NAME: String = "vision-in-product-pages.json"
   }
 
   suspend fun isAvailable(): Boolean {
@@ -49,11 +50,6 @@ open class WhatsNewInVisionContentProvider {
   @Serializable
   internal data class PublicVar(val value: String, val description: String)
 
-  @Deprecated("Use getResource(resourceName: String) instead")
-  protected fun getResourceName(): String {
-    return getResourceNameByPath(visionFileName)
-  }
-
   protected open fun getResourceNameByPath(path: String): String {
     val appName = ApplicationNamesInfo.getInstance().productName.lowercase()
     val isEap = ApplicationInfo.getInstance().isEAP
@@ -70,9 +66,14 @@ open class WhatsNewInVisionContentProvider {
   protected open fun getResource(resourceName: String): ContentSource =
     ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, resourceName)
 
-  @Deprecated("Use getResource(resourceName: String) instead")
+  protected fun getVisionJsonResourceNames(): List<String> = listOf(
+    getResourceNameByPath("vision-in-product-pages.json"),
+    getResourceNameByPath("vision.json")
+  )
+
+  @ApiStatus.OverrideOnly
   protected open fun getResource(): ContentSource =
-    ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, getResourceName())
+    ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, getVisionJsonResourceNames())
 
   private val content: ContentSource by lazy {
     System.getProperty(PROPERTY_WHATS_NEW_VISION_JSON)?.let { testResourcePath ->
@@ -107,11 +108,16 @@ private class PathContentSource(private val path: Path) : ContentSource {
     path.isRegularFile()
   }
 }
-class ResourceContentSource(private val classLoader: ClassLoader, private val resourceName: String) : ContentSource {
+class ResourceContentSource(private val classLoader: ClassLoader, private val resourceNames: List<String>) : ContentSource {
+
+  constructor(classLoader: ClassLoader, resourceName: String) : this(classLoader, listOf(resourceName))
+
   override suspend fun openStream(): InputStream? = withContext(Dispatchers.IO) {
-    classLoader.getResourceAsStream(resourceName)
+    resourceNames.asSequence().map {
+      classLoader.getResourceAsStream(it)
+    }.firstOrNull()
   }
   override suspend fun checkAvailability(): Boolean = withContext(Dispatchers.IO) {
-    classLoader.getResource(resourceName) != null
+    resourceNames.any { classLoader.getResource(it) != null }
   }
 }
