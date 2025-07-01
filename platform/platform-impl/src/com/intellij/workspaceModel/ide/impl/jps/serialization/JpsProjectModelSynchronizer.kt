@@ -357,10 +357,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  suspend fun loadProjectToEmptyStorage(project: Project): LoadedProjectEntities? {
+  suspend fun loadProjectToEmptyStorage(project: Project, workspaceModel: WorkspaceModelImpl): LoadedProjectEntities? {
     val start = Milliseconds.now()
-
-    val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
 
     val configLocation = getJpsProjectConfigLocation(project, workspaceModel.virtualFileManager)!!
     LOG.debug { "Initial loading of project located at $configLocation" }

@@ -87,7 +87,7 @@ private class ModuleBridgeLoaderService : InitProjectActivity {
       else {
         LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
         val projectEntities = span("modules loading without cache") {
-          val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
+          val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project, workspaceModel)
           loadModules(
             project = project,
             targetBuilder = projectEntities?.builder,
