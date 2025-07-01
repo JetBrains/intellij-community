@@ -393,13 +393,6 @@ f:com.intellij.platform.eel.channels.EelSendChannelKt
 - a:toString():java.lang.String
 *f:com.intellij.platform.eel.path.EelPath$Companion
 - f:parse(java.lang.String,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.path.EelPath
-*e:com.intellij.platform.eel.path.EelPath$OS
-- java.lang.Enum
-- sf:UNIX:com.intellij.platform.eel.path.EelPath$OS
-- sf:WINDOWS:com.intellij.platform.eel.path.EelPath$OS
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.platform.eel.path.EelPath$OS
-- s:values():com.intellij.platform.eel.path.EelPath$OS[]
 *f:com.intellij.platform.eel.path.EelPathException
 - java.lang.RuntimeException
 - <init>(java.lang.String,java.lang.String):V

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.directorySeparators
@@ -67,6 +67,10 @@ class IjentNioFileSystem internal constructor(
     }
 
   override fun getPath(first: String, vararg more: String): IjentNioPath {
+    val os = when (ijentFs) {
+      is IjentFileSystemPosixApi -> EelPath.OS.UNIX
+      is IjentFileSystemWindowsApi -> EelPath.OS.WINDOWS
+    }
     return try {
       more.fold(EelPath.parse(first, ijentFs.descriptor)) { path, newPart -> path.resolve(newPart) }.toNioPath()
     }

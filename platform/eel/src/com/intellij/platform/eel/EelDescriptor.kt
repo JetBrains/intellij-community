@@ -51,7 +51,7 @@ interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
  */
 @ApiStatus.Experimental
 interface EelDescriptor {
-  @Deprecated("Use platform instead", ReplaceWith("platform"))
+  @Deprecated("Use osFamily instead", ReplaceWith("platform"))
   @get:ApiStatus.Internal
   val operatingSystem: OS
     get() = when (osFamily) {

@@ -48,14 +48,15 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   fun switchToIjentFs(distro: WSLDistribution) {
     logErrorIfNotWindows()
     strategy ?: error("Not available")
+    strategy.enabledInDistros.add(distro)
     strategy.switchToIjentFs(distro)
   }
 
   @TestOnly
-  fun switchToTracingWsl9pFs(descriptor: WslEelDescriptor) {
+  fun switchToTracingWsl9pFs(distro: WSLDistribution) {
     logErrorIfNotWindows()
     strategy ?: error("Not available")
-    strategy.switchToTracingWsl9pFs(descriptor)
+    strategy.switchToTracingWsl9pFs(distro)
   }
 
   @TestOnly
