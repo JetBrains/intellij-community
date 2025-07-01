@@ -1625,17 +1625,6 @@ object MavenUtil {
     return ModuleRootManager.getInstance(module).getSdk()
   }
 
-  /*    @JvmStatic
-    fun <K, V : MutableMap<*, *>?> getOrCreate(map: MutableMap<K?, V?>, key: K?): V {
-      var res = map.get(key)
-      if (res == null) {
-        res = HashMap<Any?, Any?>() as V
-        map.put(key, res)
-      }
-
-      return res
-    }*/
-
   @JvmStatic
   fun isMavenModule(module: Module?): Boolean {
     return module != null && MavenProjectsManager.getInstance(module.getProject()).isMavenizedModule(module)
