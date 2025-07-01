@@ -37,11 +37,11 @@ class JChangesListViewFixture(private val robot: Robot, private val component: J
     }
   }
 
-  private fun clickOnCheckbox(checkbox: JCheckBox, fileTrePathLocation: Rectangle) {
+  private fun clickOnCheckbox(checkbox: JCheckBox, fileTreePathLocation: Rectangle) {
     val checkBoxBounds = checkbox.bounds
 
-    val clickX = fileTrePathLocation.x + checkBoxBounds.width / 2
-    val clickY = fileTrePathLocation.y + checkBoxBounds.height / 2
+    val clickX = fileTreePathLocation.x + checkBoxBounds.width / 2
+    val clickY = fileTreePathLocation.y + checkBoxBounds.height / 2
 
     robot.click(component, Point(clickX, clickY))
   }
