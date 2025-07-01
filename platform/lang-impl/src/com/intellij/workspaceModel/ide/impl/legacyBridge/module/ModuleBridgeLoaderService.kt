@@ -101,7 +101,7 @@ private class ModuleBridgeLoaderService : InitProjectActivity {
           @Suppress("DEPRECATION")
           project.serviceAsync<WorkspaceModelTopics>().notifyModulesAreLoaded()
         }
-        projectModelSynchronizer.applyLoadedStorage(projectEntities)
+        projectModelSynchronizer.applyLoadedStorage(projectEntities, workspaceModel)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
 

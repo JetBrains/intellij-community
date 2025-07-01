@@ -170,6 +170,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       unloadedEntityBuilder = reloadingResult.unloadedEntityBuilder,
       orphanageBuilder = reloadingResult.orphanageBuilder,
       description = description,
+      workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl,
     ) {
       sourcesToSave.removeAll(reloadingResult.affectedSources)
     }
@@ -182,6 +183,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     unloadedEntityBuilder: MutableEntityStorage,
     orphanageBuilder: MutableEntityStorage,
     description: String,
+    workspaceModel: WorkspaceModelImpl,
     onSuccessCallback: () -> Unit,
   ) {
     class CalculationResult(
@@ -235,7 +237,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return true
     }
 
-    val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
     val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerEx
 
     suspend fun applyChangesWithRetry(retryCount: Int): Boolean {
@@ -433,7 +434,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     builder.addEntity(module)
   }
 
-  suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?): Unit = applyLoadedStorageTimeMs.addMeasuredTime {
+  suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?, workspaceModel: WorkspaceModelImpl): Unit = applyLoadedStorageTimeMs.addMeasuredTime {
     if (projectEntities == null) {
       return@addMeasuredTime
     }
@@ -452,6 +453,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       unloadedEntityBuilder = projectEntities.unloadedEntitiesBuilder,
       orphanageBuilder = projectEntities.orphanageBuilder,
       description = description,
+      workspaceModel = workspaceModel,
     ) {
       sourcesToSave.clear()
       sourcesToSave.addAll(projectEntities.sourcesToUpdate)
