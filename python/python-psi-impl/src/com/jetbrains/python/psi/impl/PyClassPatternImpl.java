@@ -115,7 +115,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern 
         }
 
         List<String> matchArgs = getMatchArgs(classType, context);
-        if (matchArgs == null || matchArgs.size() > arguments.size()) return null;
+        if (matchArgs == null || index >= matchArgs.size()) return null;
 
         final PyTypedElement instanceAttribute = as(resolveTypeMember(classType, matchArgs.get(index), context), PyTypedElement.class);
         if (instanceAttribute == null) return null;
