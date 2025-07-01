@@ -27,6 +27,10 @@
     {
       "id": "MavenModelVersionMissed",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MavenNewElementsInOldSchema",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }
