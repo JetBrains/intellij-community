@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.impl.SdkVersionUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.psi.PsiManager
 import com.intellij.util.lang.JavaVersion
@@ -32,6 +33,13 @@ import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
 fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion: GradleVersion) {
+  /**
+   * At the moment it is impossible to validate `JAVA_HOME` for a remote execution.
+   * See IDEA-375312 for more details.
+   */
+  if (project.getEelDescriptor() != LocalEelDescriptor) {
+    return
+  }
   // Projects using Daemon JVM criteria with a compatible Gradle version
   // will ignore Java Home from environment variables or Gradle Properties
   if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(externalProjectPath, gradleVersion)) return
