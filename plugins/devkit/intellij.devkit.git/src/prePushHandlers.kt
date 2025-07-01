@@ -81,8 +81,13 @@ internal class KotlinBuildToolsPrePushHandler : AbstractIntelliJProjectPrePushHa
 }
 
 internal class AiAssistantPluginPrePushHandler : IssueIDPrePushHandler() {
-  override val paths: List<String> = listOf("plugins/llm/", "plugins/llm-installer", "plugins/full-line")
-  override val commitMessageRegex = Regex(".*(?:LLM|DS|IJPL)-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
+  override val paths: List<String> = listOf("plugins/llm/", "plugins/llm-installer/", "plugins/full-line/")
+  override val commitMessageRegex = Regex(".*\\b[A-Z]{2,}-\\d+\\b.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
+  private val protectedBranches = listOf("ij-ai/", "ij-aia/", "ide-next/")
+
+  override fun isTargetBranchProtected(project: Project, pushInfo: PushInfo): Boolean {
+    return super.isTargetBranchProtected(project, pushInfo) || protectedBranches.any { pushInfo.pushSpec.target.presentation.startsWith(it) }
+  }
 
   override fun isAvailable(): Boolean = Registry.`is`("aia.commit.message.validation.enabled", true)
   override fun doCommitsViolateRule(project: Project, commitsToWarnAbout: List<Pair<String, String>>, modalityState: ModalityState): Boolean {
