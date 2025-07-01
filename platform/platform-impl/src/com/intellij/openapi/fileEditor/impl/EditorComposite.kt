@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Weighted
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
@@ -228,6 +227,15 @@ open class EditorComposite internal constructor(
             lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
             errorMessage = { "exception during beforeFileOpened notification" },
           )
+        }
+
+        span("Artificially wait if the skeleton has been set recently to avoid flickering") {
+          compositePanel.skeleton?.let { editorSkeleton ->
+            val hasBeenShownFor = System.currentTimeMillis() - editorSkeleton.initialTime.get()
+            if (hasBeenShownFor < SKELETON_DELAY) {
+              delay(SKELETON_DELAY - hasBeenShownFor)
+            }
+          }
         }
 
         applyFileEditorsInEdt(
@@ -850,6 +858,8 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     private set
 
   private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
+  var skeleton: EditorSkeleton? = null
+    private set
 
   init {
     addFocusListener(object : FocusAdapter() {
@@ -880,15 +890,19 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
       skeletonScope.launch(Dispatchers.UI) {
-        delay(SKELETON_DELAY)
-        // show skeleton if editor is not added after [SKELETON_DELAY]
-        if (components.isEmpty()) {
-          add(EditorSkeleton(skeletonScope), BorderLayout.CENTER)
-        }
+        setNewSkeleton(EditorCompositeSkeletonFactory.getInstance(composite.project).createSkeleton(skeletonScope))
       }
     }
     else {
       skeletonScope.cancel()
+    }
+  }
+
+  private fun setNewSkeleton(skeleton: EditorSkeleton?) {
+    this.skeleton = skeleton
+    if (skeleton == null) return
+    if (components.isEmpty()) {
+      add(skeleton, BorderLayout.CENTER)
     }
   }
 
@@ -932,11 +946,6 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     sink[PlatformCoreDataKeys.FILE_EDITOR] = composite.selectedEditor
     sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
     sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = arrayOf(composite.file)
-  }
-
-  companion object {
-    private val SKELETON_DELAY
-      get() = Registry.intValue("editor.skeleton.delay.ms", 300).toLong()
   }
 }
 
