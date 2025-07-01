@@ -11,6 +11,7 @@ import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
@@ -69,7 +70,8 @@ internal class GitLabMergeRequestsListController(
       accountVm,
       swingAction(GitLabBundle.message("merge.request.list.reload")) {
         listVm.reload()
-      })
+      },
+      GitLabLoginSource.MR_LIST)
     val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.error, errorPresenter)
 
     return JPanel(SingleComponentCenteringLayout()).apply {
