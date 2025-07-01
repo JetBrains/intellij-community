@@ -14,6 +14,10 @@ interface FileIdAdapter {
 
   fun getFile(id: Int): VirtualFile?
 
+  @ApiStatus.Experimental
+  fun getFileWithTimestamp(id: Int, managingFsCreationTimestamp: Long): VirtualFile? = getFile(id)
+
   fun getId(file: VirtualFile): Int?
+  fun getManagingFsCreationTimestamp(file: VirtualFile): Long
 
 }
