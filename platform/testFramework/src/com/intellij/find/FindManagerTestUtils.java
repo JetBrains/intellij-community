@@ -1,24 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.testFramework.LightVirtualFile;
 import org.junit.Assert;
 
 public final class FindManagerTestUtils {
-  public static void runFindInCommentsAndLiterals(FindManager findManager, FindModel findModel, String text) {
-    runFindInCommentsAndLiterals(findManager, findModel, text, "java");
-  }
-
   public static void runFindInCommentsAndLiterals(FindManager findManager, FindModel findModel, String text, String ext) {
     findModel.setSearchContext(FindModel.SearchContext.IN_STRING_LITERALS);
     runFindForwardAndBackward(findManager, findModel, text, ext);
 
     findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
     runFindForwardAndBackward(findManager, findModel, text, ext);
-  }
-
-  public static void runFindForwardAndBackward(FindManager findManager, FindModel findModel, String text) {
-    runFindForwardAndBackward(findManager, findModel, text, "java");
   }
 
   public static void runFindForwardAndBackward(FindManager findManager, FindModel findModel, String text, String ext) {
