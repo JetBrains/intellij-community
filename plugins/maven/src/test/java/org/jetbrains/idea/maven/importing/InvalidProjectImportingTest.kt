@@ -60,7 +60,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
     importProjectAsync()
 
-    val issues = events.filterIsInstance<BuildIssueEvent>().filter { it.kind == MessageEvent.Kind.ERROR }
+    val issues = events.filterIsInstance<BuildIssueEvent>().filter { it.kind == MessageEvent.Kind.WARNING }
     assertSize(1, issues)
     assertEquals(SyncBundle.message("maven.sync.incorrect.model.version"), issues[0].issue.title)
 
