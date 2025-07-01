@@ -39,7 +39,7 @@ class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginD
   override fun getCategory(): @NlsSafe String? = pluginDto.category
 
   override fun getDisplayCategory(): @Nls String? {
-    throw UnsupportedOperationException("No direct mapping for displayCategory in PluginDto")
+    return pluginDto.displayCategory
   }
 
   override fun getSinceBuild(): String? = pluginDto.sinceBuild
