@@ -13,7 +13,7 @@ interface Map<K, V> {
 }
 class Performance {
 
-  private static final Map<String, String> translation = Map.ofEntries(
+  private static final Map<String, String> translation = Map.<String, String>ofEntries(
     Map.entry("a","b"),
     Map.entry("c","b"),
     Map.entry("d","b"),

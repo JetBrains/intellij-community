@@ -18,7 +18,7 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/performance";
 
   public void testGenericMethodCallPassedToVarargs() {
-    Benchmark.newBenchmark("200 generic method calls passed to Map.entry", this::doTest).start();
+    Benchmark.newBenchmark("200 poly method calls passed to Map.entry with type arguments", this::doTest).start();
   }
 
   public void testPolyMethodCallArgumentPassedToVarargs() {
