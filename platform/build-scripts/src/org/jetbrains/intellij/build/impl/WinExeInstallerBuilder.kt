@@ -209,7 +209,9 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
 private fun amendVersionNumber(base: String): String = base + ".0".repeat(3 - base.count { it == '.' })
 
 private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uninstallerCopy: Path): Path {
-  val toolFile = context.proprietaryBuildTools.signTool.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)!!
+  val toolFile = context.proprietaryBuildTools.signTool
+                   .commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
+                 ?: error("No command line sign tool is configured")
   val scriptFile = Files.writeString(nsiConfDir.resolve("sign-tool.cmd"), when (OsFamily.currentOs) {
     // moving the file back and forth is required for NSIS to fail if signing didn't happen
     OsFamily.WINDOWS -> """

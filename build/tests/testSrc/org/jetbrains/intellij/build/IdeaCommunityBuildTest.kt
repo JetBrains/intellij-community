@@ -23,7 +23,7 @@ class IdeaCommunityBuildTest {
       productProperties = productProperties,
       buildCrossPlatformDistribution = true,
     ) {
-      it.classOutDir = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY) ?: "$homePath/out/classes"
+      it.classOutDir = it.classOutDir ?: "$homePath/out/classes"
     }
   }
 
