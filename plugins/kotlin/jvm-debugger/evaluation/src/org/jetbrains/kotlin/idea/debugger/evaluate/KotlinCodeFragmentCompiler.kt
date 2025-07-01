@@ -141,7 +141,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
             }
 
             override fun hasNext(): Boolean {
-                return frames.size >= rollbackFramesCount
+                return frames.size > rollbackFramesCount + 1
             }
         }
     }

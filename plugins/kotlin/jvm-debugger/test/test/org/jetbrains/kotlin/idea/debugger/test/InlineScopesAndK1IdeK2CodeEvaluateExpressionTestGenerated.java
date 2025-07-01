@@ -1498,6 +1498,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/crossfileInlining.kt");
             }
 
+            @TestMetadata("multistatementLine.kt")
+            public void testMultistatementLine() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/multistatementLine.kt");
+            }
+
             @TestMetadata("properties.kt")
             public void testProperties() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/properties.kt");
