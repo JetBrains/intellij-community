@@ -5,11 +5,14 @@ import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 
 private class FileIdAdapterImpl : FileIdAdapter {
 
   override fun getFile(id: Int): VirtualFile? = VirtualFileManager.getInstance().findFileById(id)
 
   override fun getId(file: VirtualFile): Int? = (file as? VirtualFileWithId)?.id
-
+  override fun getManagingFsCreationTimestamp(file: VirtualFile): Long {
+    return ManagingFS.getInstance().creationTimestamp
+  }
 }

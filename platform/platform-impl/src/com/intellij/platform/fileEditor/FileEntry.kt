@@ -26,6 +26,7 @@ class FileEntry(
   @JvmField val currentInTab: Boolean,
   @JvmField val url: String,
   @JvmField val id: Int?,
+  @JvmField val managingFsCreationTimestamp: Long?,
   @JvmField val selectedProvider: String?,
   val ideFingerprint: IdeFingerprint?,
   @JvmField val isPreview: Boolean,
@@ -70,6 +71,7 @@ internal fun parseFileEntry(fileElement: Element, storedIdeFingerprint: IdeFinge
     selectedProvider = selectedProvider,
     providers = providers,
     ideFingerprint = storedIdeFingerprint,
+    managingFsCreationTimestamp = historyElement.getAttributeValue(HistoryEntry.MANAGING_FS_ATTRIBUTE)?.toLongOrNull(),
   )
 }
 

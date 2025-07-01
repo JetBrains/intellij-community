@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ID_ATTRIBUTE
+import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.MANAGING_FS_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -783,6 +784,7 @@ open class EditorComposite internal constructor(
       pinned = false,
       currentInTab = false,
       ideFingerprint = null,
+      managingFsCreationTimestamp = FileIdAdapter.getInstance().getManagingFsCreationTimestamp(file)
     )
   }
 
@@ -791,6 +793,7 @@ open class EditorComposite internal constructor(
     val element = Element(TAG)
     element.setAttribute(FILE_ATTRIBUTE, file.url)
     FileIdAdapter.getInstance().getId(file)?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
+    FileIdAdapter.getInstance().getManagingFsCreationTimestamp(file).let { element.setAttribute(MANAGING_FS_ATTRIBUTE, it.toString()) }
     for (fileEditorWithProvider in fileEditorWithProviders.value) {
       val providerElement = Element(PROVIDER_ELEMENT)
       val provider = fileEditorWithProvider.provider
@@ -817,6 +820,7 @@ open class EditorComposite internal constructor(
     val element = Element(TAG)
     element.setAttribute(FILE_ATTRIBUTE, entry.url)
     entry.id?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
+    entry.managingFsCreationTimestamp?.let { element.setAttribute(MANAGING_FS_ATTRIBUTE, it.toString()) }
     for ((typeId, stateElement) in entry.providers) {
       val providerElement = Element(PROVIDER_ELEMENT)
       providerElement.setAttribute(EDITOR_TYPE_ID_ATTRIBUTE, typeId)
