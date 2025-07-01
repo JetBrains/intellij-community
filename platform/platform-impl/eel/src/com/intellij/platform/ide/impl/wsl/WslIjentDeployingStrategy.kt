@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.WslEelDescriptor
 import com.intellij.platform.ijent.spi.IjentConnectionStrategy
 import com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy
 import com.intellij.util.io.computeDetached

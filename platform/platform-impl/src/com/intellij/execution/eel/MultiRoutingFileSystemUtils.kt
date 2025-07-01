@@ -2,12 +2,10 @@
 package com.intellij.execution.eel
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import org.jetbrains.annotations.ApiStatus
-import java.io.BufferedReader
 import java.nio.file.FileSystems
 import kotlin.io.path.bufferedReader
 
