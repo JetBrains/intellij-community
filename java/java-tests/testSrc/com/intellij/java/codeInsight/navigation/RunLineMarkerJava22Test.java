@@ -301,17 +301,22 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
                                  }
                              }
                            """);
-      myFixture.configureByText("BBBBBB.java", """
-          public class BBBBBB extends AAAAAA {
-              public static void <caret>main() {
-                  System.out.println("1");
-              }
-          }
+      myFixture.configureByText("Main.java", """
+        public class Main extends AAAAAA {
+            public Main() {
+                super(1);
+            }
+        
+            public static void main<caret>() {
+                System.out.println("1");
+            }
+        }
         """);
       List<GutterMark> marks = myFixture.findGuttersAtCaret();
-      assertEquals(1, marks.size());
-      GutterMark mark = marks.get(0);
-      checkMark(mark, "BBBBBB");
+      assertEquals(0, marks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(1, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
     });
   }
 

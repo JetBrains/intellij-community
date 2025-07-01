@@ -116,8 +116,9 @@ public final class PsiMethodUtil {
           continue;
         }
       }
-      if (isMainMethod(mainMethod)) {
-        if (first && !chooseMainMethodByParametersEnabled) {
+      if (isMainMethod(mainMethod, false)) {
+        if (first && !chooseMainMethodByParametersEnabled &&
+            (mainMethod.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.hasDefaultConstructor(aClass, true, true))) {
           //fast exit
           return mainMethod;
         }
@@ -129,14 +130,12 @@ public final class PsiMethodUtil {
     }
     candidates.sort(mainCandidateComparator);
     PsiMethod method = candidates.get(0);
-    if (chooseMainMethodByParametersEnabled) {
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          return null;
-        }
-        if (!PsiUtil.hasDefaultConstructor(aClass, true, true)) {
-          return null;
-        }
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return null;
+      }
+      if (!PsiUtil.hasDefaultConstructor(aClass, true, true)) {
+        return null;
       }
     }
     return method;
@@ -154,12 +153,14 @@ public final class PsiMethodUtil {
    * ATTENTION 1: does not check the method name equals "main"<br>
    * ATTENTION 2: does not use implementations of {@link JavaMainMethodProvider}
    * (unlike {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)})
+   * ATTENTION 3: another "main" method can be launched
    *
    * @param method the method to check
+   * @param checkNoArgs true if the method should be considered a main method if its class has a constructor with no parameters, false otherwise.
    * @return true, if the method satisfies a main method signature. false, otherwise
    */
-  @Contract("null -> false")
-  public static boolean isMainMethod(final @Nullable PsiMethod method) {
+  @Contract("null, _ -> false")
+  private static boolean isMainMethod(final @Nullable PsiMethod method, boolean checkNoArgs) {
     if (method == null || method.getContainingClass() == null) return false;
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
@@ -174,7 +175,8 @@ public final class PsiMethodUtil {
         return false;
       }
       PsiMethod[] constructors = containingClass.getConstructors();
-      if (!method.hasModifierProperty(PsiModifier.STATIC) && constructors.length != 0 && !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
+      if (checkNoArgs && !method.hasModifierProperty(PsiModifier.STATIC) && constructors.length != 0 &&
+          !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
         return false;
       }
       if (parameters.length == 1) {
@@ -187,6 +189,19 @@ public final class PsiMethodUtil {
       if (parameters.length != 1) return false;
       return isJavaLangStringArray(parameters[0]);
     }
+  }
+
+  /**
+   * ATTENTION 1: does not check the method name equals "main"<br>
+   * ATTENTION 2: does not use implementations of {@link JavaMainMethodProvider}
+   * (unlike {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)})
+   * ATTENTION 3: another "main" method can be launched
+   * @param method the method to check
+   * @return true, if the method satisfies a main method signature. false, otherwise
+   */
+  @Contract("null -> false")
+  public static boolean isMainMethod(final @Nullable PsiMethod method) {
+    return isMainMethod(method, true);
   }
 
   private static boolean isJavaLangStringArray(@NotNull PsiParameter parameter) {
