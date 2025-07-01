@@ -47,7 +47,7 @@
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with symbols order won't be performed"
                  key="search.everywhere.force.disable.experiment.symbols.ml"/>
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="When enabled ML experiments to order All tab items won't be performed"
                  key="search.everywhere.force.disable.experiment.all.ml"/>
     <registryKey defaultValue="false"
