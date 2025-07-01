@@ -60,7 +60,7 @@ internal fun InputField(
     outline: Outline,
     outputTransformation: OutputTransformation?,
     decorator: TextFieldDecorator?,
-    undecorated: Boolean = decorator == null,
+    undecorated: Boolean,
     scrollState: ScrollState,
 ) {
     var inputFieldState by remember(interactionSource) { mutableStateOf(InputFieldState.of(enabled = enabled)) }

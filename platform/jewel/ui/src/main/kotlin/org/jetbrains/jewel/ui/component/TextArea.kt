@@ -122,7 +122,7 @@ public fun TextArea(
         outputTransformation = outputTransformation,
         decorator =
             if (undecorated) {
-                NoTextAreaDecorator(style, scrollbarStyle, scrollState)
+                NoTextAreaDecorator(style, scrollbarStyle, scrollState, state, placeholder, textStyle)
             } else {
                 TextAreaDecorator(
                     style,
@@ -141,22 +141,31 @@ public fun TextArea(
 }
 
 @Composable
-private fun NoTextAreaDecorator(style: TextAreaStyle, scrollbarStyle: ScrollbarStyle?, scrollState: ScrollState) =
-    TextFieldDecorator { innerTextField ->
-        val (contentPadding, innerEndPadding) =
-            calculatePaddings(scrollbarStyle, style, scrollState, LocalLayoutDirection.current)
+private fun NoTextAreaDecorator(
+    style: TextAreaStyle,
+    scrollbarStyle: ScrollbarStyle?,
+    scrollState: ScrollState,
+    state: TextFieldState,
+    placeholder: @Composable (() -> Unit)?,
+    textStyle: TextStyle,
+) = TextFieldDecorator { innerTextField ->
+    val (contentPadding, innerEndPadding) =
+        calculatePaddings(scrollbarStyle, style, scrollState, LocalLayoutDirection.current)
 
-        if (scrollbarStyle != null) {
-            TextAreaScrollableContainer(
-                scrollState = scrollState,
-                style = scrollbarStyle,
-                contentModifier = Modifier.padding(style.metrics.borderWidth).padding(end = innerEndPadding),
-                content = { Box(Modifier.padding(contentPadding)) { innerTextField() } },
-            )
-        } else {
-            Box(Modifier.padding(contentPadding)) { innerTextField() }
+    Box(contentAlignment = Alignment.TopStart) {
+        if (state.text.isEmpty() && placeholder != null) {
+            Box(modifier = Modifier.padding(contentPadding)) {
+                CompositionLocalProvider(
+                    LocalTextStyle provides textStyle.copy(color = style.colors.placeholder),
+                    LocalContentColor provides style.colors.placeholder,
+                    content = placeholder,
+                )
+            }
         }
+
+        TextAreaContentWrapper(style, scrollbarStyle, scrollState, innerTextField, contentPadding, innerEndPadding)
     }
+}
 
 @Composable
 private fun TextAreaDecorator(
@@ -174,16 +183,7 @@ private fun TextAreaDecorator(
 
     TextAreaDecorationBox(
         innerTextField = {
-            if (scrollbarStyle != null) {
-                TextAreaScrollableContainer(
-                    scrollState = scrollState,
-                    style = scrollbarStyle,
-                    contentModifier = Modifier.padding(style.metrics.borderWidth).padding(end = innerEndPadding),
-                    content = { Box(Modifier.padding(contentPadding)) { innerTextField() } },
-                )
-            } else {
-                Box(Modifier.padding(contentPadding)) { innerTextField() }
-            }
+            TextAreaContentWrapper(style, scrollbarStyle, scrollState, innerTextField, contentPadding, innerEndPadding)
         },
         textStyle = textStyle,
         modifier = decorationBoxModifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
@@ -191,6 +191,27 @@ private fun TextAreaDecorator(
         placeholderTextColor = style.colors.placeholder,
         placeholderModifier = Modifier.padding(contentPadding).padding(style.metrics.borderWidth),
     )
+}
+
+@Composable
+private fun TextAreaContentWrapper(
+    style: TextAreaStyle,
+    scrollbarStyle: ScrollbarStyle?,
+    scrollState: ScrollState,
+    content: @Composable () -> Unit,
+    contentPadding: PaddingValues,
+    innerEndPadding: Dp,
+) {
+    if (scrollbarStyle != null) {
+        TextAreaScrollableContainer(
+            scrollState,
+            style = scrollbarStyle,
+            contentModifier = Modifier.padding(style.metrics.borderWidth).padding(end = innerEndPadding),
+            content = { Box(Modifier.padding(contentPadding)) { content() } },
+        )
+    } else {
+        Box(Modifier.padding(contentPadding)) { content() }
+    }
 }
 
 @Composable
