@@ -7,6 +7,7 @@ interface CodeFragmentParameter {
     val kind: Kind
     val name: String
     val debugString: String
+    val depthRelativeToCurrentFrame: Int
 
     enum class Kind {
         ORDINARY, DELEGATED, EXTENSION_RECEIVER, DISPATCH_RECEIVER, CONTEXT_RECEIVER, COROUTINE_CONTEXT, LOCAL_FUNCTION,
@@ -16,7 +17,8 @@ interface CodeFragmentParameter {
     data class Dumb(
         override val kind: Kind,
         override val name: String,
-        override val debugString: String = name
+        override val depthRelativeToCurrentFrame: Int,
+        override val debugString: String = name,
     ) : CodeFragmentParameter
 }
 

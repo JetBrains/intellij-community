@@ -224,26 +224,26 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
         return when (this) {
             is CodeFragmentCapturedValue.Local ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name, depthRelativeToCurrentFrame)
             is CodeFragmentCapturedValue.LocalDelegate ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText, depthRelativeToCurrentFrame)
             is CodeFragmentCapturedValue.ContainingClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame, displayText)
             is CodeFragmentCapturedValue.SuperClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame,displayText)
             is CodeFragmentCapturedValue.ExtensionReceiver ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, depthRelativeToCurrentFrame,displayText)
             is CodeFragmentCapturedValue.ContextReceiver -> {
                 val name = NameUtils.contextReceiverName(index).asString()
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, depthRelativeToCurrentFrame,displayText)
             }
             is CodeFragmentCapturedValue.ForeignValue -> {
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name, depthRelativeToCurrentFrame)
             }
             is CodeFragmentCapturedValue.BackingField ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, depthRelativeToCurrentFrame,displayText)
             is CodeFragmentCapturedValue.CoroutineContext ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "")
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "", depthRelativeToCurrentFrame)
             else -> null
         }
     }
