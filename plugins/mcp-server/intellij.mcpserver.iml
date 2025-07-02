@@ -93,5 +93,6 @@
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.terminal.backend" />
     <orderEntry type="module" module-name="intellij.sh.core" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

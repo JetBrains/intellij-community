@@ -3,26 +3,19 @@
 package com.intellij.mcpserver.toolsets.terminal
 
 import com.intellij.mcpserver.McpExpectedError
-import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.settings.McpServerSettings
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runReadAction
+import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.dsl.builder.panel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
-import org.jetbrains.plugins.terminal.TerminalView
-import javax.swing.JComponent
 import kotlin.time.Duration.Companion.minutes
 
 private val logger = logger<TerminalToolset>()
@@ -33,31 +26,13 @@ class TerminalToolset : McpToolset {
 
   @McpTool
   @McpDescription("""
-        Retrieves the current text content from the first active terminal in the IDE.
-        Use this tool to access the terminal's output and command history.
-        Returns one of two possible responses:
-        - The terminal's text content if a terminal exists
-        - empty string if no terminal is open or available
-        Note: Only captures text from the first terminal if multiple terminals are open
-    """)
-  suspend fun get_terminal_text(): String {
-    val project = currentCoroutineContext().project
-    val text = runReadAction<String?> {
-      val terminalWidget = TerminalView.getInstance(project).getWidgets().firstOrNull() ?: throw McpExpectedError("No terminal available")
-      terminalWidget.text
-    }
-    return text ?: ""
-  }
-
-  @McpTool
-  @McpDescription("""
         Executes a specified shell command in the IDE's integrated terminal.
         Use this tool to run terminal commands within the IDE environment.
         Requires a command parameter containing the shell command to execute.
         Important features and limitations:
         - Checks if process is running before collecting output
         - Limits output to 2000 lines (truncates excess)
-        - Times out after 120000 milliseconds with notification
+        - Times out after specified timeout with notification
         - Requires user confirmation unless "Brave Mode" is enabled in settings
         Returns possible responses:
         - Terminal output (truncated if > 2000 lines)
@@ -76,8 +51,8 @@ class TerminalToolset : McpToolset {
     @McpDescription("Whether to reuse an existing terminal window. Allows to avoid creating multiple terminals")
     reuse_existing_terminal_window: Boolean = true,
 
-    @McpDescription("Timeout for command execution in milliseconds")
-    timeout_milliseconds: Int = this.timeout.inWholeMilliseconds.toInt(),
+    @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
+    timeout_milliseconds: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
   ): CommandExecutionResult {
     val project = currentCoroutineContext().project
     if (!McpServerSettings.getInstance().state.enableBraveMode && !askConfirmation(project, command)) throw McpExpectedError("User rejected command execution")

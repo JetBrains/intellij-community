@@ -217,12 +217,12 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
         try {
           application.messageBus.syncPublisher(ToolCallListener.TOPIC).beforeMcpToolCall(this@mcpToolToRegisteredTool.descriptor)
 
-          logger.trace { "Start calling tool '${this@mcpToolToRegisteredTool.descriptor.name}'" }
+          logger.trace { "Start calling tool '${this@mcpToolToRegisteredTool.descriptor.name}'. Arguments: ${request.arguments}" }
           val result = withContext(ProjectContextElement(project)) {
             this@mcpToolToRegisteredTool.call(request.arguments)
           }
 
-          logger.trace { "Tool call successful '${this@mcpToolToRegisteredTool.descriptor.name}'" }
+          logger.trace { "Tool call successful '${this@mcpToolToRegisteredTool.descriptor.name}'. Result: ${result.content.joinToString("\n") { it.toString() }}" }
           try {
             val processedChangedFiles = mutableSetOf<VirtualFile>()
             val events = mutableListOf<McpToolSideEffectEvent>()
@@ -289,7 +289,7 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
         }
         catch (t: Throwable) {
           val errorMessage = "MCP tool call has been failed: ${t.message}"
-          logger.traceThrowable { Exception(errorMessage, t) }
+          logger.error(t)
           McpToolCallResult.error(errorMessage)
         }
         finally {

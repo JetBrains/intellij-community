@@ -72,6 +72,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//plugins/terminal/backend",
     "//plugins/sh/core",
+    "//platform/util/jdom",
   ],
   runtime_deps = [":mcpserver_resources"]
 )
@@ -154,6 +155,7 @@ jvm_library(
     "//plugins/terminal/backend",
     "//plugins/terminal/backend:backend_test_lib",
     "//plugins/sh/core",
+    "//platform/util/jdom",
   ],
   runtime_deps = [
     ":mcpserver_resources",

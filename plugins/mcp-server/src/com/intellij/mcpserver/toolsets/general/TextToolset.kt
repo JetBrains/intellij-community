@@ -2,299 +2,262 @@
 
 package com.intellij.mcpserver.toolsets.general
 
-import com.intellij.mcpserver.McpServerBundle
+import com.intellij.find.FindBundle
+import com.intellij.find.FindManager
+import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
-import com.intellij.mcpserver.util.relativizeByProjectDir
-import com.intellij.mcpserver.util.resolveRel
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Document
+import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.*
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.writeCommandAction
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
-import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.application
-import kotlin.coroutines.coroutineContext
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.usageView.UsageInfo
+import com.intellij.usages.FindUsagesProcessPresentation
+import com.intellij.usages.UsageViewPresentation
+import com.intellij.util.Processor
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.io.path.isDirectory
+import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.milliseconds
 
 class TextToolset : McpToolset {
-    @McpTool
-    @McpDescription("""
-        Retrieves the complete text content of the currently active file in the JetBrains IDE editor.
-        Use this tool to access and analyze the file's contents for tasks such as code review, content inspection, or text processing.
-        Returns empty string if no file is currently open.
-    """)
-    suspend fun get_open_in_editor_file_text(): String {
-        val project = coroutineContext.project
-        val text = runReadAction<String?> {
-            FileEditorManager.getInstance(project).selectedTextEditor?.document?.text
-        }
-        return text ?: ""
-    }
-
-    @McpTool
-    @McpDescription("""
-        Returns text of all currently open files in the JetBrains IDE editor.
-        Returns an empty list if no files are open.
-        
-        Use this tool to explore current open editors.
-        Returns a JSON array of objects containing file information:
-            - path: Path relative to project root
-            - text: File text
-    """)
-    suspend fun get_all_open_file_texts(): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-
-        val fileEditorManager = FileEditorManager.getInstance(project)
-        val openFiles = fileEditorManager.openFiles
-        val filePaths = openFiles.mapNotNull {
-            """{"path": "${
-                it.toNioPath().relativizeByProjectDir(projectDir)
-            }", "text": "${it.readText()}", """
-        }
-        return filePaths.joinToString(",\n", prefix = "[", postfix = "]")
-    }
-
-    @McpTool
-    @McpDescription("""
-        Retrieves the currently selected text from the active editor in JetBrains IDE.
-        Use this tool when you need to access and analyze text that has been highlighted/selected by the user.
-        Returns an empty string if no text is selected or no editor is open.
-    """)
-    suspend fun get_selected_in_editor_text(): String {
-        val project = coroutineContext.project
-        val text = runReadAction<String?> {
-            FileEditorManager.getInstance(project).selectedTextEditor?.selectionModel?.selectedText
-        }
-        return text ?: ""
-    }
-
-    @McpTool
-    @McpDescription("""
-        Replaces the currently selected text in the active editor with specified new text.
-        Use this tool to modify code or content by replacing the user's text selection.
-        Requires a text parameter containing the replacement content.
-        Returns one of three possible responses:
-            - "ok" if the text was successfully replaced
-            - "no text selected" if no text is selected or no editor is open
-            - "unknown error" if the operation fails
-    """)
-    suspend fun replace_selected_text(
-        @McpDescription("Replacement text content")
-        text: String
-    ): String {
-        val project = coroutineContext.project
-        var response: String? = null
-
-        application.invokeAndWait {
-            WriteCommandAction.runWriteCommandAction(project, McpServerBundle.message("command.name.replace.selected.text"), null, {
-                val editor = FileEditorManager.getInstance(project).selectedTextEditor
-                val document = editor?.document
-                val selectionModel = editor?.selectionModel
-                if (document != null && selectionModel != null && selectionModel.hasSelection()) {
-                    document.replaceString(selectionModel.selectionStart, selectionModel.selectionEnd, text)
-                    PsiDocumentManager.getInstance(project).commitDocument(document)
-                    response = "ok"
-                } else {
-                    response = "no text selected"
-                }
-            })
-        }
-
-        return response ?: "unknown error"
-    }
-
-    @McpTool
-    @McpDescription("""
-        Replaces the entire content of the currently active file in the JetBrains IDE with specified new text.
-        Use this tool when you need to completely overwrite the current file's content.
-        Requires a text parameter containing the new content.
-        Returns one of three possible responses:
-        - "ok" if the file content was successfully replaced
-        - "no file open" if no editor is active
-        - "unknown error" if the operation fails
-    """)
-    suspend fun replace_current_file_text(
-        @McpDescription("New content for the file")
-        text: String
-    ): String {
-        val project = coroutineContext.project
-        var response: String? = null
-        application.invokeAndWait {
-            WriteCommandAction.runWriteCommandAction(project, McpServerBundle.message("command.name.replace.file.text"), null, {
-                val editor = FileEditorManager.getInstance(project).selectedTextEditor
-                val document = editor?.document
-                if (document != null) {
-                    document.setText(text)
-                    response = "ok"
-                } else {
-                    response = "no file open"
-                }
-            })
-        }
-        return response ?: "unknown error"
-    }
-
-    @McpTool
-    @McpDescription("""
+  @McpTool
+  @McpDescription("""
         Retrieves the text content of a file using its path relative to project root.
         Use this tool to read file contents when you have the file's project-relative path.
-        Requires a pathInProject parameter specifying the file location from project root.
-        Returns one of these responses:
-        - The file's content if the file exists and belongs to the project
-        - error "project dir not found" if project directory cannot be determined
-        - error "file not found" if the file doesn't exist or is outside project scope
-        Note: Automatically refreshes the file system before reading
+        In the case of binary files, the tool returns an error.
+        If the file is too large, the text will be truncated with '<<<...content truncated...>>>' marker and in according to the `truncateMode` parameter.
     """)
-    suspend fun get_file_text_by_path(
-        @McpDescription("Path to file relative to project root")
-        pathInProject: String
-    ): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "project dir not found"
+  suspend fun get_file_text_by_path(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    pathInProject: String,
+    @McpDescription("How to truncate the text: from the start, in the middle, at the end, or don't truncate at all")
+    truncateMode: TruncateMode = TruncateMode.START,
+    @McpDescription("Max number of lines to return. Truncation will be performed depending on truncateMode.")
+    maxLinesCount: Int = 1000,
+  ): String {
+    val project = currentCoroutineContext().project
+    val resolvedPath = project.resolveInProject(pathInProject)
 
-        val text = runReadAction {
-            val file = LocalFileSystem.getInstance()
-                .refreshAndFindFileByNioFile(projectDir.resolveRel(pathInProject))
-                ?: return@runReadAction "file not found"
+    val originalText = readAction {
+      val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+                 ?: mcpFail("File $resolvedPath doesn't exist or can't be opened")
 
-            if (GlobalSearchScope.allScope(project).contains(file)) {
-                file.readText()
-            } else {
-                "file not found"
-            }
-        }
-        return text
+      if (file.fileType.isBinary) mcpFail("File $resolvedPath is binary")
+      file.readText()
     }
 
-    @McpTool
-    @McpDescription("""
-        Replaces specific text occurrences in a file with new text.
+    return truncateText(originalText, maxLinesCount, maxTextLength, truncateMode, truncatedMarker)
+  }
+
+  @McpTool
+  @McpDescription("""
+        Replaces text in a file with flexible options for find and replace operations.
         Use this tool to make targeted changes without replacing the entire file content.
-        Use this method if the file is large and the change is smaller than the old text.
-        Prioritize this tool among other editing tools. It's more efficient and granular in the most of cases.
+        This is the most efficient tool for file modifications when you know the exact text to replace.
+        
         Requires three parameters:
         - pathInProject: The path to the target file, relative to project root
-        - oldText: The text to be replaced
+        - oldTextOrPatte: The text to be replaced (exact match by default)
         - newText: The replacement text
+        
+        Optional parameters:
+        - replaceAll: Whether to replace all occurrences (default: true)
+        - caseSensitive: Whether the search is case-sensitive (default: true)
+        - regex: Whether to treat oldText as a regular expression (default: false)
+        
         Returns one of these responses:
         - "ok" when replacement happened
         - error "project dir not found" if project directory cannot be determined
         - error "file not found" if the file doesn't exist
         - error "could not get document" if the file content cannot be accessed
         - error "no occurrences found" if the old text was not found in the file
-        Note: Automatically saves the file after modification
-    """)
-    suspend fun replace_specific_text(
-        @McpDescription("Path to target file relative to project root")
-        pathInProject: String,
-        @McpDescription("Text to be replaced")
-        oldText: String,
-        @McpDescription("Replacement text")
-        newText: String
-    ): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "project dir not found"
-
-        var document: Document? = null
         
-        val readResult = runReadAction {
-            val file: VirtualFile = LocalFileSystem.getInstance()
-                .refreshAndFindFileByNioFile(projectDir.resolveRel(pathInProject))
-                ?: return@runReadAction "file not found"
-
-            if (!GlobalSearchScope.allScope(project).contains(file)) {
-                return@runReadAction "file not found"
-            }
-
-            document = FileDocumentManager.getInstance().getDocument(file)
-            if (document == null) {
-                return@runReadAction "could not get document"
-            }
-
-            return@runReadAction "ok"
-        }
-
-        if (readResult != "ok") {
-            return readResult
-        }
-
-        val text = document!!.text
-        if (!text.contains(oldText)) {
-            return "no occurrences found"
-        }
-
-        val newTextContent = text.replace(oldText, newText, true)
-        WriteCommandAction.runWriteCommandAction(project) {
-            document!!.setText(newTextContent)
-            FileDocumentManager.getInstance().saveDocument(document!!)
-        }
-
-        return "ok"
-    }
-
-    @McpTool
-    @McpDescription("""
-        Replaces the entire content of a specified file with new text, if the file is within the project.
-        Use this tool to modify file contents using a path relative to the project root.
-        Requires two parameters:
-        - pathInProject: The path to the target file, relative to project root
-        - text: The new content to write to the file
-        Returns one of these responses:
-        - "ok" if the file was successfully updated
-        - error "project dir not found" if project directory cannot be determined
-        - error "file not found" if the file doesn't exist
-        - error "could not get document" if the file content cannot be accessed
         Note: Automatically saves the file after modification
     """)
-    suspend fun replace_file_text_by_path(
-        @McpDescription("Path to target file relative to project root")
-        pathInProject: String,
-        @McpDescription("New content for the file")
-        text: String
-    ): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "project dir not found"
-
-        var document: Document? = null
-
-        val readResult = runReadAction {
-            var file: VirtualFile = LocalFileSystem.getInstance()
-                .refreshAndFindFileByNioFile(projectDir.resolveRel(pathInProject))
-                ?: return@runReadAction "file not found"
-
-            if (!GlobalSearchScope.allScope(project).contains(file)) {
-                return@runReadAction "file not found"
-            }
-
-            document = FileDocumentManager.getInstance().getDocument(file)
-            if (document == null) {
-                return@runReadAction "could not get document"
-            }
-
-            return@runReadAction "ok"
-        }
-
-        if (readResult != "ok") {
-            return readResult
-        }
-
-        WriteCommandAction.runWriteCommandAction(project) {
-            document!!.setText(text)
-            FileDocumentManager.getInstance().saveDocument(document!!)
-        }
-
-        return "ok"
+  suspend fun replace_text_in_file(
+    @McpDescription("Path to target file relative to project root")
+    pathInProject: String,
+    @McpDescription("Text to be replaced")
+    oldText: String,
+    @McpDescription("Replacement text")
+    newText: String,
+    @McpDescription("Replace all occurrences")
+    replaceAll: Boolean = true,
+    @McpDescription("Case-sensitive search")
+    caseSensitive: Boolean = true,
+  ) {
+    val project = currentCoroutineContext().project
+    val resolvedPath = project.resolveInProject(pathInProject)
+    val (document, text) = readAction {
+      val file: VirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+                              ?: mcpFail("file not found: $pathInProject")
+      val document = FileDocumentManager.getInstance().getDocument(file) ?: mcpFail("Could not get document for $file")
+      document to document.text
     }
+
+    val rangeMarkers = mutableListOf<RangeMarker>()
+    var currentStartIndex = 0
+    while (true) {
+      val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
+      if (occurrenceStart < 0) break
+      val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
+      rangeMarkers.add(rangeMarker)
+      if (!replaceAll) break // only the first occurence
+      currentStartIndex = occurrenceStart + oldText.length
+    }
+
+    writeCommandAction(project, commandName = FindBundle.message("find.replace.text.dialog.title")) {
+      for (marker in rangeMarkers.reversed()) {
+        if (!marker.isValid) continue
+        val textRange = marker.textRange
+        document.replaceString(textRange.startOffset, textRange.endOffset, newText)
+        marker.dispose()
+      }
+      FileDocumentManager.getInstance().saveDocument(document)
+    }
+  }
+
+  @McpTool
+  @McpDescription("""
+        |Searches for a text substring within all files in the project using IntelliJ's search engine.
+        |Prefer this tool over reading files with command-line tools because it's much faster.
+        |
+        |The result occurrences are surrounded with `||` characters, e.g. `some text ||substring|| text`
+    """)
+  suspend fun search_in_files_by_text(
+    @McpDescription("Text substring to search for")
+    searchText: String,
+    @McpDescription("Directory to search in, relative to project root. If not specified, searches in the entire project.")
+    directoryToSearch: String? = null,
+    @McpDescription("File mask to search for. If not specified, searches for all files. Example: `*.java`")
+    fileMask: String? = null,
+    @McpDescription("Whether to search for the text in a case-sensitive manner")
+    caseSensitive: Boolean = true,
+    @McpDescription("Maximum number of entries to return.")
+    maxUsageCount: Int = 1000,
+    @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
+    timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
+  ): UsageInfoResult = search_in_files(searchText, false, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
+
+  @McpTool
+  @McpDescription("""
+        |Searches with a regex pattern within all files in the project using IntelliJ's search engine.
+        |Prefer this tool over reading files with command-line tools because it's much faster.
+        |
+        |The result occurrences are surrounded with || characters, e.g. `some text ||substring|| text`
+    """)
+  suspend fun search_in_files_by_regex(
+    @McpDescription("Regex patter to search for")
+    regexPattern: String,
+    @McpDescription("Directory to search in, relative to project root. If not specified, searches in the entire project.")
+    directoryToSearch: String? = null,
+    @McpDescription("File mask to search for. If not specified, searches for all files. Example: `*.java`")
+    fileMask: String? = null,
+    @McpDescription("Whether to search for the text in a case-sensitive manner")
+    caseSensitive: Boolean = true,
+    @McpDescription("Maximum number of entries to return.")
+    maxUsageCount: Int = 1000,
+    @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
+    timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
+  ): UsageInfoResult = search_in_files(regexPattern, true, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
+
+  private suspend fun search_in_files(
+    searchTextOrRegex: String,
+    isRegex: Boolean,
+    directoryToSearch: String? = null,
+    fileMask: String? = null,
+    caseSensitive: Boolean = true,
+    maxUsageCount: Int = 1000,
+    timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
+  ): UsageInfoResult {
+    val project = currentCoroutineContext().project
+    val projectDir = project.projectDirectory
+
+    if (searchTextOrRegex.isBlank()) mcpFail("Search text is empty")
+
+    val findModel = FindManager.getInstance(project).findInProjectModel.clone().apply {
+      stringToFind = searchTextOrRegex
+      isCaseSensitive = false
+      isWholeWordsOnly = false
+      isRegularExpressions = false
+      isProjectScope = true
+      isSearchInProjectFiles = false
+      fileFilter = fileMask
+      isCaseSensitive = caseSensitive
+      isRegularExpressions = isRegex
+      if (directoryToSearch != null) {
+        val directoryToSearchPath = project.resolveInProject(directoryToSearch)
+        if (!directoryToSearchPath.isDirectory()) mcpFail("The specified path '$directoryToSearch' is not a directory.")
+        directoryName = directoryToSearchPath.pathString
+      }
+    }
+
+    val usages = CopyOnWriteArrayList<UsageInfo>()
+
+    val timedOut = withTimeoutOrNull(timeout = timeout.milliseconds) {
+      val processor = Processor<UsageInfo> { usageInfo ->
+        usages.add(usageInfo)
+        return@Processor usages.size < maxUsageCount
+      }
+
+      withBackgroundProgress(project, FindBundle.message("find.searching.for.string.in.file.progress", searchTextOrRegex, findModel.directoryName
+                                                                                                                          ?: FindBundle.message("find.scope.project.title")), cancellable = true) {
+        FindInProjectUtil.findUsages(
+          findModel,
+          project,
+          processor,
+          FindUsagesProcessPresentation(UsageViewPresentation())
+        )
+      }
+    } == null
+
+    val entries = usages.mapNotNull { usage ->
+      val file = usage.virtualFile ?: return@mapNotNull null
+      val document = readAction { FileDocumentManager.getInstance().getDocument(file) } ?: return@mapNotNull null
+      val textRange = usage.navigationRange ?: return@mapNotNull null
+      val startLineNumber = document.getLineNumber(textRange.startOffset)
+      val startLineStartOffset = document.getLineStartOffset(startLineNumber)
+      val endLineNumber = document.getLineNumber(textRange.endOffset)
+      val endLineEndOffset = document.getLineEndOffset(endLineNumber)
+      val textBeforeOccurrence = document.getText(TextRange(startLineStartOffset, textRange.startOffset))
+      val textInner = document.getText(TextRange(textRange.startOffset, textRange.endOffset))
+      val textAfterOccurrence = document.getText(TextRange(textRange.endOffset, endLineEndOffset))
+      UsageInfoEntry(projectDir.relativizeIfPossible(file), startLineNumber + 1, "$textBeforeOccurrence||$textInner||$textAfterOccurrence")
+    }
+
+    return UsageInfoResult(entries = entries, probablyHasMoreMatchingEntries = usages.size >= maxUsageCount, timedOut = timedOut)
+  }
+
+  @Serializable
+  data class UsageInfoEntry(
+    val filePath: String,
+    val lineNumber: Int,
+    val lineText: String,
+  )
+
+  @OptIn(ExperimentalSerializationApi::class)
+  @Serializable
+  data class UsageInfoResult(
+    val entries: List<UsageInfoEntry>,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val probablyHasMoreMatchingEntries: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val timedOut: Boolean = false
+  )
 }

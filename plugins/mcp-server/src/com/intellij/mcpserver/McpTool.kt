@@ -37,3 +37,10 @@ class McpToolCallResult(val content: Array<McpToolCallResultContent>, val isErro
 }
 
 open class McpExpectedError(val mcpErrorText: String) : Exception(mcpErrorText)
+
+/**
+ * Throws [McpExpectedError] with [message]
+ *
+ * The exception is caught by MCP server and returned to client as a well-rendered error
+ */
+fun mcpFail(message: String): Nothing = throw McpExpectedError(message)

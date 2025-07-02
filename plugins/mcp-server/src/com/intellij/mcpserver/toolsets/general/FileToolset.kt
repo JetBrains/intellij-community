@@ -1,279 +1,264 @@
 @file:Suppress("FunctionName", "unused")
+@file:OptIn(ExperimentalSerializationApi::class)
 
 package com.intellij.mcpserver.toolsets.general
 
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
-import com.intellij.mcpserver.util.relativizeByProjectDir
-import com.intellij.mcpserver.util.resolveRel
-import com.intellij.openapi.application.invokeLater
+import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.projectDirectory
+import com.intellij.mcpserver.util.relativizeIfPossible
+import com.intellij.mcpserver.util.renderDirectoryTree
+import com.intellij.mcpserver.util.resolveInProject
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.io.createParentDirectories
+import kotlinx.coroutines.*
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.coroutines.coroutineContext
-import kotlin.io.path.*
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.milliseconds
 
 class FileToolset : McpToolset {
-    @McpTool
-    @McpDescription("""
-        Provides a hierarchical tree view of the project directory structure starting from the specified folder.
-        Use this tool to efficiently explore complex project structures in a nested format.
-        Requires a pathInProject parameter (use "/" for project root).
-        Optionally accepts a maxDepth parameter (default: 5) to limit recursion depth.
-        Returns a JSON-formatted tree structure, where each entry contains:
-        - name: The name of the file or directory
-        - type: Either "file" or "directory"
-        - path: Full path relative to project root
-        - children: Array of child entries (for directories only)
-        Returns error if the specified path doesn't exist or is outside project scope.
+  @McpTool
+  @McpDescription("""
+        |Provides a tree representation of the specified directory in the pseudo graphic format like `tree` utility does.
+        |Use this tool to explore the contents of a directory or the whole project.
+        |You MUST prefer this tool over listing directories via command line utilities like `ls` or `dir`.
     """)
-    suspend fun list_directory_tree_in_folder(
-        @McpDescription("Path in project (use \"/\" for project root)")
-        pathInProject: String,
-        @McpDescription("Maximum recursion depth (default: 5)")
-        maxDepth: Int = 5
-    ): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "can't find project dir"
+  suspend fun list_directory_tree(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION) directoryPath: String,
+    @McpDescription("Maximum recursion depth") maxDepth: Int = 5,
+    @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION) timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
+  ): DirectoryTreeInfo {
+    val project = currentCoroutineContext().project
+    val resolvedPath = project.resolveInProject(directoryPath)
+    if (!resolvedPath.exists()) mcpFail("No such directory: $resolvedPath")
+    if (!resolvedPath.isDirectory()) mcpFail("Not a directory: $resolvedPath")
 
-        return runReadAction {
-            try {
-                val targetDir = projectDir.resolveRel(pathInProject)
+    val result = StringBuilder()
+    val errors = mutableListOf<String>()
+    val timedOut = withTimeoutOrNull(timeout.milliseconds) { renderDirectoryTree(resolvedPath.toFile(), result, errors, maxDepth = maxDepth) } == null
+    return DirectoryTreeInfo(directoryPath, result.toString(), errors, timedOut)
+  }
 
-                if (!targetDir.exists()) {
-                    return@runReadAction "directory not found"
-                }
+  @Serializable
+  class DirectoryTreeInfo(
+    val traversedDirectory: String,
+    val tree: String,
+    val errors: List<String>,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val listingTimedOut: Boolean = false,
+  )
 
-                val entryTree = buildDirectoryTree(projectDir, targetDir, maxDepth)
-                entryTreeToJson(entryTree)
-            } catch (e: Exception) {
-                "Error creating directory tree: ${e.message}"
+  @McpTool
+  @McpDescription("""
+        |Searches for all files in the project whose names contain the specified keyword (case-insensitive).
+        |Use this tool to locate files when you know part of the filename.
+        |Note: Matched only names, not paths, because works via indexes.
+        |Note: Only searches through files within the project directory, excluding libraries and external dependencies.
+        |Note: Prefer this tool over other `find` tools because it's much faster, 
+        |but remember that this tool searches only names, not paths and it doesn't support glob patterns.
+    """)
+  suspend fun find_files_by_name_keyword(
+    @McpDescription("Substring to search for in file names")
+    nameKeyword: String,
+    @McpDescription("Maximum number of files to return.")
+    fileCountLimit: Int = 1000,
+    @McpDescription("Timeout in milliseconds")
+    timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
+  ): FilesListResult {
+    val project = currentCoroutineContext().project
+    val projectDir = project.projectDirectory
+
+    val globalSearchScope = GlobalSearchScope.projectScope(project)
+    val result = CopyOnWriteArrayList<Path>()
+
+    val timedOut = withTimeoutOrNull(timeout.milliseconds) {
+      withBackgroundProgress(project, McpServerBundle.message("progress.title.searching.for.files.by.name", nameKeyword), cancellable = true) {
+        readAction {
+          val fileSequence = FilenameIndex.getAllFilenames(project)
+            .asSequence()
+            .filter { it.contains(nameKeyword, ignoreCase = true) }
+            .flatMap {
+              FilenameIndex.getVirtualFilesByName(it, globalSearchScope)
             }
-        }
-    }
-
-    @McpTool
-    @McpDescription("""
-        Lists all files and directories in the specified project folder.
-        Use this tool to explore project structure and get contents of any directory.
-        Requires a pathInProject parameter (use "/" for project root).
-        Returns a JSON-formatted list of entries, where each entry contains:
-        - name: The name of the file or directory
-        - type: Either "file" or "directory"
-        - path: Full path relative to project root
-        Returns error if the specified path doesn't exist or is outside project scope.
-    """)
-    suspend fun list_files_in_folder(
-        @McpDescription("Path in project (use \"/\" for project root)")
-        pathInProject: String
-    ): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "can't find project dir"
-
-        return runReadAction {
-            try {
-                val targetDir = projectDir.resolveRel(pathInProject)
-
-                if (!targetDir.exists()) {
-                    return@runReadAction "directory not found"
-                }
-
-                val entries = targetDir.listDirectoryEntries().map { entry ->
-                    val type = if (entry.isDirectory()) "directory" else "file"
-                    val relativePath = projectDir.relativize(entry).toString()
-                    """{"name": "${entry.name}", "type": "$type", "path": "$relativePath"}"""
-                }
-
-                entries.joinToString(",\n", prefix = "[", postfix = "]")
-            } catch (e: Exception) {
-                "Error listing directory: ${e.message}"
+            .mapNotNull { file ->
+              runCatching { projectDir.relativize(file.toNioPath()) }.getOrNull()
             }
+            .take(fileCountLimit)
+          for (file in fileSequence) {
+            ensureActive()
+            result.add(file)
+          }
         }
-    }
+      }
+    } == null
+    return FilesListResult(probablyHasMoreMatchingFiles = result.size >= fileCountLimit,
+                           timedOut = timedOut,
+                           files = result.map { it.pathString })
+  }
 
-    @McpTool
-    @McpDescription("""
-        Searches for all files in the project whose names contain the specified substring (case-insensitive).
-        Use this tool to locate files when you know part of the filename.
-        Requires a nameSubstring parameter for the search term.
-        Returns a JSON array of objects containing file information:
-        - path: Path relative to project root
-        - name: File name
-        Returns an empty array ([]) if no matching files are found.
-        Note: Only searches through files within the project directory, excluding libraries and external dependencies.
+  @OptIn(ExperimentalAtomicApi::class)
+  @McpTool
+  @McpDescription("""
+          |Searches for all files in the project whose relative paths match the specified glob pattern.
+          |The search is performed recursively in all subdirectories of the project directory or a specified subdirectory.
+          |Use this tool when you need to find files by a glob pattern (e.g. '**/*.txt').
     """)
-    suspend fun find_files_by_name_substring(
-        @McpDescription("Substring to search for in file names")
-        nameSubstring: String
-    ): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "project dir not found"
+  suspend fun find_files_by_glob(
+    @McpDescription("Glob pattern to search for. The pattern must be relative to the project root. Example: `src/**/ *.java`")
+    globPattern: String,
+    @McpDescription("Optional subdirectory relative to the project to search in.")
+    subDirectoryRelativePath: String? = null,
+    @McpDescription("Whether to add excluded/ignored files to the search results. Files can be excluded from a project either by user of by some ignore rules")
+    addExcluded: Boolean = false,
+    @McpDescription("Maximum number of files to return.")
+    fileCountLimit: Int = 1000,
+    @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
+    timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE
+  ) : FilesListResult {
+    val project = currentCoroutineContext().project
+    val projectDirPath = project.projectDirectory
+    val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
 
-        val searchSubstring = nameSubstring.lowercase()
-        return runReadAction {
-            FilenameIndex.getAllFilenames(project)
-                .filter { it.lowercase().contains(searchSubstring) }
-                .flatMap {
-                    FilenameIndex.getVirtualFilesByName(it, GlobalSearchScope.projectScope(project))
-                }
-                .filter { file ->
-                    try {
-                        projectDir.relativize(Path(file.path))
-                        true
-                    } catch (e: IllegalArgumentException) {
-                        false
-                    }
-                }
-                .map { file ->
-                    val relativePath = projectDir.relativize(Path(file.path)).toString()
-                    """{"path": "$relativePath", "name": "${file.name}"}"""
-                }
-                .joinToString(",\n", prefix = "[", postfix = "]")
-        }
+    val globMather = FileSystems.getDefault().getPathMatcher("glob:$globPattern") ?: mcpFail("Invalid glob pattern: $globPattern")
+    val result = CopyOnWriteArrayList<Path>()
+
+    val contentIterator = ContentIterator { file ->
+      if (file.isDirectory) return@ContentIterator true
+      val filePath = file.toNioPathOrNull() ?: return@ContentIterator true // continue iteration
+      val relativePath = runCatching { projectDirPath.relativize(filePath) }.getOrNull() ?: return@ContentIterator true
+
+      if (!globMather.matches(relativePath)) return@ContentIterator true
+      if (!addExcluded && runReadAction { fileIndex.isExcluded(file) }) return@ContentIterator true
+      result.add(relativePath)
+
+      return@ContentIterator result.size < fileCountLimit
     }
 
-    @McpTool
-    @McpDescription("""
-        Creates a new file at the specified path within the project directory and populates it with the provided text.
-        Use this tool to generate new files in your project structure.
-        Requires two parameters:
-            - pathInProject: The relative path where the file should be created
-            - text: The content to write into the new file
-        Returns one of two possible responses:
-            - "ok" if the file was successfully created and populated
-            - "can't find project dir" if the project directory cannot be determined
-        Note: Creates any necessary parent directories automatically
+    val timedOut = withTimeoutOrNull(timeout.milliseconds) {
+      withBackgroundProgress(project, McpServerBundle.message("progress.title.searching.for.files.by.glob.pattern", globPattern), cancellable = true) {
+        if (subDirectoryRelativePath != null) {
+          val subDirectoryPath = project.resolveInProject(subDirectoryRelativePath)
+          if (!subDirectoryPath.exists() && !subDirectoryPath.isDirectory()) mcpFail("Subdirectory not found or not a directory: $subDirectoryPath")
+          val subdirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(subDirectoryPath)
+                                        ?: mcpFail("Subdirectory not found: $subDirectoryPath")
+          fileIndex.iterateContentUnderDirectory(subdirectoryVirtualFile, contentIterator)
+        }
+        else {
+          fileIndex.iterateContent(contentIterator)
+        }
+      }
+    } == null
+
+    return FilesListResult(probablyHasMoreMatchingFiles = result.size >= fileCountLimit, // there may be a very rare case when the count of files is exactly the limit, but it's not a problem
+                           timedOut = timedOut,
+                           files = result.map { it.pathString })
+  }
+
+  @Serializable
+  data class FilesListResult(
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val probablyHasMoreMatchingFiles: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val timedOut: Boolean = false,
+    val files: List<String>
+  )
+
+
+  @McpTool
+  @McpDescription("""
+        |Opens the specified file in the JetBrains IDE editor.
+        |Requires a filePath parameter containing the path to the file to open.
+        |The file path can be absolute or relative to the project root.
     """)
-    suspend fun create_new_file_with_text(
-        @McpDescription("Path in project where the file should be created")
-        pathInProject: String,
-        @McpDescription("Content to write into the new file")
-        text: String
-    ): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "can't find project dir"
+  suspend fun open_file_in_editor(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    filePath: String,
+  ) {
+    val project = currentCoroutineContext().project
+    val resolvedPath = project.resolveInProject(filePath)
 
-        val path = projectDir.resolveRel(pathInProject)
-        if (!path.exists()) {
-            path.createParentDirectories().createFile()
-        }
-        val textContent = text.removePrefix("<![CDATA[").removeSuffix("]]>")
-        path.writeText(textContent)
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
+    val file = LocalFileSystem.getInstance().findFileByNioFile(resolvedPath)
+               ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
 
-        return "ok"
+    if (file == null || !file.exists() || !file.isFile) mcpFail("File $filePath doesn't exist or can't be opened")
+
+    withContext(Dispatchers.EDT) {
+      FileEditorManagerEx.getInstanceExAsync(project).openFile(file, options = FileEditorOpenOptions(requestFocus = true))
     }
+  }
 
-    @McpTool
-    @McpDescription("""
-        Opens the specified file in the JetBrains IDE editor.
-        Requires a filePath parameter containing the path to the file to open.
-        The file path can be absolute or relative to the project root.
-        Returns one of two possible responses:
-            - "file is opened" if the file was successfully opened
-            - "file doesn't exist or can't be opened" otherwise
+  @McpTool
+  @McpDescription("""
+        |Returns active editor's and other open editors' file paths relative to the project root.
+        |
+        |Use this tool to explore current open editors.
     """)
-    suspend fun open_file_in_editor(
-        @McpDescription("Path of file to open (absolute or relative to project root)")
-        filePath: String
-    ): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "can't find project dir"
+  suspend fun get_all_open_file_paths(): OpenFilesInfo {
+    val project = currentCoroutineContext().project
+    val projectDir = project.projectDirectory
 
-        val file = LocalFileSystem.getInstance().findFileByPath(filePath)
-            ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir.resolveRel(filePath))
+    val fileEditorManager = FileEditorManagerEx.getInstanceExAsync(project)
+    val openFiles = fileEditorManager.openFiles
+    val filePaths = openFiles.mapNotNull { projectDir.relativizeIfPossible(it) }
+    val activeFilePath = fileEditorManager.selectedEditor?.file?.toNioPathOrNull()?.let { projectDir.relativize(it).pathString }
+    return OpenFilesInfo(activeFilePath = activeFilePath, openFiles = filePaths)
+  }
 
-        return if (file != null && file.exists()) {
-            invokeLater {
-                FileEditorManager.getInstance(project).openFile(file, true)
-            }
-            "file is opened"
-        } else {
-            "file doesn't exist or can't be opened"
-        }
-    }
+  @Serializable
+  data class OpenFilesInfo(
+    val activeFilePath: String?,
+    val openFiles: List<String>
+  )
 
-    @McpTool
-    @McpDescription("""
-        Lists full path relative paths to the project root of all currently open files in the JetBrains IDE editor.
-        Returns a list of file paths that are currently open in editor tabs.
-        Returns an empty list if no files are open.
-        
-        Use this tool to explore current open editors.
-        Returns a list of file paths separated by newline symbol.
+  @McpTool
+  @McpDescription("""
+        |Creates a new file at the specified path within the project directory and optionally populates it with text if provided.
+        |Use this tool to generate new files in your project structure.
+        |Note: Creates any necessary parent directories automatically
     """)
-    suspend fun get_all_open_file_paths(): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+  suspend fun create_new_file(
+    @McpDescription("Path where the file should be created relative to the project root")
+    pathInProject: String,
+    @McpDescription("Content to write into the new file")
+    text: String? = null,
+  ) {
+    val project = currentCoroutineContext().project
 
-        val fileEditorManager = FileEditorManager.getInstance(project)
-        val openFiles = fileEditorManager.openFiles
-        val filePaths = openFiles.mapNotNull { it.toNioPath().relativizeByProjectDir(projectDir) }
-        return filePaths.joinToString("\n")
+    val path = project.resolveInProject(pathInProject)
+    val newFile = LocalFileSystem.getInstance().createChildFile(null, VfsUtil.createDirectories(path.parent.pathString), path.name)
+    writeAction {
+      val document = FileDocumentManager.getInstance().getDocument(newFile, project) ?: mcpFail("Can't get document for created file: $newFile")
+      if (text != null) {
+        document.setText(text)
+      }
     }
-
-    @McpTool
-    @McpDescription("""
-        Retrieves the absolute path of the currently active file in the JetBrains IDE editor.
-        Use this tool to get the file location for tasks requiring file path information.
-        Returns an empty string if no file is currently open.
-    """)
-    suspend fun get_open_in_editor_file_path(): String {
-        val project = coroutineContext.project
-        val path = runReadAction<String?> {
-            FileEditorManager.getInstance(project).selectedTextEditor?.virtualFile?.path
-        }
-        return path ?: ""
-    }
-
-    private data class Entry(
-        val name: String,
-        val type: String,
-        val path: String,
-        val children: MutableList<Entry> = mutableListOf()
-    )
-
-    private fun buildDirectoryTree(projectDir: Path, current: Path, maxDepth: Int, currentDepth: Int = 0): Entry {
-        val relativePath = projectDir.relativize(current).toString()
-        val type = if (current.isDirectory()) "directory" else "file"
-        val entry = Entry(name = current.name, type = type, path = relativePath)
-        if (current.isDirectory()) {
-            if (currentDepth >= maxDepth) return entry
-            current.listDirectoryEntries().forEach { childPath ->
-                entry.children.add(buildDirectoryTree(projectDir, childPath, maxDepth, currentDepth + 1))
-            }
-        }
-        return entry
-    }
-
-    private fun entryTreeToJson(entry: Entry): String {
-        val sb = StringBuilder()
-        sb.append("{")
-        sb.append("\"name\":\"${entry.name}\",")
-        sb.append("\"type\":\"${entry.type}\",")
-        sb.append("\"path\":\"${entry.path}\"")
-        if (entry.type == "directory") {
-            sb.append(",\"children\":[")
-            entry.children.forEachIndexed { index, child ->
-                if (index > 0) sb.append(",")
-                sb.append(entryTreeToJson(child))
-            }
-            sb.append("]")
-        }
-        sb.append("}")
-        return sb.toString()
-    }
+  }
 }

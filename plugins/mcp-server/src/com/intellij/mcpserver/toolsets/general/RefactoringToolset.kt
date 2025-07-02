@@ -3,21 +3,20 @@ package com.intellij.mcpserver.toolsets.general
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
-import com.intellij.mcpserver.util.resolveRel
+import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.*
 import com.intellij.refactoring.rename.RenameProcessor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
 
 class RefactoringToolset : McpToolset {
   @McpTool
@@ -38,68 +37,48 @@ class RefactoringToolset : McpToolset {
         Returns an error message if the file or symbol cannot be found or the rename operation failed.
     """)
   suspend fun rename_refactoring(
-    @McpDescription("File location from project root")
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
     pathInProject: String,
     @McpDescription("Name of the symbol to rename")
     symbolName: String,
     @McpDescription("New name for the symbol")
     newName: String,
   ): String {
-    val project = coroutineContext.project
-    val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-                     ?: return "can't find project dir"
+    val project = currentCoroutineContext().project
+    val resolvedPath = project.resolveInProject(pathInProject)
 
-    try {
-      val virtualFile: VirtualFile? = readAction {
-        LocalFileSystem.getInstance().findFileByPath(pathInProject)
-        ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir.resolveRel(pathInProject))
-      }
+    val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(resolvedPath)
+                      ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+                      ?: mcpFail("File not found: $pathInProject")
 
-      if (virtualFile == null) {
-        return "file not found: $pathInProject"
-      }
+    val document = readAction {
+      FileDocumentManager.getInstance().getDocument(virtualFile)
+    } ?: mcpFail("Cannot read file: $pathInProject")
 
-      val fileDocumentManager = FileDocumentManager.getInstance()
-      val document = readAction {
-        fileDocumentManager.getDocument(virtualFile)
-      }
-      if (document == null) {
-        return "document not found: $pathInProject"
-      }
-      val psiDocumentManager = PsiDocumentManager.getInstance(project)
-      val psiFile = readAction {
-        psiDocumentManager.getPsiFile(document)
-      }
-      if (psiFile == null) {
-        return "couldn't get PSI file for: $pathInProject"
-      }
+    val psiDocumentManager = PsiDocumentManager.getInstance(project)
+    val psiFile = readAction {
+      psiDocumentManager.getPsiFile(document)
+    } ?: mcpFail("couldn't get PSI file for: $pathInProject")
 
-      val targetElement = readAction {
-        findSymbolInFile(psiFile, symbolName)
-      }
-      if (targetElement == null) {
-        return "symbol not found: $symbolName in $pathInProject"
-      }
+    val targetElement = readAction {
+      findSymbolInFile(psiFile, symbolName)
+    } ?: mcpFail("Couldn't find symbol '$symbolName' in file '$pathInProject'")
 
-      if (targetElement !is PsiNamedElement) {
-        return "element is not renamable: $symbolName"
-      }
-
-      val renameProcessor = RenameProcessor(project, targetElement, newName, true, true)
-
-      val usages = readAction { renameProcessor.findUsages() }
-
-      withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          renameProcessor.run()
-        }
-      }
-
-      return "Successfully renamed '$symbolName' to '$newName' in $pathInProject with ${usages.size} usages."
+    if (targetElement !is PsiNamedElement) {
+      mcpFail("Element is not renamable: $symbolName")
     }
-    catch (e: Exception) {
-      return "Error during rename refactoring: ${e.message}"
+
+    val renameProcessor = RenameProcessor(project, targetElement, newName, true, true)
+
+    val usages = readAction { renameProcessor.findUsages() }
+
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        renameProcessor.run()
+      }
     }
+
+    return "Successfully renamed '$symbolName' to '$newName' in $pathInProject with ${usages.size} usages."
   }
 }
 
