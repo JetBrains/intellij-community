@@ -3,6 +3,7 @@ package com.intellij.byteCodeViewer
 
 import com.intellij.filename.UniqueNameBuilder
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -35,6 +36,11 @@ class BytecodeToolWindowService(private val project: Project) {
       return
     }
 
+    val messageBusConnection = project.messageBus.connect(toolWindow.disposable)
+    messageBusConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      deduplicateTabNames(toolWindow)
+    })
+
     val listener = object : ContentManagerListener {
       override fun contentAdded(event: ContentManagerEvent) {
         if (UISettings.getInstance().showDirectoryForNonUniqueFilenames) {
@@ -55,6 +61,7 @@ class BytecodeToolWindowService(private val project: Project) {
       // The bytecode tool window cannot be "closed"  
       contentManager.removeContentManagerListener(listener)
       registeredListeners.remove(toolWindow)
+      messageBusConnection.disconnect()
     }
   }
 
