@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentFactory
@@ -78,7 +79,9 @@ internal class ShowBytecodeAction : AnAction() {
     content.setDisposer(panel)
     toolWindow.contentManager.setSelectedContent(content)
     toolWindow.setAdditionalGearActions(createActionGroup())
-    toolWindow.activate(null)
+    toolWindow.activate {
+      IdeFocusManager.getInstance(project).requestFocus(panel, false)
+    }
   }
 
   private fun createActionGroup(): ActionGroup {
