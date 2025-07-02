@@ -103,7 +103,6 @@ internal fun Modifier.holoFoil(normalizedOffset: Offset, intensity: Float = 1f) 
             )
             .asComposeRenderEffect()
 
-    // --- The key rotation logic change ---
     // Moving the mouse horizontally (X offset) should rotate around the Y axis.
     rotationY = normalizedOffset.x * 10f * intensity
 
@@ -111,7 +110,6 @@ internal fun Modifier.holoFoil(normalizedOffset: Offset, intensity: Float = 1f) 
     // We negate it so that moving the mouse down tilts the card up.
     rotationX = -normalizedOffset.y * 10f * intensity
 
-    // We can keep a little Z rotation for style
     rotationZ = -normalizedOffset.x * 3f * intensity
     scaleX = 1f - .1f * intensity
     scaleY = 1f - .1f * intensity
