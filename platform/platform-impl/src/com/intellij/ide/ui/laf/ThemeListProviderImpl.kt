@@ -47,7 +47,7 @@ private class ThemeListProviderImpl : ThemeListProvider {
         else customThemes.add(info)
       }
     }
-    else if (ExperimentalUI.isNewUI()) {
+    else if (ExperimentalUI.isNewUI() && Registry.`is`("idea.islands.enabled", false)) {
       uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.ISLAND).forEach { info ->
         if (!info.isThemeFromPlugin) islandUiThemes.add(info)
         else customThemes.add(info)
