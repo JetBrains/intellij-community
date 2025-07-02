@@ -42,7 +42,7 @@ abstract class ViewWithMarginsCompositeBase<SubView>(private val ignoreInitialMa
     fontMetricsStorage: InlayTextMetricsStorage,
     action: (SubView, Point) -> Unit,
   ) {
-    val x = pointInsideInlay.x.toInt()
+    val x = pointInsideInlay.x
     forEachSubViewBounds(fontMetricsStorage) { subView, leftBound, rightBound ->
       if (x in leftBound..<rightBound) {
         action(subView, Point(x - leftBound, pointInsideInlay.y))
