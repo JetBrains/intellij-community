@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
 import com.intellij.ide.nls.NlsMessages
-import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import java.awt.Component
@@ -32,7 +32,7 @@ internal class SearchScopeSelector(property: ObservableMutableProperty<List<Scop
       .apply { border = JBUI.Borders.empty(BORDER, BORDER, BORDER, ICON_TEXT_GAP / 2) }
       .apply { labelFor = dropDownLink }
 
-    layout = HorizontalLayout(0)
+    layout = ListLayout.horizontal(0)
     border = JBUI.Borders.empty()
     add(label)
     add(dropDownLink)

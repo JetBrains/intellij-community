@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
-import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -14,6 +13,7 @@ import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.*
@@ -30,7 +30,7 @@ internal class ExternalProjectSelector(
       .apply { border = JBUI.Borders.empty(BORDER, BORDER, BORDER, ICON_TEXT_GAP / 2) }
       .apply { labelFor = dropDownLink }
 
-    layout = HorizontalLayout(0)
+    layout = ListLayout.horizontal(0)
     border = JBUI.Borders.empty()
     add(label)
     add(dropDownLink)

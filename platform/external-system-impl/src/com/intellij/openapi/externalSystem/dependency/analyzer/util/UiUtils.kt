@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -70,7 +70,7 @@ internal fun toolbarPanel(configure: BorderLayoutPanel.() -> Unit) =
 
 internal fun horizontalPanel(vararg components: JComponent) =
   JPanel()
-    .apply { layout = HorizontalLayout(0) }
+    .apply { layout = ListLayout.horizontal(0) }
     .apply { border = JBUI.Borders.empty() }
     .apply { components.forEach(::add) }
 
