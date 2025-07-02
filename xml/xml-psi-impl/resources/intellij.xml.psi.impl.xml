@@ -1,6 +1,5 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.platform.backend"/>
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.frontback.impl"/>

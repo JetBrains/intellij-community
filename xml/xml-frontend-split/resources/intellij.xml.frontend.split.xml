@@ -7,14 +7,14 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.lang.xml.BasicXmlElementFactory"
-                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendXmlElementFactory"/>
-    <applicationService serviceInterface="com.intellij.lang.html.BasicHtmlElementFactory"
-                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
-    <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
-                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
     <highlightErrorFilter implementation="com.intellij.xml.frontend.split.editor.FrontendHtmlHighlightErrorFilter"/>
 
     <virtualFileCustomDataConsumer implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
+
+    <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
+                        serviceImplementation="com.intellij.javaee.ExternalResourceManagerExBase"/>
+
+    <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.XmlResolveReferenceSupport"
+                        serviceImplementation="com.intellij.xml.frontend.split.editor.DummyXmlResolveReferenceSupport"/>
   </extensions>
 </idea-plugin>

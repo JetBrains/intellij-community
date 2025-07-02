@@ -53,7 +53,6 @@ jvm_library(
   runtime_deps = [
     ":psi-impl_resources",
     ":psi-impl_resources_1",
-    "//platform/backend",
   ]
 )
 ### auto-generated section `build intellij.xml.psi.impl` end

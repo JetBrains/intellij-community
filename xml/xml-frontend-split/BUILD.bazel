@@ -23,6 +23,8 @@ jvm_library(
     "//platform/util",
     "//platform/editor-ui-api:editor-ui",
     "//xml/xml-frontback-impl:frontback-impl",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-psi-api:psi",
   ],
   runtime_deps = [":frontend-split_resources"]
 )
