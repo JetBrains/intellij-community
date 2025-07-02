@@ -15,7 +15,6 @@ import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import com.jetbrains.python.sdk.uv.impl.createUvCli
@@ -63,14 +62,14 @@ fun canRun(
     return true
   }
 
-  val associatedModulePath = options.uvSdk?.associatedModulePath
+  val workingDirectory = options.workingDirectory
   val uvExecutable = getUvExecutable()
   var isError = false
   var isUnsynced = false
 
-  if (associatedModulePath != null && uvExecutable != null) {
+  if (workingDirectory != null && uvExecutable != null) {
     runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
-      val uv = createUvLowLevel(Path.of(associatedModulePath), createUvCli(uvExecutable))
+      val uv = createUvLowLevel(workingDirectory, createUvCli(uvExecutable))
 
       when (requiresSync(uv, options, logger).getOrNull()) {
         true -> isUnsynced = true
