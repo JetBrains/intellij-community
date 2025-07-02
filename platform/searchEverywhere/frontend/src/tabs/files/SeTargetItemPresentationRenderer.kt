@@ -27,6 +27,8 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     presentation.icon?.let { icon(it) }
 
     text(presentation.presentableText) {
+      accessibleName = presentation.presentableText + (presentation.containerText?.let { " $it" } ?: "")
+
       if (presentation.presentableTextErrorHighlight) {
         attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED,
                                           presentation.presentableTextFgColor,
@@ -49,6 +51,7 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       val shortenContainerText = SETextShortener.getShortenContainerText(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), { fontMetrics.stringWidth(it) })
 
       text(shortenContainerText) {
+        accessibleName = null
         attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
 
         if (selected) {
@@ -76,6 +79,7 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     presentation.locationText?.let { locationText ->
       @Suppress("HardCodedStringLiteral")
       text(locationText) {
+        accessibleName = null
         align = LcrInitParams.Align.RIGHT
         foreground =
           if (selected) NamedColorUtil.getListSelectionForeground(true)
