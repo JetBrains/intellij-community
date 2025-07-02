@@ -267,6 +267,16 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testESLinkedProjectIds() throws Exception {
+    // Project configuration without an existing directory is not allowed
+    createProjectSubDir("app");
+    createProjectSubDir("util");
+
+    createProjectSubDir("included-build/util");
+    createProjectSubDir("included-build/buildSrc/util");
+
+    createProjectSubDir("buildSrc/buildSrcSubProject");
+    createProjectSubDir("buildSrc/util");
+
     // main build
     createSettingsFile("""
                          rootProject.name = 'multiproject'

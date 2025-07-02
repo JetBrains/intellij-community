@@ -50,7 +50,6 @@ public class GradleClassFinderTest extends GradleImportingTestCase {
     // buildSrc module files
     createProjectSubFile("buildSrc/src/main/groovy/org/buildsrc/BuildSrcClass.groovy", """
       package org.buildsrc;
-      import groovy.util.AntBuilder;
       public class BuildSrcClass {}""");
     importProject("""
                     subprojects {

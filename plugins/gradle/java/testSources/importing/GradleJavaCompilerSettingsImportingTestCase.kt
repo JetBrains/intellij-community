@@ -32,8 +32,16 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
     return createBuildFile(relativePath) {
       withJavaPlugin()
       withPrefix {
-        assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
-        assignIfNotNull("targetCompatibility", projectTargetCompatibility)
+        if (isGradleAtLeast("9.0")) {
+          callIfNotEmpty("java") {
+            assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
+            assignIfNotNull("targetCompatibility", projectTargetCompatibility)
+          }
+        }
+        else {
+          assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
+          assignIfNotNull("targetCompatibility", projectTargetCompatibility)
+        }
         call("compileJava") {
           assignIfNotNull("sourceCompatibility", mainSourceCompatibility)
           assignIfNotNull("targetCompatibility", mainTargetCompatibility)

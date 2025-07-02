@@ -7,6 +7,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleDependenciesTest : GradleCodeInsightTestCase() {
@@ -91,6 +92,12 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test module delegate`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsOlderThan(gradleVersion, "9.0") {
+      """
+      ClientModule dependencies were a legacy precursor to ComponentMetadataRules, and have since been replaced and removed in Gradle 9.0.
+      See gradle/pull/32743 for more information. 
+      """.trimIndent()
+    }
     testJavaProject(gradleVersion) {
       testBuildscript("dependencies { module(':') {<caret>} }") {
         closureDelegateTest(GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY, 1)
@@ -101,6 +108,12 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test module delegate method setter`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsOlderThan(gradleVersion, "9.0") {
+      """
+      ClientModule dependencies were a legacy precursor to ComponentMetadataRules, and have since been replaced and removed in Gradle 9.0.
+      See gradle/pull/32743 for more information. 
+      """.trimIndent()
+    }
     testJavaProject(gradleVersion) {
       testBuildscript("dependencies { module(':') { <caret>changing(true) } }") {
         setterMethodTest("changing", "setChanging", GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)

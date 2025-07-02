@@ -311,6 +311,12 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                          includeBuild '../my-app'
                          includeBuild '../my-utils'""");
 
+    // Project configuration without an existing directory is not allowed
+    createProjectSubDir("../my-app/api");
+    createProjectSubDir("../my-utils/string-utils");
+    createProjectSubDir("../my-utils/number-utils");
+    createProjectSubDir("../my-utils/api");
+
     createProjectSubFile("../my-app/settings.gradle", """
       rootProject.name = 'my-app'
       include 'api'

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleOlderThan
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.testFramework.findReferenceByText
 import com.intellij.testFramework.utils.vfs.getPsiFile
@@ -39,7 +40,11 @@ class KotlinGradleBuildNavigationTest : KotlinGradleCodeInsightTestCase() {
                 setProjectName("GradleBuildNavigationTest")
             }
             withBuildFile(gradleVersion) {
-                withPlugin("org.jetbrains.kotlin.multiplatform", "1.7.0")
+                if (isGradleOlderThan(gradleVersion, "9.0")) {
+                    withPlugin("org.jetbrains.kotlin.multiplatform", "1.7.0")
+                } else {
+                    withPlugin("org.jetbrains.kotlin.multiplatform", "1.9.25")
+                }
                 withMavenCentral()
                 withPostfix {
                     call("kotlin") {
