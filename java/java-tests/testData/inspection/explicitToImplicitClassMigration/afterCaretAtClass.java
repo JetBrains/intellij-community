@@ -1,3 +1,3 @@
 void main() {
-    System.out.println("Hello, world!");
+    IO.println("Hello, world!");
 }

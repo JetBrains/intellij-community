@@ -5,17 +5,21 @@ Reports ordinary classes, which can be converted into compact source files
 <pre><code>
   public class Sample {
       public static void main(String[] args) {
-          String a = "Hello, world!";
+          System.out.println("Hello, world!");
       }
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
   void main() {
-      String a = "Hello, world!";
+      IO.println("Hello, world!");
   }
 </code></pre>
 <!-- tooltip end -->
+<p>Configure the inspection:</p>
+<ul>
+  <li>Select <b>Replace 'System.out.print()' and 'System.out.println()' with methods from 'java.lang.IO' class</b> to convert these calls to IO methods.</li>
+</ul>
 <p><small>New in 2024.1</small></p>
 </body>
 </html>
