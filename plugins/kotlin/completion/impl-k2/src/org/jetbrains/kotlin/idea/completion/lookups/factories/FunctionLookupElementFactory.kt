@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher.hasTrailingLambda
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject.Companion.hasReceiver
@@ -118,6 +119,7 @@ internal object FunctionLookupElementFactory {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(KaSession)
     @ApiStatus.Experimental
     fun createLookupWithTrailingLambda(
@@ -140,9 +142,14 @@ internal object FunctionLookupElementFactory {
             hasReceiver = signature.hasReceiver,
             inputTrailingLambdaIsRequired = true,
         )
-
-        return createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null).apply {
+        createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null).apply {
             hasTrailingLambda = true
+            if (trailingFunctionType.parameters.size > 1) {
+                TrailingLambdaInsertionHandler.create(trailingFunctionType)?.let {
+                    return withInsertHandler(it)
+                }
+            }
+            return this
         }
     }
 

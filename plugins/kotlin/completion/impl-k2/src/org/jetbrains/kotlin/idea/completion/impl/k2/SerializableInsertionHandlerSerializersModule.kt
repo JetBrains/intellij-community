@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.completion.handlers.LineAdjusterInsertionHandle
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentWithValueInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeInsertHandler
@@ -82,5 +83,6 @@ val serializableInsertionHandlerSerializersModule: SerializersModule = Serialize
         subclass(FirTrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler::class, FirTrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler.serializer())
         subclass(NameWithTypeLookupElementDecoratorInsertHandler::class, NameWithTypeLookupElementDecoratorInsertHandler.serializer())
         subclass(NamedArgumentWithValueInsertionHandler::class, NamedArgumentWithValueInsertionHandler.serializer())
+        subclass(TrailingLambdaInsertionHandler::class, serializer = TrailingLambdaInsertionHandler.serializer())
     }
 }
