@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.folding;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
 import com.intellij.json.psi.impl.JsonCollectionPsiPresentationUtils;
@@ -60,6 +61,10 @@ public final class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
     if (type == JsonElementTypes.OBJECT) {
       final JsonObject object = node.getPsi(JsonObject.class);
       final List<JsonProperty> properties = object.getPropertyList();
+      JsonFoldingSettings settings = JsonFoldingSettings.getInstance();
+      if (settings.showKeyCount) {
+        return JsonBundle.message("folding.collapsed.object.text", properties.size());
+      }
       JsonProperty candidate = null;
       for (JsonProperty property : properties) {
         final String name = property.getName();
