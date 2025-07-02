@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Document;
@@ -12,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -63,46 +65,40 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     if (myProject.isDisposed()) {
       return;
     }
-    if (daemonCodeAnalyzerEx instanceof DaemonCodeAnalyzerImpl impl && impl.isUpdateByTimerEnabled()) {
-      // even though there maybe no PSI events, we need to re-highlight the changed range
-      // e.g. when the user backspace-d and the quickly re-typed back, or modified and then quickly undid
-      addChangesFromCompositeDirtyRange(document, UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document));
-    }
-    synchronized (changedElements) {
-      List<Change> toUpdate = changedElements.get(document);
-      if (toUpdate == null) {
-        // The document has been changed, but psi hasn't
-        // We may still need to rehighlight the file if there were changes inside highlighted ranges.
-        if (UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
-          return;
+    // don't create PSI for files in other projects
+    PsiFile psiFile = getRawCachedPsiFile(document);
+    if (psiFile != null) {
+      if (daemonCodeAnalyzerEx instanceof DaemonCodeAnalyzerImpl impl && impl.isUpdateByTimerEnabled()) {
+        // even though there maybe no PSI events, we need to re-highlight the changed range
+        // e.g. when the user backspace-d and the quickly re-typed back, or modified and then quickly undid
+        addChangesFromCompositeDirtyRange(psiFile, document, UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document));
+      }
+      synchronized (changedElements) {
+        List<Change> toUpdate = changedElements.get(document);
+        if (toUpdate == null) {
+          // The document has been changed, but psi hasn't
+          // We may still need to rehighlight the file if there were changes inside highlighted ranges.
+          if (!UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
+            toUpdate = new ArrayList<>();
+            toUpdate.add(new Change(psiFile, true));
+            changedElements.putIfAbsent(document, toUpdate);
+          }
         }
-
-        // don't create PSI for files in other projects
-        PsiElement psiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
-        if (psiFile == null) {
-          return;
-        }
-
-        toUpdate = new ArrayList<>();
-        toUpdate.add(new Change(psiFile, true));
-        changedElements.putIfAbsent(document, toUpdate);
       }
     }
     Editor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    PsiFile selectedFile;
+    PsiFile selectedPsiFile;
     if (selectedEditor == null) {
-      selectedFile = null;
+      selectedPsiFile = null;
     }
     else {
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-173666")) {
-        selectedFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(selectedEditor.getDocument());
-      }
+      selectedPsiFile = getRawCachedPsiFile(selectedEditor.getDocument());
     }
-    if (selectedFile != null && !application.isUnitTestMode()) {
+    if (selectedPsiFile != null && !application.isUnitTestMode()) {
       application.invokeLater(() -> {
         if (!selectedEditor.isDisposed() &&
             selectedEditor.getMarkupModel() instanceof EditorMarkupModel markupModel) {
-          ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, selectedFile);
+          ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, selectedPsiFile);
         }
       }, ModalityState.stateForComponent(selectedEditor.getComponent()), myProject.getDisposed());
     }
@@ -113,14 +109,15 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     }
   }
 
-  private void addChangesFromCompositeDirtyRange(@NotNull Document document, boolean whiteSpaceOptimizationAllowed) {
+  private PsiFile getRawCachedPsiFile(@NotNull Document document) {
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    return virtualFile == null ? null : TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, CodeInsightContexts.anyContext());
+  }
+
+  private void addChangesFromCompositeDirtyRange(@NotNull PsiFile psiFile,
+                                                 @NotNull Document document, boolean whiteSpaceOptimizationAllowed) {
     TextRange compositeDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
     if (compositeDirtyRange != null) {
-      // don't create PSI for files in other projects
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
-      if (psiFile == null) {
-        return;
-      }
       PsiElement startElement = psiFile.findElementAt(Math.min(psiFile.getTextLength(), compositeDirtyRange.getStartOffset()));
       PsiElement endElement = psiFile.findElementAt(Math.min(psiFile.getTextLength(), compositeDirtyRange.getEndOffset()));
       if (startElement != null) {
