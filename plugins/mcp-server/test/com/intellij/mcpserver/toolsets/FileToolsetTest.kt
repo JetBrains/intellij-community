@@ -5,7 +5,7 @@ package com.intellij.mcpserver.toolsets
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.FileToolset
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import io.kotest.common.runBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,9 +17,9 @@ import org.junit.jupiter.api.Test
 class FileToolsetTest : McpToolsetTestBase() {
   @Disabled("Output contains the project directory name that is not predictable because of generated")
   @Test
-  fun list_directory_tree_in_folder() = runBlocking {
+  fun list_directory_tree() = runBlocking {
     testMcpTool(
-      FileToolset::list_directory_tree_in_folder.name,
+      FileToolset::list_directory_tree.name,
       buildJsonObject {
         put("pathInProject", JsonPrimitive("/"))
         put("maxDepth", JsonPrimitive(2))
@@ -28,40 +28,24 @@ class FileToolsetTest : McpToolsetTestBase() {
     )
   }
 
-  @Disabled("Flaky")
   @Test
-  fun list_files_in_folder() = runBlocking {
+  fun find_files_by_name_keyword() = runBlocking {
     testMcpTool(
-      FileToolset::list_files_in_folder.name,
-      buildJsonObject {
-        put("pathInProject", JsonPrimitive("/"))
-      },
-"""[{"name": "Class.java", "type": "file", "path": "Class.java"},
-{"name": "Test.java", "type": "file", "path": "Test.java"},
-{"name": "Main.java", "type": "file", "path": "Main.java"}]"""
-    )
-  }
-
-  @Test
-  fun find_files_by_name_substring() = runBlocking {
-    testMcpTool(
-      FileToolset::find_files_by_name_substring.name,
+      FileToolset::find_files_by_name_keyword.name,
       buildJsonObject {
         put("nameSubstring", JsonPrimitive("test"))
       },
       """[{"path": "Test.java", "name": "Test.java"}]"""
     )
   }
-
   @Test
-  fun create_new_file_with_text() = runBlocking {
+  fun find_files_by_glob() = runBlocking {
     testMcpTool(
-      FileToolset::create_new_file_with_text.name,
+      FileToolset::find_files_by_glob.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive("test/test_file.txt"))
-        put("text", JsonPrimitive("This is a test file"))
+        put("globPattern", JsonPrimitive("**/*.java"))
       },
-      "ok"
+      """[{"path": "Test.java", "name": "Test.java"}]"""
     )
   }
 
@@ -79,7 +63,7 @@ class FileToolsetTest : McpToolsetTestBase() {
   @Test
   fun get_all_open_file_paths() = runBlocking {
     withContext(Dispatchers.EDT) {
-      FileEditorManager.getInstance(project).openFile(mainJavaFile, true)
+      FileEditorManagerEx.getInstanceExAsync(project).openFile(mainJavaFile, true)
     }
     testMcpTool(
       FileToolset::get_all_open_file_paths.name,
@@ -89,15 +73,11 @@ class FileToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun get_open_in_editor_file_path() = runBlocking {
-    withContext(Dispatchers.EDT) {
-      FileEditorManager.getInstance(project).openFile(mainJavaFile, true)
-    }
+  fun create_new_file() = runBlocking {
     testMcpTool(
-      FileToolset::get_open_in_editor_file_path.name,
-      buildJsonObject {}
-    ) { result ->
-      assert(result.textContent.text?.endsWith("Main.java") == true)
-    }
+      FileToolset::create_new_file.name,
+      buildJsonObject {},
+      "Main.java"
+    )
   }
 }

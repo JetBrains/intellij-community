@@ -35,9 +35,8 @@
 
     <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
 
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.debugger.DebuggerToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.BuiltinGeneralToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ErrorToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ExecutionToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.AnalysisToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.TextToolset" />
