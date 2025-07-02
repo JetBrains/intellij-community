@@ -16,13 +16,11 @@
 package org.intellij.images.thumbnail;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.ui.ImageComponentDecorator;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ThumbnailView extends Disposable, ImageComponentDecorator {
-  DataKey<ThumbnailView> DATA_KEY = DataKey.create(ThumbnailView.class.getName());
-
-  @NonNls String TOOLWINDOW_ID = "Thumbnails";
 
   @NotNull
   Project getProject();
@@ -62,12 +57,6 @@ public interface ThumbnailView extends Disposable, ImageComponentDecorator {
   boolean isSelected(@NotNull VirtualFile file);
 
   VirtualFile @NotNull [] getSelection();
-
-  /**
-   * Scroll to selection. If ToolWindow is not active, then
-   * it will perform activation before scroll.
-   */
-  void scrollToSelection();
 
   void setVisible(boolean visible);
 

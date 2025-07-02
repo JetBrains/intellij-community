@@ -306,7 +306,6 @@
   <action id="Images.Editor.ZoomIn">
     <keyboard-shortcut first-keystroke="ctrl add" />
   </action>
-  <action id="Images.ShowThumbnails" />
   <action id="ImplementMethods" />
   <action id="InsertLiveTemplate" />
   <action id="JumpToLastChange">

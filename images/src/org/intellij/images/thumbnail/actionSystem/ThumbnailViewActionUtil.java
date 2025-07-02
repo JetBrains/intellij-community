@@ -20,17 +20,11 @@ public final class ThumbnailViewActionUtil {
    *
    * @param e Action event
    * @return Current {@link ThumbnailView} or {@code null}
+   * @deprecated remove with ThumbnailView and other related stuff
    */
+  @Deprecated
   public static ThumbnailView getVisibleThumbnailView(@NotNull AnActionEvent e) {
-    ThumbnailView thumbnailView = getThumbnailView(e);
-    if (thumbnailView != null && thumbnailView.isVisible()) {
-      return thumbnailView;
-    }
     return null;
-  }
-
-  public static ThumbnailView getThumbnailView(@NotNull AnActionEvent e) {
-    return e.getData(ThumbnailView.DATA_KEY);
   }
 
   /**

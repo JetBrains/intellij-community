@@ -18,15 +18,12 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <colorSettingsPage implementation="org.intellij.images.options.impl.ImageEditorColorSchemeSettings"/>
-    <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
 
     <applicationService serviceInterface="org.intellij.images.fileTypes.ImageFileTypeManager"
                         serviceImplementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl"/>
     <applicationService serviceInterface="org.intellij.images.options.OptionsManager"
                         serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
     <applicationService serviceImplementation="org.intellij.images.scientific.utils.BinarizationThresholdConfig"/>
-    <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
-                    serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
     <!-- ImageIO.getReaderFormatNames() -->
     <fileType name="Image" implementationClass="org.intellij.images.fileTypes.impl.ImageFileType" fieldName="INSTANCE"
               extensions="bigtiff;bmp;dcx;gif;icns;ico;jbig2;jpeg;jpg;pam;pbm;pcx;pgm;png;pnm;ppm;psd;rgbe;tga;tif;tiff;wbmp;xbm;xpm"/>
@@ -66,9 +63,6 @@
       <action class="org.intellij.images.actions.ConvertSvgToPngAction"
               id="Images.ConvertSvgToPng">
         <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
-      </action>
-      <action class="org.intellij.images.actions.ShowThumbnailsAction"
-              id="Images.ShowThumbnails">
       </action>
 
       <group id="Images.ImageViewActions">
