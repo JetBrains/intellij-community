@@ -13,7 +13,7 @@ import kotlin.collections.ifEmpty
 @ApiStatus.Internal
 data class InitSessionResult(
   @Transient val visiblePlugins: List<PluginUiModel> = emptyList(),
-  val pluginStates: Map<PluginId, Boolean> = emptyMap(),
+  val pluginStates: Map<PluginId, Boolean?> = emptyMap(),
   val visiblePluginDtos: List<PluginDto> = visiblePlugins.map(PluginDto::fromModel),
 ) {
   fun getVisiblePluginsList(): List<PluginUiModel> = visiblePlugins.ifEmpty { visiblePluginDtos }

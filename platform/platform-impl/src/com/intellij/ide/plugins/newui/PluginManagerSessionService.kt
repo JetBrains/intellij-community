@@ -57,12 +57,17 @@ class PluginManagerSession {
 
   val errorPluginsToDisable: MutableSet<PluginId> = ConcurrentHashSet()
   val uninstalledPlugins: MutableSet<PluginId> = ConcurrentHashSet()
-  val pluginStates: MutableMap<PluginId, PluginEnabledState> = ConcurrentHashMap()
+  val pluginStates: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
   val statesDiff: MutableMap<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> = ConcurrentHashMap()
   var updateService: PluginUpdatesService? = null
   var needRestart = false
 
+  // The next 2 methods was mooved from com.intellij.ide.plugins.InstalledPluginsTableModel
   fun isPluginDisabled(pluginId: PluginId): Boolean {
-    return pluginStates[pluginId]?.isDisabled ?: false
+    return pluginStates[pluginId]?.isDisabled ?: true
+  }
+  
+  fun isPluginEnabled(pluginId: PluginId): Boolean {
+    return pluginStates[pluginId]?.isEnabled ?: true
   }
 }
