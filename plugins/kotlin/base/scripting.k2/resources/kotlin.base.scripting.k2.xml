@@ -18,6 +18,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <useScopeEnlarger implementation="org.jetbrains.kotlin.idea.core.script.k2.navigation.KotlinScriptUseScopeEnlarger"/>
 
     <psi.implicitReferenceProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.MainKtsReferenceProvider"/>
 
