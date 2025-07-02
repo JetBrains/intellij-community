@@ -202,7 +202,7 @@ object KotlinArtifactsDownloader {
                 "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/" +
                         "$groupPath/$artifactId/$version/$fileName"
             val idePluginDeps =
-                "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
+                "https://cache-redirector.jetbrains.com/intellij-dependencies/" +
                         "$groupPath/$artifactId/$version/$fileName"
             val mavenCentral = "https://repo1.maven.org/maven2/$groupPath/$artifactId/$version/$fileName"
 

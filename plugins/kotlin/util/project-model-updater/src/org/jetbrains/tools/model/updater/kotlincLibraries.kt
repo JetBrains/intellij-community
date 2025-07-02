@@ -17,7 +17,7 @@ private val INTELLIJ_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
 // This is the old repository which artifacts BEFORE `2.2.20-dev-2414` were published to.
 private val KOTLIN_IDE_DEPS_REPOSITORY = JpsRemoteRepository(
     "kotlin-ide-plugin-deps",
-    "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+    "https://cache-redirector.jetbrains.com/intellij-dependencies"
 )
 
 private class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode) {
