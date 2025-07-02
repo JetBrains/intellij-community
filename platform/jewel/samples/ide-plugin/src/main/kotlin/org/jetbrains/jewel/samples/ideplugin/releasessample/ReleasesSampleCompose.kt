@@ -1,11 +1,6 @@
 package org.jetbrains.jewel.samples.ideplugin.releasessample
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,20 +29,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -60,9 +58,6 @@ import com.intellij.util.ui.JBUI
 import icons.JewelIcons
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.datetime.toJavaLocalDate
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.toComposeColor
@@ -70,7 +65,6 @@ import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.items
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
-import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.HorizontalSplitLayout
@@ -128,34 +122,36 @@ private fun LeftColumn(project: Project, modifier: Modifier = Modifier, onSelect
             OverflowMenu(currentContentSource) { service.setContentSource(it) }
         }
 
-        val listState = rememberSelectableLazyListState()
-        VerticallyScrollableContainer(listState.lazyListState, modifier) {
-            SelectableLazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                selectionMode = SelectionMode.Single,
-                state = listState,
-                onSelectedIndexesChange = {
-                    val selectedItem =
-                        if (it.isNotEmpty()) {
-                            currentContentSource.items[it.first()]
-                        } else {
-                            null
-                        }
+        key(currentContentSource) {
+            val listState = rememberSelectableLazyListState()
+            VerticallyScrollableContainer(listState.lazyListState, modifier) {
+                SelectableLazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    selectionMode = SelectionMode.Single,
+                    state = listState,
+                    onSelectedIndexesChange = {
+                        val selectedItem =
+                            if (it.isNotEmpty()) {
+                                currentContentSource.items[it.first()]
+                            } else {
+                                null
+                            }
 
-                    onSelectedItemChange(selectedItem)
-                },
-            ) {
-                items(
-                    items = currentContentSource.items,
-                    key = { it.key },
-                    contentType = {
-                        when (it) {
-                            is ContentItem.AndroidRelease -> ItemType.AndroidRelease
-                            is ContentItem.AndroidStudio -> ItemType.AndroidStudio
-                        }
+                        onSelectedItemChange(selectedItem)
                     },
                 ) {
-                    ContentItemRow(it, isSelected, isActive) { newFilter -> service.filterContent(newFilter) }
+                    items(
+                        items = currentContentSource.items,
+                        key = { it.key },
+                        contentType = {
+                            when (it) {
+                                is ContentItem.AndroidRelease -> ItemType.AndroidRelease
+                                is ContentItem.AndroidStudio -> ItemType.AndroidStudio
+                            }
+                        },
+                    ) {
+                        ContentItemRow(it, isSelected, isActive) { newFilter -> service.filterContent(newFilter) }
+                    }
                 }
             }
         }
@@ -230,13 +226,19 @@ private enum class ItemType {
 @Composable
 private fun SearchBar(service: ReleasesSampleService, modifier: Modifier = Modifier) {
     val filterText by service.filter.collectAsState()
+    val state = rememberTextFieldState(filterText)
+
+    LaunchedEffect(filterText) {
+        if (filterText != state.text.toString()) {
+            state.edit { replace(0, state.text.length, filterText) }
+        }
+    }
 
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
-
-    val state = rememberTextFieldState(filterText)
     LaunchedEffect(state) { snapshotFlow { state.text }.collect { service.filterContent(it.toString()) } }
+
     TextField(
         state = state,
         modifier = modifier.focusRequester(focusRequester),
@@ -364,23 +366,9 @@ private fun RightColumn(selectedItem: ContentItem?, modifier: Modifier) {
 private fun ReleaseImage(imagePath: String) {
     val painterProvider = rememberResourcePainterProvider(imagePath, JewelIcons::class.java)
     val painter by painterProvider.getPainter()
-    val transition = rememberInfiniteTransition("HoloFoil")
-    val offset by
-        transition.animateFloat(
-            initialValue = -1f,
-            targetValue = 1f,
-            animationSpec =
-                infiniteRepeatable(
-                    tween(durationMillis = 2.seconds.inWholeMilliseconds.toInt(), easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse,
-                ),
-            "holoFoil offset",
-        )
-    var isHovered by remember { mutableStateOf(false) }
-    var applyModifier by remember { mutableStateOf(false) }
-    val intensity by animateFloatAsState(if (isHovered) 1f else 0f, animationSpec = tween(300))
+    val controller = rememberFoilInteractionController()
 
-    val scope = rememberCoroutineScope()
+    val intensity by animateFloatAsState(if (controller.isHovered) 1f else 0f, animationSpec = tween(300))
 
     Image(
         painter = painter,
@@ -388,14 +376,38 @@ private fun ReleaseImage(imagePath: String) {
         modifier =
             Modifier.fillMaxWidth()
                 .sizeIn(minHeight = 150.dp, maxHeight = 250.dp)
-                .onHover { newIsHovered ->
-                    scope.launch {
-                        isHovered = newIsHovered
-                        if (!newIsHovered) delay(300)
-                        applyModifier = newIsHovered
+                .pointerInput(controller) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val newIsHovered = event.type != PointerEventType.Exit
+
+                            if (newIsHovered != controller.isHovered) {
+                                controller.onHoverStateChanged(newIsHovered)
+                            }
+
+                            if (newIsHovered) {
+                                val offset =
+                                    Offset(
+                                        x = (event.changes.first().position.x / size.width.toFloat()) * 2f - 1f,
+                                        y = (event.changes.first().position.y / size.height.toFloat()) * 2f - 1f,
+                                    )
+                                controller.onCursorMove(offset)
+                            }
+
+                            if (event.type == PointerEventType.Press) {
+                                controller.onClick()
+                            }
+                        }
                     }
                 }
-                .thenIf(applyModifier) { holoFoil(offset, intensity) },
+                .thenIf(intensity > 0.01f) {
+                    // The visual effect just reads values from the controller.
+                    holoFoil(
+                        normalizedOffset = Offset(controller.animatableX.value, controller.animatableY.value),
+                        intensity,
+                    )
+                },
         contentScale = ContentScale.Fit,
     )
 }

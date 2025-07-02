@@ -118,7 +118,7 @@ internal object AndroidStudioReleasesReader {
     private fun translateDate(rawDate: String): String {
         val month = rawDate.substringBefore(" ").trimStart('0')
         val year = rawDate.substringAfterLast(" ".trimStart('0'))
-        val day = rawDate.substring(month.length + 1, rawDate.length - year.length - 1).trimStart('0')
+        val day = rawDate.substring(month.length + 1, rawDate.length - year.length - 2).trimStart('0')
 
         if (day.isEmpty()) {
             println("$rawDate\nMonth: '$month'\nYear: '$year'")
