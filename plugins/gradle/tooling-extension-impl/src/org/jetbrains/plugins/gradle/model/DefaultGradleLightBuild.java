@@ -123,16 +123,14 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
     @NotNull Collection<? extends GradleBuild> gradleBuilds,
     @NotNull GradleVersion gradleVersion
   ) {
-    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted = new HashMap<>();
-    List<DefaultGradleLightBuild> convertedBuilds = new ArrayList<>();
+    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted = new LinkedHashMap<>();
     // TODO traverse builds via graph to avoid separated parent build field initialization
     for (GradleBuild gradleBuild : gradleBuilds) {
       DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleVersion);
       gradleBuildsToConverted.put(gradleBuild, build);
-      convertedBuilds.add(build);
     }
     setHierarchy(gradleBuilds, gradleBuildsToConverted);
-    return convertedBuilds;
+    return new ArrayList<>(gradleBuildsToConverted.values());
   }
 
   private static void setHierarchy(
