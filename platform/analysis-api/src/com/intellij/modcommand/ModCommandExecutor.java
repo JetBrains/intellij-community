@@ -87,7 +87,7 @@ public interface ModCommandExecutor {
     ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.nonBlocking(commandSupplier::get).executeSynchronously(),
       title, true, context.project());
-    if (command != null) {
+    if (!command.isEmpty()) {
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
       if (commandProcessor.getCurrentCommand() == null) {
         commandProcessor.executeCommand(context.project(), 

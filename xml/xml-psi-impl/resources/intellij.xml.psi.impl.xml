@@ -18,7 +18,6 @@
     <extensionPoint name="xml.elementDescriptorProvider" interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider" dynamic="true"/>
     <extensionPoint name="xml.idContributor" interface="com.intellij.xml.util.XmlIdContributor" dynamic="true"/>
     <extensionPoint name="xml.implicitNamespaceDescriptorProvider" interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider" dynamic="true"/>
-    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider" dynamic="true"/>
     <extensionPoint name="html.attributeValueProvider" interface="com.intellij.html.impl.providers.HtmlAttributeValueProvider" dynamic="true"/>
     <extensionPoint name="xml.psiPolicy"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -58,16 +57,6 @@
 
     <documentationCssProvider implementation="com.intellij.documentation.mdn.MdnDocumentationCssProvider"/>
 
-    <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="HTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="XHTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-
-    <lang.foldingBuilder language="DTD" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="XML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="HTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-
     <lang.ast.factory language="XML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
     <lang.ast.factory language="DTD" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
     <lang.ast.factory language="HTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
@@ -103,28 +92,12 @@
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="PolySymbolsHtmlText"/>
 
-    <polySymbols.highlightingCustomizer
-      id="html"
-      implementation="com.intellij.polySymbols.html.HtmlSymbolHighlightingCustomizer"/>
     <polySymbols.queryScopeContributor
       implementation="com.intellij.polySymbols.html.HtmlSymbolQueryScopeContributor"/>
-    <polySymbols.codeCompletionItemCustomizer
-      id="html"
-      implementation="com.intellij.polySymbols.html.HtmlSymbolQueryScopeContributor$HtmlCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider id="html-default"
       implementation="com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptorsProvider"/>
     <xml.elementDescriptorProvider
       implementation="com.intellij.polySymbols.html.elements.HtmlElementSymbolDescriptorsProvider"/>
-
-    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
-                                      hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.polySymbols.html.elements.HtmlElementSymbolReferenceProvider"/>
-    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
-                                      hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolReferenceProvider"/>
-    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
-                                      hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.polySymbols.html.attributeValues.HtmlAttributeValueSymbolReferenceProvider"/>
     <vetoRenameCondition implementation="com.intellij.polySymbols.html.HtmlSymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.polySymbols.html.HtmlSymbolsXmlExtension" id="poly-symbols"
                       order="before html, after react"/>

@@ -21,6 +21,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.GHAuthType
+import org.jetbrains.plugins.github.authentication.GHLoginCollector
+import org.jetbrains.plugins.github.authentication.GHLoginData
+import org.jetbrains.plugins.github.authentication.GHServerOffering
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
 import javax.swing.Action
@@ -33,7 +37,8 @@ internal sealed class GHLoginDialog(
   private val model: GHLoginModel,
   project: Project?,
   parentCs: CoroutineScope,
-  parent: Component?
+  parent: Component?,
+  private val loginData: GHLoginData,
 ) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
 
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.EDT + ModalityState.stateForComponent(window).asContextElement())
@@ -60,6 +65,7 @@ internal sealed class GHLoginDialog(
       try {
         val (login, token) = loginPanel.acquireLoginAndToken()
         model.saveLogin(loginPanel.getServer(), login, token)
+        logEvent()
         close(OK_EXIT_CODE, true, ExitActionType.OK)
       }
       catch (e: Exception) {
@@ -72,9 +78,15 @@ internal sealed class GHLoginDialog(
     }
   }
 
+  private fun logEvent() {
+    GHLoginCollector.login(loginData.copy(
+      authType = if (loginPanel.isOAuthUi()) GHAuthType.OAUTH else GHAuthType.TOKEN,
+      serverOffering = GHServerOffering.of(loginPanel.getServer()))
+    )
+  }
 
-  class Token(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?) :
-    GHLoginDialog(model, project, parentCs, parent) {
+  class Token(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?, loginData: GHLoginData) :
+    GHLoginDialog(model, project, parentCs, parent, loginData) {
 
     init {
       title = GithubBundle.message("login.to.github")
@@ -89,8 +101,8 @@ internal sealed class GHLoginDialog(
     override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
   }
 
-  class OAuth(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?) :
-    GHLoginDialog(model, project, parentCs, parent) {
+  class OAuth(model: GHLoginModel, project: Project?, parentCs: CoroutineScope, parent: Component?, loginData: GHLoginData) :
+    GHLoginDialog(model, project, parentCs, parent, loginData) {
 
     init {
       title = GithubBundle.message("login.to.github")

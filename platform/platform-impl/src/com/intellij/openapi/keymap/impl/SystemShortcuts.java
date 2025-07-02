@@ -33,8 +33,8 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 @Service
@@ -98,7 +98,7 @@ public final class SystemShortcuts {
 
     for (@NotNull KeyStroke sysKS : myKeyStroke2SysShortcut.keySet()) {
       final String[] actIds = computeOnEdt(() -> keymap.getActionIds(sysKS));
-      if (actIds == null || actIds.length == 0) {
+      if (actIds.length == 0) {
         continue;
       }
 

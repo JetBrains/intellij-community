@@ -65,7 +65,7 @@ private fun getUrlAndSha256(jar: MavenFileDescription, jarRepositories: List<Jar
     error("Cannot find $jar in $jarRepositories (jarPath=$jarPath)")
   }
   check(jar.sha256checksum == null || entry.sha256 == jar.sha256checksum) {
-    "Hash mismatch: got ${jar.sha256checksum} from .idea/libraries, but ${entry.sha256} for ${jar.path} from url cache ${urlCache.cacheFile}"
+    "Hash mismatch: got ${jar.sha256checksum} from .idea/libraries, but ${entry.sha256} for ${jar.path} from lib/MODULE.bazel or community/lib/MODULE.bazel"
   }
   return entry
 }
@@ -167,8 +167,7 @@ internal fun generateBazelModuleSectionsForLibs(
   owner: LibOwnerDescriptor,
   jarRepositories: List<JarRepository>,
   m2Repo: Path,
-  ultimateUrlCache: UrlCache?,
-  communityUrlCache: UrlCache,
+  urlCache: UrlCache,
   moduleFileToLabelTracker: MutableMap<Path, MutableSet<String>>,
   fileToUpdater: MutableMap<Path, BazelFileUpdater>,
 ) {
@@ -182,16 +181,6 @@ internal fun generateBazelModuleSectionsForLibs(
   val labelTracker = moduleFileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet() }
   buildFile(bazelFileUpdater, owner.sectionName) {
     for (lib in list) {
-      val urlCache = if (owner.isCommunity) {
-        communityUrlCache
-      } else {
-        check(ultimateUrlCache != null) {
-          error("generating library ${lib.lib.targetName} for ultimate part while ultimate root is missing")
-        }
-
-        ultimateUrlCache
-      }
-
       for (jar in lib.jars) {
         val label = fileToHttpRuleRepoName(jar.path)
         if (!labelTracker.add(label)) {

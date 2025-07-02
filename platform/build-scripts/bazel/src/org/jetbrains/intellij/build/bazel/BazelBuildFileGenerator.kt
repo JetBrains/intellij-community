@@ -63,8 +63,7 @@ internal class BazelBuildFileGenerator(
   val ultimateRoot: Path?,
   val communityRoot: Path,
   private val project: JpsProject,
-  @JvmField val ultimateUrlCache: UrlCache?,
-  @JvmField val communityUrlCache: UrlCache,
+  val urlCache: UrlCache,
 ) {
   @JvmField
   val javaExtensionService: JpsJavaExtensionService = JpsJavaExtensionService.getInstance()
@@ -213,8 +212,7 @@ internal class BazelBuildFileGenerator(
         owner = owner,
         jarRepositories = jarRepositories,
         m2Repo = m2Repo,
-        ultimateUrlCache = ultimateUrlCache,
-        communityUrlCache = communityUrlCache,
+        urlCache = urlCache,
         moduleFileToLabelTracker = fileToLabelTracker,
         fileToUpdater = fileToUpdater,
       )

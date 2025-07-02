@@ -37,7 +37,10 @@ open class ProjectAttachProcessor {
   }
 
   @Experimental
-  open suspend fun attachToProjectAsync(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
+  open suspend fun attachToProjectAsync(project: Project,
+                                        projectDir: Path,
+                                        callback: ProjectOpenedCallback?,
+                                        beforeOpen: (suspend (Project) -> Boolean)? = null): Boolean {
     return withContext(Dispatchers.EDT) {
       attachToProject(project = project, projectDir = projectDir, callback = callback)
     }

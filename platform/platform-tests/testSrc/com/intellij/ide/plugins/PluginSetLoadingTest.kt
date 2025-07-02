@@ -166,23 +166,31 @@ class PluginSetLoadingTest {
   fun `until build is honored only if it targets 251 and earlier`() {
     if (UntilBuildDeprecation.forceHonorUntilBuild) return
 
-    fun addDescriptor(build: String) = writeDescriptor("p$build", """
+    fun addDescriptor(branch: String) = writeDescriptor("p$branch", """
     <idea-plugin>
-      <id>p$build</id>
+      <id>p$branch</id>
       <version>1.0</version>
-      <idea-version since-build="$build" until-build="$build.100"/>
+      <idea-version since-build="$branch" until-build="$branch.100"/>
+    </idea-plugin>
+    """.trimIndent())
+    fun addDescriptorX(branch: String) = writeDescriptor("p$branch.x", """
+    <idea-plugin>
+      <id>p$branch.x</id>
+      <version>1.0</version>
+      <idea-version since-build="$branch" until-build="$branch.*"/>
     </idea-plugin>
     """.trimIndent())
 
     addDescriptor("251")
+    addDescriptorX("251")
     addDescriptor("252")
     addDescriptor("253")
     addDescriptor("261")
 
     assertEnabledPluginsSetEquals(listOf("p251")) { buildNumber = "251.10" }
-    assertEnabledPluginsSetEquals(listOf("p252")) { buildNumber = "252.10" }
-    assertEnabledPluginsSetEquals(listOf("p252", "p253")) { buildNumber = "253.200" }
-    assertEnabledPluginsSetEquals(listOf("p252", "p253", "p261")) { buildNumber = "261.200" }
+    assertEnabledPluginsSetEquals(listOf("p252", "p252.x")) { buildNumber = "252.10" }
+    assertEnabledPluginsSetEquals(listOf("p252.x", "p253")) { buildNumber = "253.200" }
+    assertEnabledPluginsSetEquals(listOf("p252.x", "p253", "p261")) { buildNumber = "261.200" }
   }
 
   @Test
@@ -193,7 +201,7 @@ class PluginSetLoadingTest {
       <idea-plugin>
       <id>p252</id>
       <version>1.0</version>
-      <idea-version since-build="252" until-build="252.100"/>
+      <idea-version since-build="252" until-build="252.*"/>
       </idea-plugin>
     """.trimIndent())
     writeDescriptor("p253", """

@@ -11,6 +11,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.Id
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
@@ -104,13 +106,21 @@ private class GradleJvmResolutionContext(
 private fun GradleJvmResolutionContext.canUseGradleJavaHomeJdk(): Boolean {
   val properties = GradlePropertiesFile.getProperties(project, externalProjectPath)
   val javaHome = properties.javaHomeProperty?.value
-  val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
+  val validationStatus = validateGradleJavaHome(project, gradleVersion, javaHome)
   return validationStatus is Success
 }
 
 private fun GradleJvmResolutionContext.canUseJavaHomeJdk(): Boolean {
+  /**
+   * This is a temporary solution:
+   * at the moment it's impossible to use a real environment from EEL due to this code being executed in a WriteAction on EDT.
+   * See IDEA-375312 for more details.
+   */
+  if (project.getEelDescriptor() != LocalEelDescriptor) {
+    return false
+  }
   val javaHome = ExternalSystemJdkUtil.getJavaHome()
-  val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
+  val validationStatus = validateGradleJavaHome(project, gradleVersion, javaHome)
   return validationStatus is Success
 }
 

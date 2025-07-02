@@ -46,6 +46,7 @@ class PluginDto(
 
   override var releaseVersion: Int = 0
   override var displayCategory: String? = null
+  override var isImplementationDetail: Boolean = false
   override var vendorDetails: PluginNodeVendorDetails? = null
   override var reviewComments: ReviewsPageContainer? = null
 
@@ -159,6 +160,7 @@ class PluginDto(
         sinceBuild = model.sinceBuild
         untilBuild = model.untilBuild
         releaseDate = model.releaseDate
+        isImplementationDetail = model.isImplementationDetail
       }
     }
   }

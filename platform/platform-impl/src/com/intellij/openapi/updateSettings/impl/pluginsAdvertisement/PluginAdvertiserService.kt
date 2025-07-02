@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -341,15 +341,7 @@ open class PluginAdvertiserServiceImpl(
   }
 
   private fun getSuggestionReason(it: UnknownFeature): @Nls String {
-    val kind = it.implementationName.substringBefore(":")
-    if (kind == EXECUTABLE_DEPENDENCY_KIND) {
-      val executableName = it.implementationName.substringAfter(":")
-      if (executableName.isNotBlank()) {
-        return IdeBundle.message("plugins.configurable.suggested.features.executable", executableName)
-      }
-    }
-
-    return IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
+    return it.suggestionReason ?: IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
   }
 
   private fun convertToModel(descriptor: IdeaPluginDescriptor?): PluginUiModel? {
@@ -535,20 +527,11 @@ open class PluginAdvertiserServiceImpl(
         )
       }
       else {
-        if (feature.value.size <= 1) {
-          IdeBundle.message(
-            "plugins.advertiser.missing.feature.dependency",
-            pluginsNumber,
-            pluginNames
-          )
-        }
-        else {
-          IdeBundle.message(
-            "plugins.advertiser.missing.features.dependency",
-            pluginsNumber,
-            pluginNames
-          )
-        }
+        IdeBundle.message(
+          "plugins.advertiser.missing.features.dependency",
+          pluginsNumber,
+          pluginNames
+        )
       }
     }
     else {
@@ -582,8 +565,9 @@ open class PluginAdvertiserServiceImpl(
         featuresCollector.registerUnknownFeature(UnknownFeature(
           DEPENDENCY_SUPPORT_FEATURE,
           IdeBundle.message("plugins.advertiser.feature.dependency"),
-          extension.kind + ":" + dependency,
+          extension.kind + ":" + dependency.coordinate,
           null,
+          dependency.reason,
         ))
       }
     }

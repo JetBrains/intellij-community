@@ -1511,29 +1511,5 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return lock;
   }
 
-  @RequiresBackgroundThread(generateAssertion = false)
-  @RequiresWriteLock(generateAssertion = false)
-  public void invokeAndWaitWithTransferredWriteAction(Runnable runnable) throws Throwable {
-    assert isWriteAccessAllowed() : "Transferring of write action is permitted only if write lock is acquired";
-    assert !EDT.isCurrentThreadEdt() : "Transferring of write action is permitted only on background thread";
-    Ref<Throwable> exceptionRef = Ref.create();
-    getThreadingSupport().transferWriteActionAndBlock(toRun -> {
-      try {
-        EventQueue.invokeAndWait(toRun);
-        return Unit.INSTANCE;
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      catch (InvocationTargetException e) {
-        exceptionRef.set(e.getCause());
-        return Unit.INSTANCE;
-      }
-    }, () -> {
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(runnable);
-    });
-    if (!exceptionRef.isNull()) {
-      throw exceptionRef.get();
-    }
-  }
+
 }

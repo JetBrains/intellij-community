@@ -21,6 +21,8 @@
                     dynamic="true"/>
 
     <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler" dynamic="true"/>
+
+    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <highlightingPassFactory order="last" implementation="com.intellij.xml.XmlCustomTagHighlightingPassFactory" />
@@ -160,5 +162,28 @@
 
     <languageStubDefinition language="HTML" implementationClass="com.intellij.xml.HtmlLanguageStubDefinition"/>
     <stubElementRegistryExtension implementation="com.intellij.xml.HtmlStubRegistryExtension"/>
+
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
+                                      hostLanguage="HtmlCompatible"
+                                      implementationClass="com.intellij.polySymbols.html.elements.HtmlElementSymbolReferenceProvider"/>
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
+                                      hostLanguage="HtmlCompatible"
+                                      implementationClass="com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolReferenceProvider"/>
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+                                      hostLanguage="HtmlCompatible"
+                                      implementationClass="com.intellij.polySymbols.html.attributeValues.HtmlAttributeValueSymbolReferenceProvider"/>
+
+    <polySymbols.highlightingCustomizer id="html" implementation="com.intellij.polySymbols.html.HtmlSymbolHighlightingCustomizer"/>
+    <polySymbols.codeCompletionItemCustomizer id="html" implementation="com.intellij.polySymbols.html.HtmlCodeCompletionItemCustomizer"/>
+
+    <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="HTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="XHTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+
+    <lang.foldingBuilder language="DTD" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="XML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="HTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
   </extensions>
 </idea-plugin>

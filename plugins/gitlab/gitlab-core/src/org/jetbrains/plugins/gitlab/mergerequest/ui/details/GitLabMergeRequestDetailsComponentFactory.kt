@@ -33,6 +33,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabCommitViewModel
@@ -138,7 +139,8 @@ object GitLabMergeRequestDetailsComponentFactory {
       accountVm,
       swingAction(GitLabBundle.message("merge.request.reload")) {
         detailsLoadingVm.reloadData()
-      })
+      },
+      GitLabLoginSource.MR_DETAILS)
     val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(loadingState.exception), errorPresenter)
     CollaborationToolsUIUtil.moveToCenter(errorPanel)
     return errorPanel

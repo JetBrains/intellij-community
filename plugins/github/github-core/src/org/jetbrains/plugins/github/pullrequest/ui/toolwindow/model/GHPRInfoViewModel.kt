@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -72,7 +73,7 @@ class GHPRInfoViewModel internal constructor(
     }
   }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
-  val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
+  val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account, GHLoginSource.PR_DETAILS) {
     cs.launch {
       dataProvider.detailsData.signalDetailsNeedReload()
       dataProvider.detailsData.signalMergeabilityNeedsReload()

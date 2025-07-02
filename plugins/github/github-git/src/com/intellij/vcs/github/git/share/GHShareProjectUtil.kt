@@ -28,6 +28,7 @@ import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
@@ -38,7 +39,7 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubSettings
 import java.awt.Component
-import java.util.Collections
+import java.util.*
 
 private class GHShareProjectUtilCompatExtension : GHShareProjectCompatibilityExtension {
   override fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
@@ -74,7 +75,7 @@ object GHShareProjectUtil {
 
     val account: GithubAccount = shareDialogResult.account!!
 
-    val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return
+    val token = GHCompatibilityUtil.getOrRequestToken(account, project, GHLoginSource.SHARE) ?: return
     val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
     gitSpService.performShareProject(
@@ -135,7 +136,7 @@ object GHShareProjectUtil {
       }
       catch (mte: GithubMissingTokenException) {
         withContext(Dispatchers.EDT) {
-          GHAccountsUtil.requestNewToken(account, project, comp) ?: throw mte
+          GHAccountsUtil.requestNewToken(account, project, comp, GHLoginSource.SHARE) ?: throw mte
         }
       }
     }

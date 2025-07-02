@@ -52,6 +52,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
         requestedCountState.update { it + count }
       }
     }
+    val resultsBalancer = SeResultsCountBalancer(providerIds)
 
     SeLog.log(SeLog.ITEM_EMIT) { "Backend will request items from providers: ${providerIds.joinToString(", ")}" }
 
@@ -59,8 +60,14 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       getProvidersHolder(sessionRef, dataContextId)
         ?.get(providerId, isAllTab)
         ?.getItems(params)
-        ?.map { SeTransferItem(it) as SeTransferEvent }
-        ?.onCompletion { emit(SeTransferEnd(providerId)) }
+        ?.map {
+          resultsBalancer.add(it)
+          SeTransferItem(it) as SeTransferEvent
+        }
+        ?.onCompletion {
+          resultsBalancer.end(providerId)
+          emit(SeTransferEnd(providerId))
+        }
     }
 
     val equalityChecker = SeEqualityChecker()

@@ -107,4 +107,6 @@ class ForMultiLanguageSupport {
   // Беларускі. У мяне добры дом.
   // Граматычная памылка: А <GRAMMAR_ERROR descr="pa_fakcie">па факту</GRAMMAR_ERROR> атрымалася, што сіл няма.
   // Памылка друку ў word: У мяне добры <TYPO descr="Typo: In word 'домн'">домн</TYPO>.
+
+  // <TYPO descr="Typo: In word 'Timout'">Timout</TYPO>
 }

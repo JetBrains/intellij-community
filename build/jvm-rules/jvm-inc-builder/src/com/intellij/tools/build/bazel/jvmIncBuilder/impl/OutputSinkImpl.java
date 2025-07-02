@@ -45,7 +45,7 @@ public class OutputSinkImpl implements OutputSink {
     myOut = sm.getOutputBuilder();
     ZipOutputBuilderImpl abiOut = sm.getAbiOutputBuilder();
     myAbiOut = abiOut;
-    myJavaAbiOut = abiOut != null? new JavaAbiFilter(abiOut, sm.getInstrumentationClassFinder()) : null;
+    myJavaAbiOut = abiOut != null? new JavaAbiFilter(abiOut) : null;
   }
 
   @Override

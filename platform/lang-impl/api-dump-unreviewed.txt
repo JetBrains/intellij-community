@@ -13520,7 +13520,6 @@ f:com.intellij.platform.ModuleAttachProcessor
 - com.intellij.projectImport.ProjectAttachProcessor
 - sf:Companion:com.intellij.platform.ModuleAttachProcessor$Companion
 - <init>():V
-- attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.coroutines.Continuation):java.lang.Object
 - beforeDetach(com.intellij.openapi.module.Module):V
 - sf:getMultiProjectDisplayName(com.intellij.openapi.project.Project):java.lang.String
 - sf:getPrimaryModule(com.intellij.openapi.project.Project):com.intellij.openapi.module.Module

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.awt.image.BaseMultiResolutionImage
 import java.awt.image.BufferedImage
 import java.awt.image.MultiResolutionImage
 import javax.swing.JRootPane
@@ -105,7 +104,7 @@ class NiceOverlayUi(
    * But we know that the UI is fronzen, hence we do a trick: we take a screenshot of the region where the freeze popup is located,
    * and draw it back when the user decides to close the popup.
    */
-  private val screenshot: MultiResolutionImage
+  private val screenshot: MultiResolutionImage?
 
   /**
    * The location of popup including its shadow; we need it to replace it with the screehshot later
@@ -125,7 +124,7 @@ class NiceOverlayUi(
     }
     else {
       // screenshot is not accessed in this case
-      BaseMultiResolutionImage(BufferedImage(0, 0, BufferedImage.TYPE_INT_ARGB))
+      null
     }
 
     drawShadow()
@@ -241,6 +240,9 @@ class NiceOverlayUi(
   private fun restoreScreenshot() {
     check(showCloseButton) {
       "Screenshot can be used only when the close button is enabled"
+    }
+    checkNotNull(screenshot) {
+      "Screenshot must be initialized for restoration"
     }
     val innerGraphics = GraphicsUtil.safelyGetGraphics(rootPane) as Graphics2D
     try {

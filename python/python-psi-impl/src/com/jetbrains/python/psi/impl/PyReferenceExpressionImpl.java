@@ -268,7 +268,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PsiFile realFile = FileContextUtil.getContextFile(this);
     if (!(getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile))) {
       for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
-        if (target == this || target == null) {
+        if (target == this) {
           continue;
         }
 

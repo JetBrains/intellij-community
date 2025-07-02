@@ -78,6 +78,8 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
+    boolean wasIgnoredDisabledPlugins = PluginEnabler.HEADLESS.isIgnoredDisabledPlugins();
+    Disposer.register(parentDisposable, () -> PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(wasIgnoredDisabledPlugins));
     PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(true);
 
     application = createApplication(parentDisposable);

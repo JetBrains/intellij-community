@@ -53,7 +53,7 @@ public interface VirtualFileGist<Data> {
   /**
    * Calculate or get the cached data by the current virtual file content in the given project (or null, if the data is project-independent).
    */
-  Data getFileData(@Nullable Project project, @NotNull VirtualFile file);
+  @Nullable Data getFileData(@Nullable Project project, @NotNull VirtualFile file);
 
   /**
    * Get the cached data by the virtual file content in the given project (or null, if the data is project-independent).

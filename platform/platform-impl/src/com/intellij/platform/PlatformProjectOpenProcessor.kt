@@ -411,16 +411,17 @@ suspend fun attachToProjectAsync(
   projectToClose: Project,
   projectDir: Path,
   processor: ProjectAttachProcessor? = null,
-  callback: ProjectOpenedCallback? = null
+  callback: ProjectOpenedCallback? = null,
+  beforeOpen: (suspend (Project) -> Boolean)? = null
 ): Boolean {
   if (!checkTrustedState(projectDir)) {
     return false
   }
   if (processor != null) {
-    return attachImpl(processor, projectToClose, projectDir, callback)
+    return attachImpl(processor, projectToClose, projectDir, callback, beforeOpen)
   }
   for (attachProcessor in ProjectAttachProcessor.EP_NAME.lazySequence()) {
-    if (attachImpl(attachProcessor, projectToClose, projectDir, callback)) {
+    if (attachImpl(attachProcessor, projectToClose, projectDir, callback, beforeOpen)) {
       return true
     }
   }
@@ -432,8 +433,9 @@ private suspend fun attachImpl(
   projectToClose: Project,
   projectDir: Path,
   callback: ProjectOpenedCallback?,
+  beforeOpen: (suspend (Project) -> Boolean)?,
 ): Boolean {
   return runCatching {
-    attachProcessor.attachToProjectAsync(projectToClose, projectDir, callback)
+    attachProcessor.attachToProjectAsync(projectToClose, projectDir, callback, beforeOpen)
   }.getOrLogException(LOG) == true
 }

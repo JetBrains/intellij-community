@@ -78,21 +78,6 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     });
   }
 
-  public void testRunLineMarkerOnInterface25() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
-    myFixture.configureByText("Main.java", """
-      public class Ma<caret>in implements I {}
-      interface I {    public static void main(String[] args) {}
-      }
-      """);
-    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
-    assertEquals(0, myFixture.findGuttersAtCaret().size());
-    List<GutterMark> gutters = myFixture.findAllGutters();
-    assertEquals(2, gutters.size());
-    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
-    });
-  }
-
   public void testNoRunLineMarkerAnonymous() {
     myFixture.configureByText("X.java", """
       public class X {

@@ -9,8 +9,6 @@ import com.intellij.polySymbols.html.elements.asHtmlSymbol
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.polySymbols.*
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer
 import com.intellij.polySymbols.js.JS_EVENTS
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
@@ -95,21 +93,6 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
 
     override fun hashCode(): Int =
       location.hashCode()
-  }
-
-  @ApiStatus.Internal
-  class HtmlCodeCompletionItemCustomizer : PolySymbolCodeCompletionItemCustomizer {
-    override fun customize(
-      item: PolySymbolCodeCompletionItem,
-      framework: FrameworkId?,
-      qualifiedKind: PolySymbolQualifiedKind,
-      location: PsiElement,
-    ): PolySymbolCodeCompletionItem =
-      when (qualifiedKind) {
-        HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
-        HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided
-        else -> item
-      }
   }
 
   private class StandardHtmlSymbolScope(private val tag: HtmlTag) : PolySymbolScope {

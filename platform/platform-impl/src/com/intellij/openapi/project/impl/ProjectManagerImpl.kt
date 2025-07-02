@@ -1050,7 +1050,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
       GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> {
         processor.beforeAttach(options.project)
-        if (attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, processor = processor, callback = options.callback)) {
+        if (attachToProjectAsync(projectToClose = projectToClose,
+                                 projectDir = projectDir,
+                                 processor = processor,
+                                 callback = options.callback,
+                                 beforeOpen = options.beforeOpen)) {
           return true
         }
         else return null // cannot attach, retry

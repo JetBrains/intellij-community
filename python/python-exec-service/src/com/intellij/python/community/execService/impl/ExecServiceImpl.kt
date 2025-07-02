@@ -16,10 +16,7 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -36,26 +33,41 @@ internal object ExecServiceImpl : ExecService {
     val description = options.processDescription
                       ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(binary.pathString) + args).joinToString(" "))
 
-    val eelPath = binary.asEelPath()
-    val executableProcess = EelExecutableProcess(eelPath, args, options.env, options.workingDirectory, description)
-    val eelProcess = executableProcess.run().getOr { return it }
+    return coroutineScope {
 
-    val result = try {
-      withTimeout(options.timeout) {
-        val interactiveResult = processInteractiveHandler.getResultFromProcess(binary, args, eelProcess)
-
-        val successResult = interactiveResult.getOr { failure ->
-          val (output, customErrorMessage) = failure.error
-          return@withTimeout executableProcess.failAsExecutionFailed(ExecErrorReason.UnexpectedProcessTermination(output), customErrorMessage)
+      val eelPath = binary.asEelPath()
+      val executableProcess = EelExecutableProcess(eelPath, args, options.env, options.workingDirectory, description)
+      val eelProcess = executableProcess.run().getOr { return@coroutineScope it }
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        try {
+          eelProcess.exitCode.await()
         }
-        Result.success(successResult)
+        catch (e: CancellationException) {
+          withContext(NonCancellable) {
+            eelProcess.kill()
+            eelProcess.exitCode.await()
+          }
+          throw e
+        }
       }
-    }
-    catch (_: TimeoutCancellationException) {
-      executableProcess.killProcessAndFailAsTimeout(eelProcess, options.timeout)
-    }
 
-    return result
+      val result = try {
+        withTimeout(options.timeout) {
+          val interactiveResult = processInteractiveHandler.getResultFromProcess(binary, args, eelProcess)
+
+          val successResult = interactiveResult.getOr { failure ->
+            val (output, customErrorMessage) = failure.error
+            return@withTimeout executableProcess.failAsExecutionFailed(ExecErrorReason.UnexpectedProcessTermination(output), customErrorMessage)
+          }
+          Result.success(successResult)
+        }
+      }
+      catch (_: TimeoutCancellationException) {
+        executableProcess.killProcessAndFailAsTimeout(eelProcess, options.timeout)
+      }
+
+      return@coroutineScope result
+    }
   }
 }
 
@@ -93,10 +105,12 @@ private fun EelExecutableProcess.failAsCantStart(executeProcessError: ExecutePro
 }
 
 private suspend fun EelExecutableProcess.killProcessAndFailAsTimeout(eelProcess: EelProcess, timeout: Duration): Result.Failure<ExecError> {
+  eelProcess.interrupt()
   eelProcess.kill()
+  eelProcess.exitCode.await()
 
   return ExecError(
-    exe = Exe.OnEel( exe),
+    exe = Exe.OnEel(exe),
     args = args.toTypedArray(),
     additionalMessageToUser = PyExecBundle.message("py.exec.timeout.error", description, timeout),
     errorReason = ExecErrorReason.Timeout

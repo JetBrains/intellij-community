@@ -48,7 +48,7 @@ public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable, E
       .toList();
     updater.rename(named, psiElement, names);
     if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
-      SpellcheckerActionStatistics.renameToPerformed(tracker);
+      SpellcheckerActionStatistics.renameToPerformed(tracker, names.size());
     }
   }
 
