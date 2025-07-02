@@ -339,7 +339,7 @@ interface Nothing {}
 /// 
 /// ## How to use it?
 /// 
-/// Create it, fill with [#addElement(LookupElementBuilder,String)] or [#addElement(LookupElementBuilder,String,int)]
+/// Create it, fill with [#addElement(LookupElementBuilder, String)] or [#addElement(LookupElementBuilder, String, int)]
 /// and obtain result with [#getResult()].
 /// 
 /// ### Priority

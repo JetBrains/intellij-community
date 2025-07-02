@@ -301,11 +301,11 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
             else if (refChild instanceof PsiDocTagValue) {
               for (@NotNull PsiElement valueChild : refChild.getChildren()) {
                 if (valueChild instanceof PsiWhiteSpace) {
-                  if (valueChild.getText().contains("\n")) result.append("\n ");
-                  continue;
+                  result.append(valueChild.getText().contains("\n") ? '\n' : valueChild.getText());
                 }
-                if (isDocToken(valueChild, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) continue;
-                result.append(valueChild.getText());
+                else if (!isDocToken(valueChild, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
+                  result.append(valueChild.getText());
+                }
               }
             }
             else {
