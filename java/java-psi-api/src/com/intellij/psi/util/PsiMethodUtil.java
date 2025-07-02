@@ -118,7 +118,7 @@ public final class PsiMethodUtil {
       }
       if (isMainMethod(mainMethod, false)) {
         if (first && !chooseMainMethodByParametersEnabled &&
-            (mainMethod.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.hasDefaultConstructor(aClass, true, true))) {
+            (mainMethod.hasModifierProperty(PsiModifier.STATIC) || hasDefaultNonPrivateConstructor(aClass))) {
           //fast exit
           return mainMethod;
         }
@@ -134,11 +134,28 @@ public final class PsiMethodUtil {
       if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return null;
       }
-      if (!PsiUtil.hasDefaultConstructor(aClass, true, true)) {
+      if (!hasDefaultNonPrivateConstructor(aClass)) {
         return null;
       }
     }
     return method;
+  }
+
+  private static boolean hasDefaultNonPrivateConstructor(@NotNull PsiClass clazz) {
+    PsiMethod[] constructors = clazz.getConstructors();
+    if (constructors.length == 0) {
+      return true;
+    }
+
+    for (PsiMethod constr: constructors) {
+      if ((constr.hasModifierProperty(PsiModifier.PUBLIC)
+           || constr.hasModifierProperty(PsiModifier.PROTECTED)
+           || constr.hasModifierProperty(PsiModifier.PACKAGE_LOCAL))
+          && constr.getParameterList().isEmpty()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
@@ -174,9 +191,7 @@ public final class PsiMethodUtil {
       if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
-      PsiMethod[] constructors = containingClass.getConstructors();
-      if (checkNoArgs && !method.hasModifierProperty(PsiModifier.STATIC) && constructors.length != 0 &&
-          !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
+      if (checkNoArgs && !method.hasModifierProperty(PsiModifier.STATIC) &&  !hasDefaultNonPrivateConstructor(containingClass)) {
         return false;
       }
       if (parameters.length == 1) {

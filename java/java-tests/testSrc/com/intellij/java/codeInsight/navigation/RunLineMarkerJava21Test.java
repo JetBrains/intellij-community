@@ -14,6 +14,9 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.List;
 
+import static com.intellij.java.codeInsight.navigation.RunLineMarkerJava22Test.checkMark;
+import static com.intellij.java.codeInsight.navigation.RunLineMarkerJava22Test.checkMethod;
+
 public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase {
 
   public void testBasic() {
@@ -312,6 +315,314 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
         RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
         assertNotNull(info);
       });
+    });
+  }
+
+
+  public void testPrivateStaticConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            private Main() {}
+            public static void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+  public void testPackageStaticConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            Main() {}
+            public static void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testProtectedStaticConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            protected Main() {}
+            public static void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testPublicStaticConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            public Main() {}
+            public static void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testPrivateConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            private Main() {}
+            public void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEmpty(marks);
+      checkMethod(myFixture, false);
+    });
+  }
+
+  public void testPackageConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            Main() {}
+            public void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testProtectedConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            protected Main() {}
+            public void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testPublicConstructor() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            public Main() {}
+            public void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+
+  public void testPrivateMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            private void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEmpty(marks);
+      checkMethod(myFixture, false);
+    });
+  }
+
+  public void testPackageMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testProtectedMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            protected void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testPublicMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            public void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testPrivateStaticMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            private static void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEmpty(marks);
+      checkMethod(myFixture, false);
+    });
+  }
+
+  public void testPackageStaticMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            static void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testProtectedStaticMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            protected static void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
+    });
+  }
+
+  public void testPublicStaticMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> {
+            public static void main(String[] args) {}
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "Main");
+
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      checkMark(allMarks.get(0), "Main");
+      checkMark(allMarks.get(1), "Main");
+
+      checkMethod(myFixture, true);
     });
   }
 }
