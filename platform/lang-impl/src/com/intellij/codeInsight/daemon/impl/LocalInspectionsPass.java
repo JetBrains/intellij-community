@@ -30,6 +30,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
@@ -40,6 +41,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +100,9 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
       List<PsiFile> injectedFragments = List.of();
     };
 
-    DumbToolWrapperCondition dumbToolWrapperCondition = new DumbToolWrapperCondition(isDumbMode());
+    VirtualFile virtualFile = getFile().getVirtualFile();
+    boolean indexable = !virtualFile.isInLocalFileSystem() || WorkspaceFileIndex.getInstance(myProject).isIndexable(virtualFile);
+    DumbToolWrapperCondition dumbToolWrapperCondition = new DumbToolWrapperCondition(isDumbMode(), indexable);
 
     if (!toolWrappers.isEmpty()) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
@@ -521,15 +525,17 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
 
   private static final class DumbToolWrapperCondition implements Condition<LocalInspectionToolWrapper> {
     private final boolean myDumbMode;
+    private final boolean myVirtualFileIsIndexable;
     private final Set<String> myInactiveIds = ConcurrentHashMap.newKeySet();
 
-    private DumbToolWrapperCondition(boolean isDumbMode) {
+    private DumbToolWrapperCondition(boolean isDumbMode, boolean virtualFileIsIndexable) {
       myDumbMode = isDumbMode;
+      myVirtualFileIsIndexable = virtualFileIsIndexable;
     }
 
     @Override
     public boolean value(LocalInspectionToolWrapper wrapper) {
-      if (!myDumbMode) return true;
+      if (!myDumbMode && myVirtualFileIsIndexable) return true;
 
       LocalInspectionTool tool = wrapper.getTool();
       if (DumbService.isDumbAware(tool)) {

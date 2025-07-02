@@ -323,6 +323,8 @@ a:com.intellij.openapi.project.DumbService
 - com.intellij.openapi.roots.ContentIterator
 - processFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
+a:com.intellij.openapi.roots.FileIndexFacade
+- *a:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 *:com.intellij.openapi.vfs.FileVisibilityProvider
 - *sf:Companion:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName

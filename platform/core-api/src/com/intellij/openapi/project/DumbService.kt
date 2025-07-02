@@ -15,10 +15,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService.Companion.DUMB_MODE
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
+import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -506,6 +510,18 @@ abstract class DumbService {
    */
   fun isUsableInCurrentContext(thing: Any) : Boolean {
     return !isDumb || isDumbAware(thing, project is LightEditCompatible)
+  }
+
+  /**
+   * return true if [thing] can be used in current dumb context, i.e., either the [thing] is [isDumbAware]
+   * or the current context is smart and the file is indexable; return false otherwise
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  fun isUsableInCurrentContext(thing: Any, file: VirtualFile?) : Boolean {
+    if (file == null || !file.isInLocalFileSystem) return isUsableInCurrentContext(thing)
+    return (!isDumb && FileIndexFacade.getInstance(project).isIndexable(file)) || isDumbAware(thing, project is LightEditCompatible)
   }
 
   companion object {
