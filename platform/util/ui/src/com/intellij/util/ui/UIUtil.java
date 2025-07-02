@@ -2435,9 +2435,10 @@ public final class UIUtil {
   }
 
   public static void setEnabledRecursively(@NotNull Component component, boolean enabled) {
-    forEachComponentInHierarchy(component, c -> {
-      c.setEnabled(enabled);
-    });
+    forEachComponentInHierarchy(component, c -> c.setEnabled(enabled));
+    // Changing the enable state for some UI elements change their size or visibility.
+    // For example, the label component with icon hides icon if it disabled.
+    component.revalidate();
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
