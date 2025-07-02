@@ -307,7 +307,11 @@ public final class HttpRequests {
     @Override
     public RequestBuilder productNameAsUserAgent() {
       Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isDisposed()) {
+      String currentBuildUrl = System.getenv("BUILD_URL");
+      if (currentBuildUrl != null) {
+        return userAgent(currentBuildUrl);
+      }
+      else if (app != null && !app.isDisposed()) {
         String productName = ApplicationNamesInfo.getInstance().getFullProductName();
         String version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
         return userAgent(productName + '/' + version);
