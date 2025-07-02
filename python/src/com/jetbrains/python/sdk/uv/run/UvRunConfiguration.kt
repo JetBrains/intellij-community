@@ -14,12 +14,15 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.run.*
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
 import com.jetbrains.python.venvReader.tryResolvePath
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
 enum class UvRunType {
@@ -39,6 +42,10 @@ data class UvRunConfigurationOptions(
 ) {
   val uvSdk: Sdk?
     get() = uvSdkKey?.let {PythonSdkUtil.findSdkByKey(it)}
+
+  val workingDirectory: Path?
+    get() = (uvSdk?.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory
+      ?: tryResolvePath(uvSdk?.associatedModulePath)
 }
 
 @ApiStatus.Internal
@@ -70,6 +77,10 @@ class UvRunConfiguration(
     checkConfiguration(options).onFailure {
       throw RuntimeConfigurationError(it)
     }
+  }
+
+  override fun getSdk(): Sdk? {
+    return options.uvSdk
   }
 }
 
