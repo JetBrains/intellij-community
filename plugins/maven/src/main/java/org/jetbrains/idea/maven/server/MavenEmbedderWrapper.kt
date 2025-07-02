@@ -400,7 +400,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
           "[WARNING]"
         }
         else if (consoleEvent.level == MavenServerConsoleIndicator.LEVEL_INFO) {
-          "INFO"
+          "[INFO]"
         }
         else if (consoleEvent.level == MavenServerConsoleIndicator.LEVEL_DEBUG) {
           "[DEBUG]"

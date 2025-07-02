@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.*
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenEventType
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -43,7 +44,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 
 @ApiStatus.Internal
-internal class Maven4ModelQuickFix : MavenLoggedEventParser, MavenSpyLoggedEventParser, MavenImportLoggedEventParser {
+internal class Maven4ModelVersionErrorParser : MavenLoggedEventParser, MavenSpyLoggedEventParser, MavenImportLoggedEventParser {
 
   override fun supportsType(type: LogMessageType?): Boolean {
     return true;
@@ -117,16 +118,6 @@ internal class Maven4ModelQuickFix : MavenLoggedEventParser, MavenSpyLoggedEvent
     console.addBuildIssue(buildIssue, kind)
     return true
   }
-
-
-  companion object {
-    private val TRIGGER_LINES = listOf(
-      "'subprojects' unexpected subprojects element @ [^,]*, (.*)",
-      "'subprojects' unexpected subprojects element at (.*?)[:,$]",
-      "the model contains elements that require a model version of 4.1.0 @ .*? file://(.*?)[:,$]",
-      "the model contains elements that require a model version of 4.1.0 at file://(.*?)[:,$]",
-    ).map { it.toRegex() };
-  }
 }
 
 class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
@@ -198,7 +189,7 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
             val modelVersion = model.modelVersion
             executeCommand(project, MavenProjectBundle.message("maven.project.updating.model.command.name")) {
               if (modelVersion.exists()) {
-                modelVersion.stringValue = "4.1.0"
+                modelVersion.stringValue = MavenConstants.MODEL_VERSION_4_1_0
               }
               val rootTag = psiFile.document?.rootTag
               rootTag?.setAttribute("xmlns", NEW_XMLNS)
@@ -223,3 +214,10 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
     private const val NEW_SCHEMA_LOCATION = "http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd"
   }
 }
+
+private val TRIGGER_LINES = listOf(
+  "'subprojects' unexpected subprojects element @ [^,]*, (.*)",
+  "'subprojects' unexpected subprojects element at (.*?)[:,$]",
+  "the model contains elements that require a model version of 4.1.0 @ .*? file://(.*?)[:,$]",
+  "the model contains elements that require a model version of 4.1.0 at file://(.*?)[:,$]",
+).map { it.toRegex() };
