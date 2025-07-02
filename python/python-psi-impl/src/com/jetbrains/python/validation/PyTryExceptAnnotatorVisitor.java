@@ -10,14 +10,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Marks misplaced default 'except' clauses.
  */
-public class TryExceptAnnotator extends PyAnnotator {
+public class PyTryExceptAnnotatorVisitor extends PyElementVisitor {
+  private final @NotNull PyAnnotationHolder myHolder;
+
+  public PyTryExceptAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
   @Override
   public void visitPyTryExceptStatement(final @NotNull PyTryExceptStatement node) {
     final PyExceptPart[] exceptParts = node.getExceptParts();
     boolean haveDefaultExcept = false;
     for (PyExceptPart part : exceptParts) {
       if (haveDefaultExcept) {
-        getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.default.except.must.be.last")).range(part).create();
+        myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.default.except.must.be.last")).range(part).create();
       }
       if (part.getExceptClass() == null) {
         haveDefaultExcept = true;
@@ -29,7 +33,7 @@ public class TryExceptAnnotator extends PyAnnotator {
   public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
     if (node.getExpressions().length == 0 &&
         PsiTreeUtil.getParentOfType(node, PyExceptPart.class, PyFinallyPart.class, PyFunction.class) == null) {
-      markError(node, PyPsiBundle.message("ANN.no.exception.to.reraise"));
+      myHolder.markError(node, PyPsiBundle.message("ANN.no.exception.to.reraise"));
     }
   }
 }

@@ -27,7 +27,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Marks built-in names.
  */
-public class PyBuiltinAnnotator extends PyAnnotator {
+public class PyBuiltinAnnotatorVisitor extends PyElementVisitor {
+  private final @NotNull PyAnnotationHolder myHolder;
+
+  public PyBuiltinAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
   @Override
   public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
     final String name = node.getName();
@@ -37,7 +41,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
       return;
     }
     if ((PyBuiltinCache.isInBuiltins(node) || PyUtil.isPy2ReservedWord(node)) && !(node.getParent() instanceof PyDecorator)) {
-      addHighlightingAnnotation(node, PyHighlighter.PY_BUILTIN_NAME);
+      myHolder.addHighlightingAnnotation(node, PyHighlighter.PY_BUILTIN_NAME);
     }
   }
 
@@ -64,7 +68,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
         if (astNode != null) {
           final ASTNode tgt = astNode.findChildByType(PyTokenTypes.IDENTIFIER); // only the id, not all qualifiers subtree
           if (tgt != null) {
-            addHighlightingAnnotation(tgt, PyHighlighter.PY_PREDEFINED_USAGE);
+            myHolder.addHighlightingAnnotation(tgt, PyHighlighter.PY_PREDEFINED_USAGE);
             return true;
           }
         }

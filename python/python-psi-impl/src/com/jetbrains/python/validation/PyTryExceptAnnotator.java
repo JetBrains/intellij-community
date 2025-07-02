@@ -11,86 +11,98 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PyTryExceptAnnotator extends PyAnnotator {
+public final class PyTryExceptAnnotator extends PyAnnotatorBase {
   @Override
-  public void visitPyTryExceptStatement(@NotNull PyTryExceptStatement node) {
-    boolean haveStar = false;
-    boolean haveNotStar = false;
-    for (PyExceptPart exceptPart: node.getExceptParts()) {
-      var star = PyPsiUtils.getFirstChildOfType(exceptPart, PyTokenTypes.MULT);
-      if (star != null) {
-        haveStar = true;
-      }
-      else {
-        haveNotStar = true;
-      }
-      if (haveNotStar && haveStar) {
-        var exceptKeyword = exceptPart.getFirstChild();
-        int startOffset = exceptKeyword.getTextOffset();
-        int endOffset = exceptKeyword.getTextRange().getEndOffset();
+  public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
+    element.accept(new MyVisitor(holder));
+  }
+
+  private static class MyVisitor extends PyElementVisitor {
+    private final @NotNull PyAnnotationHolder myHolder;
+
+    private MyVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
+    @Override
+    public void visitPyTryExceptStatement(@NotNull PyTryExceptStatement node) {
+      boolean haveStar = false;
+      boolean haveNotStar = false;
+      for (PyExceptPart exceptPart : node.getExceptParts()) {
+        var star = PyPsiUtils.getFirstChildOfType(exceptPart, PyTokenTypes.MULT);
         if (star != null) {
-          endOffset = star.getTextRange().getEndOffset();
+          haveStar = true;
         }
-        var textRange = new TextRange(startOffset, endOffset);
-        getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.try.except.can.not.have.except.and.star.except"))
+        else {
+          haveNotStar = true;
+        }
+        if (haveNotStar && haveStar) {
+          var exceptKeyword = exceptPart.getFirstChild();
+          int startOffset = exceptKeyword.getTextOffset();
+          int endOffset = exceptKeyword.getTextRange().getEndOffset();
+          if (star != null) {
+            endOffset = star.getTextRange().getEndOffset();
+          }
+          var textRange = new TextRange(startOffset, endOffset);
+          myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.try.except.can.not.have.except.and.star.except"))
             .range(textRange).create();
-        break;
-      }
-    }
-  }
-
-  private static @Nullable PyReferenceExpression tryGetExceptionGroupInExpression(@Nullable PsiElement exceptExpression) {
-    if (exceptExpression instanceof PyReferenceExpression &&
-        "ExceptionGroup".equals(((PyReferenceExpression)exceptExpression).getName())) {
-      return (PyReferenceExpression)exceptExpression;
-    }
-    if (exceptExpression instanceof PyParenthesizedExpression) {
-      return tryGetExceptionGroupInExpression(PyPsiUtils.flattenParens((PyParenthesizedExpression)exceptExpression));
-    }
-    if (exceptExpression instanceof PyTupleExpression) {
-      for (PsiElement child: exceptExpression.getChildren()) {
-        var result = tryGetExceptionGroupInExpression(child);
-        if (result != null) {
-          return result;
+          break;
         }
       }
     }
-    return null;
-  }
 
-  @Override
-  public void visitPyExceptBlock(@NotNull PyExceptPart node) {
-    if (!node.isStar()) return;
-
-    var exceptClass = node.getExceptClass();
-    var exceptionGroup = tryGetExceptionGroupInExpression(exceptClass);
-    if (exceptionGroup != null) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.exception.group.in.star.except")).range(exceptionGroup).create();
+    private static @Nullable PyReferenceExpression tryGetExceptionGroupInExpression(@Nullable PsiElement exceptExpression) {
+      if (exceptExpression instanceof PyReferenceExpression &&
+          "ExceptionGroup".equals(((PyReferenceExpression)exceptExpression).getName())) {
+        return (PyReferenceExpression)exceptExpression;
+      }
+      if (exceptExpression instanceof PyParenthesizedExpression) {
+        return tryGetExceptionGroupInExpression(PyPsiUtils.flattenParens((PyParenthesizedExpression)exceptExpression));
+      }
+      if (exceptExpression instanceof PyTupleExpression) {
+        for (PsiElement child : exceptExpression.getChildren()) {
+          var result = tryGetExceptionGroupInExpression(child);
+          if (result != null) {
+            return result;
+          }
+        }
+      }
+      return null;
     }
-  }
 
-  @Override
-  public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
-    PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class, false, PyFunction.class);
-    if (exceptPart != null && exceptPart.isStar()) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.continue.break.or.return.in.star.except")).create();
+    @Override
+    public void visitPyExceptBlock(@NotNull PyExceptPart node) {
+      if (!node.isStar()) return;
+
+      var exceptClass = node.getExceptClass();
+      var exceptionGroup = tryGetExceptionGroupInExpression(exceptClass);
+      if (exceptionGroup != null) {
+        myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.exception.group.in.star.except")).range(exceptionGroup)
+          .create();
+      }
     }
-  }
 
-  private void checkForContinueAndReturn(@NotNull PsiElement node) {
-    PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class, false, PyLoopStatement.class);
-    if (exceptPart != null && exceptPart.isStar()) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.continue.break.or.return.in.star.except")).create();
+    @Override
+    public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
+      PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class, false, PyFunction.class);
+      if (exceptPart != null && exceptPart.isStar()) {
+        myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.continue.break.or.return.in.star.except")).create();
+      }
     }
-  }
 
-  @Override
-  public void visitPyContinueStatement(@NotNull PyContinueStatement node) {
-    checkForContinueAndReturn(node);
-  }
+    private void checkForContinueAndReturn(@NotNull PsiElement node) {
+      PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class, false, PyLoopStatement.class);
+      if (exceptPart != null && exceptPart.isStar()) {
+        myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.continue.break.or.return.in.star.except")).create();
+      }
+    }
 
-  @Override
-  public void visitPyBreakStatement(@NotNull PyBreakStatement node) {
-    checkForContinueAndReturn(node);
+    @Override
+    public void visitPyContinueStatement(@NotNull PyContinueStatement node) {
+      checkForContinueAndReturn(node);
+    }
+
+    @Override
+    public void visitPyBreakStatement(@NotNull PyBreakStatement node) {
+      checkForContinueAndReturn(node);
+    }
   }
 }

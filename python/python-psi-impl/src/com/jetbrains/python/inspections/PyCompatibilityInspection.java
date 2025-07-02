@@ -45,7 +45,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.validation.CompatibilityVisitor;
+import com.jetbrains.python.validation.PyCompatibilityVisitor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +138,7 @@ public final class PyCompatibilityInspection extends PyInspection {
     return new Visitor(holder, updateVersionsToProcess());
   }
 
-  private static class Visitor extends CompatibilityVisitor {
+  private static class Visitor extends PyCompatibilityVisitor {
     private final ProblemsHolder myHolder;
     private final Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<>());
     private final Set<String> myFromCompatibilityLibs = Collections.synchronizedSet(new HashSet<>());

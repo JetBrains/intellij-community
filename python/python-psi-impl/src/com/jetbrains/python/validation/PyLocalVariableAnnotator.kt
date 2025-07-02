@@ -1,24 +1,31 @@
 package com.jetbrains.python.validation
 
+import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.highlighting.PyHighlighter
+import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 
-class PyLocalVariableAnnotator : PyAnnotator() {
+class PyLocalVariableAnnotator : PyAnnotatorBase() {
+  override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
+    element.accept(PyLocalVariableAnnotatorVisitor(holder))
+  }
+}
 
+private class PyLocalVariableAnnotatorVisitor(private val holder: PyAnnotationHolder) : PyElementVisitor() {
   override fun visitPyTargetExpression(node: PyTargetExpression) {
     if (!node.isLocalVariable()) return
-    node.nameElement?.let { addHighlightingAnnotation(it, PyHighlighter.PY_LOCAL_VARIABLE) }
+    node.nameElement?.let { holder.addHighlightingAnnotation(it, PyHighlighter.PY_LOCAL_VARIABLE) }
   }
 
   override fun visitPyReferenceExpression(node: PyReferenceExpression) {
     if (PyResolveUtil.resolveLocally(node).any { it is PyTargetExpression && it.isLocalVariable() }) {
-      addHighlightingAnnotation(node.node, PyHighlighter.PY_LOCAL_VARIABLE)
+      holder.addHighlightingAnnotation(node.node, PyHighlighter.PY_LOCAL_VARIABLE)
     }
   }
 

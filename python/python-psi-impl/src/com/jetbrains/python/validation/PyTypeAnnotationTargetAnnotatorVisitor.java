@@ -24,13 +24,17 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class TypeAnnotationTargetAnnotator extends PyAnnotator {
+public class PyTypeAnnotationTargetAnnotatorVisitor extends PyElementVisitor {
+  private final @NotNull PyAnnotationHolder myHolder;
+
+  public PyTypeAnnotationTargetAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
   @Override
   public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
     if (node.getAnnotation() != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36)) {
       if (node.getRawTargets().length > 1) {
-        getHolder().newAnnotation(HighlightSeverity.ERROR,
-                                  PyPsiBundle.message("ANN.variable.annotation.cannot.be.used.in.assignment.with.multiple.targets")).create();
+        myHolder.newAnnotation(HighlightSeverity.ERROR,
+                               PyPsiBundle.message("ANN.variable.annotation.cannot.be.used.in.assignment.with.multiple.targets")).create();
       }
       final PyExpression target = node.getLeftHandSideExpression();
       if (target != null) {
@@ -49,11 +53,11 @@ public class TypeAnnotationTargetAnnotator extends PyAnnotator {
   private void checkAnnotationTarget(@NotNull PyExpression expression) {
     final PyExpression innerExpr = PyPsiUtils.flattenParens(expression);
     if (innerExpr instanceof PyTupleExpression || innerExpr instanceof PyListLiteralExpression) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR,
-                                PyPsiBundle.message("ANN.variable.annotation.cannot.be.combined.with.tuple.unpacking")).range(innerExpr).create();
+      myHolder.newAnnotation(HighlightSeverity.ERROR,
+                             PyPsiBundle.message("ANN.variable.annotation.cannot.be.combined.with.tuple.unpacking")).range(innerExpr).create();
     }
     else if (innerExpr != null && !(innerExpr instanceof PyTargetExpression || innerExpr instanceof PySubscriptionExpression)) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.illegal.target.for.variable.annotation")).range(innerExpr).create();
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.illegal.target.for.variable.annotation")).range(innerExpr).create();
     }
   }
 }

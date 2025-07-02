@@ -4,6 +4,10 @@
     <module name="intellij.python.community.helpersLocator"/>
   </dependencies>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.pyAnnotator" interface="com.jetbrains.python.validation.PyAnnotator" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <readWriteAccessDetector implementation="com.jetbrains.python.findUsages.PyReadWriteAccessDetector"/>
 
@@ -164,6 +168,17 @@
     <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineFunctionHandler"/>
 
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.DocStringAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.StarAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.FStringsAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyPatternAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
 
     <localInspection language="Python" shortName="PyUnusedLocalInspection" suppressId="PyUnusedLocal" bundle="messages.PyPsiBundle" key="INSP.NAME.unused" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection"/>
     <localInspection language="Python" shortName="PyRedundantParenthesesInspection" suppressId="PyRedundantParentheses" bundle="messages.PyPsiBundle" key="INSP.NAME.redundant.parentheses" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRedundantParenthesesInspection"/>

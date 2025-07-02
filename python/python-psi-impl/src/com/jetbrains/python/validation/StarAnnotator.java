@@ -25,35 +25,47 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public final class StarAnnotator extends PyAnnotator {
+public final class StarAnnotator extends PyAnnotatorBase {
   @Override
-  public void visitPyStarExpression(@NotNull PyStarExpression node) {
-    super.visitPyStarExpression(node);
-    PsiElement parent = node.getParent();
-    if (!node.isAssignmentTarget() &&
-        !allowedUnpacking(node) &&
-        !(parent instanceof PyParameterTypeList) &&
-        !(parent instanceof PyTypeParameter) &&
-        !(parent instanceof PyAnnotation && isVariadicArg(parent.getParent()))) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.can.t.use.starred.expression.here")).create();
-    }
+  public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
+    element.accept(new MyVisitor(holder));
   }
 
-  private static boolean allowedUnpacking(@NotNull PyStarExpression starExpression) {
-    if (!starExpression.isUnpacking()) {
-      return false;
-    }
+  private static class MyVisitor extends PyElementVisitor {
+    private final @NotNull PyAnnotationHolder myHolder;
 
-    // Additional contexts where unpacking is prohibited depending on the language version are covered in CompatibilityVisitor.
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(starExpression, PyParenthesizedExpression.class);
-    if (parent instanceof PyTupleExpression) {
-      final PsiElement tupleParent = parent.getParent();
-      if (tupleParent instanceof PyYieldExpression && ((PyYieldExpression)tupleParent).isDelegating()) {
-        return false;
+    private MyVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
+    @Override
+    public void visitPyStarExpression(@NotNull PyStarExpression node) {
+      super.visitPyStarExpression(node);
+      PsiElement parent = node.getParent();
+      if (!node.isAssignmentTarget() &&
+          !allowedUnpacking(node) &&
+          !(parent instanceof PyParameterTypeList) &&
+          !(parent instanceof PyTypeParameter) &&
+          !(parent instanceof PyAnnotation && isVariadicArg(parent.getParent()))) {
+        myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.can.t.use.starred.expression.here")).create();
       }
     }
-    return true;
+
+    private static boolean allowedUnpacking(@NotNull PyStarExpression starExpression) {
+      if (!starExpression.isUnpacking()) {
+        return false;
+      }
+
+      // Additional contexts where unpacking is prohibited depending on the language version are covered in CompatibilityVisitor.
+      final PsiElement parent = PsiTreeUtil.skipParentsOfType(starExpression, PyParenthesizedExpression.class);
+      if (parent instanceof PyTupleExpression) {
+        final PsiElement tupleParent = parent.getParent();
+        if (tupleParent instanceof PyYieldExpression && ((PyYieldExpression)tupleParent).isDelegating()) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
+
   public static boolean isVariadicArg(@Nullable PsiElement parameter) {
     return parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).isPositionalContainer());
   }

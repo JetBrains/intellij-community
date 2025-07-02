@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.validation;
 
-import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
@@ -29,7 +28,11 @@ import java.util.Set;
 /**
  * Annotates errors in 'global' statements.
  */
-public class GlobalAnnotator extends PyAnnotator {
+public class PyGlobalAnnotatorVisitor extends PyElementVisitor {
+  private final @NotNull PyAnnotationHolder myHolder;
+
+  public PyGlobalAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
   @Override
   public void visitPyGlobalStatement(final @NotNull PyGlobalStatement node) {
     PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
@@ -49,11 +52,10 @@ public class GlobalAnnotator extends PyAnnotator {
       );
 
       // check globals
-      final AnnotationHolder holder = getHolder();
       for (PyTargetExpression expr : node.getGlobals()) {
         final String expr_name = expr.getReferencedName();
         if (paramNames.contains(expr_name)) {
-          holder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.name.used.both.as.global.and.param", expr_name)).range(expr).create();
+          myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.name.used.both.as.global.and.param", expr_name)).range(expr).create();
         }
       }
     }

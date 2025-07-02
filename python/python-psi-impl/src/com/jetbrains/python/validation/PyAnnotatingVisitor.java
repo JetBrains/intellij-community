@@ -1,54 +1,34 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
-public final class PyAnnotatingVisitor implements Annotator, DumbAware {
-  private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
-  private static final Class[] ANNOTATOR_CLASSES = new Class[] {
-    AssignTargetAnnotator.class,
-    TypeAnnotationTargetAnnotator.class,
-    ParameterListAnnotator.class,
-    HighlightingAnnotator.class,
-    ReturnAnnotator.class,
-    TryExceptAnnotator.class,
-    BreakContinueAnnotator.class,
-    GlobalAnnotator.class,
-    ImportAnnotator.class,
-    PyBuiltinAnnotator.class,
-    UnsupportedFeatures.class,
-    PyAsyncAwaitAnnotator.class
-  };
-
-  private final PyAnnotator[] myAnnotators;
-
-  public PyAnnotatingVisitor() {
-    final List<PyAnnotator> annotators = new ArrayList<>();
-    for (Class cls : ANNOTATOR_CLASSES) {
-      PyAnnotator annotator;
-      try {
-        annotator = (PyAnnotator)cls.newInstance();
-      }
-      catch (InstantiationException | IllegalAccessException e) {
-        LOGGER.error(e);
-        continue;
-      }
-      annotators.add(annotator);
-    }
-    myAnnotators = annotators.toArray(new PyAnnotator[0]);
-  }
-
+public final class PyAnnotatingVisitor extends PyAnnotatorBase implements DumbAware {
   @Override
-  public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    PyAnnotatorBase.runAnnotators(psiElement, holder, myAnnotators);
+  public void annotate(@NotNull PsiElement psiElement, @NotNull PyAnnotationHolder holder) {
+    List<@NotNull PyElementVisitor> visitors = List.of(
+      new PyAssignTargetAnnotatorVisitor(holder),
+      new PyTypeAnnotationTargetAnnotatorVisitor(holder),
+      new PyParameterListAnnotatorVisitor(holder),
+      new PyHighlightingAnnotatorVisitor(holder),
+      new ReturnAnnotator(holder),
+      new PyTryExceptAnnotatorVisitor(holder),
+      new PyBreakContinueAnnotatorVisitor(holder),
+      new PyGlobalAnnotatorVisitor(holder),
+      new PyImportAnnotatorVisitor(holder),
+      new PyBuiltinAnnotatorVisitor(holder),
+      new UnsupportedFeatures(holder, List.of(LanguageLevel.forElement(psiElement))),
+      new PyAsyncAwaitAnnotatorVisitor(holder)
+    );
+    for (PyElementVisitor visitor : visitors) {
+      psiElement.accept(visitor);
+    }
   }
 }

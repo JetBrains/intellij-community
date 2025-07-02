@@ -16,6 +16,7 @@
 package com.jetbrains.python.validation
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.documentation.docstrings.*
 import com.jetbrains.python.highlighting.PyHighlighter
@@ -24,7 +25,13 @@ import com.jetbrains.python.psi.*
 /**
  * Highlights doc strings in classes, functions, and files.
  */
-class DocStringAnnotator : PyAnnotator() {
+class DocStringAnnotator : PyAnnotatorBase() {
+  override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
+    element.accept(PyDocStringAnnotatorVisitor(holder))
+  }
+}
+
+private class PyDocStringAnnotatorVisitor(private val holder: PyAnnotationHolder) : PyElementVisitor() {
   override fun visitPyFile(node: PyFile) {
     annotateDocStringStmt(DocStringUtil.findDocStringExpression(node))
   }

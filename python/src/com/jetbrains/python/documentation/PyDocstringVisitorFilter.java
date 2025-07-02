@@ -8,8 +8,8 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import com.jetbrains.python.validation.DocStringAnnotator;
-import com.jetbrains.python.validation.HighlightingAnnotator;
-import com.jetbrains.python.validation.ParameterListAnnotator;
+import com.jetbrains.python.validation.PyHighlightingAnnotatorVisitor;
+import com.jetbrains.python.validation.PyParameterListAnnotatorVisitor;
 import com.jetbrains.python.validation.ReturnAnnotator;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,7 @@ public final class PyDocstringVisitorFilter implements PythonVisitorFilter {
       return false;
     }
     //annotators
-    if (visitorClass == DocStringAnnotator.class || visitorClass == ParameterListAnnotator.class || visitorClass == ReturnAnnotator.class || visitorClass == HighlightingAnnotator.class)
+    if (visitorClass == DocStringAnnotator.class || visitorClass == PyParameterListAnnotatorVisitor.class || visitorClass == ReturnAnnotator.class || visitorClass == PyHighlightingAnnotatorVisitor.class)
       return false;
     // doctest in separate file
     final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);

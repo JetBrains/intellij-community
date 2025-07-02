@@ -21,18 +21,12 @@
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
     <backspaceHandlerDelegate implementation="com.jetbrains.python.codeInsight.editorActions.PyTripleQuoteBackspaceDelegate"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
     <colorSettingsPage implementation="com.jetbrains.python.highlighting.PythonColorsPage"/>
     <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover" id="pyStatementMover"
                           order="before line"/>
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
   </extensions>
-  <extensions defaultExtensionNs="Pythonid">
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
-  </extensions>
-  <extensionPoints>
-    <extensionPoint qualifiedName="Pythonid.pyAnnotator" interface="com.jetbrains.python.validation.PyAnnotatorBase" dynamic="true"/>
-  </extensionPoints>
 </idea-plugin>

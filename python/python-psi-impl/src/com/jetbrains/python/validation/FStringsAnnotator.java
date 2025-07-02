@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.PyFormattedStringElement;
 import org.jetbrains.annotations.NotNull;
@@ -28,60 +29,71 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public final class FStringsAnnotator extends PyAnnotator {
+public final class FStringsAnnotator extends PyAnnotatorBase {
 
   @Override
-  public void visitPyFStringFragment(@NotNull PyFStringFragment node) {
-    final PsiElement typeConversion = node.getTypeConversion();
-    if (typeConversion != null) {
-      final String conversionChar = typeConversion.getText().substring(1);
-      if (conversionChar.isEmpty()) {
-        report(typeConversion, PyPsiBundle.message("ANN.fstrings.missing.conversion.character"));
-      }
-      else if (conversionChar.length() > 1 || "sra".indexOf(conversionChar.charAt(0)) < 0) {
-        report(typeConversion, PyPsiBundle.message("ANN.fstrings.illegal.conversion.character", conversionChar));
-      }
-    }
+  public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
+    element.accept(new MyVisitor(holder));
   }
 
-  @Override
-  public void visitPyFormattedStringElement(@NotNull PyFormattedStringElement node) {
-    final String wholeNodeText = node.getText();
-    for (TextRange textRange : node.getLiteralPartRanges()) {
-      int i = textRange.getStartOffset();
-      while (i < textRange.getEndOffset()) {
-        final int nextOffset = skipNamedUnicodeEscape(wholeNodeText, i, textRange.getEndOffset());
-        if (i != nextOffset) {
-          i = nextOffset;
-          continue;
+  private static class MyVisitor extends PyElementVisitor {
+    private final @NotNull PyAnnotationHolder myHolder;
+
+    private MyVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
+    @Override
+    public void visitPyFStringFragment(@NotNull PyFStringFragment node) {
+      final PsiElement typeConversion = node.getTypeConversion();
+      if (typeConversion != null) {
+        final String conversionChar = typeConversion.getText().substring(1);
+        if (conversionChar.isEmpty()) {
+          report(typeConversion, PyPsiBundle.message("ANN.fstrings.missing.conversion.character"));
         }
-        final char c = wholeNodeText.charAt(i);
-        if (c == '}') {
-          if (i + 1 < textRange.getEndOffset() && wholeNodeText.charAt(i + 1) == '}') {
-            i += 2;
+        else if (conversionChar.length() > 1 || "sra".indexOf(conversionChar.charAt(0)) < 0) {
+          report(typeConversion, PyPsiBundle.message("ANN.fstrings.illegal.conversion.character", conversionChar));
+        }
+      }
+    }
+
+    @Override
+    public void visitPyFormattedStringElement(@NotNull PyFormattedStringElement node) {
+      final String wholeNodeText = node.getText();
+      for (TextRange textRange : node.getLiteralPartRanges()) {
+        int i = textRange.getStartOffset();
+        while (i < textRange.getEndOffset()) {
+          final int nextOffset = skipNamedUnicodeEscape(wholeNodeText, i, textRange.getEndOffset());
+          if (i != nextOffset) {
+            i = nextOffset;
             continue;
           }
-          reportCharacter(node, i, PyPsiBundle.message("ANN.fstrings.single.right.brace.not.allowed.inside.fstrings"));
+          final char c = wholeNodeText.charAt(i);
+          if (c == '}') {
+            if (i + 1 < textRange.getEndOffset() && wholeNodeText.charAt(i + 1) == '}') {
+              i += 2;
+              continue;
+            }
+            reportCharacter(node, i, PyPsiBundle.message("ANN.fstrings.single.right.brace.not.allowed.inside.fstrings"));
+          }
+          i++;
         }
-        i++;
       }
     }
-  }
 
-  private static int skipNamedUnicodeEscape(@NotNull String nodeText, int offset, int endOffset) {
-    if (StringUtil.startsWith(nodeText, offset, "\\N{")) {
-      final int rightBraceOffset = nodeText.indexOf('}', offset + 3);
-      return rightBraceOffset < 0 ? endOffset : rightBraceOffset + 1;
+    private static int skipNamedUnicodeEscape(@NotNull String nodeText, int offset, int endOffset) {
+      if (StringUtil.startsWith(nodeText, offset, "\\N{")) {
+        final int rightBraceOffset = nodeText.indexOf('}', offset + 3);
+        return rightBraceOffset < 0 ? endOffset : rightBraceOffset + 1;
+      }
+      return offset;
     }
-    return offset;
-  }
 
-  public void reportCharacter(@NotNull PsiElement element, int offset, @NotNull @InspectionMessage String message) {
-    final int nodeStartOffset = element.getTextRange().getStartOffset();
-    getHolder().newAnnotation(HighlightSeverity.ERROR, message).range(TextRange.from(offset, 1).shiftRight(nodeStartOffset)).create();
-  }
+    public void reportCharacter(@NotNull PsiElement element, int offset, @NotNull @InspectionMessage String message) {
+      final int nodeStartOffset = element.getTextRange().getStartOffset();
+      myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(TextRange.from(offset, 1).shiftRight(nodeStartOffset)).create();
+    }
 
-  public void report(@NotNull PsiElement element, @NotNull @InspectionMessage String error) {
-    getHolder().newAnnotation(HighlightSeverity.ERROR, error).range(element).create();
+    public void report(@NotNull PsiElement element, @NotNull @InspectionMessage String error) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, error).range(element).create();
+    }
   }
 }

@@ -790,16 +790,6 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.DocStringAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.StarAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>

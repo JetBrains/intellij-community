@@ -33,7 +33,15 @@ import org.jetbrains.annotations.Nullable;
 import static com.jetbrains.python.PyPsiBundle.message;
 
 
-public class AssignTargetAnnotator extends PyAnnotator {
+public class PyAssignTargetAnnotatorVisitor extends PyElementVisitor {
+  private final @NotNull PyAnnotationHolder myHolder;
+
+  public PyAssignTargetAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
+  private @NotNull PyAnnotationHolder getHolder() {
+    return myHolder;
+  }
+
   private enum Operation {
     Assign, AugAssign, Delete, Except, For, With
   }
@@ -237,24 +245,24 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyListCompExpression(final @NotNull PyListCompExpression node) {
-      markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.comprh" : "ANN.cant.assign.to.comprh"));
+      getHolder().markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.comprh" : "ANN.cant.assign.to.comprh"));
     }
 
     @Override
     public void visitPyDictCompExpression(@NotNull PyDictCompExpression node) {
-      markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
+      getHolder().markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
     }
 
     @Override
     public void visitPySetCompExpression(@NotNull PySetCompExpression node) {
-      markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
+      getHolder().markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
     }
 
     @Override
     public void visitPyStarExpression(@NotNull PyStarExpression node) {
       super.visitPyStarExpression(node);
       if (!(node.getParent() instanceof PySequenceExpression)) {
-        markError(node, message("ANN.cant.aug.assign.starred.assignment.target.must.be.in.list.or.tuple"));
+        getHolder().markError(node, message("ANN.cant.aug.assign.starred.assignment.target.must.be.in.list.or.tuple"));
       }
     }
 

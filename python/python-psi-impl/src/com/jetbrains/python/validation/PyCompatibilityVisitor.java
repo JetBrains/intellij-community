@@ -41,7 +41,7 @@ import java.util.function.Predicate;
 /**
  * User : catherine
  */
-public abstract class CompatibilityVisitor extends PyAnnotator {
+public abstract class PyCompatibilityVisitor extends PyElementVisitor {
 
   private static final @NotNull Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
 
@@ -51,9 +51,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   private static final @NotNull Set<String> PYTHON314_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
 
-  protected @NotNull List<LanguageLevel> myVersionsToProcess;
+  protected final @NotNull List<LanguageLevel> myVersionsToProcess;
 
-  public CompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
+  public PyCompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
   }
 
@@ -529,10 +529,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     registerProblem(node, node.getTextRange(), message, true, fixes);
   }
 
-  protected void setVersionsToProcess(@NotNull List<LanguageLevel> versionsToProcess) {
-    myVersionsToProcess = versionsToProcess;
-  }
-
   protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
                                                 @NotNull @Nls String suffix,
                                                 @NotNull PsiElement node,
@@ -662,9 +658,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                      equalitySignInFStringFragment.getPsi());
     }
 
-    List<PyFStringFragment> containingFragmentsOfSameFString = 
+    List<PyFStringFragment> containingFragmentsOfSameFString =
       PsiTreeUtil.collectParents(node, PyFStringFragment.class, false, o -> o instanceof PyStringLiteralExpression);
-    
+
     if (containingFragmentsOfSameFString.size() > 1) {
       // At the moment, there is a limit of 2 for CPython 3.12, but it's implementation-dependent.
       // See https://peps.python.org/pep-0701/#specification
@@ -716,8 +712,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                        PyPsiBundle.message("INSP.compatibility.feature.allow.new.lines.in.f-strings"), multiLineLeaf);
       }
     }
-    
-    
+
+
     String parentFStringQuote = parentFString.getQuote();
     // Report only on fragments of the topmost f-string with this quote type to avoid duplicates in cases like: f'{f'{f"'"}'}'
     boolean isFragmentOfTopmostFStringWithSuchQuotes = ContainerUtil.all(remainingEnclosingFStrings,

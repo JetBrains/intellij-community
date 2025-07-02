@@ -32,85 +32,97 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public final class PyHighlightingAnnotator extends PyFrontendAnnotator implements HighlightRangeExtension {
-
-  @Override
-  public void visitPyFunction(@NotNull PyAstFunction node) {
-    if (node.isAsyncAllowed()) {
-      highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
-    }
-    else {
-      Optional
-        .ofNullable(node.getNode())
-        .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
-        .ifPresent(asyncNode -> getHolder().newAnnotation(HighlightSeverity.ERROR,
-                                                          PySyntaxCoreBundle.message("ANN.function.cannot.be.async", node.getName())).range(asyncNode).create());
-    }
-  }
-
-  @Override
-  public void visitPyNumericLiteralExpression(@NotNull PyAstNumericLiteralExpression node) {
-    String suffix = node.getIntegerLiteralSuffix();
-    if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
-    if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
-    getHolder().newAnnotation(HighlightSeverity.ERROR, PySyntaxCoreBundle.message("INSP.python.trailing.suffix.not.support", suffix))
-      .range(node).create();
-  }
-
-  @Override
-  public void visitPyForStatement(@NotNull PyAstForStatement node) {
-    highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
-  }
-
-  @Override
-  public void visitPyWithStatement(@NotNull PyAstWithStatement node) {
-    highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
-  }
-
-  @Override
-  public void visitPyPrefixExpression(@NotNull PyAstPrefixExpression node) {
-    highlightKeyword(node, PyTokenTypes.AWAIT_KEYWORD);
-  }
-
-  @Override
-  public void visitPyComprehensionElement(@NotNull PyAstComprehensionElement node) {
-    highlightKeywords(node, PyTokenTypes.ASYNC_KEYWORD);
-  }
-
-  @Override
-  public void visitPyMatchStatement(@NotNull PyAstMatchStatement node) {
-    highlightKeyword(node, PyTokenTypes.MATCH_KEYWORD);
-  }
-
-  @Override
-  public void visitPyCaseClause(@NotNull PyAstCaseClause node) {
-    highlightKeyword(node, PyTokenTypes.CASE_KEYWORD);
-  }
-
-  @Override
-  public void visitPyTypeAliasStatement(@NotNull PyAstTypeAliasStatement node) {
-    highlightKeyword(node, PyTokenTypes.TYPE_KEYWORD);
-  }
+public final class PyHighlightingAnnotator extends PyAnnotatorBase implements HighlightRangeExtension {
 
   @Override
   public boolean isForceHighlightParents(@NotNull PsiFile psiFile) {
     return psiFile instanceof PyAstFile;
   }
 
-  private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {
-    highlightAsKeyword(node.getNode().findChildByType(elementType));
+  @Override
+  public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
+    element.accept(new MyVisitor(holder));
   }
 
-  private void highlightKeywords(@NotNull PsiElement node, @NotNull PyElementType elementType) {
-    for (ASTNode astNode : node.getNode().getChildren(TokenSet.create(elementType))) {
-      highlightAsKeyword(astNode);
+  private static class MyVisitor extends PyAstElementVisitor {
+    private final @NotNull PyAnnotationHolder myHolder;
+
+    private MyVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
+    @Override
+    public void visitPyFunction(@NotNull PyAstFunction node) {
+      if (node.isAsyncAllowed()) {
+        highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+      }
+      else {
+        Optional
+          .ofNullable(node.getNode())
+          .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
+          .ifPresent(asyncNode -> myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                                         PySyntaxCoreBundle.message("ANN.function.cannot.be.async", node.getName()))
+            .range(asyncNode).create());
+      }
     }
-  }
 
-  private void highlightAsKeyword(@Nullable ASTNode astNode) {
-    if (astNode != null) {
-      getHolder().newSilentAnnotation(HighlightSeverity.INFORMATION).range(astNode)
-      .textAttributes(PyHighlighter.PY_KEYWORD).create();
+    @Override
+    public void visitPyNumericLiteralExpression(@NotNull PyAstNumericLiteralExpression node) {
+      String suffix = node.getIntegerLiteralSuffix();
+      if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
+      if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PySyntaxCoreBundle.message("INSP.python.trailing.suffix.not.support", suffix))
+        .range(node).create();
+    }
+
+    @Override
+    public void visitPyForStatement(@NotNull PyAstForStatement node) {
+      highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+    }
+
+    @Override
+    public void visitPyWithStatement(@NotNull PyAstWithStatement node) {
+      highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+    }
+
+    @Override
+    public void visitPyPrefixExpression(@NotNull PyAstPrefixExpression node) {
+      highlightKeyword(node, PyTokenTypes.AWAIT_KEYWORD);
+    }
+
+    @Override
+    public void visitPyComprehensionElement(@NotNull PyAstComprehensionElement node) {
+      highlightKeywords(node, PyTokenTypes.ASYNC_KEYWORD);
+    }
+
+    @Override
+    public void visitPyMatchStatement(@NotNull PyAstMatchStatement node) {
+      highlightKeyword(node, PyTokenTypes.MATCH_KEYWORD);
+    }
+
+    @Override
+    public void visitPyCaseClause(@NotNull PyAstCaseClause node) {
+      highlightKeyword(node, PyTokenTypes.CASE_KEYWORD);
+    }
+
+    @Override
+    public void visitPyTypeAliasStatement(@NotNull PyAstTypeAliasStatement node) {
+      highlightKeyword(node, PyTokenTypes.TYPE_KEYWORD);
+    }
+
+    private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {
+      highlightAsKeyword(node.getNode().findChildByType(elementType));
+    }
+
+    private void highlightKeywords(@NotNull PsiElement node, @NotNull PyElementType elementType) {
+      for (ASTNode astNode : node.getNode().getChildren(TokenSet.create(elementType))) {
+        highlightAsKeyword(astNode);
+      }
+    }
+
+    private void highlightAsKeyword(@Nullable ASTNode astNode) {
+      if (astNode != null) {
+        myHolder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(astNode)
+          .textAttributes(PyHighlighter.PY_KEYWORD).create();
+      }
     }
   }
 }

@@ -3,14 +3,14 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public final class PyCompositeAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    PyAnnotatorBase[] annotators = ExtensionPointName.<PyAnnotatorBase>create("Pythonid.pyAnnotator").getExtensions();
-    PyAnnotatorBase.runAnnotators(element, holder, annotators);
+    for (PyAnnotator annotator : PyAnnotator.EXTENSION_POINT_NAME.getExtensionList()) {
+      annotator.annotateElement(element, holder);
+    }
   }
 }

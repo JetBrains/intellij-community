@@ -9,13 +9,16 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public final class PyAsyncAwaitAnnotator extends PyAnnotator {
+public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
+  private final @NotNull PyAnnotationHolder myHolder;
+
+  public PyAsyncAwaitAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
   private static boolean isAsyncAllowed(ScopeOwner scopeOwner) {
     // Async functions are allowed to contain "await", "async with" and "async for"
     if (scopeOwner instanceof PyFunction pyFunction && pyFunction.isAsync()) return true;
@@ -27,9 +30,8 @@ public final class PyAsyncAwaitAnnotator extends PyAnnotator {
     return false;
   }
 
-
   private void createError(@NotNull PsiElement node, ScopeOwner scopeOwner, @InspectionMessage @NotNull String message) {
-    var annotation = getHolder()
+    var annotation = myHolder
       .newAnnotation(HighlightSeverity.ERROR, message)
       .range(node);
     if (scopeOwner instanceof PyFunction pyFunction) {

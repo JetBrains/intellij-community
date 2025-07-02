@@ -23,7 +23,6 @@ import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationBuilder;
-import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -31,19 +30,14 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
-public class UnsupportedFeatures extends CompatibilityVisitor {
+public class UnsupportedFeatures extends PyCompatibilityVisitor {
+  private final @NotNull PyAnnotationHolder myHolder;
 
-  public UnsupportedFeatures() {
-    super(new ArrayList<>());
-  }
-
-  @Override
-  public synchronized void annotateElement(PsiElement psiElement, AnnotationHolder holder) {
-    setVersionsToProcess(Collections.singletonList(LanguageLevel.forElement(psiElement)));
-    super.annotateElement(psiElement, holder);
+  public UnsupportedFeatures(@NotNull PyAnnotationHolder holder, @NotNull List<LanguageLevel> versionsToProcess) {
+    super(versionsToProcess);
+    myHolder = holder;
   }
 
   @Override
@@ -58,7 +52,7 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
 
     HighlightSeverity severity = asError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
     if (fixes.length > 0) {
-      AnnotationBuilder annotationBuilder = getHolder().newAnnotation(severity, message).range(range);
+      AnnotationBuilder annotationBuilder = myHolder.newAnnotation(severity, message).range(range);
       for (LocalQuickFix fix: fixes) {
         if (fix != null) {
           annotationBuilder = annotationBuilder.withFix(createIntention(node, message, fix));
@@ -67,7 +61,7 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
       annotationBuilder.create();
     }
     else {
-      getHolder().newAnnotation(severity, message).range(range).create();
+      myHolder.newAnnotation(severity, message).range(range).create();
     }
   }
 

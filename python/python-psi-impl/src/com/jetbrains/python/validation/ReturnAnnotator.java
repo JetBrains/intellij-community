@@ -12,15 +12,19 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Highlights incorrect return statements: 'return' and 'yield' outside functions
  */
-public class ReturnAnnotator extends PyAnnotator {
+public class ReturnAnnotator extends PyElementVisitor {
+  private final @NotNull PyAnnotationHolder myHolder;
+
+  public ReturnAnnotator(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+
   @Override
   public void visitPyReturnStatement(final @NotNull PyReturnStatement node) {
     final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
     if (function == null) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.return.outside.of.function")).create();
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.return.outside.of.function")).create();
     }
     if (function != null && node.getExpression() != null && function.isGenerator() && (function.isAsync() && function.isAsyncAllowed())) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.non.empty.return.inside.asynchronous.generator")).create();
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.non.empty.return.inside.asynchronous.generator")).create();
     }
   }
 
@@ -28,13 +32,13 @@ public class ReturnAnnotator extends PyAnnotator {
   public void visitPyYieldExpression(final @NotNull PyYieldExpression node) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
     if (!(owner instanceof PyFunction || owner instanceof PyLambdaExpression)) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.yield.outside.of.function")).create();
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.yield.outside.of.function")).create();
     }
 
     if (node.isDelegating() && owner instanceof PyFunction function) {
 
       if (function.isAsync() && function.isAsyncAllowed()) {
-        getHolder().newAnnotation(HighlightSeverity.ERROR,
+        myHolder.newAnnotation(HighlightSeverity.ERROR,
                                   PyPsiBundle.message("ANN.python.does.not.support.yield.from.inside.async.functions")).create();
       }
     }
