@@ -9,7 +9,7 @@ import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ThreadingSupport
+import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector
 import com.intellij.openapi.progress.util.ui.NiceOverlayUi
@@ -286,11 +286,8 @@ private class EternalEventStealer(disposable: Disposable) {
   init {
     IdeEventQueue.getInstance().addPostEventListener(
       { event ->
-        if (event.toString().contains(",runnable=${ThreadingSupport.RunnableWithTransferredWriteAction.NAME}")) {
-          val specialDispatchEvent = SpecialDispatchEvent(event)
-          specialEvents.add(specialDispatchEvent)
-          IdeEventQueue.getInstance().doPostEvent(specialDispatchEvent, true)
-          return@addPostEventListener true
+        if (event is InternalThreading.TransferredWriteActionEvent) {
+          specialEvents.add(TransferredWriteActionWrapper(event))
         }
         false
       }, disposable)
@@ -322,8 +319,8 @@ private class EternalEventStealer(disposable: Disposable) {
               return
             }
           }
-          is SpecialDispatchEvent -> getGlobalThreadingSupport().relaxPreventiveLockingActions {
-            event.execute()
+          is TransferredWriteActionWrapper -> getGlobalThreadingSupport().relaxPreventiveLockingActions {
+            event.event.execute()
           }
           null -> Unit
         }
@@ -339,27 +336,8 @@ private sealed interface ForcedEvent
 
 private class TerminalEvent(val id: Int) : ForcedEvent
 
-private class SpecialDispatchEvent private constructor(val reference: AtomicReference<AWTEvent>) : ForcedEvent, InvocationEvent(Any(), {
-  execute(reference)
-}) {
-  companion object {
-    fun execute(ref: AtomicReference<AWTEvent>) {
-      val actualEvent = ref.getAndSet(null) ?: return
-      IdeEventQueue.getInstance().dispatchEvent(actualEvent)
-    }
-  }
-
-  constructor(event: AWTEvent) : this(AtomicReference(event))
-
-  fun execute() {
-    execute(reference)
-  }
-
-  override fun toString(): String {
-    return "SpecialDispatchEvent"
-  }
-}
-
+@JvmInline
+private value class TransferredWriteActionWrapper(val event: InternalThreading.TransferredWriteActionEvent) : ForcedEvent
 
 /**
  * Protection against race condition: imagine someone posted an event that wants lock, and then they post [SuvorovProgress.ForcedWriteActionRunnable].

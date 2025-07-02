@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ThreadingSupport;
+import com.intellij.openapi.application.impl.InternalThreading;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.SunToolkit;
@@ -59,7 +60,8 @@ public class EventStealer {
         eventString.contains(",runnable=com.intellij.platform.ide.menu.MacNativeActionMenuKt$$Lambda")) {
       return false;
     }
-    return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
+    return event instanceof InternalThreading.TransferredWriteActionEvent ||
+           eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||// [tav] todo: remove in 2022.2
            eventString.contains(",runnable=" + ThreadingSupport.RunnableWithTransferredWriteAction.NAME) ||
            eventString.contains(",runnable=DispatchTerminationEvent") ||
            event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent"); // see JBR-4208

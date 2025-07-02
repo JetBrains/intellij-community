@@ -20,10 +20,13 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.EDT
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.awt.EventQueue
+import java.awt.event.InvocationEvent
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -180,19 +183,51 @@ object InternalThreading {
     assert(!EDT.isCurrentThreadEdt()) { "Transferring of write action is permitted only on background thread" }
     val exceptionRef = Ref.create<Throwable?>()
     lock.transferWriteActionAndBlock({ toRun: RunnableWithTransferredWriteAction ->
+                                       val event = TransferredWriteActionEvent(toRun)
                                        try {
-                                         EventQueue.invokeAndWait(toRun)
+                                         IdeEventQueue.getInstance().doPostEvent(event, true)
+                                         event.blockingWait()
                                        }
                                        catch (e: InterruptedException) {
-                                         throw RuntimeException(e)
-                                       }
-                                       catch (e: InvocationTargetException) {
-                                         exceptionRef.set(e.cause)
+                                         exceptionRef.set(e)
                                        }
                                      }) {
-      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+      try {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+      } catch (e: Throwable) {
+        exceptionRef.set(e)
+      }
     }
     exceptionRef.get()?.let { throw it }
+  }
+
+  @ApiStatus.Internal
+  class TransferredWriteActionEvent private constructor(
+    val action: AtomicReference<RunnableWithTransferredWriteAction>,
+    val job: CompletableJob = Job(currentThreadContext()[Job])) : InvocationEvent(InternalThreading, {
+    execute(action, job)
+  }) {
+
+    companion object {
+      fun execute(action: AtomicReference<RunnableWithTransferredWriteAction>, job: CompletableJob) {
+        try {
+          val action = action.getAndSet(null) ?: return
+          action.run()
+        } finally {
+          job.complete()
+        }
+      }
+    }
+
+    constructor(action: RunnableWithTransferredWriteAction) : this(AtomicReference(action))
+
+    fun execute() {
+      execute(action, job)
+    }
+
+    fun blockingWait() {
+      job.asCompletableFuture().join()
+    }
   }
 }
 
