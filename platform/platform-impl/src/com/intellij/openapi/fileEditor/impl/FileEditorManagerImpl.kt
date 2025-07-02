@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
@@ -70,6 +71,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.fileEditor.FileEntry
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
@@ -2483,14 +2485,19 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   }
   else {
     // we don't need progress - handled by async editor loader
-    runBlocking {
-      job.invokeOnCompletion {
-        EventQueue.invokeLater(EmptyRunnable.getInstance())
-      }
+    val (parallelizedLockContext, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+    try {
+      runBlocking(parallelizedLockContext) {
+        job.invokeOnCompletion {
+          EventQueue.invokeLater(EmptyRunnable.getInstance())
+        }
 
-      IdeEventQueue.getInstance().pumpEventsForHierarchy {
-        job.isCompleted
+        IdeEventQueue.getInstance().pumpEventsForHierarchy {
+          job.isCompleted
+        }
       }
+    } finally {
+      cleanup()
     }
   }
 }
