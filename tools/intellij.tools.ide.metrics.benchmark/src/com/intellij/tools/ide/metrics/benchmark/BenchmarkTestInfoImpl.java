@@ -443,6 +443,9 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
         try {
           profiler.startProfiling(logDir, fileName);
         }
+        catch (IllegalStateException e){
+          System.out.println(e.getMessage());
+        }
         catch (IOException e) {
           System.out.println("Can't start profiling");
         }
