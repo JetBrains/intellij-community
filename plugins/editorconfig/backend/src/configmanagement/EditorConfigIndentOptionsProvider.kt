@@ -36,8 +36,7 @@ internal class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
   }
 
   override fun getActivatingAction(activeUiContributor: CodeStyleStatusBarUIContributor?, file: PsiFile): AnAction? {
-    if (Registry.`is`("editor.indentProviderUX.new")
-        && Utils.isFullIntellijSettingsSupport()
+    if (Utils.isFullIntellijSettingsSupport()
         && (activeUiContributor == null || DetectableIndentOptionsProvider.isIndentDetectionContributor(activeUiContributor))
         && !Utils.isEnabled(file.project)
         && Utils.hasEditorConfig(file)) { // Alternative: implement creation of `.editorconfig` if absent

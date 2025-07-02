@@ -51,12 +51,7 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
   @Override
   public @NotNull String getStatusText(@NotNull PsiFile psiFile) {
     myIndentOptionsForFileInEditor = CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile);
-    String indentInfo = IndentStatusBarUIContributor.getIndentInfo(myIndentOptionsForFileInEditor);
-    IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
-    if (projectOptions.INDENT_SIZE != myIndentOptionsForFileInEditor.INDENT_SIZE || projectOptions.USE_TAB_CHARACTER != myIndentOptionsForFileInEditor.USE_TAB_CHARACTER) {
-      indentInfo += "*";
-    }
-    return indentInfo;
+    return IndentStatusBarUIContributor.getIndentInfo(myIndentOptionsForFileInEditor);
   }
 
   @Override

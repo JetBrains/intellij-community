@@ -30,8 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class EditorConfigActionUtil {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("EditorConfig");
-
 
   public static AnAction[] createNavigationActions(@NotNull PsiFile file) {
     EditorConfigNavigationActionsFactory navigationActionsFactory =
@@ -49,53 +47,11 @@ public final class EditorConfigActionUtil {
       message,
       e -> {
         setEditorConfigEnabled(project, false);
-        if (!Registry.is("editor.indentProviderUX.new")) {
-          EditorConfigDisabledNotification notification = new EditorConfigDisabledNotification(project);
-          notification.notify(project);
-        }
       });
   }
 
-  private static final class EditorConfigDisabledNotification extends Notification {
-    private EditorConfigDisabledNotification(Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(),
-            EditorConfigBundle.message("disabled.notification"), "",
-            NotificationType.INFORMATION);
-      addAction(new ReEnableAction(project, this));
-      addAction(new ShowEditorConfigOption(
-        ApplicationBundle.message("code.style.indent.provider.notification.settings")));
-    }
-  }
-
-  private static final class ShowEditorConfigOption extends DumbAwareAction {
-    private ShowEditorConfigOption(@Nullable @Nls String text) {
-      super(text);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      ShowSettingsUtilImpl.showSettingsDialog(e.getProject(), "preferences.sourceCode", "EditorConfig");
-    }
-  }
-
-  private static final class ReEnableAction extends DumbAwareAction {
-    private final Project myProject;
-    private final Notification myNotification;
-
-    private ReEnableAction(@NotNull Project project, Notification notification) {
-      super(ApplicationBundle.message("code.style.indent.provider.notification.re.enable"));
-      myProject = project;
-      myNotification = notification;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      setEditorConfigEnabled(myProject, true);
-      myNotification.expire();
-    }
-  }
-
-  public static AnAction createShowEditorConfigFilesAction() {
+  @Contract(" -> new")
+  public static @NotNull AnAction createShowEditorConfigFilesAction() {
     return new DumbAwareAction(EditorConfigBundle.message("editor.config.files.show")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
