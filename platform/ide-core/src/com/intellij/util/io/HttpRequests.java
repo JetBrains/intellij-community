@@ -306,19 +306,23 @@ public final class HttpRequests {
 
     @Override
     public RequestBuilder productNameAsUserAgent() {
+      String userAgent;
       Application app = ApplicationManager.getApplication();
-      String currentBuildUrl = System.getenv("BUILD_URL");
-      if (currentBuildUrl != null) {
-        return userAgent(currentBuildUrl);
-      }
-      else if (app != null && !app.isDisposed()) {
+      if (app != null && !app.isDisposed()) {
         String productName = ApplicationNamesInfo.getInstance().getFullProductName();
         String version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
-        return userAgent(productName + '/' + version);
+        userAgent = productName + '/' + version;
       }
       else {
-        return userAgent("IntelliJ");
+        userAgent = "IntelliJ";
       }
+
+      String currentBuildUrl = System.getenv("BUILD_URL");
+      if (currentBuildUrl != null) {
+        userAgent += " (" + currentBuildUrl + ")";
+      }
+
+      return userAgent(userAgent);
     }
 
     @Override
