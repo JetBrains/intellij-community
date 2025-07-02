@@ -115,5 +115,8 @@ fun Finder.searchEverywhereTypeFilterPopup(@Language("xpath") xpath: String? = n
   x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("ElementsChooser")) }, SearchEverywhereTypeFilterUI::class.java).apply(block)
 
 class SearchEverywhereTypeFilterUI(data: ComponentData) : UiComponent(data) {
-  val elementsList: JListUiComponent = accessibleList()
+  fun clickType(type: String) {
+    val actionsLabelRowColumn = table().findRowColumn { it == type }
+    table().clickCell(actionsLabelRowColumn.first, actionsLabelRowColumn.second - 1)
+  }
 }
