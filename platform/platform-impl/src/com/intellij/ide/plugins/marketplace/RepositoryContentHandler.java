@@ -131,6 +131,7 @@ final class RepositoryContentHandler extends DefaultHandler {
       case DOWNLOAD_URL, DOWNLOAD_URL_NEW_STYLE -> builder.setDownloadUrl(currentValueString);
       case IDEA_PLUGIN, PLUGIN -> {
         if (builder != null) {
+          builder.setIsFromMarketPlace(true);
           plugins.add(builder.build());
         }
         builder = null;
