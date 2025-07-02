@@ -2,11 +2,10 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumenterClassWriter;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.FieldNode;
+import org.jetbrains.org.objectweb.asm.tree.FrameNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnNode;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 
@@ -16,20 +15,23 @@ public class JavaAbiClassFilter extends ClassVisitor {
   public static final String MODULE_INFO_CLASS_NAME = "module-info";
   private boolean isAbiClass;
   private boolean allowPackageLocalMethods;
-  private Set<String> myExcludedClasses = new HashSet<>();
-  private List<FieldNode> myFields = new ArrayList<>();
-  private List<MethodNode> myMethods = new ArrayList<>();
+  private final Set<String> myExcludedClasses = new HashSet<>();
+  private final List<FieldNode> myFields = new ArrayList<>();
+  private final List<MethodNode> myMethods = new ArrayList<>();
 
   private JavaAbiClassFilter(ClassVisitor delegate) {
     super(Opcodes.API_VERSION, delegate);
   }
 
-  public static byte @Nullable [] filter(byte[] classBytes, InstrumentationClassFinder finder) {
-    ClassReader reader = new FailSafeClassReader(classBytes);
-    int version = InstrumenterClassWriter.getClassFileVersion(reader);
-    ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
+  public static byte @Nullable [] filter(byte[] classBytes) {
+    ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS) {
+      @Override
+      protected String getCommonSuperClass(String type1, String type2) {
+        return null;
+      }
+    };
     JavaAbiClassFilter abiVisitor = new JavaAbiClassFilter(writer);
-    reader.accept(
+    new FailSafeClassReader(classBytes).accept(
       abiVisitor, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG
     );
     return abiVisitor.isAbiClass? writer.toByteArray() : null;
@@ -110,13 +112,21 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   private static final class AbiMethod extends MethodNode {
     private static final InsnNode NOP_INSTRUCTION = new InsnNode(Opcodes.NOP);
+    private static final FrameNode FRAME_NODE = new FrameNode(Opcodes.F_SAME, 0, null, 0, null);
 
     AbiMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
       super(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions);
 
       if ((access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
-        // in a valid bytecode non-abstract and non-native methods must have a code attribute
+        // in a valid bytecode, non-abstract and non-native methods must have a code attribute
         instructions.add(NOP_INSTRUCTION);
+      }
+    }
+
+    @Override
+    public void visitEnd() {
+      if (instructions.iterator().hasNext()) {
+        instructions.add(FRAME_NODE);
       }
     }
   }
