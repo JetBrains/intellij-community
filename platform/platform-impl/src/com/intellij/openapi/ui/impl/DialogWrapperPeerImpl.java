@@ -900,17 +900,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     private void logMonitorConfiguration() {
       var ideFrame = WindowManager.getInstance().getFrame(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this)));
-      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      for (GraphicsDevice device : ge.getScreenDevices()) {
-        DisplayMode displayMode = device.getDisplayMode();
-        GraphicsConfiguration gc = device.getDefaultConfiguration();
-        float scale = JBUIScale.sysScale(gc);
-        Rectangle bounds = ScreenUtil.getScreenRectangle(gc);
-        LOG.debug(String.format("%s (%dx%d scaled at %.02f with insets %s)%s%s",
-                                bounds, displayMode.getWidth(), displayMode.getHeight(), scale, ScreenUtil.getScreenInsets(gc),
-                                (device == ge.getDefaultScreenDevice() ? ", default" : ""),
-                                (ideFrame != null && device == ideFrame.getGraphicsConfiguration().getDevice() ? ", IDE frame" : "")
-        ));
+      for (String message : ScreenUtil.loggableMonitorConfiguration(ideFrame)) {
+        LOG.debug(message);
       }
     }
 
