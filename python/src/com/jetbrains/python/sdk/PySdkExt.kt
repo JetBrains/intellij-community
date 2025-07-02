@@ -46,7 +46,6 @@ import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
@@ -364,7 +363,6 @@ var Module.pythonSdk: Sdk?
   get() = PythonSdkUtil.findPythonSdk(this)
   set(newSdk) {
     val prevSdk = pythonSdk
-    if (newSdk == prevSdk) return
     thisLogger().info("Setting PythonSDK $newSdk to module $this")
     ModuleRootModificationUtil.setModuleSdk(this, newSdk)
     runInEdt {
