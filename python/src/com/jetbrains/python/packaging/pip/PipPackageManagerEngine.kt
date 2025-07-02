@@ -167,7 +167,7 @@ internal class PipPackageManagerEngine(
       val message = if (result.stdout.isBlank() && result.stderr.isBlank()) PySdkBundle.message(
         "python.conda.permission.denied")
       else PySdkBundle.message("python.sdk.packaging.non.zero.exit.code", exitCode)
-      PyExecutionException(message, commandLineString, args, result).let {
+      PyExecutionException(message, commandLine[0], args, result).let {
         return@withContext PyResult.failure(it.pyError)
       }
     }
