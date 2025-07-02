@@ -338,13 +338,13 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     val newBoundsFit = Rectangle(newBounds)
     ScreenUtil.moveRectangleToFitTheScreen(newBoundsFit) // location
     ScreenUtil.fitToScreen(newBoundsFit) // size
-    when {
+    val result = when {
       !isValidSize(newBoundsFit.size) -> {
         IDE_FRAME_EVENT_LOG.warn(
           "The IDE window was externally resized to ${currentBounds.width}x${currentBounds.height}, which is too small." +
           " Restoring the size is impossible because an attempt to fit the last valid bounds ($newBounds) to the screens resulted in $newBoundsFit"
         )
-        return false
+        false
       }
       newBoundsFit == newBounds -> {
         IDE_FRAME_EVENT_LOG.warn(
@@ -352,7 +352,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
           " Restoring the size to the last valid size: ${newBounds.width}x${newBounds.height}"
         )
         this.bounds = newBounds
-        return true
+        true
       }
       else -> {
         IDE_FRAME_EVENT_LOG.warn(
@@ -361,8 +361,17 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
           " Moving and resizing to fit the screens, the new bounds will be $newBoundsFit"
         )
         this.bounds = newBoundsFit
-        return true
+        true
       }
+    }
+    logMonitorConfiguration()
+    return result
+  }
+
+  private fun logMonitorConfiguration() {
+    IDE_FRAME_EVENT_LOG.warn("The current monitor configuration is:")
+    for (message in ScreenUtil.loggableMonitorConfiguration(this)) {
+      IDE_FRAME_EVENT_LOG.warn(message)
     }
   }
 }
