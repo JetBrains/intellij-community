@@ -93,7 +93,7 @@ internal class JpsModuleToBazel {
 
       if (ultimateRoot != null) {
         val targetsFile = ultimateRoot.resolve("build/bazel-targets.json")
-        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList.skippedModules)
+        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList)
       }
     }
 
@@ -134,19 +134,22 @@ internal class JpsModuleToBazel {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, skippedModules: Collection<String>) {
+    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, moduleList: ModuleList) {
       @Serializable
       data class TargetsFileModuleDescription(
         val productionTargets: List<String>,
         val productionJars: List<String>,
         val testTargets: List<String>,
         val testJars: List<String>,
+        val exports: List<String>,
       )
 
       @Serializable
       data class TargetsFile(
         val modules: Map<String, TargetsFileModuleDescription>,
       )
+
+      val skippedModules = moduleList.skippedModules
 
       val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
       try {
@@ -160,8 +163,9 @@ internal class JpsModuleToBazel {
                 productionJars = moduleTarget.productionJars,
                 testTargets = moduleTarget.testTargets,
                 testJars = moduleTarget.testJars,
+                exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports ?: emptyList(),
               )
-            } + skippedModules.associateWith { moduleName -> TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList()) }
+            } + skippedModules.associateWith { moduleName -> TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList()) }
           )))
         tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
       } finally {
