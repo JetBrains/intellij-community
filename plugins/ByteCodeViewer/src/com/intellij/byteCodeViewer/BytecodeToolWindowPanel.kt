@@ -15,8 +15,15 @@ import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiClass
 import com.intellij.ui.components.JBPanel
 import org.jetbrains.org.objectweb.asm.ClassReader
@@ -73,6 +80,27 @@ internal class BytecodeToolWindowPanel(
         updateBytecodeSelection(sourceEditor, bytecodeEditor)
       }
     }, this@BytecodeToolWindowPanel)
+
+    val messageBusConnection = project.messageBus.connect(this)
+    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID) ?: return
+        for (event in events) {
+          val file = event.file ?: continue
+          if (file.fileType !is JavaClassFileType) continue
+          // Maybe also check: ProjectRootManager.getInstance(project).fileIndex.isInGeneratedSources(file)
+          val content = toolWindow.contentManager.contents.firstOrNull { it.getUserData(JAVA_CLASS_FILE) == file } ?: continue
+          when (event) {
+            is VFileContentChangeEvent -> {
+              this@BytecodeToolWindowPanel.classFile.refresh(true, false) { updateTextInEditor() }
+            }
+            is VFileDeleteEvent -> {
+              toolWindow.contentManager.removeContent(content, true)
+            }
+          }
+        }
+      }
+    })
   }
 
   fun updateTextInEditor() {
