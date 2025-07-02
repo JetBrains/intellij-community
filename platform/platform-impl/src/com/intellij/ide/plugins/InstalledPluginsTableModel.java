@@ -37,7 +37,7 @@ public class InstalledPluginsTableModel {
     InitSessionResult initSessionResult = UiPluginManager.getInstance().initSession(sessionId);
     view.addAll(initSessionResult.getVisiblePluginsList());
     initSessionResult.getPluginStates().forEach((pluginId, pluginState) -> {
-      myEnabled.put(pluginId, pluginState ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED);
+      myEnabled.put(pluginId, pluginState != null ? (pluginState ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED) : null);
     });
   }
 
