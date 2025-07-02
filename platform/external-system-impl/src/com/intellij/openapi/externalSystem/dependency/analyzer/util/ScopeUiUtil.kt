@@ -76,7 +76,6 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<ScopePro
     cellRenderer = SearchScopePropertyRenderer()
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     ListUtil.installAutoSelectOnMouseMove(this)
-    setupListPopupPreferredWidth(this)
     whenMousePressed {
       when (val scope = selectedValue) {
         is ScopeProperty.Any -> scope.property.set(ThreeStateCheckBox.nextState(scope.property.get(), false))

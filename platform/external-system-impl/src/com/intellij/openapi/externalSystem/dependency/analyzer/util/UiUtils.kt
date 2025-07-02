@@ -40,14 +40,6 @@ internal fun emptyListCellBorder(list: JList<*>, index: Int, indent: Int = 0): B
   return JBUI.Borders.empty(topGap, leftGap, bottomGap, rightGap)
 }
 
-internal fun setupListPopupPreferredWidth(list: JList<*>) {
-  list.setPreferredWidth(maxOf(JBUI.scale(164), list.preferredSize.width))
-}
-
-internal fun JComponent.setPreferredWidth(width: Int) {
-  preferredSize = preferredSize.also { it.width = width }
-}
-
 internal fun label(text: @Nls String) =
   JLabel(text)
     .apply { border = JBUI.Borders.empty(BORDER) }
@@ -64,8 +56,6 @@ internal fun toolbarPanel(configure: BorderLayoutPanel.() -> Unit) =
   BorderLayoutPanel()
     .apply { layout = BorderLayout() }
     .apply { border = JBUI.Borders.empty(1, 2) }
-    .apply { withMinimumHeight(JBUI.scale(30)) }
-    .apply { withPreferredHeight(JBUI.scale(30)) }
     .apply { configure() }
 
 internal fun horizontalPanel(vararg components: JComponent) =

@@ -52,7 +52,6 @@ internal class ExternalProjectSelector(
       cellRenderer = ExternalProjectRenderer()
       selectionMode = ListSelectionModel.SINGLE_SELECTION
       ListUtil.installAutoSelectOnMouseMove(this)
-      setupListPopupPreferredWidth(this)
     }
   }
 
