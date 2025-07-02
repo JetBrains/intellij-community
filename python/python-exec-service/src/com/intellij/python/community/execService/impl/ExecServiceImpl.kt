@@ -35,6 +35,7 @@ internal object ExecServiceImpl : ExecService {
 
     return coroutineScope {
 
+      val binary = if (binary.isAbsolute) binary else options.workingDirectory?.resolve(binary) ?: binary.toAbsolutePath()
       val eelPath = binary.asEelPath()
       val executableProcess = EelExecutableProcess(eelPath, args, options.env, options.workingDirectory, description)
       val eelProcess = executableProcess.run().getOr { return@coroutineScope it }
