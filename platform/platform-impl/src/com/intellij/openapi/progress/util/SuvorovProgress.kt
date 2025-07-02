@@ -58,7 +58,6 @@ import javax.swing.SwingUtilities
  */
 @ApiStatus.Internal
 object SuvorovProgress {
-  var entered: Boolean = false
 
   @Volatile
   private lateinit var eternalStealer: EternalEventStealer
@@ -113,7 +112,8 @@ object SuvorovProgress {
         if (currentFocusedPane == null) {
           // can happen also in tests
           processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
-        } else {
+        }
+        else {
           showNiceOverlay(awaitedValue, currentFocusedPane)
         }
       }
@@ -206,13 +206,7 @@ object SuvorovProgress {
 
   @OptIn(InternalCoroutinesApi::class)
   private fun processInvocationEventsWithoutDialog(awaitedValue: Deferred<*>, showingDelay: Int) {
-    eternalStealer.enable()
-    try {
-      eternalStealer.dispatchAllEventsForTimeout(showingDelay.toLong(), awaitedValue)
-    }
-    finally {
-      eternalStealer.disable()
-    }
+    eternalStealer.dispatchAllEventsForTimeout(showingDelay.toLong(), awaitedValue)
   }
 
   private fun showSpinningProgress(awaitedValue: Deferred<*>) {
@@ -286,16 +280,13 @@ object SuvorovProgress {
  * One needs to be careful to maintain keep AWT events in the order they were posted.
  */
 private class EternalEventStealer(disposable: Disposable) {
-  @Volatile
-  private var enabled = false
   private var counter = 0
-
   private val specialEvents = LinkedBlockingQueue<ForcedEvent>()
 
   init {
     IdeEventQueue.getInstance().addPostEventListener(
       { event ->
-        if (enabled && event.toString().contains(",runnable=${ThreadingSupport.RunnableWithTransferredWriteAction.NAME}")) {
+        if (event.toString().contains(",runnable=${ThreadingSupport.RunnableWithTransferredWriteAction.NAME}")) {
           val specialDispatchEvent = SpecialDispatchEvent(event)
           specialEvents.add(specialDispatchEvent)
           IdeEventQueue.getInstance().doPostEvent(specialDispatchEvent, true)
@@ -303,10 +294,6 @@ private class EternalEventStealer(disposable: Disposable) {
         }
         false
       }, disposable)
-  }
-
-  fun enable() {
-    enabled = true
   }
 
   fun dispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {
@@ -328,7 +315,7 @@ private class EternalEventStealer(disposable: Disposable) {
         return
       }
       try {
-        when (val event = specialEvents.poll(toSleep, TimeUnit.MILLISECONDS)) {
+        when (val event = specialEvents.poll() ?: specialEvents.poll(toSleep, TimeUnit.MILLISECONDS)) {
           is TerminalEvent -> {
             // return only if we get the event for the right id
             if (event.id == id) {
@@ -344,14 +331,7 @@ private class EternalEventStealer(disposable: Disposable) {
         // we still return locking result regardless of interruption
         Thread.currentThread().interrupt()
       }
-      if (!deferred.isActive) {
-        return
-      }
     }
-  }
-
-  fun disable() {
-    enabled = false
   }
 }
 
