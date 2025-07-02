@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 internal class XNextToolbarGroup : ActionGroup(), DumbAware {
 
   private val arrayOf = arrayOf<AnAction>(XNextToolbarToolWindowsGroup(), XNextToolWindowsMoreGroup(), XNextToolbarActionsGroup())
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return arrayOf
   }
 

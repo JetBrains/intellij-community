@@ -82,7 +82,7 @@ class RunWidgetResumeManager(private val project: Project) {
 
 private fun createRunActionToolbar(): ActionToolbar {
   val group = object : ActionGroup(), DumbAware {
-    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       if (e == null) return emptyArray()
       return arrayOf(e.actionManager.getAction("RunToolbarMainActionGroup"))
     }

@@ -637,7 +637,7 @@ private class EditorTabs(
     }
 
     val group = info.tabLabelActions ?: return null
-    val actions: Array<AnAction?> = if (group is DefaultActionGroup) {
+    val actions: Array<AnAction> = if (group is DefaultActionGroup) {
       group.getChildren(ActionManager.getInstance())
     }
     else if (group is CustomisedActionGroup && group.delegate is DefaultActionGroup) {

@@ -834,7 +834,7 @@ open class ConsoleViewImpl protected constructor(
       group = actionManager.getAction(CONSOLE_VIEW_POPUP_MENU) as ActionGroup
     }
     return object : ActionGroupWrapper(group) {
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
         val children = super.getChildren(e)
         val postProcessors = ConsoleActionsPostProcessor.EP_NAME.extensionList
         if (postProcessors.isEmpty()) return children

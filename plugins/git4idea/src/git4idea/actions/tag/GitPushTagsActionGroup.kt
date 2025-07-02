@@ -24,7 +24,7 @@ internal class GitPushTagsActionGroup : ActionGroup(GitBundle.messagePointer("ac
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val repositories = e?.getData(GitBranchActionsDataKeys.AFFECTED_REPOSITORIES) ?: return emptyArray()
 
     val action = ActionManager.getInstance().getAction(GitPushTagAction.ACTION_ID)

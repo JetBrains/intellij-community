@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -94,11 +94,11 @@ class ActionUpdaterTest {
     val group = object : ActionGroup(), ActionUpdateThreadAware.Recursive {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> = arrayOf(
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(
         newAction(ActionUpdateThread.EDT) { assertNotEDT() },
         object : ActionGroup() {
           override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-          override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+          override fun getChildren(e: AnActionEvent?): Array<AnAction> {
             assertNotEDT()
             return arrayOf(
               newAction(ActionUpdateThread.EDT) { assertNotEDT() },
@@ -144,7 +144,7 @@ class ActionUpdaterTest {
     val actions = try {
       fastTrack.setValue(3_000)
       val group = object : ActionGroup() {
-        override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+        override fun getChildren(e: AnActionEvent?): Array<AnAction> {
           awaitWithCheckCanceled(100)
           return arrayOf(EmptyAction.createEmptyAction("", null, true))
         }
@@ -179,7 +179,7 @@ class ActionUpdaterTest {
     val semaphore = Semaphore(1, 1)
     val action = EmptyAction.createEmptyAction("", null, true)
     val actionGroup = object : ActionGroup() {
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         e!!
         if (getChildrenCount++ == 0) {
           semaphore.release()
@@ -223,7 +223,7 @@ class ActionUpdaterTest {
     val action = EmptyAction.createEmptyAction("", null, true)
     val actionGroup = object : ActionGroup() {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         e!!
         getChildrenCount ++
         e.updateSession.sharedData(key1) { supplierCount++; awaitWithCheckCanceled(10); 1 }
@@ -412,12 +412,12 @@ class ActionUpdaterTest {
     }))
     assertCyclicDependencyReported(object : ActionGroup() {
       val action = this@ActionUpdaterTest.newAction(ActionUpdateThread.BGT) {}
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         return arrayOf(action) + e!!.updateSession.children(this)
       }
     })
     assertCyclicDependencyReported(object : ActionGroup() {
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> = arrayOf(DefaultActionGroup(this))
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(DefaultActionGroup(this))
     })
   }
 

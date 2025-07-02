@@ -458,7 +458,7 @@ private fun createRunConfigurationWithInlines(project: Project,
       }
     }
 
-    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       var prefix = listOf<AnAction>(extraGroup)
       if (showRerunAndStopButtons) {
         val extraExecutor = if (activeExecutor === runExecutor) debugExecutor else runExecutor

@@ -1,48 +1,31 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.actionSystem;
+package com.intellij.openapi.actionSystem
 
-import org.jetbrains.annotations.NotNull;
-
-public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAction>, PerformWithDocumentsCommitted {
-  private final AnAction myDelegate;
-
-  public AnActionWrapper(@NotNull AnAction action) {
-    myDelegate = action;
-    copyFrom(action);
+open class AnActionWrapper(
+  private val myDelegate: AnAction
+) : AnAction(), ActionWithDelegate<AnAction>, PerformWithDocumentsCommitted {
+  init {
+    copyFrom(myDelegate)
   }
 
-  @Override
-  public @NotNull AnAction getDelegate() {
-    return myDelegate;
+  override fun getDelegate(): AnAction = myDelegate
+
+  override fun update(e: AnActionEvent) {
+    ActionWrapperUtil.update(e, this, myDelegate)
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    ActionWrapperUtil.update(e, this, myDelegate);
+  override fun actionPerformed(e: AnActionEvent) {
+    ActionWrapperUtil.actionPerformed(e, this, myDelegate)
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    ActionWrapperUtil.actionPerformed(e, this, myDelegate);
-  }
+  override fun isDumbAware(): Boolean = myDelegate.isDumbAware()
 
-  @Override
-  public boolean isDumbAware() {
-    return myDelegate.isDumbAware();
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread =
+    ActionWrapperUtil.getActionUpdateThread(this, myDelegate)
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionWrapperUtil.getActionUpdateThread(this, myDelegate);
-  }
+  override fun isPerformWithDocumentsCommitted(): Boolean =
+    PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(myDelegate)
 
-  @Override
-  public boolean isPerformWithDocumentsCommitted() {
-    return PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(myDelegate);
-  }
-
-  @Override
-  public boolean isInInjectedContext() {
-    return myDelegate.isInInjectedContext();
-  }
+  override fun isInInjectedContext(): Boolean =
+    myDelegate.isInInjectedContext
 }

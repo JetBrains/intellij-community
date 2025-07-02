@@ -163,6 +163,20 @@ com.intellij.openapi.actionSystem.ActionButtonComponent
 - a:getInsets():java.awt.Insets
 - a:getPopState():I
 - a:getWidth():I
+c:com.intellij.openapi.actionSystem.ActionGroupWrapper
+- com.intellij.openapi.actionSystem.ActionGroup
+- com.intellij.openapi.actionSystem.ActionWithDelegate
+- com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
+- <init>(com.intellij.openapi.actionSystem.ActionGroup):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- getDelegate():com.intellij.openapi.actionSystem.ActionGroup
+- isDumbAware():Z
+- isInInjectedContext():Z
+- isPerformWithDocumentsCommitted():Z
+- postProcessVisibleChildren(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List):java.util.List
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.actionSystem.ActionPromoter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
@@ -172,8 +186,26 @@ com.intellij.openapi.actionSystem.ActionStubBase
 - a:getId():java.lang.String
 - a:getPlugin():com.intellij.openapi.extensions.PluginDescriptor
 - getPluginId():com.intellij.openapi.extensions.PluginId
+f:com.intellij.openapi.actionSystem.ActionWrapperUtil
+- sf:INSTANCE:com.intellij.openapi.actionSystem.ActionWrapperUtil
+- sf:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
+- sf:getActionUpdateThread(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ActionUpdateThread
+- sf:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.AnAction[]
+- sf:update(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
 com.intellij.openapi.actionSystem.AnActionHolder
 - a:getAction():com.intellij.openapi.actionSystem.AnAction
+c:com.intellij.openapi.actionSystem.AnActionWrapper
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.actionSystem.ActionWithDelegate
+- com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
+- <init>(com.intellij.openapi.actionSystem.AnAction):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getDelegate():com.intellij.openapi.actionSystem.AnAction
+- isDumbAware():Z
+- isInInjectedContext():Z
+- isPerformWithDocumentsCommitted():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.actionSystem.CheckedActionGroup
 com.intellij.openapi.actionSystem.DataConstants
 - sf:PROJECT:java.lang.String

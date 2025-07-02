@@ -1265,20 +1265,6 @@ a:com.intellij.openapi.actionSystem.AbbreviationManager
 - a:removeAllAbbreviations(java.lang.String):V
 @:com.intellij.openapi.actionSystem.ActionButtonComponent$ButtonState
 - java.lang.annotation.Annotation
-c:com.intellij.openapi.actionSystem.ActionGroupWrapper
-- com.intellij.openapi.actionSystem.ActionGroup
-- com.intellij.openapi.actionSystem.ActionWithDelegate
-- com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
-- <init>(com.intellij.openapi.actionSystem.ActionGroup):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- f:getDelegate():com.intellij.openapi.actionSystem.ActionGroup
-- isDumbAware():Z
-- isInInjectedContext():Z
-- isPerformWithDocumentsCommitted():Z
-- postProcessVisibleChildren(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List):java.util.List
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.actionSystem.ActionInGroup
 - getGroup():com.intellij.openapi.actionSystem.ActionGroup
 - setAsSecondary(Z):com.intellij.openapi.actionSystem.ActionInGroup
@@ -1302,23 +1288,6 @@ e:com.intellij.openapi.actionSystem.ActionToolbarPosition
 - sf:TOP:com.intellij.openapi.actionSystem.ActionToolbarPosition
 - s:valueOf(java.lang.String):com.intellij.openapi.actionSystem.ActionToolbarPosition
 - s:values():com.intellij.openapi.actionSystem.ActionToolbarPosition[]
-f:com.intellij.openapi.actionSystem.ActionWrapperUtil
-- s:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
-- s:getActionUpdateThread(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.AnAction[]
-- s:update(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
-c:com.intellij.openapi.actionSystem.AnActionWrapper
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.actionSystem.ActionWithDelegate
-- com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
-- <init>(com.intellij.openapi.actionSystem.AnAction):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getDelegate():com.intellij.openapi.actionSystem.AnAction
-- isDumbAware():Z
-- isInInjectedContext():Z
-- isPerformWithDocumentsCommitted():Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.actionSystem.Anchor
 - sf:AFTER:com.intellij.openapi.actionSystem.Anchor
 - sf:BEFORE:com.intellij.openapi.actionSystem.Anchor
