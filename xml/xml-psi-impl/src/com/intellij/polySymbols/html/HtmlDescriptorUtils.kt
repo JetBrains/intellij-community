@@ -15,6 +15,7 @@ import com.intellij.util.asSafely
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import com.intellij.xml.util.XmlUtil
+import org.jetbrains.annotations.ApiStatus
 
 object HtmlDescriptorUtils {
   @JvmStatic
@@ -55,7 +56,8 @@ object HtmlDescriptorUtils {
     }
 
   @JvmStatic
-  internal fun getStandardHtmlElementDescriptor(tag: XmlTag, name: String = tag.localName): HtmlElementDescriptorImpl? {
+  @ApiStatus.Internal
+  fun getStandardHtmlElementDescriptor(tag: XmlTag, name: String = tag.localName): HtmlElementDescriptorImpl? {
     val parentTag = tag.parentTag
     if (parentTag != null) {
       parentTag.getNSDescriptor(parentTag.namespace, false)
@@ -70,7 +72,8 @@ object HtmlDescriptorUtils {
   }
 
   @JvmStatic
-  internal fun getStandardHtmlElementDescriptor(project: Project, name: String): HtmlElementDescriptorImpl? {
+  @ApiStatus.Internal
+  fun getStandardHtmlElementDescriptor(project: Project, name: String): HtmlElementDescriptorImpl? {
     return getHtmlNSDescriptor(project)
       ?.getElementDescriptorByName(name)
       ?.asSafely<HtmlElementDescriptorImpl>()

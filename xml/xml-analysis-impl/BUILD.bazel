@@ -32,6 +32,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/polySymbols/backend",
     "//libraries/xerces",
+    "//platform/polySymbols",
   ],
   exports = ["//xml/xml-analysis-api:analysis"],
   runtime_deps = [
