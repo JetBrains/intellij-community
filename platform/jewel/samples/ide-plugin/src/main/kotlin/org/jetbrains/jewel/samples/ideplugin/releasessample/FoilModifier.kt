@@ -1,8 +1,23 @@
 package org.jetbrains.jewel.samples.ideplugin.releasessample
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import org.jetbrains.skia.ImageFilter
 import org.jetbrains.skia.RuntimeEffect
@@ -75,9 +90,9 @@ vec4 main(float2 fragCoord) {
 private val runtimeEffect = RuntimeEffect.makeForShader(FOIL_SHADER_CODE)
 private val shaderBuilder = RuntimeShaderBuilder(runtimeEffect)
 
-internal fun Modifier.holoFoil(offset: Float, intensity: Float = 1f) = graphicsLayer {
+internal fun Modifier.holoFoil(normalizedOffset: Offset, intensity: Float = 1f) = graphicsLayer {
     shaderBuilder.uniform("resolution", size.width, size.height)
-    shaderBuilder.uniform("offset", 0f, offset)
+    shaderBuilder.uniform("offset", normalizedOffset.x, normalizedOffset.y)
     shaderBuilder.uniform("intensity", intensity * .65f)
 
     renderEffect =
@@ -88,9 +103,113 @@ internal fun Modifier.holoFoil(offset: Float, intensity: Float = 1f) = graphicsL
             )
             .asComposeRenderEffect()
 
-    rotationX = offset * 4f * intensity
-    rotationY = offset * 10f * intensity
-    rotationZ = offset * -3f * intensity
+    // Moving the mouse horizontally (X offset) should rotate around the Y axis.
+    rotationY = normalizedOffset.x * 10f * intensity
+
+    // Moving the mouse vertically (Y offset) should rotate around the X axis.
+    // We negate it so that moving the mouse down tilts the card up.
+    rotationX = -normalizedOffset.y * 10f * intensity
+
+    rotationZ = -normalizedOffset.x * 3f * intensity
     scaleX = 1f - .1f * intensity
     scaleY = 1f - .1f * intensity
+}
+
+@Composable
+internal fun rememberFoilInteractionController(): FoilInteractionController {
+    val scope = rememberCoroutineScope()
+    return remember { FoilInteractionController(scope) }
+}
+
+internal class FoilInteractionController(private val scope: CoroutineScope) {
+    companion object {
+        private val TRANSITION_SPEC = tween<Float>(300, easing = FastOutSlowInEasing)
+        private val CYCLE_SPEC = tween<Float>(2000, easing = FastOutSlowInEasing)
+        private val ANIM_START_OFFSET = Offset(-1f, 0.4f)
+        private val ANIM_END_OFFSET = Offset(1f, -0.4f)
+    }
+
+    val animatableX = Animatable(0f)
+    val animatableY = Animatable(0f)
+
+    var mode by mutableStateOf(FoilShaderMode.Tracking)
+        private set
+
+    var isHovered by mutableStateOf(false)
+        private set
+
+    private var currentCursorPosition by mutableStateOf(Offset.Zero)
+    private var animationJob: Job? = null
+
+    fun onHoverStateChanged(isHovered: Boolean) {
+        this.isHovered = isHovered
+        if (mode == FoilShaderMode.Animating) {
+            if (!isHovered) animationJob?.cancel()
+            return
+        }
+
+        // If in tracking mode, either snap or animate to center.
+        if (isHovered) {
+            trackCursor()
+        } else {
+            returnToCenter()
+        }
+    }
+
+    fun onCursorMove(newOffset: Offset) {
+        currentCursorPosition = newOffset
+        if (mode == FoilShaderMode.Tracking && isHovered) {
+            trackCursor()
+        }
+    }
+
+    fun onClick() {
+        if (mode == FoilShaderMode.Animating) return
+
+        animationJob?.cancel()
+        animationJob =
+            scope.launch {
+                try {
+                    mode = FoilShaderMode.Animating
+                    // Animate the current image position to the start position of the animation
+                    animateOffsetTo(ANIM_START_OFFSET, TRANSITION_SPEC)
+
+                    // Do the animation
+                    animateOffsetTo(ANIM_END_OFFSET, CYCLE_SPEC)
+                    animateOffsetTo(ANIM_START_OFFSET, CYCLE_SPEC)
+
+                    // Animate the image to face the cursor current position
+                    animateOffsetTo(currentCursorPosition, TRANSITION_SPEC)
+                } finally {
+                    mode = FoilShaderMode.Tracking
+                    // After finishing, ensure we're correctly tracking if still hovered.
+                    if (isHovered) trackCursor()
+                }
+            }
+    }
+
+    private fun trackCursor() {
+        scope.launch {
+            animatableX.stop()
+            animatableY.stop()
+            animatableX.snapTo(currentCursorPosition.x)
+            animatableY.snapTo(currentCursorPosition.y)
+        }
+    }
+
+    private fun returnToCenter() {
+        scope.launch { animateOffsetTo(Offset.Zero, TRANSITION_SPEC) }
+    }
+
+    private suspend fun animateOffsetTo(target: Offset, animationSpec: AnimationSpec<Float>) {
+        coroutineScope {
+            launch { animatableX.animateTo(target.x, animationSpec) }
+            launch { animatableY.animateTo(target.y, animationSpec) }
+        }
+    }
+}
+
+internal enum class FoilShaderMode {
+    Tracking,
+    Animating,
 }
