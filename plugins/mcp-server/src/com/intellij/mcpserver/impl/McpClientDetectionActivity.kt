@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clientConfiguration.McpClient
 import com.intellij.mcpserver.settings.McpServerSettings
@@ -173,6 +174,11 @@ internal class McpClientDetectionActivity : ProjectActivity {
         NotificationType.INFORMATION
       )
       .addAction( ShowSettingsAction(project, McpServerBundle.message("mcp.clients.detected.action.enable")))
+      .addAction(object : AnAction(McpServerBundle.message("mcp.clients.detected.action.show.help")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          BrowserUtil.open("https://modelcontextprotocol.io/introduction")
+        }
+      })
       .addAction(object : AnAction(McpServerBundle.message("mcp.clients.detected.action.dont.show")) {
         override fun actionPerformed(e: AnActionEvent) {
           application.service<McpClientDetectionSettings>().state.doNotShowServerDisabledAgain = true
