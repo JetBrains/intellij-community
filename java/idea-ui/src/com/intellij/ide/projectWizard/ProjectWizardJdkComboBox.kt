@@ -28,6 +28,7 @@ import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.JavaHomeFinder
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.*
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
@@ -363,6 +364,15 @@ class ProjectWizardJdkComboBox(
     if (projectJdk != null) {
       // If we are creating a new module, select the project JDK
       intent = model.items.find { intent -> intent is ExistingJdk && intent.name == projectJdk.name }
+    }
+
+    if (intent == null) {
+      // Select the JDK defined in New Projects Setup | Structure…
+      val defaultProject = DefaultProjectFactory.getInstance().defaultProject
+      val defaultSdk = ProjectRootManager.getInstance(defaultProject).projectSdk
+      if (defaultSdk != null) {
+        intent = model.items.find { intent -> intent is ExistingJdk && intent.name == defaultSdk.name }
+      }
     }
 
     if (intent == null) {
