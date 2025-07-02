@@ -811,6 +811,14 @@ fun PyClassType.resolveImplicitlyInvokedMethods(
   else resolveDunderCall(callSite, resolveContext)
 }
 
+fun PyClassType.getImplicitlyInvokedMethodTypes(
+  callSite: PyCallSiteExpression?,
+  resolveContext: PyResolveContext,
+): List<PyTypedResolveResult> {
+  return if (isDefinition()) getConstructorTypes(callSite, resolveContext)
+  else getDunderCallType(callSite, resolveContext)
+}
+
 private fun PyClassType.changeToImplicitlyInvokedMethods(
   implicitlyInvokedMethods: List<PsiElement>,
   call: PyCallExpression,
@@ -857,6 +865,20 @@ private fun PyClassType.resolveConstructors(callSite: PyCallSiteExpression?, res
   return initAndNew.preferInitOverNew().map { RatedResolveResult(PyReferenceImpl.getRate(it, context), it) }
 }
 
+private fun PyClassType.getConstructorTypes(callSite: PyCallSiteExpression?, resolveContext: PyResolveContext): List<PyTypedResolveResult> {
+  val initTypes = getMemberTypes(PyNames.INIT, callSite, AccessDirection.READ, resolveContext)
+  if (initTypes != null) {
+    return initTypes
+  }
+
+  val newTypes = getMemberTypes(PyNames.NEW, callSite, AccessDirection.READ, resolveContext)
+  if (newTypes != null) {
+    return newTypes
+  }
+
+  return emptyList()
+}
+
 private fun PyCallableType.isReturnTypeAnnotated(context: TypeEvalContext): Boolean {
   val callable = this.callable
   if (callable is PyFunction) {
@@ -898,6 +920,10 @@ private fun PyClassType.resolveMetaclassDunderCall(
 
 private fun PyClassLikeType.resolveDunderCall(location: PyExpression?, resolveContext: PyResolveContext): List<RatedResolveResult> {
   return resolveMember(PyNames.CALL, location, AccessDirection.READ, resolveContext) ?: emptyList()
+}
+
+private fun PyClassLikeType.getDunderCallType(location: PyExpression?, resolveContext: PyResolveContext): List<PyTypedResolveResult> {
+  return getMemberTypes(PyNames.CALL, location, AccessDirection.READ, resolveContext) ?: emptyList()
 }
 
 fun analyzeArguments(
