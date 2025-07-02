@@ -86,7 +86,7 @@ public final class XmlNsDescriptorUtil {
 
       if (nsDescriptor == null) {
         String htmlns = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(document.getProject());
-        if (htmlns.isEmpty()) {
+        if (htmlns == null || htmlns.isEmpty()) {
           htmlns = Html5SchemaProvider.getHtml5SchemaLocation();
         }
         nsDescriptor = getDefaultNSDescriptor(document, htmlns, false);

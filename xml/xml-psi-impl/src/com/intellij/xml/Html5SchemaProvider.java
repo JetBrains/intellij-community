@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.function.Supplier;
@@ -14,9 +15,18 @@ import java.util.function.Supplier;
 public abstract class Html5SchemaProvider {
   private static final Logger LOG = Logger.getInstance(Html5SchemaProvider.class);
   private static final Supplier<String>
-    HTML5_SCHEMA_LOCATION = new SynchronizedClearableLazy<>(() -> loadLocation(getInstance().getHtmlSchemaLocation(), "HTML5_SCHEMA"));
-  private static final Supplier<String> XHTML5_SCHEMA_LOCATION = new SynchronizedClearableLazy<>(() -> loadLocation(getInstance().getXhtmlSchemaLocation(), "XHTML5_SCHEMA"));
-  private static final Supplier<String> CHARS_DTD_LOCATION = new SynchronizedClearableLazy<>(() -> loadLocation(getInstance().getCharsLocation(), "CHARS_DTD"));
+    HTML5_SCHEMA_LOCATION = new SynchronizedClearableLazy<>(() -> {
+      Html5SchemaProvider provider = getInstance();
+      return provider != null ? loadLocation(provider.getHtmlSchemaLocation(), "HTML5_SCHEMA") : null;
+    });
+  private static final Supplier<String> XHTML5_SCHEMA_LOCATION = new SynchronizedClearableLazy<>(() -> {
+      Html5SchemaProvider provider = getInstance();
+      return provider != null ? loadLocation(provider.getXhtmlSchemaLocation(), "XHTML5_SCHEMA") : null;
+    });
+  private static final Supplier<String> CHARS_DTD_LOCATION = new SynchronizedClearableLazy<>(() -> {
+      Html5SchemaProvider provider = getInstance();
+      return provider != null ? loadLocation(provider.getCharsLocation(), "CHARS_DTD") : null;
+    });
 
   private static String loadLocation(URL url, String id) {
     String location = VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(
@@ -37,7 +47,7 @@ public abstract class Html5SchemaProvider {
     return CHARS_DTD_LOCATION.get();
   }
 
-  private static @NotNull Html5SchemaProvider getInstance() {
+  private static @Nullable Html5SchemaProvider getInstance() {
     return ApplicationManager.getApplication().getService(Html5SchemaProvider.class);
   }
 
