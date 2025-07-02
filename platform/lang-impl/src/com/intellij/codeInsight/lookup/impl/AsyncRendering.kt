@@ -86,7 +86,7 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
 
     presentation.freeze()
     rememberPresentation(element, presentation)
-    lookup.cellRenderer.scheduleUpdateLookupAfterElementPresentationChange()
+    lookup.cellRenderer.scheduleUpdateLookupWidthFromVisibleItems()
   }
 
   private suspend fun renderInBackgroundSuspending(element: LookupElement, renderer: SuspendingLookupElementRenderer<LookupElement>) {
@@ -95,7 +95,7 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
 
     presentation.freeze()
     rememberPresentation(element, presentation)
-    lookup.cellRenderer.scheduleUpdateLookupAfterElementPresentationChange()
+    lookup.cellRenderer.scheduleUpdateLookupWidthFromVisibleItems()
   }
 
 
