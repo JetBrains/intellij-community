@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -102,12 +103,18 @@ internal class McpClientDetectionActivity : ProjectActivity {
   private class AutoconfigureAction(private val project: Project, private val unconfiguredClients: List<McpClient>, private val notification: Notification): AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")){
     override fun actionPerformed(e: AnActionEvent) {
       val clientsWithErrorDuringConfiguration = mutableSetOf<McpClient>()
-      unconfiguredClients.forEach { client -> runCatching { client.configure() }.onFailure { clientsWithErrorDuringConfiguration.add(client) } }
-      val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
-        .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
-                            McpServerBundle.message("mcp.server.client.restart.info"), NotificationType.INFORMATION)
-        .setImportant(false)
-      doneNotification.notify(project)
+      unconfiguredClients.forEach { client -> runCatching { client.configure() }.onFailure {
+        thisLogger().info(it)
+        clientsWithErrorDuringConfiguration.add(client) }
+      }
+      val configuredClients = unconfiguredClients.filter { it !in clientsWithErrorDuringConfiguration }
+      if (configuredClients.isNotEmpty()) {
+        val doneNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
+          .createNotification(McpServerBundle.message("mcp.client.autoconfigured"),
+                              McpServerBundle.message("mcp.server.client.restart.info", configuredClients.joinToString(", ") { it.name.displayName }), NotificationType.INFORMATION)
+          .setImportant(false)
+        doneNotification.notify(project)
+      }
 
       if (clientsWithErrorDuringConfiguration.isNotEmpty()) {
         val errorNotification = NotificationGroupManager.getInstance().getNotificationGroup("MCP Server")
