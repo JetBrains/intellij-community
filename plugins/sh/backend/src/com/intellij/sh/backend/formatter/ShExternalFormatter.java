@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.formatter;
+package com.intellij.sh.backend.formatter;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
+import com.intellij.sh.formatter.ShShfmtFormatterUtilBase;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.settings.ShSettings;
@@ -66,11 +67,11 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
     FormattingContext formattingContext = request.getContext();
     Project project = formattingContext.getProject();
     String shFmtExecutable = ShSettings.getShfmtPath(project);
-    if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
+    if (!ShShfmtFormatterUtilBase.getInstance().isValidPath(shFmtExecutable)) {
       return null;
     }
 
-    ShShfmtFormatterUtil.checkShfmtForUpdate(project);
+    ShShfmtFormatterUtilBase.getInstance().checkShfmtForUpdate(project);
     String interpreter = ShShebangParserUtil.getInterpreter((ShFile)formattingContext.getContainingFile(), KNOWN_SHELLS, "bash");
 
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();

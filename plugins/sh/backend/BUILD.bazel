@@ -34,6 +34,8 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//spellchecker",
     "//platform/analysis-api:analysis",
+    "//platform/statistics",
+    "//platform/code-style-api:codeStyle",
   ],
   runtime_deps = [
     ":backend_resources",

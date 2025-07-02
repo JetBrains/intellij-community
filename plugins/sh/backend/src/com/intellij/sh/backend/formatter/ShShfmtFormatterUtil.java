@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.formatter;
+package com.intellij.sh.backend.formatter;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.sh.ShNotificationDisplayIds;
+import com.intellij.sh.formatter.ShShfmtFormatterUtilBase;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileService;
@@ -46,7 +47,7 @@ import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_FORMATTER_DOWNLOADED_EVENT_ID;
 import static com.intellij.sh.utils.ExternalServicesUtil.computeDownloadPath;
 
-public final class ShShfmtFormatterUtil {
+public final class ShShfmtFormatterUtil implements ShShfmtFormatterUtilBase {
   private static final Logger LOG = Logger.getInstance(ShShfmtFormatterUtil.class);
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHFMT_UPDATE");
 
@@ -63,7 +64,8 @@ public final class ShShfmtFormatterUtil {
   private static final @NlsSafe String LINUX = "_linux";
   private static final @NlsSafe String FREE_BSD = "_freebsd";
 
-  public static void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+  @Override
+  public void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     download(project, onSuccess, onFailure, false);
   }
 
@@ -174,7 +176,8 @@ public final class ShShfmtFormatterUtil {
     FileUtil.delete(oldFormatter);
   }
 
-  public static boolean isValidPath(@Nullable String path) {
+  @Override
+  public boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
     if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return true;
     File file = new File(path);
@@ -182,7 +185,8 @@ public final class ShShfmtFormatterUtil {
     return file.getName().contains(SHFMT);
   }
 
-  static void checkShfmtForUpdate(@NotNull Project project) {
+  @Override
+  public void checkShfmtForUpdate(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.getUserData(UPDATE_NOTIFICATION_SHOWN) != null) return;
     application.putUserData(UPDATE_NOTIFICATION_SHOWN, true);

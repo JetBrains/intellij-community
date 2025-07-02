@@ -51,8 +51,6 @@
     <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
 
-    <fileDocumentManagerListener implementation="com.intellij.sh.formatter.ShLineEndingsAdapter"/>
-    <formattingService implementation="com.intellij.sh.formatter.ShExternalFormatter"/>
 
     <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
 
