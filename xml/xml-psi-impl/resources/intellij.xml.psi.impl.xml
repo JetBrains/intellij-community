@@ -58,16 +58,6 @@
 
     <documentationCssProvider implementation="com.intellij.documentation.mdn.MdnDocumentationCssProvider"/>
 
-    <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="HTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="XHTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-
-    <lang.foldingBuilder language="DTD" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="XML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="HTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-
     <lang.ast.factory language="XML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
     <lang.ast.factory language="DTD" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
     <lang.ast.factory language="HTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
