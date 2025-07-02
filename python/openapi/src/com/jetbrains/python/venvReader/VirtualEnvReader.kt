@@ -25,6 +25,12 @@ class VirtualEnvReader(
   else
     setOf("pypy", "python")
 
+  private val binFolderName = if (isWindows) {
+    "Scripts"
+  } else {
+    "bin"
+  }
+
   /**
    * Dir with virtual envs
    */
@@ -118,6 +124,28 @@ class VirtualEnvReader(
     return findInterpreter(dir)
   }
 
+  fun getVenvRootPath(path: Path): Path? {
+    val bin = path.parent
+
+    if (bin == null || bin.fileName.pathString != binFolderName) {
+      return null
+    }
+
+    val venv = bin.parent
+
+    if (venv == null) {
+      return null
+    }
+
+    val root = venv.parent
+
+    if (root == null) {
+      return null
+    }
+
+    return root
+  }
+
   /**
    * Looks for python binary among directory entries
    */
@@ -144,5 +172,6 @@ class VirtualEnvReader(
      */
     const val DEFAULT_VIRTUALENVS_DIR: String = ".virtualenvs"
     const val DEFAULT_VIRTUALENV_DIRNAME: String = ".venv"
+
   }
 }
