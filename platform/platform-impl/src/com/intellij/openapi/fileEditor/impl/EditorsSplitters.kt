@@ -1267,13 +1267,10 @@ private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: Virt
   // In the case of the JetBrains client, it's better to get the file by its ID to avoid a blocking protocol call inside
   // [VirtualFileManager.findFileByUrl]
   val file = if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
-    val file = if (fileEntry.managingFsCreationTimestamp != null) {
-      FileIdAdapter.getInstance().getFileWithTimestamp(fileEntry.id, fileEntry.managingFsCreationTimestamp)
+    if (fileEntry.managingFsCreationTimestamp != null) {
+      FileIdAdapter.getInstance().getFileWithTimestamp(fileEntry.id, fileEntry, fileEntry.managingFsCreationTimestamp)
     } else {
-      FileIdAdapter.getInstance().getFile(fileEntry.id)
-    }
-    file?.also {
-      StartupVirtualFileProcessor.getInstance().processVirtualFileOnStartup(it, fileEntry)
+      FileIdAdapter.getInstance().getFile(fileEntry.id, fileEntry)
     }
   }
   else {
