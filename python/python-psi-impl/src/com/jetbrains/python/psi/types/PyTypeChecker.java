@@ -4,7 +4,6 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveResult;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -544,18 +543,15 @@ public final class PyTypeChecker {
     GenericSubstitutions substitutions = collectTypeSubstitutions(actual, matchContext.context);
 
     MatchContext protocolContext = new MatchContext(matchContext.context, new GenericSubstitutions(), matchContext.reversedSubstitutions);
-    for (kotlin.Pair<PyTypedElement, List<RatedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, matchContext.context)) {
-      final List<RatedResolveResult> subclassElements = pair.getSecond();
-      if (ContainerUtil.isEmpty(subclassElements)) {
+    for (kotlin.Pair<PyTypedElement, List<PyTypedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, matchContext.context)) {
+      final List<PyType> subclassElementTypes = ContainerUtil.map(pair.getSecond(), member -> member.getType());
+      if (ContainerUtil.isEmpty(subclassElementTypes)) {
         return false;
       }
 
       final PyType protocolElementType = dropSelfIfNeeded(expected, matchContext.context.getType(pair.getFirst()), matchContext.context);
       final boolean elementResult = StreamEx
-        .of(subclassElements)
-        .map(ResolveResult::getElement)
-        .select(PyTypedElement.class)
-        .map(matchContext.context::getType)
+        .of(subclassElementTypes)
         .map(type -> dropSelfIfNeeded(actual, type, matchContext.context))
         .map(type -> substitute(type, substitutions, matchContext.context))
         .anyMatch(
