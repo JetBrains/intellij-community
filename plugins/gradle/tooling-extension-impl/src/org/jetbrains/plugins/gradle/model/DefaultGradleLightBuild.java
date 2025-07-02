@@ -31,9 +31,10 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
     myName = rootGradleProject.getName();
     myBuildIdentifier = new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir());
 
-    Map<BasicGradleProject, DefaultGradleLightProject> projects = gradleBuild.getProjects().stream()
-      .map(it -> new Pair<>(it, new DefaultGradleLightProject(this, it, gradleVersion)))
-      .collect(Collectors.toMap(it -> it.getFirst(), it -> it.getSecond()));
+    Map<BasicGradleProject, DefaultGradleLightProject> projects = new LinkedHashMap<>();
+    for (BasicGradleProject project : gradleBuild.getProjects()) {
+      projects.put(project, new DefaultGradleLightProject(this, project, gradleVersion));
+    }
 
     replicateModelHierarchy(
       rootGradleProject,

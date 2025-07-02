@@ -12,7 +12,6 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Inter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertIterableEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNotNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.io.File
@@ -126,13 +125,7 @@ class DefaultGradleLightBuildTest {
     assertEquals(buildDir.absolutePath, build.buildIdentifier.rootDir.absolutePath)
     assertEquals(parentBuild, build.parentBuild)
 
-    assertEquals(2, build.projects.count())
-    // The order of elements in `DefaultGradleLightBuild.getProjects` is random
-    val rootProject = build.projects.find { it.name == buildName }
-      .also { assertEquals(build.rootProject, it) }!!
-    val subproject = build.projects.find { it.name == "subproject" }
-      .also { assertNotNull(it) }!!
-
+    val (rootProject, subproject) = build.projects.toList()
     verifyProject(project = rootProject,
                   name = buildName,
                   path = ":",
