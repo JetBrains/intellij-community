@@ -9,6 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.xmlb.XmlSerializer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
@@ -67,7 +68,6 @@ class UvRunConfiguration(
 
   override fun checkConfiguration() {
     checkConfiguration(options).onFailure {
-      @Suppress("HardCodedStringLiteral") // these strings are all returned already localized
       throw RuntimeConfigurationError(it)
     }
   }
@@ -84,7 +84,7 @@ fun writeExternal(element: Element, options: UvRunConfigurationOptions) {
 }
 
 @ApiStatus.Internal
-fun checkConfiguration(options: UvRunConfigurationOptions): Result<Unit, String> {
+fun checkConfiguration(options: UvRunConfigurationOptions): Result<Unit, @NlsSafe String> {
   if (options.uvSdk == null) {
     return Result.failure(PyBundle.message("uv.run.configuration.validation.sdk"))
   }
