@@ -23,6 +23,7 @@ abstract class ModuleManager : SimpleModificationTracker() {
   companion object {
     /**
      * Returns the module manager instance for the current project.
+     * In coroutines, use [com.intellij.openapi.components.serviceAsync] instead.
      *
      * @param project the project for which the module manager is requested.
      * @return the module manager instance.
