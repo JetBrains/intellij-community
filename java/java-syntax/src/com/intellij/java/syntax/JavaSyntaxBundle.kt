@@ -38,5 +38,5 @@ object JavaSyntaxBundle {
 @ApiStatus.Internal
 object DefaultJavaSyntaxResourcesTestAccessor {
   val mappings: Map<String, String> get() = DefaultJavaSyntaxResources.mappings
-  val defaultJavaSyntaxResourcesName: String get() = DefaultJavaSyntaxResources::class.java.name
+  val defaultJavaSyntaxResourcesName: String get() = DefaultJavaSyntaxResources::class.qualifiedName!!
 }
