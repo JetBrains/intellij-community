@@ -9,6 +9,9 @@ import java.nio.file.FileSystem
 
 /**
  * An extension point for [com.intellij.platform.core.nio.fs.MultiRoutingFileSystem.BackendProvider].
+ *
+ * *Note:* the implementation MUST NOT load classes during initialization.
+ * Otherwise, a deadlock in the classloader is `com.intellij.util.lang.UrlClassLoader` is possible.
  */
 @ApiStatus.Internal
 interface MultiRoutingFileSystemBackend {
@@ -24,9 +27,14 @@ interface MultiRoutingFileSystemBackend {
   interface InitializationService
 
   /**
-   * In contrast with [com.intellij.platform.core.nio.fs.MultiRoutingFileSystem.BackendProvider], it must never return `localFS`.
+   * *Note:* it must never return `localFS`.
+   * Otherwise, the behavior is undefined.
    *
-   * *Note:* this function must throw no errors.
+   * *Note:* this function MUST NOT throw any error.
+   * Otherwise, the behavior is undefined.
+   *
+   * *Note:* the implementation MUST NOT load classes if [sanitizedPath] belongs to a local path.
+   * Otherwise, a deadlock in `com.intellij.util.lang.UrlClassLoader` is possible.
    */
   fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem?
 
