@@ -33,7 +33,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.util.PsiUtilCore
 import java.time.Duration
 
 internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionFilteringEventListener(),
@@ -216,28 +215,28 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
 }
 
 private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
-  val REQUEST_ID = registerBasic(EventFields.Long("request_id", "Unique request id for the inline completion session"))
+  val REQUEST_ID = register(EventFields.Long("request_id", "Unique request id for the inline completion session"))
   val REQUEST_EVENT = register(EventFields.Class("request_event", "Type of the event that caused the request for the inline completion session"))
-  val EDITOR_TYPE = registerBasic(EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor"))
-  val INLINE_API_PROVIDER = registerBasic(EventFields.Class("inline_api_provider", "Type of the inline completion provider that was used for the request"))
-  val FILE_LANGUAGE = registerBasic(EventFields.Language("file_language", "Language of the file that was opened for the request")).alsoLocalStatistic()
+  val EDITOR_TYPE = register(EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor"))
+  val INLINE_API_PROVIDER = register(EventFields.Class("inline_api_provider", "Type of the inline completion provider that was used for the request"))
+  val FILE_LANGUAGE = register(EventFields.Language("file_language", "Language of the file that was opened for the request")).alsoLocalStatistic()
 }
 
 private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
-  val WAS_SHOWN = registerBasic(EventFields.Boolean("was_shown", "Indicates whether completion or some part of it was shown during the session or not")).alsoLocalStatistic()
-  val TIME_TO_START_SHOWING = registerBasic(EventFields.Long("time_to_start_showing", "Time from the completion request to start showing at least one element"))
-  val SHOWING_TIME = registerBasic(EventFields.Long("showing_time", "Duration from the beginning of the show to its end (for any reason)"))
-  val FINISH_TYPE = registerBasic(EventFields.Enum("finish_type", InlineCompletionUsageTracker.ShownEvents.FinishType::class.java, "Indicates how completion session was finished")).alsoLocalStatistic()
-  val INVALIDATION_EVENT = registerBasic(EventFields.Class("invalidation_event", "In case of finish type 'invalidated'  which exactly event invalidated the completion"))
-  val FULL_INSERT_ACTIONS = registerBasic(EventFields.Int("full_insert_actions", "Number of full inline completion inserts"))
-  val NEXT_WORD_ACTIONS = registerBasic(EventFields.Int("next_word_actions", "Number of next word inline completion inserts"))
-  val NEXT_LINE_ACTIONS = registerBasic(EventFields.Int("next_line_actions", "Number of next line inline completion inserts"))
-  val TOTAL_INSERTED_LENGTH = registerBasic(EventFields.Int("total_inserted_length", "Total length of inserted text")).alsoLocalStatistic()
-  val TOTAL_INSERTED_LINES = registerBasic(EventFields.Int("total_inserted_lines", "Total number of inserted lines")).alsoLocalStatistic()
-  val RECEIVED_PROPOSAL_LENGTH = registerBasic(EventFields.Int("received_proposal_length", "Length of proposal that was received from the inline completion provider"))
-  val RECEIVED_PROPOSAL_LINES = registerBasic(EventFields.Int("received_proposal_lines", "Number of lines in proposal that was received from the inline completion provider"))
-  val FINAL_PROPOSAL_LENGTH = registerBasic(EventFields.Int("final_proposal_length", "Length of proposal at finish"))
-  val FINAL_PROPOSAL_LINE = registerBasic(EventFields.Int("final_proposal_line", "Number of lines in proposal at finish"))
+  val WAS_SHOWN = register(EventFields.Boolean("was_shown", "Indicates whether completion or some part of it was shown during the session or not")).alsoLocalStatistic()
+  val TIME_TO_START_SHOWING = register(EventFields.Long("time_to_start_showing", "Time from the completion request to start showing at least one element"))
+  val SHOWING_TIME = register(EventFields.Long("showing_time", "Duration from the beginning of the show to its end (for any reason)"))
+  val FINISH_TYPE = register(EventFields.Enum("finish_type", InlineCompletionUsageTracker.ShownEvents.FinishType::class.java, "Indicates how completion session was finished")).alsoLocalStatistic()
+  val INVALIDATION_EVENT = register(EventFields.Class("invalidation_event", "In case of finish type 'invalidated'  which exactly event invalidated the completion"))
+  val FULL_INSERT_ACTIONS = register(EventFields.Int("full_insert_actions", "Number of full inline completion inserts"))
+  val NEXT_WORD_ACTIONS = register(EventFields.Int("next_word_actions", "Number of next word inline completion inserts"))
+  val NEXT_LINE_ACTIONS = register(EventFields.Int("next_line_actions", "Number of next line inline completion inserts"))
+  val TOTAL_INSERTED_LENGTH = register(EventFields.Int("total_inserted_length", "Total length of inserted text")).alsoLocalStatistic()
+  val TOTAL_INSERTED_LINES = register(EventFields.Int("total_inserted_lines", "Total number of inserted lines")).alsoLocalStatistic()
+  val RECEIVED_PROPOSAL_LENGTH = register(EventFields.Int("received_proposal_length", "Length of proposal that was received from the inline completion provider"))
+  val RECEIVED_PROPOSAL_LINES = register(EventFields.Int("received_proposal_lines", "Number of lines in proposal that was received from the inline completion provider"))
+  val FINAL_PROPOSAL_LENGTH = register(EventFields.Int("final_proposal_length", "Length of proposal at finish"))
+  val FINAL_PROPOSAL_LINE = register(EventFields.Int("final_proposal_line", "Number of lines in proposal at finish"))
 }
 
 internal class InlineCompletionListenerSessionLogs : InlineCompletionSessionLogsEP {

@@ -65,7 +65,7 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     get() = mlRecorder.value?.recorderOptionsProvider?.getIntOption("cloud_logs_share") ?: 10
 
   object Session {
-    private val phaseToFieldList: List<Pair<Phase, EventFieldExt<*>>> = run {
+    private val phaseToFieldList: List<Pair<Phase, EventField<*>>> = run {
       val fields = Cancellation.withNonCancelableSection().use {
         // Non-cancellable section, because this function is often used in
         // static initializer code of `object`, and any exception (namely, CancellationException)
@@ -75,7 +75,7 @@ object InlineCompletionLogs : CounterUsagesCollector() {
         phasedLogs.registeredFields.map { field -> phasedLogs.phase to field}
       }
 
-      fields.groupingBy { it.second.field }.eachCount().filter { it.value > 1 }.forEach {
+      fields.groupingBy { it.second }.eachCount().filter { it.value > 1 }.forEach {
         thisLogger().error("Log ${it.key} is registered multiple times: ${it.value}")
       }
       fields
@@ -83,11 +83,11 @@ object InlineCompletionLogs : CounterUsagesCollector() {
 
     // group logs to the phase so that each phase has its own object field
     val phases: Map<Phase, ObjectEventField> = Phase.entries.associateWith { phase ->
-      ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second.field }.toTypedArray())
+      ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second }.toTypedArray())
     }
 
-    val eventFieldProperties: Map<String, EventFieldProperty> = phaseToFieldList.associate {
-      it.second.field.name to EventFieldProperty(it.first, it.second.isBasic)
+    val phaseByName: Map<String, Phase> = phaseToFieldList.associate {
+      it.second.name to it.first
     }
 
     fun isBasic(eventPair: EventPair<*>): Boolean {
@@ -112,10 +112,4 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     val COMMON_PREFIX_LENGTH: EventField<Int> = EventFields.Int("common_prefix_length", "Length of common prefix between the suggestion and what remained in Editor")
     val COMMON_SUFFIX_LENGTH: EventField<Int> = EventFields.Int("common_suffix_length", "Length of common suffix between the suggestion and what remained in Editor")
   }
-
-  data class EventFieldProperty(
-    val phase: Phase,
-    val isBasic: Boolean,
-  )
-
 }
