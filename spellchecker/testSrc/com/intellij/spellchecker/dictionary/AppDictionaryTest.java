@@ -3,10 +3,12 @@ package com.intellij.spellchecker.dictionary;
 
 
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
-import static java.lang.Boolean.TRUE;
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien;
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present;
 import static java.util.Arrays.asList;
 
 public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
@@ -16,17 +18,17 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final EditableDictionary APP_DICTIONARY = createAppDictionary(APP_WORDS);
 
   private static EditableDictionary createAppDictionary(Collection<String> projectWords) {
-    final EditableDictionary editableDictionary = new UserDictionary("TestName");
+    EditableDictionary editableDictionary = new UserDictionary("TestName");
     editableDictionary.addToDictionary(APP_WORDS);
     return editableDictionary;
   }
 
   private static void doContainTest(String wordToCheck) {
-    doContainTest(wordToCheck, TRUE);
+    doContainTest(wordToCheck, Present);
   }
 
-  private static void doContainTest(String wordToCheck, Boolean expected) {
-    assertEquals(expected, APP_DICTIONARY.contains(wordToCheck));
+  private static void doContainTest(String wordToCheck, Dictionary.LookupStatus lookupStatus) {
+    assertEquals(lookupStatus, APP_DICTIONARY.lookup(wordToCheck));
   }
 
   public void testContainsProject() {
@@ -38,72 +40,70 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testWords() {
-    final Set<String> expected = new HashSet<>();
-    expected.addAll(asList(AAAA, BBBB));
+    Set<String> expected = ContainerUtil.newHashSet(AAAA, BBBB);
     assertEquals(expected, APP_DICTIONARY.getWords());
   }
 
   public void testEditableWords() {
-    final Set<String> expected = new HashSet<>();
-    expected.addAll(APP_WORDS);
+    Set<String> expected = new HashSet<>(APP_WORDS);
     assertEquals(expected, APP_DICTIONARY.getEditableWords());
   }
 
   public void testRemoveProjectWord() {
-    final EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
-    assertEquals(TRUE, appDictionary.contains(BBBB));
+    EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
+    assertEquals(Present, appDictionary.lookup(BBBB));
     appDictionary.removeFromDictionary(BBBB);
-    assertEquals(null, appDictionary.contains(BBBB));
+    assertEquals(Alien, appDictionary.lookup(BBBB));
   }
 
   public void testRemoveNotPresented() {
-    final EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
-    final String eeee = "eeee";
-    assertEquals(null, appDictionary.contains(eeee));
+    EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
+    String eeee = "eeee";
+    assertEquals(Alien, appDictionary.lookup(eeee));
     appDictionary.removeFromDictionary(eeee);
-    assertEquals(null, appDictionary.contains(eeee));
+    assertEquals(Alien, appDictionary.lookup(eeee));
   }
 
   public void testClear() {
-    final EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
+    EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
     appDictionary.clear();
 
     // current behavior
-    assert APP_WORDS.stream().allMatch(w -> appDictionary.contains(w) == null);
+    assert ContainerUtil.and(APP_WORDS, word -> appDictionary.lookup(word) == Alien);
   }
 
   public void testAdd() {
-    final EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
+    EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
     appDictionary.addToDictionary("EEEE");
 
-    assert appDictionary.contains("EEEE");
+    assert appDictionary.lookup("EEEE") == Present;
   }
 
   public void testAddCollection() {
-    final EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
-    final List<String> wordsToAdd = asList("EEEE", "KKKK");
-    appDictionary.addToDictionary(wordsToAdd);
+    EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
+    List<String> words = asList("EEEE", "KKKK");
+    appDictionary.addToDictionary(words);
 
-    assert wordsToAdd.stream().allMatch(appDictionary::contains);
+    assert ContainerUtil.and(words, word -> appDictionary.lookup(word) == Present);
   }
 
   public void testReplace() {
-    final EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
-    final List<String> wordsToReplace = asList("EEEE", "KKKK");
+    EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
+    List<String> wordsToReplace = asList("EEEE", "KKKK");
     appDictionary.replaceAll(wordsToReplace);
 
-    assert wordsToReplace.stream().allMatch(appDictionary::contains);
-    assert APP_WORDS.stream().allMatch(projectWord -> appDictionary.contains(projectWord) == null);
+    assert ContainerUtil.and(wordsToReplace, word -> appDictionary.lookup(word) == Present);
+    assert ContainerUtil.and(APP_WORDS, projectWord -> appDictionary.lookup(projectWord) == Alien);
   }
 
   public void testGetSuggestions() {
-    final List<String> suggestions = new ArrayList<>();
+    List<String> suggestions = new ArrayList<>();
     APP_DICTIONARY.consumeSuggestions("AAAB", suggestions::add);
     assert suggestions.isEmpty(); // TODO: change current behavior
   }
 
   public void testNoSuggestions() {
-    final List<String> suggestions = new ArrayList<>();
+    List<String> suggestions = new ArrayList<>();
     APP_DICTIONARY.consumeSuggestions("EEEE", suggestions::add);
     assert suggestions.isEmpty();
   }

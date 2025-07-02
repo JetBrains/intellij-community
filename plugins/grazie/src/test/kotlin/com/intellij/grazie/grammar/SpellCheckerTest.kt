@@ -3,12 +3,12 @@ package com.intellij.grazie.grammar
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.spellcheck.GrazieCheckers
 import com.intellij.openapi.components.service
-import org.junit.Test
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
 
 object GrazieSpellchecker {
-  fun isCorrect(word: String): Boolean? {
-    return service<GrazieCheckers>().isCorrect(word)
-  }
+  fun isCorrect(word: String): Dictionary.LookupStatus = service<GrazieCheckers>().lookup(word)
 
   /**
    * Checks text for spelling mistakes.
@@ -19,49 +19,41 @@ object GrazieSpellchecker {
 }
 
 class SpellCheckerTest : GrazieTestBase() {
-  @Test
   fun `test empty word`() {
-    assertTrue(GrazieSpellchecker.isCorrect("") ?: false)
+    assertEquals(Present, GrazieSpellchecker.isCorrect(""))
   }
 
-  @Test
   fun `test emoji`() {
-    assertTrue(GrazieSpellchecker.isCorrect("\uD83D\uDE4B\uD83C\uDFFF") ?: false)
+    assertEquals(Present, GrazieSpellchecker.isCorrect("\uD83D\uDE4B\uD83C\uDFFF"))
   }
 
-  @Test
   fun `test alien word`() {
-    assertNull(GrazieSpellchecker.isCorrect("例子"))
+    assertEquals(Alien, GrazieSpellchecker.isCorrect("例子"))
   }
 
-  @Test
   fun `test unknown word`() {
     val word = "dasfhaljkwehfjhadfdsafdsv"
-    assertFalse(GrazieSpellchecker.isCorrect(word) ?: true)
+    assertTrue(GrazieSpellchecker.isCorrect(word).isNotPresent)
     assertTrue(GrazieSpellchecker.getSuggestions(word).isEmpty())
   }
 
-  @Test
   fun `test correct word`() {
-    assertTrue(GrazieSpellchecker.isCorrect("banana") ?: false)
+    assertEquals(Present, GrazieSpellchecker.isCorrect("banana"))
   }
 
-  @Test
   fun `test incorrect word`() {
     val word = "bannana"
-    assertFalse(GrazieSpellchecker.isCorrect(word) ?: true)
+    assertTrue(GrazieSpellchecker.isCorrect(word).isNotPresent)
     assertTrue(GrazieSpellchecker.getSuggestions(word).contains("banana"))
   }
 
-  @Test
   fun `test correct word with apostrophe`() {
-    assertTrue(GrazieSpellchecker.isCorrect("un'espressione") ?: false)
+    assertEquals(Present, GrazieSpellchecker.isCorrect("un'espressione"))
   }
 
-  @Test
   fun `test incorrect word with apostrophe`() {
     val word = "un'espresssione"
-    assertFalse(GrazieSpellchecker.isCorrect(word) ?: true)
+    assertTrue(GrazieSpellchecker.isCorrect(word).isNotPresent)
     assertTrue(GrazieSpellchecker.getSuggestions(word).contains("un'espressione"))
   }
 }
