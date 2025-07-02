@@ -20,7 +20,7 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.FileIndexingResult.ApplicationMode
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner.Companion.INDEXING_PARALLELIZATION
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner.Companion.TRACER
-import com.intellij.util.indexing.events.VfsEventsMerger
+import com.intellij.util.indexing.events.IndexingEventsLogger
 import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -170,7 +170,7 @@ object SameThreadIndexWriter : IndexWriter() {
         val applied = applier.apply()
         allModificationsSuccessful = allModificationsSuccessful && applied
         if (!applied) {
-          VfsEventsMerger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
+          IndexingEventsLogger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
         }
       }
 
@@ -178,7 +178,7 @@ object SameThreadIndexWriter : IndexWriter() {
         val removed = remover.remove()
         allModificationsSuccessful = allModificationsSuccessful && removed
         if (!removed) {
-          VfsEventsMerger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
+          IndexingEventsLogger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
         }
       }
     }
@@ -387,7 +387,7 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
           val applied = applier.apply()
           allModificationsSuccessful = allModificationsSuccessful && applied
           if (!applied) {
-            VfsEventsMerger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
+            IndexingEventsLogger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
           }
         }
       }
@@ -397,7 +397,7 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
           val removed = remover.remove()
           allModificationsSuccessful = allModificationsSuccessful && removed
           if (!removed) {
-            VfsEventsMerger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
+            IndexingEventsLogger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
           }
         }
       }
@@ -428,7 +428,7 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
         fileIndexingResult.markFileProcessed(allModificationsSuccessful, debugString)
       }
       else {
-        VfsEventsMerger.tryLog("HAS_MORE_MODIFICATIONS", fileIndexingResult.file(), debugString)
+        IndexingEventsLogger.tryLog("HAS_MORE_MODIFICATIONS", fileIndexingResult.file(), debugString)
       }
 
       fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs)
@@ -663,7 +663,7 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
           val applied = applier.apply()
           allModificationsSuccessful = allModificationsSuccessful && applied
           if (!applied) {
-            VfsEventsMerger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
+            IndexingEventsLogger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
           }
         }
       }
@@ -673,7 +673,7 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
           val removed = remover.remove()
           allModificationsSuccessful = allModificationsSuccessful && removed
           if (!removed) {
-            VfsEventsMerger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
+            IndexingEventsLogger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
           }
         }
       }
@@ -704,7 +704,7 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
         fileIndexingResult.markFileProcessed(allModificationsSuccessful, debugString)
       }
       else {
-        VfsEventsMerger.tryLog("HAS_MORE_MODIFICATIONS", fileIndexingResult.file(), debugString)
+        IndexingEventsLogger.tryLog("HAS_MORE_MODIFICATIONS", fileIndexingResult.file(), debugString)
       }
 
       fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs)
@@ -964,7 +964,7 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
           val applied = applier.apply()
           allModificationsSuccessful = allModificationsSuccessful && applied
           if (!applied) {
-            VfsEventsMerger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
+            IndexingEventsLogger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
           }
         }
       }
@@ -974,7 +974,7 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
           val removed = remover.remove()
           allModificationsSuccessful = allModificationsSuccessful && removed
           if (!removed) {
-            VfsEventsMerger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
+            IndexingEventsLogger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
           }
         }
       }
@@ -1005,7 +1005,7 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
         fileIndexingResult.markFileProcessed(allModificationsSuccessful, debugString)
       }
       else {
-        VfsEventsMerger.tryLog("HAS_MORE_MODIFICATIONS", fileIndexingResult.file(), debugString)
+        IndexingEventsLogger.tryLog("HAS_MORE_MODIFICATIONS", fileIndexingResult.file(), debugString)
       }
 
       fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs)

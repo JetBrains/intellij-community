@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexesEvaluated;
-import com.intellij.util.indexing.events.VfsEventsMerger;
+import com.intellij.util.indexing.events.IndexingEventsLogger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -132,7 +132,7 @@ public final class FileIndexingResult {
   public void markFileProcessed(boolean allModificationsSuccessful,
                                 @NotNull Supplier<String> debugString) {
     if (allModificationsSuccessful) {
-      VfsEventsMerger.tryLog("INDEX_UPDATED", file, debugString);
+      IndexingEventsLogger.tryLog("INDEX_UPDATED", file, debugString);
       indexImpl.getFilesToUpdateCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
 
       if (shouldMarkFileAsIndexed) {
@@ -143,7 +143,7 @@ public final class FileIndexingResult {
       }
     }
     else {
-      VfsEventsMerger.tryLog("INDEX_PARTIAL_UPDATE", file, debugString);
+      IndexingEventsLogger.tryLog("INDEX_PARTIAL_UPDATE", file, debugString);
       if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
         IndexingFlag.unlockFile(file);
       }

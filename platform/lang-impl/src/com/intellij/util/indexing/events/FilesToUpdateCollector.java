@@ -39,7 +39,7 @@ public class FilesToUpdateCollector {
                   "File=" + file.getPath());
       }
     }
-    VfsEventsMerger.tryLog("ADD_TO_UPDATE", file);
+    IndexingEventsLogger.tryLog("ADD_TO_UPDATE", file);
     int fileId = request.getFileId();
     myDirtyFiles.addFile(dirtyQueueProjects, fileId);
     myFilesToUpdate.put(fileId, request);
@@ -53,7 +53,7 @@ public class FilesToUpdateCollector {
     int fileId = FileBasedIndex.getFileId(file);
     FileIndexingRequest alreadyScheduledFile = myFilesToUpdate.get(fileId);
     if (alreadyScheduledFile != null && !alreadyScheduledFile.isDeleteRequest()) {
-      VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", fileId);
+      IndexingEventsLogger.tryLog("PULL_OUT_FROM_UPDATE", fileId);
       myFilesToUpdate.remove(fileId);
       myDirtyFiles.removeFile(fileId);
     }
