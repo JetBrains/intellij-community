@@ -402,7 +402,6 @@ private fun ReleaseImage(imagePath: String) {
                     }
                 }
                 .thenIf(intensity > 0.01f) {
-                    // The visual effect just reads values from the controller.
                     holoFoil(
                         normalizedOffset = Offset(controller.animatableX.value, controller.animatableY.value),
                         intensity,
