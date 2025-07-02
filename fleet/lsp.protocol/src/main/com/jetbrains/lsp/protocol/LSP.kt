@@ -1,12 +1,12 @@
 package com.jetbrains.lsp.protocol
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.Json
-import java.nio.file.Path
-import java.nio.file.Paths
-
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.PolymorphicKind
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.*
 
 /**
  * URI following the URI specification, so special spaces (like spaces) are encoded.
@@ -342,14 +342,6 @@ data class ChangeAnnotation(
     val description: String? = null,
 )
 
-//todo: custom serializer is required
-@Serializable
-@JvmInline
-value class DocumentChange(val change: JsonElement) // TextDocumentEdit | FileChange
-
-@Serializable
-sealed interface FileChange
-
 @Serializable
 data class TextDocumentEdit(
     /**
@@ -364,7 +356,7 @@ data class TextDocumentEdit(
      * client capability `workspace.workspaceEdit.changeAnnotationSupport`
      */
     val edits: List<TextEdit>,
-)
+): FileChange
 
 @Serializable
 data class Location(
@@ -532,7 +524,9 @@ data class CreateFileOptions(
     val ignoreIfExists: Boolean? = null,
 )
 
-@SerialName("create")
+@Serializable(with = FileChangeSerializer::class)
+sealed interface FileChange
+
 @Serializable
 data class CreateFile(
     /**
@@ -567,7 +561,6 @@ data class RenameFileOptions(
 )
 
 @Serializable
-@SerialName("rename")
 data class RenameFile(
     /**
      * The old (existing) location.
@@ -606,7 +599,6 @@ data class DeleteFileOptions(
 )
 
 @Serializable
-@SerialName("delete")
 data class DeleteFile(
     /**
      * The file to delete.
@@ -628,12 +620,12 @@ data class DeleteFile(
 
 @Serializable
 data class WorkspaceEdit(
-    /**
+  /**
      * Holds changes to existing resources.
      */
     val changes: Map<DocumentUri, List<TextEdit>>? = null,
 
-    /**
+  /**
      * Depending on the client capability `workspace.workspaceEdit.resourceOperations`,
      * document changes are either an array of `TextDocumentEdit`s to express changes
      * to different text documents where each text document edit addresses a specific
@@ -647,9 +639,9 @@ data class WorkspaceEdit(
      * `workspace.workspaceEdit.resourceOperations`, only plain `TextEdit`s
      * using the `changes` property are supported.
      */
-    val documentChanges: List<DocumentChange>? = null, // Use proper types or sealed classes for TextDocumentEdit, CreateFile, RenameFile, DeleteFile if defined elsewhere
+    val documentChanges: List<FileChange>? = null, // Use proper types or sealed classes for TextDocumentEdit, CreateFile, RenameFile, DeleteFile if defined elsewhere
 
-    /**
+  /**
      * A map of change annotations that can be referenced in `AnnotatedTextEdit`s
      * or create, rename and delete file / folder operations.
      *
@@ -934,7 +926,7 @@ object LSP {
         classDiscriminator = "kind"
     }
 
-    val ProgressNotificationType: NotificationType<ProgressParams> =
+  val ProgressNotificationType: NotificationType<ProgressParams> =
         NotificationType("$/progress", ProgressParams.serializer())
 
     val CancelNotificationType: NotificationType<CancelParams> =
@@ -945,4 +937,44 @@ object LSP {
 
     val UnregisterCapabilityNotificationType: NotificationType<UnregistrationParams> =
         NotificationType("client/unregisterCapability", UnregistrationParams.serializer())
+}
+
+@Serializer(forClass = FileChange::class)
+object FileChangeSerializer : KSerializer<FileChange> {
+  @OptIn(InternalSerializationApi::class)
+  override val descriptor: SerialDescriptor = buildSerialDescriptor("FileChange", PolymorphicKind.SEALED) {
+    element("TextDocumentEdit", TextDocumentEdit.serializer().descriptor)
+    element("CreateFile", CreateFile.serializer().descriptor)
+    element("RenameFile", RenameFile.serializer().descriptor)
+    element("DeleteFile", DeleteFile.serializer().descriptor)
+  }
+
+  override fun serialize(encoder: Encoder, value: FileChange) {
+    require(encoder is JsonEncoder) { "FileChange can only be serialized to JSON" }
+    val json = encoder.json
+
+    val jsonElement = when (value) {
+      is TextDocumentEdit -> json.encodeToJsonElement(value)
+      is CreateFile -> JsonObject((json.encodeToJsonElement(value) as JsonObject) + ("kind" to JsonPrimitive("create")))
+      is RenameFile -> JsonObject((json.encodeToJsonElement(value) as JsonObject) + ("kind" to JsonPrimitive("rename")))
+      is DeleteFile -> JsonObject((json.encodeToJsonElement(value) as JsonObject) + ("kind" to JsonPrimitive("delete")))
+    }
+
+    encoder.encodeJsonElement(jsonElement)
+  }
+
+  override fun deserialize(decoder: Decoder): FileChange {
+    require(decoder is JsonDecoder) { "FileChange can only be deserialized from JSON" }
+    val jsonElement = decoder.decodeJsonElement()
+    require(jsonElement is JsonObject) { "Expected JsonObject for FileChange" }
+
+    val json = decoder.json
+    return when (val kind = jsonElement["kind"]?.jsonPrimitive?.content) {
+      "create" -> json.decodeFromJsonElement<CreateFile>(jsonElement)
+      "rename" -> json.decodeFromJsonElement<RenameFile>(jsonElement)
+      "delete" -> json.decodeFromJsonElement<DeleteFile>(jsonElement)
+      null -> json.decodeFromJsonElement<TextDocumentEdit>(TextDocumentEdit.serializer(), jsonElement)
+      else -> throw SerializationException("Unknown FileChange kind: $kind")
+    }
+  }
 }
