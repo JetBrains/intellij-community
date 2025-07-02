@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -45,11 +44,10 @@ class ChooseAnotherJdkQuickFix : BuildIssueQuickFix {
           settings.importingSettings.jdkForImporter = sdk.name
           val runnerSettings = MavenRunner.getInstance(project).settings;
           runnerSettings.setJreName(sdk.name)
+          MavenProjectsManager.getInstance(project).scheduleUpdateAllMavenProjects(MavenSyncSpec.full("ChooseAnotherJdkQuickFix", true))
         }
       }.onPopupClosed {
         result.complete(null)
-        MavenProjectsManager.getInstance(project).scheduleUpdateAllMavenProjects(MavenSyncSpec.full("ChooseAnotherJdkQuickFix", true))
-        ProjectRefreshAction.Manager.refreshProject(project)
       }.buildPopup()
 
     popup.showCenteredInCurrentWindow(project)
