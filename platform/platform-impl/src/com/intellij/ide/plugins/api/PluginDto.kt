@@ -85,6 +85,19 @@ class PluginDto(
     dependencies.add(PluginDependencyModel(id, optional))
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PluginDto
+
+    return pluginId == other.pluginId
+  }
+
+  override fun hashCode(): Int {
+    return pluginId.hashCode()
+  }
+
   companion object {
     @JvmStatic
     fun fromModel(model: PluginUiModel): PluginDto {
