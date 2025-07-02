@@ -109,7 +109,7 @@ object SuvorovProgress {
         processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
       "NiceOverlay" -> {
-        val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.let(SwingUtilities::getRootPane)
+        val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
         if (currentFocusedPane == null) {
           // can happen also in tests
           processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
