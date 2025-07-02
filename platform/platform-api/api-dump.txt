@@ -363,6 +363,9 @@ com.intellij.openapi.keymap.KeymapManagerListener
 - shortcutChanged(com.intellij.openapi.keymap.Keymap,java.lang.String):V
 - shortcutChanged(com.intellij.openapi.keymap.Keymap,java.lang.String,Z):V
 - shortcutsChanged(com.intellij.openapi.keymap.Keymap,java.util.Collection,Z):V
+f:com.intellij.openapi.observable.util.BindUtil
+- sf:bindLoading(com.intellij.ui.components.JBLoadingPanel,com.intellij.openapi.observable.properties.ObservableBooleanProperty):com.intellij.ui.components.JBLoadingPanel
+- sf:bindLoadingText(com.intellij.ui.components.JBLoadingPanel,com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.components.JBLoadingPanel
 com.intellij.openapi.options.ConfigurableGroup
 - com.intellij.openapi.options.Configurable$Composite
 - getDescription():java.lang.String
