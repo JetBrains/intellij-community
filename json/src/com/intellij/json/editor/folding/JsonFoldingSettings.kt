@@ -17,6 +17,9 @@ class JsonFoldingSettings : PersistentStateComponent<JsonFoldingSettings?> {
   @JvmField
   var showKeyCount: Boolean = false
 
+  @JvmField
+  var showFirstKey: Boolean = false
+
   override fun getState(): JsonFoldingSettings? {
     return this
   }
@@ -34,8 +37,12 @@ class JsonFoldingSettings : PersistentStateComponent<JsonFoldingSettings?> {
 }
 
 
-class JsonFoldingOptionsProvider : BeanConfigurable<JsonFoldingSettings>(JsonFoldingSettings.getInstance(), JsonBundle.message("JsonFoldingSettings.title")), CodeFoldingOptionsProvider {
+class JsonFoldingOptionsProvider : BeanConfigurable<JsonFoldingSettings>(
+    JsonFoldingSettings.getInstance(),
+    JsonBundle.message("JsonFoldingSettings.title")),
+                                   CodeFoldingOptionsProvider {
   init {
     checkBox(JsonBundle.message("JsonFoldingSettings.show.key.count"), instance::showKeyCount)
+    checkBox(JsonBundle.message("JsonFoldingSettings.show.first.key"), instance::showFirstKey)
   }
 }

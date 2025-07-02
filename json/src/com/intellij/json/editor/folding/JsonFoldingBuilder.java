@@ -70,7 +70,7 @@ public final class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
         final String name = property.getName();
         final JsonValue value = property.getValue();
         if (value instanceof JsonLiteral) {
-          if ("id".equals(name) || "name".equals(name)) {
+          if (!settings.showFirstKey && ("id".equals(name) || "name".equals(name))) {
             candidate = property;
             break;
           }

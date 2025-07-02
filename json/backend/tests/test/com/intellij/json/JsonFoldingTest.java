@@ -38,34 +38,105 @@ public class JsonFoldingTest extends JsonTestCase {
   }
 
   public void testObjectFoldingWithKeyCountZeroKeys() {
-    withEnabledShowingKeyCountSetting(() -> doTest());
+    withFoldingSettings()
+      .withShowingKeyCount(true)
+      .execute(() -> doTest());
   }
 
   public void testObjectFoldingWithKeyCountOneKey() {
-    withEnabledShowingKeyCountSetting(() -> doTest());
+    withFoldingSettings()
+      .withShowingKeyCount(true)
+      .execute(() -> doTest());
   }
 
   public void testObjectFoldingWithKeyCountSeveralKeys() {
-    withEnabledShowingKeyCountSetting(() -> doTest());
+    withFoldingSettings()
+      .withShowingKeyCount(true)
+      .execute(() -> doTest());
   }
 
   public void testObjectFoldingWithKeyCountWithArrayInside() {
-    withEnabledShowingKeyCountSetting(() -> doTest());
+    withFoldingSettings()
+      .withShowingKeyCount(true)
+      .execute(() -> doTest());
   }
 
   public void testObjectFoldingWithKeyCountWithFoldedObjectInside() {
-    withEnabledShowingKeyCountSetting(() -> doTest());
+    withFoldingSettings()
+      .withShowingKeyCount(true)
+      .execute(() -> doTest());
   }
 
-  protected void withEnabledShowingKeyCountSetting(ThrowableRunnable<? extends RuntimeException> runnable) {
-    JsonFoldingSettings settings = JsonFoldingSettings.getInstance();
-    boolean originalValue = settings.showKeyCount;
-    try {
-      settings.showKeyCount = true;
-      runnable.run();
-    } finally {
-      settings.showKeyCount = originalValue;
+  public void testObjectFoldingWithShowFirstKeyWithIdProperty() {
+    withFoldingSettings()
+      .withShowingFirstKey(true)
+      .execute(() -> doTest());
+  }
+
+  public void testObjectFoldingWithShowFirstKeyWithNameProperty() {
+    withFoldingSettings()
+      .withShowingFirstKey(true)
+      .execute(() -> doTest());
+  }
+
+  public void testObjectFoldingWithShowFirstKeyWithFirstObject() {
+    withFoldingSettings()
+      .withShowingFirstKey(true)
+      .execute(() -> doTest());
+  }
+
+  public void testObjectFoldingWithShowFirstKeyWithOnlyObject() {
+    withFoldingSettings()
+      .withShowingFirstKey(true)
+      .execute(() -> doTest());
+  }
+
+  public void testObjectFoldingWithKeyCountWithShowFirstKey() {
+    withFoldingSettings()
+      .withShowingKeyCount(true)
+      .withShowingFirstKey(true)
+      .execute(() -> doTest());
+  }
+
+  public void testObjectFoldingWithKeyCountWithShowFirstKeyWithOnlyObject() {
+    withFoldingSettings()
+      .withShowingKeyCount(true)
+      .withShowingFirstKey(true)
+      .execute(() -> doTest());
+  }
+
+  protected static class JsonFoldingSettingsBuilder {
+    private boolean showKeyCount = false;
+    private boolean showFirstKey = false;
+
+    public JsonFoldingSettingsBuilder withShowingKeyCount(boolean value) {
+      this.showKeyCount = value;
+      return this;
     }
+
+    public JsonFoldingSettingsBuilder withShowingFirstKey(boolean value) {
+      this.showFirstKey = value;
+      return this;
+    }
+
+    public void execute(ThrowableRunnable<? extends RuntimeException> runnable) {
+      JsonFoldingSettings settings = JsonFoldingSettings.getInstance();
+      boolean originalKeyCount = settings.showKeyCount;
+      boolean originalFirstKey = settings.showFirstKey;
+      try {
+        settings.showKeyCount = showKeyCount;
+        settings.showFirstKey = showFirstKey;
+        runnable.run();
+      }
+      finally {
+        settings.showKeyCount = originalKeyCount;
+        settings.showFirstKey = originalFirstKey;
+      }
+    }
+  }
+
+  protected JsonFoldingSettingsBuilder withFoldingSettings() {
+    return new JsonFoldingSettingsBuilder();
   }
 
   @FunctionalInterface
