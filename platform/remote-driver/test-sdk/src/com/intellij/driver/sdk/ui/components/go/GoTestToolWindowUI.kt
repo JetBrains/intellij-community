@@ -15,9 +15,6 @@ class GoTestToolWindowUI(data: ComponentData) : UiComponent(data) {
   val editor: UiComponent
     get() = x { byAccessibleName("Editor") }
 
-  val scrollDownButton: UiComponent
-    get() = x { byAttribute("myicon", "scrollDown.svg") }
-
   fun getEditorText(): String = editor.getAllTexts().asString()
 
   fun containsText(text: String): Boolean = getEditorText().contains(text)
