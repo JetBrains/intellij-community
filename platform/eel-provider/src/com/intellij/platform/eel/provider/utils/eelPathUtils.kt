@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.isWindows
@@ -15,6 +17,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
@@ -80,6 +83,34 @@ object EelPathUtils {
       val file = eel.fs.createTemporaryFile().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).getOrThrowFileSystemException()
       file.asNioPath()
     }
+  }
+
+  private fun EelPlatform.asPathManagerOs(): PathManager.OS =
+    when (this) {
+      is EelPlatform.Windows -> PathManager.OS.WINDOWS
+      is EelPlatform.Darwin -> PathManager.OS.MACOS
+      is EelPlatform.Linux -> PathManager.OS.LINUX
+      is EelPlatform.FreeBSD -> PathManager.OS.GENERIC_UNIX
+    }
+
+  @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun getSystemFolder(project: Project): Path {
+    return getSystemFolder(project.getEelDescriptor().toEelApiBlocking())
+  }
+
+  @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun getSystemFolder(eelDescriptor: EelDescriptor): Path {
+    return getSystemFolder(eelDescriptor.toEelApiBlocking())
+  }
+
+  @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun getSystemFolder(eel: EelApi): Path {
+    val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
+    val userHomeFolder = eel.userInfo.home.asNioPath().toString()
+    return PathManager.getDefaultSystemPathFor(eel.platform.asPathManagerOs(), userHomeFolder, selector, eel.exec.fetchLoginShellEnvVariablesBlocking())
   }
 
   @JvmStatic

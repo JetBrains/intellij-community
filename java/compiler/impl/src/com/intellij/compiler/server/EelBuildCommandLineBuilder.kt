@@ -116,21 +116,12 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
     return remoteServer.asCompletableFuture().get().port.toInt()
   }
 
-  fun EelPlatform.asPathManagerOs(): PathManager.OS =
-    when (this) {
-      is EelPlatform.Windows -> PathManager.OS.WINDOWS
-      is EelPlatform.Darwin -> PathManager.OS.MACOS
-      is EelPlatform.Linux, is EelPlatform.FreeBSD -> PathManager.OS.LINUX
-    }
-
   private fun getSystemSubfolder(subfolder: String): Path {
     return getSystemFolderRoot().resolve(subfolder)
   }
 
   private fun getSystemFolderRoot(): Path {
-    val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
-    val userHomeFolder = eel.userInfo.home.asNioPath().toString()
-    return PathManager.getDefaultSystemPathFor(eel.platform.asPathManagerOs(), userHomeFolder, selector)
+    return EelPathUtils.getSystemFolder(eel)
   }
 }
 
