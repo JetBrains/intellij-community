@@ -1706,6 +1706,18 @@
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.explicit.to.implicit.class.migration.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids25" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.MigrateToJavaLangIoInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.migrate.to.java.lang.io.name"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids25" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.MigrateFromJavaLangIoInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.migrate.from.java.lang.io.name"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      shortName="TextBlockBackwardMigration"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids15" enabledByDefault="true" level="INFORMATION"
