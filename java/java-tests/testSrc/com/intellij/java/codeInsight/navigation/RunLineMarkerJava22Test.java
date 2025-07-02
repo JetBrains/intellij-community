@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -11,6 +12,8 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -345,6 +348,33 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
       assertEquals(1, marks.size());
       GutterMark mark = marks.get(0);
       checkMark(mark, "Parent");
+    });
+  }
+
+  public void testRunLineMarkerOnInterface25() {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
+      myFixture.configureByText("Main.java", """
+        public class Ma<caret>in implements I {}
+        interface I {
+          public static void main(String[] args) {}
+        }
+        """);
+      assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+      assertEquals(0, myFixture.findGuttersAtCaret().size());
+      List<GutterMark> gutters = myFixture.findAllGutters();
+      gutters = ContainerUtil.filter(gutters, gutter ->
+        gutter instanceof LineMarkerInfo.LineMarkerGutterIconRenderer<?> renderer &&
+        AllIcons.RunConfigurations.TestState.Run.equals(renderer.getIcon()));
+      assertEquals(2, gutters.size());
+      assertTrue(ContainerUtil.or(gutters, gutter ->
+        gutter instanceof LineMarkerInfo.LineMarkerGutterIconRenderer<?> renderer &&
+        "I".equals(renderer.getLineMarkerInfo().getElement().getText())
+      ));
+      assertTrue(ContainerUtil.or(gutters, gutter ->
+        gutter instanceof LineMarkerInfo.LineMarkerGutterIconRenderer<?> renderer &&
+        "main".equals(renderer.getLineMarkerInfo().getElement().getText())
+      ));
+      assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
     });
   }
 
