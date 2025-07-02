@@ -17,24 +17,6 @@ import kotlin.time.Duration.Companion.seconds
  */
 internal suspend fun EelProcess.awaitWithReporting(progressListener: FlowCollector<ProcessEvent.ProcessOutput>?): EelProcessExecutionResult =
   coroutineScope {
-    launch {
-      // As we read process in blocking manner, we might freeze forever
-      // Here we check if coroutine was killed to kill process as well
-      try {
-        exitCode.await()
-      }
-      catch (e: CancellationException) {
-        withContext(NonCancellable) {
-          interrupt()
-          withTimeoutOrNull(1.seconds) {
-            exitCode.await()
-          }
-          kill()
-          exitCode.await()
-        }
-        throw e
-      }
-    }
     val stdout = async { report(STDOUT, progressListener) }
     val stderr = async { report(STDERR, progressListener) }
     EelProcessExecutionResult(exitCode.await(), stdout = stdout.await(), stderr = stderr.await())
