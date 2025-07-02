@@ -339,7 +339,6 @@ var Module.pythonSdk: Sdk?
   get() = PythonSdkUtil.findPythonSdk(this)
   set(newSdk) {
     val prevSdk = pythonSdk
-    if (newSdk == prevSdk) return
     thisLogger().info("Setting PythonSDK $newSdk to module $this")
     ModuleRootModificationUtil.setModuleSdk(this, newSdk)
     runInEdt {
