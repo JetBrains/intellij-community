@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -44,13 +45,15 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
       return Result.success(existingSdk)
     }
 
-    val existingWorkingDir = existingSdk?.associatedModulePath?.let { tryResolvePath(it) }
-    val usePip = existingWorkingDir != null && !existingSdk.isUv
+    val workingDirectory =
+      VirtualEnvReader().getVenvRootPath(selectedInterpreterPath)
+      ?: tryResolvePath(existingSdk?.associatedModulePath)
+      ?: projectDir
 
     return setupExistingEnvAndSdk(
       envExecutable = selectedInterpreterPath,
-      envWorkingDir = existingWorkingDir,
-      usePip = usePip,
+      envWorkingDir = workingDirectory,
+      usePip = existingSdk?.isUv == true,
       projectDir = projectDir,
       existingSdks = allSdk.toList()
     )
