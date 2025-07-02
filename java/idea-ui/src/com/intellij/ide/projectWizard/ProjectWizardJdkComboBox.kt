@@ -71,6 +71,10 @@ import kotlin.io.path.Path
 
 private val selectedJdkProperty = "jdk.selected.${JAVA.id}"
 
+/**
+ * @param sdkFilter Filter for registered SDKs
+ * @param jdkPredicate Predicate to show an error based on the JDK intent version/name
+ */
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
   intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
@@ -90,6 +94,11 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
   )
 }
 
+/**
+ * @param projectJdk Existing JDK in case we are creating a module ("Project JDK" will be selected by default)
+ * @param sdkFilter Filter for registered SDKs
+ * @param jdkPredicate Predicate to show an error based on the JDK intent version/name
+ */
 fun projectWizardJdkComboBox(
   row: Row,
   locationProperty: GraphProperty<String>,
@@ -99,7 +108,7 @@ fun projectWizardJdkComboBox(
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  val combo = ProjectWizardJdkComboBox(projectJdk, disposable)
+  val combo = ProjectWizardJdkComboBox(projectJdk, disposable, sdkFilter)
 
   locationProperty.afterPropagation {
     val path = locationProperty.get()
@@ -209,6 +218,7 @@ private inline fun guardEelDescriptor(producer: () -> EelDescriptor): EelDescrip
 class ProjectWizardJdkComboBox(
   val projectJdk: Sdk? = null,
   disposable: Disposable,
+  val sdkFilter: (Sdk) -> Boolean = { true },
 ) : ComboBox<ProjectWizardJdkIntent>(MutableCollectionComboBoxModel()), UiDataProvider {
 
   override fun getModel(): CollectionComboBoxModel<ProjectWizardJdkIntent> {
@@ -330,7 +340,7 @@ class ProjectWizardJdkComboBox(
   private fun reloadJdks(key: EelDescriptor?) {
     model.removeAll()
 
-    model.add(computeRegisteredSdks(key))
+    model.add(computeRegisteredSdks(key).filter { existing -> sdkFilter(existing.jdk) })
     model.add(computeHelperJdks(registered))
 
     selectDefaultItem()
