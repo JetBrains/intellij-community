@@ -60,6 +60,7 @@ class EdtScheduler(@JvmField val coroutineScope: CoroutineScope) {
     return schedule(delay = delay.milliseconds, modality = modality, task = task, kind = kind)
   }
 
+  @JvmOverloads
   fun schedule(
     delay: Duration,
     modality: ModalityState,
