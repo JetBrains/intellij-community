@@ -338,11 +338,9 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
         context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, ReadAction.compute(() -> uMethod.getName()));
 
         PsiMethod javaMethod = ReadAction.compute(() -> uMethod.getJavaPsi());
-        if (javaMethod != null) {
-          Query<PsiReference> search = MethodReferencesSearch.search(javaMethod, searchScope, true);
-          if (Registry.is("batch.inspections.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
-          search.forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
-        }
+        Query<PsiReference> search = MethodReferencesSearch.search(javaMethod, searchScope, true);
+        if (Registry.is("batch.inspections.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        search.forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
       }
 
       myMethodUsagesRequests = null;
