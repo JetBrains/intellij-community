@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.DataClassResolver
+import org.jetbrains.kotlin.scripting.definitions.isScript
 
 object K2UnusedSymbolUtil {
     private val KOTLIN_ADDITIONAL_ANNOTATIONS: List<String> = listOf("kotlin.test.*", "kotlin.js.JsExport")
@@ -69,6 +70,7 @@ object K2UnusedSymbolUtil {
 
     // Simple PSI-based checks
     fun isApplicableByPsi(declaration: KtNamedDeclaration): Boolean {
+        if (declaration.containingFile.isScript()) return false
         // never mark companion object as unused (there are too many reasons it can be needed for)
         if (declaration is KtObjectDeclaration && declaration.isCompanion()) return false
 

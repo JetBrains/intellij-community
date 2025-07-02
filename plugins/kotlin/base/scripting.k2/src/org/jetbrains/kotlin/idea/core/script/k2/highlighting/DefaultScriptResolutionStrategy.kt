@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
@@ -91,6 +92,7 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
 
         edtWriteAction {
             project.publishGlobalModuleStateModificationEvent()
+            project.publishGlobalScriptModuleStateModificationEvent()
         }
 
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
