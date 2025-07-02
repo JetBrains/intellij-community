@@ -17,6 +17,7 @@ jvm_library(
     "//platform/execution-impl/frontend",
     "//platform/execution.dashboard/frontend",
     "//platform/execution.serviceView/frontend",
+    "//platform/remote-topics/frontend",
     "//platform/buildView/frontend",
   ]
 )

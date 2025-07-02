@@ -23,6 +23,7 @@ jvm_library(
     "//platform/find/backend",
     "//platform/managed-cache/managed.cache.backend",
     "//platform/scopes/backend",
+    "//platform/remote-topics/backend",
     "//platform/buildView/backend",
   ]
 )

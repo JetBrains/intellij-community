@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.rpc.topics` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "rpc-topics_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "rpc-topics",
+  module_name = "intellij.platform.rpc.topics",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/shared:kernel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":rpc-topics_resources"]
+)
+### auto-generated section `build intellij.platform.rpc.topics` end

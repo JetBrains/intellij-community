@@ -571,6 +571,9 @@ platform/remote-servers/api
 platform/remote-servers/clouds
 platform/remote-servers/impl
 platform/remote-servers/target-integration-tests
+platform/remote-topics/backend
+platform/remote-topics/frontend
+platform/remote-topics/shared
 platform/remoteDev-util
 platform/runtime/loader
 platform/runtime/product
