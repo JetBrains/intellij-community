@@ -56,11 +56,6 @@
 
     <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
 
-    <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.shellcheck.ShShellcheckExternalAnnotator"/>
-    <localInspection language="Shell Script" shortName="ShellCheck" enabledByDefault="true"
-                     bundle="messages.ShBundle" groupKey="sh.shell.script" key="display.name.shell.check"
-                     level="ERROR" unfair="true" implementationClass="com.intellij.sh.shellcheck.ShShellcheckInspection"/>
-
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 

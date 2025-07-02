@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.sh.backend.shellcheck.ShQuickFixIntention;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.ShSuppressInspectionIntention;

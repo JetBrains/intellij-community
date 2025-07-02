@@ -34,10 +34,7 @@ import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.SemVer;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -205,7 +202,8 @@ public final class ShShellcheckUtil {
     return file.canExecute() && file.getName().contains(SHELLCHECK);
   }
 
-  static void checkShellCheckForUpdate(@NotNull Project project) {
+  @ApiStatus.Internal
+  public static void checkShellCheckForUpdate(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.getUserData(UPDATE_NOTIFICATION_SHOWN) != null) return;
     application.putUserData(UPDATE_NOTIFICATION_SHOWN, true);
@@ -653,7 +651,8 @@ public final class ShShellcheckUtil {
     put("SC2249", message("consider.adding.a.default.case.even.if.it.just.exits.with.error"));
   }};
 
-  static int calcOffset(CharSequence sequence, int startOffset, int column) {
+  @ApiStatus.Internal
+  public static int calcOffset(CharSequence sequence, int startOffset, int column) {
     int i = 1;
     while (i < column) {
       int c = Character.codePointAt(sequence, startOffset);

@@ -15,6 +15,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.ActionLink;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,8 @@ public class ShellcheckOptionsPanel {
   private final Set<String> myDisabledInspections;
   private final Project myProject;
 
-  ShellcheckOptionsPanel(Set<String> disabledInspections, BiConsumer<String, Boolean> inspectionsChangeListener) {
+  @ApiStatus.Internal
+  public ShellcheckOptionsPanel(Set<String> disabledInspections, BiConsumer<String, Boolean> inspectionsChangeListener) {
     myInspectionsChangeListener = inspectionsChangeListener;
     myDisabledInspections = disabledInspections;
     myProject = ProjectUtil.getProject(getPanel());
@@ -84,7 +86,8 @@ public class ShellcheckOptionsPanel {
     });
   }
 
-  JComponent getPanel() {
+  @ApiStatus.Internal
+  public JComponent getPanel() {
     return myPanel;
   }
 }

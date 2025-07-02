@@ -25,6 +25,10 @@
     <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
     <runLineMarkerContributor language="" implementationClass="com.intellij.sh.backend.run.ShRunLineMarkerContributor"/>
     <spellchecker.support language="Shell Script" implementationClass="com.intellij.sh.backend.spellchecker.ShSpellcheckingStrategy"/>
+    <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.backend.shellcheck.ShShellcheckExternalAnnotator"/>
+    <localInspection language="Shell Script" shortName="ShellCheck" enabledByDefault="true"
+                     bundle="messages.ShBundle" groupKey="sh.shell.script" key="display.name.shell.check"
+                     level="ERROR" unfair="true" implementationClass="com.intellij.sh.backend.shellcheck.ShShellcheckInspection"/>
   </extensions>
 
   <actions>

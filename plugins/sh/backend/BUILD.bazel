@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:gson",
     "//plugins/sh/core",
     "//platform/core-api:core",
     "//platform/lang-api:lang",
@@ -32,6 +33,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/indexing-api:indexing",
     "//spellchecker",
+    "//platform/analysis-api:analysis",
   ],
   runtime_deps = [
     ":backend_resources",
