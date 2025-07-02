@@ -1,11 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// LANGUAGE_VERSION: 2.2
 // WITH_STDLIB
 fun main() {
     with("hello") {
-        <error descr="[UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL] To call contextual declarations, specify the '-Xcontext-parameters' compiler option.">foo</error>()
+        foo()
     }
 }
 
-<error descr="[UNSUPPORTED_FEATURE] The feature \"context parameters\" is experimental and should be enabled explicitly. This can be done by supplying the compiler argument '-Xcontext-parameters', but note that no stability guarantees are provided.">context(ctx: Any)</error>
+context(ctx: Any)
 fun foo() {
     if (ctx is String) println("$ctx is string") // ← breakpoint
     else {
