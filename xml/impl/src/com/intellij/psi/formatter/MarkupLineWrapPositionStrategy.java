@@ -15,18 +15,44 @@
  */
 package com.intellij.psi.formatter;
 
-import com.intellij.openapi.editor.LineWrapPositionStrategy;
-import com.intellij.openapi.editor.PsiAwareDefaultLineWrapPositionStrategy;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * {@link LineWrapPositionStrategy} for markup languages like XML, HTML etc.
  */
 public class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
 
+  private final DefaultLineWrapPositionStrategy myDefaultStrategy = new DefaultLineWrapPositionStrategy();
+
   public MarkupLineWrapPositionStrategy() {
     super(true, XmlElementType.XML_TEXT, XmlElementType.HTML_RAW_TEXT, XmlTokenType.XML_COMMENT_CHARACTERS, TokenType.WHITE_SPACE);
+
+    myDefaultStrategy.addRule(new GenericLineWrapPositionStrategy.Rule('<', GenericLineWrapPositionStrategy.WrapCondition.BEFORE));
+    myDefaultStrategy.addRule(new GenericLineWrapPositionStrategy.Rule('/', GenericLineWrapPositionStrategy.WrapCondition.AFTER,
+                                                                       GenericLineWrapPositionStrategy.Rule.DEFAULT_WEIGHT - 2));
+  }
+
+  @Override
+  public int calculateWrapPosition(@NotNull Document document,
+                                   @Nullable Project project,
+                                   int startOffset,
+                                   int endOffset,
+                                   int maxPreferredOffset,
+                                   boolean allowToBeyondMaxPreferredOffset,
+                                   boolean isSoftWrap) {
+    if (isSoftWrap) {
+      return myDefaultStrategy.calculateWrapPosition(
+        document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, isSoftWrap);
+    }
+    else {
+      return super.calculateWrapPosition(
+        document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, isSoftWrap);
+    }
   }
 }
