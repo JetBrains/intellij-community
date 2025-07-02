@@ -17,4 +17,5 @@ class InstallPluginResult {
   var restartRequired: Boolean = true
   var dynamicRestartRequired = false
   var pluginsToDisable: Set<PluginId> = emptySet()
+  var errors: Map<PluginId, CheckErrorsResult> = emptyMap()
 }

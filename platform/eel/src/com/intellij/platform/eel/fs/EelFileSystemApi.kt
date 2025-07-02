@@ -10,6 +10,14 @@ import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
 
 @get:ApiStatus.Internal
+val EelFileSystemApi.pathOs: EelPath.OS
+  get() = when (this) {
+    is EelFileSystemPosixApi -> EelPath.OS.UNIX
+    is EelFileSystemWindowsApi -> EelPath.OS.WINDOWS
+    else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
+  }
+
+@get:ApiStatus.Internal
 val EelFileSystemApi.pathSeparator: String
   get() = when (this) {
     is EelFileSystemPosixApi -> ":"

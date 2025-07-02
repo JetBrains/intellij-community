@@ -1,19 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.impl.nio
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.EelOsFamily
 import java.io.File
-import java.nio.file.FileStore
-import java.nio.file.FileSystem
-import java.nio.file.Path
-import java.nio.file.PathMatcher
-import java.nio.file.WatchService
+import java.nio.file.*
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 
-internal class EelUnitTestFileSystem(val provider: FileSystemProvider, val os: EelPlatform, val rootDirectory: Path, val fakeLocalRoot: String) : FileSystem() {
+internal class EelUnitTestFileSystem(val provider: FileSystemProvider, val os: EelOsFamily, val rootDirectory: Path, val fakeLocalRoot: String) : FileSystem() {
   val root: EelUnitTestPath = EelUnitTestPath(this, rootDirectory)
 
   override fun provider(): FileSystemProvider {

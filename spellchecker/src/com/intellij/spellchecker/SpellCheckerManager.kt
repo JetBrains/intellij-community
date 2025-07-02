@@ -24,6 +24,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.FileUtilRt.extensionEquals
+import com.intellij.openapi.util.io.FileUtilRt.getExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.project.stateStore
@@ -420,8 +422,10 @@ private class CustomDictFileListener(private val project: Project, private val m
   }
 }
 
-private fun isDic(path: String): Boolean {
-  return FileUtilRt.extensionEquals(path, "dic")
+fun isDic(path: String): Boolean {
+  return extensionEquals(path, "dic") ||
+         extensionEquals(path, "txt") ||
+         getExtension(path, null) == null
 }
 
 private fun affectCustomDictionaries(path: String, project: Project): Boolean {

@@ -251,7 +251,8 @@ public final class PluginInstaller {
       }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
 
       if (pluginDescriptor == null) {
-        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName()), CommonBundle.getErrorTitle());
+        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName()),
+                                   CommonBundle.getErrorTitle());
         return;
       }
 
@@ -278,7 +279,8 @@ public final class PluginInstaller {
         return;
       }
       if (isBrokenPlugin(pluginDescriptor)) {
-        var message = CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
+        var message =
+          CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
         return;
       }
@@ -303,9 +305,8 @@ public final class PluginInstaller {
         new Task.WithResult<>(null, parent, IdeBundle.message("progress.title.checking.plugin.dependencies"), true) {
           @Override
           protected @NotNull Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor> compute(@NotNull ProgressIndicator indicator) {
-            var repositoryPlugins = ContainerUtil.map(CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins(),
-                                                      it -> (PluginNode)it.getDescriptor());
-            var operation = new PluginInstallOperation(List.of(), repositoryPlugins, pluginEnabler, indicator);
+            var repositoryPlugins = CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
+            var operation = new PluginInstallOperation(List.of(), repositoryPlugins, indicator, pluginEnabler);
             operation.setAllowInstallWithoutRestart(true);
             return operation.checkMissingDependencies(pluginDescriptor, null) ?
                    new Pair<>(operation, operation.checkDependenciesAndReplacements(pluginDescriptor)) : Pair.empty();
@@ -453,14 +454,15 @@ public final class PluginInstaller {
 
   @RequiresEdt
   static void installPluginFromCallbackData(@NotNull PluginInstallCallbackData callbackData) {
-    var descriptor = callbackData.getPluginDescriptor();
-    if (callbackData.getRestartNeeded()) {
-      shutdownOrRestartAppAfterInstall(descriptor);
-    }
-    else {
-      var loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
-      if (!loaded) {
+    if (callbackData.getPluginDescriptor() instanceof IdeaPluginDescriptorImpl descriptor && callbackData.getFile() != null) {
+      if (callbackData.getRestartNeeded()) {
         shutdownOrRestartAppAfterInstall(descriptor);
+      }
+      else {
+        var loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
+        if (!loaded) {
+          shutdownOrRestartAppAfterInstall(descriptor);
+        }
       }
     }
   }
@@ -469,9 +471,9 @@ public final class PluginInstaller {
     PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(
       PluginManagerConfigurable.getUpdatesDialogTitle(),
       action -> IdeBundle.message("plugin.installed.ide.restart.required.message",
-                                                                                           descriptor.getName(),
-                                                                                           action,
-                                                                                           ApplicationNamesInfo.getInstance()
-                                                                                             .getFullProductName()));
+                                  descriptor.getName(),
+                                  action,
+                                  ApplicationNamesInfo.getInstance()
+                                    .getFullProductName()));
   }
 }

@@ -492,8 +492,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         Object breakpointOrVariant = getBestMatchingBreakpoint(breakpointInfo.getPosition().getOffset(),
                                                                Stream.concat(breakpoints.stream(), variants.stream()).iterator(),
                                                                o ->
-                                                                 o instanceof XLineBreakpointProxy b
-                                                                 ? b.getHighlightRange()
+                                                                 o instanceof XLineBreakpointProxy b ? rangeOrNull(b.getHighlightRange())
                                                                  : ((FrontendXLineBreakpointVariant)o).getHighlightRange());
 
         if (breakpointOrVariant instanceof XLineBreakpointProxy existingBreakpoint) {
@@ -517,6 +516,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       variantChoice.select(variant);
       return Unit.INSTANCE;
     });
+  }
+
+  private static TextRange rangeOrNull(XLineBreakpointHighlighterRange range) {
+    if (range instanceof XLineBreakpointHighlighterRange.Available available) {
+      return available.getRange();
+    }
+    return null;
   }
 
   @ApiStatus.Internal

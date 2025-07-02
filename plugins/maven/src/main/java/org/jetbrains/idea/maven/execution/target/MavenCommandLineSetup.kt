@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.text.nullize
@@ -39,7 +41,6 @@ import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerEmbedder
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -110,18 +111,38 @@ class MavenCommandLineSetup(
   }
 
   private fun setupTargetJavaRuntime(runnerSettings: MavenRunnerSettings) {
-    val javaHomePath: String? =
-      when {
-        runnerSettings.jreName != MavenRunnerSettings.USE_PROJECT_JDK -> runnerSettings.jreName
-        defaultJavaRuntimeConfiguration?.homePath?.isNotBlank() == true -> defaultJavaRuntimeConfiguration.homePath
-        else -> null
-      } ?: runBlockingCancellable { calculateJavaHome() }
-    if (javaHomePath != null) {
-      commandLine.addEnvironmentVariable(JAVA_HOME_ENV_KEY, javaHomePath)
+    @NativePath
+    var targetJavaHome: String? = null
+    if (runnerSettings.jreName != MavenRunnerSettings.USE_PROJECT_JDK) {
+      val jdkPath = ProjectJdkTable.getInstance(project)
+        .findJdk(runnerSettings.jreName)
+        ?.homePath
+      if (isValidJavaHomePath(jdkPath)) {
+        targetJavaHome = jdkPath!!.asTargetPathString()
+      }
+    } else if (isValidJavaHomePath(defaultJavaRuntimeConfiguration?.homePath)) {
+       targetJavaHome = defaultJavaRuntimeConfiguration?.homePath!!.asTargetPathString()
+    }
+
+    if (targetJavaHome == null) {
+      targetJavaHome = runBlockingCancellable { calculateTargetJavaHome() }
+    }
+    if (targetJavaHome != null) {
+      commandLine.addEnvironmentVariable(JAVA_HOME_ENV_KEY, targetJavaHome)
     }
   }
 
-  private suspend fun calculateJavaHome(): String? {
+  private fun isValidJavaHomePath(javaHomePath: String?) : Boolean {
+    if (javaHomePath == null || javaHomePath.isBlank()) {
+      return false
+    }
+    if (Path.of(javaHomePath).getEelDescriptor() != project.getEelDescriptor()) {
+      throw CantRunException(message("maven.target.run.incompatible.jdk", javaHomePath, name))
+    }
+    return true
+  }
+
+  private suspend fun calculateTargetJavaHome(): @NativePath String? {
     val descriptor = project.getEelDescriptor()
     val eel = descriptor.toEelApi()
     val targetEnv = eel.exec.fetchLoginShellEnvVariables()
@@ -322,5 +343,5 @@ class MavenCommandLineSetup(
     val setupKey = Key.create<MavenCommandLineSetup>("org.jetbrains.idea.maven.execution.target.MavenCommandLineSetup")
   }
 
-  private fun String.asTargetPathString(): String = Path.of(this).asEelPath().toString()
+  private fun @NativePath String.asTargetPathString(): String = Path.of(this).asEelPath().toString()
 }

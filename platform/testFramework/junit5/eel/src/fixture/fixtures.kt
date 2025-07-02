@@ -3,7 +3,7 @@ package com.intellij.platform.testFramework.junit5.eel.fixture
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.testFramework.junit5.eel.impl.currentOs
 import com.intellij.platform.testFramework.junit5.eel.impl.eelInitializer
@@ -39,7 +39,11 @@ interface IsolatedFileSystem {
  * The local file system would not be able to recognize these paths, so you can test whether your feature is eel-agnostic.
  */
 @TestOnly
-fun eelFixture(os: EelPlatform = currentOs): TestFixture<IsolatedFileSystem> {
+fun eelFixture(os: EelPath.OS = currentOs): TestFixture<IsolatedFileSystem> {
+  val os = when (os) {
+    EelPath.OS.WINDOWS -> EelOsFamily.Windows
+    EelPath.OS.UNIX -> EelOsFamily.Posix
+  }
   return testFixture("eel-test-fixture", eelInitializer(os))
 }
 

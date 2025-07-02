@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestRoot("highlighting/highlighting-k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/mainKts")
+@TestMetadata("../../idea/tests/testData/mainKts/highlighting")
 public class K2MainKtsHighlightingTestGenerated extends AbstractK2MainKtsHighlightingTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
@@ -32,11 +32,11 @@ public class K2MainKtsHighlightingTestGenerated extends AbstractK2MainKtsHighlig
 
     @TestMetadata("definitionDependencies.main.kts")
     public void testDefinitionDependencies() throws Exception {
-        runTest("../../idea/tests/testData/mainKts/definitionDependencies.main.kts");
+        runTest("../../idea/tests/testData/mainKts/highlighting/definitionDependencies.main.kts");
     }
 
     @TestMetadata("fileName.main.kts")
     public void testFileName() throws Exception {
-        runTest("../../idea/tests/testData/mainKts/fileName.main.kts");
+        runTest("../../idea/tests/testData/mainKts/highlighting/fileName.main.kts");
     }
 }

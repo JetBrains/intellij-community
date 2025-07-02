@@ -11,6 +11,7 @@ import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
@@ -39,15 +40,15 @@ internal suspend fun <R> suspendAllAndEvaluate(
       tryToBreakOnAnyMethodAndEvaluate(context,  process, null, timeToSuspend, action)
     } else {
       // We are on a Suspend All breakpoint, we can evaluate right here.
-      val result = Channel<R>(capacity = 1)
+      val result = CompletableDeferred<R>()
 
       // We have to evaluate inside SuspendContextCommandImpl, so we just start a new command.
       // TODO: are there any better ways to do this? Should we create proper command above?
       executeOnDMT(suspendContext) {
-        result.send(action(suspendContext))
+        result.completeWith(runCatching { action(suspendContext) })
       }
 
-      result.receive()
+      result.await()
     }
   }
   else {
@@ -61,22 +62,27 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate (
   process: DebugProcessImpl,
   pauseSuspendContext: SuspendContextImpl?,
   timeToSuspend: Duration,
-  block: suspend (SuspendContextImpl) -> R
+  actionToEvaluate: suspend (SuspendContextImpl) -> R
 ): R {
   val onPause = pauseSuspendContext != null
 
-  val actionResult = Channel<R>(capacity = 1)
-  val evaluatableContextObtained = CompletableDeferred<Unit>()
+  var timedOut = false
+
+  val programSuspendedActionStarted = CompletableDeferred<Unit>()
+  val actionResult = CompletableDeferred<R>()
 
   // Create a request which suspends all the threads and gets the suspendContext.
   val requestor = object : FilteredRequestor {
     override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-      val requestor = this
-      runBlockingCancellable {
-        process.requestsManager.deleteRequest(requestor)
+      process.requestsManager.deleteRequest(this)
+      if (!timedOut) {
         val suspendContext = action.suspendContext!!
-        evaluatableContextObtained.complete(Unit)
-        actionResult.send(block(suspendContext))
+        programSuspendedActionStarted.complete(Unit)
+        actionResult.completeWith(runCatching {
+          runBlockingCancellable {
+            actionToEvaluate(suspendContext)
+          }
+        })
       }
       // Note: in case the context was not originally suspended, return false,
       // so that suspendContext is resumed when action is computed,
@@ -87,11 +93,21 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate (
     override fun getSuspendPolicy(): String = DebuggerSettings.SUSPEND_ALL
   }
 
-  val request = process.requestsManager.createMethodEntryRequest(requestor)
+  // We prefer to stop at a predictable location (i.e., SuspendHelper)
+  // to prevent any deadlocks by inconsistent state of VirtualThread/Coroutine
+  // See IDEA-370914.
+  val suspendHelperMethod = process
+    .takeIf { AsyncStacksUtils.isSuspendHelperEnabled() }
+    ?.findLoadedClass(null, "com.intellij.rt.debugger.agent.SuspendHelper", null)
+    ?.let { DebuggerUtils.findMethod(it, "suspendHelperLoopBody", "()V") }
+
+  val request =
+    if (suspendHelperMethod != null) process.requestsManager.createBreakpointRequest(requestor, suspendHelperMethod.locationOfCodeIndex(0))
+    else process.requestsManager.createMethodEntryRequest(requestor)
   request.setSuspendPolicy(EventRequest.SUSPEND_ALL)
   request.isEnabled = true
 
-  // If the context was on pause, it should be resume first to hit the breakpoint
+  // If the context was on pause, it should be resumed first to hit the breakpoint
   if (onPause) {
     context.managerThread!!
       .invokeNow(process.createResumeCommand(pauseSuspendContext))
@@ -100,22 +116,32 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate (
   // Check that we hit the breakpoint within the specified timeout
   try {
     withTimeout(timeToSuspend) {
-      evaluatableContextObtained.await()
+      programSuspendedActionStarted.await()
     }
   }
   catch (e: TimeoutCancellationException) {
-    if (onPause) {
-      // FIXME: get preferred thread from pauseSuspendContext
-      // If the context was originally on pause, but after resume did not hit a breakpoint within a timeout,
-      // then it should be paused again
-      context.managerThread!!
-        .invokeNow(process.createPauseCommand(null))
+    // Try to make it earlier.
+    process.requestsManager.deleteRequest(requestor)
+
+    withDebugContext(context.managerThread!!) {
+      // FIXME: unify all this logic with evaluatable Pause
+      timedOut = true
+      if (programSuspendedActionStarted.isCompleted) {
+        // Request was already processed, we need to ignore the timeout.
+      } else {
+        if (onPause) {
+          // FIXME: get preferred thread from pauseSuspendContext
+          // If the context was originally on pause, but after resume did not hit a breakpoint within a timeout,
+          // then it should be paused again
+          process.createPauseCommand(null).invokeCommand()
+        }
+        throw e
+      }
     }
-    throw e
   }
   finally {
     process.requestsManager.deleteRequest(requestor)
   }
 
-  return actionResult.receive()
+  return actionResult.await()
 }

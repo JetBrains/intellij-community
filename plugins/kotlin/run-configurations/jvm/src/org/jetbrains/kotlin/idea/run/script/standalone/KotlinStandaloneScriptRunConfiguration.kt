@@ -27,6 +27,7 @@ import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
+import org.jetbrains.kotlin.idea.ScriptAfterRunCallbackProvider
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -60,8 +61,12 @@ class KotlinStandaloneScriptRunConfiguration(
     val systemIndependentPath: String?
         get() = filePath?.let { FileUtil.toSystemIndependentName(it) }
 
-    override fun getState(executor: Executor, executionEnvironment: ExecutionEnvironment): RunProfileState =
-        ScriptCommandLineState(executionEnvironment, this)
+    override fun getState(executor: Executor, executionEnvironment: ExecutionEnvironment): RunProfileState {
+        systemIndependentPath?.let {
+            executionEnvironment.callback = ScriptAfterRunCallbackProvider.getCallback(project, it)
+        }
+        return ScriptCommandLineState(executionEnvironment, this)
+    }
 
     override fun suggestedName() = filePath?.substringAfterLast('/')
 

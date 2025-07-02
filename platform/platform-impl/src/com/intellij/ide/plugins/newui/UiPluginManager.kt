@@ -1,26 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.InstallPluginRequest
-import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
-import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.InitSessionResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
@@ -42,6 +43,10 @@ class UiPluginManager {
 
   fun closeSession(uuid: UUID) {
     getController().closeSession(uuid.toString())
+  }
+
+  fun initSession(uuid: UUID): InitSessionResult {
+    return getController().initSession(uuid.toString())
   }
 
   fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): PluginSearchResult {
@@ -86,23 +91,12 @@ class UiPluginManager {
     }
   }
 
-  fun uninstallDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return getController().uninstallDynamicPlugin(parentComponent, pluginId, isUpdate)
+  suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
+    return getController().loadErrors(sessionId)
   }
 
-  /*
-   * Perform the uninstallation and return whether the process requires a restart.
-   */
-  fun performUninstall(sessionId: String, id: PluginId): Boolean {
-    return getController().performUninstall(sessionId, id)
-  }
-
-  fun deletePluginFiles(pluginId: PluginId) {
-    return getController().deletePluginFiles(pluginId)
-  }
-
-  fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean {
-    return getController().allowLoadUnloadSynchronously(pluginId)
+  fun loadErrorsBlocking(sessionId: String): Map<PluginId, CheckErrorsResult> {
+    return runBlockingCancellable { loadErrors(sessionId) }
   }
 
   fun getPlugin(pluginId: PluginId): PluginUiModel? {
@@ -118,13 +112,17 @@ class UiPluginManager {
   }
 
   fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch {
-      getController().setPluginStatus(sessionId, pluginIds, enable)
-    }
+    getController().setPluginStatus(sessionId, pluginIds, enable)
   }
 
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
     return getController().applySession(sessionId, parent, project)
+
+  }
+
+  @NlsSafe
+  fun getApplySessionError(sessionId: String): String? {
+    return getController().getApplyError(sessionId)
   }
 
   fun updatePluginDependencies(sessionId: String): Set<PluginId> {
@@ -224,7 +222,7 @@ class UiPluginManager {
   }
 
   fun getController(): UiPluginManagerController {
-    if (Registry.`is`("reworked.plugin.manager.enabled")) {
+    if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
       return UiPluginManagerController.EP_NAME.extensionList.firstOrNull() ?: DefaultUiPluginManagerController
     }
     return DefaultUiPluginManagerController

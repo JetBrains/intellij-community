@@ -173,11 +173,17 @@ public final class PluginManagerMain {
 
   public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                                                  @NotNull List<? extends IdeaPluginDescriptor> list) {
+    return suggestToEnableInstalledDependantPlugins(pluginEnabler, list, null);
+  }
+
+  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                                                 @NotNull List<? extends IdeaPluginDescriptor> list,
+                                                                 @Nullable Boolean isUpdate) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (IdeaPluginDescriptor node : list) {
       PluginId pluginId = node.getPluginId();
-      if (pluginEnabler.isDisabled(pluginId)) {
+      if (pluginEnabler.isDisabled(pluginId) && (isUpdate == null || isUpdate)) {
         disabled.add(node);
       }
       for (IdeaPluginDependency dependency : node.getDependencies()) {

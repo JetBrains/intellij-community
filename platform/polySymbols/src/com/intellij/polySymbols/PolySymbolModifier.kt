@@ -3,6 +3,15 @@ package com.intellij.polySymbols
 
 import com.intellij.polySymbols.impl.PolySymbolModifierData.Companion.create
 
+/**
+ * A modifier of a PolySymbols. Depending on the symbol `qualifiedKind`,
+ * modifiers might have a different meaning, and it is up to the implementation
+ * to ensure consistency of the modifiers, or how they are merged in
+ * [com.intellij.polySymbols.query.PolySymbolMatch].
+ *
+ * Many of the common modifiers from various languages are provided for
+ * convenience, but implementations are free to define their own ones.
+ */
 interface PolySymbolModifier {
 
   val name: String

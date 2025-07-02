@@ -48,7 +48,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -64,6 +64,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
@@ -92,6 +95,8 @@ public final class PluginManagerConfigurable
 
   public static final String ID = "preferences.pluginManager";
   public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
+  public static final DataKey<Consumer<PluginInstallCallbackData>> PLUGIN_INSTALL_CALLBACK_DATA_KEY =
+    DataKey.create("PLUGIN_INSTALL_CALLBACK_DATA_KEY");
 
   @SuppressWarnings("UseJBColor") public static final Color MAIN_BG_COLOR =
     JBColor.namedColor("Plugins.background", JBColor.lazy(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
@@ -112,7 +117,7 @@ public final class PluginManagerConfigurable
   private PluginsTab myInstalledTab;
 
   private PluginsGroupComponentWithProgress myMarketplacePanel;
-  private PluginsGroupComponent myInstalledPanel;
+  private PluginsGroupComponentWithProgress myInstalledPanel;
 
   private final PluginsGroup myBundledUpdateGroup =
     new PluginsGroup(IdeBundle.message("plugins.configurable.bundled.updates"), PluginsGroupType.BUNDLED_UPDATE);
@@ -127,6 +132,7 @@ public final class PluginManagerConfigurable
   private final JLabel myUpdateCounter = new CountComponent();
   private final JLabel myUpdateCounterBundled = new CountComponent();
   private final CountIcon myCountIcon = new CountIcon();
+  private final CoroutineScope myCoroutineScope;
 
   private final PluginModelFacade myPluginModelFacade;
 
@@ -164,6 +170,12 @@ public final class PluginManagerConfigurable
   public PluginManagerConfigurable() {
     myPluginModelFacade = new PluginModelFacade(new MyPluginModel(null));
     myPluginManagerCustomizer = PluginManagerCustomizer.getInstance();
+    CoroutineScope parentScope =
+      ApplicationManager.getApplication().getService(PluginManagerCoroutineScopeHolder.class).getCoroutineScope();
+    CoroutineScope childScope =
+      com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope(parentScope, getClass().getName(), Dispatchers.getIO(), true);
+    myPluginModelFacade.getModel().setCoroutineScope(childScope);
+    myCoroutineScope = childScope;
   }
 
   @Override
@@ -194,7 +206,12 @@ public final class PluginManagerConfigurable
 
       String query = (index == MARKETPLACE_TAB ? myInstalledTab : myMarketplaceTab).getSearchQuery();
       (index == MARKETPLACE_TAB ? myMarketplaceTab : myInstalledTab).setSearchQuery(query);
-    });
+    }) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        sink.set(PLUGIN_INSTALL_CALLBACK_DATA_KEY, PluginManagerConfigurable.this::onPluginInstalledFromDisk);
+      }
+    };
     createGearGotIt();
 
     myUpdateAll.setVisible(false);
@@ -271,7 +288,9 @@ public final class PluginManagerConfigurable
     }
 
     getPluginsViewCustomizer().processConfigurable(this);
-
+    if (myPluginManagerCustomizer != null) {
+      myPluginManagerCustomizer.initCustomizer(myCardPanel);
+    }
     return myCardPanel;
   }
 
@@ -281,7 +300,8 @@ public final class PluginManagerConfigurable
       UpdateOptions state = UpdateSettings.getInstance().getState();
       myPluginsAutoUpdateEnabled = state.isPluginsAutoUpdateEnabled();
 
-      MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(myDisposer);
+      MessageBusConnection connect =
+        ApplicationManager.getApplication().getMessageBus().connect(com.intellij.util.CoroutineScopeKt.asDisposable(myCoroutineScope));
       connect.subscribe(PluginAutoUpdateListener.Companion.getTOPIC(), new PluginAutoUpdateListener() {
         @Override
         public void settingsChanged() {
@@ -341,9 +361,19 @@ public final class PluginManagerConfigurable
       @Override
       protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
                                                @Nullable Project project) {
+        if (myPluginManagerCustomizer != null) {
+          myPluginManagerCustomizer.updateAfterModification(() -> {
+            PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
+            return null;
+          });
+          return;
+        }
         PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
       }
     });
+    if (myPluginManagerCustomizer != null) {
+      actions.addAll(myPluginManagerCustomizer.getExtraPluginsActions());
+    }
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
@@ -449,8 +479,9 @@ public final class PluginManagerConfigurable
         myMarketplacePanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, true);
+                                                                     @NotNull PluginsGroup group,
+                                                                     @NotNull List<HtmlChunk> errors) {
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, true);
           }
         };
 
@@ -463,14 +494,29 @@ public final class PluginManagerConfigurable
 
         Project project = ProjectUtil.getActiveProject();
 
-        Runnable runnable = () -> {
-          List<PluginsGroup> groups = new ArrayList<>();
+        myMarketplaceRunnable = () -> {
+          myMarketplacePanel.clear();
+          myMarketplacePanel.startLoading();
+          doCreateMarketplaceTab(selectionListener, project);
+        };
 
+        myMarketplacePanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.marketplace.plugins.not.loaded"))
+          .appendSecondaryText(IdeBundle.message("message.check.the.internet.connection.and") + " ", StatusText.DEFAULT_ATTRIBUTES, null)
+          .appendSecondaryText(IdeBundle.message("message.link.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                               e -> myMarketplaceRunnable.run());
+
+        doCreateMarketplaceTab(selectionListener, project);
+        return createScrollPane(myMarketplacePanel, false);
+      }
+
+      private void doCreateMarketplaceTab(@NotNull Consumer<? super PluginsGroupComponent> selectionListener, Project project) {
+        PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, myPluginModelFacade.getModel(), project, model -> {
+          List<PluginsGroup> groups = new ArrayList<>();
           try {
             Map<String, List<PluginUiModel>> customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap();
             try {
               if (project != null) {
-                addSuggestedGroup(groups, project, customRepositoriesMap);
+                addSuggestedGroup(groups, project, customRepositoriesMap, model.getErrors(), model.getSuggestedPlugins());
               }
 
               PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
@@ -484,37 +530,47 @@ public final class PluginManagerConfigurable
                   PluginsGroupType.INTERNAL,
                   SearchWords.INTERNAL.getValue(),
                   customPlugins,
-                  group -> customPlugins.size() >= ITEMS_PER_GROUP
+                  group -> customPlugins.size() >= ITEMS_PER_GROUP,
+                  model.getErrors()
                 );
               }
 
+              Map<String, PluginSearchResult> marketplaceData = model.getMarketplaceData();
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.staff.picks"),
                 PluginsGroupType.STAFF_PICKS,
                 "is_featured_search=true",
-                SearchWords.STAFF_PICKS.getValue()
+                SearchWords.STAFF_PICKS.getValue(),
+                marketplaceData,
+                model.getErrors()
               );
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.new.and.updated"),
                 PluginsGroupType.NEW_AND_UPDATED,
                 "orderBy=update+date",
-                "/sortBy:updated"
+                "/sortBy:updated",
+                marketplaceData,
+                model.getErrors()
               );
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.top.downloads"),
                 PluginsGroupType.TOP_DOWNLOADS,
                 "orderBy=downloads",
-                "/sortBy:downloads"
+                "/sortBy:downloads",
+                marketplaceData,
+                model.getErrors()
               );
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.top.rated"),
                 PluginsGroupType.TOP_RATED,
                 "orderBy=rating",
-                "/sortBy:rating"
+                "/sortBy:rating",
+                marketplaceData,
+                model.getErrors()
               );
             }
             catch (IOException e) {
@@ -534,7 +590,8 @@ public final class PluginManagerConfigurable
                          group -> {
                            PluginsGroup.sortByName(group.getModels());
                            return allDescriptors.size() > ITEMS_PER_GROUP;
-                         });
+                         },
+                         model.getErrors());
               }
             }
             if (myPluginManagerCustomizer != null) {
@@ -571,21 +628,9 @@ public final class PluginManagerConfigurable
               });
             }, ModalityState.any());
           }
-        };
 
-        myMarketplaceRunnable = () -> {
-          myMarketplacePanel.clear();
-          myMarketplacePanel.startLoading();
-          ApplicationManager.getApplication().executeOnPooledThread(runnable);
-        };
-
-        myMarketplacePanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.marketplace.plugins.not.loaded"))
-          .appendSecondaryText(IdeBundle.message("message.check.the.internet.connection.and") + " ", StatusText.DEFAULT_ATTRIBUTES, null)
-          .appendSecondaryText(IdeBundle.message("message.link.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                               e -> myMarketplaceRunnable.run());
-
-        ApplicationManager.getApplication().executeOnPooledThread(runnable);
-        return createScrollPane(myMarketplacePanel, false);
+          return null;
+        });
       }
 
       @Override
@@ -820,8 +865,9 @@ public final class PluginManagerConfigurable
         PluginsGroupComponentWithProgress panel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, true);
+                                                                     @NotNull PluginsGroup group,
+                                                                     @NotNull List<HtmlChunk> errors) {
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, true);
           }
         };
 
@@ -992,11 +1038,12 @@ public final class PluginManagerConfigurable
       protected @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         UiPluginManager uiPluginManager = UiPluginManager.getInstance();
-        myInstalledPanel = new PluginsGroupComponent(eventHandler) {
+        myInstalledPanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, false);
+                                                                     @NotNull PluginsGroup group,
+                                                                     @NotNull List<HtmlChunk> errors) {
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, false);
           }
         };
 
@@ -1006,98 +1053,104 @@ public final class PluginManagerConfigurable
 
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
+        myInstalledPanel.startLoading();
+        PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
+          try {
+            PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
+            installing.setErrors(model.getErrors());
+            installing.addModels(MyPluginModel.getInstallingPlugins());
+            if (!installing.getModels().isEmpty()) {
+              installing.sortByName();
+              installing.titleWithCount();
+              myInstalledPanel.addGroup(installing);
+            }
 
-        try {
-          PluginLogo.startBatchMode();
+            PluginsGroup downloaded =
+              new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
+            downloaded.setErrors(model.getErrors());
+            downloaded.addModels(model.getInstalledPlugins());
 
-          PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
-          installing.addModels(MyPluginModel.getInstallingPlugins());
-          if (!installing.getModels().isEmpty()) {
-            installing.sortByName();
-            installing.titleWithCount();
-            myInstalledPanel.addGroup(installing);
-          }
+            myBundledUpdateGroup.setErrors(model.getErrors());
 
-          PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
-          downloaded.addModels(UiPluginManager.getInstance().getInstalledPlugins());
+            Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
+              .stream()
+              .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
 
-          Map<Boolean, List<PluginUiModel>> visiblePlugins = uiPluginManager
-            .getVisiblePlugins(RegistryManager.getInstance().is("plugins.show.implementation.details"))
-            .stream()
-            .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
+            List<PluginUiModel> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
+            downloaded.addModels(nonBundledPlugins);
 
-          List<PluginUiModel> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
-          downloaded.addModels(nonBundledPlugins);
+            LinkListener<Object> updateAllListener = new LinkListener<>() {
+              @Override
+              public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+                myUpdateAll.setEnabled(false);
+                myUpdateAllBundled.setEnabled(false);
 
-          LinkListener<Object> updateAllListener = new LinkListener<>() {
-            @Override
-            public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
-              myUpdateAll.setEnabled(false);
-              myUpdateAllBundled.setEnabled(false);
-
-              for (UIPluginGroup group : getInstalledGroups()) {
-                if (group.excluded) {
-                  continue;
-                }
-                for (ListPluginComponent plugin : group.plugins) {
-                  plugin.updatePlugin();
+                for (UIPluginGroup group : getInstalledGroups()) {
+                  if (group.excluded) {
+                    continue;
+                  }
+                  for (ListPluginComponent plugin : group.plugins) {
+                    plugin.updatePlugin();
+                  }
                 }
               }
+            };
+            myUpdateAll.setListener(updateAllListener, null);
+            downloaded.addRightAction(myUpdateAll);
+            downloaded.addRightAction(myUpdateCounter);
+
+            if (!downloaded.getModels().isEmpty()) {
+              downloaded.sortByName();
+
+              long enabledNonBundledCount = nonBundledPlugins.stream()
+                .filter(descriptor -> !uiPluginManager.isPluginDisabled(descriptor.getPluginId()))
+                .count();
+              downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
+              myInstalledPanel.addGroup(downloaded);
+              myPluginModelFacade.getModel().addEnabledGroup(downloaded);
             }
-          };
-          myUpdateAll.setListener(updateAllListener, null);
-          downloaded.addRightAction(myUpdateAll);
-          downloaded.addRightAction(myUpdateCounter);
 
-          if (!downloaded.getModels().isEmpty()) {
-            downloaded.sortByName();
+            myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
 
-            long enabledNonBundledCount = nonBundledPlugins.stream()
-              .filter(descriptor -> !uiPluginManager.isPluginDisabled(descriptor.getPluginId()))
-              .count();
-            downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
-            myInstalledPanel.addGroup(downloaded);
-            myPluginModelFacade.getModel().addEnabledGroup(downloaded);
-          }
+            String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
+            visiblePlugins.get(Boolean.TRUE)
+              .stream()
+              .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
+              .entrySet()
+              .stream()
+              .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
+              .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
+                                  defaultCategory.equals(o2.title) ? -1 :
+                                  o1.compareTo(o2))
+              .forEachOrdered(group -> {
+                group.setErrors(model.getErrors());
+                myInstalledPanel.addGroup(group);
+                myPluginModelFacade.getModel().addEnabledGroup(group);
+              });
 
-          myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
+            myUpdateAllBundled.setListener(updateAllListener, null);
+            myBundledUpdateGroup.addRightAction(myUpdateAllBundled);
+            myBundledUpdateGroup.addRightAction(myUpdateCounterBundled);
 
-          String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
-          visiblePlugins.get(Boolean.TRUE)
-            .stream()
-            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
-            .entrySet()
-            .stream()
-            .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
-            .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
-                                defaultCategory.equals(o2.title) ? -1 :
-                                o1.compareTo(o2))
-            .forEachOrdered(group -> {
-              myInstalledPanel.addGroup(group);
-              myPluginModelFacade.getModel().addEnabledGroup(group);
+            myPluginUpdatesService.calculateUpdates(updates -> {
+              if (ContainerUtil.isEmpty(updates)) {
+                clearUpdates(myInstalledPanel);
+                clearUpdates(myInstalledSearchPanel.getPanel());
+              }
+              else {
+                applyUpdates(myInstalledPanel, updates);
+                applyUpdates(myInstalledSearchPanel.getPanel(), updates);
+              }
+              applyBundledUpdates(updates);
+              selectionListener.accept(myInstalledPanel);
+              selectionListener.accept(myInstalledSearchPanel.getPanel());
             });
-
-          myUpdateAllBundled.setListener(updateAllListener, null);
-          myBundledUpdateGroup.addRightAction(myUpdateAllBundled);
-          myBundledUpdateGroup.addRightAction(myUpdateCounterBundled);
-
-          myPluginUpdatesService.calculateUpdates(updates -> {
-            if (ContainerUtil.isEmpty(updates)) {
-              clearUpdates(myInstalledPanel);
-              clearUpdates(myInstalledSearchPanel.getPanel());
-            }
-            else {
-              applyUpdates(myInstalledPanel, updates);
-              applyUpdates(myInstalledSearchPanel.getPanel(), updates);
-            }
-            applyBundledUpdates(updates);
-            selectionListener.accept(myInstalledPanel);
-            selectionListener.accept(myInstalledSearchPanel.getPanel());
-          });
-        }
-        finally {
-          PluginLogo.endBatchMode();
-        }
+          }
+          finally {
+            myInstalledPanel.stopLoading();
+          }
+          return null;
+        });
 
         return createScrollPane(myInstalledPanel, true);
       }
@@ -1162,8 +1215,9 @@ public final class PluginManagerConfigurable
         PluginsGroupComponent panel = new PluginsGroupComponent(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, false);
+                                                                     @NotNull PluginsGroup group,
+                                                                     @NotNull List<HtmlChunk> errors) {
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, false);
           }
         };
 
@@ -1371,10 +1425,12 @@ public final class PluginManagerConfigurable
 
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Project project,
-                                 Map<String, @NotNull List<PluginUiModel>> customMap) {
+                                 Map<String, @NotNull List<PluginUiModel>> customMap,
+                                 @NotNull Map<@NotNull PluginId,
+                                 @NotNull List<@NotNull HtmlChunk>> errors,
+                                 @NotNull List<@NotNull PluginUiModel> plugins) {
     String groupName = IdeBundle.message("plugins.configurable.suggested");
     LOG.info("Marketplace tab: '" + groupName + "' group load started");
-    List<PluginUiModel> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customMap);
 
     for (PluginUiModel plugin : plugins) {
       if (plugin.isFromMarketplace()) {
@@ -1383,7 +1439,7 @@ public final class PluginManagerConfigurable
 
       FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
     }
-    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
+    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false, errors);
   }
 
 
@@ -1879,9 +1935,10 @@ public final class PluginManagerConfigurable
                         @NotNull PluginsGroupType type,
                         @NotNull String showAllQuery,
                         @NotNull List<PluginUiModel> customPlugins,
-                        @NotNull Predicate<? super PluginsGroup> showAllPredicate) {
+                        @NotNull Predicate<? super PluginsGroup> showAllPredicate,
+                        @NotNull Map<PluginId, List<HtmlChunk>> errors) {
     PluginsGroup group = new PluginsGroup(name, type);
-
+    group.setErrors(errors);
     int i = 0;
     for (Iterator<PluginUiModel> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
       group.addModel(iterator.next());
@@ -1905,9 +1962,11 @@ public final class PluginManagerConfigurable
                                           @NotNull @Nls String name,
                                           @NotNull PluginsGroupType type,
                                           @NotNull @NonNls String query,
-                                          @NotNull @NonNls String showAllQuery) throws IOException {
+                                          @NotNull @NonNls String showAllQuery,
+                                          @NotNull Map<String, PluginSearchResult> marketplaceData,
+                                          @NotNull Map<PluginId, List<HtmlChunk>> errors) throws IOException {
     LOG.info("Marketplace tab: '" + name + "' group load started");
-    PluginSearchResult searchResult = UiPluginManager.getInstance().executeMarketplaceQuery(query, ITEMS_PER_GROUP * 2, false);
+    PluginSearchResult searchResult = marketplaceData.get(query);
     if (searchResult.getError() != null) {
       throw new IOException(searchResult.getError());
     }
@@ -1923,7 +1982,8 @@ public final class PluginManagerConfigurable
              type,
              showAllQuery,
              plugins,
-             __ -> plugins.size() >= ITEMS_PER_GROUP);
+             __ -> plugins.size() >= ITEMS_PER_GROUP,
+             errors);
   }
 
   @Override
@@ -1958,7 +2018,7 @@ public final class PluginManagerConfigurable
     pluginsState.resetChangesAppliedWithoutRestart();
 
     if (myDisposer != null) {
-      Disposer.dispose(myDisposer);
+      CoroutineScopeKt.cancel(myCoroutineScope, null);
       myDisposer = null;
     }
   }

@@ -19,31 +19,31 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XBreakpointApi : RemoteApi<Unit> {
-  suspend fun setEnabled(breakpointId: XBreakpointId, enabled: Boolean)
+  suspend fun setEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean)
 
-  suspend fun setSuspendPolicy(breakpointId: XBreakpointId, suspendPolicy: SuspendPolicy)
+  suspend fun setSuspendPolicy(breakpointId: XBreakpointId, requestId: Long, suspendPolicy: SuspendPolicy)
 
   suspend fun setDefaultSuspendPolicy(project: ProjectId, breakpointTypeId: XBreakpointTypeId, policy: SuspendPolicy)
 
-  suspend fun setConditionEnabled(breakpointId: XBreakpointId, enabled: Boolean)
+  suspend fun setConditionEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean)
 
-  suspend fun setConditionExpression(breakpointId: XBreakpointId, condition: XExpressionDto?)
+  suspend fun setConditionExpression(breakpointId: XBreakpointId, requestId: Long, condition: XExpressionDto?)
 
-  suspend fun setLogMessage(breakpointId: XBreakpointId, enabled: Boolean)
+  suspend fun setLogMessage(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean)
 
-  suspend fun setLogStack(breakpointId: XBreakpointId, enabled: Boolean)
+  suspend fun setLogStack(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean)
 
-  suspend fun setLogExpressionEnabled(breakpointId: XBreakpointId, enabled: Boolean)
+  suspend fun setLogExpressionEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean)
 
-  suspend fun setLogExpressionObject(breakpointId: XBreakpointId, logExpression: XExpressionDto?)
+  suspend fun setLogExpressionObject(breakpointId: XBreakpointId, requestId: Long, logExpression: XExpressionDto?)
 
-  suspend fun setTemporary(breakpointId: XBreakpointId, isTemporary: Boolean)
+  suspend fun setTemporary(breakpointId: XBreakpointId, requestId: Long, isTemporary: Boolean)
 
-  suspend fun setUserDescription(breakpointId: XBreakpointId, description: String?)
+  suspend fun setUserDescription(breakpointId: XBreakpointId, requestId: Long, description: String?)
 
-  suspend fun updatePosition(breakpointId: XBreakpointId)
-  suspend fun setFileUrl(breakpointId: XBreakpointId, fileUrl: String?)
-  suspend fun setLine(breakpointId: XBreakpointId, line: Int)
+  suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long)
+  suspend fun setFileUrl(breakpointId: XBreakpointId, requestId: Long, fileUrl: String?)
+  suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int)
 
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId?
 

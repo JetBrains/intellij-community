@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.PluginId;
@@ -69,6 +70,12 @@ public final class InstalledPluginsState {
     }
   }
 
+  public @NotNull Collection<PluginId> getInstalledWithoutRestartPlugins() {
+    synchronized (myLock) {
+      return Collections.unmodifiableCollection(myInstalledWithoutRestartPlugins);
+    }
+  }
+
   public @NotNull Collection<PluginId> getUpdatedPlugins() {
     synchronized (myLock) {
       return Collections.unmodifiableCollection(myUpdatedPlugins);
@@ -118,14 +125,14 @@ public final class InstalledPluginsState {
    * Should be called whenever a list of plugins is loaded from a repository to check if there is an updated version.
    */
   @ApiStatus.Internal
-  public void onDescriptorDownload(@NotNull IdeaPluginDescriptor descriptor) {
+  public void onDescriptorDownload(@NotNull PluginUiModel descriptor) {
     PluginId id = descriptor.getPluginId();
     IdeaPluginDescriptor existing = PluginManagerCore.getPlugin(id);
     if (existing == null || (existing.isBundled() && !existing.allowBundledUpdate()) || wasUpdated(id)) {
       return;
     }
 
-    boolean supersedes = PluginManagerCore.isCompatible(descriptor) &&
+    boolean supersedes = PluginManagerCore.isCompatible(descriptor.getDescriptor()) &&
                          PluginDownloader.compareVersionsSkipBrokenAndIncompatible(descriptor.getVersion(), existing) > 0;
 
     String idString = id.getIdString();

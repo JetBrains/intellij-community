@@ -51,8 +51,8 @@ class EelFileWatcher : PluggableFileWatcher() {
   override fun isSettingRoots(): Boolean = isOperational() && mySettingRoots.get() > 0
 
   override fun setWatchRoots(recursive: List<String>, flat: List<String>, shuttingDown: Boolean) {
-    val recursiveFiltered = recursive.mapNotNull { it.getDevcontainerPathInfo() }
-    val flatFiltered = flat.mapNotNull { it.getDevcontainerPathInfo() }
+    val recursiveFiltered = filterAndNotifyManualWatchRoots(recursive)
+    val flatFiltered = filterAndNotifyManualWatchRoots(recursive)
     if (recursiveFiltered.isEmpty() && flatFiltered.isEmpty()) return
     if (shuttingDown) {
       myShuttingDown = true
@@ -83,6 +83,13 @@ class EelFileWatcher : PluggableFileWatcher() {
         true
       } else false
     }
+  }
+
+  private fun filterAndNotifyManualWatchRoots(all: List<String>): List<DevcontainerPathInfo> {
+    val (result, ignored) = all.map { it to it.getDevcontainerPathInfo() }.partition { it.second != null }
+    myNotificationSink.notifyManualWatchRoots(this, ignored.map { it.first })
+
+    return result.mapNotNull { it.second }
   }
 
   private fun sortRoots(roots: List<DevcontainerPathInfo>,

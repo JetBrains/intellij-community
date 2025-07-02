@@ -1572,8 +1572,6 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - p:createOpenAction(java.lang.String,java.util.Set,com.intellij.ide.RecentProjectsManagerBase):com.intellij.ide.ReopenProjectAction
 - f:getActions():java.util.List
 - f:getActions(Z):java.util.List
-- getActions(Z,Z):java.util.List
-- bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,I,java.lang.Object):java.util.List
 - sf:getInstance():com.intellij.ide.RecentProjectListActionProvider
 - isCurrentProjectAction(com.intellij.openapi.project.Project,com.intellij.ide.ReopenProjectAction):Z
 f:com.intellij.ide.RecentProjectListActionProvider$Companion
@@ -2307,8 +2305,8 @@ f:com.intellij.ide.actions.UndoAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - <init>():V
 a:com.intellij.ide.actions.UndoRedoAction
-- com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.project.DumbAwareAction
+- com.intellij.ide.lightEdit.LightEditCompatible
 - sf:IGNORE_SWING_UNDO_MANAGER:com.intellij.openapi.util.Key
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -3200,7 +3198,6 @@ c:com.intellij.ide.plugins.InstalledPluginsTableModel
 - pf:sessionId:java.util.UUID
 - pf:view:java.util.List
 - <init>(com.intellij.openapi.project.Project):V
-- <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.Collection):V
 - pf:getEnabledMap():java.util.Map
 - pf:getProject():com.intellij.openapi.project.Project
 - p:handleBeforeChangeEnableState(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.Pair):V
@@ -3267,15 +3264,10 @@ f:com.intellij.ide.plugins.PluginHostsConfigurable
 - isModified():Z
 - reset():V
 f:com.intellij.ide.plugins.PluginInstallCallbackData
-- <init>(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,Z):V
 - f:component1():java.nio.file.Path
-- f:component2():com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 - f:component3():Z
-- f:copy(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,Z):com.intellij.ide.plugins.PluginInstallCallbackData
-- bs:copy$default(com.intellij.ide.plugins.PluginInstallCallbackData,java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,Z,I,java.lang.Object):com.intellij.ide.plugins.PluginInstallCallbackData
 - equals(java.lang.Object):Z
 - f:getFile():java.nio.file.Path
-- f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 - f:getRestartNeeded():Z
 - hashCode():I
 f:com.intellij.ide.plugins.PluginInstaller
@@ -3702,19 +3694,6 @@ c:com.intellij.ide.plugins.newui.SearchQueryParser$Marketplace
 - p:handleAttribute(java.lang.String,java.lang.String):V
 com.intellij.ide.plugins.newui.TabHeaderListener
 - a:selectionChanged(I):V
-f:com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent
-- javax.swing.JPanel
-- <init>(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.ide.plugins.newui.TabHeaderListener):V
-- addNotify():V
-- addTab(java.lang.String,javax.swing.Icon):V
-- getSelectionTab():I
-- setBounds(I,I,I,I):V
-- setListener():V
-- setSelection(I):V
-- setSelectionWithEvents(I):V
-- setTabTooltip(I,java.lang.String):V
-- update():V
-- updateUI():V
 f:com.intellij.ide.plugins.newui.TagComponent
 - com.intellij.ide.plugins.newui.LinkComponent
 - <init>():V

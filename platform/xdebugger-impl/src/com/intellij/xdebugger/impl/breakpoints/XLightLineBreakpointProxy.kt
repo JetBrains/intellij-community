@@ -18,11 +18,19 @@ interface XLightLineBreakpointProxy {
 
   fun getFile(): VirtualFile?
   fun getLine(): Int
-  fun getHighlightRange(): TextRange?
+  fun getHighlightRange(): XLineBreakpointHighlighterRange
+  suspend fun getHighlightRangeSuspend(): XLineBreakpointHighlighterRange = getHighlightRange()
+
   fun isEnabled(): Boolean
   fun updateIcon()
   fun createGutterIconRenderer(): GutterIconRenderer?
 
   @RequiresBackgroundThread
   fun doUpdateUI(callOnUpdate: () -> Unit = {})
+}
+
+@ApiStatus.Internal
+sealed interface XLineBreakpointHighlighterRange {
+  object Unavailable : XLineBreakpointHighlighterRange
+  data class Available(val range: TextRange?) : XLineBreakpointHighlighterRange
 }

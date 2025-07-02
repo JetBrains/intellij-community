@@ -12,6 +12,6 @@ class KotlinDslSyncListener : AbstractKotlinDslSyncListener() {
         sync: KotlinDslGradleBuildSync
     ) {
         if (sync.models.isEmpty()) return
-        GradleScriptDefinitionsStorage.getInstance(project).loadDefinitionsFromDisk(sync.workingDir, sync.gradleHome, sync.javaHome, sync.gradleVersion)
+        GradleScriptDefinitionsStorage.getInstance(project).loadDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, sync.gradleVersion)
     }
 }

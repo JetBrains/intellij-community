@@ -13,12 +13,13 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.gradle.scripting.shared.*
 import org.jetbrains.kotlin.idea.core.script.*
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptRefinedConfigurationResolver
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptWorkspaceModelManager
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptModuleRelativeLocation
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import kotlin.script.experimental.api.*
@@ -36,7 +36,7 @@ import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
 class GradleScriptRefinedConfigurationProvider(
-  val project: Project, val coroutineScope: CoroutineScope
+    val project: Project, val coroutineScope: CoroutineScope
 ) : ScriptRefinedConfigurationResolver, ScriptWorkspaceModelManager {
     private val data = AtomicReference<Map<VirtualFile, ScriptConfigurationWithSdk>>(emptyMap())
 
@@ -45,17 +45,16 @@ class GradleScriptRefinedConfigurationProvider(
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data.get()[virtualFile]
 
     suspend fun processScripts(scriptsData: GradleScriptModelData, storageToUpdate: MutableEntityStorage? = null) {
+        val sdk = scriptsData.javaHome.resolveSdk()
+        val javaHomePath = sdk?.homePath?.let { File(it) }
+
         val configurations = scriptsData.models.associate { gradleScript: GradleScriptModel ->
             val sourceCode = VirtualFileScriptSource(gradleScript.virtualFile)
             val definition = findScriptDefinition(project, sourceCode)
 
-            val sdk = scriptsData.javaHome.resolveSdk()
-
-            val javaHomePath = sdk?.homePath?.let { Path.of(it) }
-
             val configuration = definition.compilationConfiguration.with {
-                javaHomePath?.let {
-                    jvm.jdkHome(it.toFile())
+                if (javaHomePath != null) {
+                    jvm.jdkHome(javaHomePath)
                 }
                 defaultImports(gradleScript.imports)
                 dependencies(JvmDependency(gradleScript.classPath.map { File(it) }))
@@ -67,39 +66,46 @@ class GradleScriptRefinedConfigurationProvider(
             gradleScript.virtualFile to ScriptConfigurationWithSdk(updatedConfiguration, sdk)
         }
 
+        val updatedStorage = MutableEntityStorage.create()
         if (storageToUpdate == null) {
             project.workspaceModel.update("updating .gradle.kts scripts") { storage ->
-                val storageWithGradleScriptModules = getUpdatedStorage(configurations) // under writeAction from workspaceModel.update
-                storage.replaceBySource({ it is KotlinGradleScriptModuleEntitySource }, storageWithGradleScriptModules)
+                updatedStorage.enrichStorage(configurations) // under writeAction from workspaceModel.update
+                storage.replaceBySource({ it is KotlinGradleScriptModuleEntitySource }, updatedStorage)
             }
         } else {
-            val storageWithGradleScriptModules = getUpdatedStorage(configurations) // do not care about the locks here
-            storageToUpdate.replaceBySource({ it is KotlinGradleScriptModuleEntitySource }, storageWithGradleScriptModules)
+            updatedStorage.enrichStorage(configurations) // do not care about the locks here
+            storageToUpdate.replaceBySource({ it is KotlinGradleScriptModuleEntitySource }, updatedStorage)
         }
 
         data.set(configurations)
     }
 
-  private fun String?.resolveSdk(): Sdk? {
+    private fun String?.resolveSdk(): Sdk? {
         if (this == null) {
-            LOG.warn("[KOTLIN_SCRIPTING] Gradle javaHome is null")
+            scriptingWarnLog("Gradle javaHome is null")
             return null
         }
         return ExternalSystemJdkUtil.lookupJdkByPath(this).also {
-            LOG.info("[KOTLIN_SCRIPTING] resolved sdk=$it, javaHome=$this")
+            scriptingDebugLog { "resolved gradle sdk=$it, javaHome=$this" }
         }
     }
 
-    override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {}
+    override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
+        if (configurationPerFile.size == 1) {
+            val currentStorage = project.workspaceModel.currentSnapshot.toBuilder()
+            project.workspaceModel.update("updating .gradle.kts scripts") { storage ->
+                currentStorage.enrichStorage(configurationPerFile) // under writeAction from workspaceModel.update
+                storage.applyChangesFrom(currentStorage)
+            }
+        }
+    }
 
-    private fun getUpdatedStorage(
-      configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
-    ): MutableEntityStorage {
-        val result = MutableEntityStorage.Companion.create()
-
-        val urlManager = WorkspaceModel.Companion.getInstance(project).getVirtualFileUrlManager()
+    private fun MutableEntityStorage.enrichStorage(
+        configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
+    ) {
+        val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
         val virtualFileCache = ScriptVirtualFileCache()
-        val dependencyFactory = ScriptDependencyFactory(result, configurations, virtualFileCache)
+        val dependencyFactory = ScriptDependencyFactory(this, configurations, virtualFileCache)
 
         for ((scriptFile, configurationWithSdk) in configurations) {
             val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
@@ -107,7 +113,7 @@ class GradleScriptRefinedConfigurationProvider(
 
             val definition = findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
             val definitionName = definition.name
-            val externalProjectPath = definition.compilationConfiguration[ScriptCompilationConfiguration.Companion.gradle.externalProjectPath]
+            val externalProjectPath = definition.compilationConfiguration[ScriptCompilationConfiguration.gradle.externalProjectPath]
             val scriptRelativeLocation = project.scriptModuleRelativeLocation(scriptFile)
 
             val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
@@ -117,21 +123,21 @@ class GradleScriptRefinedConfigurationProvider(
             val allDependencies = listOfNotNull(sdkDependency) + buildList {
                 val sources = configuration.dependenciesSources.mapNotNull { virtualFileCache.findVirtualFile(it.path) }.toMutableSet()
                 add(
-                    result.groupRootsByPredicate(classes, sources, source, "kotlin-stdlib dependencies") {
+                    groupRootsByPredicate(classes, sources, source, "kotlin-stdlib dependencies") {
                         it.name.contains("kotlin-stdlib")
                     }
                 )
 
                 if (indexSourceRootsEagerly()) {
-                    addAll(result.createDependenciesWithSources(classes, sources, source))
+                    addAll(createDependenciesWithSources(classes, sources, source))
                     add(
-                        result.groupRootsByPredicate(
+                        groupRootsByPredicate(
                             classes, sources, source, "$scriptRelativeLocation accessors dependencies"
                         ) {
                             it.path.contains("accessors")
                         })
                     add(
-                        result.groupRootsByPredicate(
+                        groupRootsByPredicate(
                             classes, sources, source, "$scriptRelativeLocation groovy dependencies"
                         ) {
                             it.path.contains("groovy")
@@ -143,27 +149,26 @@ class GradleScriptRefinedConfigurationProvider(
                 })
             }.distinct().sortedBy { it.library.name }
 
-
-            val moduleName = "${KOTLIN_SCRIPTS_MODULE_NAME}.$definitionName.$scriptRelativeLocation"
-            result addEntity ModuleEntity(moduleName, allDependencies, source) {
-              this.exModuleOptions = ExternalSystemModuleOptionsEntity.Companion(source) {
-                this.externalSystem = GradleConstants.SYSTEM_ID.id
-                this.module = this@ModuleEntity
-                this.rootProjectPath = "kotlin-scripts:$externalProjectPath"
-                this.linkedProjectId = moduleName
-              }
+            val scriptModuleId = ModuleId("${KOTLIN_SCRIPTS_MODULE_NAME}.$definitionName.$scriptRelativeLocation")
+            if (!this.contains(scriptModuleId)) {
+                this addEntity ModuleEntity(scriptModuleId.name, allDependencies, source) {
+                    this.exModuleOptions = ExternalSystemModuleOptionsEntity.Companion(source) {
+                        this.externalSystem = GradleConstants.SYSTEM_ID.id
+                        this.module = this@ModuleEntity
+                        this.rootProjectPath = "kotlin-scripts:$externalProjectPath"
+                        this.linkedProjectId = scriptModuleId.name
+                    }
+                }
             }
         }
-
-        return result
     }
 
     private fun MutableEntityStorage.groupRootsByPredicate(
-      classes: MutableSet<VirtualFile>,
-      sources: MutableSet<VirtualFile>,
-      source: KotlinScriptEntitySource,
-      dependencyName: String,
-      predicate: Predicate<VirtualFile>
+        classes: MutableSet<VirtualFile>,
+        sources: MutableSet<VirtualFile>,
+        source: KotlinScriptEntitySource,
+        dependencyName: String,
+        predicate: Predicate<VirtualFile>
     ): LibraryDependency {
         val groupedClasses = classes.removeOnMatch(predicate)
         val groupedSources = sources.removeOnMatch(predicate)
@@ -188,9 +193,9 @@ class GradleScriptRefinedConfigurationProvider(
     }
 
     inner class ScriptDependencyFactory(
-      private val entityStorage: MutableEntityStorage,
-      scripts: Map<VirtualFile, ScriptConfigurationWithSdk>,
-      virtualFileCache: ScriptVirtualFileCache,
+        private val entityStorage: MutableEntityStorage,
+        scripts: Map<VirtualFile, ScriptConfigurationWithSdk>,
+        virtualFileCache: ScriptVirtualFileCache,
     ) {
         private val nameCache = HashMap<String, Set<VirtualFile>>()
 
@@ -247,7 +252,7 @@ class GradleScriptRefinedConfigurationProvider(
     }
 
     private fun MutableEntityStorage.createDependenciesWithSources(
-      classes: MutableSet<VirtualFile>, sources: MutableSet<VirtualFile>, source: KotlinScriptEntitySource
+        classes: MutableSet<VirtualFile>, sources: MutableSet<VirtualFile>, source: KotlinScriptEntitySource
     ): List<LibraryDependency> {
         val result: MutableList<LibraryDependency> = mutableListOf()
         val sourcesNames = sources.associateBy { it.name }

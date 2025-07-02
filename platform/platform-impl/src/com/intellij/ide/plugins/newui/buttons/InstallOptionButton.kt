@@ -46,6 +46,11 @@ class InstallOptionButton @JvmOverloads constructor(
     }
   }
 
+  override fun setAction(a: Action?) {
+    super.setAction(a)
+    setWidth(this, 80)
+  }
+
   override fun setEnabled(b: Boolean) {
     super.setEnabled(b)
     action?.isEnabled = b

@@ -10,7 +10,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import kotlinx.coroutines.*
 import javax.swing.Icon
 
@@ -23,7 +22,7 @@ internal class FrontendXLightLineBreakpoint(
 ) : XLightLineBreakpointProxy {
   private val cs = parentCs.childScope("FrontendXLightLineBreakpoint")
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(this, useFeProxy(), breakpointManager)
+  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeLineBreakpointProxy(), breakpointManager)
 
   init {
     // TODO IJPL-185322: let's add loading icon if light breakpoint is alive for more than ~300ms
@@ -56,9 +55,9 @@ internal class FrontendXLightLineBreakpoint(
     return installationInfo.position.line
   }
 
-  // TODO IJPL-185322: should we support highlighting range to partially highlight the line?
-  override fun getHighlightRange(): TextRange? {
-    return null
+  override fun getHighlightRange(): XLineBreakpointHighlighterRange {
+    // only full line breakpoints can be light breakpoints
+    return XLineBreakpointHighlighterRange.Available(null)
   }
 
   override fun isEnabled(): Boolean {
@@ -74,9 +73,7 @@ internal class FrontendXLightLineBreakpoint(
   }
 
   override fun doUpdateUI(callOnUpdate: () -> Unit) {
-    if (useFeLineBreakpointProxy()) {
-      visualRepresentation.doUpdateUI(callOnUpdate)
-    }
+    visualRepresentation.doUpdateUI(callOnUpdate)
   }
 
   private class FrontendXLightBreakpointGutterIconRenderer(

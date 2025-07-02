@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 @ApiStatus.Internal
-class RemotePluginUpdatesService(private val sessionId: String) : PluginUpdatesService() {
+open class RemotePluginUpdatesService(private val sessionId: String) : PluginUpdatesService() {
 
   private val coroutineScope = service<BackendRpcCoroutineContext>().coroutineScope.childScope("RemotePluginUpdatesServiceScope")
 

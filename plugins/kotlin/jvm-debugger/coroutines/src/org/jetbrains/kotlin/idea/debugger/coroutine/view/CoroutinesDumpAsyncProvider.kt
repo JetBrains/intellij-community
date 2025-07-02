@@ -27,7 +27,7 @@ import javax.swing.Icon
 @ApiStatus.Internal
 class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     override fun getProvider(context: DebuggerContextImpl): ThreadDumpItemsProvider = object : ThreadDumpItemsProvider {
-        override val progressText: String get() = JavaDebuggerBundle.message("thread.dump.coroutines.progress")
+        override val itemsName: String get() = JavaDebuggerBundle.message("thread.dump.coroutines.name")
 
         private val enabled: Boolean =
             Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel") &&

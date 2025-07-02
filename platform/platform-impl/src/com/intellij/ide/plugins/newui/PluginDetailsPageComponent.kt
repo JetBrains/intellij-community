@@ -12,7 +12,6 @@ import com.intellij.ide.impl.ProjectUtil.getProjectForComponent
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.api.ReviewsPageContainer
-import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.pluginCardOpened
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginHomepage
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginReviewNoteUrl
@@ -55,7 +54,9 @@ import com.intellij.util.ui.AsyncProcessIcon.BigCentered
 import com.intellij.util.ui.StartupUiUtil.labelFont
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -63,6 +64,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
+import java.util.Collections
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
@@ -167,8 +169,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   init {
     nameAndButtons = BaselinePanel(12, false)
     customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
-    pluginManagerCustomizer = if (Registry.`is`("reworked.plugin.manager.enabled")) {
-      PluginManagerCustomizer.EP_NAME.extensionList.first()
+    pluginManagerCustomizer = if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+      PluginManagerCustomizer.EP_NAME.extensionList.firstOrNull()
     }
     else null
 
@@ -315,7 +317,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     nameAndButtons!!.add(versionPanel)
 
     createButtons()
-    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else updateButton)!!)
+    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else if (updateDescriptor != null) updateButton else gearButton)!!)
 
     topPanel.add(ErrorComponent().also { errorComponent = it }, VerticalLayout.FILL_HORIZONTAL)
     topPanel.add(licensePanel)
@@ -425,21 +427,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
     updateButton!!.addActionListener {
-      val modalityState = ModalityState.stateForComponent(updateButton!!)
-      val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
-                                                                                        descriptorForActions!!,
-                                                                                        updateDescriptor,
-                                                                                        modalityState)?.action
-      if (customizedAction != null) {
-        customizedAction()
-      }
-      else {
-        pluginModel.installOrUpdatePlugin(
-          this,
-          descriptorForActions!!, updateDescriptor,
-          modalityState,
-        )
-      }
+      updatePlugin()
     }
 
     nameAndButtons.addButtonComponent(createInstallButton().also { installButton = it }.getComponent())
@@ -461,6 +449,24 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   fun setOnlyUpdateMode() {
     nameAndButtons!!.removeButtons()
     emptyPanel!!.border = null
+  }
+
+  private fun updatePlugin() {
+    val modalityState = ModalityState.stateForComponent(updateButton!!)
+    val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
+                                                                                      descriptorForActions!!,
+                                                                                      updateDescriptor,
+                                                                                      modalityState)?.action
+    if (customizedAction != null) {
+      customizedAction()
+    }
+    else {
+      pluginModel.installOrUpdatePlugin(
+        this,
+        descriptorForActions!!, updateDescriptor,
+        modalityState,
+      )
+    }
   }
 
   private fun createScrollPane(component: JComponent): JBScrollPane {
@@ -529,19 +535,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     else {
       enableDisableController?.update()
     }
-  }
-
-  private fun customizeUpdateAction() {
-    if (pluginManagerCustomizer == null) return
-    val uiModel = descriptorForActions ?: return
-    val updateModel = updateDescriptor ?: return
-    val component = updateButton ?: return
-    val modalityState = ModalityState.stateForComponent(component)
-    val customizationModel = pluginManagerCustomizer.getUpdateButtonCustomizationModel(pluginModel,
-                                                                                       uiModel,
-                                                                                       updateModel,
-                                                                                       modalityState) ?: return
-
   }
 
   private fun updateAdditionalText() {
@@ -1050,7 +1043,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                     }, ModalityState.any())
 
     if (pluginModel.isPluginInstallingOrUpdating(plugin)) {
-      showProgress()
+      showInstallProgress()
     }
     else {
       fullRepaint()
@@ -1382,14 +1375,33 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     fullRepaint()
   }
 
-  fun showProgress() {
+  fun showProgress(storeIndicator: Boolean, cancelRunnable: () -> Unit) {
     indicator = OneLineProgressIndicator(false)
-    indicator!!.setCancelRunnable { pluginModel.finishInstall(descriptorForActions!!, null, false, false, true) }
+    indicator!!.setCancelRunnable(cancelRunnable)
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
-
-    PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)
+    if (storeIndicator) {
+      PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)
+    }
 
     fullRepaint()
+  }
+
+  fun showInstallProgress() {
+    showProgress(true) {
+      pluginModel.finishInstall(descriptorForActions!!,
+                                null,
+                                false,
+                                false,
+                                true,
+                                Collections.emptyMap())
+    }
+  }
+
+  fun showUninstallProgress(cs: CoroutineScope) {
+    showProgress(false) {
+      cs.cancel()
+      hideProgress()
+    }
   }
 
   private fun fullRepaint() {
@@ -1399,7 +1411,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun applyCustomization() {
-    if (plugin == null) return
+    if (plugin == null || pluginManagerCustomizer == null) return
     customizeEnableDisableButton()
     customizeInstallButton()
     updateAdditionalText()
@@ -1419,6 +1431,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun updateButtonsAndApplyCustomization() {
     updateButtons()
     applyCustomization()
+  }
+
+  fun hideProgress() {
+    indicator = null
+    nameAndButtons?.removeProgressComponent()
   }
 
   fun hideProgress(success: Boolean, restartRequired: Boolean) {
@@ -1460,7 +1477,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun createInstallButton(): PluginInstallButton {
-    if (Registry.`is`("reworked.plugin.manager.enabled")) {
+    if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
       val button = InstallOptionButton()
       setDefaultInstallAction(button)
       return button
@@ -1680,7 +1697,7 @@ private fun getDeletedState(pluginUiModel: PluginUiModel): BooleanArray {
   val state = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
   val uninstalledWithoutRestart = state.status == PluginStatus.UNINSTALLED_WITHOUT_RESTART
   if (!uninstalled) {
-    uninstalled = state.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART || state.status == PluginStatus.UPDATED
+    uninstalled = state.status in listOf(PluginStatus.INSTALLED_AND_REQUIRED_RESTART, PluginStatus.UPDATED, PluginStatus.UPDATED_WITH_RESTART)
   }
 
   return booleanArrayOf(uninstalled, uninstalledWithoutRestart)

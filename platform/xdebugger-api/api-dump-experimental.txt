@@ -29,6 +29,7 @@ a:com.intellij.xdebugger.frame.XStackFrame
 - append(com.intellij.ui.ColoredText):V
 - append(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - append(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.lang.Object):V
+- f:copy():com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
 - f:customizePresentation(com.intellij.ui.ColoredTextContainer):V
 - f:getFragments():java.util.List
 - f:getIcon():javax.swing.Icon

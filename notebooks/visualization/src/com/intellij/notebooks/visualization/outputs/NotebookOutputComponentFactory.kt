@@ -1,12 +1,13 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.outputs
 
 import com.intellij.notebooks.visualization.ui.EditorCellOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.Graphics
-import java.awt.Rectangle
 import javax.swing.JComponent
 
 interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataKey> {
@@ -28,9 +29,18 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
     NOTHING,
   }
 
-  interface GutterPainter {
-    fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle)
-  }
+  /**
+   * This mehanizm of execution count holder is obsolete. The business logic that uses this interface should be reviewed and must probably
+   *   removed.
+   *
+   * In previous implementations of the notebooks, the execution count was displayed in the cell output's gutter (see screenshots in DS-851).
+   * However, this is not the case anymore. This interface was used to support the gutter text in the cell. However, some parts of the notebooks
+   *   contains update logic based on the value of the execution count. It's not clear if this logic is needed or not anymore.
+   *
+   * As the first refactoring, the logic behind the gutter was removed, leaving only the counter information.
+   */
+  @ApiStatus.Obsolete
+  interface ExecutionCountHolder
 
   /**
    * @param limitHeight if the height of the component should be limited by 2/3 of visible vertical space. It's  the [component]'s
@@ -45,11 +55,12 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
   data class CreatedComponent<C : JComponent>(
     val component: C,
     val widthStretching: WidthStretching,
-    val gutterPainter: GutterPainter?,
     val limitHeight: Boolean,
     val resizable: Boolean,
     val collapsedTextSupplier: () -> @Nls String,
+    @ApiStatus.Obsolete val executionCountHolder: ExecutionCountHolder? = null, // See the docs for ExecutionCountHolder
     val disposable: Disposable? = component as? Disposable,
+    val gutterRenderer: GutterIconRenderer? = null,
   )
 
   val componentClass: Class<C>
@@ -84,10 +95,10 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
     val EP_NAME: ExtensionPointName<NotebookOutputComponentFactory<out JComponent, out NotebookOutputDataKey>> =
       ExtensionPointName.create("org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentFactory")
 
-    var JComponent.gutterPainter: GutterPainter?
+    var JComponent.executionCountHolder: ExecutionCountHolder?
       get() =
-        getClientProperty(GutterPainter::class.java) as GutterPainter?
+        getClientProperty(ExecutionCountHolder::class.java) as ExecutionCountHolder?
       internal set(value) =
-        putClientProperty(GutterPainter::class.java, value)
+        putClientProperty(ExecutionCountHolder::class.java, value)
   }
 }

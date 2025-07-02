@@ -33,7 +33,11 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       saveSettingsForRemoteDevelopment(application)
 
       val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SWITCH_ENGINE)
-      TerminalToolWindowManager.getInstance(project).createNewSession(startupFusInfo)
+      TerminalToolWindowManager.getInstance(project).createNewTab(
+        TerminalOptionsProvider.instance.terminalEngine,
+        startupFusInfo,
+        null
+      )
     }
   }
 

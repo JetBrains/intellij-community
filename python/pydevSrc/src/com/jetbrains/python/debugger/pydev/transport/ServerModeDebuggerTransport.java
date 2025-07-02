@@ -66,12 +66,14 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
       }
     }
     finally {
-      if (!myServerSocket.isClosed()) {
-        try {
-          myServerSocket.close();
-        }
-        catch (IOException e) {
-          LOG.warn("Error closing socket", e);
+      synchronized (mySocketObject) {
+        if (!myServerSocket.isClosed()) {
+          try {
+            myServerSocket.close();
+          }
+          catch (IOException e) {
+            LOG.warn("Error closing socket", e);
+          }
         }
       }
     }

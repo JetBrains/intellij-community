@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,15 +51,18 @@ fun Document.bindToBackend(
 /**
  * Binds the [Document] created on the backend side with the [Document] created on the frontend where [bindToBackend] was called.
  *
+ * Optional [project] parameter is a context project for the document. For example, if a document comes from an editor,
+ * it should be `editor.project`. If the document has some language support, you should also pass the project it is bound to.
+ *
  * Please note that this binding happens asynchronously, so you shouldn't expect that it will happen immediately after the method call.
  */
 @ApiStatus.Internal
-suspend fun Document.bindToFrontend(frontendDocumentId: FrontendDocumentId): BackendDocumentId {
+suspend fun Document.bindToFrontend(frontendDocumentId: FrontendDocumentId, project: Project? = null): BackendDocumentId {
   val backendDocument = this@bindToFrontend
   val id = BackendDocumentId(UID.random())
   withContext(Dispatchers.EDT) {
     val binder = BackendDocumentBinder.EP_NAME.extensionList.firstOrNull()
-    binder?.bindDocument(frontendDocumentId, backendDocument)
+    binder?.bindDocument(frontendDocumentId, backendDocument, project)
   }
   return id
 }
@@ -170,7 +174,7 @@ interface BackendDocumentBinder {
       ExtensionPointName<BackendDocumentBinder>("com.intellij.backendDocumentBinder")
   }
 
-  fun bindDocument(frontendDocumentId: FrontendDocumentId, baseDocument: Document)
+  fun bindDocument(frontendDocumentId: FrontendDocumentId, baseDocument: Document, project: Project?)
 }
 
 

@@ -144,8 +144,6 @@ args = dict(
         'Environment :: Console',
         'Intended Audience :: Developers',
 
-        'License :: OSI Approved :: Apache Software License',
-
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',

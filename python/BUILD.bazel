@@ -259,8 +259,6 @@ jvm_library(
     "//python/python-syntax:syntax",
     "//platform/ui.jcef",
     "//libraries/io",
-    "//libraries/ktor-client",
-    "//libraries/ktor-client-cio",
     "//platform/util/progress",
     "//platform/feedback",
     "@lib//:kotlinx-datetime-jvm",

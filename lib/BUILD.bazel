@@ -1738,6 +1738,46 @@ jvm_import(
 )
 
 java_library(
+  name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-be",
+  exports = [
+    ":language-be-6_5_0_12_http_import",
+    ":linguistics_grammardb_spell_languagetool-1_0_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "language-be-6_5_0_12_http_import",
+  jar = "@language-be-6_5_0_12_http//file",
+  source_jar = "@language-be-6_5_0_12-sources_http//file"
+)
+
+jvm_import(
+  name = "linguistics_grammardb_spell_languagetool-1_0_2_http_import",
+  jar = "@linguistics_grammardb_spell_languagetool-1_0_2_http//file"
+)
+
+java_library(
+  name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-uk",
+  exports = [
+    ":language-uk-6_5_0_12_http_import",
+    ":morfologik-ukrainian-lt-6_5_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "language-uk-6_5_0_12_http_import",
+  jar = "@language-uk-6_5_0_12_http//file",
+  source_jar = "@language-uk-6_5_0_12-sources_http//file"
+)
+
+jvm_import(
+  name = "morfologik-ukrainian-lt-6_5_2_http_import",
+  jar = "@morfologik-ukrainian-lt-6_5_2_http//file"
+)
+
+java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-de",
   exports = [
     ":language-de-6_5_0_12_http_import",

@@ -58,6 +58,10 @@ internal abstract class InlineSessionWiseCaretListener : CaretListener {
     @RequiresEdt
     get
 
+  protected abstract val isTypingSessionInProgress: Boolean
+    @RequiresEdt
+    get
+
   @RequiresEdt
   protected abstract fun cancel()
 
@@ -78,7 +82,7 @@ internal abstract class InlineSessionWiseCaretListener : CaretListener {
           // In such a case, the actual caret position does not change, only 'leansForward'
           cancel()
         }
-        else if (newOffset != completionOffset) {
+        else if (!isTypingSessionInProgress && newOffset != completionOffset) {
           cancel()
         }
       }

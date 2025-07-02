@@ -99,4 +99,12 @@ class ForMultiLanguageSupport {
   // print(f'
   // print(f')
   // print(f'      world')
+
+  // Українська. У мене хороші будинки.
+  // Граматична помилка: Поверталися на <GRAMMAR_ERROR descr="VYSHIDNYI_VYHIDNYI">висхідну</GRAMMAR_ERROR> позицію.
+  // Друкувати словом: У мене хороші <TYPO descr="Typo: In word 'будінки'">будінки</TYPO>.
+
+  // Беларускі. У мяне добры дом.
+  // Граматычная памылка: А <GRAMMAR_ERROR descr="pa_fakcie">па факту</GRAMMAR_ERROR> атрымалася, што сіл няма.
+  // Памылка друку ў word: У мяне добры <TYPO descr="Typo: In word 'домн'">домн</TYPO>.
 }

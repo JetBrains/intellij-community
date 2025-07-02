@@ -19,7 +19,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("actions", 82)
+  val GROUP: EventLogGroup = EventLogGroup("actions", 81)
 
   @JvmField
   val ACTION_ID: PrimitiveEventField<String?> = ActionIdEventField("action_id")
@@ -87,12 +87,9 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   val ADDITIONAL: ObjectEventField = EventFields.createAdditionalDataField(GROUP.id, ACTION_FINISHED_EVENT_ID)
 
   @JvmField
-  val ACTION_ON_NON_INDEXABLE_FILE: BooleanEventField = EventFields.Boolean("action_on_non_indexable_file")
-
-  @JvmField
   val ACTION_FINISHED: VarargEventId = registerActionEvent(
     GROUP, ACTION_FINISHED_EVENT_ID, EventFields.StartTime, ADDITIONAL, EventFields.Language, EventFields.DurationMs,
-    DUMB_START, RESULT, LOOKUP_ACTIVE, ACTION_ON_NON_INDEXABLE_FILE, ToolwindowFusEventFields.TOOLWINDOW
+    DUMB_START, RESULT, LOOKUP_ACTIVE, ToolwindowFusEventFields.TOOLWINDOW
   )
 
   @JvmField
@@ -118,7 +115,6 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
       CONTEXT_MENU,
       EventFields.Dumb,
       INCOMPLETE_DEPENDENCIES_MODE,
-      ACTION_ON_NON_INDEXABLE_FILE,
       ACTION_ID,
       ACTION_CLASS,
       ACTION_PARENT,

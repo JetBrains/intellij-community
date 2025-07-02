@@ -74,6 +74,10 @@ public final class AsyncStacksUtils {
     return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 
+  public static boolean isSuspendHelperEnabled() {
+    return isAgentEnabled() && Registry.is("debugger.run.suspend.helper");
+  }
+
   public static @Nullable List<@Nullable StackFrameItem> getAgentRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
     if (!isAgentEnabled() || !frame.threadProxy().equals(suspendContext.getThread())) { // only for the current thread for now
       return null;
@@ -374,7 +378,7 @@ public final class AsyncStacksUtils {
 
   private static String generateAgentSettings(@Nullable Project project) {
     Properties properties = CaptureSettingsProvider.getPointsProperties(project);
-    if (Registry.is("debugger.run.suspend.helper")) {
+    if (isSuspendHelperEnabled()) {
       properties.setProperty("suspendHelper", "true");
     }
     if (!properties.isEmpty()) {

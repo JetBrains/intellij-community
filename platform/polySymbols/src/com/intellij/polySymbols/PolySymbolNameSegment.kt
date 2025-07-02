@@ -19,12 +19,15 @@ interface PolySymbolNameSegment {
 
   val displayName: @NlsSafe String?
 
+  @get:ApiStatus.Internal
   val matchScore: Int
 
   val apiStatus: PolySymbolApiStatus?
 
+  @get:ApiStatus.Internal
   val priority: PolySymbol.Priority?
 
+  @get:ApiStatus.Internal
   val symbolKinds: Set<PolySymbolQualifiedKind>
 
   fun getName(symbol: PolySymbol): @NlsSafe String =

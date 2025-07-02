@@ -2832,8 +2832,8 @@
 
     <action id="ExternalSystem.AttachProject"
             class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction">
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel" anchor="after"
-                    relative-to-action="ExternalSystem.RefreshAllProjects"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.AttachProjectPanel" anchor="before"
+                    relative-to-action="ExternalSystem.DetachProject"/>/>
     </action>
   </actions>
 

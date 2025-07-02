@@ -6,13 +6,12 @@ import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConf
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.dependencies.ArtifactWithLocation
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 internal class ReportingExternalDependenciesResolver(
-  private val delegate: ExternalDependenciesResolver,
-  private val configurationProvider: MainKtsScriptConfigurationProvider,
+    private val delegate: ExternalDependenciesResolver,
+    private val configurationProvider: MainKtsScriptConfigurationProvider,
 ) : ExternalDependenciesResolver {
 
     override fun acceptsArtifact(artifactCoordinates: String): Boolean =
@@ -22,25 +21,25 @@ internal class ReportingExternalDependenciesResolver(
         delegate.acceptsRepository(repositoryCoordinates)
 
     override fun addRepository(
-      repositoryCoordinates: RepositoryCoordinates,
-      options: ExternalDependenciesResolver.Options,
-      sourceCodeLocation: SourceCode.LocationWithId?
+        repositoryCoordinates: RepositoryCoordinates,
+        options: ExternalDependenciesResolver.Options,
+        sourceCodeLocation: SourceCode.LocationWithId?
     ): ResultWithDiagnostics<Boolean> =
         delegate.addRepository(repositoryCoordinates, options, sourceCodeLocation)
 
     override suspend fun resolve(
-      artifactCoordinates: String,
-      options: ExternalDependenciesResolver.Options,
-      sourceCodeLocation: SourceCode.LocationWithId?
+        artifactCoordinates: String,
+        options: ExternalDependenciesResolver.Options,
+        sourceCodeLocation: SourceCode.LocationWithId?
     ): ResultWithDiagnostics<List<File>> {
-        configurationProvider.reporter?.indeterminateStep(KotlinBaseScriptingBundle.message("progress.text.resolving", artifactCoordinates))
-        return super.resolve(artifactCoordinates, options, sourceCodeLocation)
-    }
+        return configurationProvider.reporter?.indeterminateStep(
+            KotlinBaseScriptingBundle.message(
+                "progress.text.resolving",
+                artifactCoordinates
+            )
+        ) {
+            delegate.resolve(artifactCoordinates, options, sourceCodeLocation)
+        } ?: delegate.resolve(artifactCoordinates, options, sourceCodeLocation)
 
-    override suspend fun resolve(
-      artifactsWithLocations: List<ArtifactWithLocation>,
-      options: ExternalDependenciesResolver.Options
-    ): ResultWithDiagnostics<List<File>> {
-        return super.resolve(artifactsWithLocations, options)
     }
 }
