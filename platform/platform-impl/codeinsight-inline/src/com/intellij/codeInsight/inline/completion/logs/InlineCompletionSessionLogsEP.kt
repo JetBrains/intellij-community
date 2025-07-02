@@ -14,9 +14,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 abstract class PhasedLogs(val phase: Phase) {
-  private val fields = mutableListOf<EventFieldExt<*>>()
+  private val fields = mutableListOf<EventField<*>>()
 
-  val registeredFields: List<EventFieldExt<*>>
+  val registeredFields: List<EventField<*>>
     get() = fields
 
   /**
@@ -24,17 +24,7 @@ abstract class PhasedLogs(val phase: Phase) {
    * Such a log will be sent only for a fraction of requests in the release build.
    */
   protected fun <T> register(field: EventField<T>): EventField<T> {
-    fields.add(EventFieldExt(field, false))
-    return field
-  }
-
-  /**
-   * Associate the given [field] with the [phase].
-   * Such a log will always be sent;
-   * Important: try to keep the number of basic fields as small as possible
-   */
-  protected fun <T> registerBasic(field: EventField<T>): EventField<T> {
-    fields.add(EventFieldExt(field, true))
+    fields.add(field)
     return field
   }
 
@@ -44,21 +34,12 @@ abstract class PhasedLogs(val phase: Phase) {
   }
 }
 
-/**
- * Wrapper around the [EventField] with an additional property
- */
-@ApiStatus.Internal
-data class EventFieldExt<T>(
-  val field: EventField<T>,
-  val isBasic: Boolean = false,
-)
-
 @ApiStatus.Internal
 interface InlineCompletionSessionLogsEP {
 
   val logGroups: List<PhasedLogs>
 
   companion object {
-    val EP_NAME = ExtensionPointName<InlineCompletionSessionLogsEP>("com.intellij.inline.completion.session.logs");
+    val EP_NAME: ExtensionPointName<InlineCompletionSessionLogsEP> = ExtensionPointName<InlineCompletionSessionLogsEP>("com.intellij.inline.completion.session.logs");
   }
 }

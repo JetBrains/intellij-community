@@ -187,7 +187,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
 }
 
 object TestPhasedLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
-  val basicTestField = registerBasic(EventFields.Int("basic_test_field"))
+  val basicTestField = register(EventFields.Int("basic_test_field"))
   val fullTestField = register(EventFields.Int("full_test_field"))
 }
 

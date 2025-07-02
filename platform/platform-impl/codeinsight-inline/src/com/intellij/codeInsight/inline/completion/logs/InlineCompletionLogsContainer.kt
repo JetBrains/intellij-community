@@ -96,7 +96,7 @@ class InlineCompletionLogsContainer() {
    * If you have to launch expensive computation and don't want to pause your main execution (especially if you are on EDT) use [addAsync].
    */
   fun add(value: EventPair<*>) {
-    val phase = requireNotNull(InlineCompletionLogs.Session.eventFieldProperties[value.field.name]?.phase) {
+    val phase = requireNotNull(InlineCompletionLogs.Session.phaseByName[value.field.name]) {
       "Cannot find phase for ${value.field.name}"
     }
     logs[phase]!!.add(value)
