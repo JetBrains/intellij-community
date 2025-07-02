@@ -1472,8 +1472,8 @@ jvm_import(
 
 jvm_import(
   name = "fastutil-min",
-  jar = "@intellij-deps-fastutil-8_5_15-jb1_http//file",
-  source_jar = "@intellij-deps-fastutil-8_5_15-jb1-sources_http//file",
+  jar = "@intellij-deps-fastutil-8_5_16-jb1_http//file",
+  source_jar = "@intellij-deps-fastutil-8_5_16-jb1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

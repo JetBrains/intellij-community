@@ -7020,14 +7020,14 @@
     "sha256": "1408ae6528102c098971bde601f99c791cd1c57cc2485516f75f4ccbb45202ef"
   },
   {
-    "path": "org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1-sources.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1-sources.jar",
-    "sha256": "57d0e59cd6f6bd931d893ab0089bdcb13aee0ed78f1f8e85d88bc55b89815211"
+    "path": "org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1-sources.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1-sources.jar",
+    "sha256": "ac312a8e1216c71a9c33bd500743b18935ed2092e0db042a8fe728ff047e18b3"
   },
   {
-    "path": "org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1.jar",
-    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1.jar",
-    "sha256": "5a0d7557d494732a6165e4188eb11f10faca196350cad04d9950abd83e6dd148"
+    "path": "org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1.jar",
+    "url": "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1.jar",
+    "sha256": "63aca730b99bb849f4efb87e61765a050b4a46c7d3f2969054e49439cb0132f8"
   },
   {
     "path": "org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.3.0/file-prediction-model-0.3.0-sources.jar",
