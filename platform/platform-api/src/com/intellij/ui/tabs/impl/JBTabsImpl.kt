@@ -2746,6 +2746,13 @@ open class JBTabsImpl internal constructor(
     return this
   }
 
+  override fun removeTabMouseListener(listener: MouseListener): JBTabs {
+    removeListeners()
+    tabMouseListeners.remove(listener)
+    addListeners()
+    return this
+  }
+
   override fun getComponent(): JComponent = this
 
   private fun addListeners() {

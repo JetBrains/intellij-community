@@ -962,6 +962,7 @@ com.intellij.ui.tabs.JBTabs
 - a:processDropOver(com.intellij.ui.tabs.TabInfo,com.intellij.ui.awt.RelativePoint):V
 - a:removeAllTabs():V
 - a:removeTab(com.intellij.ui.tabs.TabInfo):com.intellij.openapi.util.ActionCallback
+- a:removeTabMouseListener(java.awt.event.MouseListener):com.intellij.ui.tabs.JBTabs
 - a:requestFocus():V
 - a:resetDropOver(com.intellij.ui.tabs.TabInfo):V
 - a:select(com.intellij.ui.tabs.TabInfo,Z):com.intellij.openapi.util.ActionCallback
