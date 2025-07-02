@@ -24,6 +24,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.EditorNotifications
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -33,10 +34,15 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 
+private val isTestingMode : Boolean by lazy {
+  val application = ApplicationManager.getApplication()
+  application.isUnitTestMode || application.isHeadlessEnvironment || SystemProperties.getBooleanProperty("idea.is.playback", false)
+}
+
 internal class PluginsAdvertiserStartupActivity : ProjectActivity {
+
   suspend fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || application.isHeadlessEnvironment) {
+    if (isTestingMode) {
       return
     }
 
@@ -126,8 +132,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
 
 internal fun findSuggestedPlugins(project: Project, customRepositories: Map<String, List<PluginUiModel>>): List<PluginUiModel> {
   return runBlockingMaybeCancellable {
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || application.isHeadlessEnvironment) {
+    if (isTestingMode) {
       return@runBlockingMaybeCancellable emptyList()
     }
 
