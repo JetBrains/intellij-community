@@ -19,9 +19,7 @@ import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asCompletableFuture
@@ -117,16 +115,14 @@ internal class BackendXValueApi : XValueApi {
 
   override suspend fun computeInlineData(xValueId: XValueId): XInlineDebuggerDataDto? {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
-    val flow = MutableSharedFlow<XSourcePositionDto>()
+    val channel = Channel<XSourcePositionDto>(Channel.UNLIMITED)
     val state = xValueModel.xValue.computeInlineDebuggerData(object : XInlineDebuggerDataCallback() {
       override fun computed(position: XSourcePosition?) {
         if (position == null) return
-        xValueModel.cs.launch {
-          flow.emit(position.toRpc())
-        }
+        channel.trySend(position.toRpc())
       }
     })
-    return XInlineDebuggerDataDto(state, flow.toRpc())
+    return XInlineDebuggerDataDto(state, channel.asColdFlow().toRpc())
   }
 }
 
@@ -279,5 +275,11 @@ private sealed interface RawComputeChildrenEvent {
     override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
       return XValueComputeChildrenEvent.TooManyChildren(remaining, addNextChildrenCallbackHandler.setAddNextChildrenCallback(addNextChildren))
     }
+  }
+}
+
+private fun <T> ReceiveChannel<T>.asColdFlow(): Flow<T> = flow {
+  consumeEach {
+    emit(it)
   }
 }
