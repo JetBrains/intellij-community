@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
@@ -41,13 +42,19 @@ kt_jvm_library(
 
 java_binary(
     name = "jvm-inc-builder",
-    jvm_flags = get_jvm_flags([
-        "-Dkotlin.environment.keepalive=true",
-        "-XX:+HeapDumpOnOutOfMemoryError",
-    ]),
+#     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use :jvm-inc-builder-jvm_flags
     main_class = "com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncExecutor",
     visibility = ["//visibility:public"],
     runtime_deps = [":jvm-inc-builder-lib"],
+)
+
+string_list_flag(
+    name = "jvm-inc-builder-jvm_flags",
+    build_setting_default = get_jvm_flags([
+        "-Dkotlin.environment.keepalive=true",
+        "-XX:+HeapDumpOnOutOfMemoryError",
+    ]),
+    visibility = ["//visibility:public"],
 )
 
 

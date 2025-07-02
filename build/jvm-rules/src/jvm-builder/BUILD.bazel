@@ -41,6 +41,7 @@ kt_jvm_library(
 
 java_binary(
     name = "jvm-builder",
+#     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use :jvm-builder-jvm_flags
     main_class = "org.jetbrains.bazel.jvm.worker.JvmBuildWorker",
     visibility = ["//visibility:public"],
     runtime_deps = [":jvm-builder-lib"],
