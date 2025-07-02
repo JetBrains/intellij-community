@@ -246,10 +246,10 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       updateFrozenCount()
 
       val yetToScrollHeight = verticalScrollBar.maximum - verticalScrollBar.model.extent - adjustmentEvent.value
-      if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < 50) {
+      if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < maxOf(resultsScrollPane.height / 2, 50)) {
         isScrolledAlmostToAnEnd.value = true
       }
-      else if (yetToScrollHeight > resultsScrollPane.height / 2) {
+      else if (yetToScrollHeight > resultsScrollPane.height * 1.5) {
         isScrolledAlmostToAnEnd.value = false
       }
     }
@@ -725,7 +725,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   override fun dispose() {}
 
   companion object {
-    const val DEFAULT_FROZEN_VISIBLE_PART: Double = 0.7
+    const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.0
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
 
     @JvmStatic
