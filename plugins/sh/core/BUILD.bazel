@@ -13,7 +13,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
-    "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -37,7 +36,6 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/eel-impl",
     "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
   ],
   runtime_deps = [
