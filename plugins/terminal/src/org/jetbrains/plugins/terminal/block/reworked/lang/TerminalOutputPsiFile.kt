@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.block.reworked.lang
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.FileViewProvider
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.PsiFileImpl
 
@@ -22,17 +21,5 @@ internal class TerminalOutputPsiFile(
     var clone = super.clone()
     clone.setOriginalFile(this)
     return clone
-  }
-
-  override fun isValid(): Boolean {
-    return true
-  }
-
-  override fun findElementAt(offset: Int): PsiElement {
-    return this
-  }
-
-  override fun getModificationStamp(): Long {
-    return 0
   }
 }
