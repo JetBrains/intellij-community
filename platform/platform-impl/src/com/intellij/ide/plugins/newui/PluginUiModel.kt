@@ -64,6 +64,8 @@ interface PluginUiModel {
   @get:NlsSafe
   val displayCategory: String?
 
+  val isImplementationDetail: Boolean
+
   var source: PluginSource?
 
   @get:NlsSafe
