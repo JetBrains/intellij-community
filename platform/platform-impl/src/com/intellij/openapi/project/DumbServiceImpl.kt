@@ -411,8 +411,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     showDumbModeNotificationForFunctionality(message, DumbModeBlockedFunctionality.Other)
   }
 
-  override fun showDumbModeNotificationForFunctionality(message: @NlsContexts.PopupContent String,
-                                                        functionality: DumbModeBlockedFunctionality) {
+  override fun showDumbModeNotificationForFunctionality(
+    message: @NlsContexts.PopupContent String,
+    functionality: DumbModeBlockedFunctionality,
+  ) {
     DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, functionality)
     doShowDumbModeNotification(message)
   }
@@ -420,9 +422,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   /**
    * Doesn't log new event if the equality object is equal to the previous one
    */
-  override fun showDumbModeNotificationForFunctionalityWithCoalescing(message: @NlsContexts.PopupContent String,
-                                                             functionality: DumbModeBlockedFunctionality,
-                                                             equality: Any) {
+  override fun showDumbModeNotificationForFunctionalityWithCoalescing(
+    message: @NlsContexts.PopupContent String,
+    functionality: DumbModeBlockedFunctionality,
+    equality: Any,
+  ) {
     DumbModeBlockedFunctionalityCollector.logFunctionalityBlockedWithCoalescing(project, functionality, equality)
     doShowDumbModeNotification(message)
   }
@@ -458,6 +462,17 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     actionIds: List<String>,
   ) {
     balloon.showDumbModeActionBalloon(
+      balloonText = balloonText,
+      runWhenSmartAndBalloonStillShowing = {
+        DumbModeBlockedFunctionalityCollector.logActionsBlocked(project, actionIds, true)
+        runWhenSmartAndBalloonStillShowing.run()
+      },
+      runWhenCancelled = { DumbModeBlockedFunctionalityCollector.logActionsBlocked(project = project, actionIds = actionIds, executedAfterBlock = false) },
+    )
+  }
+
+  override fun showNonIndexableFileActionBalloon(balloonText: @NlsContexts.PopupContent String, runWhenSmartAndBalloonStillShowing: Runnable, actionIds: List<String>) {
+    balloon.showNonIndexableFileActionBalloon(
       balloonText = balloonText,
       runWhenSmartAndBalloonStillShowing = {
         DumbModeBlockedFunctionalityCollector.logActionsBlocked(project, actionIds, true)

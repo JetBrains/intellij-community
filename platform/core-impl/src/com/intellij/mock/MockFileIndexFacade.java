@@ -66,6 +66,9 @@ public class MockFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
+  public boolean isIndexable(@NotNull VirtualFile file) { return true; }
+
+  @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
     return myModule;
   }
