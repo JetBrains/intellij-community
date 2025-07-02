@@ -1393,7 +1393,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
-    jetbrainsLibrary("jetbrains.fus.reporting.ap.validation"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
     jetbrainsLibrary("jetbrains.kotlin.compose.compiler.plugin"),
     jetbrainsLibrary("jetbrains.ml.completion.trigger_model_kotlin_cloud"),

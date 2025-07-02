@@ -2261,13 +2261,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "io-modelcontextprotocol-kotlin-sdk-provided",
-  exports = [":io-modelcontextprotocol-kotlin-sdk"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "io-opentelemetry-sdk-extension-autoconfigure-spi",
   jar = "@opentelemetry-sdk-extension-autoconfigure-spi-1_45_0_http//file",
