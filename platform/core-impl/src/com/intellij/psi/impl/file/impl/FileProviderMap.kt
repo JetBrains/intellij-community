@@ -357,7 +357,7 @@ private class ManyItemMap<V : Any>(
   }
 
   override fun remove(key: CodeInsightContext): ContextMap<V> {
-    if (!map.containsKey(key)) {
+    if (map[key] == null) {
       return this
     }
 
