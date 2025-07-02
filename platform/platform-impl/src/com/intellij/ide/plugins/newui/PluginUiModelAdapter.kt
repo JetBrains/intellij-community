@@ -65,6 +65,8 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.releaseVersion
   override val displayCategory: String?
     get() = pluginDescriptor.displayCategory
+  override val isImplementationDetail: Boolean
+    get() = pluginDescriptor.isImplementationDetail
   override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
     set(value) {

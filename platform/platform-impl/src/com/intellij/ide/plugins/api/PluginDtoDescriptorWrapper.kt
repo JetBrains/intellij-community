@@ -66,9 +66,7 @@ class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginD
 
   override fun allowBundledUpdate(): Boolean = pluginDto.allowBundledUpdate
 
-  override fun isImplementationDetail(): Boolean {
-    throw UnsupportedOperationException("No direct mapping for isImplementationDetail in PluginDto")
-  }
+  override fun isImplementationDetail(): Boolean = pluginDto.isImplementationDetail
 
   override fun isRequireRestart(): Boolean {
     throw UnsupportedOperationException("No direct mapping for isRequireRestart in PluginDto")
