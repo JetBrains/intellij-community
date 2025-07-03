@@ -115,7 +115,7 @@ private val httpFileRegex = Regex(
   "http_file\\(\\s+" +
   "name\\s+=\\s+\"[^\"]+\",\\s+" +
   "url\\s+=\\s+\"([^\"]+)\",\\s+" +
-  "sha256 = \"([0-9a-f]{64})\","
+  "sha256\\s+=\\s+\"([0-9a-f]{64})\","
 )
 
 internal fun readModules(modulesBazel: List<Path>, repositories: List<JarRepository>, warningsAsErrors: Boolean): Map<String, CacheEntry> {
