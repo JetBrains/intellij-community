@@ -725,7 +725,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   override fun dispose() {}
 
   companion object {
-    const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.0
+    const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.1
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
 
     @JvmStatic
