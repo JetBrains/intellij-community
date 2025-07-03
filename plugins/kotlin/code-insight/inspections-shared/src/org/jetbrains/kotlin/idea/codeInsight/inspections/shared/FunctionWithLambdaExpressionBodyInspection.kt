@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -27,39 +28,23 @@ internal class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspec
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitNamedFunction(function: KtNamedFunction) {
-            check(function)
+            visitAndRegisterProblem(function)
         }
 
         override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
             if (accessor.isSetter) return
             if (accessor.returnTypeReference != null) return
-            check(accessor)
+            visitAndRegisterProblem(accessor)
         }
 
-        private fun check(element: KtDeclarationWithBody) {
+        private fun visitAndRegisterProblem(element: KtDeclarationWithBody) {
             val callableDeclaration = element.getNonStrictParentOfType<KtCallableDeclaration>() ?: return
             if (callableDeclaration.typeReference != null) return
             val lambda = element.bodyExpression as? KtLambdaExpression ?: return
             val functionLiteral = lambda.functionLiteral
             if (functionLiteral.arrow != null || functionLiteral.valueParameterList != null) return
-            val lambdaBody = functionLiteral.bodyBlockExpression ?: return
 
-            val used = ReferencesSearch.search(callableDeclaration).findAll().any()
-            val typeInfo = analyze(callableDeclaration) {
-                CallableReturnTypeUpdaterUtils.getTypeInfo(callableDeclaration)
-            }
-            val fixes = listOfNotNull(
-                CallableReturnTypeUpdaterUtils.SpecifyExplicitTypeQuickFix(callableDeclaration, typeInfo),
-                AddArrowIntention(),
-                if (!used &&
-                    lambdaBody.statements.size == 1 &&
-                    lambdaBody.allChildren.none { it is PsiComment }
-                )
-                    RemoveBracesFix(lambda)
-                else
-                    null,
-                if (!used) WrapRunFix(lambda) else null
-            ).map { it.asQuickFix() }
+            val fixes = getFixes(callableDeclaration, lambda) ?: return
             holder.registerProblem(
                 lambda,
                 KotlinBundle.message("inspection.function.with.lambda.expression.body.display.name"),
@@ -67,6 +52,32 @@ internal class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspec
                 *fixes.toTypedArray()
             )
         }
+    }
+
+    private fun getFixes(callableDeclaration: KtCallableDeclaration, lambda: KtLambdaExpression): List<LocalQuickFix>? {
+        val functionLiteral = lambda.functionLiteral
+        val lambdaBody = functionLiteral.bodyBlockExpression ?: return null
+
+        val typeInfo = analyze(callableDeclaration) {
+            CallableReturnTypeUpdaterUtils.getTypeInfo(callableDeclaration)
+        }
+        val specifyExplicitTypeQuickFix = CallableReturnTypeUpdaterUtils.SpecifyExplicitTypeQuickFix(callableDeclaration, typeInfo)
+
+        val used = ReferencesSearch.search(callableDeclaration).findAll().any()
+        val removeBracesFix = if (!used &&
+            lambdaBody.statements.size == 1 &&
+            lambdaBody.allChildren.none { it is PsiComment }
+        ) {
+            RemoveBracesFix(lambda)
+        } else null
+        val wrapFix = if (!used) WrapRunFix(lambda) else null
+
+        return listOfNotNull(
+            specifyExplicitTypeQuickFix,
+            AddArrowIntention(),
+            removeBracesFix,
+            wrapFix
+        ).map { it.asQuickFix() }
     }
 
     private class AddArrowIntention : SpecifyExplicitLambdaSignatureIntentionBase()
@@ -79,7 +90,8 @@ internal class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspec
             element: KtLambdaExpression,
             updater: ModPsiUpdater
         ) {
-            val singleStatement = element.functionLiteral.bodyExpression?.statements?.singleOrNull() ?: return
+            val body = element.functionLiteral.bodyExpression ?: return
+            val singleStatement = body.statements.singleOrNull() ?: return
             val replaced = element.replaced(singleStatement)
             replaced.setTypeIfNeed()
         }
@@ -94,7 +106,9 @@ internal class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspec
             updater: ModPsiUpdater
         ) {
             val body = element.functionLiteral.bodyExpression ?: return
-            val replaced = element.replaced(KtPsiFactory(element.project).createExpressionByPattern("run { $0 }", body.allChildren))
+            val factory = KtPsiFactory(element.project)
+            val newElement = factory.createExpressionByPattern("run { $0 }", body.allChildren)
+            val replaced = element.replaced(newElement)
             replaced.setTypeIfNeed()
         }
     }
