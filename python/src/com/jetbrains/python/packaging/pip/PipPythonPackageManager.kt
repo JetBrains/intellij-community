@@ -21,6 +21,7 @@ import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -74,7 +75,11 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
 class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPackageManager) {
   private val languageLevel: LanguageLevel = sdk.version
 
-  suspend fun installManagementIfNeeded(): Boolean {
+  /**
+   * This method is for local SDK only. It does nothing for remote SDK.
+   */
+  internal suspend fun installManagementIfNeeded(): Boolean {
+    if (PythonSdkUtil.isRemote(sdk)) return false
     if (hasManagement()) return true
     return performManagementInstallation()
   }
