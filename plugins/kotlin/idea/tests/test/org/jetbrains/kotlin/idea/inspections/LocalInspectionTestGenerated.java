@@ -4503,6 +4503,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/covariantEquals/override.kt");
         }
 
+        @TestMetadata("override1.kt")
+        public void testOverride1() throws Exception {
+            runTest("testData/inspectionsLocal/covariantEquals/override1.kt");
+        }
+
         @TestMetadata("overrideAnyEquals.kt")
         public void testOverrideAnyEquals() throws Exception {
             runTest("testData/inspectionsLocal/covariantEquals/overrideAnyEquals.kt");

@@ -4953,6 +4953,75 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/covariantEquals")
+    public static class CovariantEquals extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/basic.kt");
+        }
+
+        @TestMetadata("hasOverriddenAnyEquals.kt")
+        public void testHasOverriddenAnyEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/hasOverriddenAnyEquals.kt");
+        }
+
+        @TestMetadata("inCompanion.kt")
+        public void testInCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/inCompanion.kt");
+        }
+
+        @TestMetadata("inObject.kt")
+        public void testInObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/inObject.kt");
+        }
+
+        @TestMetadata("inObjectLiteral.kt")
+        public void testInObjectLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/inObjectLiteral.kt");
+        }
+
+        @TestMetadata("local.kt")
+        public void testLocal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/local.kt");
+        }
+
+        @TestMetadata("override.kt")
+        public void testOverride() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/override.kt");
+        }
+
+        @TestMetadata("override1.kt")
+        public void testOverride1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/override1.kt");
+        }
+
+        @TestMetadata("overrideAnyEquals.kt")
+        public void testOverrideAnyEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/overrideAnyEquals.kt");
+        }
+
+        @TestMetadata("topLevel.kt")
+        public void testTopLevel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/topLevel.kt");
+        }
+
+        @TestMetadata("twoParameters.kt")
+        public void testTwoParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/covariantEquals/twoParameters.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/explicitThis")
     public static class ExplicitThis extends AbstractK2LocalInspectionTest {
         @java.lang.Override

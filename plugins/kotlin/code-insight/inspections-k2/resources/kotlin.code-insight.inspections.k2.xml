@@ -394,6 +394,15 @@
                      suppressId="EqualsBetweenInconvertibleTypes"
                      language="kotlin" key="inspection.kotlin.equals.between.inconvertible.types.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinCovariantEqualsInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     suppressId="CovariantEquals"
+                     key="inspection.kotlin.covariant.equals.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ProtectedInFinalInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
