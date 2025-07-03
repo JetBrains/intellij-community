@@ -278,7 +278,7 @@ class StructureViewWrapperImpl(
               setFileFromSelectionHistory()
             }
             else {
-              setFile(null)
+              setFile(project.serviceAsync<FileEditorManager>().selectedFiles.firstOrNull())
             }
           }
         }
