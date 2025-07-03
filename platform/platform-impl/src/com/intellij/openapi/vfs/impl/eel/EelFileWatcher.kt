@@ -113,8 +113,8 @@ class EelFileWatcher : PluggableFileWatcher() {
     val eel = data.descriptor.upgradeBlocking()
 
     val job = scope.launch {
-      val flow = eel.fs.watchChanges(
-        WatchOptionsBuilder().changeTypes(watchedOptions).paths(data.getWatchedPaths()).build())
+      val flow = eel.fs.watchChanges()
+      eel.fs.addWatchRoots(WatchOptionsBuilder().changeTypes(watchedOptions).paths(data.getWatchedPaths()).build())
       val job = scope.launch { flow.collect { notifyChange(it, data) } }
       mySettingRoots.decrementAndGet()
       job

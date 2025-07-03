@@ -486,24 +486,33 @@ interface EelFileSystemApi {
   }
 
   /**
-   * Adds the watched paths from the specified set of file paths and provides a flow of change events.
-   * A path is watched till [unwatch] method is explicitly called for it.
+   * Subscribes to a file watcher to receive file change events.
    *
-   * Use [WatchOptionsBuilder] to construct the watch configuration. An example of recursive watch for the given `eelPath`:
-   * ```
-   * val flow = eel.fs.watchChanges(
-   *     WatchOptionsBuilder()
-   *         .changeTypes(setOf(EelFileSystemApi.FileChangeType.CHANGED))
-   *         .paths(setOf(WatchedPath.from(eelPath).recursive()))
-   *         .build())
-   * ```
-   *
-   * @param watchOptions The options to use for file watching. See [WatchOptions]
    * @return A flow emitting [PathChange] instances that indicate the path and type of change.
    *         Each path is an absolute path on the target system (container), for example, `/home/myproject/myfile.txt`
    */
   @Throws(UnsupportedOperationException::class)
-  suspend fun watchChanges(@GeneratedBuilder watchOptions: WatchOptions): Flow<PathChange> {
+  suspend fun watchChanges(): Flow<PathChange> {
+    throw UnsupportedOperationException()
+  }
+
+  /**
+   * Adds the watched paths from the specified set of file paths. A path is watched till [unwatch] method is explicitly called for it.
+   *
+   * Use [WatchOptionsBuilder] to construct the watch configuration. Example:
+   * ```
+   * val flow = eel.fs.addWatchRoots(
+   *     WatchOptionsBuilder()
+   *         .changeTypes(setOf(EelFileSystemApi.FileChangeType.CHANGED))
+   *         .paths(setOf(eelPath))
+   *         .build())
+   * ```
+   *
+   * @param watchOptions The options to use for file watching. See [WatchOptions]
+   * @return True if the operation was successful.
+   */
+  @Throws(UnsupportedOperationException::class)
+  suspend fun addWatchRoots(@GeneratedBuilder watchOptions: WatchOptions): Boolean {
     throw UnsupportedOperationException()
   }
 

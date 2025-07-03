@@ -18,7 +18,6 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.UnwatchOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
 import com.intellij.platform.eel.path.EelPath
-import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -121,26 +120,24 @@ fun EelFileSystemApi.unwatch(
   )
 
 /**
- * Adds the watched paths from the specified set of file paths and provides a flow of change events.
- * A path is watched till [unwatch] method is explicitly called for it.
+ * Adds the watched paths from the specified set of file paths. A path is watched till [unwatch] method is explicitly called for it.
  *
- * Use [WatchOptionsBuilder] to construct the watch configuration. An example of recursive watch for the given `eelPath`:
+ * Use [WatchOptionsBuilder] to construct the watch configuration. Example:
  * ```
- * val flow = eel.fs.watchChanges(
+ * val flow = eel.fs.addWatchRoots(
  *     WatchOptionsBuilder()
  *         .changeTypes(setOf(EelFileSystemApi.FileChangeType.CHANGED))
- *         .paths(setOf(WatchedPath.from(eelPath).recursive()))
+ *         .paths(setOf(eelPath))
  *         .build())
  * ```
  *
  * @param watchOptions The options to use for file watching. See [WatchOptions]
- * @return A flow emitting [PathChange] instances that indicate the path and type of change.
- *         Each path is an absolute path on the target system (container), for example, `/home/myproject/myfile.txt`
+ * @return True if the operation was successful.
  */
 @GeneratedBuilder.Result
 @ApiStatus.Internal
-fun EelFileSystemApi.watchChanges(): EelFileSystemApiHelpers.WatchChanges =
-  EelFileSystemApiHelpers.WatchChanges(
+fun EelFileSystemApi.addWatchRoots(): EelFileSystemApiHelpers.AddWatchRoots =
+  EelFileSystemApiHelpers.AddWatchRoots(
     owner = this,
   )
 
@@ -547,32 +544,32 @@ object EelFileSystemApiHelpers {
   }
 
   /**
-   * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.watchChanges].
+   * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.addWatchRoots].
    */
   @GeneratedBuilder.Result
   @ApiStatus.Internal
-  class WatchChanges(
+  class AddWatchRoots(
     private val owner: EelFileSystemApi,
-  ) : OwnedBuilder<Flow<EelFileSystemApi.PathChange>> {
+  ) : OwnedBuilder<Boolean> {
     private var changeTypes: Set<FileChangeType> = emptySet()
 
     private var paths: Set<WatchedPath> = emptySet()
 
-    fun changeTypes(arg: Set<FileChangeType>): WatchChanges = apply {
+    fun changeTypes(arg: Set<FileChangeType>): AddWatchRoots = apply {
       this.changeTypes = arg
     }
 
-    fun paths(arg: Set<WatchedPath>): WatchChanges = apply {
+    fun paths(arg: Set<WatchedPath>): AddWatchRoots = apply {
       this.paths = arg
     }
 
     /**
-     * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.watchChanges]
+     * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.addWatchRoots]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.WatchOptions].
      */
     @Throws(UnsupportedOperationException::class)
-    override suspend fun eelIt(): Flow<EelFileSystemApi.PathChange> =
-      owner.watchChanges(
+    override suspend fun eelIt(): Boolean =
+      owner.addWatchRoots(
         WatchOptionsImpl(
           changeTypes = changeTypes,
           paths = paths,
