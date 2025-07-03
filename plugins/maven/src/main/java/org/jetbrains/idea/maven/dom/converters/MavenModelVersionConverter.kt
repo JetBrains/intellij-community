@@ -34,16 +34,16 @@ class MavenModelVersionConverter : MavenConstantListConverter() {
   }
 
   override fun fromString(s: @NonNls String?, context: ConvertContext): String? {
-    if (s != null) return super.fromString(s, context)
-    val rootTag = context.file.rootTag
-    if (MavenUtil.isMaven410(
-        rootTag?.getAttribute("xmlns")?.value,
-        rootTag?.getAttribute("xsi:schemaLocation")?.value)) return MODEL_VERSION_4_1_0
-    return null
+  if (s != null) return super.fromString(s, context)
+  val rootTag = context.file.rootTag
+  if (MavenUtil.isMaven410(
+    rootTag?.getAttribute("xmlns")?.value,
+    rootTag?.getAttribute("xsi:schemaLocation")?.value)) return MODEL_VERSION_4_1_0
+  return null
   }
 
   override fun getErrorMessage(s: String?, context: ConvertContext): String? {
-    return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", getValues(context))
+  return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", getValues(context))
   }
 
   companion object {
