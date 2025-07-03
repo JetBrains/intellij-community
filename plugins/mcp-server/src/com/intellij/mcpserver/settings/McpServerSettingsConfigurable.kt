@@ -15,11 +15,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.ui.dsl.builder.MutableProperty
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.SpacingConfiguration
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.ui.layout.and
@@ -83,52 +79,56 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         }
       }
       panel {
-        McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
-          val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
-          val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
-          val json = mcpClient.json
-          group(mcpClient.name.displayName) {
-            row {
-              text(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
-              text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect))
-              text(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
-            }
-            val autoconfiguredPressed = ValueComponentPredicate(false)
-            val errorDuringConfiguration = ValueComponentPredicate(false)
-            val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
-            row {
-              icon(AllIcons.General.Information)
-              comment(McpServerBundle.message("mcp.server.client.restart.info"))
-            }.visibleIf(autoconfiguredPressed)
-            row {
-              icon(AllIcons.General.Error)
-              comment(McpServerBundle.message("mcp.server.client.autoconfig.error"))
-            }.visibleIf(errorDuringConfiguration)
-            row {
-              button(McpServerBundle.message("autoconfigure.mcp.server"), {
-                runCatching {
-                  mcpClient.configure()
-                }.onFailure {
-                  errorDuringConfiguration.set(true)
-                }.onSuccess {
-                  errorDuringConfiguration.set(false)
-                  isConfigured.set(true)
-                  isPortCorrect.set(true)
-                  configExists.set(true)
-                  autoconfiguredPressed.set(true)
-                }
-              })
-              button(McpServerBundle.message("open.settings.json"), { openFileInEditor(mcpClient.configPath) }).visibleIf(configExists)
-              button(McpServerBundle.message("copy.mcp.server.configuration"), {
-                CopyPasteManager.getInstance().setContents(TextTransferable(json.encodeToString(buildJsonObject {
-                  put("jetbrains", json.encodeToJsonElement(mcpClient.getConfig()))
-                }) as CharSequence))
-                showCopiedBallon(it)
-              })
-            }
+        group(McpServerBundle.message("settings.client.group")){
+          McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
+            val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
+            val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
+            val json = mcpClient.json
+              row {
+                text(mcpClient.name.displayName)
+                comment(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
+                text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect))
+                text(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
+              }.topGap(TopGap.MEDIUM)
+              val autoconfiguredPressed = ValueComponentPredicate(false)
+              val errorDuringConfiguration = ValueComponentPredicate(false)
+              val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
+              row {
+                icon(AllIcons.General.Information)
+                comment(McpServerBundle.message("mcp.server.client.restart.info.settings"))
+              }.visibleIf(autoconfiguredPressed)
+              row {
+                icon(AllIcons.General.Error)
+                comment(McpServerBundle.message("mcp.server.client.autoconfig.error"))
+              }.visibleIf(errorDuringConfiguration)
+              row {
+                button(McpServerBundle.message("autoconfigure.mcp.server"), {
+                  runCatching {
+                    mcpClient.configure()
+                  }.onFailure {
+                    errorDuringConfiguration.set(true)
+                  }.onSuccess {
+                    errorDuringConfiguration.set(false)
+                    isConfigured.set(true)
+                    isPortCorrect.set(true)
+                    configExists.set(true)
+                    autoconfiguredPressed.set(true)
+                  }
+                })
+                button(McpServerBundle.message("open.settings.json"), { openFileInEditor(mcpClient.configPath) }).visibleIf(configExists)
+                button(McpServerBundle.message("copy.mcp.server.configuration"), {
+                  CopyPasteManager.getInstance().setContents(TextTransferable(json.encodeToString(buildJsonObject {
+                    put("jetbrains", json.encodeToJsonElement(mcpClient.getConfig()))
+                  }) as CharSequence))
+                  showCopiedBallon(it)
+                })
+              }
           }
         }
         group(McpServerBundle.message("mcp.general.client")){
+          row {
+            comment(McpServerBundle.message("settings.comment.manual.config"))
+          }
           row{
             button(McpServerBundle.message("copy.mcp.server.sse.configuration"), {
               val json = createSseServerJsonEntry(McpServerService.getInstance().port)
@@ -151,7 +151,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
           }
           row {
             icon(AllIcons.General.Warning)
-            comment(McpServerBundle.message("text.warning.enabling.brave.mode.will.allow.terminal.commands.to.execute.without.confirmation.use.with.caution"))
+            comment(McpServerBundle.message("text.warning.enabling.brave.mode.will.allow.terminal.commands.to.execute.without.confirmation.use.with.caution")).gap(RightGap.SMALL)
           }
         }
       }.enabledIf(enabledCheckboxState!!)
