@@ -19,10 +19,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -152,7 +149,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     XDebuggerEditorsProvider debuggerEditorsProvider = breakpoint.getEditorsProvider();
 
     if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.ACTIONS)) {
-      myActionsPanel.init(project, breakpoint, debuggerEditorsProvider);
+      myActionsPanel.init(project, breakpoint, debuggerEditorsProvider, myShowAllOptions);
       mySubPanels.add(myActionsPanel);
     }
     else {
@@ -229,11 +226,16 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       @Override
       public void focusGained(FocusEvent event) {
         JComponent compToFocus = null;
-        if (myConditionComboBox != null && myConditionComboBox.getComboBox().isEnabled()) {
-          compToFocus = myConditionComboBox.getEditorComponent();
-        }
-        else if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.ACTIONS)) {
+        var actionsAvailable = breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.ACTIONS);
+        var conditionEditable = myConditionComboBox != null && myConditionComboBox.getComboBox().isEnabled();
+        var isSuspending = breakpoint.getSuspendPolicy() != SuspendPolicy.NONE;
+        if (actionsAvailable && (!isSuspending || !conditionEditable)) {
+          // Focus actions panel in case of non-suspending breakpoint (or if condition is explicitly disabled).
+          // This is important for the "Add Logging Breakpoint" action which should focus on the logging expression.
           compToFocus = myActionsPanel.getDefaultFocusComponent();
+        }
+        else if (conditionEditable) {
+          compToFocus = myConditionComboBox.getEditorComponent();
         }
         if (compToFocus != null) {
           IdeFocusManager.findInstance().requestFocus(compToFocus, false);

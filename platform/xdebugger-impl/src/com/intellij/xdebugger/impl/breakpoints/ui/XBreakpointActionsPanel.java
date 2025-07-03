@@ -2,8 +2,10 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -25,8 +27,10 @@ import java.awt.event.ActionListener;
 public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   public static final String LOG_EXPRESSION_HISTORY_ID = "breakpointLogExpression";
 
+  private JLabel myLogMessageLabel;
   private JCheckBox myLogMessageCheckBox;
   private JCheckBox myLogExpressionCheckBox;
+  private JPanel myLogExpressionCheckBoxPanel;
   private JPanel myLogExpressionPanel;
   private JPanel myContentPane;
   private JPanel myMainPanel;
@@ -36,8 +40,14 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   private JCheckBox myLogStack;
   private @Nullable XDebuggerExpressionComboBox myLogExpressionComboBox;
 
-  public void init(Project project, @NotNull XBreakpointProxy breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
+  private boolean myShowAllOptions;
+
+  public void init(Project project,
+                   @NotNull XBreakpointProxy breakpoint,
+                   @Nullable XDebuggerEditorsProvider debuggerEditorsProvider,
+                   boolean showAllOptions) {
     init(project, breakpoint);
+    myShowAllOptions = showAllOptions;
     if (debuggerEditorsProvider != null) {
       ActionListener listener = new ActionListener() {
         @Override
@@ -45,6 +55,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
           onCheckboxChanged();
         }
       };
+      myLogExpressionCheckBox = new JBCheckBox(XDebuggerBundle.message("xbreakpoints.log.expression.checkbox"));
       myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, LOG_EXPRESSION_HISTORY_ID,
                                                                 null, true, false);
       myLanguageChooserPanel.add(myLogExpressionComboBox.getLanguageChooser(), BorderLayout.CENTER);
@@ -100,7 +111,20 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
     if (myLogExpressionComboBox != null) {
       XExpression logExpression = myBreakpoint.getLogExpressionObjectInt();
       myLogExpressionComboBox.setExpression(logExpression);
-      myLogExpressionCheckBox.setSelected(myBreakpoint.isLogExpressionEnabled() && logExpression != null);
+      boolean hideCheckbox = !myShowAllOptions && logExpression == null;
+      myLogExpressionCheckBox.setSelected(hideCheckbox || (myBreakpoint.isLogExpressionEnabled() && logExpression != null));
+      myLogExpressionCheckBoxPanel.removeAll();
+      if (hideCheckbox) {
+        var label = new JLabel(XDebuggerBundle.message("xbreakpoints.log.expression.checkbox"));
+        label.setBorder(JBUI.Borders.empty(0, 4, 4, 0));
+        label.setLabelFor(myLogExpressionComboBox.getComboBox());
+        myLogExpressionCheckBoxPanel.add(label);
+        myLogExpressionPanel.setBorder(JBUI.Borders.emptyLeft(3));
+        myLogMessageLabel.setBorder(JBUI.Borders.empty(0, 4, 4, 0)); // to unify with other labels
+      } else {
+        myLogExpressionCheckBoxPanel.add(myLogExpressionCheckBox);
+        myLogExpressionPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myLogExpressionCheckBox)));
+      }
     }
     onCheckboxChanged();
   }
