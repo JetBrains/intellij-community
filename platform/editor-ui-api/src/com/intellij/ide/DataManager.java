@@ -80,7 +80,7 @@ public abstract class DataManager {
   public abstract @Nullable Object getCustomizedData(@NotNull String dataId, @NotNull DataContext dataContext, @NotNull DataProvider provider);
 
   /**
-   * Use {@link com.intellij.openapi.actionSystem.CustomizedDataContext#customize} instead
+   * Use {@link com.intellij.openapi.actionSystem.CustomizedDataContext#withSnapshot} instead
    */
   @ApiStatus.Internal
   public abstract @NotNull DataContext customizeDataContext(@NotNull DataContext dataContext, @NotNull Object provider);
@@ -110,7 +110,7 @@ public abstract class DataManager {
    *
    * @deprecated Use {@link UiDataProvider} or {@link UiDataProvider#wrapComponent}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void registerDataProvider(@NotNull JComponent component, @NotNull DataProvider provider) {
     if (component instanceof UiDataProvider) {
       LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing UiDataProvider. " +
