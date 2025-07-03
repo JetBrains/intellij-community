@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ID_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.MANAGING_FS_ATTRIBUTE
+import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.PROTOCOL_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -766,26 +767,33 @@ open class EditorComposite internal constructor(
         stateToElement(state = fileEditor.getState(FileEditorStateLevel.FULL), provider = provider, project = project),
       )
     }
-    return FileEntry(
-      url = file.url,
-      id = FileIdAdapter.getInstance().getId(file),
-      selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
-      isPreview = isPreview,
-      providers = stateMap,
-      tab = FileEntryTab(),
-      pinned = false,
-      currentInTab = false,
-      ideFingerprint = null,
-      managingFsCreationTimestamp = FileIdAdapter.getInstance().getManagingFsCreationTimestamp(file)
-    )
+    return with(FileIdAdapter.getInstance()) {
+      FileEntry(
+        url = file.url,
+        id = getId(file),
+        selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
+        isPreview = isPreview,
+        providers = stateMap,
+        tab = FileEntryTab(),
+        pinned = false,
+        currentInTab = false,
+        ideFingerprint = null,
+        managingFsCreationTimestamp = getManagingFsCreationTimestamp(file),
+        protocol = getProtocol(file)
+      )
+    }
   }
 
   internal fun writeCurrentStateAsHistoryEntry(project: Project): Element {
     val selectedEditorWithProvider = selectedEditorWithProvider.value
     val element = Element(TAG)
     element.setAttribute(FILE_ATTRIBUTE, file.url)
-    FileIdAdapter.getInstance().getId(file)?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
-    FileIdAdapter.getInstance().getManagingFsCreationTimestamp(file).let { element.setAttribute(MANAGING_FS_ATTRIBUTE, it.toString()) }
+    with(FileIdAdapter.getInstance()) {
+      getId(file)?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
+      getManagingFsCreationTimestamp(file).let { element.setAttribute(MANAGING_FS_ATTRIBUTE, it.toString()) }
+      getProtocol(file)?.let { element.setAttribute(PROTOCOL_ATTRIBUTE, it) }
+    }
+
     for (fileEditorWithProvider in fileEditorWithProviders.value) {
       val providerElement = Element(PROVIDER_ELEMENT)
       val provider = fileEditorWithProvider.provider
