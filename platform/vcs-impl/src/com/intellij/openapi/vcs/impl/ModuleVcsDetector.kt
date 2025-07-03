@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.ide.util.PropertiesComponent
@@ -49,11 +49,13 @@ class ModuleVcsDetector(private val project: Project, private val coroutineScope
   /**
    * Returns 'true' during initial project setup, i.e.:
    * * Project was not reopened a second time ([INITIAL_DETECTION_KEY])
+   * * There are detectors that should be run each time the project is opened
    * * There are no configured mappings
    */
   @VisibleForTesting
   fun needInitialDetection(props: PropertiesComponent, vcsManager: ProjectLevelVcsManager): Boolean {
-    return !props.getBoolean(INITIAL_DETECTION_KEY) && !vcsManager.hasAnyMappings() && VcsUtil.shouldDetectVcsMappingsFor(project);
+    return (!props.getBoolean(INITIAL_DETECTION_KEY) || VcsRootChecker.EXTENSION_POINT_NAME.extensionList.any { it.shouldAlwaysRunInitialDetection() })
+           && !vcsManager.hasAnyMappings() && VcsUtil.shouldDetectVcsMappingsFor(project)
   }
 
   suspend fun awaitInitialDetection() {
@@ -76,7 +78,14 @@ class ModuleVcsDetector(private val project: Project, private val coroutineScope
         override suspend fun execute() {
           val contentRoots = project.serviceAsync<DefaultVcsRootPolicy>().defaultVcsRoots
           MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots - contentRoots", contentRoots)
-          autoDetectForContentRoots(contentRoots = contentRoots, isInitialDetection = true, vcsManager = vcsManager)
+          val rootCheckers = if (props.getBoolean(INITIAL_DETECTION_KEY)) {
+            VcsRootChecker.EXTENSION_POINT_NAME.extensionList.filter { it.shouldAlwaysRunInitialDetection() }
+          }
+          else {
+            VcsRootChecker.EXTENSION_POINT_NAME.extensionList
+          }
+
+          autoDetectForContentRoots(contentRoots = contentRoots, isInitialDetection = true, vcsManager = vcsManager, rootCheckers = rootCheckers)
           props.updateValue(INITIAL_DETECTION_KEY, true)
           initialDetectionDone.complete(Unit)
         }
@@ -88,7 +97,11 @@ class ModuleVcsDetector(private val project: Project, private val coroutineScope
     contentRoots: Collection<VirtualFile>,
     isInitialDetection: Boolean = false,
     vcsManager: ProjectLevelVcsManagerImpl,
+    rootCheckers: List<VcsRootChecker> = VcsRootChecker.EXTENSION_POINT_NAME.extensionList,
   ) {
+    if (rootCheckers.isEmpty()) {
+      return
+    }
     MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectForContentRoots - contentRoots", contentRoots)
     if (vcsManager.haveDefaultMapping() != null) {
       return
@@ -109,7 +122,7 @@ class ModuleVcsDetector(private val project: Project, private val coroutineScope
       }
 
     val directMappings = detectedRoots.mapTo(HashSet(detectedRoots.size)) { it.first }
-    for (rootChecker in VcsRootChecker.EXTENSION_POINT_NAME.extensionList) {
+    for (rootChecker in rootCheckers) {
       val vcs = vcsManager.findVcsByName(rootChecker.supportedVcs.name) ?: continue
       val detectedMappings = try {
         rootChecker.detectProjectMappings(project, contentRoots, directMappings) ?: continue
