@@ -123,7 +123,7 @@ class PreviewOutputBlocksManager(editor: Editor) {
 
             val formattedRow = valuesByLineNumber.groupBy { it.variableName }.map { (variableName, valuesByVariableName) ->
                 if (valuesByVariableName.size == 1) {
-                    "$variableName: ${valuesByVariableName.single().variableValue}"
+                    formatSingleVariable(variableName, valuesByVariableName.single().variableValue)
                 } else {
                     val lineResult = valuesByVariableName.last()
                     val lineResultOffset = lineResult.offsets
@@ -150,6 +150,14 @@ class PreviewOutputBlocksManager(editor: Editor) {
             targetDocument.insertStringAtLine(lineNumber = lineNumber, formattedRow)
 
             markupModel.highlightLines(lineNumber, lineNumber, getAttributesForOutputType(ScratchOutputType.RESULT))
+        }
+    }
+
+    private fun formatSingleVariable(variableName: String, variableValue: Any?): String = buildString {
+        if (variableName.isNotBlank() && variableName != RESULT) {
+            append("$variableName: ${variableValue}")
+        } else if (variableValue !in VALUES_TO_HIDE) {
+            append("${variableValue}")
         }
     }
 
@@ -293,3 +301,7 @@ fun MarkupModel.highlightLines(
         targetArea
     )
 }
+
+private val VALUES_TO_HIDE = setOf("kotlin.Unit", "kotlin.Nothing")
+
+private const val RESULT = $$$"$$result"

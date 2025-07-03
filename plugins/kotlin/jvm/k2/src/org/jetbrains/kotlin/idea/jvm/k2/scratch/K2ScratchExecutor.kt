@@ -77,9 +77,9 @@ class K2ScratchExecutor(override val file: K2KotlinScratchFile, val project: Pro
                 CompilationResult(process.exitValue(), stdout, stderr)
             }
 
-            if (code != 0) {
+            if (code != 0 && !file.options.isInteractiveMode) {
                 handler.error(file, "Compilation failed: ${stderr}")
-            } else {
+            } else if (code == 0) {
                 if (stdout.isNotEmpty()) {
                     handler.handle(file, ScratchOutput(stdout, ScratchOutputType.OUTPUT))
                 }
