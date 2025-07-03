@@ -204,5 +204,10 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   }
 
   public void testMutabilityJdk21() { doTest(); }
+  
+  public void testJSpecifyLambdaTernary() {
+    addJSpecifyNullMarked(myFixture);
+    doTest();
+  }
 
 }

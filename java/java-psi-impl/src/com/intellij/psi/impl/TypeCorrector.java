@@ -160,6 +160,12 @@ class TypeCorrector extends PsiTypeMapper {
     }
 
     @Override
+    public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
+      PsiClassType newDelegate = myDelegate.withNullability(nullability);
+      return newDelegate == myDelegate ? this : new PsiCorrectedClassType(myLanguageLevel, newDelegate, myResolveResult);
+    }
+
+    @Override
     public PsiType @NotNull [] getParameters() {
       return ContainerUtil.map2Array(myDelegate.getParameters(), PsiType.class, type -> {
         if (type == null) {
