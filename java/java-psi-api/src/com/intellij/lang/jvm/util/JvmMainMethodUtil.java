@@ -1,8 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.*;
 import com.intellij.lang.jvm.types.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +15,11 @@ import static com.intellij.util.containers.ContainerUtil.find;
 import static java.util.Objects.requireNonNull;
 
 // TODO support com.intellij.codeInsight.runner.JavaMainMethodProvider
+
+/**
+ * @deprecated These methods are not supported for new features, please use original methods for languages
+ */
+@Deprecated
 public final class JvmMainMethodUtil {
 
   private static final String MAIN = "main";
@@ -21,12 +29,18 @@ public final class JvmMainMethodUtil {
   public static boolean isMainMethod(@NotNull JvmMethod method) {
     if (!MAIN.equals(method.getName())) return false;
     final JvmClass containingClass = method.getContainingClass();
-    return containingClass != null && canBeMainClass(containingClass) && hasMainMethodSignature(method);
+    return containingClass != null && canBeMainClass(containingClass) && (hasMainMethodSignature(method) ||
+           //just to partially support instance methods for Java, these methods are abandoned
+           //please use original methods
+           (method instanceof PsiMethod && PsiMethodUtil.isMainMethod((PsiMethod)method)));
   }
 
   public static boolean hasMainMethodInHierarchy(@NotNull JvmClass clazz) {
     if (!canBeMainClass(clazz)) return false;
-    return findMainMethodInHierarchy(clazz) != null;
+    return findMainMethodInHierarchy(clazz) != null ||
+           //just to partially support instance methods for Java, these methods are abandoned,
+           //please use original methods
+           (clazz instanceof PsiClass && PsiMethodUtil.hasMainMethod((PsiClass)clazz));
   }
 
   private static boolean canBeMainClass(@NotNull JvmClass clazz) {

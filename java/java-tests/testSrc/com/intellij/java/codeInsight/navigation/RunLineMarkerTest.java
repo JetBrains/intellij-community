@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.intellij.java.codeInsight.navigation.RunLineMarkerJava22Test.checkMark;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -306,5 +308,52 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
       }""");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(0, marks.size());
+  }
+
+  public void testNonStaticMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.configureByText("A1.java", """
+      class A1 {
+          public void main<caret>(){
+          }
+      }""");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "A1");
+    });
+  }
+
+  public void testInheritStaticMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.addClass("""
+                         class A2 {
+                             public static void main(String[] args) {
+                                 System.out.println("1");
+                             }
+                         }""");
+    myFixture.configureByText("A1.java", """
+      class A1<caret> extends A2 {
+      }""");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    checkMark(marks.get(0), "A1");
+    });
+  }
+
+  public void testInheritMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.addClass("""
+                         class A2 {
+                             public void main(String[] args) {
+                                 System.out.println("1");
+                             }
+                         }""");
+    myFixture.configureByText("A1.java", """
+      class A1<caret> extends A2 {
+      }""");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    checkMark(marks.get(0), "A1");
+    });
   }
 }
