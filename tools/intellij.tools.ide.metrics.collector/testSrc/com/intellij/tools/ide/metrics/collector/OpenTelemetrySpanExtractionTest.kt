@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.metrics.collector
 
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
+import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetrySpanJsonParser
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffBetweenSpans
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsForStartup
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.FileSystems
 import java.nio.file.Paths
+import java.time.Instant
 import kotlin.io.path.div
 
 internal val openTelemetryReports by lazy {
@@ -28,6 +30,14 @@ internal val openTelemetryReports by lazy {
 }
 
 class OpenTelemetrySpanExtractionTest {
+
+  @Test
+  fun gatewayClientHostMetricsCollected() {
+    val file = (openTelemetryReports / "client-opentelemetry.json")
+    val result = OpentelemetrySpanJsonParser(SpanFilter.nameInList("rdct.station.discovery: scheduled", "rdct.gateway.LinkHandler.reporting.capabilities")).getSpanElements(file)
+    result.filter { it.startTimestamp == Instant.ofEpochMilli(1751546271647270 / 1000) && it.name == "rdct.station.discovery: scheduled" }.shouldHaveSize(1)
+    result.filter { it.startTimestamp == Instant.ofEpochMilli(1751546271719000 / 1000) && it.name == "rdct.gateway.LinkHandler.reporting.capabilities" }.shouldHaveSize(1)
+  }
 
   @Test
   fun startupMetricsCollected() {
@@ -313,13 +323,13 @@ class OpenTelemetrySpanExtractionTest {
                                                     (openTelemetryReports / "opentelemetry_with_warmup_spans.json"),
                                                     "localInspections", "GeneralHighlightingPass")
     assertThat(metrics).containsAll(listOf(
-      Metric.newDuration("semanticHighlighting_1", 33),
-      Metric.newDuration("semanticHighlighting_2", 34),
-      Metric.newDuration("semanticHighlighting_3", 35),
-      Metric.newDuration("semanticHighlighting_4", 45),
-      Metric.newDuration("semanticHighlighting_5", 47),
-      Metric.newDuration("semanticHighlighting", 194),
-      Metric.newDuration("semanticHighlighting#mean_value", 38),
+      Metric.newDuration("semanticHighlighting_1", 347),
+      Metric.newDuration("semanticHighlighting_2", 337),
+      Metric.newDuration("semanticHighlighting_3", 342),
+      Metric.newDuration("semanticHighlighting_4", 349),
+      Metric.newDuration("semanticHighlighting_5", 350),
+      Metric.newDuration("semanticHighlighting", 1725),
+      Metric.newDuration("semanticHighlighting#mean_value", 345),
     ))
     val find = metrics.find { it.id.name == "semanticHighlighting_6" }
     assert(find == null) {
