@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -10,15 +10,19 @@ import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A collection of utility methods for working with PATH environment variable.
  */
+@SuppressWarnings("ALL")
 public final class PathEnvironmentVariableUtil {
-
-  private static final String PATH = "PATH";
+  private static final Map<String, Boolean> ourOnPathCache = Collections.synchronizedMap(new HashMap<>());
 
   private PathEnvironmentVariableUtil() { }
 
@@ -143,7 +147,7 @@ public final class PathEnvironmentVariableUtil {
    * Retrieves the value of PATH environment variable
    */
   public static @Nullable String getPathVariableValue() {
-    return EnvironmentUtil.getValue(PATH);
+    return EnvironmentUtil.getValue("PATH");
   }
 
   public static @Nullable File findExecutableInPathOnAnyOS(@NotNull @NonNls String fileBaseName) {
@@ -156,5 +160,30 @@ public final class PathEnvironmentVariableUtil {
     else {
       return findInPath(fileBaseName);
     }
+  }
+
+  /**
+   * Checks whether the given file is in one of the directories listed in the PATH environment variable.
+   * The first call might be slow, but the result is cached.
+   *
+   * @since 2025.3
+   */
+  public static boolean isOnPath(@NotNull String name) {
+    if (name.indexOf('\\') >= 0 || name.indexOf('/') >= 0) throw new IllegalArgumentException(name);
+    var result = ourOnPathCache.get(name);
+    if (result == null) {
+      result = Boolean.FALSE;
+      var path = getPathVariableValue();
+      if (path != null) {
+        for (var dir : StringUtil.tokenize(path, File.pathSeparator)) {
+          if (Files.isExecutable(Path.of(dir, name))) {
+            result = Boolean.TRUE;
+            break;
+          }
+        }
+      }
+      ourOnPathCache.put(name, result);
+    }
+    return result;
   }
 }

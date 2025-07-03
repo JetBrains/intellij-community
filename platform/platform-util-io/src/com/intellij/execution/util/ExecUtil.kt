@@ -4,21 +4,21 @@ package com.intellij.execution.util
 import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.*
 import com.intellij.execution.sudo.SudoCommandProvider
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
+import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.BufferedReader
@@ -27,20 +27,19 @@ import java.io.InputStreamReader
 import java.nio.file.Path
 
 object ExecUtil {
-  private val hasGnomeTerminal = PathExecLazyValue.create("gnome-terminal")
-  @Suppress("SpellCheckingInspection")
-  private val hasKdeTerminal = PathExecLazyValue.create("konsole")
-  @Suppress("SpellCheckingInspection")
-  private val hasUrxvt = PathExecLazyValue.create("urxvt")
-  private val hasXTerm = PathExecLazyValue.create("xterm")
+  private val hasSupportedTerminals = lazy {
+    @Suppress("SpellCheckingInspection")
+    PathEnvironmentVariableUtil.isOnPath("konsole") ||
+    PathEnvironmentVariableUtil.isOnPath("gnome-terminal") ||
+    PathEnvironmentVariableUtil.isOnPath("urxvt") ||
+    PathEnvironmentVariableUtil.isOnPath("xterm")
+  }
 
   @JvmStatic
-  val osascriptPath: @NlsSafe String
-    get() = "/usr/bin/osascript"
+  val osascriptPath: @NlsSafe String get() = "/usr/bin/osascript"
 
   @JvmStatic
-  val openCommandPath: @NlsSafe String
-    get() = "/usr/bin/open"
+  val openCommandPath: @NlsSafe String get() = "/usr/bin/open"
 
   @ApiStatus.Internal
   @JvmStatic
@@ -167,17 +166,16 @@ object ExecUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun hasTerminalApp(): Boolean =
-    SystemInfoRt.isWindows || SystemInfoRt.isMac || hasKdeTerminal.get() || hasGnomeTerminal.get() || hasUrxvt.get() || hasXTerm.get()
+  fun hasTerminalApp(): Boolean = OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || hasSupportedTerminals.value
 
   @ApiStatus.Internal
   @JvmStatic
   @Suppress("SpellCheckingInspection")
   fun getTerminalCommand(@Nls(capitalization = Nls.Capitalization.Title) title: String?, command: String): List<@NlsSafe String> = when {
-    SystemInfoRt.isWindows -> {
+    OS.CURRENT == OS.Windows -> {
       listOf(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
     }
-    SystemInfoRt.isMac -> {
+    OS.CURRENT == OS.macOS -> {
       val prefix = if (title != null) "\"echo -n \" & " + escapeAppleScriptArgument("\\0033]0;${title}\\007") + " & \" ; \" & " else ""
       val script = prefix + "\"clear ; exec \" & " + escapeAppleScriptArgument(command)
       listOf(osascriptPath, "-e", """
@@ -187,24 +185,24 @@ object ExecUtil {
           |end tell
           """.trimMargin())
     }
-    hasKdeTerminal.get() -> {
+    PathEnvironmentVariableUtil.isOnPath("konsole") -> {
       if (title != null) listOf("konsole", "-p", "tabtitle=\"${title.replace('"', '\'')}\"", "-e", command)
       else listOf("konsole", "-e", command)
     }
-    hasGnomeTerminal.get() -> {
+    PathEnvironmentVariableUtil.isOnPath("gnome-terminal") -> {
       if (title != null) listOf("gnome-terminal", "-t", title, "-x", command)
       else listOf("gnome-terminal", "-x", command)
     }
-    hasUrxvt.get() -> {
+    PathEnvironmentVariableUtil.isOnPath("urxvt") -> {
       if (title != null) listOf("urxvt", "-title", title, "-e", command)
       else listOf("urxvt", "-e", command)
     }
-    hasXTerm.get() -> {
+    PathEnvironmentVariableUtil.isOnPath("xterm") -> {
       if (title != null) listOf("xterm", "-T", title, "-e", command)
       else listOf("xterm", "-e", command)
     }
     else -> {
-      throw UnsupportedOperationException("Unsupported OS/desktop: ${SystemInfoRt.OS_NAME}/${System.getenv("XDG_CURRENT_DESKTOP")}")
+      throw UnsupportedOperationException("Unsupported OS/desktop: ${OS.CURRENT.name}/${System.getenv("XDG_CURRENT_DESKTOP")}")
     }
   }
 

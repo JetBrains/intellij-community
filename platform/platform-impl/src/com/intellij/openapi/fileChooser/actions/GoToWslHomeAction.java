@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
@@ -18,7 +19,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,15 +26,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Supplier;
 
 final class GoToWslHomeAction extends FileChooserAction implements LightEditCompatible {
-  private static final Supplier<Boolean> ourHasWsl = PathExecLazyValue.create("wsl.exe");
-
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    var allowed = WSLUtil.isSystemCompatible() && ourHasWsl.get() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser");
-    e.getPresentation().setEnabledAndVisible(allowed);
+    e.getPresentation().setEnabledAndVisible(
+      WSLUtil.isSystemCompatible() &&
+      Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser") &&
+      PathEnvironmentVariableUtil.isOnPath("wsl.exe")
+    );
   }
 
   @Override

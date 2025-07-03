@@ -423,6 +423,8 @@ com.intellij.util.keyFMap.KeyFMap
 - a:minus(com.intellij.openapi.util.Key):com.intellij.util.keyFMap.KeyFMap
 - a:plus(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.util.keyFMap.KeyFMap
 - a:size():I
+e:com.intellij.util.system.OS
+- s:isGenericUnix():Z
 com.intellij.util.xmlb.Accessor
 - a:getAnnotation(java.lang.Class):java.lang.annotation.Annotation
 - a:getGenericType():java.lang.reflect.Type
