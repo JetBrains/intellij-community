@@ -1264,14 +1264,19 @@ internal data class FileToOpen(
 )
 
 private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: VirtualFileManager): VirtualFile? {
+  val fileIdAdapter = FileIdAdapter.getInstance()
+
   // In the case of the JetBrains client, it's better to get the file by its ID to avoid a blocking protocol call inside
   // [VirtualFileManager.findFileByUrl]
   val file = if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
     if (fileEntry.managingFsCreationTimestamp != null) {
-      FileIdAdapter.getInstance().getFileWithTimestamp(fileEntry.id, fileEntry, fileEntry.managingFsCreationTimestamp)
+      fileIdAdapter.getFileWithTimestamp(fileEntry.id, fileEntry, fileEntry.managingFsCreationTimestamp)
     } else {
-      FileIdAdapter.getInstance().getFile(fileEntry.id, fileEntry)
+      fileIdAdapter.getFile(fileEntry.id, fileEntry)
     }
+  }
+  else if (PlatformUtils.isJetBrainsClient() && fileEntry.protocol != null) {
+    fileIdAdapter.getFile(fileEntry.protocol, VirtualFileManager.extractPath(fileEntry.url), fileEntry)
   }
   else {
     LOG.runAndLogException {
