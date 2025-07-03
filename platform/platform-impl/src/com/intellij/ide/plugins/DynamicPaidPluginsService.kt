@@ -103,8 +103,25 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     }
 
     if (requireRestartPlugins.isNotEmpty()) {
+      notifyNotLoadedWithoutRestart(pluginEnabler, requireRestartPlugins)
+    }
+    else {
+      logger.debug("No plugins that require restart found to be enabled.")
+    }
+  }
+
+  private fun notifyNotLoadedWithoutRestart(pluginEnabler: PluginEnabler, plugins: List<IdeaPluginDescriptorImpl>) {
+    val (loadableAfterRestart, missingDependencies) = plugins.partition { plugin ->
+      plugin.dependencies.all { PluginManagerCore.isPluginInstalled(it.pluginId) || it.isOptional }
+    }
+
+    if (missingDependencies.isNotEmpty()) {
+      logger.info("Plugins cannot be loaded even with restart because of missing dependencies: ${missingDependencies.map { it.pluginId }}")
+    }
+
+    if (loadableAfterRestart.isNotEmpty()) {
       val notificationTitle: String = IdeBundle.message("notification.title.paid.plugins.not.loaded")
-      val pluginNames = requireRestartPlugins.map { it.name }.sorted()
+      val pluginNames = loadableAfterRestart.map { it.name }.sorted()
 
       @Suppress("HardCodedStringLiteral")
       val notificationContent = IdeBundle.message("notification.content.paid.plugins.not.loaded") +
@@ -115,13 +132,10 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
         .createNotification(notificationTitle, notificationContent, NotificationType.INFORMATION)
         .addAction(object : NotificationAction(IdeBundle.message("notification.action.load.paid.plugins.and.restart")) {
           override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-            enablePlugins(pluginEnabler, requireRestartPlugins, restart = true)
+            enablePlugins(pluginEnabler, loadableAfterRestart, restart = true)
           }
         })
         .notify(null)
-    }
-    else {
-      logger.debug("No plugins that require restart found to be enabled.")
     }
   }
 
