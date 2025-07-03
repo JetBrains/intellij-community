@@ -4060,8 +4060,6 @@ a:com.intellij.ide.ui.laf.SystemDarkThemeDetector
 - sf:Companion:com.intellij.ide.ui.laf.SystemDarkThemeDetector$Companion
 - f:check():V
 - a:check(java.lang.Boolean):V
-- sf:createDetector(java.util.function.Consumer):com.intellij.ide.ui.laf.SystemDarkThemeDetector
-- sf:createParametrizedDetector(java.util.function.BiConsumer):com.intellij.ide.ui.laf.SystemDarkThemeDetector
 - a:getDetectionSupported():Z
 - a:isDark():Z
 f:com.intellij.ide.ui.laf.SystemDarkThemeDetector$Companion

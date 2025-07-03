@@ -238,7 +238,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun syncThemeAndEditorScheme(systemIsDark: Boolean, async: Boolean?) {
-    syncTheme(systemIsDark, async ?: true)
+    syncTheme(systemIsDark = systemIsDark, async = async ?: true)
     syncEditorScheme(systemIsDark)
   }
 
