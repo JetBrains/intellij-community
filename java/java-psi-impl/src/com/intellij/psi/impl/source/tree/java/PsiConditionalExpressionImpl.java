@@ -98,8 +98,12 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
       }
       return TypeConversionUtil.binaryNumericPromotion(type1, type2);
     }
-    if (TypeConversionUtil.isNullType(type1) && !(type2 instanceof PsiPrimitiveType)) return type2;
-    if (TypeConversionUtil.isNullType(type2) && !(type1 instanceof PsiPrimitiveType)) return type1;
+    if (TypeConversionUtil.isNullType(type1) && !(type2 instanceof PsiPrimitiveType)) {
+      return type2.withNullability(type2.getNullability().join(type1.getNullability()));
+    }
+    if (TypeConversionUtil.isNullType(type2) && !(type1 instanceof PsiPrimitiveType)) {
+      return type1.withNullability(type2.getNullability().join(type1.getNullability()));
+    }
 
     if (TypeConversionUtil.isAssignable(type1, type2, false)) return type1;
     if (TypeConversionUtil.isAssignable(type2, type1, false)) return type2;
