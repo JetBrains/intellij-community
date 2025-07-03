@@ -116,4 +116,58 @@ class ContainingKlass {
         }
     }
 }
+class Q {
+  class A {
+    class X  {
+    }
+  }
+  class B extends A {
+    class X extends B {
+      Class c = X.class;
+      //           ^ IntelliJ: Reference to 'X' is ambiguous, both 'Q.B.X' and 'Q.A.X' match
+      //           ^ javac   : no problem!
+    }
+  }
+}
+abstract class Base {
+  public class Type{}
+
+  static abstract class Derived extends Base {
+    public class Type{}
+
+    /**
+     * {@link Type} should resolve to Derived.Type
+     */
+    static class Concrete extends Derived {
+      Type t;
+    }
+  }
+}
+interface Base2 {
+  public class Type{}
+
+  interface Derived extends Base2 {
+    public class Type{}
+
+    static class Concrete implements Derived {
+      // still incorrect error here, not in fact ambiguous:
+      <error descr="Reference to 'Type' is ambiguous, both 'Base2.Derived.Type' and 'Base2.Type' match">Type</error> t;
+    }
+  }
+}
+interface I1 {
+  class Z {}
+}
+interface I2 extends I1 {
+  class Z {}
+}
+interface I3 extends I1 {
+  Z good();
+}
+interface I4 extends I2, I3 {
+  Z ambiguous(); // there should be an error here
+}
+interface I5 extends I4 {
+  Z ambiguous(); // there should be an error here
+}
 
