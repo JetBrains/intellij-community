@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
@@ -56,7 +57,6 @@ import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
-import fleet.util.logging.logger
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*

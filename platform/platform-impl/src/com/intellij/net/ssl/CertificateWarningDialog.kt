@@ -4,6 +4,7 @@ package com.intellij.net.ssl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -27,7 +28,6 @@ import com.intellij.util.net.ssl.CertificateWrapper.CommonField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import fleet.util.logging.logger
 import java.awt.Color
 import java.awt.Component
 import java.awt.Point

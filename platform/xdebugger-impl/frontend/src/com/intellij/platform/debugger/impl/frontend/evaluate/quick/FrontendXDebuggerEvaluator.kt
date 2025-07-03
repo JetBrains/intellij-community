@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
@@ -19,7 +20,6 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluat
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.toRpc
-import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future

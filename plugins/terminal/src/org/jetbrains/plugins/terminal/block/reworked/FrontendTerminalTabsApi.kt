@@ -4,13 +4,13 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
-import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -54,7 +54,7 @@ internal class FrontendTerminalTabsApi(private val project: Project, private val
       throw e
     }
     catch (e: Exception) {
-      LOG.error(e, "Failed to rename tab: ${request}")
+      LOG.error("Failed to rename tab: ${request}", e)
     }
   }
 
