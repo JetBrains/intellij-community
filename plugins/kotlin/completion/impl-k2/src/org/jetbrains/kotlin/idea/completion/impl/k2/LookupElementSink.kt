@@ -18,8 +18,6 @@ import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStr
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
 import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
 import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
-import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher
-import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -49,12 +47,12 @@ internal class LookupElementSink(
 
     fun addElement(element: LookupElement) {
         decorateLookupElement(element)
-            ?.let(resultSet::addElement)
+            .let(resultSet::addElement)
     }
 
     fun addAllElements(elements: Iterable<LookupElement>) {
         val decoratedElements = elements.asSequence()
-            .mapNotNull(::decorateLookupElement)
+            .map(::decorateLookupElement)
             .asIterable()
         resultSet.addAllElements(decoratedElements)
     }
@@ -72,16 +70,7 @@ internal class LookupElementSink(
 
     private fun decorateLookupElement(
         element: LookupElement,
-    ): LookupElementDecorator<LookupElement>? {
-        if (parameters.completionType == CompletionType.SMART
-            && when (element.matchesExpectedType) {
-                ExpectedTypeWeigher.MatchesExpectedType.MATCHES_PREFERRED,
-                ExpectedTypeWeigher.MatchesExpectedType.MATCHES -> false
-
-                else -> true
-            }
-        ) return null
-
+    ): LookupElementDecorator<LookupElement> {
         element.groupPriority = groupPriority
         element.contributorClass = contributorClass
 

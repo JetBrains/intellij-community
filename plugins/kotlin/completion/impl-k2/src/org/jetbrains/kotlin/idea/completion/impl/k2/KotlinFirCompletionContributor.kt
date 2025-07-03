@@ -3,13 +3,17 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
+import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.MatchesExpectedType
+import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -102,6 +106,9 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         )
 
         return withPrefixMatcher(prefix)
+            .applyIf(parameters.completionType == CompletionType.SMART) {
+                withPrefixMatcher(SmartCompletionPrefixMatcher(prefixMatcher))
+            }
     }
 
     private fun CompletionResultSet.withRelevanceSorter(
@@ -118,4 +125,23 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         PsiJavaPatterns.psiElement().withText(""),
         PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
     )
+
+    private class SmartCompletionPrefixMatcher(
+        private val delegate: PrefixMatcher,
+    ) : PrefixMatcher(delegate.prefix) {
+
+        override fun prefixMatches(element: LookupElement): Boolean =
+            when (element.matchesExpectedType) {
+                MatchesExpectedType.MATCHES_PREFERRED,
+                MatchesExpectedType.MATCHES -> true
+
+                else -> false
+            } && super.prefixMatches(element)
+
+        override fun prefixMatches(name: String): Boolean =
+            delegate.prefixMatches(name)
+
+        override fun cloneWithPrefix(prefix: String): PrefixMatcher =
+            SmartCompletionPrefixMatcher(delegate.cloneWithPrefix(prefix))
+    }
 }
