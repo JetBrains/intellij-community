@@ -39,6 +39,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -354,7 +355,10 @@ public final class PlatformTestUtil {
     while (busyCondition.get()) {
       assertMaxWaitTimeSince(startTimeMillis);
       TimeoutUtil.sleep(5);
-      UIUtil.dispatchAllInvocationEvents();
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        UIUtil.dispatchAllInvocationEvents();
+        return Unit.INSTANCE;
+      });
     }
   }
 
@@ -411,7 +415,10 @@ public final class PlatformTestUtil {
     long start = System.currentTimeMillis();
     while (true) {
       if (!future.isDone()) {
-        UIUtil.dispatchAllInvocationEvents();
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+          UIUtil.dispatchAllInvocationEvents();
+          return Unit.INSTANCE;
+        });
       }
       try {
         return future.get(10, TimeUnit.MILLISECONDS);
@@ -510,14 +517,17 @@ public final class PlatformTestUtil {
    */
   public static void dispatchAllEventsInIdeEventQueue() {
     assertEventQueueDispatchThread();
-    while (true) {
-      try {
-        if (dispatchNextEventIfAny() == null) break;
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      while (true) {
+        try {
+          if (dispatchNextEventIfAny() == null) break;
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }
+      return Unit.INSTANCE;
+    });
   }
 
   /**
