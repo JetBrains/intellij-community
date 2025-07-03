@@ -434,7 +434,7 @@ open class ExternalResourceManagerExBase(coroutineScope: CoroutineScope) : Exter
 
   internal fun getStandardResources(): Collection<MutableMap<String, ExternalResource>> = standardResources.value.values
 
-  override fun getDefaultHtmlDoctype(project: Project): String? {
+  override fun getDefaultHtmlDoctype(project: Project): String {
     val doctype = getProjectResources(project).defaultHtmlDoctype
     return when {
       XmlUtil.XHTML_URI == doctype -> XmlUtil.XHTML4_SCHEMA_LOCATION

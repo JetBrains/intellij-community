@@ -329,9 +329,8 @@ public final class HtmlUtil {
 
     if (doctype == null) {
       LOG.debug("DOCTYPE for " + htmlFileFullName + " is null");
-      return isHtmlTagContainingFile(doc) &&
-             Objects.equals(Html5SchemaProvider.getHtml5SchemaLocation(),
-                            ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
+      return isHtmlTagContainingFile(doc) && Html5SchemaProvider.getHtml5SchemaLocation()
+        .equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
     }
 
     final boolean html5Doctype = isHtml5Doctype(doctype);
