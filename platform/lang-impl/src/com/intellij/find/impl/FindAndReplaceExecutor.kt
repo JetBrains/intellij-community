@@ -2,9 +2,11 @@
 package com.intellij.find.impl
 
 import com.intellij.find.FindModel
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfoAdapter
 import org.jetbrains.annotations.ApiStatus
@@ -31,6 +33,8 @@ interface FindAndReplaceExecutor {
     findModel: FindModel,
     previousUsages: Set<UsageInfoAdapter>,
     shouldThrottle: Boolean,
+    disposableParent: Disposable,
+    onDocumentUpdated: (usageInfos: List<UsageInfo>) -> Unit?,
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
   )

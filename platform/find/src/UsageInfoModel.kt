@@ -7,11 +7,16 @@ import com.intellij.ide.SelectInEditorManager
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.textChunk
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.DocumentFullUpdateListener
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -31,12 +36,13 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 private val LOG = logger<UsageInfoModel>()
 
-internal class UsageInfoModel private constructor(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor {
+internal class UsageInfoModel private constructor(val project: Project, val model: FindInFilesResult, val coroutineScope: CoroutineScope, val onDocumentUpdated: (usageInfos: List<UsageInfo>) -> Unit?) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor, Disposable {
   private val virtualFile: VirtualFile? = run {
     val virtualFile = model.fileId.virtualFile()
     if (virtualFile == null) LOG.error("Cannot find virtualFile for ${model.presentablePath}")
@@ -44,6 +50,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   private var cachedPsiFile: PsiFile? = null
+  private var document: Document? = null
   private var cachedSmartRange: SmartPsiFileRange? = null
   private var cachedMergedSmartRanges: List<SmartPsiFileRange> = emptyList()
   private var cachedUsageInfos: List<UsageInfo> = emptyList()
@@ -54,7 +61,23 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
     TextRange(it, it + model.length)
   }
 
+  private val fullUpdateListener = object : DocumentFullUpdateListener {
+    override fun onFullUpdateDocument(document: Document) {
+      PsiDocumentManager.getInstance(project).performForCommittedDocument(document) {
+        initialize(onDocumentUpdated)
+      }
+    }
+  }
+
+  override fun dispose() {
+    (document as? DocumentImpl)?.removeFullUpdateListener(fullUpdateListener)
+  }
+
   init {
+    initialize()
+  }
+
+  private fun initialize(onDocumentUpdated: ((usageInfos: List<UsageInfo>) -> Unit?)? = null) {
     coroutineScope.launch(Dispatchers.Default) {
       try {
 
@@ -62,6 +85,9 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
 
           val psiFile = virtualFile?.let { vFile ->
             PsiManager.getInstance(project).findFile(vFile)
+          }
+          if (document == null) document = psiFile?.fileDocument?.also {
+            (it as? DocumentEx)?.addFullUpdateListener(fullUpdateListener)
           }
 
           if (psiFile == null) return@readAction CachedValues(null, null, emptyList(), emptyList())
@@ -78,8 +104,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
                 .createSmartPsiFileRangePointer(psiFile, range)
             }
           }
-          val ranges = if (smartMergedRanges.isEmpty()) defaultMergedRanges else smartMergedRanges.mapNotNull { smartRange -> smartRange.range?.let { TextRange(it.startOffset, it.endOffset) } }
-          val usageInfos = ranges.map { UsageInfo(psiFile, it, false) }
+          val usageInfos = defaultMergedRanges.map { UsageInfo(psiFile, it, false) }
 
           CachedValues(psiFile, smartRange, smartMergedRanges, usageInfos)
         }
@@ -97,6 +122,9 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
       }
       finally {
         initializationCompleted.complete(Unit)
+        withContext(Dispatchers.EDT) {
+          onDocumentUpdated?.invoke(cachedUsageInfos)
+        }
       }
     }
   }
@@ -111,13 +139,17 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   companion object {
     @JvmStatic
     @RequiresBackgroundThread
-    fun createUsageInfoModel(project: Project, model: FindInFilesResult, coroutineScope: CoroutineScope): UsageInfoModel {
-      return UsageInfoModel(project, model, coroutineScope)
+    fun createUsageInfoModel(project: Project, model: FindInFilesResult, coroutineScope: CoroutineScope, onDocumentUpdated: (usageInfos: List<UsageInfo>) -> Unit?): UsageInfoModel {
+      return UsageInfoModel(project, model, coroutineScope, onDocumentUpdated)
     }
   }
 
   private fun getMergedRanges(): List<TextRange> {
-    return if (cachedMergedSmartRanges.isEmpty()) defaultMergedRanges else cachedMergedSmartRanges.mapNotNull { smartRange -> smartRange.range?.let { TextRange(it.startOffset, it.endOffset) } }
+    return if (cachedMergedSmartRanges.isEmpty()) defaultMergedRanges
+    else cachedMergedSmartRanges
+      .mapNotNull { smartRange ->
+        smartRange.range?.let { TextRange(it.startOffset, it.endOffset) }
+      }.ifEmpty { defaultMergedRanges }
   }
 
   private fun calculateRange(): Segment {
@@ -151,12 +183,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   override fun getMergedInfosAsync(): CompletableFuture<Array<UsageInfo>> {
-    return if (initializationCompleted.isDone) {
-      CompletableFuture.completedFuture(cachedUsageInfos.toTypedArray())
-    }
-    else {
-      CompletableFuture.supplyAsync(captureThreadContext { getMergedInfos() })
-    }
+    return CompletableFuture.supplyAsync(captureThreadContext { getMergedInfos() })
   }
 
   override fun isReadOnly(): Boolean {

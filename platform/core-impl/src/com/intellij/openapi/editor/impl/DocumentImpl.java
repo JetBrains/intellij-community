@@ -72,6 +72,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<DocumentFullUpdateListener> fullUpdateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private int myCheckGuardedBlocks;
   private boolean myGuardsSuppressed;
@@ -1128,8 +1129,27 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     else {
       CommandProcessor.getInstance().executeCommand(null, runnable, "", DocCommandGroupId.noneGroupId(this));
     }
+    fireDocumentFullUpdated();
 
     clearLineModificationFlags();
+  }
+
+  private void fireDocumentFullUpdated() {
+    fullUpdateListeners.forEach(listener -> {
+      listener.onFullUpdateDocument(this);
+    });
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void addFullUpdateListener(DocumentFullUpdateListener listener) {
+    fullUpdateListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void removeFullUpdateListener(DocumentFullUpdateListener listener) {
+    fullUpdateListeners.remove(listener);
   }
 
   @Override
