@@ -113,24 +113,17 @@ object ConvertToBlockBodyUtils {
     )
 
     private fun KtDeclarationWithBody.setTypeReferenceIfNeeded(context: ConvertToBlockBodyContext) {
-        fun KtCallableDeclaration.setTypeReference() {
-            val addedTypeReference = setTypeReference(KtPsiFactory(project).createType(context.returnTypeString))
-            if (addedTypeReference != null) {
-                context.shortenReferences.shorten(addedTypeReference)
-            }
-        }
-
         when (this) {
             is KtNamedFunction -> {
                 if (!hasDeclaredReturnType() && !context.returnTypeIsUnit) {
-                    this.setTypeReference()
+                    setTypeReference(context.returnTypeString)
                 }
             }
 
             is KtPropertyAccessor -> {
                 val parent = parent
                 if (parent is KtProperty && parent.typeReference == null) {
-                    parent.setTypeReference()
+                    parent.setTypeReference(context.returnTypeString)
                 }
             }
         }
