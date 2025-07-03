@@ -1,4 +1,6 @@
 <idea-plugin>
+  <module value="intellij.regexp.plugin"/>
+
   <extensionPoints>
     <extensionPoint name="regExpLanguageHost" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpLanguageHost"/>
