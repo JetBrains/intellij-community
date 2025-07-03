@@ -132,7 +132,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val position = request.position.sourcePosition()
     val lineTypes = request.types.mapNotNull { XBreakpointUtil.findType(it.id) as? XLineBreakpointType<*> }
     LOG.info("[$requestId] Toggle line breakpoint request received file: ${request.position}, line: ${request.position.line}" +
-             "Request details: hasBreakpoints=${request.hasBreakpoints}, isTemporary=${request.isTemporary}, isConditional=${request.isConditional}," +
+             "Request details: hasBreakpoints=${request.hasBreakpoints}, isTemporary=${request.isTemporary}, isLogging=${request.isLogging}," +
              "  line breakpoint types: ${lineTypes.map { it.id }}")
 
     val variants = readAction { XDebuggerUtilImpl.getLineBreakpointVariants(project, lineTypes, position) }.await()
@@ -198,10 +198,10 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val breakpoint = readAction {
       XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, position.file, position.line, request.isTemporary)
     }
-    if (request.isConditional) {
+    if (request.isLogging) {
       breakpoint.setSuspendPolicy(SuspendPolicy.NONE)
-      if (request.condition != null) {
-        breakpoint.setLogExpression(request.condition)
+      if (request.logExpression != null) {
+        breakpoint.setLogExpression(request.logExpression)
       }
       else {
         breakpoint.setLogMessage(true)

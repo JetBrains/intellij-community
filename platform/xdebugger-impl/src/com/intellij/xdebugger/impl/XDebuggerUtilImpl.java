@@ -319,10 +319,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final boolean temporary,
     final @Nullable Editor editor,
     boolean canRemove,
-    boolean isConditional,
-    @Nullable String condition
+    boolean isLogging,
+    @Nullable String logExpression
   ) {
-    var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, temporary, isConditional, condition, canRemove);
+    var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, temporary, isLogging, logExpression, canRemove);
     return toggleAndReturnLineBreakpointProxy(project, editor, breakpointInfo, selectVariantByPositionColumn);
   }
 

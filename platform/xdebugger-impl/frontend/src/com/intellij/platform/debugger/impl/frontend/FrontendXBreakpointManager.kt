@@ -166,7 +166,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     if (findBreakpointsAtLine(type, info.position.file, info.position.line).isNotEmpty()) {
       return false
     }
-    if (info.isTemporary || info.isConditional) {
+    if (info.isTemporary || info.isLogging) {
       return false
     }
     val lineInfo = FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLineFast(editor, info.position.line)

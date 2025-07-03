@@ -38,8 +38,8 @@ data class XLineBreakpointInstallationInfo(
   val types: List<XLineBreakpointTypeProxy>,
   val position: XSourcePosition,
   val isTemporary: Boolean,
-  val isConditional: Boolean,
-  val condition: String?,
+  val isLogging: Boolean,
+  val logExpression: String?,
   private val canRemove: Boolean,
 ) {
   fun canRemoveBreakpoint(): Boolean = canRemove && !isTemporary
@@ -50,8 +50,8 @@ fun XLineBreakpointInstallationInfo.toRequest(hasBreakpoints: Boolean): XLineBre
   types.map { XBreakpointTypeId(it.id) },
   position.toRpc(),
   isTemporary,
-  isConditional,
-  condition,
+  isLogging,
+  logExpression,
   hasBreakpoints,
 )
 

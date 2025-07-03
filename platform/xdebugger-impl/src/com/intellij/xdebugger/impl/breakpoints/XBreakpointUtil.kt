@@ -223,8 +223,8 @@ object XBreakpointUtil {
     temporary: Boolean,
     moveCaret: Boolean,
     canRemove: Boolean,
-    isConditional: Boolean = false,
-    condition: String? = null,
+    isLogging: Boolean = false,
+    logExpression: String? = null,
   ): CompletableFuture<XLineBreakpointProxy?> {
     // TODO: Replace with `coroutineScope.future` after IJPL-184112 is fixed
     val future = CompletableFuture<XLineBreakpointProxy?>()
@@ -240,7 +240,7 @@ object XBreakpointUtil {
         val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
 
         val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpointProxy(
-          project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove, isConditional, condition)
+          project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove, isLogging, logExpression)
         if (lineStart != lineWinner) {
           val offset = editor.document.getLineStartOffset(lineWinner)
           ExpandRegionAction.expandRegionAtOffset(editor, offset)

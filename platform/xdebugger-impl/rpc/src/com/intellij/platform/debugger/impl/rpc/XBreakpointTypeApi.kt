@@ -109,8 +109,8 @@ data class XLineBreakpointInstallationRequest(
   val types: List<XBreakpointTypeId>,
   val position: XSourcePositionDto,
   val isTemporary: Boolean,
-  val isConditional: Boolean,
-  val condition: String?,
+  val isLogging: Boolean,
+  val logExpression: String?,
   val hasBreakpoints: Boolean,
 )
 
