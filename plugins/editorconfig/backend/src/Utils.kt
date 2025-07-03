@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -47,6 +48,7 @@ object Utils {
   // TODO Ec4j has nicer mechanisms to handle "unset", but does not know "none", could it be extended?
   private val UNSET_VALUES = arrayOf("none", "unset")
   private var ourIsFullSettingsSupportEnabledInTest = false
+  private val EDITOR_CONFIGS = Key.create<List<VirtualFile>>("EDITOR_CONFIGS")
 
   @TestOnly
   @JvmStatic
@@ -247,9 +249,12 @@ object Utils {
   }
 
   fun processEditorConfig(project: Project, file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+    EDITOR_CONFIGS.set(file, null)
     val filePath = getFilePath(project, file)
     if (filePath != null) {
-      return EditorConfigPropertiesService.getInstance(project).getPropertiesAndEditorConfigs(file)
+      val propertiesAndEditorConfigs = EditorConfigPropertiesService.getInstance(project).getPropertiesAndEditorConfigs(file)
+      EDITOR_CONFIGS.set(file, propertiesAndEditorConfigs.second)
+      return propertiesAndEditorConfigs
     }
     else if (VfsUtilCore.isBrokenLink(file)) {
       thisLogger().warn("${file.presentableUrl} is a broken link")
@@ -258,7 +263,11 @@ object Utils {
     return Pair(ResourceProperties.Builder().build(), emptyList())
   }
 
-  fun hasEditorConfig(file: PsiFile): Boolean = processEditorConfig(file.project, file.virtualFile).second.isNotEmpty()
+  fun relatedEditorConfigFiles(vCodeFile: VirtualFile): List<VirtualFile> {
+    return EDITOR_CONFIGS.get(vCodeFile)?: emptyList()
+  }
+  
+  fun hasEditorConfig(file: PsiFile): Boolean = relatedEditorConfigFiles(file.virtualFile).isNotEmpty()
 
   fun fireEditorConfigChanged(project: Project) {
     if (!project.isDisposed) {

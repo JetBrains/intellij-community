@@ -64,7 +64,7 @@ public final class EditorConfigActionUtil {
   }
 
   public static void showEditorConfigFiles(@NotNull Project project, @NotNull AnActionEvent event) {
-    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
+    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);//
     String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
     if (seManager.isShown()) {
       if (!searchProviderID.equals(seManager.getSelectedTabID())) {
