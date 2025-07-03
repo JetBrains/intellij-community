@@ -47,6 +47,8 @@ internal class CreateKotlinCallableAction(
         else -> null
     }?.createSmartPointer()
 
+    private val elementToReplace: SmartPsiElementPointer<PsiElement>? = request.elementToReplace?.createSmartPointer()
+
     private val call: PsiElement?
         get() = callPointer?.element
 
@@ -139,6 +141,7 @@ internal class CreateKotlinCallableAction(
             isExtension,
             requestTargetClassPointer?.element,
             insertContainer,
+            elementToReplace?.element,
         )
     }
 
