@@ -249,7 +249,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return walker.promise();
   }
 
-  private TreeWalkerBase<Node> createWalker(@NotNull TreeVisitor visitor, boolean allowLoading) {
+  private @NotNull TreeWalkerBase<Node> createWalker(@NotNull TreeVisitor visitor, boolean allowLoading) {
     if (visitor.visitThread() == TreeVisitor.VisitThread.BGT) {
       return new BgtTreeWalker<>(visitor, background, foreground, node -> node.object) {
         @Override
@@ -301,7 +301,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return background.compute(command::computeNode);
   }
 
-  private Promise<Void> applyToUiTree(@NotNull Command command, Node value) {
+  private @NotNull Promise<Void> applyToUiTree(@NotNull Command command, @Nullable Node value) {
     return foreground.compute(() -> {
       command.applyToUiTree(value);
       return null;
@@ -390,7 +390,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return node.getChildren();
   }
 
-  private @NotNull TreeModelEvent createEvent(@NotNull TreePath path, Map<Object, Integer> map) {
+  private @NotNull TreeModelEvent createEvent(@NotNull TreePath path, @Nullable Map<Object, Integer> map) {
     if (map == null || map.isEmpty()) return new TreeModelEvent(this, path, null, null);
     int i = 0;
     int size = map.size();
@@ -404,7 +404,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return new TreeModelEvent(this, path, indices, children);
   }
 
-  private void treeNodesChanged(@NotNull Node node, Map<Object, Integer> map) {
+  private void treeNodesChanged(@NotNull Node node, @Nullable Map<Object, Integer> map) {
     if (!listeners.isEmpty()) {
       for (TreePath path : node.paths) {
         listeners.treeNodesChanged(createEvent(path, map));
@@ -412,7 +412,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     }
   }
 
-  private void treeNodesInserted(@NotNull Node node, Map<Object, Integer> map) {
+  private void treeNodesInserted(@NotNull Node node, @NotNull Map<Object, Integer> map) {
     if (!listeners.isEmpty()) {
       for (TreePath path : node.paths) {
         listeners.treeNodesInserted(createEvent(path, map));
@@ -420,7 +420,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     }
   }
 
-  private void treeNodesRemoved(@NotNull Node node, Map<Object, Integer> map) {
+  private void treeNodesRemoved(@NotNull Node node, @NotNull Map<Object, Integer> map) {
     if (!listeners.isEmpty()) {
       for (TreePath path : node.paths) {
         listeners.treeNodesRemoved(createEvent(path, map));
@@ -428,8 +428,8 @@ public final class AsyncTreeModel extends AbstractTreeModel
     }
   }
 
-  private static @NotNull LinkedHashMap<Object, Integer> getIndices(@NotNull List<Node> children, @Nullable ToIntFunction<? super Node> function) {
-    LinkedHashMap<Object, Integer> map = new LinkedHashMap<>();
+  private static @NotNull Map<Object, Integer> getIndices(@NotNull List<Node> children, @Nullable ToIntFunction<? super Node> function) {
+    Map<Object, Integer> map = new LinkedHashMap<>();
     for (int i = 0; i < children.size(); i++) {
       Node child = children.get(i);
       if (map.containsKey(child.object)) {
@@ -476,7 +476,6 @@ public final class AsyncTreeModel extends AbstractTreeModel
     if (countTwo > 0) return getIntersection(inserted, removed.keySet());
     return emptyList();
   }
-
 
   private abstract static class Command implements Obsolescent {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
@@ -646,7 +645,6 @@ public final class AsyncTreeModel extends AbstractTreeModel
 
       if (model instanceof AsyncChildrenProvider<?> provider) {
         Promise<? extends List<?>> childrenPromise = provider.getChildrenAsync(object);
-        if (childrenPromise == null) throw new ProcessCanceledException(); // cancel this command
         return childrenPromise.then(children -> {
           loaded.children = load(children);
           return loaded;
@@ -656,6 +654,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     }
 
     @Override
+    @NotNull
     Node computeNode(Object object) {
       Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
@@ -722,7 +721,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
         return;
       }
 
-      LinkedHashMap<Object, Integer> removed = getIndices(oldChildren, null);
+      Map<Object, Integer> removed = getIndices(oldChildren, null);
       if (newChildren.isEmpty()) {
         oldChildren.forEach(child -> child.removeMapping(node, tree));
         node.setLeafState(loaded.leafState);
@@ -733,9 +732,9 @@ public final class AsyncTreeModel extends AbstractTreeModel
       }
 
       // remove duplicated nodes during indices calculation
-      ArrayList<Node> list = new ArrayList<>(newChildren.size());
-      SmartHashSet<Object> reload = new SmartHashSet<>();
-      LinkedHashMap<Object, Integer> inserted = getIndices(newChildren, child -> {
+      List<Node> list = new ArrayList<>(newChildren.size());
+      Set<Object> reload = new SmartHashSet<>();
+      Map<Object, Integer> inserted = getIndices(newChildren, child -> {
         Node found = tree.map.get(child.object);
         if (found == null) {
           tree.map.put(child.object, child);
@@ -767,7 +766,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
         return;
       }
 
-      LinkedHashMap<Object, Integer> contained = new LinkedHashMap<>();
+      Map<Object, Integer> contained = new LinkedHashMap<>();
       for (Object object : getIntersection(removed, inserted)) {
         Integer oldIndex = removed.remove(object);
         if (oldIndex == null) {
@@ -865,8 +864,8 @@ public final class AsyncTreeModel extends AbstractTreeModel
       promises.forEach(promise -> promise.setError("cancel loading"));
     }
 
-    private @NotNull Iterable<AsyncPromise<Node>> getPromises(T command) {
-      ArrayList<AsyncPromise<Node>> list = new ArrayList<>();
+    private @NotNull Iterable<AsyncPromise<Node>> getPromises(@Nullable Command command) {
+      List<AsyncPromise<Node>> list = new ArrayList<>();
       while (true) {
         T last = deque.pollLast();
         if (last == null) break;
@@ -909,6 +908,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
   private static final class Node {
     private final CommandQueue<CmdGetChildren> queue = new CommandQueue<>();
     private final Set<TreePath> paths = new SmartHashSet<>();
+    @NotNull
     private volatile Object object;
     private volatile LeafState leafState;
     private volatile @Nullable List<Node> children;
@@ -1111,6 +1111,6 @@ public final class AsyncTreeModel extends AbstractTreeModel
 
   @ApiStatus.Internal
   public interface AsyncChildrenProvider<T> {
-    Promise<? extends List<? extends T>> getChildrenAsync(Object parent);
+    @NotNull Promise<? extends List<? extends T>> getChildrenAsync(Object parent);
   }
 }
