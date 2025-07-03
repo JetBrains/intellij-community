@@ -1510,10 +1510,12 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     // There is no evidence that this method is called in deep parallelization stacks
     state.releaseWriteIntentPermit(permit.writeIntentPermit)
     drainWriteActionFollowups()
+    myWriteIntentAcquired.set(false)
     try {
       return action()
     }
     finally {
+      myWriteIntentAcquired.set(true)
       // non-cancellable section here because we need to prohibit prompt cancellation of lock acquisition in this `finally`
       // otherwise the outer release in `runWriteIntentReadAction` would fail with NPE
       installThreadContext(currentThreadContext().minusKey(Job), true) {

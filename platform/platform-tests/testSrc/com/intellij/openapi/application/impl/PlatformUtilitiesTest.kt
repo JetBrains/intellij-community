@@ -122,6 +122,7 @@ class PlatformUtilitiesTest {
     val coroutine = launch(Dispatchers.EDT) {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
         jobWaiting.complete()
+        assertThat(application.isWriteIntentLockAcquired).isFalse
         infiniteJob.asCompletableFuture().join()
       }
     }
