@@ -25,4 +25,6 @@ interface FileIdAdapter {
 
   fun getFile(protocol: String, path: String, fileEntry: FileEntry?): VirtualFile?
 
+  fun shouldSaveEditorState(file: VirtualFile): Boolean
+
 }
