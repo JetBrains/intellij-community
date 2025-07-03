@@ -235,6 +235,16 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/packageWithQuotation/packageWithQuotation.test");
     }
 
+    @TestMetadata("kotlin/searchReferencesAndPackageUpdates/searchReferencesDisabled/searchReferencesDisabled.test")
+    public void testKotlin_searchReferencesAndPackageUpdates_searchReferencesDisabled_SearchReferencesDisabled() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/searchReferencesAndPackageUpdates/searchReferencesDisabled/searchReferencesDisabled.test");
+    }
+
+    @TestMetadata("kotlin/searchReferencesAndPackageUpdates/searchStringsDisabled/searchStringsDisabled.test")
+    public void testKotlin_searchReferencesAndPackageUpdates_searchStringsDisabled_SearchStringsDisabled() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/searchReferencesAndPackageUpdates/searchStringsDisabled/searchStringsDisabled.test");
+    }
+
     @TestMetadata("kotlin/selfReferenceInImport/selfReferenceInImport.test")
     public void testKotlin_selfReferenceInImport_SelfReferenceInImport() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/selfReferenceInImport/selfReferenceInImport.test");

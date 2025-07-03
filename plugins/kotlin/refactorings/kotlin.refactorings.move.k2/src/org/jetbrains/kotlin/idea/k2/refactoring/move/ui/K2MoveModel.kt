@@ -171,14 +171,14 @@ sealed class K2MoveModel {
                 targetDescr
             )
             val operationDescriptor = K2MoveOperationDescriptor.Files(
-                project,
-                listOf(moveDescriptor),
-                searchForText.state,
-                searchReferences,
-                searchInComments.state,
+                project = project,
+                moveDescriptors = listOf(moveDescriptor),
+                searchForText = searchForText.state,
+                searchReferences = searchReferences,
+                searchInComments = searchInComments.state,
                 dirStructureMatchesPkg = true,
                 isMoveToExplicitPackage = target.isMoveToExplicitPackage(),
-                moveCallBack
+                moveCallBack = moveCallBack,
             )
             return operationDescriptor
         }
@@ -248,8 +248,8 @@ sealed class K2MoveModel {
                     project = project,
                     moveDescriptors = descriptors,
                     searchForText = searchForText,
-                    searchInComments = searchForReferences,
-                    searchReferences = searchInComments,
+                    searchInComments = searchInComments,
+                    searchReferences = searchForReferences,
                     dirStructureMatchesPkg = true,
                     moveCallBack = moveCallBack
                 )

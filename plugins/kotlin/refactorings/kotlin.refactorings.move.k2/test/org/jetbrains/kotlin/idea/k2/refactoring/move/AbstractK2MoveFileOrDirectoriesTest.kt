@@ -83,10 +83,10 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
               targetDescriptor
             )
             val moveOperationDescriptor = K2MoveOperationDescriptor.Files(
-                project,
-                listOf(moveDescriptor),
-                shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
-                config.searchReferences(),
+                project = project,
+                moveDescriptors = listOf(moveDescriptor),
+                searchForText = shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
+                searchInComments = config.searchInComments(),
                 searchReferences = config.searchReferences(),
                 dirStructureMatchesPkg = true,
                 isMoveToExplicitPackage = explicitPackage,
