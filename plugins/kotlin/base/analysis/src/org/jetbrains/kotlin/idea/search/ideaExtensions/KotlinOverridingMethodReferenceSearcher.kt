@@ -17,12 +17,14 @@ import org.jetbrains.kotlin.asJava.canHaveOverride
 import org.jetbrains.kotlin.asJava.canHaveSyntheticGetter
 import org.jetbrains.kotlin.asJava.canHaveSyntheticSetter
 import org.jetbrains.kotlin.asJava.syntheticAccessors
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
@@ -73,6 +75,8 @@ class KotlinOverridingMethodReferenceSearcher : MethodUsagesSearcher() {
             consumer: Processor<in PsiReference>
         ): Boolean {
             fun isWrongAccessorReference(): Boolean {
+                if (method.unwrapped is KtFunction) return true
+
                 val canHaveGetter by lazy { method.canHaveSyntheticGetter }
                 val canHaveSetter by lazy { method.canHaveSyntheticSetter }
 
