@@ -28,8 +28,10 @@ class ScratchFileAutoRunnerK2(private val project: Project, private val scope: C
         }
     }
 
-    suspend fun submitRun(file: K2KotlinScratchFile) {
-        flow.emit(file)
+    fun submitRun(file: K2KotlinScratchFile) {
+        scope.launch {
+            flow.emit(file)
+        }
     }
 
     override fun documentChanged(event: DocumentEvent) {
