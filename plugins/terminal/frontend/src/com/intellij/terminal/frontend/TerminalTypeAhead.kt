@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.PlatformUtils
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
@@ -28,7 +29,7 @@ internal class TerminalTypeAhead(
     }
   }
 
-  private fun isDisabled() = isDisabledInRegistry() || !isTypingCommand()
+  private fun isDisabled() = PlatformUtils.isJetBrainsClient() || isDisabledInRegistry() || !isTypingCommand()
 
   private fun isDisabledInRegistry(): Boolean = !Registry.`is`("terminal.type.ahead", false)
   
