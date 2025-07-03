@@ -14581,6 +14581,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/abstractOverride3.kt");
             }
 
+            @TestMetadata("anonymousMultipleContextsWithUserTypes.kt")
+            public void testAnonymousMultipleContextsWithUserTypes() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousMultipleContextsWithUserTypes.kt");
+            }
+
+            @TestMetadata("anonymousPotentialRenameConflict.kt")
+            public void testAnonymousPotentialRenameConflict() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousPotentialRenameConflict.kt");
+            }
+
+            @TestMetadata("anonymousSingle.kt")
+            public void testAnonymousSingle() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousSingle.kt");
+            }
+
+            @TestMetadata("anonymousSingleWithParameterAndReceiver.kt")
+            public void testAnonymousSingleWithParameterAndReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousSingleWithParameterAndReceiver.kt");
+            }
+
             @TestMetadata("classHierarchy1.kt")
             public void testClassHierarchy1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/classHierarchy1.kt");

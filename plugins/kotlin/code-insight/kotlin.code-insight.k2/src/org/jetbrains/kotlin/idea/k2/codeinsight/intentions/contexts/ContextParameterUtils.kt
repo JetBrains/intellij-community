@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts
 
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterI
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 object ContextParameterUtils {
@@ -36,24 +38,35 @@ object ContextParameterUtils {
     }
 
     /**
-     * Creates and configures [KotlinChangeInfo] using the owner callable of the [element] or the base overridden declaration for overrides.
+     * Creates and configures [KotlinChangeInfo] using the owner callable of the [ktParameter] or the base overridden declaration for overrides.
      * The Change Signature refactoring runs with this info if [configureChangeInfo] returns `true`.
+     * If [runAfterChangeSignature] is passed, it is called in the same action after the main refactoring is performed.
      */
-    fun runChangeSignatureForParameter(element: KtParameter, configureChangeInfo: (KotlinChangeInfo) -> Boolean) {
-        val ktCallable = element.getStrictParentOfType<KtCallableDeclaration>() ?: return
+    fun runChangeSignatureForParameter(
+        ktParameter: KtParameter,
+        runAfterChangeSignature: (() -> Unit)? = null,
+        configureChangeInfo: (KotlinChangeInfo) -> Boolean,
+    ) {
+        val ktCallable = ktParameter.getStrictParentOfType<KtCallableDeclaration>() ?: return
         val changeInfo = createChangeInfo(ktCallable) ?: return
         if (!configureChangeInfo(changeInfo)) return
-        KotlinChangeSignatureProcessor(element.project, changeInfo).also {
-            it.prepareSuccessfulSwingThreadCallback = Runnable { }
-        }.run()
+
+        val changeSignatureProcessor = object : KotlinChangeSignatureProcessor(ktParameter.project, changeInfo) {
+            override fun performRefactoring(usages: Array<out UsageInfo?>) {
+                super.performRefactoring(usages)
+                runAfterChangeSignature?.invoke()
+            }
+        }
+        changeSignatureProcessor.prepareSuccessfulSwingThreadCallback = Runnable { }
+        changeSignatureProcessor.run()
     }
 
     /**
-     * Finds context parameter in the given [changeInfo] by the parameter name.
+     * Finds context parameter in the given [changeInfo] by the parameter name and index.
      */
     fun findContextParameterInChangeInfo(ktParameter: KtParameter, changeInfo: KotlinChangeInfo): KotlinParameterInfo? =
         changeInfo.getNonReceiverParameters().find {
-            it.isContextParameter && it.oldName == ktParameter.name
+            it.isContextParameter && it.oldName == ktParameter.name && it.oldIndex == ktParameter.parameterIndex()
         }
 
     /**
@@ -89,4 +102,10 @@ object ContextParameterUtils {
         val methodDescriptor = KotlinMethodDescriptor(rootOverriddenOrSelf)
         return KotlinChangeInfo(methodDescriptor)
     }
+
+    /**
+     * Checks if the given [KtParameter] is anonymous, i.e., contains only underscore characters in its name.
+     */
+    fun isAnonymousParameter(ktParameter: KtParameter): Boolean =
+        ktParameter.name.let { name -> !name.isNullOrEmpty() && name.all { char -> char == '_' }}
 }
