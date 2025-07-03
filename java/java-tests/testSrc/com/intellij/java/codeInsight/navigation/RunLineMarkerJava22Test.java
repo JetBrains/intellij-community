@@ -296,7 +296,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
-  public void testImpossibleInheritStatic() {
+  public void testNonDefaultConstructorParent() {
     IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.addClass("""
                              public class AAAAAA {
@@ -323,6 +323,23 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
       List<GutterMark> allMarks = myFixture.findAllGutters();
       assertEquals(1, allMarks.size());
       checkMark(allMarks.get(0), "Main");
+    });
+  }
+public void testImpossibleInheritStaticInterface() {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
+      myFixture.addClass("""
+                             public interface AInterface {
+                                static void main(String[] args) {
+                                    System.out.println("1");
+                                }
+                             }
+                           """);
+      myFixture.configureByText("Main.java", """
+        public class Main<caret> implements AInterface {
+        }
+        """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEquals(0, marks.size());
     });
   }
 
