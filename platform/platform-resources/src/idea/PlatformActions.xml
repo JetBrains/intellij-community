@@ -431,6 +431,8 @@
       <override-text place="EditorTabPopup"/>
     </action>
 
+    <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
+    <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
     <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
     <action id="PinActiveTabToggle" class="com.intellij.ide.actions.PinActiveTabAction$Toggle"/>
 
@@ -785,10 +787,20 @@
           <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowTabInEditorAction"
                   icon="AllIcons.Actions.OpenNewTab"/>
           <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction" use-shortcut-of="PinActiveTab"/>
-          <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
           <action id="MaximizeToolWindow" class="com.intellij.openapi.wm.impl.MaximizeToolWindowAction"/>
           <action id="DockToolWindow" class="com.intellij.openapi.wm.impl.DockToolWindowAction"/>
+          <separator/>
+          <reference ref="NextTab"/>
+          <reference ref="PreviousTab"/>
+          <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
+          <action id="TW.CloseOtherTabs" class="com.intellij.ide.actions.ToolWindowCloseOtherTabsAction"
+                  use-shortcut-of="CloseAllEditorsButActive"/>
+          <action id="TW.CloseAllTabs" class="com.intellij.ide.actions.ToolWindowCloseAllTabsAction" use-shortcut-of="CloseAllEditors"/>
+          <action id="TW.SplitAndMoveRight" class="com.intellij.ide.actions.ToolWindowSplitAndMoveRightAction"
+                  use-shortcut-of="MoveTabRight"/>
+          <action id="TW.SplitAndMoveDown" class="com.intellij.ide.actions.ToolWindowSplitAndMoveDownAction" use-shortcut-of="MoveTabDown"/>
+          <action id="TW.Unsplit" class="com.intellij.ide.actions.ToolWindowUnsplitAction" use-shortcut-of="Unsplit"/>
           <separator/>
           <group id="TW.ViewModeGroup" class="com.intellij.ide.actions.ToolWindowViewModeAction$Group" popup="true"/>
           <group id="TW.MoveToGroup" class="com.intellij.ide.actions.ToolWindowMoveAction$Group"/>
@@ -803,8 +815,8 @@
         </group>
 
         <group id="EditorTabsGroup" popup="true">
-          <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
-          <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
+          <reference ref="NextTab"/>
+          <reference ref="PreviousTab"/>
           <action id="PinActiveEditorTab" class="com.intellij.ide.actions.PinActiveTabAction$EW" use-shortcut-of="PinActiveTab"/>
           <action id="KeepTabOpen" class="com.intellij.ide.actions.KeepTabOpenAction"/>
           <action id="TabList" class="com.intellij.ide.actions.TabListAction"/>

@@ -537,6 +537,10 @@ class InternalDecoratorImpl internal constructor(
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
+    sink[PlatformDataKeys.CONTENT_MANAGER] = contentManager
+    if (contentManager.contentCount > 1) {
+      sink[PlatformDataKeys.NONEMPTY_CONTENT_MANAGER] = contentManager
+    }
   }
 
   fun setTitleActions(actions: List<AnAction>) {

@@ -78,13 +78,6 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   private final JPanel contentComponent;
   final ToolWindowImpl window;
 
-  private final TabbedContentAction.CloseAllAction closeAllAction;
-  private final TabbedContentAction.MyNextTabAction nextTabAction;
-  private final TabbedContentAction.MyPreviousTabAction previousTabAction;
-  private final TabbedContentAction.SplitTabAction splitRightTabAction;
-  private final TabbedContentAction.SplitTabAction splitDownTabAction;
-  private final TabbedContentAction.UnsplitTabAction unsplitTabAction;
-
   private final ShowContentAction showContent;
 
   private final TabContentLayout tabsLayout;
@@ -211,12 +204,6 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     initMouseListeners(tabComponent, this, true);
     MouseDragHelper.setComponentDraggable(tabComponent, true);
 
-    closeAllAction = new TabbedContentAction.CloseAllAction(contentManager);
-    nextTabAction = new TabbedContentAction.MyNextTabAction(contentManager);
-    previousTabAction = new TabbedContentAction.MyPreviousTabAction(contentManager);
-    splitRightTabAction = new TabbedContentAction.SplitTabAction(contentManager, true);
-    splitDownTabAction = new TabbedContentAction.SplitTabAction(contentManager, false);
-    unsplitTabAction = new TabbedContentAction.UnsplitTabAction(contentManager);
     showContent = new ShowContentAction(window, contentComponent, contentManager);
   }
 
@@ -591,17 +578,18 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     if (content == null) {
       return;
     }
+    var actionManager = ActionManager.getInstance();
 
     group.addSeparator();
     group.add(new TabbedContentAction.CloseAction(content));
-    group.add(closeAllAction);
-    group.add(new TabbedContentAction.CloseAllButThisAction(content));
+    group.add(actionManager.getAction("TW.CloseAllTabs"));
+    group.add(actionManager.getAction("TW.CloseOtherTabs"));
     group.addSeparator();
     Component component = window.getComponent();
     if (ClientProperty.isTrue(component, ALLOW_DND_FOR_TABS) && Registry.is("ide.allow.split.and.reorder.in.tool.window", false)) {
-      group.add(splitRightTabAction);
-      group.add(splitDownTabAction);
-      group.add(unsplitTabAction);
+      group.add(actionManager.getAction("TW.SplitAndMoveRight"));
+      group.add(actionManager.getAction("TW.SplitAndMoveDown"));
+      group.add(actionManager.getAction("TW.Unsplit"));
       group.addSeparator();
     }
     if (content.isPinnable()) {
@@ -609,8 +597,8 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       group.addSeparator();
     }
 
-    group.add(nextTabAction);
-    group.add(previousTabAction);
+    group.add(actionManager.getAction("NextTab"));
+    group.add(actionManager.getAction("PreviousTab"));
     group.add(showContent);
 
     if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {

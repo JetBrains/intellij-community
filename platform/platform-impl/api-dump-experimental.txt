@@ -355,18 +355,6 @@ c:com.intellij.ui.content.impl.ContentManagerImpl
 - com.intellij.ui.content.ContentManager
 - java.beans.PropertyChangeListener
 - *:<init>(Z,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.ui.content.impl.ContentManagerImpl$ContentUiProducer):V
-*f:com.intellij.ui.content.tabs.TabbedContentAction$SplitTabAction
-- com.intellij.ui.content.tabs.TabbedContentAction
-- <init>(com.intellij.ui.content.ContentManager,Z):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-*f:com.intellij.ui.content.tabs.TabbedContentAction$UnsplitTabAction
-- com.intellij.ui.content.tabs.TabbedContentAction
-- <init>(com.intellij.ui.content.ContentManager):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ui.dsl.builder.ButtonKt
 - *sf:whenStateChangedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - *bs:whenStateChangedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
