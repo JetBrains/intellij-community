@@ -8203,7 +8203,87 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody")
+    public abstract static class FunctionWithLambdaExpressionBody extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces")
+        public static class RemoveBraces extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("functionHasComment.kt")
+            public void testFunctionHasComment() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces/functionHasComment.kt");
+            }
+
+            @TestMetadata("functionHasMultiStatements.kt")
+            public void testFunctionHasMultiStatements() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces/functionHasMultiStatements.kt");
+            }
+
+            @TestMetadata("functionHasNoStatement.kt")
+            public void testFunctionHasNoStatement() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces/functionHasNoStatement.kt");
+            }
+
+            @TestMetadata("funtionIsUsed.kt")
+            public void testFuntionIsUsed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces/funtionIsUsed.kt");
+            }
+
+            @TestMetadata("getterHasComment.kt")
+            public void testGetterHasComment() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces/getterHasComment.kt");
+            }
+
+            @TestMetadata("getterHasMultiStatements.kt")
+            public void testGetterHasMultiStatements() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces/getterHasMultiStatements.kt");
+            }
+
+            @TestMetadata("getterHasNoStatement.kt")
+            public void testGetterHasNoStatement() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces/getterHasNoStatement.kt");
+            }
+
+            @TestMetadata("getterIsUsed.kt")
+            public void testGetterIsUsed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/removeBraces/getterIsUsed.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/wrapRun")
+        public static class WrapRun extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("funtionIsUsed.kt")
+            public void testFuntionIsUsed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/wrapRun/funtionIsUsed.kt");
+            }
+
+            @TestMetadata("getterIsUsed.kt")
+            public void testGetterIsUsed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/functionWithLambdaExpressionBody/wrapRun/getterIsUsed.kt");
+            }
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/implement")

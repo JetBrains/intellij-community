@@ -17244,6 +17244,205 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody")
+    public abstract static class FunctionWithLambdaExpressionBody extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/addArrow")
+        public static class AddArrow extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/addArrow/function.kt");
+            }
+
+            @TestMetadata("getter.kt")
+            public void testGetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/addArrow/getter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/removeBraces")
+        public static class RemoveBraces extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/removeBraces/function.kt");
+            }
+
+            @TestMetadata("functionReturnsNothing.kt")
+            public void testFunctionReturnsNothing() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/removeBraces/functionReturnsNothing.kt");
+            }
+
+            @TestMetadata("getter.kt")
+            public void testGetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/removeBraces/getter.kt");
+            }
+
+            @TestMetadata("getterReturnsNothing.kt")
+            public void testGetterReturnsNothing() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/removeBraces/getterReturnsNothing.kt");
+            }
+
+            @TestMetadata("kt32580.kt")
+            public void testKt32580() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/removeBraces/kt32580.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/specifyType")
+        public static class SpecifyType extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/specifyType/function.kt");
+            }
+
+            @TestMetadata("getter.kt")
+            public void testGetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/specifyType/getter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody")
+        public static class Uncategorized extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("functionHasArrow.kt")
+            public void testFunctionHasArrow() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/functionHasArrow.kt");
+            }
+
+            @TestMetadata("functionHasLabel.kt")
+            public void testFunctionHasLabel() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/functionHasLabel.kt");
+            }
+
+            @TestMetadata("functionHasNoExpressionBody.kt")
+            public void testFunctionHasNoExpressionBody() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/functionHasNoExpressionBody.kt");
+            }
+
+            @TestMetadata("functionHasNoLambda.kt")
+            public void testFunctionHasNoLambda() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/functionHasNoLambda.kt");
+            }
+
+            @TestMetadata("functionHasType.kt")
+            public void testFunctionHasType() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/functionHasType.kt");
+            }
+
+            @TestMetadata("getterHasArrow.kt")
+            public void testGetterHasArrow() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/getterHasArrow.kt");
+            }
+
+            @TestMetadata("getterHasLabel.kt")
+            public void testGetterHasLabel() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/getterHasLabel.kt");
+            }
+
+            @TestMetadata("getterHasNoLambda.kt")
+            public void testGetterHasNoLambda() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/getterHasNoLambda.kt");
+            }
+
+            @TestMetadata("getterHasType.kt")
+            public void testGetterHasType() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/getterHasType.kt");
+            }
+
+            @TestMetadata("getterHasType2.kt")
+            public void testGetterHasType2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/getterHasType2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun")
+        public static class WrapRun extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("body.kt")
+            public void testBody() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/body.kt");
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/function.kt");
+            }
+
+            @TestMetadata("functionReturnsNothing.kt")
+            public void testFunctionReturnsNothing() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/functionReturnsNothing.kt");
+            }
+
+            @TestMetadata("getter.kt")
+            public void testGetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/getter.kt");
+            }
+
+            @TestMetadata("getterReturnsNothing.kt")
+            public void testGetterReturnsNothing() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/getterReturnsNothing.kt");
+            }
+
+            @TestMetadata("kt32580.kt")
+            public void testKt32580() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun/kt32580.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override
