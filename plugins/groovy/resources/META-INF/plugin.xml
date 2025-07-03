@@ -27,6 +27,7 @@
     <module name="intellij.java.unscramble"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
+    <module name="intellij.regexp"/>
   </dependencies>
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
