@@ -4843,283 +4843,283 @@ http_file(
 )
 
 http_file(
-  name = "allopen-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-ij252-8/allopen-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "allopen-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-5812/allopen-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "ae93b9423113700f909d0eb250bf44249968e5522050ff0501397dab4de651b4",
-  downloaded_file_path = "allopen-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "allopen-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "allopen-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-ij252-8/allopen-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "allopen-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.2.20-dev-5812/allopen-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "3f03ca748a7acdeb8cefd6601bfd601828fa344154c12479f62642d821dacc65",
-  downloaded_file_path = "allopen-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "allopen-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "analysis-api-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-ij252-8/analysis-api-for-ide-2.2.20-ij252-8.jar",
+  name = "analysis-api-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-5812/analysis-api-for-ide-2.2.20-dev-5812.jar",
   sha256 = "02d528b6480ba7925844803c0264ac042b39c6f8f8e983d7dcf0710dfd28213b",
-  downloaded_file_path = "analysis-api-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "analysis-api-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "analysis-api-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-ij252-8/analysis-api-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "analysis-api-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-for-ide/2.2.20-dev-5812/analysis-api-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "945914027da8f33437ebbcb0d049327a1e3d322a14adbfedcf3fa9a3b27e36f8",
-  downloaded_file_path = "analysis-api-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "analysis-api-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "analysis-api-fe10-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-ij252-8/analysis-api-fe10-for-ide-2.2.20-ij252-8.jar",
+  name = "analysis-api-fe10-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-5812/analysis-api-fe10-for-ide-2.2.20-dev-5812.jar",
   sha256 = "994d2fa5fc0ba6e746ad2c9120fe5dc9f1e1ecb97d2055978478eae1c8c290e2",
-  downloaded_file_path = "analysis-api-fe10-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "analysis-api-fe10-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "analysis-api-fe10-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-ij252-8/analysis-api-fe10-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "analysis-api-fe10-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.20-dev-5812/analysis-api-fe10-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "cf66fc85bb59183c91249a22c44c8b44c66bc9f825eda21dca1067ff03ed4b83",
-  downloaded_file_path = "analysis-api-fe10-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "analysis-api-fe10-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "analysis-api-impl-base-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-ij252-8/analysis-api-impl-base-for-ide-2.2.20-ij252-8.jar",
+  name = "analysis-api-impl-base-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-5812/analysis-api-impl-base-for-ide-2.2.20-dev-5812.jar",
   sha256 = "3103b50deda02455022e31ff775e721dc6122ce27b9a6d8933bcc938e4a3fc61",
-  downloaded_file_path = "analysis-api-impl-base-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "analysis-api-impl-base-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "analysis-api-impl-base-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-ij252-8/analysis-api-impl-base-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "analysis-api-impl-base-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-5812/analysis-api-impl-base-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "560a965e52a1a422e53754b81a1d25c78a668c35cc393a5e017809e8025a6e6d",
-  downloaded_file_path = "analysis-api-impl-base-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "analysis-api-impl-base-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "analysis-api-impl-base-tests-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-ij252-8/analysis-api-impl-base-tests-for-ide-2.2.20-ij252-8.jar",
+  name = "analysis-api-impl-base-tests-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-5812/analysis-api-impl-base-tests-for-ide-2.2.20-dev-5812.jar",
   sha256 = "ceb57c47928d13b930ed75be870a06376b3895516498338aff5da38615da4763",
-  downloaded_file_path = "analysis-api-impl-base-tests-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "analysis-api-impl-base-tests-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "analysis-api-impl-base-tests-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-ij252-8/analysis-api-impl-base-tests-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "analysis-api-impl-base-tests-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.2.20-dev-5812/analysis-api-impl-base-tests-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "0fc07f9e2b007a6996d8f6f076018070a1cf82744e360459265f02d0876dcc70",
-  downloaded_file_path = "analysis-api-impl-base-tests-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "analysis-api-impl-base-tests-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "analysis-api-k2-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-ij252-8/analysis-api-k2-for-ide-2.2.20-ij252-8.jar",
+  name = "analysis-api-k2-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-5812/analysis-api-k2-for-ide-2.2.20-dev-5812.jar",
   sha256 = "9da57d8624c3b1283bfecee2464ee3be91e097f4c895052ade2f8fd4b2010dd0",
-  downloaded_file_path = "analysis-api-k2-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "analysis-api-k2-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "analysis-api-k2-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-ij252-8/analysis-api-k2-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "analysis-api-k2-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.2.20-dev-5812/analysis-api-k2-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "01b1b2fbffb319221ffadaa289d1385c7efa1d41eb74899abaff49ccf3c91641",
-  downloaded_file_path = "analysis-api-k2-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "analysis-api-k2-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "analysis-api-k2-tests-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-ij252-8/analysis-api-k2-tests-for-ide-2.2.20-ij252-8.jar",
+  name = "analysis-api-k2-tests-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-5812/analysis-api-k2-tests-for-ide-2.2.20-dev-5812.jar",
   sha256 = "d6044a6c762e55804151289e5be3ea5e471f0276f87bfb81dc0a40a639357cc9",
-  downloaded_file_path = "analysis-api-k2-tests-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "analysis-api-k2-tests-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "analysis-api-k2-tests-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-ij252-8/analysis-api-k2-tests-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "analysis-api-k2-tests-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.2.20-dev-5812/analysis-api-k2-tests-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "46752566b7637f4d61a42e0a20c4b83389f813c78a0adc2c48304fb13a1b3498",
-  downloaded_file_path = "analysis-api-k2-tests-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "analysis-api-k2-tests-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "analysis-api-platform-interface-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-ij252-8/analysis-api-platform-interface-for-ide-2.2.20-ij252-8.jar",
+  name = "analysis-api-platform-interface-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-5812/analysis-api-platform-interface-for-ide-2.2.20-dev-5812.jar",
   sha256 = "a6f38266907707df3847135bb97766ee1b363f7b63c704a107f89270640c776b",
-  downloaded_file_path = "analysis-api-platform-interface-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "analysis-api-platform-interface-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "analysis-api-platform-interface-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-ij252-8/analysis-api-platform-interface-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "analysis-api-platform-interface-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-5812/analysis-api-platform-interface-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "23fb0add901a42f2fb7b44710b9768bbb2cd0fbc2b49c7a56e9d4d724973318b",
-  downloaded_file_path = "analysis-api-platform-interface-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "analysis-api-platform-interface-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "assignment-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-ij252-8/assignment-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "assignment-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-5812/assignment-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "330ab47b3d1b6c718ece924b2bcb22076d7693a525e2f49a515ec6ccd3af1e26",
-  downloaded_file_path = "assignment-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "assignment-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "assignment-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-ij252-8/assignment-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "assignment-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.2.20-dev-5812/assignment-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "e3ad68e934a09eea195196609bbb2c1648df500003cd29d4515a01d33416080b",
-  downloaded_file_path = "assignment-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "assignment-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "compose-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-ij252-8/compose-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "compose-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-5812/compose-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "b739ec9c552196d969385d2ecfbad34e485ac9a78df069c8ca9a9c7bb97b1dbd",
-  downloaded_file_path = "compose-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "compose-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "compose-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-ij252-8/compose-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "compose-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.20-dev-5812/compose-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "9c21be66013aebc351d588da0ca94e46640606d0949feefa1b9487d25d6ba740",
-  downloaded_file_path = "compose-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "compose-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "incremental-compilation-impl-tests-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-ij252-8/incremental-compilation-impl-tests-for-ide-2.2.20-ij252-8.jar",
+  name = "incremental-compilation-impl-tests-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-5812/incremental-compilation-impl-tests-for-ide-2.2.20-dev-5812.jar",
   sha256 = "ef44c3b9f605c69aa43ce375df07563bde25668c51b9a881a3b95020ae456bf9",
-  downloaded_file_path = "incremental-compilation-impl-tests-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "incremental-compilation-impl-tests-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "incremental-compilation-impl-tests-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-ij252-8/incremental-compilation-impl-tests-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "incremental-compilation-impl-tests-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.2.20-dev-5812/incremental-compilation-impl-tests-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "fafc5b5357ef0999a0a83b33a87582dc512cae10d769f5405d83bf0d51f895f5",
-  downloaded_file_path = "incremental-compilation-impl-tests-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "incremental-compilation-impl-tests-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "js-plain-objects-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-ij252-8/js-plain-objects-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "js-plain-objects-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-5812/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "6362a3698b3e41340e221e87d188c56cd8345460e49b8015af53edc4b60197f4",
-  downloaded_file_path = "js-plain-objects-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "js-plain-objects-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-ij252-8/js-plain-objects-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "js-plain-objects-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.20-dev-5812/js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "524309b11e0c828b2691d16c8912afa12fc2903d15e0e20c8b4971cdb34229e2",
-  downloaded_file_path = "js-plain-objects-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "js-plain-objects-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-build-common-tests-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-ij252-8/kotlin-build-common-tests-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-build-common-tests-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-5812/kotlin-build-common-tests-for-ide-2.2.20-dev-5812.jar",
   sha256 = "05905be5a4deca8f2f7b7df170af11291e7d3f960e3e65866710d91224822b84",
-  downloaded_file_path = "kotlin-build-common-tests-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-build-common-tests-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-build-common-tests-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-ij252-8/kotlin-build-common-tests-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-build-common-tests-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.20-dev-5812/kotlin-build-common-tests-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "8170a401b8491126100647386a9c8fb75a527752ea5ff0932a3cb88bb66ae4ff",
-  downloaded_file_path = "kotlin-build-common-tests-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-build-common-tests-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-cli-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-ij252-8/kotlin-compiler-cli-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-compiler-cli-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-5812/kotlin-compiler-cli-for-ide-2.2.20-dev-5812.jar",
   sha256 = "5afe9165a9745482450fd993b1ffbdf58a5e5edfc9d64aa3bf03266014c62b0d",
-  downloaded_file_path = "kotlin-compiler-cli-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-compiler-cli-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-cli-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-ij252-8/kotlin-compiler-cli-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-compiler-cli-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.2.20-dev-5812/kotlin-compiler-cli-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "f00959e8f06dabbee2c7299bd1cbd1e1025f113ebdfed90b1abe6fa4b6352f88",
-  downloaded_file_path = "kotlin-compiler-cli-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-compiler-cli-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-common-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-ij252-8/kotlin-compiler-common-for-ide-2.2.20-ij252-8.jar",
-  sha256 = "67c61611ef8af6b681f50d23f33448b2689585badeccafaadb9aaf41db01bcef",
-  downloaded_file_path = "kotlin-compiler-common-for-ide-2.2.20-ij252-8.jar"
+  name = "kotlin-compiler-common-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-5812/kotlin-compiler-common-for-ide-2.2.20-dev-5812.jar",
+  sha256 = "ba7a6bfba979681c6f52a1fcbfdf677879713691d6f681f411711081ccdeb853",
+  downloaded_file_path = "kotlin-compiler-common-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-common-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-ij252-8/kotlin-compiler-common-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-compiler-common-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-5812/kotlin-compiler-common-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "927b4cb0937a699893e6b68b6092e93f0a4b35462a6bc9060b50656bee073521",
-  downloaded_file_path = "kotlin-compiler-common-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-compiler-common-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-fe10-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-ij252-8/kotlin-compiler-fe10-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-compiler-fe10-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-5812/kotlin-compiler-fe10-for-ide-2.2.20-dev-5812.jar",
   sha256 = "9e95fc93b5fb611a926bcc7905f4261a666e59351f75cb8d466cb3c002ff0ccf",
-  downloaded_file_path = "kotlin-compiler-fe10-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-compiler-fe10-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-fe10-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-ij252-8/kotlin-compiler-fe10-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-compiler-fe10-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2.2.20-dev-5812/kotlin-compiler-fe10-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "06a1fe453c4f0b97af41d331dff5f40a1051c08b0d0027f23428357f2294c402",
-  downloaded_file_path = "kotlin-compiler-fe10-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-compiler-fe10-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-fir-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-ij252-8/kotlin-compiler-fir-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-compiler-fir-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-5812/kotlin-compiler-fir-for-ide-2.2.20-dev-5812.jar",
   sha256 = "9a414ba9b3f972d94a39d2b3b2a69b5d21104e50af71a2a6dc39eab46584726f",
-  downloaded_file_path = "kotlin-compiler-fir-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-compiler-fir-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-fir-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-ij252-8/kotlin-compiler-fir-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-compiler-fir-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-5812/kotlin-compiler-fir-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "6320bbf6b62542bb2083d38966b6d947081274e6f8e5c0c4eab11ca9af156265",
-  downloaded_file_path = "kotlin-compiler-fir-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-compiler-fir-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-ir-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-ij252-8/kotlin-compiler-ir-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-compiler-ir-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-5812/kotlin-compiler-ir-for-ide-2.2.20-dev-5812.jar",
   sha256 = "5c834a42648a130ab1e96f2ffaef889fbe70d86d34024f176fbd0e5684ec7b6d",
-  downloaded_file_path = "kotlin-compiler-ir-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-compiler-ir-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-ir-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-ij252-8/kotlin-compiler-ir-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-compiler-ir-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.2.20-dev-5812/kotlin-compiler-ir-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "7c4c57d4097816f7e29f2a6a2fbe06afb7a63b22ad1ab5f56ffbb75a47d9c28f",
-  downloaded_file_path = "kotlin-compiler-ir-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-compiler-ir-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-tests-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-ij252-8/kotlin-compiler-tests-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-compiler-tests-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-5812/kotlin-compiler-tests-for-ide-2.2.20-dev-5812.jar",
   sha256 = "0cbe547c1fec6ec44b61d6b23c1e5c39c7e5db0b7187e1a2de88f3b2fff92452",
-  downloaded_file_path = "kotlin-compiler-tests-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-compiler-tests-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-compiler-tests-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-ij252-8/kotlin-compiler-tests-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-compiler-tests-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.2.20-dev-5812/kotlin-compiler-tests-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "a1a703abc7f49d2e05b65fbf2919e0acd4df1309bcbe637dc2c6ee9e6ad2d211",
-  downloaded_file_path = "kotlin-compiler-tests-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-compiler-tests-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-dataframe-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-ij252-8/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-dataframe-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-5812/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "7bdd0267f6c274112129e5faba1f81de31749fe4265935a76936ed5a76a0998d",
-  downloaded_file_path = "kotlin-dataframe-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-dataframe-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-ij252-8/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-dataframe-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-5812/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "1daf2ecdb413021a931c9cefe8914815aa2dd23e09e11e3b52e4c70ae91fec18",
-  downloaded_file_path = "kotlin-dataframe-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
@@ -5137,45 +5137,45 @@ http_file(
 )
 
 http_file(
-  name = "kotlin-gradle-statistics-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-ij252-8/kotlin-gradle-statistics-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-gradle-statistics-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-5812/kotlin-gradle-statistics-for-ide-2.2.20-dev-5812.jar",
   sha256 = "075c65e1d89b61c7889ea26f855c97ac54a143be165320579c772c80e7d8a82d",
-  downloaded_file_path = "kotlin-gradle-statistics-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-gradle-statistics-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-gradle-statistics-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-ij252-8/kotlin-gradle-statistics-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-gradle-statistics-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.2.20-dev-5812/kotlin-gradle-statistics-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "1c43c0cc96847254f780c9200a8f3c2eb3775c389ed48351ad0c86b2558223c4",
-  downloaded_file_path = "kotlin-gradle-statistics-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-gradle-statistics-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-dist-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-ij252-8/kotlin-dist-for-ide-2.2.20-ij252-8.jar",
-  sha256 = "f40c21f84749b4220ac66f26e92916639e5adffc2a885cdb5c8239dc8c738332",
-  downloaded_file_path = "kotlin-dist-for-ide-2.2.20-ij252-8.jar"
+  name = "kotlin-dist-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-5812/kotlin-dist-for-ide-2.2.20-dev-5812.jar",
+  sha256 = "70e73e5357f2f91ef1e9932e27197d9c4d5cfa29fe31224daa9f7892f9f00d50",
+  downloaded_file_path = "kotlin-dist-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-dist-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-ij252-8/kotlin-dist-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-dist-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.20-dev-5812/kotlin-dist-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-  downloaded_file_path = "kotlin-dist-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-dist-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-jps-common-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-ij252-8/kotlin-jps-common-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlin-jps-common-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-5812/kotlin-jps-common-for-ide-2.2.20-dev-5812.jar",
   sha256 = "acad948ff957a9c240fc2284e8536e226ae02677f9751ed7bb9f972a91fa8454",
-  downloaded_file_path = "kotlin-jps-common-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlin-jps-common-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-jps-common-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-ij252-8/kotlin-jps-common-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-jps-common-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.2.20-dev-5812/kotlin-jps-common-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "2c37fcf3410f186f9f333e4610069ebba9074976209d5595e0db4f4650dbe5e2",
-  downloaded_file_path = "kotlin-jps-common-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-jps-common-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
@@ -5193,17 +5193,17 @@ http_file(
 )
 
 http_file(
-  name = "kotlin-jps-plugin-classpath-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-ij252-8/kotlin-jps-plugin-classpath-2.2.20-ij252-8.jar",
-  sha256 = "272b086141f9b0a0c0218101093b320c736b1a0c69aa5947b82892175b5627b3",
-  downloaded_file_path = "kotlin-jps-plugin-classpath-2.2.20-ij252-8.jar"
+  name = "kotlin-jps-plugin-classpath-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-5812/kotlin-jps-plugin-classpath-2.2.20-dev-5812.jar",
+  sha256 = "95faeaa80dab7e4021d002f7bd41ffa54027a1b1bd782281a97aadbfda2ecd2f",
+  downloaded_file_path = "kotlin-jps-plugin-classpath-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-jps-plugin-classpath-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-ij252-8/kotlin-jps-plugin-classpath-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-jps-plugin-classpath-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.2.20-dev-5812/kotlin-jps-plugin-classpath-2.2.20-dev-5812-sources.jar",
   sha256 = "ed60a7371b695b5610fb81058ad397ce98e3157d47c8fd9ded27783114d42953",
-  downloaded_file_path = "kotlin-jps-plugin-classpath-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-jps-plugin-classpath-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
@@ -5221,185 +5221,185 @@ http_file(
 )
 
 http_file(
-  name = "kotlin-script-runtime-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-ij252-8/kotlin-script-runtime-2.2.20-ij252-8.jar",
-  sha256 = "9b09e716a4aaccdc3c544a9e8e42f46dde208506a10ceeb40e6eca5dc2bac8ba",
-  downloaded_file_path = "kotlin-script-runtime-2.2.20-ij252-8.jar"
+  name = "kotlin-script-runtime-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-5812/kotlin-script-runtime-2.2.20-dev-5812.jar",
+  sha256 = "cf85bed7668e71ba54b1b7a05f362b6f561c401d536ebb4ecb67592411b0d9c3",
+  downloaded_file_path = "kotlin-script-runtime-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-script-runtime-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-ij252-8/kotlin-script-runtime-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-script-runtime-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-5812/kotlin-script-runtime-2.2.20-dev-5812-sources.jar",
   sha256 = "d9d6b416bf1267d5d9a2fffb309c8d02fa707608154d7b0d7dd318d2dd7daa96",
-  downloaded_file_path = "kotlin-script-runtime-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-script-runtime-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-scripting-common-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-ij252-8/kotlin-scripting-common-2.2.20-ij252-8.jar",
-  sha256 = "d9b7000e52b2b9d79db93fcf04c5e97a2166687fcd1300fa6a39261a67c05613",
-  downloaded_file_path = "kotlin-scripting-common-2.2.20-ij252-8.jar"
+  name = "kotlin-scripting-common-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-5812/kotlin-scripting-common-2.2.20-dev-5812.jar",
+  sha256 = "bef3ed0e332082f5d729ea0e6429f281c5232198c34784409800f638741cc7be",
+  downloaded_file_path = "kotlin-scripting-common-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-scripting-common-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-ij252-8/kotlin-scripting-common-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-scripting-common-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-5812/kotlin-scripting-common-2.2.20-dev-5812-sources.jar",
   sha256 = "f35d6e3213353fd4a115986e56fe222dbaddab56510c6c96b2bd2d9bd5e130de",
-  downloaded_file_path = "kotlin-scripting-common-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-scripting-common-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-scripting-compiler-impl-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-ij252-8/kotlin-scripting-compiler-impl-2.2.20-ij252-8.jar",
-  sha256 = "1a6fdd4a4b7349fe945b93f3d29dab55ca90de6e83f0577576f4a2dcd65ec37c",
-  downloaded_file_path = "kotlin-scripting-compiler-impl-2.2.20-ij252-8.jar"
+  name = "kotlin-scripting-compiler-impl-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-5812/kotlin-scripting-compiler-impl-2.2.20-dev-5812.jar",
+  sha256 = "2d56387bc12ce4b4abfa5384be85dcaab16e2f9971c8c48f1536cc8f01838151",
+  downloaded_file_path = "kotlin-scripting-compiler-impl-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-scripting-compiler-impl-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-ij252-8/kotlin-scripting-compiler-impl-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-scripting-compiler-impl-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.20-dev-5812/kotlin-scripting-compiler-impl-2.2.20-dev-5812-sources.jar",
   sha256 = "db6db10045202326e1ca641a9f74fe5245d0f89baa423c5a4542c73e833166ff",
-  downloaded_file_path = "kotlin-scripting-compiler-impl-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-scripting-compiler-impl-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-scripting-dependencies-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-ij252-8/kotlin-scripting-dependencies-2.2.20-ij252-8.jar",
-  sha256 = "f9bf4b1023eb721cea9a379e3d2f0289c43aade53a419982ce5ad48ec4eb1c23",
-  downloaded_file_path = "kotlin-scripting-dependencies-2.2.20-ij252-8.jar"
+  name = "kotlin-scripting-dependencies-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-5812/kotlin-scripting-dependencies-2.2.20-dev-5812.jar",
+  sha256 = "6a2c1b220048ef4735b95ca681252931d6b9aabdc8587ae8afa6d71022c64895",
+  downloaded_file_path = "kotlin-scripting-dependencies-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-scripting-dependencies-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-ij252-8/kotlin-scripting-dependencies-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-scripting-dependencies-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.20-dev-5812/kotlin-scripting-dependencies-2.2.20-dev-5812-sources.jar",
   sha256 = "844d95fec92f336551e901b597588494252966315efffe7815dc3cda1f4b4f1d",
-  downloaded_file_path = "kotlin-scripting-dependencies-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-scripting-dependencies-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlin-scripting-jvm-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-ij252-8/kotlin-scripting-jvm-2.2.20-ij252-8.jar",
-  sha256 = "83aad95cf67a1cea6bb9fd7a5e76daa2966976f4445452f9dd976ec776f54ac1",
-  downloaded_file_path = "kotlin-scripting-jvm-2.2.20-ij252-8.jar"
+  name = "kotlin-scripting-jvm-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-5812/kotlin-scripting-jvm-2.2.20-dev-5812.jar",
+  sha256 = "6023a5555d942942495c698ea7f071d1738e93db3f1f9c6764b4bf60d682e955",
+  downloaded_file_path = "kotlin-scripting-jvm-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlin-scripting-jvm-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-ij252-8/kotlin-scripting-jvm-2.2.20-ij252-8-sources.jar",
+  name = "kotlin-scripting-jvm-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-5812/kotlin-scripting-jvm-2.2.20-dev-5812-sources.jar",
   sha256 = "2a647e6f709da1792192b264c5742b95147d8287d3354e61a020b4f715408c0c",
-  downloaded_file_path = "kotlin-scripting-jvm-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlin-scripting-jvm-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-ij252-8/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "kotlinx-serialization-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-5812/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "c0a7ecd59d6ef38ec0cead041b6c3f3d81c060cdccd08bc92856bd4f1afdaa4e",
-  downloaded_file_path = "kotlinx-serialization-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "kotlinx-serialization-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-ij252-8/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "kotlinx-serialization-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.2.20-dev-5812/kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "767a95556dcf0cb49ac7a261e0f24dccce996edadaffaa7c22bb649e0e5848c5",
-  downloaded_file_path = "kotlinx-serialization-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "kotlinx-serialization-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "lombok-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-ij252-8/lombok-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "lombok-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-5812/lombok-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "924e19483c3aebc6ef38cae2533f956b3b14656d2419e92999263748d96b8e3b",
-  downloaded_file_path = "lombok-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "lombok-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "lombok-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-ij252-8/lombok-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "lombok-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.2.20-dev-5812/lombok-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "f9b74b886b087d395410b477ed675f1b3d87cb35aa029d93d915099cac5e78f4",
-  downloaded_file_path = "lombok-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "lombok-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "low-level-api-fir-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-ij252-8/low-level-api-fir-for-ide-2.2.20-ij252-8.jar",
-  sha256 = "c5e63201c3056a9055c90342572cad4ee098445d103bd54bf6a929b4aab6db8b",
-  downloaded_file_path = "low-level-api-fir-for-ide-2.2.20-ij252-8.jar"
+  name = "low-level-api-fir-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-5812/low-level-api-fir-for-ide-2.2.20-dev-5812.jar",
+  sha256 = "8e71ac2636f8dcaddc4cdf0a89e9a761cf34fbec11e0ef333b8a10f754f3ab8b",
+  downloaded_file_path = "low-level-api-fir-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "low-level-api-fir-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-ij252-8/low-level-api-fir-for-ide-2.2.20-ij252-8-sources.jar",
-  sha256 = "68ea3d1f3d2b669b89414df1911d85ea6679cb034c2ce33bbc5340680ebe42d5",
-  downloaded_file_path = "low-level-api-fir-for-ide-2.2.20-ij252-8-sources.jar"
+  name = "low-level-api-fir-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.20-dev-5812/low-level-api-fir-for-ide-2.2.20-dev-5812-sources.jar",
+  sha256 = "2af7ccddf07f5e73f0ec55a39d04ee73a4af2677efe433ba0bd055ddea685c82",
+  downloaded_file_path = "low-level-api-fir-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "noarg-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-ij252-8/noarg-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "noarg-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-5812/noarg-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "eef047a6cbd34ad3db4edd9c934ea5896924f14e856e9c52fb5c4c50e83117f4",
-  downloaded_file_path = "noarg-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "noarg-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "noarg-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-ij252-8/noarg-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "noarg-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.2.20-dev-5812/noarg-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "54202ad2621e47c5e1e773114248800145b9b663bb4a0f77fde56f01ca59dc5e",
-  downloaded_file_path = "noarg-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "noarg-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "parcelize-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-ij252-8/parcelize-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "parcelize-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-5812/parcelize-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "4ec1ffa499f34f5d9f2941748805b1f207136a61c35602b434feaebbab28e265",
-  downloaded_file_path = "parcelize-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "parcelize-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "parcelize-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-ij252-8/parcelize-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "parcelize-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2.2.20-dev-5812/parcelize-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "fe3598f53e3a3913ce4b7c06273670e9794623bd8e33672cf6831d8acfa38a2f",
-  downloaded_file_path = "parcelize-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "parcelize-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "sam-with-receiver-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-ij252-8/sam-with-receiver-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "sam-with-receiver-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-5812/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "fe9c4aa6c6fcf23f9deec7ad1261703f06b7d1e725c63c694e5bf86492a8400b",
-  downloaded_file_path = "sam-with-receiver-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "sam-with-receiver-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-ij252-8/sam-with-receiver-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "sam-with-receiver-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2.2.20-dev-5812/sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "192e34a33ffc7c7b757658d94d4e272c9b887982c4b4c17f2efa8e3676f6c739",
-  downloaded_file_path = "sam-with-receiver-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "sam-with-receiver-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "scripting-compiler-plugin-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-ij252-8/scripting-compiler-plugin-for-ide-2.2.20-ij252-8.jar",
+  name = "scripting-compiler-plugin-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-5812/scripting-compiler-plugin-for-ide-2.2.20-dev-5812.jar",
   sha256 = "0700f7b0060a6e1dee7af70d0f49d1ce7d948d57bfc627cc0bfdf4b416177a64",
-  downloaded_file_path = "scripting-compiler-plugin-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "scripting-compiler-plugin-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "scripting-compiler-plugin-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-ij252-8/scripting-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "scripting-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.2.20-dev-5812/scripting-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "b9c86d67768804a4f0dba48e3f8f861ebd96164f9f47a53e6f6bf6b3b845b097",
-  downloaded_file_path = "scripting-compiler-plugin-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "scripting-compiler-plugin-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
-  name = "symbol-light-classes-for-ide-2_2_20-ij252-8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-ij252-8/symbol-light-classes-for-ide-2.2.20-ij252-8.jar",
+  name = "symbol-light-classes-for-ide-2_2_20-dev-5812_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-5812/symbol-light-classes-for-ide-2.2.20-dev-5812.jar",
   sha256 = "ea906b986ecf2aff4414d2449ece93f3b45a926017b4e8be988fc2aadbcf280e",
-  downloaded_file_path = "symbol-light-classes-for-ide-2.2.20-ij252-8.jar"
+  downloaded_file_path = "symbol-light-classes-for-ide-2.2.20-dev-5812.jar"
 )
 
 http_file(
-  name = "symbol-light-classes-for-ide-2_2_20-ij252-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-ij252-8/symbol-light-classes-for-ide-2.2.20-ij252-8-sources.jar",
+  name = "symbol-light-classes-for-ide-2_2_20-dev-5812-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.2.20-dev-5812/symbol-light-classes-for-ide-2.2.20-dev-5812-sources.jar",
   sha256 = "4f6908522dbc76757cb43844b9a6af07e66bc0224365003dbe1768e756391630",
-  downloaded_file_path = "symbol-light-classes-for-ide-2.2.20-ij252-8-sources.jar"
+  downloaded_file_path = "symbol-light-classes-for-ide-2.2.20-dev-5812-sources.jar"
 )
 
 http_file(
