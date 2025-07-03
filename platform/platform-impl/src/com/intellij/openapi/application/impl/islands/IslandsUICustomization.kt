@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
@@ -99,8 +101,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   init {
-    checkThemesVisible()
-
     if (isManyIslandEnabled && JBColor.isBright()) {
       Toolkit.getDefaultToolkit().addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
     }
@@ -115,6 +115,17 @@ internal class IslandsUICustomization : InternalUICustomization() {
         toolkit.addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
       }
     })
+
+    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+      checkThemesVisible()
+    }
+    else {
+      connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+        override fun appStarted() {
+          checkThemesVisible()
+        }
+      })
+    }
   }
 
   private fun checkThemesVisible() {
