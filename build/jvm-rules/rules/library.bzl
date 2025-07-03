@@ -2,6 +2,7 @@ load("@rules_java//java:defs.bzl", _JavaInfo = "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", "KtPluginConfiguration", _KtCompilerPluginInfo = "KtCompilerPluginInfo", _KtJvmInfo = "KtJvmInfo")
 load("//:rules/common-attrs.bzl", "add_dicts", "common_attr", "common_outputs", "common_toolchains")
 load("//:rules/impl/compile.bzl", "kt_jvm_produce_jar_actions")
+load("//:rules/impl/transitions.bzl", "jvm_platform_transition")
 
 visibility("private")
 
@@ -72,4 +73,5 @@ jvm_library = rule(
     host_fragments = ["java"],  # required fragments of the host configuration
     implementation = _jvm_library,
     provides = [_JavaInfo, _KtJvmInfo],
+    cfg = jvm_platform_transition,
 )

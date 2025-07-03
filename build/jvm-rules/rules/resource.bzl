@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
+load("//:rules/impl/transitions.bzl", "jvm_platform_transition")
 
 visibility("private")
 
@@ -85,4 +86,5 @@ jvm_resources = rule(
         ),
     },
     provides = [JavaInfo],
+    cfg = jvm_platform_transition,
 )

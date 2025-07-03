@@ -58,6 +58,9 @@ build:ci --nowatchfs
 common --enable_platform_specific_config
 common --incompatible_strict_action_env=true
 
+# Use target platform short name (not CPU) in the output directory
+common --experimental_platform_in_output_dir
+
 # Do not depend on external environment
 build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
 
