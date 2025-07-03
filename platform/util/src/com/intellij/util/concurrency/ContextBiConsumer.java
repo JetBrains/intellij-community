@@ -2,7 +2,6 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,10 +21,11 @@ final class ContextBiConsumer<T, U> implements BiConsumer<T, U> {
   @Async.Execute
   @Override
   public void accept(T t, U u) {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    ThreadContext.resetThreadContext(() -> {
       myChildContext.runInChildContext(() -> {
         myRunnable.accept(t, u);
       });
-    }
+      return null;
+    });
   }
 }

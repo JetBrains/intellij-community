@@ -14,7 +14,7 @@ class ThreadContextTest {
     assertNull(currentThreadContextOrNull())
     installThreadContext(EmptyCoroutineContext).use {
       assertNotNull(currentThreadContextOrNull())
-      resetThreadContext().use {
+      resetThreadContext() {
         assertNull(currentThreadContextOrNull())
       }
       assertNotNull(currentThreadContextOrNull())

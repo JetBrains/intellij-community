@@ -269,15 +269,27 @@ If this behavior is unexpected, please consult the documentation for com.intelli
 }
 
 /**
- * Resets the current thread context to initial value.
- *
- * @return handle to restore the previous thread context
+ * Do not use this function -- it is invisible in stacktraces, and it complicates the debugging of erroneously dropped thread context.
+ * Consider using the overload with an explicit action.
  */
+@Deprecated("Use resetThreadContext", ReplaceWith("resetThreadContext(action)"))
 fun resetThreadContext(): AccessToken {
   return withThreadLocal(tlCoroutineContext) { _ ->
     @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     InstalledThreadContext(currentSnapshot, null)
+  }
+}
+
+/**
+ * Resets [currentThreadContext] context to [EmptyCoroutineContext].
+ *
+ * This may be useful if you are going to run an event loop synchronously.
+ * This function is often used before dispatching the AWT events.
+ */
+fun <T> resetThreadContext(action: () -> T): T {
+  return resetThreadContext().use {
+    action()
   }
 }
 

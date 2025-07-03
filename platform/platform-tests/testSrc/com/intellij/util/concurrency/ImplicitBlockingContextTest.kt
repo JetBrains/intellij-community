@@ -103,7 +103,7 @@ class ImplicitBlockingContextTest {
   fun resetThreadContextTakesPriority(): Unit = runBlockingWithCatchingExceptions {
     withContext(E()) {
       val context = coroutineContext
-      resetThreadContext().use {
+      resetThreadContext {
         assertEquals(IntellijCoroutines.currentThreadCoroutineContext(), context)
         assertNull(currentThreadContextOrNull())
         assertEquals(EmptyCoroutineContext, currentThreadContext())

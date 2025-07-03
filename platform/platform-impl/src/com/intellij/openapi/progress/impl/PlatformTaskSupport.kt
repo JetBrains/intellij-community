@@ -688,7 +688,7 @@ private fun IdeEventQueue.pumpEventsForHierarchy(
 
 @Internal
 fun IdeEventQueue.pumpEventsForHierarchy(exitCondition: () -> Boolean) {
-  resetThreadContext().use {
+  resetThreadContext {
     pumpEventsForHierarchy(
       exitCondition = exitCondition,
       modalComponent = { null },

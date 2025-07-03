@@ -1473,9 +1473,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       if (myPreferredFocusedComponent != null) {
         // `resetThreadContext` here is needed because `setVisible` runs event loop
         // IJPL-161712
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        ThreadContext.resetThreadContext(() -> {
           myPreferredFocusedComponent.requestFocus();
-        }
+          return null;
+        });
       }
       else {
         _requestFocus();

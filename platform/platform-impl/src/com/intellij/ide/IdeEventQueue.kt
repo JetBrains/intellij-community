@@ -515,7 +515,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     idleTracker()
     synchronized(lock) {
       lastActiveTime = System.nanoTime()
-      resetThreadContext().use {
+      resetThreadContext {
         for (activityListener in activityListeners) {
           activityListener.run()
         }
@@ -608,9 +608,9 @@ class IdeEventQueue private constructor() : EventQueue() {
   @Internal
   fun flushQueue() {
     EDT.assertIsEdt()
-    resetThreadContext().use {
+    resetThreadContext {
       while (true) {
-        peekEvent() ?: return
+        peekEvent() ?: return@resetThreadContext
         try {
           dispatchEvent(nextEvent)
         }
@@ -622,7 +622,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   fun pumpEventsForHierarchy(modalComponent: Component, exitCondition: Future<*>, eventConsumer: Consumer<AWTEvent>) {
-    resetThreadContext().use {
+    resetThreadContext {
       EDT.assertIsEdt()
       Logs.LOG.debug { "pumpEventsForHierarchy($modalComponent, $exitCondition)" }
 
@@ -1260,9 +1260,9 @@ fun IdeEventQueue.flushExistingEvents() {
   EDT.assertIsEdt()
   var stop = false
   EventQueue.invokeLater(ContextAwareRunnable { stop = true })
-  resetThreadContext().use {
+  resetThreadContext {
     while (!stop) {
-      peekEvent() ?: return
+      peekEvent() ?: return@resetThreadContext
       try {
         dispatchEvent(nextEvent)
       }

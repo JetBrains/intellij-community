@@ -14,6 +14,7 @@
 - sf:installThreadContext(kotlin.coroutines.CoroutineContext,Z):com.intellij.openapi.application.AccessToken
 - bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,I,java.lang.Object):com.intellij.openapi.application.AccessToken
 - sf:resetThreadContext():com.intellij.openapi.application.AccessToken
+- sf:resetThreadContext(kotlin.jvm.functions.Function0):java.lang.Object
 *:com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 - s:getClassToReport(java.lang.Object):java.lang.Class
 - a:getSubstitutedClass():java.lang.Class

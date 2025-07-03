@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
@@ -101,13 +102,14 @@ public final class JobLauncherImpl extends JobLauncher {
       runWhileForking.run();
 
       // help all others
-      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      ThreadContext.resetThreadContext(() -> {
         safeIterate(globalCompleters, thrown, completer -> {
           wrapper.checkCanceled();
           // don't call .invoke() or other FJP-setting status functions
           completer.wrapAndRun(() -> completer.execAll());
         });
-      }
+        return null;
+      });
       // all work is done or distributed; wait for in-flight appliers and manifest exceptions
       safeIterate(globalCompleters, thrown, completer -> {
         while (true) {
@@ -121,8 +123,19 @@ public final class JobLauncherImpl extends JobLauncher {
               completer.get();
             }
             else {
-              try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-                completer.get(1, TimeUnit.MILLISECONDS);
+              Ref<Throwable> throwableRef = new Ref<>(null);
+              ThreadContext.resetThreadContext(() -> {
+                try {
+                  completer.get(1, TimeUnit.MILLISECONDS);
+                }
+                catch (Throwable e) {
+                  throwableRef.set(e);
+                }
+                return null;
+              });
+              Throwable throwable = throwableRef.get();
+              if (throwable != null) {
+                throw throwable;
               }
             }
             break;
@@ -319,11 +332,12 @@ public final class JobLauncherImpl extends JobLauncher {
         if (toWait < 0) {
           return false;
         }
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        ThreadContext.resetThreadContext(() -> {
           // wait while helping other tasks in the meantime, but not for too long
           // we are avoiding calling timed myForkJoinTask.get() because it's very expensive when timed out (bc of TimeoutException)
           myForkJoinPool.awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
-        }
+          return null;
+        });
       }
       if (myForkJoinTask.isDone()) {
         try {

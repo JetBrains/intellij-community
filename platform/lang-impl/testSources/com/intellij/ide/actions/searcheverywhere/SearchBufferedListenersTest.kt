@@ -362,7 +362,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     myMockery!!.assertIsSatisfied()
   }
 
-  private fun awaitShutdownNonBlocking(executorService: ScheduledExecutorService) = resetThreadContext().use {
+  private fun awaitShutdownNonBlocking(executorService: ScheduledExecutorService) = resetThreadContext {
     val eventQueue = Toolkit.getDefaultToolkit().systemEventQueue as IdeEventQueue
     while (!executorService.awaitTermination(10, TimeUnit.MILLISECONDS)) {
       val event = eventQueue.nextEvent

@@ -874,7 +874,7 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
-    return resetThreadContext().use {
+    return resetThreadContext {
       doInstantiateClass(aClass, pluginId)
     }
   }
@@ -904,7 +904,7 @@ abstract class ComponentManagerImpl(
   }
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
-    return resetThreadContext().use {
+    return resetThreadContext {
       instantiateUsingPicoContainer(aClass = aClass, requestorKey = key, pluginId = pluginId, componentManager = this)
     }
   }

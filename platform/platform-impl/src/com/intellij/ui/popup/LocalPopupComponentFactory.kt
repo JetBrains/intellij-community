@@ -103,7 +103,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
       if (!dispose) {
         // `resetThreadContext` here is needed because `setVisible` runs eventloop
         // IJPL-161712
-        resetThreadContext().use {
+        resetThreadContext {
           window?.isVisible = false
         }
         return

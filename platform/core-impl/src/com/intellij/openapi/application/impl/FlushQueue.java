@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl;
 import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.EventWatcher;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +27,7 @@ final class FlushQueue {
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    ThreadContext.resetThreadContext(() -> {
       ThreadingAssertions.assertEventDispatchThread();
       synchronized (getQueueLock()) {
         FLUSHER_SCHEDULED = false;
@@ -48,7 +47,8 @@ final class FlushQueue {
           break;
         }
       }
-    }
+      return null;
+    });
   }
 
   private Object getQueueLock() {
