@@ -115,6 +115,9 @@ f:com.intellij.ide.wizard.UIWizardUtil
 f:com.intellij.openapi.actionSystem.ActionGroupUtil
 - *s:forceHideDisabledChildren(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionGroup
 - *s:forceRecursiveUpdateInBackground(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionGroup
+*f:com.intellij.openapi.application.impl.TestOnlyThreading
+- sf:INSTANCE:com.intellij.openapi.application.impl.TestOnlyThreading
+- sf:releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(kotlin.jvm.functions.Function0):java.lang.Object
 *e:com.intellij.openapi.editor.ComponentInlayAlignment
 - java.lang.Enum
 - sf:FIT_CONTENT_WIDTH:com.intellij.openapi.editor.ComponentInlayAlignment

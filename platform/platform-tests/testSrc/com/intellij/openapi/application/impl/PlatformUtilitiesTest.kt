@@ -120,7 +120,7 @@ class PlatformUtilitiesTest {
     val infiniteJob = Job(currentCoroutineContext().job)
     val jobWaiting = Job(currentCoroutineContext().job)
     val coroutine = launch(Dispatchers.EDT) {
-      getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
         jobWaiting.complete()
         infiniteJob.asCompletableFuture().join()
       }
