@@ -6,7 +6,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyContext
@@ -22,7 +21,7 @@ internal class ConvertToBlockBodyIntention :
     override fun isApplicableByPsi(element: KtDeclarationWithBody): Boolean = ConvertToBlockBodyUtils.isConvertibleByPsi(element)
 
     override fun KaSession.prepareContext(element: KtDeclarationWithBody): ConvertToBlockBodyContext? =
-        ConvertToBlockBodyUtils.createContext(element, ShortenReferencesFacility.getInstance(), reformat = true)
+        ConvertToBlockBodyUtils.createContext(element, reformat = true)
 
     override fun invoke(
       actionContext: ActionContext,

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -20,8 +19,7 @@ data class ConvertToBlockBodyContext(
     val returnTypeString: String,
     val bodyTypeIsUnit: Boolean,
     val bodyTypeIsNothing: Boolean,
-    val reformat: Boolean,
-    val shortenReferences: ShortenReferencesFacility
+    val reformat: Boolean
 )
 
 object ConvertToBlockBodyUtils {
@@ -32,7 +30,6 @@ object ConvertToBlockBodyUtils {
     @OptIn(KaExperimentalApi::class)
     fun createContext(
         declaration: KtDeclarationWithBody,
-        shortenReferences: ShortenReferencesFacility,
         reformat: Boolean,
         isErrorReturnTypeAllowed: Boolean = false,
     ): ConvertToBlockBodyContext? {
@@ -53,8 +50,7 @@ object ConvertToBlockBodyUtils {
             returnTypeString = returnType.render(position = Variance.OUT_VARIANCE),
             bodyTypeIsUnit = bodyType.isUnitType,
             bodyTypeIsNothing = bodyType.isNothingType && !bodyType.isMarkedNullable,
-            reformat = reformat,
-            shortenReferences = shortenReferences
+            reformat = reformat
         )
     }
 
@@ -100,8 +96,7 @@ object ConvertToBlockBodyUtils {
             bodyTypeIsUnit = convertExpressionToBlockBodyData.returnTypeIsUnit,
             bodyTypeIsNothing = convertExpressionToBlockBodyData.returnTypeIsNothing &&
                     !convertExpressionToBlockBodyData.returnTypeIsMarkedNullable,
-            reformat = reformat,
-            shortenReferences = ShortenReferencesFacility.getInstance()
+            reformat = reformat
         )
     }
 

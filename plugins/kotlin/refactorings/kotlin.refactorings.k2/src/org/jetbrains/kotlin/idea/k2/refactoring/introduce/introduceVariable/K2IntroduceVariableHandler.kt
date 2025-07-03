@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
@@ -177,10 +176,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 allowAnalysisFromWriteAction {
                     analyze(declaration) {
                         ConvertToBlockBodyUtils.createContext(
-                            declaration,
-                            ShortenReferencesFacility.getInstance(),
-                            reformat = false,
-                            isErrorReturnTypeAllowed = true,
+                          declaration,
+                          reformat = false,
+                          isErrorReturnTypeAllowed = true,
                         )
                     }
                 }

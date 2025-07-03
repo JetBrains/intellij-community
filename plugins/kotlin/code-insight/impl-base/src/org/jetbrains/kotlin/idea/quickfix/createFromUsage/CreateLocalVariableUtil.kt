@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage
 
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
@@ -19,13 +18,12 @@ object CreateLocalVariableUtil {
         declaration.bodyExpression ?: return null
 
         return ConvertToBlockBodyContext(
-          returnTypeIsUnit = false,
-          returnTypeIsNothing = false,
-          returnTypeString = "kotlin.Any?",
-          bodyTypeIsUnit = false,
-          bodyTypeIsNothing = false,
-          reformat = reformat,
-          shortenReferences = ShortenReferencesFacility.getInstance()
+            returnTypeIsUnit = false,
+            returnTypeIsNothing = false,
+            returnTypeString = "kotlin.Any?",
+            bodyTypeIsUnit = false,
+            bodyTypeIsNothing = false,
+            reformat = reformat
         )
     }
 }
