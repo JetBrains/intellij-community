@@ -48,13 +48,7 @@ class ScratchTopPanelK2(val scratchFile: K2KotlinScratchFile) {
             if (isInteractiveMode) {
                 val project = e.project
                 if (project != null) {
-                    application.invokeLater {
-                        runBlockingCancellable {
-                            withBackgroundProgress(project, KotlinJvmBundle.message("progress.title.run.scratch")) {
-                                (ScratchFileAutoRunner.getInstance(project) as? ScratchFileAutoRunnerK2)?.submitRun(scratchFile)
-                            }
-                        }
-                    }
+                    (ScratchFileAutoRunner.getInstance(project) as? ScratchFileAutoRunnerK2)?.submitRun(scratchFile)
                 }
             }
             scratchFile.saveOptions { copy(isInteractiveMode = isInteractiveMode) }
