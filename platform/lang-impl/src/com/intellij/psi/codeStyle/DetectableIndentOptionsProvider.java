@@ -179,7 +179,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
                                          .getIndentOptionsByFile(project, virtualFile, null, true, null);
                                        indentOptsWithoutDetected.associateWithDocument(document);
                                      }
-                                     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
                                      CommandProcessor.getInstance().executeCommand(
                                        project,
                                        () -> ApplicationManager.getApplication().runWriteAction(
@@ -201,6 +200,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
                                        null
                                      );
                                      myDiscardedOptions.remove(virtualFile);
+                                     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
                                    }));
           actions.add(Separator.getInstance());
         }
