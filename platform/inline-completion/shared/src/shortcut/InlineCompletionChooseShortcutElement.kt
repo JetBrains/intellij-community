@@ -260,7 +260,7 @@ private class ChangeShortcutAction(
   shortcut: Shortcut,
   private val editor: Editor,
   private val lineNumber: Int
-) : InplaceChangeInlineCompletionShortcutAction(text, shortcut) {
+) : InplaceChangeInlineCompletionShortcutAction(text, shortcut, IdeActions.ACTION_INSERT_INLINE_COMPLETION) {
 
   override fun actionPerformed(e: AnActionEvent) {
     super.actionPerformed(e)

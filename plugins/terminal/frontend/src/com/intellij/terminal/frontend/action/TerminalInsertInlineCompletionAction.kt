@@ -28,4 +28,8 @@ internal class TerminalInsertInlineCompletionAction : EditorAction(InsertInlineC
       return editor.isReworkedTerminalEditor && !InlineCompletionSession.getOrNull(editor)?.context?.textToInsert().isNullOrEmpty()
     }
   }
+
+  companion object {
+    const val ACTION_ID: String = "Terminal.InsertInlineCompletion"
+  }
 }

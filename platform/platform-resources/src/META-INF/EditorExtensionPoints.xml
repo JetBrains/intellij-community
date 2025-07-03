@@ -92,6 +92,10 @@
       interface="com.intellij.codeInsight.inline.completion.InlineCompletionEditorInsertHandler"
       dynamic="true"/>
     <extensionPoint
+      name="inline.completion.insertActionIdResolver"
+      interface="com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionInsertActionIdResolver"
+      dynamic="true"/>
+    <extensionPoint
       name="inline.completion.usage.data"
       interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionProviderSpecificUsageData"
       dynamic="true"/>

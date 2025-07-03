@@ -24,8 +24,12 @@
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
       serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
-    <inline.completion.editorInsertHandler implementation="com.intellij.terminal.frontend.inlineCompletion.TerminalInlineCompletionEditorInsertHandler"
-                                             order="first"/>
+    <inline.completion.editorInsertHandler
+      implementation="com.intellij.terminal.frontend.inlineCompletion.TerminalInlineCompletionEditorInsertHandler"
+      order="first"/>
+    <inline.completion.insertActionIdResolver
+      implementation="com.intellij.terminal.frontend.inlineCompletion.TerminalInlineCompletionInsertActionIdResolver"
+      order="first"/>
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.TerminalFocusFusService"
       serviceImplementation="com.intellij.terminal.frontend.fus.TerminalFocusFusServiceImpl"/>
