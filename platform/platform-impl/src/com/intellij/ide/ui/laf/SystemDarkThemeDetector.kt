@@ -2,16 +2,19 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.jna.JnaLoader
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.sun.jna.Callback
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
@@ -50,9 +53,11 @@ private abstract class AsyncDetector : SystemDarkThemeDetector() {
   abstract val syncFunction: BiConsumer<Boolean, Boolean?>
 
   override fun check(parameter: Boolean?) {
-    NonUrgentExecutor.getInstance().execute {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       val isDark = isDark()
-      ApplicationManager.getApplication().invokeLater({ syncFunction.accept(isDark, parameter) }, ModalityState.any())
+      withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
+        syncFunction.accept(isDark, parameter)
+      }
     }
   }
 }
