@@ -13,6 +13,7 @@ import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
 import com.intellij.model.psi.impl.targetSymbols
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
@@ -59,6 +60,8 @@ class IdentifierHighlightingComputer(
   @RequiresBackgroundThread
   @ApiStatus.Internal
   fun computeRanges(): IdentifierHighlightingResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     if (myCaretOffset < 0 || !myEnabled || isInlinePromptShown(myEditor)) {
       if (LOG.isDebugEnabled) {
         LOG.debug("IdentifierHighlightingComputer.computeRanges empty $myCaretOffset $myEnabled ${isInlinePromptShown(myEditor)}")

@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
-import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterUpdater;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
@@ -75,6 +72,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static junit.framework.Assert.assertTrue;
@@ -348,16 +346,18 @@ public final class CodeInsightTestUtil {
     });
   }
 
-  public static void runIdentifierHighlighterPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+  @NotNull
+  public static IdentifierHighlightingResult runIdentifierHighlighterPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     IdentifierHighlighterUpdater pass = new IdentifierHighlighterUpdater(psiFile, editor, EditorContextManager.getEditorContext(editor, psiFile.getProject()),
                                                                          InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile));
-    assert pass != null;
     try {
-      ReadAction.nonBlocking(() -> {
+      return ReadAction.nonBlocking(() -> {
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+        AtomicReference<IdentifierHighlightingResult> result = new AtomicReference<>();
         ProgressManager.getInstance().runProcess(() -> {
-          pass.doCollectInformationForTestsSynchronously();
+          result.set(pass.doCollectInformationForTestsSynchronously());
         }, indicator);
+        return result.get();
       }).submit(AppExecutorUtil.getAppExecutorService()).get();
     }
     catch (InterruptedException | ExecutionException e) {

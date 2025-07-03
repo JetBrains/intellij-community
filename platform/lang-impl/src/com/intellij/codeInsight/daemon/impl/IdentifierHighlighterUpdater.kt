@@ -112,11 +112,11 @@ class IdentifierHighlighterUpdater(
   @RequiresBackgroundThread
   @ApiStatus.Internal
   @TestOnly
-  fun doCollectInformationForTestsSynchronously(): List<HighlightInfo> {
+  fun doCollectInformationForTestsSynchronously(): IdentifierHighlightingResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     assert(ApplicationManager.getApplication().isUnitTestMode())
-    val result =
-      IdentifierHighlightingComputer(myPsiFile, myEditor, ProperTextRange.create(myPsiFile.textRange), myEditor.caretModel.offset).computeRanges()
-    return createHighlightInfos(result)
+    return IdentifierHighlightingComputer(myPsiFile, myEditor, ProperTextRange.create(myPsiFile.textRange), myEditor.caretModel.offset).computeRanges()
   }
 
   companion object {
