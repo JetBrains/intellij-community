@@ -15,6 +15,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
@@ -304,7 +305,12 @@ class PlatformUtilitiesTest {
         })
       }
       catch (_: CustomException) {
-        delay(1000)
+        customExceptionWasRethrown.set(true)
+      }
+      try {
+        UIUtil.dispatchAllInvocationEvents()
+      }
+      catch (e: CustomException) {
         customExceptionWasRethrown.set(true)
       }
     }
