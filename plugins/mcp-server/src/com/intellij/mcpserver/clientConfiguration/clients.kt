@@ -24,14 +24,14 @@ import kotlin.reflect.jvm.javaMethod
 
 enum class MCPClientNames(val displayName: String){
   VS_CODE_PROJECT("VSCode (Project)"),
-  VS_CODE_GLOBAL("VSCode (Global)"),
-  CLAUDE_APP_GLOBAL("Claude App (Global)"),
-  WINDSURF_PROJECT("WindSurf (Project)"),
-  WINDSURF_GLOBAL("WindSurf (Global)"),
+  VS_CODE_GLOBAL("VSCode"),
+  CLAUDE_APP_GLOBAL("Claude App"),
+  WINDSURF_PROJECT("Windsurf (Project)"),
+  WINDSURF_GLOBAL("Windsurf"),
   CURSOR_PROJECT("Cursor (Project)"),
-  CURSOR_GLOBAL("Cursor (Global)"),
+  CURSOR_GLOBAL("Cursor"),
   CLAUDE_CODE_PROJECT("Claude Code (Project)"),
-  CLAUDE_CODE_GLOBAL("Claude Code (Global)"),
+  CLAUDE_CODE_GLOBAL("Claude Code"),
 }
 
 open class McpClient(

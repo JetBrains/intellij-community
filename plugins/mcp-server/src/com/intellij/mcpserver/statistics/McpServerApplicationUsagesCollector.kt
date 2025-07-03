@@ -10,7 +10,7 @@ import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpServerSettings
 
 internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver", 2)
+  private val GROUP = EventLogGroup("mcpserver", 3)
   private val MCP_RUNNING = GROUP.registerEvent("mcp.running", EventFields.Enabled)
   private val MCP_BRAVE_MODE_ENABLED = GROUP.registerEvent("mcp.brave.mode.enabled", EventFields.Enabled)
   private val MCP_GLOBAL_CLIENTS = GROUP.registerEvent("mcp.global.clients",
