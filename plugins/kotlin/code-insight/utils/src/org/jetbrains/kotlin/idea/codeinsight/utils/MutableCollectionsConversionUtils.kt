@@ -9,7 +9,11 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -35,6 +39,12 @@ object MutableCollectionsConversionUtils {
 
     fun canConvertPropertyType(property: KtProperty): Boolean {
         return property.isLocal && property.initializer != null
+    }
+
+    fun defaultValue(declaration: KtCallableDeclaration): KtExpression? = when (declaration) {
+        is KtDeclarationWithInitializer -> declaration.initializer
+        is KtParameter -> declaration.defaultValue
+        else -> null
     }
 
     fun KaSession.convertPropertyTypeToMutable(property: KtProperty, type: ClassId) {
