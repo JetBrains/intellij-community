@@ -6,6 +6,7 @@ package com.intellij.platform.fileEditor
 import com.intellij.ide.util.treeView.findCachedImageIcon
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.platform.ide.IdeFingerprint
 import com.intellij.util.xmlb.jdomToJson
 import kotlinx.serialization.Serializable
@@ -82,6 +83,11 @@ internal fun writeWindow(result: Element, window: EditorWindow, delayedStates: M
   val serializer = FileEntryTab.serializer()
   for (tab in window.tabbedPane.tabs.tabs) {
     val composite = tab.composite
+
+    if (!FileIdAdapter.getInstance().shouldSaveEditorState(composite.file)) {
+      continue
+    }
+
     val fileElement = Element("file")
 
     val delayedState = delayedStates.get(composite)
