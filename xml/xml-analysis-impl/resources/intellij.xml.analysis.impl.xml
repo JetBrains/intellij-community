@@ -185,5 +185,12 @@
     <lang.foldingBuilder language="XML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
     <lang.foldingBuilder language="HTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
     <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+
+    <!--temporarily moved from intellij.xml.psi.impl-->
+    <multiHostInjector implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpInjector"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
+    <multiHostInjector implementation="com.intellij.polySymbols.html.HtmlSymbolsTextInjector"
+                       order="before JSConfigurationInjector, after TemporaryPlacesInjector"
+                       id="PolySymbolsHtmlText"/>
   </extensions>
 </idea-plugin>
