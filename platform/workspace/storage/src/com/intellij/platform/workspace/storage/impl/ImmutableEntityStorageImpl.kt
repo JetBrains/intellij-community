@@ -397,6 +397,10 @@ internal class MutableEntityStorageImpl(
   }
 
   override fun collectChanges(): Map<Class<*>, List<EntityChange<*>>> = collectChangesTimeMs.addMeasuredTime {
+    if (changeLog.changeLog.isEmpty()) {
+      return@addMeasuredTime emptyMap()
+    }
+
     // We keep the Removed-Replaced-Added ordering of the events
     //
     // This implemented by adding Removed events at the start, Added events at the end, and Replaced before the Added events.
@@ -405,10 +409,6 @@ internal class MutableEntityStorageImpl(
 
     try {
       startWriting()
-
-      if (changeLog.changeLog.isEmpty()) {
-        return@addMeasuredTime emptyMap()
-      }
 
       val result = HashMap<Class<*>, MutableList<EntityChange<*>>>()
       for ((entityId, change) in changeLog.changeLog) {
