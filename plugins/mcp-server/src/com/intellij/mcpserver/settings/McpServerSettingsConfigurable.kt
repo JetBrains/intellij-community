@@ -16,6 +16,8 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
@@ -47,7 +49,13 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
     val panel = panel {
       row {
-        val checkboxWithValidation = CheckboxWithValidation(McpServerBundle.message("enable.mcp.server"), ConsentValidator)
+        val checkboxWithValidation = CheckboxWithValidation(
+          if (McpServerService.getInstance().isRunning) {
+            McpServerBundle.message("enable.mcp.server.when.enabled")
+          }
+          else {
+            McpServerBundle.message("enable.mcp.server")
+          }, ConsentValidator)
         cell(checkboxWithValidation).bind(
           componentGet = { it.isValidatedSelected },
           componentSet = { component, value -> component.isValidatedSelected = value },
@@ -55,34 +63,26 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
             getter = { settings.state.enableMcpServer },
             setter = { settings.state.enableMcpServer = it }
           )
-        )
+        ).gap(RightGap.SMALL)
         enabledCheckboxState = ValueComponentPredicate(checkboxWithValidation.isValidatedSelected).also { predicate ->
           checkboxWithValidation.addPropertyChangeListener(CheckboxWithValidation.IS_VALIDATED_SELECTED_PROPERTY) { evt ->
             predicate.set(evt.newValue as Boolean)
           }
         }
-      }
-      panel {
 
-        fun getLabelText(): String = if (McpServerService.getInstance().isRunning) McpServerBundle.message("mcp.server.is.running.on") else ""
         fun getLinkText(): String = if (McpServerService.getInstance().isRunning) McpServerService.getInstance().serverSseUrl else ""
-
-        row {
-          val label = label(getLabelText())
-          val link = link(getLinkText()) {
-            BrowserUtil.browse(it.actionCommand!!)
-          }
-
-          enabledCheckboxState!!.addListener {
-            McpServerService.getInstance().settingsChanged(it)
-            val isServerRunning = McpServerService.getInstance().isRunning
-            label.component.text = if (isServerRunning) getLabelText() else ""
-            link.component.text = if (isServerRunning) McpServerService.getInstance().serverSseUrl else ""
-          }
+        val link = link(getLinkText()) {
+          BrowserUtil.browse(it.actionCommand!!)
         }
 
-
-
+        enabledCheckboxState!!.addListener {
+          McpServerService.getInstance().settingsChanged(it)
+          val isServerRunning = McpServerService.getInstance().isRunning
+          link.component.text = if (isServerRunning) McpServerService.getInstance().serverSseUrl else ""
+          checkboxWithValidation.text = if (isServerRunning) McpServerBundle.message("enable.mcp.server.when.enabled") else McpServerBundle.message("enable.mcp.server")
+        }
+      }
+      panel {
         McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
           val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
           val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
