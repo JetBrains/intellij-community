@@ -633,6 +633,10 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("stream")
         void simpleStream(int x, int y) { System.out.println(x + ", " + y); }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("stream()")
+        void withBraces(int x, int y) { System.out.println(x + ", " + y); }
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("iterable")
@@ -673,6 +677,10 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
         void intStreamProvider(int x, org.junit.jupiter.api.TestReporter testReporter) { System.out.println(x); }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("MethodSource${'$'}InnerClass#intStreamProvider()")
+        void directLink(int x) { System.out.println(x); }
 
         static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> stream() { return null; }
         static java.util.Iterator<org.junit.jupiter.params.provider.Arguments> iterator() { return null; }
@@ -683,6 +691,10 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         static Object[] objectsArrayProvider() { return new Object[] { org.junit.jupiter.params.provider.Arguments.of(1, "one") }; }
         static Object[][] objects2DArrayProvider() { return new Object[][] { {1, "s"} }; }
         static java.util.stream.IntStream intStreamProvider() { return null; }
+        
+        static class InnerClass {
+          static java.util.stream.IntStream intStreamProvider() { return null; }
+        }
       }
       
       interface MyMethodSourceInterface {

@@ -75,6 +75,14 @@ abstract class BaseJunitAnnotationReference(
     return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, OurGenericsResolver, false, incompleteCode, file)
   }
 
+  private fun prepareFactoryMethodName(factoryMethodName: String): String {
+    var result = factoryMethodName
+    if (result.endsWith("()")) {
+      result = result.substring(0, result.length - 2)
+    }
+    return result
+  }
+
   /**
    * Finds a method reference from a direct link in the format `com.example.MyClass$InnerClass#testMethod`.
    *
@@ -86,7 +94,7 @@ abstract class BaseJunitAnnotationReference(
     val string = literal.evaluate() as String? ?: return null
     val factoryClassName = StringUtil.getPackageName(string, '#')
     if (factoryClassName.isEmpty()) return null
-    val factoryMethodName = StringUtil.getShortName(string, '#')
+    val factoryMethodName = prepareFactoryMethodName(StringUtil.getShortName(string, '#'))
     if (factoryMethodName.isEmpty()) return null
     val directClass = ClassUtil.findPsiClass(scope.javaPsi.manager, factoryClassName, null, false, scope.javaPsi.resolveScope)
                       ?: return null
@@ -94,7 +102,8 @@ abstract class BaseJunitAnnotationReference(
   }
 
   private fun fastResolveFor(literal: UExpression, scope: UClass, testMethod: UMethod?): Set<PsiMethod> {
-    val factoryMethodName = literal.evaluate() as String? ?: return setOf()
+    val string = literal.evaluate() as String? ?: return setOf()
+    val factoryMethodName = prepareFactoryMethodName(string)
     val psiClazz = scope.javaPsi
     val factoryMethods = filteredMethod(psiClazz.findMethodsByName(factoryMethodName, true), scope, testMethod)
 

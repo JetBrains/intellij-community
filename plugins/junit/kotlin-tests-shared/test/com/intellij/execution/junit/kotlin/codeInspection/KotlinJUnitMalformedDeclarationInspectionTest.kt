@@ -575,6 +575,10 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("stream")
         fun simpleStream(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("stream()")
+        fun withBraces(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("iterable")
@@ -606,10 +610,8 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
-        fun injectTestReporter(x: Int, testReporter: org.junit.jupiter.api.TestReporter) { 
-          System.out.println("${'$'}x, ${'$'}testReporter") 
-        }
-        
+        fun injectTestReporter(x: Int, testReporter: org.junit.jupiter.api.TestReporter) { System.out.println("${'$'}x, ${'$'}testReporter") }
+
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
         fun intStreamProvider(x: Int, testReporter: org.junit.jupiter.api.TestReporter) { System.out.println("${'$'}x, ${'$'}testReporter") }
