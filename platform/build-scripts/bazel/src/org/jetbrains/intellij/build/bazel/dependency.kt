@@ -218,8 +218,8 @@ internal fun generateDeps(
       val libName = element.libraryReference.libraryName
       if (libName == "jetbrains-jewel-markdown-laf-bridge-styling" ||
           libName == "jetbrains.kotlin.compose.compiler.plugin" ||
-          libName == "jetbrains.compose.foundation.desktop:toolbox" ||
-          libName == "jetbrains.compose.ui.test.junit4.desktop:toolbox" ||
+          libName == "toolbox:jetbrains.compose.foundation.desktop" ||
+          libName == "toolbox:jetbrains.compose.ui.test.junit4.desktop" ||
           libName == "jetbrains-compose-ui-test-junit4-desktop") {
         plugins.add("@lib//:compose-plugin")
       }

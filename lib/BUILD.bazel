@@ -712,13 +712,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "app-cash-turbine-jvm-provided",
-  exports = [":app-cash-turbine-jvm"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "asm",
   jar = "@asm-all-9_6_1_http//file",
