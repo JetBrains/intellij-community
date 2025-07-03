@@ -1547,6 +1547,35 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/importAliases")
+        public static class ImportAliases extends AbstractK1JSBasicCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ImportAliasClass.kt")
+            public void testImportAliasClass() throws Exception {
+                runTest("../testData/basic/common/importAliases/ImportAliasClass.kt");
+            }
+
+            @TestMetadata("ImportAliasExtension.kt")
+            public void testImportAliasExtension() throws Exception {
+                runTest("../testData/basic/common/importAliases/ImportAliasExtension.kt");
+            }
+
+            @TestMetadata("ImportAliasMethod.kt")
+            public void testImportAliasMethod() throws Exception {
+                runTest("../testData/basic/common/importAliases/ImportAliasMethod.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/inInitBlock")
         public static class InInitBlock extends AbstractK1JSBasicCompletionTest {
             @java.lang.Override

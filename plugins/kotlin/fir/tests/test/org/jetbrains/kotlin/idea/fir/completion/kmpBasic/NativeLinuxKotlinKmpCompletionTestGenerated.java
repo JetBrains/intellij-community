@@ -1626,6 +1626,40 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/common/importAliases")
+    public static class ImportAliases extends AbstractKotlinKmpCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        @java.lang.Override
+        public KMPTestPlatform getTestPlatform() {
+            return KMPTestPlatform.NativeLinux;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ImportAliasClass.kt")
+        public void testImportAliasClass() throws Exception {
+            runTest("../../completion/testData/basic/common/importAliases/ImportAliasClass.kt");
+        }
+
+        @TestMetadata("ImportAliasExtension.kt")
+        public void testImportAliasExtension() throws Exception {
+            runTest("../../completion/testData/basic/common/importAliases/ImportAliasExtension.kt");
+        }
+
+        @TestMetadata("ImportAliasMethod.kt")
+        public void testImportAliasMethod() throws Exception {
+            runTest("../../completion/testData/basic/common/importAliases/ImportAliasMethod.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/common/inInitBlock")
     public static class InInitBlock extends AbstractKotlinKmpCompletionTest {
         @java.lang.Override
