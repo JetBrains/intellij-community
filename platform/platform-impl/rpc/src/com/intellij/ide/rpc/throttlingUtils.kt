@@ -99,8 +99,8 @@ fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RES
 }
 
 @ApiStatus.Internal
-sealed interface ThrottledItems<T>
+sealed class ThrottledItems<T>(val items: List<T>)
 @ApiStatus.Internal
-class ThrottledAccumulatedItems<T>(val items: List<T>) : ThrottledItems<T>
+class ThrottledAccumulatedItems<T>(items: List<T>) : ThrottledItems<T>(items)
 @ApiStatus.Internal
-class ThrottledOneItem<T>(val item: T) : ThrottledItems<T>
+class ThrottledOneItem<T>(val item: T) : ThrottledItems<T>(listOf(item))

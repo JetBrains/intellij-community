@@ -8,15 +8,17 @@ import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
 import com.intellij.find.replaceInProject.ReplaceInProjectManager
-import com.intellij.ide.rpc.ThrottledAccumulatedItems
 import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.ide.rpc.throttledWithAccumulation
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
@@ -33,6 +35,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
   private var validationJob: Job? = null
   private var findUsagesJob: Job? = null
+  private var currentSearchDisposable: Disposable? = null
 
   @OptIn(ExperimentalAtomicApi::class)
   override fun findUsages(
@@ -42,6 +45,8 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     findModel: FindModel,
     previousUsages: Set<UsageInfoAdapter>,
     shouldThrottle: Boolean,
+    disposableParent: Disposable,
+    onDocumentUpdated: (usageInfos: List<UsageInfo>) -> Unit?,
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
   ) {
@@ -49,26 +54,20 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
       findUsagesJob?.cancel("new find request is started")
       findUsagesJob = coroutineScope.launch {
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
+        currentSearchDisposable?.let { Disposer.dispose(it) }
+        currentSearchDisposable = Disposer.newDisposable(disposableParent, "Find in Project Search")
 
         FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() })
           .let {
             if (shouldThrottle) it.throttledWithAccumulation()
             else it.map { event -> ThrottledOneItem(event) }
           }.collect { throttledItems ->
-            when (throttledItems) {
-              is ThrottledOneItem -> {
-                val usage = UsageInfoModel.createUsageInfoModel(project, throttledItems.item, this.childScope("UsageInfoModel.init"))
-                onResult(usage)
-              }
-              is ThrottledAccumulatedItems -> {
-                throttledItems.items.forEach {
-                  val usage = UsageInfoModel.createUsageInfoModel(project, it, this.childScope("UsageInfoModel.init"))
-                  onResult(usage)
-                }
-              }
+            throttledItems.items.forEach { item ->
+              val usage = UsageInfoModel.createUsageInfoModel(project, item, this.childScope("UsageInfoModel.init"), onDocumentUpdated)
+              currentSearchDisposable?.let { parent -> Disposer.register(parent, usage) }
+              onResult(usage)
             }
-
-        }
+          }
         onFinish()
       }
     }
