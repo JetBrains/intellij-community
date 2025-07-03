@@ -27,6 +27,12 @@ object MutableCollectionsConversionUtils {
         return property.isLocal && property.initializer != null
     }
 
+    fun defaultValue(declaration: KtCallableDeclaration): KtExpression? = when (declaration) {
+        is KtDeclarationWithInitializer -> declaration.initializer
+        is KtParameter -> declaration.defaultValue
+        else -> null
+    }
+
     private fun mutableCallableName(
         initializer: KtExpression,
     ): String? {
