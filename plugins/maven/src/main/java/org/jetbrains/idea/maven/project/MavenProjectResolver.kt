@@ -14,6 +14,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.CollectionFactory
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -118,6 +119,9 @@ class MavenProjectResolver(private val myProject: Project) {
         projectsWithUnresolvedPlugins[baseDir] = projectsWithUnresolvedPluginsChunk
       }
       catch (t: Throwable) {
+        if (t is CancellationException) {
+          throw t
+        }
         processResolverException(t, true)
       }
     }
@@ -207,7 +211,7 @@ class MavenProjectResolver(private val myProject: Project) {
       val file = aggregator.file?.toPath() ?: return@forEach
       val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file) ?: return@forEach
       val aggregatorProject = tree.findProject(virtualFile) ?: return@forEach
-      modules.forEach modules@ { modulePath ->
+      modules.forEach modules@{ modulePath ->
         val moduleFile = file.parent.resolve(modulePath).resolve("pom.xml")
         val moduleVirtualFile = VirtualFileManager.getInstance().findFileByNioPath(moduleFile) ?: return@modules
         val moduleProject = tree.findProject(moduleVirtualFile) ?: return@modules
