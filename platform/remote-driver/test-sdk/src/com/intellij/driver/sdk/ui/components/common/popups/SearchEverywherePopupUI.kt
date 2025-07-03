@@ -74,6 +74,14 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
     waitFor("Popup is closed") { notPresent() }
   }
 
+  fun switchTypeFilters(types: List<String>) {
+    typeFilterButton.click()
+    types.forEach { type ->
+      searchEverywhereTypeFilterPopup().clickType(type)
+    }
+    typeFilterButton.click()
+  }
+
   private fun invokeActionWithShortcut(shortcut: String, chooser: (List<AnAction>) -> AnAction? = { it.singleOrNull() }) {
     val action = driver.utility(ActionUtils::class).getActions(searchEverywhereUi.component).filter {
       it.getShortcutSet().getShortcuts().singleOrNull()?.toString() == shortcut
