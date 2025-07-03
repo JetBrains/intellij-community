@@ -225,7 +225,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       if (isInited.getAndSet(true))
         return
       repositoryManager.initCaches()
-      if (installedPackages.isEmpty()) {
+      if (installedPackages.isEmpty() && !PythonSdkType.isMock(sdk)) {
         reloadPackages()
       }
     }
@@ -238,7 +238,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   //Some test on EDT so need to be inited on first create
-  private fun shouldBeInitInstantly(): Boolean = PythonSdkType.isMock(sdk) || ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isUnitTestMode
+  private fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isUnitTestMode
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
