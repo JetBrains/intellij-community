@@ -3831,6 +3831,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../../completion/testData/basic/common/NestedClassesOnDefaultObjectLiteral.kt");
             }
 
+            @TestMetadata("NoClassMembersHighInvocationCount.kt")
+            public void testNoClassMembersHighInvocationCount() throws Exception {
+                runTest("../../completion/testData/basic/common/NoClassMembersHighInvocationCount.kt");
+            }
+
             @TestMetadata("NoClassNameDuplication.kt")
             public void testNoClassNameDuplication() throws Exception {
                 runTest("../../completion/testData/basic/common/NoClassNameDuplication.kt");
