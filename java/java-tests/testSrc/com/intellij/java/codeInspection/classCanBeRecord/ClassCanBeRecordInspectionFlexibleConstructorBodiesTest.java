@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
 
-public class ClassCanBeRecordFlexibleConstructorBodiesTest extends LightQuickFixParameterizedTestCase {
+public class ClassCanBeRecordInspectionFlexibleConstructorBodiesTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     ClassCanBeRecordInspection inspection = new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, true);
@@ -20,7 +20,7 @@ public class ClassCanBeRecordFlexibleConstructorBodiesTest extends LightQuickFix
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_25;
   }
 
   @Override
