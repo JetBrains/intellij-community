@@ -355,6 +355,7 @@ class DependencyAnalyzerViewImpl(
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.groupId.show") }
     val viewOptionsButton = popupActionGroup(showDependencyGroupIdAction)
       .apply { templatePresentation.icon = AllIcons.Actions.Show }
+      .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.view.options") }
       .asActionButton(ACTION_PLACE)
       .bindEnabled(!dependencyLoadingProperty)
     val reloadNotificationProperty = isNotificationVisibleProperty(project, systemId, parentDisposable)
