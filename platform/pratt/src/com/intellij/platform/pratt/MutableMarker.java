@@ -4,11 +4,12 @@ package com.intellij.platform.pratt;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 
-public class MutableMarker {
+public final class MutableMarker {
   enum Mode { READY, DROPPED, COMMITTED, ERROR }
 
   private final PsiBuilder.Marker myStartMarker;
@@ -17,7 +18,8 @@ public class MutableMarker {
   private final LinkedList<IElementType> myPath;
   private Mode myMode = Mode.READY;
 
-  public MutableMarker(final LinkedList<IElementType> path, final PsiBuilder.Marker startMarker, final int initialPathLength) {
+  @ApiStatus.Internal
+  MutableMarker(final LinkedList<IElementType> path, final PsiBuilder.Marker startMarker, final int initialPathLength) {
     myPath = path;
     myStartMarker = startMarker;
     myInitialPathLength = initialPathLength;

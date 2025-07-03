@@ -4,8 +4,7 @@ a:com.intellij.platform.pratt.AppendTokenParser
 - <init>():V
 - pa:parseAppend(com.intellij.platform.pratt.PrattBuilder):com.intellij.psi.tree.IElementType
 - parseToken(com.intellij.platform.pratt.PrattBuilder):Z
-c:com.intellij.platform.pratt.MutableMarker
-- <init>(java.util.LinkedList,com.intellij.lang.PsiBuilder$Marker,I):V
+f:com.intellij.platform.pratt.MutableMarker
 - drop():V
 - error(java.lang.String):V
 - finish():V
