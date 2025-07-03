@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
-import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -243,9 +242,10 @@ internal class FilteringBranchesTree(
     tree.launchOnShow("Git Dashboard Tree") {
       // need EDT because of RA in TreeUtil.promiseVisit
       withContext(Dispatchers.EDT) {
-        updateTree()
-        checkCanceled()
         model.addListener(listener)
+        if (model.root.children.isNotEmpty() != (searchModel.root.childCount > 0)) {
+          updateTree()
+        }
         try {
           awaitCancellation()
         }
