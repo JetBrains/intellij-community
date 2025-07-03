@@ -65,4 +65,51 @@ class JavaSupportTest : GrazieTestBase() {
   fun `test spellchecking normalization`() {
     runHighlightTestForFile("ide/language/java/Normalization.java")
   }
+
+  fun `test multiline compounds`() {
+    doTest(
+      """
+        public class Main {
+          /**
+           * I use {@code awaitility} to poll any eve<caret>ntually-      
+           * consistent results for a short period.
+           */
+          int consistency;
+        }
+      """.trimIndent(),
+      """
+        public class Main {
+          /**
+           * I use {@code awaitility} to poll any eventually-consistent results for a short period.
+           */
+          int consistency;
+        }
+      """.trimIndent(),
+      "eventually-consistent"
+    )
+    doTest(
+      """
+        public class Main {
+          // Du bestellst ein Paket bei einem Online         
+          // -Sh<caret>op. Direkt nach der Bestellung steht auf der Website.
+          double onlineShop;
+        }
+      """.trimIndent(),
+      """
+        public class Main {
+          // Du bestellst ein Paket bei einem Online-Shop. Direkt nach der Bestellung steht auf der Website.
+          double onlineShop;
+        }
+      """.trimIndent(),
+      "Online-Shop"
+      )
+  }
+
+  private fun doTest(beforeText: String, afterText: String, hint: String) {
+    myFixture.configureByText("a.java", beforeText)
+    val intentionAction = myFixture.findSingleIntention(hint)
+    assertNotNull(intentionAction)
+    myFixture.launchAction(intentionAction)
+    myFixture.checkResult(afterText)
+  }
 }
