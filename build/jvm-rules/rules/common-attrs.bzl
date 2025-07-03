@@ -15,6 +15,7 @@ load(
     "//:rules/impl/kotlinc-options.bzl",
     "KotlincOptions",
 )
+load("//:rules/impl/transitions.bzl", "scrubbed_host_platform_transition")
 
 visibility("private")
 
@@ -98,7 +99,7 @@ common_attr = add_dicts(
         "_jvm_builder": attr.label(
             default = "//:jvm-builder",
             allow_single_file = True,
-            cfg = "exec",
+            cfg = scrubbed_host_platform_transition,
         ),
         "_jvm_builder_jvm_flags": attr.label(
             default = "//:jvm-builder-jvm_flags",

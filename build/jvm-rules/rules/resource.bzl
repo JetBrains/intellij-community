@@ -1,6 +1,6 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
-load("//:rules/impl/transitions.bzl", "jvm_platform_transition")
+load("//:rules/impl/transitions.bzl", "jvm_platform_transition", "scrubbed_host_platform_transition")
 
 visibility("private")
 
@@ -75,7 +75,7 @@ jvm_resources = rule(
         "_worker": attr.label(
             default = "//:resource-packager",
             allow_single_file = True,
-            cfg = "exec",
+            cfg = scrubbed_host_platform_transition,
         ),
         "_worker_jvm_flags": attr.label(
             default = "//:resource-packager-jvm_flags",
