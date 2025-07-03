@@ -1,5 +1,5 @@
 // "Convert to run { ... }" "false"
-// TOOL: org.jetbrains.kotlin.idea.inspections.FunctionWithLambdaExpressionBodyInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.FunctionWithLambdaExpressionBodyInspection
 // ACTION: Convert to anonymous function
 // ACTION: Convert to block body
 // ACTION: Convert to multi-line lambda
