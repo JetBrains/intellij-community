@@ -34,6 +34,7 @@ jvm_library(
     "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-ui-common:ui-common",
     "//xml/xml-analysis-impl:analysis-impl",
     "//xml/xml-structure-view-impl:structureView-impl",
     "//platform/xdebugger-api:debugger",
@@ -57,6 +58,7 @@ jvm_library(
   exports = [
     "//xml/openapi:xml",
     "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-ui-common:ui-common",
     "//xml/xml-analysis-impl:analysis-impl",
     "//xml/xml-structure-view-impl:structureView-impl",
   ],

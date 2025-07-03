@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.xml.ui.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ui-common_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ui-common",
+  module_name = "intellij.xml.ui.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-impl",
+    "//xml/xml-parser:parser",
+    "//platform/code-style-api:codeStyle",
+    "//platform/extensions",
+    "//xml/xml-frontback-impl:frontback-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:fastutil-min",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//xml/xml-psi-api:psi",
+  ],
+  runtime_deps = [":ui-common_resources"]
+)
+### auto-generated section `build intellij.xml.ui.common` end

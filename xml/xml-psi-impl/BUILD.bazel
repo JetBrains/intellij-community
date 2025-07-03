@@ -44,8 +44,12 @@ jvm_library(
     "//platform/markdown-utils",
     "//platform/polySymbols",
     "//RegExpSupport:regexp",
+    "//xml/xml-ui-common:ui-common",
   ],
-  exports = ["//xml/xml-frontback-impl:frontback-impl"],
+  exports = [
+    "//xml/xml-frontback-impl:frontback-impl",
+    "//xml/xml-ui-common:ui-common",
+  ],
   runtime_deps = [
     ":psi-impl_resources",
     ":psi-impl_resources_1",

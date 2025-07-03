@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="intellij.xml.frontback.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.ui.common" exported="" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" exported="" />
     <orderEntry type="module" module-name="intellij.xml.structureView.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />

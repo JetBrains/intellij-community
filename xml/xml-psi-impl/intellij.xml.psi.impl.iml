@@ -37,5 +37,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols" />
     <orderEntry type="module" module-name="intellij.regexp" />
+    <orderEntry type="module" module-name="intellij.xml.ui.common" exported="" />
   </component>
 </module>

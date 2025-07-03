@@ -3,6 +3,7 @@
     <module name="intellij.platform.frontend.split"/>
     <module name="intellij.xml.frontback.impl"/>
     <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.ui.common"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -13,5 +14,7 @@
     <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
                         serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
     <highlightErrorFilter implementation="com.intellij.xml.frontend.split.editor.FrontendHtmlHighlightErrorFilter"/>
+
+    <virtualFileCustomDataConsumer implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
   </extensions>
 </idea-plugin>
