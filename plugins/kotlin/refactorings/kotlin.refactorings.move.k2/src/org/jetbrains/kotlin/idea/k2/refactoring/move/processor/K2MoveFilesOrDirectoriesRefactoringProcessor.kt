@@ -46,10 +46,19 @@ internal class K2MoveFilesOrDirectoriesRefactoringProcessor(private val descript
         moveTarget.baseDirectory.forcedTargetPackage = null
     }
 
-    override fun performRefactoring(_usages: Array<out UsageInfo?>) {
+    private fun <T> withForcedPackageIfNeeded(action: () -> T): T {
         setForcedPackageIfNeeded()
-        super.performRefactoring(_usages)
-        cleanForcedPackage()
+        try {
+            return action()
+        } finally {
+            cleanForcedPackage()
+        }
+    }
+
+    override fun performRefactoring(_usages: Array<out UsageInfo?>) {
+        withForcedPackageIfNeeded {
+            super.performRefactoring(_usages)
+        }
     }
 
     /**
@@ -57,9 +66,8 @@ internal class K2MoveFilesOrDirectoriesRefactoringProcessor(private val descript
      * It's done separately because in case of cancellation [performRefactoring] is not called and uncleaned user data would leak.
      */
     override fun preprocessUsages(refUsages: Ref<Array<out UsageInfo?>?>): Boolean {
-        setForcedPackageIfNeeded()
-        return super.preprocessUsages(refUsages).also {
-            cleanForcedPackage()
+        return withForcedPackageIfNeeded {
+            super.preprocessUsages(refUsages)
         }
     }
 }
