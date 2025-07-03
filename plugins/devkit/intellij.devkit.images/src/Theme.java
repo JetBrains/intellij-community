@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.images;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.jetbrains.annotations.NonNls;
 
@@ -75,16 +73,6 @@ public enum Theme implements ThemeFilter {
   @Override
   public String getDisplayName() {
     return myDisplayNameSupplier.get();
-  }
-
-  @Override
-  public boolean isApplicableToProject(Project project) {
-    return true;
-  }
-
-  @Override
-  public void setFilter(ThumbnailView view) {
-    view.setFilter(this);
   }
 
 }

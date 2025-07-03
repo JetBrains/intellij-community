@@ -35,7 +35,6 @@
 
     <filePasteProvider implementation="org.intellij.images.ide.ImagePasteProvider" order="last"/>
 
-    <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
     <registryKey key="ide.images.wheel.zooming" defaultValue="true" description="Enable zoom in/out by mouse wheel"/>
     <registryKey key="ide.images.show.chessboard" defaultValue="false" description="Enable chessboard"/>
     <registryKey key="ide.images.chessboard.cell.size" defaultValue="5" description="Option for default chessboard cell size"/>

@@ -15,19 +15,11 @@
  */
 package org.intellij.images.thumbnail.actions;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.images.thumbnail.ThumbnailView;
 
 public interface Filter {
   @NlsActions.ActionText String getDisplayName();
 
   boolean accepts(VirtualFile file);
-
-  boolean isApplicableToProject(Project project);
-
-  void setFilter(ThumbnailView view);
-  
-  default void clearFilter(ThumbnailView view) {}
 }
