@@ -58,6 +58,10 @@ enum class SeLog {
       logger.error(message)
     }
 
+    fun error(throwable: Throwable) {
+      logger.error(throwable)
+    }
+
     private fun String.withSePrefix(category: SeLog): String = "SearchEverywhere2 ($category): $this"
   }
 }
