@@ -12,6 +12,7 @@ fun IdeaFrameUI.pythonConsole(func: PythonConsoleUi.() -> Unit = {}) =
   }.apply(func)
 
 class PythonConsoleUi(data: ComponentData) : UiComponent(data) {
+  val header = x { byAccessibleName("Tool Window Header") }
   val content = x { byClass("PythonConsoleView") }
   val prompt = xx(JEditorUiComponent::class.java) { byClass("EditorComponentImpl") }.list().last()
   fun promptIsReady(): Boolean {
