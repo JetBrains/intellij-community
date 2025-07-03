@@ -20,10 +20,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -85,7 +85,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
 
-  private final boolean myMarkColorIds = Registry.is("editor.color.scheme.mark.colors", false);
+  private final boolean myMarkColorIds = SystemProperties.getBooleanProperty("editor.color.scheme.mark.colors", false);
   private final TextAttributesReader myValueReader = new TextAttributesReader();
   //region Meta info-related fields
   private final Properties metaInfo = new Properties();

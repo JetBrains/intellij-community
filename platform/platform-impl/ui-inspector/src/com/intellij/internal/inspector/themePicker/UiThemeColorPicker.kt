@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.themePicker
 
+import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.keymap.KeymapUtil
@@ -29,6 +32,7 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.util.SystemProperties
 import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -252,26 +256,37 @@ internal class UiThemeColorPickerToolWindowFactory : ToolWindowFactory, DumbAwar
     val manager = UiThemeColorPicker.getInstance()
     val panel = panel {
       row {
-        val editorRegistry = Registry.get("editor.color.scheme.mark.colors")
+        val canWriteVMOptions = VMOptions.canWriteOptions()
+        val editorRegistry = SystemProperties.getBooleanProperty("editor.color.scheme.mark.colors", false)
         val mixerRegistry = Registry.get("ide.color.mixture.mark.colors")
         checkBox("Enable color markers in runtime").applyToComponent {
-          isSelected = editorRegistry.asBoolean() && mixerRegistry.asBoolean()
+          isSelected = editorRegistry && mixerRegistry.asBoolean()
           toolTipText = "May affect IDE performance and behavior on theme changes"
           addItemListener {
             invokeLater { // swing weirdness
               if (isSelected) {
-                editorRegistry.setValue(true)
                 mixerRegistry.setValue(true)
+
+                if (canWriteVMOptions) {
+                  logger<UiThemeColorPickerToolWindowFactory>().runAndLogException {
+                    VMOptions.setProperty("editor.color.scheme.mark.colors", "true")
+                  }
+                }
               }
               else {
-                editorRegistry.resetToDefault()
                 mixerRegistry.resetToDefault()
+
+                if (canWriteVMOptions) {
+                  logger<UiThemeColorPickerToolWindowFactory>().runAndLogException {
+                    VMOptions.setProperty("editor.color.scheme.mark.colors", null)
+                  }
+                }
               }
               RegistryBooleanOptionDescriptor.suggestRestartIfNecessary(null)
             }
           }
         }
-        comment("Restart required")
+        comment(if (canWriteVMOptions) "Restart required" else "Also set '-Deditor.color.scheme.mark.colors=true' VMOption. Restart required")
       }
       row {
         checkBox("Show on-hover tooltip").applyToComponent {
