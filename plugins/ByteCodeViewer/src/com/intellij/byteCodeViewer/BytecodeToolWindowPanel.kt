@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -35,13 +34,6 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.math.min
 
-/**
- * Displays JVM bytecode in a tool window.
- *
- * It has 2 states:
- * - there is bytecode: display a non-editable editor with source<->bytecode line matching
- * - there is no bytecode: display a label instructing the user to build the project first.
- */
 internal class BytecodeToolWindowPanel(
   private val project: Project,
   private val psiClass: PsiClass,
