@@ -156,6 +156,12 @@ public final class PluginDownloader {
     return myDescriptor;
   }
 
+  // TODO this method is nullable for extra safety, can probably be dropped later with some caution
+  @ApiStatus.Internal
+  public @Nullable PluginUiModel getUiModel() {
+    return myModel;
+  }
+
   public @NotNull Path getFilePath() throws IOException {
     if (myFile != null) {
       return myFile;
