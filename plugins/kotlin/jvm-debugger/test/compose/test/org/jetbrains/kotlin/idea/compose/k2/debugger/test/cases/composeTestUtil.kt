@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases
 
 import com.intellij.jarRepository.RemoteRepositoryDescription
-import org.jetbrains.kotlin.idea.codegen.findCompilerPluginJars
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.googleMavenRepository
 import java.nio.file.Path
 
@@ -15,5 +15,5 @@ internal fun jarRepositoriesForCompose(): List<RemoteRepositoryDescription> = li
  * We're looking up the 'compose compiler' from the IntelliJ dependencies provided by kotlinc
  */
 internal val composeCompilerJars: List<Path> by lazy {
-    findCompilerPluginJars("kotlinc.compose-compiler-plugin")
+    listOf(TestKotlinArtifacts.composeCompilerPluginForIde.toPath())
 }

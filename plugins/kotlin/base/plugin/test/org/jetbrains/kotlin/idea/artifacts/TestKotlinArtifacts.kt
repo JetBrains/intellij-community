@@ -210,6 +210,7 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinTestJs: File by lazy { getKotlinKlib("kotlin-test-js") }
     @JvmStatic val kotlinTestJunit: File by lazy { getKotlinJar("kotlin-test-junit") }
     @JvmStatic val parcelizeRuntime: File by lazy { getKotlinJar("parcelize-compiler-plugin-for-ide") }
+    @JvmStatic val composeCompilerPluginForIde: File by lazy { getKotlinJar("compose-compiler-plugin-for-ide") }
 
     @JvmStatic val trove4j: File by lazy {
         PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("gnu.trove.THashMap"))!!.toFile()

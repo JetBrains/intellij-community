@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.parcelize.k2.debugger.test.cases
 
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.codegen.findCompilerPluginJars
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.googleMavenRepository
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
@@ -36,6 +36,6 @@ abstract class AbstractK2ParcelizeDebuggerEvaluationTest : AbstractK2IdeK2CodeKo
      * We're looking up the 'parcelize compiler plugin' from the IntelliJ dependencies provided by kotlinc
      */
     private val parcelizeCompilerJars: List<Path> by lazy {
-        findCompilerPluginJars("kotlinc.parcelize-compiler-plugin")
+        listOf(TestKotlinArtifacts.parcelizeRuntime.toPath())
     }
 }
