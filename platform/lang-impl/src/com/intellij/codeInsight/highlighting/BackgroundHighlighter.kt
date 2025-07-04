@@ -201,7 +201,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     val offsetBefore = hostEditor.caretModel.offset
     val visibleRange = hostEditor.calculateVisibleRange()
     val needMatching = BackgroundHighlightingUtil.needMatching(hostEditor, CodeInsightSettings.getInstance())
-    coroutineScope.launch {
+    coroutineScope.launch(context = CoroutineName("BackgroundHighlighter.updateHighlighted(${hostEditor.document})")) {
       val job:Job = coroutineContext.job
       val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK) {
         job
