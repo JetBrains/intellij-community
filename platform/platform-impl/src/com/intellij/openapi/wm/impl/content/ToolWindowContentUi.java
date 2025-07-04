@@ -597,7 +597,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     group.add(actionManager.getAction("TW.CloseOtherTabs"));
     group.addSeparator();
     if (isToolWindowReorderAllowed(window)) {
+      group.add(actionManager.getAction("TW.SplitRight"));
       group.add(actionManager.getAction("TW.SplitAndMoveRight"));
+      group.add(actionManager.getAction("TW.SplitDown"));
       group.add(actionManager.getAction("TW.SplitAndMoveDown"));
       group.add(actionManager.getAction("TW.Unsplit"));
       group.addSeparator();

@@ -797,8 +797,16 @@
           <action id="TW.CloseOtherTabs" class="com.intellij.ide.actions.ToolWindowCloseOtherTabsAction"
                   use-shortcut-of="CloseAllEditorsButActive"/>
           <action id="TW.CloseAllTabs" class="com.intellij.ide.actions.ToolWindowCloseAllTabsAction" use-shortcut-of="CloseAllEditors"/>
+          <action id="TW.SplitRight" class="com.intellij.ide.actions.ToolWindowSplitRightAction" use-shortcut-of="SplitVertically"
+                  icon="AllIcons.Actions.SplitVertically">
+            <synonym key="action.SplitVertically.synonym"/>
+          </action>
           <action id="TW.SplitAndMoveRight" class="com.intellij.ide.actions.ToolWindowSplitAndMoveRightAction"
                   use-shortcut-of="MoveTabRight"/>
+          <action id="TW.SplitDown" class="com.intellij.ide.actions.ToolWindowSplitDownAction" use-shortcut-of="SplitHorizontally"
+                  icon="AllIcons.Actions.SplitHorizontally">
+            <synonym key="action.SplitHorizontally.synonym"/>
+          </action>
           <action id="TW.SplitAndMoveDown" class="com.intellij.ide.actions.ToolWindowSplitAndMoveDownAction" use-shortcut-of="MoveTabDown"/>
           <action id="TW.Unsplit" class="com.intellij.ide.actions.ToolWindowUnsplitAction" use-shortcut-of="Unsplit"/>
           <action id="TW.MoveToNextSplitter" class="com.intellij.ide.actions.ToolWindowMoveToNextSplitterAction"

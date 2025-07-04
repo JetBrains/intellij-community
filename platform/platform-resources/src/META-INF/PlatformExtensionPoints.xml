@@ -202,6 +202,9 @@
     </extensionPoint>
 
     <extensionPoint name="defaultToolWindowLayout" interface="com.intellij.toolWindow.DefaultToolWindowLayoutExtension" dynamic="true"/>
+    <extensionPoint name="toolWindow.splitContentProvider" beanClass="com.intellij.toolWindow.ToolWindowSplitContentProviderBean" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.toolWindow.ToolWindowSplitContentProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider" dynamic="false"/>
     <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider" dynamic="true"/>
