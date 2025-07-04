@@ -16,7 +16,6 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.InternalDecorator
@@ -915,7 +914,7 @@ class InternalDecoratorImpl internal constructor(
     contentUi.update()
 
     if ((toolWindow.type == ToolWindowType.WINDOWED || toolWindow.type == ToolWindowType.FLOATING) &&
-        Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
+        ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)) {
       ToolWindowInnerDragHelper(disposable, this).start()
     }
   }

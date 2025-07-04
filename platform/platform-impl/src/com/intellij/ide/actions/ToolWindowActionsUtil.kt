@@ -25,8 +25,3 @@ internal fun AnActionEvent.findNearestDecorator(): InternalDecoratorImpl? {
   val component = getData(PlatformDataKeys.CONTEXT_COMPONENT)
   return InternalDecoratorImpl.findNearestDecorator(component)
 }
-
-internal fun isToolWindowSplitAllowed(toolWindow: ToolWindow): Boolean {
-  return ClientProperty.isTrue(toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS) &&
-         Registry.`is`("ide.allow.split.and.reorder.in.tool.window", false)
-}

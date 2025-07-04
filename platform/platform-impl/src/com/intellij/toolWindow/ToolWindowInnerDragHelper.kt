@@ -10,7 +10,6 @@ import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.awt.RelativePoint
@@ -50,7 +49,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       val child = SwingUtilities.getDeepestComponentAt(pane, x, y)
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       if (decorator != null &&
-          ClientProperty.isTrue(decorator.toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS) &&
+          ToolWindowContentUi.isToolWindowReorderAllowed(decorator.toolWindow) &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&

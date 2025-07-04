@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.InternalDecoratorImpl
 
 internal abstract class ToolWindowMoveToSplitterAction(
@@ -26,7 +27,7 @@ internal abstract class ToolWindowMoveToSplitterAction(
     val toolWindow = topDecorator?.toolWindow
     e.presentation.isEnabled = topDecorator?.mode?.isSplit == true
     e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu) &&
-                               toolWindow != null && isToolWindowSplitAllowed(toolWindow)
+                               toolWindow != null && ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)
 
   }
 

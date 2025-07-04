@@ -20,7 +20,7 @@ internal class ToolWindowUnsplitAction : DumbAwareAction(), ActionRemoteBehavior
     val toolWindow = decorator?.toolWindow
     e.presentation.isEnabled = decorator != null && decorator.canUnsplit()
     e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu)
-                               && toolWindow != null && isToolWindowSplitAllowed(toolWindow)
+                               && toolWindow != null && ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

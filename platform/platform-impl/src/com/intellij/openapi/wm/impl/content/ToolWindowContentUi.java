@@ -596,8 +596,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     group.add(actionManager.getAction("TW.CloseAllTabs"));
     group.add(actionManager.getAction("TW.CloseOtherTabs"));
     group.addSeparator();
-    Component component = window.getComponent();
-    if (ClientProperty.isTrue(component, ALLOW_DND_FOR_TABS) && Registry.is("ide.allow.split.and.reorder.in.tool.window", false)) {
+    if (isToolWindowReorderAllowed(window)) {
       group.add(actionManager.getAction("TW.SplitAndMoveRight"));
       group.add(actionManager.getAction("TW.SplitAndMoveDown"));
       group.add(actionManager.getAction("TW.Unsplit"));
@@ -796,6 +795,11 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   /** Checks if the selected content component or one of its descendants has focus. */
   @ApiStatus.Internal public Boolean isActive() {
     return UIUtil.isFocusAncestor(contentComponent);
+  }
+
+  public static boolean isToolWindowReorderAllowed(@NotNull ToolWindow window) {
+    return ClientProperty.isTrue(window.getComponent(), ALLOW_DND_FOR_TABS) &&
+           Registry.is("ide.allow.split.and.reorder.in.tool.window", false);
   }
 
   public final class TabPanel extends NonOpaquePanel implements UISettingsListener {

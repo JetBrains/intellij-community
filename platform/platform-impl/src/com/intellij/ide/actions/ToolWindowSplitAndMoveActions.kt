@@ -21,7 +21,7 @@ internal abstract class ToolWindowSplitAndMoveActionBase(
   override fun update(e: AnActionEvent) {
     val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
     val contentManager = e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY)
-    e.presentation.isEnabledAndVisible = toolWindow != null && isToolWindowSplitAllowed(toolWindow) &&
+    e.presentation.isEnabledAndVisible = toolWindow != null && ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow) &&
                                          contentManager != null && contentManager.contentCount > 1
   }
 

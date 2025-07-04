@@ -233,8 +233,7 @@ abstract class ToolWindowHeader internal constructor(
 
   private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
     if (init) {
-      val allowDnd = ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)
-      westPanel.growFirst = allowDnd
+      westPanel.growFirst = ToolWindowContentUi.isToolWindowReorderAllowed(toolWindow)
       westPanel.setComponents(contentUi.tabComponent, sideComponent)
       contentUi.connectTabToolbar()
     }
