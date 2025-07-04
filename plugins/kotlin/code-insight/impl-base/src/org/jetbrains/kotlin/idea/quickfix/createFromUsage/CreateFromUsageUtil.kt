@@ -11,6 +11,7 @@ import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
+import org.jetbrains.kotlin.idea.core.isKotlinNotebookCell
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -31,7 +32,7 @@ object CreateFromUsageUtil {
         val psiFactory = KtPsiFactory(container.project)
         val newLine = psiFactory.createNewLine()
 
-        val actualContainer = (container as? KtClassOrObject)?.getOrCreateBody() ?: container
+        val actualContainer = (container as? KtClassOrObject)?.getOrCreateBody() ?: getActualContainerForScript(container)
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
@@ -68,7 +69,12 @@ object CreateFromUsageUtil {
                         }
                     }
                 }
-                addNextToOriginalElementContainer(insertToBlock || declaration is KtTypeAlias, anchor, declaration, actualContainer)
+                val addBefore = insertToBlock ||
+                        declaration is KtTypeAlias ||
+                        // In K2 REPL model, notebook cells are somewhat similar to function bodies,
+                        // so we should add declarations before their usage
+                        container.isKotlinNotebookCell
+                addNextToOriginalElementContainer(addBefore, anchor, declaration, actualContainer)
             }
 
             container is KtFile -> container.add(declaration) as D
@@ -222,10 +228,22 @@ object CreateFromUsageUtil {
         actualContainer: PsiElement
     ): D {
         val sibling = anchor.parentsWithSelf.first { it.parent == actualContainer }
+        @Suppress("UNCHECKED_CAST")
         return if (addBefore || PsiTreeUtil.hasErrorElements(sibling)) {
             actualContainer.addBefore(declaration, sibling)
         } else {
             actualContainer.addAfter(declaration, sibling)
         } as D
+    }
+
+    /**
+     * In scripts, no elements should exist outside the main block expression
+     */
+    private fun getActualContainerForScript(container: PsiElement): PsiElement {
+        return if ((container as? KtFile)?.isScript() == true) {
+            container.script?.blockExpression ?: container
+        } else {
+            container
+        }
     }
 }
