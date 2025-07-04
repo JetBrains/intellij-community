@@ -311,10 +311,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
 
-    cellRenderer.itemAdded(item, presentation);
     LookupArranger arranger = myArranger;
     arranger.registerMatcher(item, matcher);
     arranger.addElement(item, presentation);
+    cellRenderer.itemAdded(item, presentation);
     return true;
   }
 
@@ -521,6 +521,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         }
       }
     });
+
+    cellRenderer.scheduleVisibleItemsExpensiveRendering();
 
     updateListHeight(listModel);
 
@@ -1206,6 +1208,23 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
+  @ApiStatus.Internal
+  public List<LookupElement> getItemsForAsyncRendering() {
+    ThreadingAssertions.assertEventDispatchThread();
+
+    var itemsCount = list.getItemsCount();
+    if (itemsCount == 0) return Collections.emptyList();
+
+    synchronized (uiLock) {
+      int lowerItemIndex = list.getFirstVisibleIndex();
+      int higherItemIndex = list.getLastVisibleIndex();
+      if (lowerItemIndex < 0 || higherItemIndex < 0) return Collections.emptyList();
+
+      int delta = 15;
+      var items = getListModel().toList();
+      return items.subList(Math.max(lowerItemIndex - delta, 0), Math.min(higherItemIndex + 1 + delta, itemsCount));
+    }
+  }
 
   @Override
   public @Unmodifiable List<String> getAdvertisements() {
