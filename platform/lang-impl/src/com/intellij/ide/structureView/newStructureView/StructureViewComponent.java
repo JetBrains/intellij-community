@@ -520,8 +520,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
    * @param path         the path to visit
    * @param element      the element to look for
    * @param editorOffset the current editor offset, or -1 if the editor is not a text editor
-   * @param stage        the current stage and the length of the longest path found so far
-   * @param deepestPath  the longest path found so far
    * @return SKIP_CHILDREN if the optimization is performed, CONTINUE in other cases
    */
   @ApiStatus.Internal
@@ -705,7 +703,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler implements Disposable {
     private FileEditorPositionListener myFileEditorPositionListener;
 
-    private MyAutoScrollFromSourceHandler(Project project, @NotNull Disposable parentDisposable) {
+    private MyAutoScrollFromSourceHandler(@NotNull Project project, @NotNull Disposable parentDisposable) {
       super(project, getTree(), parentDisposable);
 
       Disposer.register(parentDisposable, this);
@@ -767,31 +765,23 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       PsiElement element = getSelectedValues(selection).filter(PsiElement.class).single();
       return element != null && element.isValid() ? element : null;
     });
-    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
-      return PsiUtilCore.toPsiElementArray(getSelectedValues(selection).filter(PsiElement.class).toList());
-    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> PsiUtilCore.toPsiElementArray(getSelectedValues(selection).filter(PsiElement.class).toList()));
     sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       List<Object> list = selection.map(StructureViewComponent::unwrapNavigatable).toList();
       Object[] selectedElements = list.isEmpty() ? null : ArrayUtil.toObjectArray(list);
       if (selectedElements == null || selectedElements.length == 0) return null;
       return selectedElements[0] instanceof Navigatable o ? o : null;
     });
-    sink.lazy(CommonDataKeys.SYMBOLS, () -> {
-      return getSelectedValues(selection)
-        .filterMap(it -> it instanceof DelegatingPsiElementWithSymbolPointer o ? o.getSymbolPointer().dereference() : null)
-        .filter(Symbol.class)
-        .toList();
-    });
-    sink.lazy(LogicalStructureDataKeys.STRUCTURE_TREE_ELEMENT, () -> {
-      return Optional.of(myTree)
-        .filter(tree -> tree instanceof MyTree)
-        .map(tree -> ((MyTree) tree).getLastHoveredPath())
-        .map(path -> path.getLastPathComponent())
-        .map(component -> {
-          return getStructureTreeElement(component);
-        })
-        .orElse(null);
-    });
+    sink.lazy(CommonDataKeys.SYMBOLS, () -> getSelectedValues(selection)
+      .filterMap(it -> it instanceof DelegatingPsiElementWithSymbolPointer o ? o.getSymbolPointer().dereference() : null)
+      .filter(Symbol.class)
+      .toList());
+    sink.lazy(LogicalStructureDataKeys.STRUCTURE_TREE_ELEMENT, () -> Optional.of(myTree)
+      .filter(tree -> tree instanceof MyTree)
+      .map(tree -> ((MyTree) tree).getLastHoveredPath())
+      .map(path -> path.getLastPathComponent())
+      .map(component -> getStructureTreeElement(component))
+      .orElse(null));
   }
 
   @Override
