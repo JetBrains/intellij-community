@@ -451,6 +451,43 @@ class InternalDecoratorImpl internal constructor(
 
   override fun isSplitUnsplitInProgress(): Boolean = isSplitUnsplitInProgress
 
+  fun getNextCell(current: InternalDecoratorImpl): InternalDecoratorImpl? {
+    return getNextPrevCellImpl(current, isNext = true)
+  }
+
+  fun getPrevCell(current: InternalDecoratorImpl): InternalDecoratorImpl? {
+    return getNextPrevCellImpl(current, isNext = false)
+  }
+
+  private fun getNextPrevCellImpl(current: InternalDecoratorImpl, isNext: Boolean): InternalDecoratorImpl? {
+    if (mode?.isSplit != true) return null
+
+    val cells = getOrderedCells()
+    val curCellIndex = cells.indexOf(current)
+    return if (curCellIndex != -1) {
+      val newIndex = curCellIndex + (if (isNext) 1 else -1)
+      cells[(newIndex + cells.size) % cells.size]
+    }
+    else null
+  }
+
+  private fun getOrderedCells(): List<InternalDecoratorImpl> {
+    val cells = mutableListOf<InternalDecoratorImpl>()
+
+    fun collectCell(decorator: InternalDecoratorImpl) {
+      if (decorator.mode!!.isSplit) {
+        collectCell(decorator.firstDecorator!!)
+        collectCell(decorator.secondDecorator!!)
+      }
+      else {
+        cells.add(decorator)
+      }
+    }
+
+    collectCell(this)
+    return cells
+  }
+
   override fun getContentManager(): ContentManager = contentUi.contentManager
 
   override fun getHeaderToolbar(): ActionToolbar = header.getToolbar()

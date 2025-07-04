@@ -801,6 +801,10 @@
                   use-shortcut-of="MoveTabRight"/>
           <action id="TW.SplitAndMoveDown" class="com.intellij.ide.actions.ToolWindowSplitAndMoveDownAction" use-shortcut-of="MoveTabDown"/>
           <action id="TW.Unsplit" class="com.intellij.ide.actions.ToolWindowUnsplitAction" use-shortcut-of="Unsplit"/>
+          <action id="TW.MoveToNextSplitter" class="com.intellij.ide.actions.ToolWindowMoveToNextSplitterAction"
+                  use-shortcut-of="NextSplitter"/>
+          <action id="TW.MoveToPreviousSplitter" class="com.intellij.ide.actions.ToolWindowMoveToPreviousSplitterAction"
+                  use-shortcut-of="PrevSplitter"/>
           <separator/>
           <group id="TW.ViewModeGroup" class="com.intellij.ide.actions.ToolWindowViewModeAction$Group" popup="true"/>
           <group id="TW.MoveToGroup" class="com.intellij.ide.actions.ToolWindowMoveAction$Group"/>
