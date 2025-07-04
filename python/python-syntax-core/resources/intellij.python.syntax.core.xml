@@ -18,7 +18,7 @@
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>
 
-    <highlightRangeExtension implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
+    <highlightRangeExtension implementation="com.jetbrains.python.validation.PyKeywordHighlightingAnnotator"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.lineWrapStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyLineWrapPositionStrategy"/>
   </extensions>

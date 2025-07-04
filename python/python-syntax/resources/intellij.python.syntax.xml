@@ -27,6 +27,6 @@
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyKeywordHighlightingAnnotator"/>
   </extensions>
 </idea-plugin>

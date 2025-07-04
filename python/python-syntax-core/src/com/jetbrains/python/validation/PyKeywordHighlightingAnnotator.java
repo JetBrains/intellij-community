@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public final class PyHighlightingAnnotator extends PyAnnotatorBase implements HighlightRangeExtension {
+public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implements HighlightRangeExtension {
 
   @Override
   public boolean isForceHighlightParents(@NotNull PsiFile psiFile) {
