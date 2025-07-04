@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model
 
+import com.intellij.idea.IJIgnore
 import com.intellij.testFramework.common.mock.NotMockedMemberError
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
@@ -9,7 +10,6 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
 import org.jetbrains.plugins.gradle.testFramework.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.mockito.kotlin.doReturn
@@ -88,12 +88,25 @@ class DefaultGradleLightProjectTest {
     verifyIdentityPath(":buildSrc:subproject", buildSrcSubproject)
   }
 
-  // TODO support or create a YouTrack issue for this case
-  @Disabled("identityPath calculation for buildSrc of included build is not supported for 7.6 version, " +
-            "because buildSrc build is synced separately and doesn't have a parent build")
+  /**
+   * identityPath calculation for buildSrc of an included build is wrong for versions below 8.0,
+   * because buildSrc build is synced separately and doesn't have a parent build
+   * TODO combine tests when IDEA-375500 is fixed
+   */
+  @IJIgnore(issue = "IDEA-375500")
   @ParameterizedTest
-  @GradleTestSource("7.6, 8.0")
+  @GradleTestSource("7.6")
   fun `test DefaultGradleLightProject#getProjectIdentityPath for buildSrc of included build`(gradleVersion: GradleVersion) {
+    testCalculationForBuildSrcOfIncluded(gradleVersion)
+  }
+
+  @ParameterizedTest
+  @GradleTestSource("8.0")
+  fun `test DefaultGradleLightProject#getProjectIdentityPath for buildSrc of included build since Gradle 8`(gradleVersion: GradleVersion) {
+    testCalculationForBuildSrcOfIncluded(gradleVersion)
+  }
+
+  private fun testCalculationForBuildSrcOfIncluded(gradleVersion: GradleVersion) {
     val rootBuild = mockLightBuild("project")
     val includedBuild = mockLightBuild("includedBuild", parent = rootBuild)
 
