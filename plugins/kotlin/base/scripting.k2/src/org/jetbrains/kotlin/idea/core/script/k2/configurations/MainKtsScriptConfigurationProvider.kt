@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurati
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.isNonScript
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
@@ -121,9 +122,11 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         }
     }
 
-    private val ScriptConfigurationWithSdk.importedScripts
-        get() = this.scriptConfiguration.valueOrNull()?.importedScripts?.mapNotNull { imported -> (imported as? VirtualFileScriptSource)?.virtualFile }
-            ?: emptyList()
+    private val ScriptConfigurationWithSdk.importedScripts: List<VirtualFile>
+        get() {
+            val importedScripts = this.scriptConfiguration.valueOrNull()?.importedScripts ?: return emptyList()
+            return importedScripts.mapNotNull { (it as? VirtualFileScriptSource)?.virtualFile }.filterNot { it.isNonScript() }
+        }
 
     private fun getUpdatedStorage(
         project: Project,
