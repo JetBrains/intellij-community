@@ -448,6 +448,14 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
         }
       }
     }
+
+    if (PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, false, PyFunction.class) != null) {
+      registerForAllMatchingVersions(
+        level -> level.isAtLeast(LanguageLevel.PYTHON314) && registerForLanguageLevel(level),
+        PyPsiBundle.message("INSP.compatibility.feature.support.return.inside.finally.clause"),
+        node
+      );
+    }
   }
 
   @Override
@@ -750,9 +758,24 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     super.visitPyContinueStatement(node);
 
     if (PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, false, PyLoopStatement.class) != null) {
-      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
-                                     PyPsiBundle.message("INSP.compatibility.feature.support.continue.inside.finally.clause"),
-                                     node);
+      registerForAllMatchingVersions(
+        level -> (level.isOlderThan(LanguageLevel.PYTHON38) || level.isAtLeast(LanguageLevel.PYTHON314)) && registerForLanguageLevel(level),
+        PyPsiBundle.message("INSP.compatibility.feature.support.continue.inside.finally.clause"),
+        node
+      );
+    }
+  }
+
+  @Override
+  public void visitPyBreakStatement(@NotNull PyBreakStatement node) {
+    super.visitPyBreakStatement(node);
+
+    if (PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, false, PyLoopStatement.class) != null) {
+      registerForAllMatchingVersions(
+        level -> level.isAtLeast(LanguageLevel.PYTHON314) && registerForLanguageLevel(level),
+        PyPsiBundle.message("INSP.compatibility.feature.support.break.inside.finally.clause"),
+        node
+      );
     }
   }
 
