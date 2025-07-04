@@ -94,15 +94,18 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
     if (mavenArtifactNode.state == MavenArtifactState.CONFLICT) {
       status.add(DAOmitted)
       mavenArtifactNode.relatedArtifact?.version?.also {
+        val title = message("external.system.dependency.analyzer.warning.version.conflict.title", it)
         val message = message("external.system.dependency.analyzer.warning.version.conflict", it)
-        status.add(DAWarning(message))
+        status.add(DAWarning(title, message))
       }
     }
     else if (mavenArtifactNode.state == MavenArtifactState.DUPLICATE) {
       status.add(DAOmitted)
     }
     if (!mavenArtifactNode.artifact.isResolvedArtifact) {
-      status.add(DAWarning(message("external.system.dependency.analyzer.warning.unresolved")))
+      val title = message("external.system.dependency.analyzer.warning.unresolved.title")
+      val message = message("external.system.dependency.analyzer.warning.unresolved")
+      status.add(DAWarning(title, message))
     }
     return status
   }

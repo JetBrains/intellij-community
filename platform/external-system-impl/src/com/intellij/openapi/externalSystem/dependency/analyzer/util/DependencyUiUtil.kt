@@ -62,11 +62,11 @@ private fun SimpleColoredComponent.customizeCellRenderer(group: DependencyGroup,
     add(htmlParagraph(dataText + "\n" + htmlList(listOf(group.data.getDisplayText(true)))))
 
     val scopesText = ExternalSystemBundle.message("external.system.dependency.analyzer.tooltip.scopes")
-    add(htmlParagraph(scopesText + "\n" + htmlList(group.scopes.map { it.name }.toSet())))
+    add(htmlParagraph(scopesText + "\n" + htmlList(group.scopes.map { it.title }.toSet())))
 
-    if (group.warnings.isNotEmpty()) {
-      val warningsText = ExternalSystemBundle.message("external.system.dependency.analyzer.tooltip.warnings")
-      add(htmlParagraph(warningsText + "\n" + htmlList(group.warnings.map { it.message }.toSet())))
+    if (group.status.isNotEmpty()) {
+      val statusText = ExternalSystemBundle.message("external.system.dependency.analyzer.tooltip.status")
+      add(htmlParagraph(statusText + "\n" + htmlList(group.status.map { it.title }.toSet())))
     }
   }.joinToString("\n")
 }
@@ -230,6 +230,7 @@ internal class DependencyGroup(val variances: List<Dependency>) {
   val data by lazy { dependency.data }
   val scopes by lazy { variances.map { it.scope }.toSet() }
   val parents by lazy { variances.map { it.parent }.toSet() }
+  val status by lazy { variances.flatMap { it.status } }
   val warnings by lazy { variances.flatMap { it.warnings } }
   val isOmitted by lazy { variances.all { it.isOmitted } }
   val hasWarnings by lazy { variances.any { it.hasWarnings } }

@@ -132,15 +132,17 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
   private fun DependencyNode.getStatus(data: Dependency.Data): List<Dependency.Status> {
     val status = mutableListOf<Dependency.Status>()
     if (resolutionState == ResolutionState.UNRESOLVED) {
+      val title = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.unresolved.title")
       val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.unresolved")
-      status.add(DAWarning(message))
+      status.add(DAWarning(title, message))
     }
     val selectionReason = selectionReason
     if (data is Dependency.Data.Artifact && selectionReason != null && selectionReason.startsWith("between versions")) {
       val conflictedVersion = selectionReason.substringAfter("between versions ${data.version} and ", "")
       if (conflictedVersion.isNotEmpty()) {
+        val title = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict.title", conflictedVersion)
         val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion)
-        status.add(DAWarning(message))
+        status.add(DAWarning(title, message))
       }
     }
     return status

@@ -209,6 +209,7 @@ f:com.intellij.openapi.externalSystem.dependency.analyzer.DAOmitted
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status$Omitted
 - sf:INSTANCE:com.intellij.openapi.externalSystem.dependency.analyzer.DAOmitted
+- getTitle():java.lang.String
 f:com.intellij.openapi.externalSystem.dependency.analyzer.DAProject
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
@@ -238,7 +239,9 @@ f:com.intellij.openapi.externalSystem.dependency.analyzer.DAWarning
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status$Warning
 - <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
 - getMessage():java.lang.String
+- getTitle():java.lang.String
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
 - a:getDependencies(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject):java.util.List
 - a:getDependencyScopes(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject):java.util.List
@@ -274,6 +277,7 @@ e:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDepe
 - s:values():com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type[]
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status
 - com.intellij.openapi.util.UserDataHolder
+- a:getTitle():java.lang.String
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status$Omitted
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status$Warning

@@ -44,6 +44,8 @@ interface DependencyAnalyzerDependency : UserDataHolder {
 
   sealed interface Status : UserDataHolder {
 
+    val title: @Nls(capitalization = Nls.Capitalization.Title) String
+
     interface Omitted : Status
 
     interface Warning : Status {
