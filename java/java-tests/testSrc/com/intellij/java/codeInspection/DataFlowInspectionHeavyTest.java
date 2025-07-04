@@ -3,8 +3,8 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -23,7 +23,7 @@ public class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase 
 
   public void testDifferentAnnotationsWithDifferentLanguageLevels() throws IOException {
     Module module6 =
-      PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod6", myFixture.getTempDirFixture().findOrCreateDir("mod6"));
+      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod6", myFixture.getTempDirFixture().findOrCreateDir("mod6"));
     IdeaTestUtil.setModuleLanguageLevel(module6, LanguageLevel.JDK_1_6);
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_8);
     ModuleRootModificationUtil.addDependency(getModule(), module6);
@@ -100,7 +100,7 @@ public class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase 
 
     String noJsr305dep = "noJsr305dep";
     Module anotherModule =
-      PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, noJsr305dep, myFixture.getTempDirFixture().findOrCreateDir(noJsr305dep));
+      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), noJsr305dep, myFixture.getTempDirFixture().findOrCreateDir(noJsr305dep));
     ModuleRootModificationUtil.setModuleSdk(anotherModule, ModuleRootManager.getInstance(getModule()).getSdk());
 
     PsiFile nullableNick = myFixture.addFileToProject(noJsr305dep + "/bar/NullableNick.java", DataFlowInspectionTest.barNullableNick());

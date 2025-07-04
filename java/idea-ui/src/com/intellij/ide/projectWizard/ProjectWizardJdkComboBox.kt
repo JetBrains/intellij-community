@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.StdModuleTypes.JAVA
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -70,7 +69,7 @@ import javax.swing.Icon
 import javax.swing.JList
 import kotlin.io.path.Path
 
-private val selectedJdkProperty = "jdk.selected.${JAVA.id}"
+private val selectedJdkProperty = "jdk.selected.JAVA_MODULE"
 
 /**
  * @param sdkFilter Filter for registered SDKs

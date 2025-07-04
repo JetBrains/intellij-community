@@ -26,7 +26,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -297,12 +297,12 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   public void testCompositeBuildWithProjectNameDuplicates() throws Exception {
     IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
-    modelsProvider.newModule(getProjectPath() + "/api.iml", StdModuleTypes.JAVA.getId());
-    modelsProvider.newModule(getProjectPath() + "/api_main.iml", StdModuleTypes.JAVA.getId());
-    modelsProvider.newModule(getProjectPath() + "/my-app-api.iml", StdModuleTypes.JAVA.getId());
-    modelsProvider.newModule(getProjectPath() + "/my-app-api_main.iml", StdModuleTypes.JAVA.getId());
-    modelsProvider.newModule(getProjectPath() + "/my-utils-api.iml", StdModuleTypes.JAVA.getId());
-    modelsProvider.newModule(getProjectPath() + "/my-utils-api_main.iml", StdModuleTypes.JAVA.getId());
+    modelsProvider.newModule(getProjectPath() + "/api.iml", JavaModuleType.getModuleType().getId());
+    modelsProvider.newModule(getProjectPath() + "/api_main.iml", JavaModuleType.getModuleType().getId());
+    modelsProvider.newModule(getProjectPath() + "/my-app-api.iml", JavaModuleType.getModuleType().getId());
+    modelsProvider.newModule(getProjectPath() + "/my-app-api_main.iml", JavaModuleType.getModuleType().getId());
+    modelsProvider.newModule(getProjectPath() + "/my-utils-api.iml", JavaModuleType.getModuleType().getId());
+    modelsProvider.newModule(getProjectPath() + "/my-utils-api_main.iml", JavaModuleType.getModuleType().getId());
     edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));
 
     createSettingsFile("""

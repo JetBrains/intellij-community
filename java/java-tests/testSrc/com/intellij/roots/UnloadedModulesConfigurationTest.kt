@@ -8,8 +8,8 @@ import com.intellij.facet.mock.registerFacetType
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -120,7 +120,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
 
     runWriteAction {
-      moduleManager.newModule(aImlPath, StdModuleTypes.JAVA.id)
+      moduleManager.newModule(aImlPath, JavaModuleType.getModuleType().id)
     }
     assertEmpty(moduleManager.unloadedModuleDescriptions)
     assertEmpty(unloadedModuleEntities)

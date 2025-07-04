@@ -9,10 +9,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -387,7 +387,7 @@ abstract class MavenTestCaseLegacy : UsefulTestCase() {
     }
   }
 
-  protected fun createModule(name: String): Module = createModule(name, StdModuleTypes.JAVA)
+  protected fun createModule(name: String): Module = createModule(name, JavaModuleType.getModuleType())
 
 
   protected fun createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {

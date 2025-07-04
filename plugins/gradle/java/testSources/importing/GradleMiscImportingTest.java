@@ -12,9 +12,9 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -365,8 +365,8 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testSourceSetModuleNamesForDeduplicatedMainModule() throws Exception {
     IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
-    modelsProvider.newModule(getProjectPath() + "/app.iml", StdModuleTypes.JAVA.getId());
-    modelsProvider.newModule(getProjectPath() + "/my_group.app.main.iml", StdModuleTypes.JAVA.getId());
+    modelsProvider.newModule(getProjectPath() + "/app.iml", JavaModuleType.getModuleType().getId());
+    modelsProvider.newModule(getProjectPath() + "/my_group.app.main.iml", JavaModuleType.getModuleType().getId());
     edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));
 
     createSettingsFile("rootProject.name = 'app'");
@@ -400,7 +400,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     edt(() -> {
       ApplicationManager.getApplication().runWriteAction(() -> {
         Module module = ModuleManager.getInstance(myProject).newModule(
-          getProjectPath() + "/" + "project" + ModuleFileType.DOT_DEFAULT_EXTENSION, StdModuleTypes.JAVA.getId());
+          getProjectPath() + "/" + "project" + ModuleFileType.DOT_DEFAULT_EXTENSION, JavaModuleType.getModuleType().getId());
         ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
         modifiableModel.addContentEntry(myProjectRoot);
         modifiableModel.inheritSdk();

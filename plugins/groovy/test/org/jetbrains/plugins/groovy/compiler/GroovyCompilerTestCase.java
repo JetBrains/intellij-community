@@ -178,7 +178,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
           final VirtualFile depRoot = myFixture.getTempDirFixture().findOrCreateDir(name);
   
           final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-          String moduleName = moduleModel.newModule(depRoot.getPath() + "/" + name + ".iml", StdModuleTypes.JAVA.getId()).getName();
+          String moduleName = moduleModel.newModule(depRoot.getPath() + "/" + name + ".iml", JavaModuleType.getModuleType().getId()).getName();
           moduleModel.commit();
   
           final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);

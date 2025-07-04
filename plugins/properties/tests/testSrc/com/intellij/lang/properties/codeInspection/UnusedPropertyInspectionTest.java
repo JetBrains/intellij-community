@@ -3,9 +3,9 @@ package com.intellij.lang.properties.codeInspection;
 import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +43,7 @@ public class UnusedPropertyInspectionTest extends CodeInsightFixtureTestCase<Mod
     final String path = ProjectKt.getStateStore(getProject()).getProjectBasePath() + "/module";
     final ModuleManager moduleManager = ModuleManager.getInstance(getProject());
 
-    final Module module = WriteAction.compute(() -> moduleManager.newModule(path, StdModuleTypes.JAVA.getId()));
+    final Module module = WriteAction.compute(() -> moduleManager.newModule(path, JavaModuleType.getModuleType().getId()));
 
     ModuleRootModificationUtil.addDependency(module, myModule);
     configureSources(module);

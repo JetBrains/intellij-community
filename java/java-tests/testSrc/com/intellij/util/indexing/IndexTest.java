@@ -24,8 +24,8 @@ import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -857,7 +857,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(facade.findClass("A", GlobalSearchScope.moduleScope(getModule())));
 
     final VirtualFile anotherDir = myFixture.getTempDirFixture().findOrCreateDir("another");
-    Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "another", anotherDir);
+    Module anotherModule = PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "another", anotherDir);
     assertNull(facade.findClass("A", GlobalSearchScope.moduleScope(anotherModule)));
 
     WriteAction.run(() -> srcFile.getVirtualFile().getParent().copy(this, anotherDir, "doo"));

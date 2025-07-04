@@ -2,8 +2,8 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -49,7 +49,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testBasics() throws Exception {
-    Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
+    Module moduleA = createModule("a.iml", JavaModuleType.getModuleType());
     addDependentModule(moduleA, DependencyScope.COMPILE);
     addLibrary(moduleA, DependencyScope.COMPILE);
 
@@ -122,7 +122,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testTestOnlyModuleDependency() throws Exception {
-    Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
+    Module moduleA = createModule("a.iml", JavaModuleType.getModuleType());
     Module moduleB = addDependentModule(moduleA, DependencyScope.TEST);
 
     VirtualFile classB = myFixture.createFile("b/Test.java", "public class Test { }");
@@ -143,7 +143,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   private Module addDependentModule(Module moduleA, DependencyScope scope) {
-    Module moduleB = createModule("b" + ".iml", StdModuleTypes.JAVA);
+    Module moduleB = createModule("b" + ".iml", JavaModuleType.getModuleType());
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       VirtualFile rootB = myFixture.findOrCreateDir("b");
@@ -159,10 +159,10 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testModuleTwiceInDependents() {
-    Module m = createModule("m.iml", StdModuleTypes.JAVA);
-    Module a = createModule("a.iml", StdModuleTypes.JAVA);
-    Module b = createModule("b.iml", StdModuleTypes.JAVA);
-    Module c = createModule("c.iml", StdModuleTypes.JAVA);
+    Module m = createModule("m.iml", JavaModuleType.getModuleType());
+    Module a = createModule("a.iml", JavaModuleType.getModuleType());
+    Module b = createModule("b.iml", JavaModuleType.getModuleType());
+    Module c = createModule("c.iml", JavaModuleType.getModuleType());
 
     ModuleRootModificationUtil.addDependency(a, m, DependencyScope.COMPILE, false);
     ModuleRootModificationUtil.addDependency(b, m, DependencyScope.COMPILE, true);
@@ -178,10 +178,10 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testModuleContentWithDependenciesScopeRootOrdering() {
-    Module m = createModule("m.iml", StdModuleTypes.JAVA);
-    Module a = createModule("a.iml", StdModuleTypes.JAVA);
-    Module b = createModule("b.iml", StdModuleTypes.JAVA);
-    Module c = createModule("c.iml", StdModuleTypes.JAVA);
+    Module m = createModule("m.iml", JavaModuleType.getModuleType());
+    Module a = createModule("a.iml", JavaModuleType.getModuleType());
+    Module b = createModule("b.iml", JavaModuleType.getModuleType());
+    Module c = createModule("c.iml", JavaModuleType.getModuleType());
 
     ModuleRootModificationUtil.addDependency(b, m, DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true);
@@ -214,7 +214,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testTestOnlyLibraryDependency() {
-    Module m = createModule("a.iml", StdModuleTypes.JAVA);
+    Module m = createModule("a.iml", JavaModuleType.getModuleType());
     addLibrary(m, DependencyScope.TEST);
     VirtualFile libraryClass = myFixture.createFile("lib/Test.class");
 
@@ -228,7 +228,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testRuntimeModuleDependency() {
-    Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
+    Module moduleA = createModule("a.iml", JavaModuleType.getModuleType());
     addDependentModule(moduleA, DependencyScope.RUNTIME);
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
     assertEquals(1, runtimeClasspath.length);
@@ -239,7 +239,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testRuntimeLibraryDependency() {
-    Module m = createModule("a.iml", StdModuleTypes.JAVA);
+    Module m = createModule("a.iml", JavaModuleType.getModuleType());
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.RUNTIME);
 
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
@@ -259,7 +259,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testProvidedModuleDependency() {
-    Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
+    Module moduleA = createModule("a.iml", JavaModuleType.getModuleType());
     addDependentModule(moduleA, DependencyScope.PROVIDED);
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
     assertEmpty(runtimeClasspath);
@@ -268,7 +268,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testProvidedLibraryDependency() {
-    Module m = createModule("a.iml", StdModuleTypes.JAVA);
+    Module m = createModule("a.iml", JavaModuleType.getModuleType());
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.PROVIDED);
 
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
@@ -316,7 +316,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testScopeEquality() {
-    Module module = createModule("a.iml", StdModuleTypes.JAVA);
+    Module module = createModule("a.iml", JavaModuleType.getModuleType());
     addDependentModule(module, DependencyScope.COMPILE);
     addLibrary(module, DependencyScope.COMPILE);
 
@@ -340,9 +340,9 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   public void testHonorExportsWhenCalculatingLibraryScope() throws IOException {
-    Module a = createModule("a.iml", StdModuleTypes.JAVA);
-    Module b = createModule("b.iml", StdModuleTypes.JAVA);
-    Module c = createModule("c.iml", StdModuleTypes.JAVA);
+    Module a = createModule("a.iml", JavaModuleType.getModuleType());
+    Module b = createModule("b.iml", JavaModuleType.getModuleType());
+    Module c = createModule("c.iml", JavaModuleType.getModuleType());
     ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
 

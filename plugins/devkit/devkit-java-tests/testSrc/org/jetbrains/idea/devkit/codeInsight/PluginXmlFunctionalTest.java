@@ -18,8 +18,8 @@ import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -269,7 +269,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
       String moduleDescriptorFilename = name + ".xml";
       VirtualFile moduleRoot = myFixture.getTempDirFixture().findOrCreateDir(name);
       VirtualFile file = myFixture.copyFileToProject(moduleDescriptorFilename, "/" + name + "/" + moduleDescriptorFilename);
-      Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, name, moduleRoot);
+      Module dependencyModule = PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), name, moduleRoot);
       ModuleRootModificationUtil.setModuleSdk(dependencyModule, IdeaTestUtil.getMockJdk17());
       ModuleRootModificationUtil.addDependency(getModule(), dependencyModule);
       return file;

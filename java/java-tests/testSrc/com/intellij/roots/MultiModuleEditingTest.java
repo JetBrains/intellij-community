@@ -4,10 +4,10 @@ package com.intellij.roots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -56,8 +56,8 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
 
     {
       final ModifiableModuleModel modifiableModel = moduleManager.getModifiableModel();
-      moduleA = modifiableModel.newModule(dir.resolve("a.iml"), StdModuleTypes.JAVA.getId());
-      moduleB = modifiableModel.newModule(dir.resolve("b.iml"), StdModuleTypes.JAVA.getId());
+      moduleA = modifiableModel.newModule(dir.resolve("a.iml"), JavaModuleType.getModuleType().getId());
+      moduleB = modifiableModel.newModule(dir.resolve("b.iml"), JavaModuleType.getModuleType().getId());
       assertEquals("Changes are not applied until commit", 0, moduleManager.getModules().length);
       //noinspection SSBasedInspection
       moduleListener.assertCorrectEvents(new String[0][]);
@@ -97,8 +97,8 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     final Module moduleB;
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
-      moduleA = moduleModel.newModule(dir.resolve("a.iml"), StdModuleTypes.JAVA.getId());
-      moduleB = moduleModel.newModule(dir.resolve("b.iml"), StdModuleTypes.JAVA.getId());
+      moduleA = moduleModel.newModule(dir.resolve("a.iml"), JavaModuleType.getModuleType().getId());
+      moduleB = moduleModel.newModule(dir.resolve("b.iml"), JavaModuleType.getModuleType().getId());
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleA);
@@ -137,9 +137,9 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
 
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
-      moduleA = moduleModel.newModule(dir.resolve("a.iml"), StdModuleTypes.JAVA.getId());
-      moduleB = moduleModel.newModule(dir.resolve("b.iml"), StdModuleTypes.JAVA.getId());
-      final Module moduleC = moduleModel.newModule(dir.resolve("c.iml"), StdModuleTypes.JAVA.getId());
+      moduleA = moduleModel.newModule(dir.resolve("a.iml"), JavaModuleType.getModuleType().getId());
+      moduleB = moduleModel.newModule(dir.resolve("b.iml"), JavaModuleType.getModuleType().getId());
+      final Module moduleC = moduleModel.newModule(dir.resolve("c.iml"), JavaModuleType.getModuleType().getId());
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleC);
       moduleModel.disposeModule(moduleC);

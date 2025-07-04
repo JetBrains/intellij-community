@@ -396,7 +396,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   @Override
   public ModuleType<?> getModuleType() {
-    return StdModuleTypes.JAVA;
+    return JavaModuleType.getModuleType();
   }
 
   private @NotNull VirtualFile setupGradleBuildFile(@NotNull VirtualFile modelContentRootDir)
