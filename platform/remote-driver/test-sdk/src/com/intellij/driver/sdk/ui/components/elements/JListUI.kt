@@ -114,12 +114,10 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   protected fun findItemIndex(itemText: String, fullMatch: Boolean, trimmed: Boolean = false): Int? =
     fixture.collectItems().indexOfFirst {
-      if (fullMatch) it == itemText
-      else it.contains(itemText, true)
-    }.let {
-      if (it == -1) null
-      else it
-    }
+      val text = if (trimmed) it.trim() else it
+      if (fullMatch) text == itemText
+      else text.contains(itemText, true)
+    }.takeIf { it != -1 }
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JListTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
