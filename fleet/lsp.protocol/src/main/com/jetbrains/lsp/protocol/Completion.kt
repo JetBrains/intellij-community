@@ -685,18 +685,31 @@ value class TextEditOrInsertReplaceEdit private constructor(val edit: JsonElemen
     )
 }
 
-//todo: custom serializer needed
-@Serializable
-@JvmInline
-value class StringOrMarkupContent private constructor(val content: JsonElement) {
-  constructor(content: String) : this(JsonPrimitive(content))
-  constructor(content: MarkupContent) : this(LSP.json.encodeToJsonElement(MarkupContent.serializer(), content))
+@Serializable(with = StringOrMarkupContent.Serializer::class)
+sealed interface StringOrMarkupContent {
+  @Serializable
+  @JvmInline
+  value class String(val value: kotlin.String) : StringOrMarkupContent
 
-  fun contentAsString(): String = when (content) {
-    is JsonPrimitive -> content.content
-    is JsonObject -> LSP.json.decodeFromJsonElement(MarkupContent.serializer(), content).value
-    else -> error("Unexpected content type: ${content::class.simpleName}")
+  @Serializable
+  @JvmInline
+  value class Markup(val value: MarkupContent) : StringOrMarkupContent
+
+  class Serializer : JsonContentPolymorphicSerializer<StringOrMarkupContent>(StringOrMarkupContent::class) {
+    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<StringOrMarkupContent> {
+      return when (element) {
+        is JsonPrimitive -> String.serializer()
+        else -> Markup.serializer()
+      }
+    }
   }
+}
+
+fun StringOrMarkupContent(content: String): StringOrMarkupContent = StringOrMarkupContent.String(content)
+fun StringOrMarkupContent(content: MarkupContent): StringOrMarkupContent = StringOrMarkupContent.Markup(content)
+fun StringOrMarkupContent.contentAsString(): String = when (this) {
+  is StringOrMarkupContent.String -> value
+  is StringOrMarkupContent.Markup -> value.value
 }
 
 class CompletionItemKindSerializer : EnumAsIntSerializer<CompletionItemKind>(
