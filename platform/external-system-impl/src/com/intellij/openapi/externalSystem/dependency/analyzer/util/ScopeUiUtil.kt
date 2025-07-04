@@ -43,31 +43,53 @@ internal class SearchScopeSelector(property: ObservableMutableProperty<List<Scop
 
 private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<SearchScopeItem>() {
 
-  private val anyGroup: SearchScopeItem.Group
-  private val anyScopes: List<SearchScopeItem.Element>
+  private val allScopes: List<SearchScopeItem.Element>
+
+  private val standardGroup: SearchScopeItem.Group
+  private val standardScopes: List<SearchScopeItem.Element>
+
+  private val customGroup: SearchScopeItem.Group
+  private val customScopes: List<SearchScopeItem.Element>
 
   init {
     val propertyGraph = PropertyGraph(isBlockPropagation = false)
 
-    anyScopes = scopes.map { scope ->
+    allScopes = scopes.map { scope ->
       SearchScopeItem.Element(
         scope.scope,
         propertyGraph.property(scope.isSelected)
       )
     }
-    anyGroup = SearchScopeItem.Group(
-      ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any"),
-      propertyGraph.lazyProperty { suggestGroupState(anyScopes) }
+    standardScopes = allScopes.filter { it.scope.type == Scope.Type.STANDARD }
+    customScopes = allScopes.filter { it.scope.type == Scope.Type.CUSTOM }
+
+    standardGroup = SearchScopeItem.Group(
+      when (standardScopes.size == allScopes.size) {
+        true -> ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any")
+        else -> ExternalSystemBundle.message("external.system.dependency.analyzer.scope.standard")
+      },
+      propertyGraph.lazyProperty { suggestGroupState(standardScopes) }
+    )
+    customGroup = SearchScopeItem.Group(
+      when (customScopes.size == allScopes.size) {
+        true -> ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any")
+        else -> ExternalSystemBundle.message("external.system.dependency.analyzer.scope.custom")
+      },
+      propertyGraph.lazyProperty { suggestGroupState(customScopes) }
     )
 
     propertyGraph.afterPropagation {
       repaint()
     }
-    initProperties(anyGroup, anyScopes)
+    initProperties(standardGroup, standardScopes)
+    initProperties(customGroup, customScopes)
   }
 
   init {
-    model = createDefaultListModel(getItems(anyGroup, anyScopes))
+    model = createDefaultListModel(
+      getItems(standardGroup, standardScopes) +
+      getItems(customGroup, customScopes)
+    )
     border = emptyListBorder()
     cellRenderer = SearchScopeRenderer()
     selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -81,9 +103,9 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<SearchSc
   }
 
   fun afterChange(listener: (List<ScopeItem>) -> Unit) {
-    for (scope in anyScopes) {
+    for (scope in allScopes) {
       scope.property.afterChange {
-        listener(anyScopes.map { ScopeItem(it.scope, it.property.get()) })
+        listener(allScopes.map { ScopeItem(it.scope, it.property.get()) })
       }
     }
   }
@@ -177,13 +199,24 @@ private class SearchScopeDropDownLink(
       .apply { x += insets.left }
 
   override fun itemToString(item: List<ScopeItem>): @NlsSafe String {
+    val selectedScopes = item.filter { it.isSelected }
+    val standardScopes = item.filter { it.scope.type == Scope.Type.STANDARD }
+    val selectedStandardScopes = standardScopes.filter { it.isSelected }
+    val customScopes = item.filter { it.scope.type == Scope.Type.CUSTOM }
+    val selectedCustomScopes = customScopes.filter { it.isSelected }
     return when {
-      item.all { it.isSelected } -> ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any")
-      !item.any { it.isSelected } -> ExternalSystemBundle.message("external.system.dependency.analyzer.scope.none")
-      else -> {
-        val scopes = item.filter { it.isSelected }.map { it.scope.title }
-        StringUtil.shortenPathWithEllipsis(NlsMessages.formatNarrowAndList(scopes), 30, true)
-      }
+      selectedScopes.isEmpty() ->
+        ExternalSystemBundle.message("external.system.dependency.analyzer.scope.none")
+      selectedScopes.size == item.size ->
+        ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any")
+      selectedScopes.size == standardScopes.size &&
+      selectedScopes.size == selectedStandardScopes.size ->
+        ExternalSystemBundle.message("external.system.dependency.analyzer.scope.standard")
+      selectedScopes.size == customScopes.size &&
+      selectedScopes.size == selectedCustomScopes.size ->
+        ExternalSystemBundle.message("external.system.dependency.analyzer.scope.custom")
+      else ->
+        StringUtil.shortenPathWithEllipsis(NlsMessages.formatNarrowAndList(selectedScopes.map { it.scope.title }), 30, true)
     }
   }
 

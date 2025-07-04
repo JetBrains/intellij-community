@@ -36,6 +36,10 @@ interface DependencyAnalyzerDependency : UserDataHolder {
     val name: @Nls String
 
     val title: @Nls(capitalization = Nls.Capitalization.Title) String
+
+    val type: Type
+
+    enum class Type { STANDARD, CUSTOM }
   }
 
   sealed interface Status : UserDataHolder {

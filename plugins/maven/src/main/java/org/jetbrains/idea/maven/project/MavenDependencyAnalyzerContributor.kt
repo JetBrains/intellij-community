@@ -4,12 +4,13 @@ package org.jetbrains.idea.maven.project
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope.Type.CUSTOM
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope.Type.STANDARD
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.model.MavenArtifactNode
 import org.jetbrains.idea.maven.model.MavenArtifactState
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -41,12 +42,7 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
   }
 
   override fun getDependencyScopes(externalProject: DependencyAnalyzerProject): List<Dependency.Scope> {
-    return listOf(scope(MavenConstants.SCOPE_COMPILE),
-                  scope(MavenConstants.SCOPE_PROVIDED),
-                  scope(MavenConstants.SCOPE_RUNTIME),
-                  scope(MavenConstants.SCOPE_SYSTEM),
-                  scope(MavenConstants.SCOPE_IMPORT),
-                  scope(MavenConstants.SCOPE_TEST))
+    return STANDARD_SCOPES.map(::scope)
   }
 
   override fun getDependencies(externalProject: DependencyAnalyzerProject): List<Dependency> {
@@ -59,7 +55,7 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
     val root = DAModule(mavenProject.displayName)
     val mavenId = mavenProject.mavenId
     root.putUserData(MAVEN_ARTIFACT_ID, MavenId(mavenId.groupId, mavenId.artifactId, mavenId.version))
-    val rootDependency = DADependency(root, scope(MavenConstants.SCOPE_COMPILE), null, emptyList())
+    val rootDependency = DADependency(root, DEFAULT_SCOPE, null, emptyList())
     val result = mutableListOf<Dependency>()
     collectDependency(mavenProject.dependencyTree, rootDependency, result)
     return result
@@ -112,7 +108,26 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
   }
 
   companion object {
-    fun scope(name: @NlsSafe String) = DAScope(name, StringUtil.toTitleCase(name))
-    val MAVEN_ARTIFACT_ID = Key.create<MavenId>("MavenDependencyAnalyzerContributor.MavenId")
+
+    val MAVEN_ARTIFACT_ID: Key<MavenId?> = Key.create<MavenId>("MavenDependencyAnalyzerContributor.MavenId")
+
+    internal val DEFAULT_SCOPE = DAScope("default")
+
+    private val STANDARD_SCOPES = listOf(
+      MavenConstants.SCOPE_COMPILE,
+      MavenConstants.SCOPE_PROVIDED,
+      MavenConstants.SCOPE_RUNTIME,
+      MavenConstants.SCOPE_SYSTEM,
+      MavenConstants.SCOPE_IMPORT,
+      MavenConstants.SCOPE_TEST
+    )
+
+    private fun scope(name: @Nls String): DAScope {
+      return DAScope(name, type = scopeType(name))
+    }
+
+    private fun scopeType(name: String): Dependency.Scope.Type {
+      return if (name in STANDARD_SCOPES) STANDARD else CUSTOM
+    }
   }
 }
