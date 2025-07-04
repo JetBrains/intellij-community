@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.invariantSeparatorsPathString
 
 private const val ITEMS_PER_FILE_LIMIT = 100
 private const val RESOURCE_ITEM_CLASS = "ResourceItem"
@@ -85,7 +86,7 @@ private suspend fun getChunkFileSpec(
             buildString {
               append("${RESOURCE_ITEM_CLASS}(")
               append("setOf(${item.addQualifiers()}),")
-              append("\"${item.path}\",")
+              append("\"${item.path.invariantSeparatorsPathString}\",")
               append("${item.offset},")
               append(item.size)
               append(")")
