@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 
-public final class PyAnnotatingVisitor extends PyAnnotatorBase implements DumbAware {
+public final class PySyntaxAnnotator extends PyAnnotatorBase implements DumbAware {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull PyAnnotationHolder holder) {
     List<@NotNull PsiElementVisitor> visitors = List.of(

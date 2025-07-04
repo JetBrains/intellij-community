@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyHighlightingAnnotatorVisitor extends PyAnnotatorBase {
+public class PyFunctionHighlightingAnnotator extends PyAnnotatorBase {
   @Override
   protected void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
     element.accept(new MyVisitor(holder));

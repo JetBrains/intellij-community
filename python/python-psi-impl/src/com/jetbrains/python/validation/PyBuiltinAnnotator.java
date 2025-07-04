@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Marks built-in names.
  */
-public class PyBuiltinAnnotatorVisitor extends PyAnnotatorBase {
+public class PyBuiltinAnnotator extends PyAnnotatorBase {
   @Override
   protected void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
     element.accept(new MyVisitor(holder));

@@ -167,7 +167,7 @@
     <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineLocalHandler"/>
     <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineFunctionHandler"/>
 
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PySyntaxAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDocStringAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyGeneratorInArgumentListAnnotator"/>
@@ -179,8 +179,8 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyHighlightingAnnotatorVisitor"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyBuiltinAnnotatorVisitor"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyFunctionHighlightingAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyBuiltinAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.UnsupportedFeatures"/>
 
     <localInspection language="Python" shortName="PyUnusedLocalInspection" suppressId="PyUnusedLocal" bundle="messages.PyPsiBundle" key="INSP.NAME.unused" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection"/>
