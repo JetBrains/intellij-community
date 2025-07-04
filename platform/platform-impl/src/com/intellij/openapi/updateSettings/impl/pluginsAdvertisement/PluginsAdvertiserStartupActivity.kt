@@ -161,6 +161,10 @@ internal fun findSuggestedPlugins(project: Project, customRepositories: Map<Stri
 }
 
 private suspend fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, PluginDataSet> {
+  if (isTestingMode) {
+    return emptyMap()
+  }
+
   val params = mapOf("featureType" to featureType)
   val features = MarketplaceRequests.getInstance().getFeatures(params)
   return features
