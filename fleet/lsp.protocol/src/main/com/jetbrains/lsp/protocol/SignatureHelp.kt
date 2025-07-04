@@ -22,7 +22,7 @@ data class SignatureHelpOptions(
    * The characters that trigger signature help
    * automatically.
    */
-  val triggerCharacters: List<String>,
+  val triggerCharacters: List<String>?,
   /**
    * List of characters that re-trigger signature help.
    *
@@ -32,7 +32,7 @@ data class SignatureHelpOptions(
    *
    * @since 3.15.0
    */
-  val retriggerCharacters: List<String>,
+  val retriggerCharacters: List<String>?,
   override val workDoneProgress: Boolean?,
 ) : WorkDoneProgressOptions
 

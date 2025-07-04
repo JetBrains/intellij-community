@@ -73,9 +73,9 @@ data class Diagnostic(
 )
 
 class DiagnosticSeveritySerializer : EnumAsIntSerializer<DiagnosticSeverity>(
-    serialName = "CompletionTriggerKind",
+    serialName = "DiagnosticSeverity",
     serialize = DiagnosticSeverity::value,
-    deserialize = { DiagnosticSeverity.entries.get(it - 1) },
+    deserialize = { DiagnosticSeverity.entries[it - 1] },
 )
 
 @Serializable(DiagnosticSeveritySerializer::class)
@@ -87,9 +87,9 @@ enum class DiagnosticSeverity(val value: Int) {
 }
 
 class DiagnosticTagSerializer : EnumAsIntSerializer<DiagnosticTag>(
-    serialName = "CompletionTriggerKind",
+    serialName = "DiagnosticTag",
     serialize = DiagnosticTag::value,
-    deserialize = { DiagnosticTag.entries.get(it - 1) },
+    deserialize = { DiagnosticTag.entries[it - 1] },
 )
 
 /**

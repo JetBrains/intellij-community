@@ -1,8 +1,11 @@
 package com.jetbrains.lsp.protocol
 
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonContentPolymorphicSerializer
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -173,9 +176,7 @@ data class CompletionClientCapabilities(
     )
 }
 
-@Serializable
-sealed interface CompletionOptions {
-    /**
+interface CompletionOptions: WorkDoneProgressOptions { /**
      * The additional characters, beyond the defaults provided by the client (typically
      * [a-zA-Z]), that should automatically trigger a completion request. For example
      * `.` in JavaScript represents the beginning of an object property or method and is
@@ -236,6 +237,7 @@ data class CompletionRegistrationOptionsImpl(
     override val allCommitCharacters: List<String>?,
     override val resolveProvider: Boolean?,
     override val completionItem: CompletionOptions.CompletionItemCapabilities?,
+    override val workDoneProgress: Boolean? = null,
 ) : CompletionOptions
 
 @Serializable
@@ -245,6 +247,7 @@ data class CompletionRegistrationOptions(
     override val allCommitCharacters: List<String>?,
     override val resolveProvider: Boolean?,
     override val completionItem: CompletionOptions.CompletionItemCapabilities?,
+    override val workDoneProgress: Boolean? = null,
 ) : TextDocumentRegistrationOptions, CompletionOptions
 
 @Serializable
@@ -264,7 +267,7 @@ data class CompletionParams(
 class CompletionTriggerKindSerializer : EnumAsIntSerializer<CompletionTriggerKind>(
     serialName = "CompletionTriggerKind",
     serialize = CompletionTriggerKind::value,
-    deserialize = { CompletionTriggerKind.values().get(it - 1) },
+    deserialize = { CompletionTriggerKind.entries[it - 1] },
 )
 
 /**
@@ -340,7 +343,7 @@ data class CompletionList(
 ) {
 
     companion object {
-        val EMPTY_COMPLETE = CompletionList(
+        val EMPTY_COMPLETE: CompletionList = CompletionList(
             isIncomplete = false,
             itemDefaults = null,
             items = emptyList(),
@@ -385,11 +388,27 @@ data class CompletionList(
         val data: JsonElement? = null,
     )
 
-    @Serializable
-    data class EditRange(
-        val insert: Range,
-        val replace: Range,
-    )
+    @Serializable(with = EditRange.Serializer::class)
+    sealed interface EditRange {
+      @Serializable
+      @JvmInline
+      value class Range(val range: com.jetbrains.lsp.protocol.Range) : EditRange
+
+      @Serializable
+      data class InsertReplaceRange(
+        val insert: com.jetbrains.lsp.protocol.Range,
+        val replace: com.jetbrains.lsp.protocol.Range,
+      ) : EditRange
+
+      class Serializer : JsonContentPolymorphicSerializer<EditRange>(EditRange::class) {
+        override fun selectDeserializer(element: JsonElement): DeserializationStrategy<EditRange> {
+          return when (element) {
+            is JsonObject -> if (element.containsKey("insert")) InsertReplaceRange.serializer() else Range.serializer()
+            else -> throw SerializationException("Expected either a Range object or an the insert/replace object of Ranges.")
+          }
+        }
+      }
+    }
 }
 
 /**
@@ -414,9 +433,9 @@ data class InsertReplaceEdit(
 )
 
 class InsertTextFormatSerializer : EnumAsIntSerializer<InsertTextFormat>(
-    serialName = "CompletionTriggerKind",
+    serialName = "InsertTextFormat",
     serialize = InsertTextFormat::value,
-    deserialize = { InsertTextFormat.values().get(it - 1) },
+    deserialize = { InsertTextFormat.entries[it - 1] },
 )
 
 @Serializable(InsertTextFormatSerializer::class)
@@ -426,9 +445,9 @@ enum class InsertTextFormat(val value: Int) {
 }
 
 class CompletionItemTagSerializer : EnumAsIntSerializer<CompletionItemTag>(
-    serialName = "CompletionTriggerKind",
+    serialName = "CompletionItemTag",
     serialize = CompletionItemTag::value,
-    deserialize = { CompletionItemTag.values().get(it - 1) },
+    deserialize = { CompletionItemTag.entries[it - 1] },
 )
 
 /**
@@ -446,9 +465,9 @@ enum class CompletionItemTag(val value: Int) {
 }
 
 class InsertTextModeSerializer : EnumAsIntSerializer<InsertTextMode>(
-    serialName = "CompletionTriggerKind",
+    serialName = "InsertTextMode",
     serialize = InsertTextMode::value,
-    deserialize = { InsertTextMode.values().get(it - 1) },
+    deserialize = { InsertTextMode.entries[it - 1] },
 )
 
 /**
@@ -600,7 +619,7 @@ data class CompletionItem(
     /**
      * An edit which is applied to a document when selecting this completion.
      */
-    val textEdit: TextEditOrInsertReplaceEdit? = null,
+    val textEdit: Edit? = null,
 
     /**
      * The edit text used if the completion item is part of a CompletionList.
@@ -631,7 +650,27 @@ data class CompletionItem(
      * a completion and a completion resolve request.
      */
     val data: JsonElement? = null,
-)
+) {
+    @Serializable(with = Edit.Serializer::class)
+    sealed interface Edit {
+        @Serializable
+        @JvmInline
+        value class Text(val textEdit: TextEdit) : Edit
+
+        @Serializable
+        @JvmInline
+        value class InsertReplace(val insertReplaceEdit: InsertReplaceEdit) : Edit
+
+        class Serializer : JsonContentPolymorphicSerializer<Edit>(Edit::class) {
+            override fun selectDeserializer(element: JsonElement): DeserializationStrategy<Edit> {
+                return when {
+                    element is JsonObject && element.containsKey("insert") -> InsertReplace.serializer()
+                    else -> Text.serializer()
+                }
+            }
+        }
+    }
+}
 
 // todo: custom serializer needed
 @Serializable
@@ -661,9 +700,9 @@ value class StringOrMarkupContent private constructor(val content: JsonElement) 
 }
 
 class CompletionItemKindSerializer : EnumAsIntSerializer<CompletionItemKind>(
-    serialName = "CompletionTriggerKind",
+    serialName = "CompletionItemKind",
     serialize = CompletionItemKind::kind,
-    deserialize = { CompletionItemKind.values().get(it - 1) },
+    deserialize = { CompletionItemKind.entries[it - 1] },
 )
 
 /**
@@ -698,11 +737,31 @@ enum class CompletionItemKind(val kind: Int) {
     TypeParameter(25);
 }
 
-val CompletionRequestType: RequestType<CompletionParams, CompletionList, Unit> =
+@Serializable(with = CompletionResult.Serializer::class)
+sealed interface CompletionResult {
+    @Serializable
+    @JvmInline
+    value class MaybeIncomplete(val completionList: CompletionList) : CompletionResult
+
+    @Serializable
+    @JvmInline
+    value class Complete(val items: List<CompletionItem>) : CompletionResult
+
+    class Serializer : JsonContentPolymorphicSerializer<CompletionResult>(CompletionResult::class) {
+        override fun selectDeserializer(element: JsonElement): DeserializationStrategy<CompletionResult> {
+            return when {
+                element is JsonArray -> Complete.serializer()
+                else -> MaybeIncomplete.serializer()
+            }
+        }
+    }
+}
+
+val CompletionRequestType: RequestType<CompletionParams, CompletionResult?, Unit> =
     RequestType(
         "textDocument/completion",
         CompletionParams.serializer(),
-        CompletionList.serializer(),
+        CompletionResult.serializer().nullable,
         Unit.serializer()
     )
 

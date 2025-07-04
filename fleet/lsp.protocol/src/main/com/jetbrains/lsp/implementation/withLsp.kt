@@ -33,12 +33,13 @@ private class OutgoingRequest(
     val requestType: RequestType<*, *, *>,
 )
 
-suspend fun withLsp(
+suspend fun <T> withLsp(
     incoming: ReceiveChannel<JsonElement>,
     outgoing: SendChannel<JsonElement>,
     handlers: LspHandlers,
+    createContext: (LspClient) -> T,
     createCoroutineContext: (LspClient) -> CoroutineContext = { EmptyCoroutineContext },
-    body: suspend CoroutineScope.(LspClient) -> Unit,
+    body: suspend CoroutineScope.(T) -> Unit,
 ) {
     coroutineScope {
         val outgoingRequests = ConcurrentHashMap<StringOrInt, OutgoingRequest>()
@@ -86,7 +87,7 @@ suspend fun withLsp(
             }
         }
 
-        val lspHandlerContext = LspHandlerContext(lspClient)
+        val lspHandlerContext = createContext(lspClient)
 
         launch(createCoroutineContext(lspClient)) {
             withSupervisor { supervisor ->
@@ -108,7 +109,7 @@ suspend fun withLsp(
                                     val deserializedParams = request.params?.let { params ->
                                         LSP.json.decodeFromJsonElement(handler.requestType.paramsSerializer, params)
                                     }
-                                    val result = (handler as LspRequestHandler<Any?, Any?, Any?>).handler(
+                                    val result = (handler as LspRequestHandler<Any?, Any?, Any?, T>).handler(
                                         lspHandlerContext,
                                         this,
                                         deserializedParams
@@ -248,7 +249,7 @@ suspend fun withLsp(
                                                 val deserializedParams = notification.params?.let { params ->
                                                     LSP.json.decodeFromJsonElement(handler.notificationType.paramsSerializer, params)
                                                 }
-                                                (handler as LspNotificationHandler<Any?>).handler(this, deserializedParams)
+                                                (handler as LspNotificationHandler<Any?, T>).handler(lspHandlerContext, this, deserializedParams)
                                             }
                                         }
                                     }.onFailure { error ->
@@ -265,7 +266,7 @@ suspend fun withLsp(
                 }
             }
         }.use {
-            body(lspClient)
+            body(lspHandlerContext)
         }
     }
 }
@@ -280,7 +281,7 @@ fun main() {
         withLsp(
             incoming = clientToServer,
             outgoing = serverToClient,
-            handlers = lspHandlers {
+            handlers = lspHandlers<LspHandlerContext> {
                 request(HelloRequestType) { str ->
                     "Hello, $str"
                 }
@@ -295,22 +296,24 @@ fun main() {
                         throw c
                     }
                 }
-            }
+            },
+            createContext = ::LspHandlerContext,
         ) { server ->
             withLsp(
                 incoming = serverToClient,
                 outgoing = clientToServer,
-                handlers = lspHandlers {
+                handlers = lspHandlers<LspHandlerContext> {
                     notification(PrintHelloNotification) { str ->
                         println("client: $str")
                     }
-                }
-            ) { client ->
-                println(client.request(HelloRequestType, "World"))
-                client.notify(PrintHelloNotification, "Hello World")
-                server.notify(PrintHelloNotification, "Hello World")
+                },
+                createContext = ::LspHandlerContext,
+            ) { context ->
+                println(context.lspClient.request(HelloRequestType, "World"))
+                context.lspClient.notify(PrintHelloNotification, "Hello World")
+                context.lspClient.notify(PrintHelloNotification, "Hello World")
                 val hangingRequestJob = launch {
-                    client.request(HangRequestType, Unit)
+                    context.lspClient.request(HangRequestType, Unit)
                 }
                 delay(100)
                 hangingRequestJob.cancel()

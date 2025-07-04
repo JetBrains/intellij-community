@@ -4,6 +4,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
 
 @Serializable
 @JvmInline
@@ -18,6 +21,38 @@ value class OrBoolean<T>(val value: JsonElement) {
         }
     }
 }
+
+inline fun <reified T> OrBoolean<T>.getOrElse(f: (T) -> Boolean) : Boolean =
+    if (value is JsonPrimitive && value.booleanOrNull != null) value.boolean else f(LSP.json.decodeFromJsonElement<T>(value))
+
+inline fun <reified T, R> OrBoolean<T>.map(mapBoolean: (Boolean) -> R, mapOtherwise: (T) -> R): R {
+    return when  {
+        value is JsonPrimitive && value.booleanOrNull != null -> mapBoolean(value.boolean)
+        else -> mapOtherwise(LSP.json.decodeFromJsonElement<T>(value))
+    }
+}
+
+@Serializable
+@JvmInline
+value class OrString<T>(val value: JsonElement) {
+    constructor(string: String) : this(JsonPrimitive(string))
+
+    companion object {
+        inline fun <reified T> of(value: T): OrString<T> {
+            val serializer = kotlinx.serialization.serializer<T>()
+            val encoded = LSP.json.encodeToJsonElement(serializer, value)
+            return OrString(encoded)
+        }
+    }
+}
+
+inline fun <reified T, R> OrString<T>.map(mapString: (String) -> R, mapOtherwise: (T) -> R): R {
+    return when  {
+        value is JsonPrimitive && value.isString -> mapString(value.content)
+        else -> mapOtherwise(LSP.json.decodeFromJsonElement<T>(value))
+    }
+}
+
 
 @Serializable
 data class ServerCapabilities(
@@ -52,7 +87,7 @@ data class ServerCapabilities(
     /**
      * The server provides completion support.
      */
-    val completionProvider: CompletionOptions? = null,
+    val completionProvider: CompletionRegistrationOptions? = null,
 
     /**
      * The server provides hover support.
@@ -217,7 +252,7 @@ data class ServerCapabilities(
      *
      * @since 3.17.0
      */
-    val inlayHintProvider: OrBoolean<InlayHintOptions>? = null,
+    val inlayHintProvider: OrBoolean<InlayHintRegistrationOptions>? = null,
 
     /**
      * The server has support for pull model diagnostics.
@@ -248,13 +283,11 @@ typealias TypeDefinitionOptions = Unknown
 typealias ImplementationOptions = Unknown
 typealias DocumentHighlightOptions = Unknown
 typealias DocumentSymbolOptions = Unknown
-typealias CodeLensOptions = Unknown
 typealias DocumentLinkOptions = Unknown
 typealias DocumentColorOptions = Unknown
 typealias DocumentFormattingOptions = Unknown
 typealias DocumentRangeFormattingOptions = Unknown
 typealias DocumentOnTypeFormattingOptions = Unknown
-typealias RenameOptions = Unknown
 typealias FoldingRangeOptions = Unknown
 typealias SelectionRangeOptions = Unknown
 typealias LinkedEditingRangeOptions = Unknown
@@ -263,7 +296,50 @@ typealias SemanticTokensRegistrationOptions = Unknown
 typealias MonikerOptions = Unknown
 typealias TypeHierarchyOptions = Unknown
 typealias InlineValueOptions = Unknown
-typealias InlayHintOptions = Unknown
+
+@Serializable
+data class RenameOptions(
+  /**
+	 * Renames should be checked and tested before being executed.
+	 */
+	val prepareProvider: Boolean?,
+
+  override val workDoneProgress: Boolean? = null,
+) : WorkDoneProgressOptions
+
+@Serializable
+data class CodeLensOptions(
+  override val workDoneProgress: Boolean? = null,
+
+    /**
+     * Code lens has a resolve provider as well.
+     */
+    val resolveProvider: Boolean? = null,
+  ) : WorkDoneProgressOptions
+
+@Serializable
+data class InlayHintOptions(
+    /**
+    * The server provides support to resolve additional
+    * information for an inlay hint item.
+    */
+   val resolveProvider: Boolean?,
+
+    override val workDoneProgress: Boolean?,
+) : WorkDoneProgressOptions
+
+@Serializable
+data class InlayHintRegistrationOptions(
+    /**
+     * The server provides support to resolve additional
+     * information for an inlay hint item.
+     */
+    val resolveProvider: Boolean?,
+
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+    override val id: String? = null,
+) : TextDocumentRegistrationOptions, StaticRegistrationOptions, WorkDoneProgressOptions
 
 @Serializable
 data class SemanticTokensOptions(
@@ -276,13 +352,24 @@ data class SemanticTokensOptions(
      * Server supports providing semantic tokens for a specific range
      * of a document.
      */
-    val range: Boolean?,
+    val range: OrBoolean<Unit>?,
 
     /**
      * Server supports providing semantic tokens for a full document.
      */
-    val full: Boolean?,
-)
+    val full: OrBoolean<Full>?,
+
+    override val workDoneProgress: Boolean? = null,
+) : WorkDoneProgressOptions {
+
+    @Serializable
+    data class Full(
+        /**
+         * The server supports deltas for full documents.
+         */
+        val delta: Boolean?,
+    )
+}
 
 @Serializable
 data class ServerWorkspaceCapabilities(
@@ -317,7 +404,7 @@ data class WorkspaceFoldersServerCapabilities(
      * side. The ID can be used to unregister for these events
      * using the `client/unregisterCapability` request.
      */
-    val changeNotifications: JsonElement? = null // String or Boolean
+    val changeNotifications: JsonElement? = null, // String or Boolean
 )
 
 /**
@@ -353,7 +440,7 @@ data class FileOperationPattern(
     /**
      * Additional options used during matching.
      */
-    val options: FileOperationPatternOptions? = null
+    val options: FileOperationPatternOptions? = null,
 )
 
 /**
@@ -366,7 +453,7 @@ data class FileOperationPatternOptions(
     /**
      * The pattern should be matched ignoring casing.
      */
-    val ignoreCase: Boolean? = null
+    val ignoreCase: Boolean? = null,
 )
 
 @Serializable
@@ -404,7 +491,7 @@ data class FileOperationFilter(
     /**
      * The actual file operation pattern.
      */
-    val pattern: FileOperationPattern
+    val pattern: FileOperationPattern,
 )
 
 /**
@@ -417,7 +504,7 @@ data class FileOperationRegistrationOptions(
     /**
      * The actual filters.
      */
-    val filters: List<FileOperationFilter>
+    val filters: List<FileOperationFilter>,
 )
 
 @Serializable

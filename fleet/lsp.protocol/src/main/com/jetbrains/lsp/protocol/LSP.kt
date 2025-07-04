@@ -1,6 +1,7 @@
 package com.jetbrains.lsp.protocol
 
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildSerialDescriptor
@@ -162,6 +163,8 @@ data class Range(
      * Extends the range so it includes also all remaining characters in the last line including the line break
      */
     fun toTheLineEndWithLineBreak(): Range = Range(start, Position(end.line + 1, 0))
+
+    operator fun contains(position: Position): Boolean = position in start..end
 
     companion object {
         val BEGINNING: Range = Range(Position.ZERO, Position.ZERO)
@@ -639,7 +642,7 @@ data class WorkspaceEdit(
      * `workspace.workspaceEdit.resourceOperations`, only plain `TextEdit`s
      * using the `changes` property are supported.
      */
-    val documentChanges: List<FileChange>? = null, // Use proper types or sealed classes for TextDocumentEdit, CreateFile, RenameFile, DeleteFile if defined elsewhere
+    val documentChanges: List<FileChange>? = null,
 
   /**
      * A map of change annotations that can be referenced in `AnnotatedTextEdit`s
@@ -932,11 +935,11 @@ object LSP {
     val CancelNotificationType: NotificationType<CancelParams> =
         NotificationType("$/cancelRequest", CancelParams.serializer())
 
-    val RegisterCapabilityNotificationType: NotificationType<RegistrationParams> =
-        NotificationType("client/registerCapability", RegistrationParams.serializer())
+    val RegisterCapabilityRequestType: RequestType<RegistrationParams, Unit, Unit> =
+        RequestType("client/registerCapability", RegistrationParams.serializer(), Unit.serializer(), Unit.serializer())
 
-    val UnregisterCapabilityNotificationType: NotificationType<UnregistrationParams> =
-        NotificationType("client/unregisterCapability", UnregistrationParams.serializer())
+    val UnregisterCapabilityRequestType: RequestType<UnregistrationParams, Unit, Unit> =
+      RequestType("client/unregisterCapability", UnregistrationParams.serializer(), Unit.serializer(), Unit.serializer())
 }
 
 @Serializer(forClass = FileChange::class)

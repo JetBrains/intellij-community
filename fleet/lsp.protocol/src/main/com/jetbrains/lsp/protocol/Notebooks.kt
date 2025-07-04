@@ -100,9 +100,9 @@ data class NotebookCell(
 )
 
 class NotebookCellKindSerializer : EnumAsIntSerializer<NotebookCellKind>(
-    serialName = "CompletionTriggerKind",
+    serialName = "NotebookCellKind",
     serialize = NotebookCellKind::value,
-    deserialize = { NotebookCellKind.entries.get(it - 1) },
+    deserialize = { NotebookCellKind.entries[it - 1] },
 )
 
 /**

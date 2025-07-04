@@ -24,11 +24,12 @@ data class ExecuteCommandParams(
      * Arguments that the command should be invoked with.
      */
     val arguments: List<JsonElement>? = null,
-    override val workDoneToken: ProgressToken?,
+
+    override val workDoneToken: ProgressToken? = null,
 ) : WorkDoneProgressParams
 
 object Commands {
-    val ExecuteCommand = RequestType(
+    val ExecuteCommand: RequestType<ExecuteCommandParams, JsonElement, Unit> = RequestType(
         "workspace/executeCommand",
         ExecuteCommandParams.serializer(),
         JsonElement.serializer(), Unit.serializer()

@@ -1,47 +1,60 @@
 package com.jetbrains.lsp.protocol
 
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PolymorphicKind
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonContentPolymorphicSerializer
+import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class TextDocumentSyncClientCapabilities(
-    /**
-     * Whether text document synchronization supports dynamic registration.
-     */
-    val dynamicRegistration: Boolean? = null,
+  /**
+   * Whether text document synchronization supports dynamic registration.
+   */
+  val dynamicRegistration: Boolean? = null,
 
-    /**
-     * The client supports sending will save notifications.
-     */
-    val willSave: Boolean? = null,
+  /**
+   * The client supports sending will save notifications.
+   */
+  val willSave: Boolean? = null,
 
-    /**
-     * The client supports sending a will save request and
-     * waits for a response providing text edits which will
-     * be applied to the document before it is saved.
-     */
-    val willSaveWaitUntil: Boolean? = null,
+  /**
+   * The client supports sending a will save request and
+   * waits for a response providing text edits which will
+   * be applied to the document before it is saved.
+   */
+  val willSaveWaitUntil: Boolean? = null,
 
-    /**
-     * The client supports did save notifications.
-     */
-    val didSave: Boolean? = null
+  /**
+   * The client supports did save notifications.
+   */
+  val didSave: Boolean? = null,
 )
 
+@Serializable(with = TextDocumentSync.Serializer::class)
+sealed interface TextDocumentSync {
 
-//todo: custom serializer
-@Serializable
-@JvmInline
-value class TextDocumentSync(val value: JsonElement) {
-    constructor(kind: TextDocumentSyncKind) : this(
-        LSP.json.encodeToJsonElement(
-            TextDocumentSyncKind.serializer(),
-            kind
-        )
-    )
-} // TextDocumentSyncOptions | TextDocumentSyncKind
+  class Serializer : JsonContentPolymorphicSerializer<TextDocumentSync>(TextDocumentSync::class) {
+    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<TextDocumentSync> {
+      return when (element) {
+        is JsonObject -> TextDocumentSyncOptions.serializer()
+        else -> TextDocumentSyncKind.serializer()
+      }
+    }
+  }
+}
 
 @Serializable
 data class TextDocumentSyncOptions(
@@ -49,7 +62,7 @@ data class TextDocumentSyncOptions(
      * Open and close notifications are sent to the server. If omitted open
      * close notifications should not be sent.
      */
-    val openClose: Boolean,
+    val openClose: Boolean?,
 
     /**
      * Change notifications are sent to the server. See
@@ -75,17 +88,17 @@ data class TextDocumentSyncOptions(
      * If present save notifications are sent to the server. If omitted the
      * notification should not be sent.
      */
-    val save: Boolean?,
-)
+    val save: OrBoolean<SaveOptions>?,
+) : TextDocumentSync
 
 class TextDocumentSyncKindSerializer : EnumAsIntSerializer<TextDocumentSyncKind>(
-    serialName = "CompletionTriggerKind",
+    serialName = "TextDocumentSyncKind",
     serialize = TextDocumentSyncKind::value,
-    deserialize = { TextDocumentSyncKind.entries.get(it) },
+    deserialize = { TextDocumentSyncKind.entries[it] },
 )
 
-@Serializable(TextDocumentSyncKindSerializer::class) // todo: custom serializer
-enum class TextDocumentSyncKind(val value: Int) {
+@Serializable(TextDocumentSyncKindSerializer::class)
+enum class TextDocumentSyncKind(val value: Int) : TextDocumentSync {
     None(0),
     Full(1),
     Incremental(2);
@@ -166,9 +179,9 @@ data class WillSaveTextDocumentParams(
 )
 
 class TextDocumentSaveReasonSerializer : EnumAsIntSerializer<TextDocumentSaveReason>(
-    serialName = "CompletionTriggerKind",
+    serialName = "TextDocumentSaveReason",
     serialize = TextDocumentSaveReason::code,
-    deserialize = { TextDocumentSaveReason.entries.get(it - 1) },
+    deserialize = { TextDocumentSaveReason.entries[it - 1] },
 )
 
 /**
@@ -194,6 +207,7 @@ enum class TextDocumentSaveReason(val code: Int) {
     FocusOut(3)
 }
 
+@Serializable
 data class SaveOptions(
     val includeText: Boolean? = null,
 )

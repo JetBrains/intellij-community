@@ -11,6 +11,8 @@ val Initialize: RequestType<InitializeParams, InitializeResult, InitializeError>
     InitializeError.serializer()
 )
 
+val Initialized: NotificationType<Unit> = NotificationType("initialized", Unit.serializer())
+
 @Serializable
 data class InitializeParams(
     /**

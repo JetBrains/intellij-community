@@ -1,9 +1,15 @@
 package com.jetbrains.lsp.protocol
 
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonContentPolymorphicSerializer
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class CodeActionOptions(
@@ -139,8 +145,8 @@ data class CodeActionParams(
      * Context carrying additional information.
      */
     val context: CodeActionContext,
-    override val workDoneToken: ProgressToken?,
-    override val partialResultToken: ProgressToken?,
+    override val workDoneToken: ProgressToken? = null,
+    override val partialResultToken: ProgressToken? = null,
 ) : WorkDoneProgressParams, PartialResultParams {
     fun shouldProvideKind(kind: CodeActionKind): Boolean =
         context.only == null || kind in context.only
@@ -285,8 +291,33 @@ data class CodeAction(
     )
 }
 
+@Serializable(with = CommandOrCodeAction.Serializer::class)
+sealed interface CommandOrCodeAction {
+    @Serializable
+    @JvmInline
+    value class Command(val command: com.jetbrains.lsp.protocol.Command) : CommandOrCodeAction
+
+    @Serializable
+    @JvmInline
+    value class CodeAction(val codeAction: com.jetbrains.lsp.protocol.CodeAction) : CommandOrCodeAction
+
+    class Serializer : JsonContentPolymorphicSerializer<CommandOrCodeAction>(CommandOrCodeAction::class) {
+        private fun isCommand(json: JsonObject) = json["command"]?.let { command -> command is JsonPrimitive && command.isString }
+            ?: false
+
+        override fun selectDeserializer(element: JsonElement): DeserializationStrategy<CommandOrCodeAction> {
+            return when (element) {
+                is JsonObject -> if (isCommand(element)) Command.serializer() else CodeAction.serializer()
+                else -> throw SerializationException("Expected either Command or CodeAction, got $element")
+            }
+        }
+    }
+}
 
 object CodeActions {
-    val CodeActionRequest: RequestType<CodeActionParams, List<CodeAction>, Unit> =
-        RequestType("textDocument/codeAction", CodeActionParams.serializer(), ListSerializer(CodeAction.serializer()), Unit.serializer())
+    val CodeActionRequest: RequestType<CodeActionParams, List<CommandOrCodeAction>?, Unit> =
+        RequestType("textDocument/codeAction", CodeActionParams.serializer(), ListSerializer(CommandOrCodeAction.serializer()).nullable, Unit.serializer())
+
+    val ResolveCodeAction: RequestType<CodeAction, CodeAction, Unit> =
+        RequestType("codeAction/resolve", CodeAction.serializer(), CodeAction.serializer(), Unit.serializer())
 }

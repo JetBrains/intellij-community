@@ -1,9 +1,12 @@
 package com.jetbrains.lsp.protocol
 
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonContentPolymorphicSerializer
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class WorkspaceSymbolOptions(
@@ -27,8 +30,8 @@ data class WorkspaceSymbolParams(
      * string here to request all symbols.
      */
     val query: String,
-    override val partialResultToken: ProgressToken?,
-    override val workDoneToken: ProgressToken?,
+    override val partialResultToken: ProgressToken? = null,
+    override val workDoneToken: ProgressToken? = null,
 ) : WorkDoneProgressParams, PartialResultParams
 
 
@@ -38,8 +41,8 @@ data class DocumentSymbolParams(
      * The text document.
      */
     val textDocument: TextDocumentIdentifier,
-    override val partialResultToken: ProgressToken?,
-    override val workDoneToken: ProgressToken?
+    override val partialResultToken: ProgressToken? = null,
+    override val workDoneToken: ProgressToken? = null,
 ): WorkDoneProgressParams, PartialResultParams
 
 /**
@@ -79,14 +82,33 @@ data class WorkspaceSymbol(
      *
      * See also `SymbolInformation.location`.
      */
-    val location: Location, // TODO | { uri: DocumentUri },
+    val location: SymbolLocation,
 
     /**
      * A data entry field that is preserved on a workspace symbol between a
      * workspace symbol request and a workspace symbol resolve request.
      */
     val data: JsonElement?,
-)
+) {
+    @Serializable(with = SymbolLocation.Serializer::class)
+    sealed interface SymbolLocation {
+        @Serializable
+        @JvmInline
+        value class Full(val value: Location) : SymbolLocation
+
+        @Serializable
+        data class Partial(val uri: DocumentUri) : SymbolLocation
+
+        class Serializer : JsonContentPolymorphicSerializer<SymbolLocation>(SymbolLocation::class) {
+            override fun selectDeserializer(element: JsonElement): DeserializationStrategy<SymbolLocation> {
+                return when {
+                    element is JsonObject && element.containsKey("range") -> Full.serializer()
+                    else -> Partial.serializer()
+                }
+            }
+        }
+    }
+}
 
 /**
  * Represents programming constructs like variables, classes, interfaces etc.
@@ -229,7 +251,7 @@ object WorkspaceSymbolRequests {
         )
 }
 
-val DocumentSymbolRequest = RequestType(
+val DocumentSymbolRequest: RequestType<DocumentSymbolParams, List<DocumentSymbol>, Unit> = RequestType(
     "textDocument/documentSymbol",
     DocumentSymbolParams.serializer(),
     ListSerializer(DocumentSymbol.serializer()),

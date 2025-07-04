@@ -7,6 +7,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
 
 @Serializable
 data class DeclarationClientCapabilities(
@@ -44,6 +45,33 @@ data class DeclarationParams(
     WorkDoneProgressParams,
     PartialResultParams
 
+@Serializable
+@JvmInline
+value class Locations(val location: JsonElement) { // Location | Location[]
+    constructor(loc: Location) : this(LSP.json.encodeToJsonElement(Location.serializer(), loc))
+    constructor(locs: List<Location>) : this(LSP.json.encodeToJsonElement(ListSerializer(Location.serializer()), locs))
 
-val DeclarationRequestType: RequestType<DeclarationParams, List<Location>, Unit> =
-    RequestType("textDocument/declaration", DeclarationParams.serializer(), ListSerializer(Location.serializer()), Unit.serializer())
+    val locations: List<Location>
+        get() = when (val loc = location) {
+            is JsonArray -> loc.map { LSP.json.decodeFromJsonElement(Location.serializer(), it) }
+            is JsonObject -> listOf(LSP.json.decodeFromJsonElement(Location.serializer(), loc))
+            else -> error("Unexpected value: $loc")
+        }
+
+    val links: List<LocationLink>
+        get() = location.jsonArray.map { LSP.json.decodeFromJsonElement(LocationLink.serializer(), it) }
+
+    val areLinks: Boolean
+        get() = location is JsonArray && location.isNotEmpty() && isLink(location[0])
+
+    private fun isLink(element: JsonElement) = element is JsonObject && element.containsKey("targetUri")
+
+    companion object {
+        fun fromLinks(links: List<LocationLink>): Locations {
+            return Locations(LSP.json.encodeToJsonElement(ListSerializer(LocationLink.serializer()), links))
+        }
+    }
+}
+
+val DeclarationRequestType: RequestType<DeclarationParams, Locations?, Unit> =
+    RequestType("textDocument/declaration", DeclarationParams.serializer(), Locations.serializer().nullable, Unit.serializer())
