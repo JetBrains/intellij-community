@@ -16,18 +16,20 @@ import kotlin.io.path.inputStream
 object GrazieRemote {
   private fun isLibExists(lib: String) = GrazieDynamic.dynamicFolder.resolve(lib).exists() || GraziePlugin.libFolder.resolve(lib).exists()
 
-  fun isAvailableLocally(lang: Lang) = lang.isEnglish() || isLibExists(lang.remote.fileName)
+  fun isAvailableLocally(lang: Lang): Boolean = lang.isEnglish() || isLibExists(lang.remote.fileName)
 
-  fun allAvailableLocally() = Lang.values().filter { isAvailableLocally(it) }
+  fun allAvailableLocally(languages: Collection<Lang>): Boolean = languages.all { isAvailableLocally(it) }
+
+  fun allAvailableLocally(): List<Lang> = Lang.entries.filter { isAvailableLocally(it) }
 
   /** Downloads [lang] to local storage */
-  fun download(lang: Lang, project: Project? = null): Boolean = LangDownloader.download(lang, project)
+  fun download(lang: Lang): Boolean = LanguageDownloader.download(lang)
 
   /** Downloads [languages] asynchronously to local storage */
-  fun downloadAsync(languages: Collection<Lang>, project: Project): Unit = LangDownloader.downloadAsync(languages, project)
+  fun downloadAsync(languages: Collection<Lang>, project: Project): Unit = LanguageDownloader.downloadAsync(languages, project)
 
   /** Downloads all missing languages to local storage*/
-  fun downloadMissing(project: Project): Unit = LangDownloader.downloadAsync(GrazieConfig.get().missedLanguages, project)
+  fun downloadMissing(project: Project): Unit = downloadAsync(GrazieConfig.get().missedLanguages, project)
 
   fun isValidBundleForLanguage(language: Lang, file: Path): Boolean {
     val actualChecksum = checksum(file)

@@ -4,67 +4,63 @@ package com.intellij.grazie.remote
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
+import com.intellij.grazie.GrazieScope
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.remote.GrazieRemote.allAvailableLocally
 import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.lang.UrlClassLoader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.copyTo
 
 @Suppress("DialogTitleCapitalization")
-internal object LangDownloader {
-  fun download(lang: Lang, project: Project?): Boolean {
-    // check if language lib already loaded
-    if (isAvailableLocally(lang)) return true
+internal object LanguageDownloader {
 
-    val path = runDownload(lang, project) ?: return false
+  fun download(lang: Lang): Boolean {
+    if (isAvailableLocally(lang)) return true
+    val path = runDownload(lang) ?: return false
     performGrazieUpdate(listOf(lang to path))
     return true
   }
 
   fun downloadAsync(languages: Collection<Lang>, project: Project) {
-    // check if language lib already loaded
-    val notAvailableLocallyLanguages = languages
-      .filter { !isAvailableLocally(it) }
-    if (notAvailableLocallyLanguages.isEmpty()) return
-
-    val task = object : Task.Backgroundable(
-      project,
-      msg("grazie.settings.proofreading.languages.download"),
-      true,
-      ALWAYS_BACKGROUND
-    ) {
-      override fun run(indicator: ProgressIndicator) {
-        performGrazieUpdate(
-          performDownload(languages)
-        )
+    if (allAvailableLocally(languages)) return
+    GrazieScope.coroutineScope().launch {
+      withBackgroundProgress(project, msg("grazie.settings.proofreading.languages.download"), true) {
+        startDownloading(languages)
       }
     }
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(
-      task, BackgroundableProcessIndicator(task)
-    )
   }
 
-  private fun runDownload(language: Lang, project: Project?): Path? {
+  suspend fun startDownloading(languages: Collection<Lang>) {
+    val bundles = withContext(Dispatchers.IO) {
+      performDownload(languages)
+    }
+    performGrazieUpdate(bundles)
+  }
+
+  private fun runDownload(language: Lang): Path? {
     try {
-      return ProgressManager.getInstance().runProcessWithProgressSynchronously<List<Pair<Lang, Path>>, Exception>(
-        { performDownload(listOf(language)) },
-        msg("grazie.settings.proofreading.languages.download"),
-        false,
-        project
-      ).single().second
+      return runWithModalProgressBlocking(
+        ModalTaskOwner.guess(),
+        msg("grazie.settings.proofreading.languages.download")
+      ) {
+        performDownload(listOf(language))
+      }.single().second
     }
     catch (exception: Throwable) {
       thisLogger().warn(exception)
-      return promptToSelectLanguageBundleManually(project, language)
+      return promptToSelectLanguageBundleManually(language)
     }
   }
 
@@ -96,8 +92,8 @@ internal object LangDownloader {
     return bundles
   }
 
-  private fun promptToSelectLanguageBundleManually(project: Project?, language: Lang): Path? {
-    val selectedFile = OfflineLanguageBundleSelectionDialog.show(project, language) ?: return null
+  private fun promptToSelectLanguageBundleManually(language: Lang): Path? {
+    val selectedFile = OfflineLanguageBundleSelectionDialog.show(null, language) ?: return null
     val targetPath = GrazieDynamic.dynamicFolder.resolve(language.remote.fileName)
     selectedFile.copyTo(targetPath, overwrite = true)
     return targetPath
