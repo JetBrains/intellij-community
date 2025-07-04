@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -18,6 +19,7 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -75,11 +77,15 @@ public final class ArtifactsTestUtil {
   }
 
   public static void assertOutputPath(Project project, String artifactName, String expected) {
-    assertEquals(expected, findArtifact(project, artifactName).getOutputPath());
+    assertPathEquals(expected, findArtifact(project, artifactName).getOutputPath());
   }
 
   public static void assertOutputFileName(Project project, String artifactName, String expected) {
-    assertEquals(expected, findArtifact(project, artifactName).getRootElement().getName());
+    assertPathEquals(expected, findArtifact(project, artifactName).getRootElement().getName());
+  }
+
+  private static void assertPathEquals(@NotNull String expected, @Nullable String actual) {
+    assertEquals(FileUtil.toSystemIndependentName(expected), null == actual ? null :FileUtil.toSystemIndependentName(actual));
   }
 
   public static void setOutput(final Project project, final String artifactName, final String outputPath) {
