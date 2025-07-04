@@ -19,7 +19,6 @@ public final class PyAnnotatingVisitor extends PyAnnotatorBase implements DumbAw
       new PyParameterListAnnotatorVisitor(holder),
       new PyHighlightingAnnotatorVisitor(holder),
       new ReturnAnnotator(holder),
-      new PyTryExceptAnnotatorVisitor(holder),
       new PyBreakContinueAnnotatorVisitor(holder),
       new PyGlobalAnnotatorVisitor(holder),
       new PyImportAnnotatorVisitor(holder),

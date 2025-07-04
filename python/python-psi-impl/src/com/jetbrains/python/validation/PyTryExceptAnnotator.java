@@ -24,6 +24,16 @@ public final class PyTryExceptAnnotator extends PyAnnotatorBase {
 
     @Override
     public void visitPyTryExceptStatement(@NotNull PyTryExceptStatement node) {
+      boolean haveDefaultExcept = false;
+      for (PyExceptPart part : node.getExceptParts()) {
+        if (haveDefaultExcept) {
+          myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.default.except.must.be.last")).range(part).create();
+        }
+        if (part.getExceptClass() == null) {
+          haveDefaultExcept = true;
+        }
+      }
+
       boolean haveStar = false;
       boolean haveNotStar = false;
       for (PyExceptPart exceptPart : node.getExceptParts()) {
@@ -46,6 +56,14 @@ public final class PyTryExceptAnnotator extends PyAnnotatorBase {
             .range(textRange).create();
           break;
         }
+      }
+    }
+
+    @Override
+    public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
+      if (node.getExpressions().length == 0 &&
+          PsiTreeUtil.getParentOfType(node, PyExceptPart.class, PyFinallyPart.class, PyFunction.class) == null) {
+        myHolder.markError(node, PyPsiBundle.message("ANN.no.exception.to.reraise"));
       }
     }
 
