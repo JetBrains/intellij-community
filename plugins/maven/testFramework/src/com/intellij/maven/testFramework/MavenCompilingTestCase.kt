@@ -118,7 +118,8 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
 
   protected fun assertCopied(path: String) {
     val parent = projectPom.parent.toNioPath()
-    assertTrue(parent.resolve(path).exists())
+    val resolvedPath = parent.resolve(path)
+    assertTrue("File $resolvedPath doesn't exist", resolvedPath.exists())
   }
 
   protected fun assertExists(path: String) {
