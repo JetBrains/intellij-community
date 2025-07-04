@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
@@ -127,7 +127,7 @@ class NavigationToSingleJarInMultipleLibrariesTest : AbstractNavigationWithMulti
 abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase() {
     abstract fun getTestDataDirectory(): File
 
-    protected fun module(name: String, srcPath: String) = createModuleFromTestData(srcPath, name, StdModuleTypes.JAVA, true)
+    protected fun module(name: String, srcPath: String) = createModuleFromTestData(srcPath, name, JavaModuleType.getModuleType(), true)
 
     protected fun checkReferencesInModule(module: Module, libraryName: String, expectedFileName: String) {
         checkAnnotatedCode(findSourceFile(module), File(getTestDataDirectory(), expectedFileName)) {

@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.multiplatform
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -288,7 +288,7 @@ private fun AbstractMultiModuleTest.createModuleWithRoots(
 
 private fun AbstractMultiModuleTest.createModule(name: String): Module {
     val moduleDir = KotlinTestUtils.tmpDirForReusableFolder("kotlinTest")
-    val module = createModule("$moduleDir/$name", StdModuleTypes.JAVA)
+    val module = createModule("$moduleDir/$name", JavaModuleType.getModuleType())
     val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir)
     checkNotNull(root)
     module.project.executeWriteCommand("refresh") {

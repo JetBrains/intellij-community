@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.facet.FacetTypeRegistry
 import com.intellij.facet.impl.FacetUtil
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.ModuleFixture
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 interface KotlinModuleFixtureBuilder : JavaModuleFixtureBuilder<KotlinModuleTestFixture>
 
 class KotlinModuleFixtureBuilderImpl(fixtureBuilder: TestFixtureBuilder<IdeaProjectTestFixture>) :
-    JavaModuleFixtureBuilderImpl<KotlinModuleTestFixture>(StdModuleTypes.JAVA, fixtureBuilder), KotlinModuleFixtureBuilder {
+    JavaModuleFixtureBuilderImpl<KotlinModuleTestFixture>(JavaModuleType.getModuleType(), fixtureBuilder), KotlinModuleFixtureBuilder {
 
     override fun instantiateFixture() = KotlinModuleTestFixtureImpl(this)
     override fun createModule(): Module {

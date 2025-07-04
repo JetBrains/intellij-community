@@ -8,9 +8,9 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -81,7 +81,7 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
 
     fun module(name: String, hasTestRoot: Boolean = false, sdkFactory: () -> Sdk = { IdeaTestUtil.getMockJdk18() }): Module {
         val srcDir = testDataPath + "${getTestName(true)}/$name"
-        val moduleWithSrcRootSet = createModuleFromTestData(srcDir, name, StdModuleTypes.JAVA, true)
+        val moduleWithSrcRootSet = createModuleFromTestData(srcDir, name, JavaModuleType.getModuleType(), true)
         if (hasTestRoot) {
             addRoot(
                 moduleWithSrcRootSet,

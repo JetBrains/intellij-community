@@ -7,8 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -2329,7 +2329,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     }
 
     private fun module(name: String, hasProductionRoot: Boolean = true, hasTestRoot: Boolean = true): Module {
-        return createModuleFromTestData(createTempDirectory().absolutePath, name, StdModuleTypes.JAVA, false).apply {
+        return createModuleFromTestData(createTempDirectory().absolutePath, name, JavaModuleType.getModuleType(), false).apply {
             if (hasProductionRoot)
                 PsiTestUtil.addSourceContentToRoots(this, dir(), false)
             if (hasTestRoot)
