@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -317,5 +319,17 @@ class PlatformUtilitiesTest {
     }
     assertThat(customExceptionWasRethrown.get()).isTrue()
     assertThat(writeActionThrew.get()).isFalse()
+  }
+
+  @Test
+  fun `parallelization of write-intent lock removes write-intent access`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val (lockContext, lockCleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+    installThreadContext(lockContext).use {
+      try {
+        assertThat(application.isWriteIntentLockAcquired).isFalse
+      } finally {
+        lockCleanup()
+      }
+    }
   }
 }
