@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -37,7 +38,8 @@ import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 
-internal object GHPRStatusChecksComponentFactory {
+@ApiStatus.Internal
+object GHPRStatusChecksComponentFactory {
   fun create(
     parentScope: CoroutineScope,
     project: Project,

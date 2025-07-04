@@ -22,6 +22,7 @@ import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
@@ -29,7 +30,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRSubmitReviewPopup
 import javax.swing.JButton
 import javax.swing.JComponent
 
-internal object GHPRDetailsActionsComponentFactory {
+@ApiStatus.Internal
+object GHPRDetailsActionsComponentFactory {
   private const val BUTTONS_GAP = 10
 
   fun create(
