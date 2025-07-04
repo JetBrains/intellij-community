@@ -173,6 +173,16 @@
                      key="inspection.object.literal.to.lambda.display.name"
                      bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectInheritsExceptionInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     cleanupTool="true"
+                     key="inspection.object.exception.to.class.display.name"
+                     bundle="messages.KotlinBundle"/>
+
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.JavaIoSerializableObjectMustHaveReadResolveInspection"
             groupPath="Kotlin"
