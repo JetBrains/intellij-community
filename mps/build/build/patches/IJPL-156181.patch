@@ -1,0 +1,18 @@
+Index: platform/lang-impl/src/com/intellij/profile/codeInspection/ui/SingleInspectionProfilePanel.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/lang-impl/src/com/intellij/profile/codeInspection/ui/SingleInspectionProfilePanel.java b/platform/lang-impl/src/com/intellij/profile/codeInspection/ui/SingleInspectionProfilePanel.java
+--- a/platform/lang-impl/src/com/intellij/profile/codeInspection/ui/SingleInspectionProfilePanel.java	(revision cef35a48726b2996593160e9b38f8270f604767f)
++++ b/platform/lang-impl/src/com/intellij/profile/codeInspection/ui/SingleInspectionProfilePanel.java	(date 1751619776636)
+@@ -1361,7 +1361,7 @@
+         SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+         e -> { myInspectionsFilter.reset(); }
+       );
+-    } else if (myCreateInspectionActions.getChildrenCount() > 0) {
++    } else if (myCreateInspectionActions != null && myCreateInspectionActions.getChildrenCount() > 0) {
+       emptyText
+         .appendSecondaryText(
+           AnalysisBundle.message("inspections.settings.empty.text.inspection.link"),
+ 
