@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHa
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlin.psi.KtStatementExpression
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -35,7 +36,7 @@ class IntroduceVariableIntention : SelfTargetingIntention<PsiElement>(
             .takeWhile { it !is KtDeclarationWithBody && it !is KtStatementExpression }
             .firstOrNull {
                 val parent = it.parent
-                parent is KtBlockExpression || parent is KtDeclarationWithBody && !parent.hasBlockBody() && parent.bodyExpression == it
+                parent is KtBlockExpression || parent is KtScriptInitializer || parent is KtDeclarationWithBody && !parent.hasBlockBody() && parent.bodyExpression == it
             }
     }
 
