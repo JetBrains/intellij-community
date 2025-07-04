@@ -20,6 +20,8 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Obsolescent;
@@ -30,7 +32,6 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.function.*;
 
 import static java.util.Collections.emptyList;
@@ -420,7 +421,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return node.getChildren();
   }
 
-  private @NotNull TreeModelEvent createEvent(@NotNull TreePath path, @Nullable Map<Object, Integer> map) {
+  private @NotNull TreeModelEvent createEvent(@NotNull TreePath path, @Nullable Object2IntMap<Object> map) {
     if (map == null || map.isEmpty()) {
       return new TreeModelEvent(this, path, null, null);
     }
@@ -428,15 +429,15 @@ public final class AsyncTreeModel extends AbstractTreeModel
     int size = map.size();
     int[] indices = new int[size];
     Object[] children = new Object[size];
-    for (Entry<Object, Integer> entry : map.entrySet()) {
-      indices[i] = entry.getValue();
+    for (Object2IntMap.Entry<Object> entry : map.object2IntEntrySet()) {
+      indices[i] = entry.getIntValue();
       children[i] = entry.getKey();
       i++;
     }
     return new TreeModelEvent(this, path, indices, children);
   }
 
-  private void treeNodesChanged(@NotNull Node node, @Nullable Map<Object, Integer> map) {
+  private void treeNodesChanged(@NotNull Node node, @Nullable Object2IntMap<Object> map) {
     if (!listeners.isEmpty()) {
       for (TreePath path : node.paths) {
         listeners.treeNodesChanged(createEvent(path, map));
@@ -444,7 +445,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     }
   }
 
-  private void treeNodesInserted(@NotNull Node node, @NotNull Map<Object, Integer> map) {
+  private void treeNodesInserted(@NotNull Node node, @NotNull Object2IntMap<Object> map) {
     if (!listeners.isEmpty()) {
       for (TreePath path : node.paths) {
         listeners.treeNodesInserted(createEvent(path, map));
@@ -452,7 +453,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     }
   }
 
-  private void treeNodesRemoved(@NotNull Node node, @NotNull Map<Object, Integer> map) {
+  private void treeNodesRemoved(@NotNull Node node, @NotNull Object2IntMap<Object> map) {
     if (!listeners.isEmpty()) {
       for (TreePath path : node.paths) {
         listeners.treeNodesRemoved(createEvent(path, map));
@@ -460,8 +461,13 @@ public final class AsyncTreeModel extends AbstractTreeModel
     }
   }
 
-  private static @NotNull Map<Object, Integer> getIndices(@NotNull List<Node> children, @Nullable ToIntFunction<? super Node> function) {
-    Map<Object, Integer> map = new LinkedHashMap<>();
+  private static @NotNull Object2IntMap<Object> createObject2IntLinkedMap(int size) {
+    Object2IntLinkedOpenHashMap<Object> map = new Object2IntLinkedOpenHashMap<>(size);
+    map.defaultReturnValue(-1);
+    return map;
+  }
+  private static @NotNull Object2IntMap<Object> getIndices(@NotNull List<? extends Node> children, @Nullable ToIntFunction<? super Node> function) {
+    Object2IntMap<Object> map = createObject2IntLinkedMap(children.size());
     for (int i = 0; i < children.size(); i++) {
       Node child = children.get(i);
       if (map.containsKey(child.object)) {
@@ -474,12 +480,12 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return map;
   }
 
-  private static int getIntersectionCount(@NotNull Map<Object, Integer> indices, @NotNull Iterable<Object> objects) {
+  private static int getIntersectionCount(@NotNull Object2IntMap<Object> indices, @NotNull Iterable<Object> objects) {
     int count = 0;
     int last = -1;
     for (Object object : objects) {
-      Integer index = indices.get(object);
-      if (index != null && last < index.intValue()) {
+      int index = indices.getOrDefault(object, -1);
+      if (index != -1 && last < index) {
         last = index;
         count++;
       }
@@ -487,12 +493,12 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return count;
   }
 
-  private static @NotNull List<Object> getIntersection(@NotNull Map<Object, Integer> indices, @NotNull Iterable<Object> objects) {
+  private static @NotNull List<Object> getIntersection(@NotNull Object2IntMap<Object> indices, @NotNull Iterable<Object> objects) {
     List<Object> list = new ArrayList<>(indices.size());
     int last = -1;
     for (Object object : objects) {
-      Integer index = indices.get(object);
-      if (index != null && last < index.intValue()) {
+      int index = indices.getOrDefault(object, -1);
+      if (index != -1 && last < index) {
         last = index;
         list.add(object);
       }
@@ -500,7 +506,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     return list;
   }
 
-  private static @NotNull List<Object> getIntersection(@NotNull Map<Object, Integer> removed, @NotNull Map<Object, Integer> inserted) {
+  private static @NotNull List<Object> getIntersection(@NotNull Object2IntMap<Object> removed, @NotNull Object2IntMap<Object> inserted) {
     if (removed.isEmpty() || inserted.isEmpty()) {
       return emptyList();
     }
@@ -783,7 +789,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
         return;
       }
 
-      Map<Object, Integer> removed = getIndices(oldChildren, null);
+      Object2IntMap<Object> removed = getIndices(oldChildren, null);
       if (newChildren.isEmpty()) {
         oldChildren.forEach(child -> child.removeMapping(node, tree));
         node.setLeafState(loaded.leafState);
@@ -796,7 +802,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
       // remove duplicated nodes during indices calculation
       List<Node> list = new ArrayList<>(newChildren.size());
       Set<Object> reload = new SmartHashSet<>();
-      Map<Object, Integer> inserted = getIndices(newChildren, child -> {
+      Object2IntMap<Object> inserted = getIndices(newChildren, child -> {
         Node found = tree.map.get(child.object);
         if (found == null) {
           tree.map.put(child.object, child);
@@ -828,14 +834,15 @@ public final class AsyncTreeModel extends AbstractTreeModel
         return;
       }
 
-      Map<Object, Integer> contained = new LinkedHashMap<>();
-      for (Object object : getIntersection(removed, inserted)) {
-        Integer oldIndex = removed.remove(object);
-        if (oldIndex == null) {
+      List<Object> intersection = getIntersection(removed, inserted);
+      Object2IntMap<Object> contained = createObject2IntLinkedMap(intersection.size());
+      for (Object object : intersection) {
+        int oldIndex = removed.removeInt(object);
+        if (oldIndex == -1) {
           LOG.warn("intersection failed");
         }
-        Integer newIndex = inserted.remove(object);
-        if (newIndex == null) {
+        int newIndex = inserted.removeInt(object);
+        if (newIndex == -1) {
           LOG.warn("intersection failed");
         }
         else {
