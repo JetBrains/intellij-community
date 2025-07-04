@@ -205,6 +205,12 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testJSpecifyIntersectionBound() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
   public void testPassthroughGenericParameter() {
     doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
   }

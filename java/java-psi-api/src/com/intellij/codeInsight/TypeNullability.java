@@ -6,6 +6,7 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -171,5 +172,25 @@ public final class TypeNullability {
   @Override
   public String toString() {
     return myNullability + " (" + mySource + ")";
+  }
+
+  /**
+   * @return this object in the form of {@link NullabilityAnnotationInfo} if conversion is possible, null otherwise.
+   */
+  public @Nullable NullabilityAnnotationInfo toNullabilityAnnotationInfo() {
+    NullabilitySource source = source();
+    if (source instanceof NullabilitySource.ExtendsBound) {
+      source = ((NullabilitySource.ExtendsBound)source).boundSource();
+    }
+    if (source instanceof NullabilitySource.MultiSource) {
+      source = ((NullabilitySource.MultiSource)source).sources().iterator().next();
+    }
+    if (source instanceof NullabilitySource.ExplicitAnnotation) {
+      return new NullabilityAnnotationInfo(((NullabilitySource.ExplicitAnnotation)source).annotation(), nullability(), false);
+    }
+    if (source instanceof NullabilitySource.ContainerAnnotation) {
+      return new NullabilityAnnotationInfo(((NullabilitySource.ContainerAnnotation)source).annotation(), nullability(), true);
+    }
+    return null;
   }
 }

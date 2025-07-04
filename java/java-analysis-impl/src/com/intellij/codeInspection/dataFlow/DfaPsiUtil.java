@@ -245,19 +245,7 @@ public final class DfaPsiUtil {
 
   public static @Nullable NullabilityAnnotationInfo getTypeNullabilityInfo(@Nullable PsiType type) {
     if (type == null || type instanceof PsiPrimitiveType) return null;
-
-    TypeNullability nullability = type.getNullability();
-    NullabilitySource source = nullability.source();
-    if (source instanceof NullabilitySource.ExtendsBound extendsBound) {
-      source = extendsBound.boundSource();
-    }
-    if (source instanceof NullabilitySource.ExplicitAnnotation ea) {
-      return new NullabilityAnnotationInfo(ea.annotation(), nullability.nullability(), false);
-    }
-    if (source instanceof NullabilitySource.ContainerAnnotation ca) {
-      return new NullabilityAnnotationInfo(ca.annotation(), nullability.nullability(), true);
-    }
-    return null;
+    return type.getNullability().toNullabilityAnnotationInfo();
   }
 
   private static boolean shouldIgnoreAnnotation(PsiAnnotation annotation) {
