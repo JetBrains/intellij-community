@@ -9,44 +9,43 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 
 class DefaultGradleLightProjectTest {
 
   @Test
   fun `test DefaultGradleLightProject#getProjectIdentityPath for composite build`() {
     val rootBuild = mockLightBuild("project")
-    val rootProject = mockLightProject(":", rootBuild)
-    val rootSubproject = mockLightProject(":subproject", rootBuild)
+    val rootProject = mockLightProject(path = ":", rootBuild)
+    val rootSubproject = mockLightProject(path = ":subproject", rootBuild)
 
     val includedBuild = mockLightBuild("includedBuild", rootBuild)
-    val includedProject = mockLightProject(":", includedBuild)
-    val includedSubproject = mockLightProject(":subproject", includedBuild)
+    val includedProject = mockLightProject(path = ":", includedBuild)
+    val includedSubproject = mockLightProject(path = ":subproject", includedBuild)
 
     val deepIncludedBuild = mockLightBuild("deepIncludedBuild", includedBuild)
-    val deepIncludedProject = mockLightProject(":", deepIncludedBuild)
-    val deepIncludedSubproject = mockLightProject(":subproject", deepIncludedBuild)
+    val deepIncludedProject = mockLightProject(path = ":", deepIncludedBuild)
+    val deepIncludedSubproject = mockLightProject(path = ":subproject", deepIncludedBuild)
 
-    assertEquals(":", DefaultGradleLightProject.getProjectIdentityPath(rootProject))
-    assertEquals(":subproject", DefaultGradleLightProject.getProjectIdentityPath(rootSubproject))
+    verifyIdentityPath(":", rootProject)
+    verifyIdentityPath(":subproject", rootSubproject)
 
-    assertEquals(":includedBuild", DefaultGradleLightProject.getProjectIdentityPath(includedProject))
-    assertEquals(":includedBuild:subproject", DefaultGradleLightProject.getProjectIdentityPath(includedSubproject))
+    verifyIdentityPath(":includedBuild", includedProject)
+    verifyIdentityPath(":includedBuild:subproject", includedSubproject)
 
-    assertEquals(":includedBuild:deepIncludedBuild", DefaultGradleLightProject.getProjectIdentityPath(deepIncludedProject))
-    assertEquals(":includedBuild:deepIncludedBuild:subproject",
-                            DefaultGradleLightProject.getProjectIdentityPath(deepIncludedSubproject))
+    verifyIdentityPath(":includedBuild:deepIncludedBuild", deepIncludedProject)
+    verifyIdentityPath(":includedBuild:deepIncludedBuild:subproject", deepIncludedSubproject)
   }
 
   @ParameterizedTest
   @GradleTestSource("7.6, 8.0")
   fun `test DefaultGradleLightProject#getProjectIdentityPath for buildSrc`(gradleVersion: GradleVersion) {
     val rootBuild = mockLightBuild("project")
-    val rootProject = mockLightProject(path = ":", rootBuild)
 
     val buildSrcBuild = mockLightBuild(
-      name = "buildSrc",
+      buildName = "buildSrc",
       parent = when (isBuildSrcSyncedSeparately(gradleVersion)) {
         true -> null
         else -> rootBuild
@@ -55,10 +54,8 @@ class DefaultGradleLightProjectTest {
     val buildSrcProject = mockLightProject(path = ":", buildSrcBuild)
     val buildSrcSubproject = mockLightProject(path = ":subproject", buildSrcBuild)
 
-    assertEquals(":", DefaultGradleLightProject.getProjectIdentityPath(rootProject))
-
-    assertEquals(":buildSrc", DefaultGradleLightProject.getProjectIdentityPath(buildSrcProject))
-    assertEquals(":buildSrc:subproject", DefaultGradleLightProject.getProjectIdentityPath(buildSrcSubproject))
+    verifyIdentityPath(":buildSrc", buildSrcProject)
+    verifyIdentityPath(":buildSrc:subproject", buildSrcSubproject)
   }
 
   // TODO support or create a YouTrack issue for this case
@@ -68,13 +65,10 @@ class DefaultGradleLightProjectTest {
   @GradleTestSource("7.6, 8.0")
   fun `test DefaultGradleLightProject#getProjectIdentityPath for buildSrc of included build`(gradleVersion: GradleVersion) {
     val rootBuild = mockLightBuild("project")
-    val rootProject = mockLightProject(path = ":", rootBuild)
-
     val includedBuild = mockLightBuild("includedBuild", parent = rootBuild)
-    val includedProject = mockLightProject(path = ":", includedBuild)
 
     val buildSrcOfIncludedBuild = mockLightBuild(
-      name = "buildSrc",
+      buildName = "buildSrc",
       parent = when (isBuildSrcSyncedSeparately(gradleVersion)) {
         true -> null
         else -> includedBuild
@@ -83,30 +77,36 @@ class DefaultGradleLightProjectTest {
     val buildSrcOfIncludedProject = mockLightProject(path = ":", buildSrcOfIncludedBuild)
     val buildSrcOfIncludedSubproject = mockLightProject(path = ":subproject", buildSrcOfIncludedBuild)
 
-    assertEquals(":", DefaultGradleLightProject.getProjectIdentityPath(rootProject))
-
-    assertEquals(":includedBuild", DefaultGradleLightProject.getProjectIdentityPath(includedProject))
-
-    assertEquals(":includedBuild:buildSrc", DefaultGradleLightProject.getProjectIdentityPath(buildSrcOfIncludedProject))
-    assertEquals(":includedBuild:buildSrc:subproject", DefaultGradleLightProject.getProjectIdentityPath(buildSrcOfIncludedSubproject))
+    verifyIdentityPath(":includedBuild:buildSrc", buildSrcOfIncludedProject)
+    verifyIdentityPath(":includedBuild:buildSrc:subproject", buildSrcOfIncludedSubproject)
   }
 
-  private fun mockLightBuild(name: String, parent: GradleLightBuild? = null): GradleLightBuild =
-    mock<GradleLightBuild>().also {
-      whenever(it.name).thenReturn(name)
-      whenever(it.parentBuild).thenReturn(parent)
-      whenever(it.buildIdentifier).thenThrow(NotMockedMemberError())
-      whenever(it.rootProject).thenThrow(NotMockedMemberError())
-      whenever(it.projects).thenThrow(NotMockedMemberError())
+  private fun verifyIdentityPath(identityPath: String, rootProject: GradleLightProject) {
+    assertEquals(identityPath, DefaultGradleLightProject.getProjectIdentityPath(rootProject)) {
+      "The identityPath, calculated by `DefaultGradleLightProject#getProjectIdentityPath` has unexpected value."
     }
+  }
 
-  private fun mockLightProject(path: String, build: GradleLightBuild): GradleLightProject =
-    mock<GradleLightProject>().also {
-      whenever(it.build).thenReturn(build)
-      whenever(it.path).thenReturn(path)
-      whenever(it.name).thenThrow(NotMockedMemberError())
-      whenever(it.projectDirectory).thenThrow(NotMockedMemberError())
-      whenever(it.projectIdentifier).thenThrow(NotMockedMemberError())
-      whenever(it.childProjects).thenThrow(NotMockedMemberError())
-    }
+  private fun mockLightBuild(
+    buildName: String,
+    parent: GradleLightBuild? = null,
+  ): GradleLightBuild = mock {
+    on { this.name } doReturn buildName
+    on { parentBuild } doReturn parent
+    on { buildIdentifier } doThrow NotMockedMemberError()
+    on { rootProject } doThrow NotMockedMemberError()
+    on { projects } doThrow NotMockedMemberError()
+  }
+
+  private fun mockLightProject(
+    path: String,
+    build: GradleLightBuild,
+  ): GradleLightProject = mock {
+    on { this.build } doReturn build
+    on { this.path } doReturn path
+    on { name } doThrow NotMockedMemberError()
+    on { projectDirectory } doThrow NotMockedMemberError()
+    on { projectIdentifier } doThrow NotMockedMemberError()
+    on { childProjects } doThrow NotMockedMemberError()
+  }
 }

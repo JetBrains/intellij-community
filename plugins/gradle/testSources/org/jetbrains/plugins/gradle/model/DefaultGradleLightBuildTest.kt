@@ -29,8 +29,8 @@ class DefaultGradleLightBuildTest {
       gradleVersion = gradleVersion,
     )
     val subproject = mockGradleProject(
-      path = ":subproject",
-      buildTreePath = ":subproject", buildPath = "/rootBuild",
+      path = ":subproject", buildTreePath = ":subproject",
+      buildPath = "/rootBuild",
       projectPath = "/rootBuild/subproject",
       gradleVersion = gradleVersion,
       parent = rootProject
@@ -79,8 +79,8 @@ class DefaultGradleLightBuildTest {
       gradleVersion = gradleVersion,
     )
     val includedSubproject = mockGradleProject(
-      path = ":subproject",
-      buildTreePath = ":includedBuild:subproject", buildPath = "/rootBuild/includedBuild",
+      path = ":subproject", buildTreePath = ":includedBuild:subproject",
+      buildPath = "/rootBuild/includedBuild",
       projectPath = "/rootBuild/includedBuild/subproject",
       gradleVersion = gradleVersion,
       parent = includedRootProject
@@ -97,8 +97,8 @@ class DefaultGradleLightBuildTest {
       gradleVersion = gradleVersion,
     )
     val deepIncludedSubproject = mockGradleProject(
-      path = ":subproject",
-      buildTreePath = ":includedBuild:deepIncludedBuild:subproject", buildPath = "/rootBuild/includedBuild/deepIncludedBuild",
+      path = ":subproject", buildTreePath = ":includedBuild:deepIncludedBuild:subproject",
+      buildPath = "/rootBuild/includedBuild/deepIncludedBuild",
       projectPath = "/rootBuild/includedBuild/deepIncludedBuild/subproject",
       gradleVersion = gradleVersion,
       parent = deepIncludedRootProject
