@@ -179,6 +179,9 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyHighlightingAnnotatorVisitor"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyBuiltinAnnotatorVisitor"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.UnsupportedFeatures"/>
 
     <localInspection language="Python" shortName="PyUnusedLocalInspection" suppressId="PyUnusedLocal" bundle="messages.PyPsiBundle" key="INSP.NAME.unused" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection"/>
     <localInspection language="Python" shortName="PyRedundantParenthesesInspection" suppressId="PyRedundantParentheses" bundle="messages.PyPsiBundle" key="INSP.NAME.redundant.parentheses" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRedundantParenthesesInspection"/>

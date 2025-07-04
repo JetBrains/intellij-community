@@ -4,7 +4,6 @@ package com.jetbrains.python.validation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -17,13 +16,10 @@ public final class PyAnnotatingVisitor extends PyAnnotatorBase implements DumbAw
       new PyAssignTargetAnnotatorVisitor(holder),
       new PyTypeAnnotationTargetAnnotatorVisitor(holder),
       new PyParameterListAnnotatorVisitor(holder),
-      new PyHighlightingAnnotatorVisitor(holder),
       new ReturnAnnotator(holder),
       new PyBreakContinueAnnotatorVisitor(holder),
       new PyGlobalAnnotatorVisitor(holder),
       new PyImportAnnotatorVisitor(holder),
-      new PyBuiltinAnnotatorVisitor(holder),
-      new UnsupportedFeatures(holder, List.of(LanguageLevel.forElement(psiElement))),
       new PyAsyncAwaitAnnotatorVisitor(holder),
       new PyAstNumericLiteralAnnotatorVisitor(holder)
     );
