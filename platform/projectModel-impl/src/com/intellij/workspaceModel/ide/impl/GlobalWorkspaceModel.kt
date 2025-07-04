@@ -48,7 +48,7 @@ import kotlin.system.measureTimeMillis
 
 @OptIn(EntityStorageInstrumentationApi::class)
 @ApiStatus.Internal
-class GlobalWorkspaceModel(
+class GlobalWorkspaceModel internal constructor(
   /**
    * Despite the prefix `Global`, the IDE can have multiple workspace models per isolated environment, such as WSL and Docker containers.
    *
