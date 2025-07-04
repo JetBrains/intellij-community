@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
  * Extension point to provide a custom, language-dependent hyperlink for nodes in the Variables view.
  *
  * Note that it will only be invoked if there were no other hyperlinks provided before
- * ([XValueNodeImpl.myFullValueEvaluator] or [XValueNodeImpl.myAdditionalHyperLinks])
+ * ([XValueNodeImpl.myFullValueEvaluator] or [XValueNodeImpl.myAdditionalHyperLink])
  */
 @ApiStatus.Experimental
 interface XDebuggerNodeLinkActionProvider {
