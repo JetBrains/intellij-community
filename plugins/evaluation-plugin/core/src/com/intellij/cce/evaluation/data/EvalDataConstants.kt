@@ -179,43 +179,23 @@ object Execution {
     )
   )
 
-  val REFERENCE_START_LINE: TrivialEvalData<Int> = EvalDataDescription(
-    name = "Reference start line",
-    description = "Ground truth start line of the range",
-    DataPlacement.AdditionalInt(REFERENCE_START_LINE_PROPERTY),
+  val REFERENCE_NAMED_RANGES: TrivialEvalData<List<NamedRange>> = EvalDataDescription(
+    name = "Reference named ranges",
+    description = "Ground truth named ranges",
+    DataPlacement.AdditionalNamedRanges(REFERENCE_NAMED_RANGE_PROPERTY),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.InlineInt
+      DataRenderer.NamedRanges
     )
   )
 
-  val REFERENCE_END_LINE: TrivialEvalData<Int> = EvalDataDescription(
-    name = "Reference end line",
-    description = "Ground truth end line of the range",
-    DataPlacement.AdditionalInt(REFERENCE_END_LINE_PROPERTY),
+  val PREDICTED_NAMED_RANGES: TrivialEvalData<List<NamedRange>> = EvalDataDescription(
+    name = "Predicted named ranges",
+    description = "Predicted named ranges",
+    DataPlacement.AdditionalNamedRanges(PREDICTED_NAMED_RANGE_PROPERTY),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.InlineInt
-    )
-  )
-
-  val START_LINES: TrivialEvalData<List<Int>> = EvalDataDescription(
-    name = "Predicted start lines",
-    description = "Predicted start lines of the ranges",
-    DataPlacement.AdditionalListInt(START_LINES_PROPERTY),
-    presentation = EvalDataPresentation(
-      PresentationCategory.EXECUTION,
-      DataRenderer.ListInt
-    )
-  )
-
-  val END_LINES: TrivialEvalData<List<Int>> = EvalDataDescription(
-    name = "Predicted end lines",
-    description = "Predicted end lines of the ranges",
-    DataPlacement.AdditionalListInt(END_LINES_PROPERTY),
-    presentation = EvalDataPresentation(
-      PresentationCategory.EXECUTION,
-      DataRenderer.ListInt
+      DataRenderer.NamedRanges
     )
   )
 }

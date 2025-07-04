@@ -1,12 +1,20 @@
 package com.intellij.cce.metric
 
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
-import com.intellij.cce.evaluable.REFERENCE_START_LINE_PROPERTY
-import com.intellij.cce.evaluable.REFERENCE_END_LINE_PROPERTY
-import com.intellij.cce.evaluable.START_LINES_PROPERTY
-import com.intellij.cce.evaluable.END_LINES_PROPERTY
+import com.intellij.cce.evaluable.REFERENCE_NAMED_RANGE_PROPERTY
+import com.intellij.cce.evaluable.PREDICTED_NAMED_RANGE_PROPERTY
+import com.intellij.cce.evaluation.data.NamedRange
+import com.intellij.cce.metric.util.CloudSemanticSimilarityCalculator
 import com.intellij.cce.metric.util.Sample
 import com.intellij.cce.metric.util.computeIOU
+import com.intellij.cce.metric.util.matchRanges
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import kotlinx.coroutines.async
 import kotlin.collections.forEach
 
 
@@ -23,55 +31,65 @@ abstract class RangeMetricBase : ConfidenceIntervalMetric<Double>() {
     val lookups = sessions.flatMap { session -> session.lookups }
     val fileSample = Sample()
     lookups.forEach { lookup ->
-      val referenceRange = Pair((lookup.additionalInfo[REFERENCE_START_LINE_PROPERTY] as? Double ?: -1).toInt(),
-                                (lookup.additionalInfo[REFERENCE_END_LINE_PROPERTY] as? Double ?: -1).toInt())
-      val predictedRanges = (lookup.additionalInfo[START_LINES_PROPERTY] as? List<Double> ?: emptyList())
-        .zip(lookup.additionalInfo[END_LINES_PROPERTY] as? List<Double> ?: emptyList()).map {
-          Pair(it.first.toInt(), it.second.toInt())
-        }
+      val referenceRanges = getFromProperty(lookup, REFERENCE_NAMED_RANGE_PROPERTY)
+      val predictedRanges = getFromProperty(lookup, PREDICTED_NAMED_RANGE_PROPERTY)
 
-      calculateMetric(predictedRanges, referenceRange, fileSample)
+      calculateMetric(getMatchedRanges(predictedRanges, referenceRanges), predictedRanges, referenceRanges, fileSample)
     }
     return fileSample.mean()
   }
 
-  abstract fun calculateMetric(predictedRanges: List<Pair<Int, Int>>, referenceRange: Pair<Int, Int>, fileSample: Sample)
+  fun getFromProperty(lookup: Lookup, propertyKey: String): List<NamedRange> {
+    val gson = Gson()
+    val namedRanges = lookup.additionalInfo[propertyKey] ?: return emptyList()
+    val ranges = namedRanges as? JsonElement ?: gson.toJsonTree(namedRanges)
+    return gson.fromJson(ranges, Array<NamedRange>::class.java).toList()
+  }
+
+  fun getMatchedRanges(predictedRanges: List<NamedRange>, referenceRanges: List<NamedRange>): Map<NamedRange, NamedRange> {
+    return matchRanges(referenceRanges, predictedRanges)
+  }
+
+  abstract fun calculateMetric(matchedRanges: Map<NamedRange, NamedRange>, predictedRanges: List<NamedRange>, referenceRanges: List<NamedRange>, fileSample: Sample)
 }
 
 interface Scorer {
-  fun computeScore(predictedRange: Pair<Int, Int>, referenceRange: Pair<Int, Int>): Double
+  fun computeScore(predictedRange: NamedRange, referenceRange: NamedRange): Double
 }
 
 interface IOUScorer : Scorer {
-  override fun computeScore(predictedRange: Pair<Int, Int>, referenceRange: Pair<Int, Int>): Double {
+  override fun computeScore(predictedRange: NamedRange, referenceRange: NamedRange): Double {
     return computeIOU(predictedRange, referenceRange)
   }
 }
 
 interface PerfectOverlapScorer : Scorer {
-  override fun computeScore(predictedRange: Pair<Int, Int>, referenceRange: Pair<Int, Int>): Double {
+  override fun computeScore(predictedRange: NamedRange, referenceRange: NamedRange): Double {
     val iou = computeIOU(predictedRange, referenceRange)
     return if (iou == 1.0) 1.0 else 0.0
   }
 }
 
 abstract class PrecisionRangeMetricBase : RangeMetricBase(), Scorer {
-  override fun calculateMetric(predictedRanges: List<Pair<Int, Int>>, referenceRange: Pair<Int, Int>, fileSample: Sample) {
-    if (predictedRanges.isEmpty()) return
-    val bestOverlap = predictedRanges.maxOfOrNull { computeScore(it, referenceRange) } ?: 0.0
-    (listOf(bestOverlap) + List(predictedRanges.size - 1) { 0.0 }).forEach {
+  override fun calculateMetric(matchedRanges: Map<NamedRange, NamedRange>, predictedRanges: List<NamedRange>, referenceRanges: List<NamedRange>, fileSample: Sample) {
+    if (predictedRanges.isEmpty()) {
+      val value = if (referenceRanges.isEmpty()) 1.0 else 0.0
+      fileSample.add(value)
+      coreSample.add(value)
+      return
+    }
+
+    val bestOverlaps = matchedRanges.map { computeScore(it.key, it.value) }
+    (bestOverlaps + List(predictedRanges.size - matchedRanges.size) { 0.0 }).forEach {
       fileSample.add(it)
       coreSample.add(it)
     }
   }
 }
 
-abstract class RecallRangeMetricBase : RangeMetricBase(), Scorer {
-  override fun calculateMetric(predictedRanges: List<Pair<Int, Int>>, referenceRange: Pair<Int, Int>, fileSample: Sample) {
-    if (referenceRange.first == -1 || referenceRange.second == -1) return
-    val bestOverlap = predictedRanges.maxOfOrNull { computeScore(it, referenceRange) } ?: 0.0
-    fileSample.add(bestOverlap)
-    coreSample.add(bestOverlap)
+abstract class RecallRangeMetricBase : PrecisionRangeMetricBase(), Scorer {
+  override fun calculateMetric(matchedRanges: Map<NamedRange, NamedRange>, predictedRanges: List<NamedRange>, referenceRanges: List<NamedRange>, fileSample: Sample) {
+    super.calculateMetric(matchedRanges, referenceRanges, predictedRanges, fileSample)
   }
 }
 
@@ -94,4 +112,34 @@ class IOUPrecisionMetric : PrecisionRangeMetricBase(), IOUScorer {
 class IOURecallMetric : RecallRangeMetricBase(), IOUScorer {
   override val name = "IoU Recall"
   override val description: String = "Sum of IoU between predicted & reference range divided by total number of reference ranges"
+}
+
+class SemanticSimilarityRangeMetric(val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : RangeMetricBase() {
+  override val name = "Semantic Similarity"
+  override val description: String = "Semantic Similarity between texts of best matched predicted & reference ranges"
+
+  private val project: Project
+    get() = ProjectManager.getInstance().defaultProject
+
+  override fun calculateMetric(matchedRanges: Map<NamedRange, NamedRange>, predictedRanges: List<NamedRange>, referenceRanges: List<NamedRange>, fileSample: Sample) {
+    if (matchedRanges.isEmpty()) {
+      val value = if (referenceRanges.isEmpty()) 1.0 else 0.0
+      fileSample.add(value)
+      coreSample.add(value)
+      return
+    }
+    matchedRanges.forEach { (predicted, reference) ->
+      val score = runBlockingCancellable {
+        async {
+          cloudSemanticSimilarityCalculator.calculateCosineSimilarity(
+            project,
+            predicted.text,
+            reference.text
+          )
+        }.await()
+      }
+      fileSample.add(score)
+      coreSample.add(score)
+    }
+  }
 }
