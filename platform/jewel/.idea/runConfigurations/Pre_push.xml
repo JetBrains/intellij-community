@@ -10,8 +10,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="apiDump" />
-          <option value="ktfmtFormat" />
+        <option value="validatePublicApi" />
+        <option value="ktfmtFormat" />
         </list>
       </option>
       <option name="vmOptions" />

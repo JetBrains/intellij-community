@@ -146,8 +146,7 @@ The minimum supported Kotlin version is dictated by the minimum supported Intell
 The project is split in modules:
 
 1. `buildSrc` contains the build logic, including:
-    * The `jewel` and `jewel-publish` configuration plugins
-    * The `jewel-check-public-api` and `jewel-linting` configuration plugins
+    * The `jewel`, `jewel-publish`, `jewel-check-public-api` and `jewel-linting` configuration plugins
     * The Theme Palette generator plugin
     * The Studio Releases generator plugin
 2. `foundation` contains the foundational Jewel functionality:

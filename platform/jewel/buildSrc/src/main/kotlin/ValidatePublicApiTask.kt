@@ -1,16 +1,23 @@
-import java.io.File
-import java.util.Stack
-import java.util.regex.PatternSyntaxException
+import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.SourceTask
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import java.io.File
+import java.util.regex.PatternSyntaxException
 
 @CacheableTask
-open class ValidatePublicApiTask : SourceTask() {
+abstract class ValidatePublicApiTask : DefaultTask() {
+    @get:Input
+    abstract var excludedClassRegexes: Set<String>
 
-    @Input var excludedClassRegexes: Set<String> = emptySet()
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val apiFiles: ConfigurableFileCollection
 
     init {
         group = "verification"
@@ -19,32 +26,25 @@ open class ValidatePublicApiTask : SourceTask() {
         outputs.file(project.layout.buildDirectory.file("apiValidationRun"))
     }
 
-    private val classFqnRegex = "public (?:\\w+ )*class (\\S+)\\b".toRegex()
-
-    @Suppress("ConvertToStringTemplate") // The odd concatenation is needed because of $; escapes get confused
-    private val copyMethodRegex = ("public static synthetic fun copy(-\\w+)?" + "\\$" + "default\\b").toRegex()
-
     @TaskAction
     fun validatePublicApi() {
-        logger.info("Validating ${source.files.size} API file(s)...")
-
         val violations = mutableMapOf<File, Set<String>>()
         val excludedRegexes =
             excludedClassRegexes
                 .map {
                     try {
                         it.toRegex()
-                    } catch (ignored: PatternSyntaxException) {
+                    } catch (_: PatternSyntaxException) {
                         throw GradleException("Invalid data exclusion regex: '$it'")
                     }
                 }
                 .toSet()
 
-        inputs.files.forEach { apiFile ->
+        apiFiles.forEach { apiFile ->
             logger.lifecycle("Validating public API from file ${apiFile.path}")
 
             apiFile.useLines { lines ->
-                val actualDataClasses = findDataClasses(lines).filterExclusions(excludedRegexes)
+                val actualDataClasses = findDataClasses(apiFile.readLines()).filterExclusions(excludedRegexes)
 
                 if (actualDataClasses.isNotEmpty()) {
                     violations[apiFile] = actualDataClasses
@@ -54,7 +54,7 @@ open class ValidatePublicApiTask : SourceTask() {
 
         if (violations.isNotEmpty()) {
             val message = buildString {
-                appendLine("Data classes found in public API.")
+                appendLine("Data classes are not allowed. Found violations:")
                 appendLine()
 
                 for ((file, dataClasses) in violations.entries) {
@@ -64,6 +64,13 @@ open class ValidatePublicApiTask : SourceTask() {
                     }
                     appendLine()
                 }
+
+                appendLine("Avoid using data classes. Turn it into a class and add the @GenerateDataFunctions annotation.")
+                appendLine(
+                    "For specific cases, you can exclude a data class from the validation. " +
+                        "For this, just add it to the 'apiValidation.excludedClassRegexes' block in " +
+                        "your build.gradle.kts."
+                )
             }
 
             throw GradleException(message)
@@ -72,57 +79,63 @@ open class ValidatePublicApiTask : SourceTask() {
         }
     }
 
-    private fun findDataClasses(lines: Sequence<String>): Set<String> {
-        val currentClassStack = Stack<String>()
+    private fun findDataClasses(lines: List<String>): Set<String> {
+        var currentClassFqn: String? = null
+        var isCurrentClassCandidate = false
         val dataClasses = mutableMapOf<String, DataClassInfo>()
 
         for (line in lines) {
             if (line.isBlank()) continue
 
-            val matchResult = classFqnRegex.find(line)
-            if (matchResult != null) {
-                val classFqn = matchResult.groupValues[1]
-                currentClassStack.push(classFqn)
-                continue
-            }
+            // If the line starts with -, it's a member of a class.
+            if (line.startsWith("-")) {
+                // If we haven't found a class context yet or the current member isn't from
+                // a data class candidate, just ignore this member.
+                if (currentClassFqn == null || !isCurrentClassCandidate) continue
 
-            if (line.contains("}")) {
-                currentClassStack.pop()
-                continue
-            }
+                // We are inside a class, so check for data class methods.
+                val info = dataClasses.getOrPut(currentClassFqn) { DataClassInfo() }
 
-            val fqn = currentClassStack.peek()
-            if (copyMethodRegex.find(line) != null) {
-                val info = dataClasses.getOrPut(fqn) { DataClassInfo(fqn) }
-                info.hasCopyMethod = true
-            } else if (line.contains("public static final synthetic fun box-impl")) {
-                val info = dataClasses.getOrPut(fqn) { DataClassInfo(fqn) }
-                info.isLikelyValueClass = true
+                // Detect copy() method and the $default version.
+                if ("copy(" in line || "copy\$default(" in line) {
+                    info.hasCopyMethod = true
+                }
+
+                // Detect componentN() methods
+                if (line.contains(Regex("""component\d+\("""))) {
+                    info.hasComponentMethod = true
+                }
+            } else {
+                if (line.startsWith("f:")) {
+                    currentClassFqn = line.substringAfter("f:")
+                    isCurrentClassCandidate = true
+                } else {
+                    isCurrentClassCandidate = false
+                }
             }
         }
 
-        val actualDataClasses = dataClasses.filterValues { it.hasCopyMethod && !it.isLikelyValueClass }.keys
-        return actualDataClasses
+        return dataClasses.filterValues { it.isDataClass() }.keys
     }
 
     private fun Set<String>.filterExclusions(excludedRegexes: Set<Regex>): Set<String> {
         if (excludedRegexes.isEmpty()) return this
 
         return filterNot { dataClassFqn ->
-                val isExcluded = excludedRegexes.any { it.matchEntire(dataClassFqn) != null }
+            val isExcluded = excludedRegexes.any { it.matchEntire(dataClassFqn) != null }
 
-                if (isExcluded) {
-                    logger.info("  Ignoring excluded data class $dataClassFqn")
-                }
-                isExcluded
+            if (isExcluded) {
+                logger.lifecycle("  Ignoring excluded data class $dataClassFqn")
             }
-            .toSet()
+            isExcluded
+        }.toSet()
     }
 }
 
 @Suppress("DataClassShouldBeImmutable") // Only used in a loop, saves memory and is faster
 private data class DataClassInfo(
-    val fqn: String,
     var hasCopyMethod: Boolean = false,
-    var isLikelyValueClass: Boolean = false,
-)
+    var hasComponentMethod: Boolean = false,
+) {
+    fun isDataClass(): Boolean = hasCopyMethod && hasComponentMethod
+}
