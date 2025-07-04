@@ -5,8 +5,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.chooseDanglingFileResolutionMode
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -37,7 +37,7 @@ fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
     element: E,
 ): C? = if (element.containingFile.copyOrigin == null) analyze(element) {
     prepareContext(element)
-} else analyzeCopy(element, KaDanglingFileResolutionMode.PREFER_SELF) {
+} else analyzeCopy(element, chooseDanglingFileResolutionMode(element)) {
     prepareContext(element)
 }
 

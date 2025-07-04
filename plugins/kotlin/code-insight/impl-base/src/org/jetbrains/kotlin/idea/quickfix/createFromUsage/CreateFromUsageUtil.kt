@@ -11,7 +11,7 @@ import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
-import org.jetbrains.kotlin.idea.core.isKotlinNotebookCell
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.isKotlinNotebookCell
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
