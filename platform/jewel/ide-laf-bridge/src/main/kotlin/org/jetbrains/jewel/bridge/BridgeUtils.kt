@@ -96,7 +96,7 @@ public fun retrieveIntAsDp(key: String, default: Dp? = null): Dp {
 public fun retrieveIntAsDpOrUnspecified(key: String): Dp =
     try {
         retrieveIntAsDp(key)
-    } catch (_: ComposeBridgeException) {
+    } catch (_: JewelBridgeException) {
         Dp.Unspecified
     }
 

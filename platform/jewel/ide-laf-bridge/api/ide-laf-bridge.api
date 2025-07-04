@@ -54,18 +54,18 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun toPaddingValues (Ljava/awt/Insets;)Landroidx/compose/foundation/layout/PaddingValues;
 }
 
-public abstract class org/jetbrains/jewel/bridge/ComposeBridgeException : java/lang/RuntimeException {
+public abstract class org/jetbrains/jewel/bridge/JewelBridgeException : java/lang/RuntimeException {
 	public static final field $stable I
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun getMessage ()Ljava/lang/String;
 }
 
-public final class org/jetbrains/jewel/bridge/ComposeBridgeException$KeyNotFoundException : org/jetbrains/jewel/bridge/ComposeBridgeException {
+public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeyNotFoundException : org/jetbrains/jewel/bridge/JewelBridgeException {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 }
 
-public final class org/jetbrains/jewel/bridge/ComposeBridgeException$KeysNotFoundException : org/jetbrains/jewel/bridge/ComposeBridgeException {
+public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeysNotFoundException : org/jetbrains/jewel/bridge/JewelBridgeException {
 	public static final field $stable I
 	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
 }

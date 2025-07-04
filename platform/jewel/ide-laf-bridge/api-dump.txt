@@ -1,3 +1,15 @@
+f:org.jetbrains.jewel.bridge.BridgeIconDataKt
+- sf:readFromLaF(org.jetbrains.jewel.foundation.theme.ThemeIconData$Companion):org.jetbrains.jewel.foundation.theme.ThemeIconData
+f:org.jetbrains.jewel.bridge.BridgePainterHintsProvider
+- org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.bridge.BridgePainterHintsProvider$Companion
+- hints(java.lang.String,androidx.compose.runtime.Composer,I):java.util.List
+f:org.jetbrains.jewel.bridge.BridgePainterHintsProvider$Companion
+- f:invoke(Z):org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
+f:org.jetbrains.jewel.bridge.BridgeResourceResolverKt
+- sf:bridgePainterProvider(java.lang.String):org.jetbrains.jewel.ui.painter.ResourcePainterProvider
+- sf:bridgePainterProvider(org.jetbrains.jewel.ui.icon.IconKey):org.jetbrains.jewel.ui.painter.ResourcePainterProvider
 f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:createVerticalBrush-8A-3gB4(java.util.List,F,F,I):androidx.compose.ui.graphics.Brush
 - bs:createVerticalBrush-8A-3gB4$default(java.util.List,F,F,I,I,java.lang.Object):androidx.compose.ui.graphics.Brush
@@ -32,28 +44,108 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:toNonNegativeDpSize(java.awt.Dimension):J
 - sf:toPaddingValues(com.intellij.util.ui.JBInsets):androidx.compose.foundation.layout.PaddingValues
 - sf:toPaddingValues(java.awt.Insets):androidx.compose.foundation.layout.PaddingValues
-a:org.jetbrains.jewel.bridge.ComposeBridgeException
+a:org.jetbrains.jewel.bridge.JewelBridgeException
 - java.lang.RuntimeException
 - sf:$stable:I
 - getMessage():java.lang.String
-f:org.jetbrains.jewel.bridge.ComposeBridgeException$KeyNotFoundException
-- org.jetbrains.jewel.bridge.ComposeBridgeException
+f:org.jetbrains.jewel.bridge.JewelBridgeException$KeyNotFoundException
+- org.jetbrains.jewel.bridge.JewelBridgeException
 - sf:$stable:I
 - <init>(java.lang.String,java.lang.String):V
-f:org.jetbrains.jewel.bridge.ComposeBridgeException$KeysNotFoundException
-- org.jetbrains.jewel.bridge.ComposeBridgeException
+f:org.jetbrains.jewel.bridge.JewelBridgeException$KeysNotFoundException
+- org.jetbrains.jewel.bridge.JewelBridgeException
 - sf:$stable:I
 - <init>(java.util.List,java.lang.String):V
 f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
 - sf:JBPanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:JBPanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- sf:JewelComposeNoThemePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bs:JewelComposeNoThemePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- sf:JewelComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bs:JewelComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- sf:JewelToolWindowComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bs:JewelToolWindowComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- sf:JewelToolWindowNoThemeComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bs:JewelToolWindowNoThemeComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - sf:compose(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:compose$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - sf:composeForToolWindowWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:composeForToolWindowWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - sf:composeWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:composeWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- sf:getLocalComponent():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.bridge.ToolWindowExtensionsKt
+- sf:addComposeTab(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3):V
+- bs:addComposeTab$default(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+org.jetbrains.jewel.bridge.ToolWindowScope
+- a:getToolWindow():com.intellij.openapi.wm.ToolWindow
+f:org.jetbrains.jewel.bridge.TypographyKt
+- sf:medium(org.jetbrains.jewel.ui.component.Typography,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- sf:regular(org.jetbrains.jewel.ui.component.Typography,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- sf:small(org.jetbrains.jewel.ui.component.Typography,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+f:org.jetbrains.jewel.bridge.actionSystem.RootDataProviderModifier
+- androidx.compose.ui.node.ModifierNodeElement
+- com.intellij.openapi.actionSystem.UiDataProvider
+- sf:$stable:I
+- <init>():V
+- create():org.jetbrains.jewel.bridge.actionSystem.RootDataProviderNode
+- equals(java.lang.Object):Z
+- hashCode():I
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+- update(org.jetbrains.jewel.bridge.actionSystem.RootDataProviderNode):V
+f:org.jetbrains.jewel.bridge.actionSystem.RootDataProviderNode
+- androidx.compose.ui.Modifier$Node
+- com.intellij.openapi.actionSystem.UiDataProvider
+- sf:$stable:I
+- <init>():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+f:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory$Companion
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- f:createHighlighter():org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
+f:org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory$Companion
+- f:getInstance(com.intellij.openapi.project.Project):org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
+f:org.jetbrains.jewel.bridge.icon.IntelliJIconKeyKt
+- sf:fromPlatformIcon(org.jetbrains.jewel.ui.icon.IntelliJIconKey$Companion,javax.swing.Icon,java.lang.Class):org.jetbrains.jewel.ui.icon.IconKey
+- bs:fromPlatformIcon$default(org.jetbrains.jewel.ui.icon.IntelliJIconKey$Companion,javax.swing.Icon,java.lang.Class,I,java.lang.Object):org.jetbrains.jewel.ui.icon.IconKey
+f:org.jetbrains.jewel.bridge.theme.BridgeGlobalColorsKt
+- sf:readFromLaF(org.jetbrains.jewel.foundation.BorderColors$Companion):org.jetbrains.jewel.foundation.BorderColors
+- sf:readFromLaF(org.jetbrains.jewel.foundation.GlobalColors$Companion):org.jetbrains.jewel.foundation.GlobalColors
+- sf:readFromLaF(org.jetbrains.jewel.foundation.OutlineColors$Companion):org.jetbrains.jewel.foundation.OutlineColors
+- sf:readFromLaF(org.jetbrains.jewel.foundation.TextColors$Companion):org.jetbrains.jewel.foundation.TextColors
+f:org.jetbrains.jewel.bridge.theme.BridgeGlobalMetricsKt
+- sf:readFromLaF(org.jetbrains.jewel.foundation.GlobalMetrics$Companion):org.jetbrains.jewel.foundation.GlobalMetrics
 f:org.jetbrains.jewel.bridge.theme.BridgeGrayFilterValuesKt
 - sf:readFromLaF(org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion):org.jetbrains.jewel.foundation.DisabledAppearanceValues
+f:org.jetbrains.jewel.bridge.theme.BridgeThemeColorPaletteKt
+- sf:getWindowsPopupBorder(org.jetbrains.jewel.foundation.theme.ThemeColorPalette):androidx.compose.ui.graphics.Color
+- sf:readFromLaF(org.jetbrains.jewel.foundation.theme.ThemeColorPalette$Companion):org.jetbrains.jewel.foundation.theme.ThemeColorPalette
+f:org.jetbrains.jewel.bridge.theme.IntUiBridgeScrollbarKt
+- sf:default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
+- sf:default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling$Companion):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
+- sf:macOs-TZvXluI(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling$Companion,F,F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,J,J,J,J):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
+- bs:macOs-TZvXluI$default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling$Companion,F,F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
+- sf:macOs-fYp4AQw(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion,F,androidx.compose.foundation.layout.PaddingValues,J,J,J):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
+- bs:macOs-fYp4AQw$default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion,F,androidx.compose.foundation.layout.PaddingValues,J,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
+- sf:windowsAndLinux-TZvXluI(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling$Companion,F,F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,J,J,J,J):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
+- bs:windowsAndLinux-TZvXluI$default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling$Companion,F,F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
+- sf:windowsAndLinux-tYhzLtE(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion,F,androidx.compose.foundation.layout.PaddingValues,J,J):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
+- bs:windowsAndLinux-tYhzLtE$default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion,F,androidx.compose.foundation.layout.PaddingValues,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
+f:org.jetbrains.jewel.bridge.theme.IntUiBridgeSliderKt
+- sf:dark-7HESe_I(org.jetbrains.jewel.ui.component.styling.SliderColors$Companion,J,J,J,J,J,J,J,J,J,J,J,J,J,J,J):org.jetbrains.jewel.ui.component.styling.SliderColors
+- bs:dark-7HESe_I$default(org.jetbrains.jewel.ui.component.styling.SliderColors$Companion,J,J,J,J,J,J,J,J,J,J,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SliderColors
+- sf:defaults-IDSuZpE(org.jetbrains.jewel.ui.component.styling.SliderMetrics$Companion,F,J,F,F,F,F):org.jetbrains.jewel.ui.component.styling.SliderMetrics
+- bs:defaults-IDSuZpE$default(org.jetbrains.jewel.ui.component.styling.SliderMetrics$Companion,F,J,F,F,F,F,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SliderMetrics
+- sf:light-7HESe_I(org.jetbrains.jewel.ui.component.styling.SliderColors$Companion,J,J,J,J,J,J,J,J,J,J,J,J,J,J,J):org.jetbrains.jewel.ui.component.styling.SliderColors
+- bs:light-7HESe_I$default(org.jetbrains.jewel.ui.component.styling.SliderColors$Companion,J,J,J,J,J,J,J,J,J,J,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.SliderColors
+f:org.jetbrains.jewel.bridge.theme.IntUiBridgeSplitButtonKt
+- sf:readDefaultSplitButtonStyle():org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
+- sf:readOutlinedSplitButtonStyle():org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt
+- sf:retrieveConsoleTextStyle():androidx.compose.ui.text.TextStyle
+- sf:retrieveDefaultTextStyle():androidx.compose.ui.text.TextStyle
 - sf:retrieveDefaultTextStyle(F):androidx.compose.ui.text.TextStyle
+- sf:retrieveEditorTextStyle():androidx.compose.ui.text.TextStyle
+f:org.jetbrains.jewel.bridge.theme.SwingBridgeThemeKt
+- sf:SwingBridgeTheme(kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
