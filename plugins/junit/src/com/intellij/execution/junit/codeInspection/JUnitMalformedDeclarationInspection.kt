@@ -386,7 +386,8 @@ private class JUnitMalformedSignatureVisitor(
     val javaClass = aClass.javaPsi
     if (aClass.isInterface || aClass.javaPsi.hasModifier(JvmModifier.ABSTRACT)) return
     val hasNestedAnnotation = javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)
-    if (!hasNestedAnnotation && !aClass.methods.any { it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_API_TEST) }) return
+    if (!hasNestedAnnotation && !aClass.methods.any { it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_API_TEST) ||
+                                                      it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)}) return
     if (!hasNestedAnnotation && aClass.isStatic) return
     if (hasNestedAnnotation && !aClass.isStatic && aClass.visibility != UastVisibility.PRIVATE) return
     val message = JUnitBundle.message("jvm.inspections.junit.malformed.missing.nested.annotation.descriptor")

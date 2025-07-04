@@ -652,6 +652,19 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         void implicitConversionClass(Book book) { }
 
         static class Book { public Book(String title) { } }
+        
+        static class StaticInnerTest {
+          @org.junit.jupiter.params.ParameterizedTest
+          @org.junit.jupiter.params.provider.ValueSource(strings = {"1","2"})
+          public void test(String data) {}
+        }
+        
+        @org.junit.jupiter.api.Nested
+        class NestedInnerTest {
+          @org.junit.jupiter.params.ParameterizedTest
+          @org.junit.jupiter.params.provider.ValueSource(strings = {"1","2"})
+          public void test(String data) {}
+        }
       }
       
       class MethodSource {
@@ -973,6 +986,21 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         void testWithEnumSource(int i) { }
       }
     """.trimIndent())
+    }
+    fun `test malformed ParameterizedTest inner class should be nested highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class OuterTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.ValueSource(strings = {"1","2"})
+        public void test(String data) {}
+      
+        class <error descr="Tests in nested class will not be executed">InnerTest</error> {
+          @org.junit.jupiter.params.ParameterizedTest
+          @org.junit.jupiter.params.provider.ValueSource(strings = {"1","2"})
+          public void test(String data) {}
+        }
+      }
+      """.trimIndent())
     }
     fun `test malformed parameterized multiple types highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
