@@ -44,6 +44,7 @@ object CreateFromUsageUtil {
                 val sibling = actualContainer.getChildOfType<KtProperty>() ?: when (actualContainer) {
                     is KtClassBody -> actualContainer.declarations.firstOrNull() ?: actualContainer.rBrace
                     is KtFile -> actualContainer.declarations.first()
+                    is KtBlockExpression -> actualContainer.statements.firstOrNull() ?: actualContainer.rBrace
                     else -> null
                 }
                 sibling?.let { actualContainer.addBefore(declaration, it) as D } ?: fileToEdit.add(declaration) as D
