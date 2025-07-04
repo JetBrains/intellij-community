@@ -38,20 +38,7 @@ internal object ExecServiceImpl : ExecService {
       val binary = if (binary.isAbsolute) binary else options.workingDirectory?.resolve(binary) ?: binary.toAbsolutePath()
       val eelPath = binary.asEelPath()
       val executableProcess = EelExecutableProcess(eelPath, args, options.env, options.workingDirectory, description)
-      val eelProcess = executableProcess.run().getOr { return@coroutineScope it }
-      launch(start = CoroutineStart.UNDISPATCHED) {
-        try {
-          eelProcess.exitCode.await()
-        }
-        catch (e: CancellationException) {
-          withContext(NonCancellable) {
-            eelProcess.kill()
-            eelProcess.exitCode.await()
-          }
-          throw e
-        }
-      }
-
+      val eelProcess = executableProcess.run(this).getOr { return@coroutineScope it }
       val result = try {
         withTimeout(options.timeout) {
           val interactiveResult = processInteractiveHandler.getResultFromProcess(binary, args, eelProcess)
@@ -81,13 +68,15 @@ private data class EelExecutableProcess(
 )
 
 @CheckReturnValue
-private suspend fun EelExecutableProcess.run(): PyExecResult<EelProcess> {
+private suspend fun EelExecutableProcess.run(scopeToBound: CoroutineScope): PyExecResult<EelProcess> {
   val workingDirectory = if (workingDirectory != null && !workingDirectory.isAbsolute) workingDirectory.toRealPath() else workingDirectory
   try {
     val executionResult = exe.descriptor.toEelApi().exec.spawnProcess(exe.toString())
+      .scope(scopeToBound)
       .args(args)
       .env(env)
-      .workingDirectory(workingDirectory?.asEelPath()).eelIt()
+      .workingDirectory(workingDirectory?.asEelPath())
+      .eelIt()
 
     return Result.success(executionResult)
   }
