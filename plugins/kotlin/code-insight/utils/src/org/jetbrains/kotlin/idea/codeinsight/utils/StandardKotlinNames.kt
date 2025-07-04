@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.JvmStandardClassIds
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_ENUMS_PACKAGE
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
@@ -26,6 +28,8 @@ object StandardKotlinNames {
         @JvmField val enumValues: FqName = BUILT_INS_PACKAGE_FQ_NAME + "enumValues"
         @JvmField val enumValueOf: FqName = BUILT_INS_PACKAGE_FQ_NAME + "enumValueOf"
     }
+
+    @JvmField val exceptionClassId  = ClassId(BUILT_INS_PACKAGE_FQ_NAME , Name.identifier("Exception"))
 
     object Jvm {
         @JvmField val JvmInline: FqName = JvmStandardClassIds.BASE_JVM_PACKAGE + "JvmInline"
