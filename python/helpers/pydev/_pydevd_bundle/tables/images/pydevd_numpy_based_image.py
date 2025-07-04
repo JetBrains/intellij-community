@@ -31,6 +31,14 @@ def create_image(arr):
                 arr_to_convert = tf.sparse.to_dense(tf.sparse.reorder(arr_to_convert))
         except ImportError:
             pass
+        try:
+            import torch
+            if isinstance(arr_to_convert, torch.Tensor):
+                if arr_to_convert.requires_grad:
+                    arr_to_convert = arr_to_convert.detach()
+                arr_to_convert = arr_to_convert.to_dense()
+        except Exception:
+            pass
 
         arr_to_convert = arr_to_convert.numpy()
         arr_to_convert = np.where(arr_to_convert == None, 0, arr_to_convert)
