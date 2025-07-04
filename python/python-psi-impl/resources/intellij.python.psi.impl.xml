@@ -168,12 +168,12 @@
     <inlineActionHandler implementation="com.jetbrains.python.refactoring.inline.PyInlineFunctionHandler"/>
 
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.DocStringAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDocStringAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.StarAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.FStringsAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyGeneratorInArgumentListAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyStarAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyStringLiteralQuotesAnnotator"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyFStringsAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyPatternAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>

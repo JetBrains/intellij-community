@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.PyGeneratorExpression;
 import org.jetbrains.annotations.NotNull;
 
 
-public final class GeneratorInArgumentListAnnotator extends PyAnnotatorBase {
+public final class PyGeneratorInArgumentListAnnotator extends PyAnnotatorBase {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
     element.accept(new MyVisitor(holder));

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public final class StarAnnotator extends PyAnnotatorBase {
+public final class PyStarAnnotator extends PyAnnotatorBase {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
     element.accept(new MyVisitor(holder));

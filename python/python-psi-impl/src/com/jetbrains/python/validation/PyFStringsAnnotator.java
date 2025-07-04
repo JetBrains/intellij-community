@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public final class FStringsAnnotator extends PyAnnotatorBase {
+public final class PyFStringsAnnotator extends PyAnnotatorBase {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {

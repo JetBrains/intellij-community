@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Looks for well-formedness of string constants.
  */
-public final class StringLiteralQuotesAnnotator extends PyAnnotatorBase {
+public final class PyStringLiteralQuotesAnnotator extends PyAnnotatorBase {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
     element.accept(new MyVisitor(holder));
