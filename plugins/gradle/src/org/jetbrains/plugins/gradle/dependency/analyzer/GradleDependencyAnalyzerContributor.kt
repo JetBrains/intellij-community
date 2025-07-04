@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import org.jetbrains.plugins.gradle.util.gradleIdentityPathOrNull
 import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
@@ -49,13 +50,15 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     if (projects.isEmpty()) {
       val projectDataManager = ProjectDataManager.getInstance()
       for (projectInfo in projectDataManager.getExternalProjectsData(project, GradleConstants.SYSTEM_ID)) {
-        val projectStructure = projectInfo.externalProjectStructure ?: continue
-        for (moduleNode in ExternalSystemApiUtil.findAll(projectStructure, ProjectKeys.MODULE)) {
+        val projectNode = projectInfo.externalProjectStructure ?: continue
+        val projectData = projectNode.data
+        for (moduleNode in ExternalSystemApiUtil.findAll(projectNode, ProjectKeys.MODULE)) {
           val moduleData = moduleNode.data
           val gradleModuleData = GradleModuleData(moduleNode)
           if (!gradleModuleData.isBuildSrcModule) {
             val module = GradleUtil.findGradleModule(project, moduleData) ?: continue
-            val externalProject = DAProject(module, moduleData.moduleName)
+            val externalProjectName = projectData.externalName + (moduleData.gradleIdentityPathOrNull ?: (":" + moduleData.moduleName))
+            val externalProject = DAProject(module, externalProjectName.removeSuffix(":"))
             projects[externalProject] = gradleModuleData
           }
         }
