@@ -465,6 +465,10 @@ internal class ReworkedTerminalView(
         val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
         val lastBlock = editor.getUserData(TerminalBlocksModel.KEY)?.blocks?.lastOrNull() ?: return
         val lastBlockCommandStartIndex = if (lastBlock.commandStartOffset != -1) lastBlock.commandStartOffset else lastBlock.startOffset
+
+        // When resizing the terminal, the blocks model may fall out of sync for a short time.
+        // These updates will never trigger a completion, so we return early to avoid reading out of bounds.
+        if (lastBlockCommandStartIndex >= editor.document.textLength) return
         val curCommandText = editor.document.text.substring(lastBlockCommandStartIndex, editor.document.textLength).trim()
 
         if (isTypeAhead) {
