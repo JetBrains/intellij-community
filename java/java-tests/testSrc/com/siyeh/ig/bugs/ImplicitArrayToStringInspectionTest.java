@@ -2,6 +2,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.java.codeInspection.MigrateToJavaLangIoInspectionTest;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +14,13 @@ public class ImplicitArrayToStringInspectionTest extends LightJavaInspectionTest
 
   public void testImplicitArrayToString() {
     doTest();
+  }
+
+  public void testImplicitArrayToStringIO() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      MigrateToJavaLangIoInspectionTest.addIOClass(myFixture);
+      doTest();
+    });
   }
 
   @NotNull

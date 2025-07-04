@@ -8,6 +8,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -116,28 +117,25 @@ public final class MigrateToJavaLangIoInspection extends AbstractBaseJavaLocalIn
     PsiReferenceExpression methodExpr = methodCall.getMethodExpression();
     String methodName = methodExpr.getReferenceName();
     if (methodName == null) return;
-    PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
-    StringBuilder replacement = new StringBuilder("IO.").append(methodName).append("(");
-    if (arguments.length == 1) {
-      replacement.append(arguments[0].getText());
+    PsiElement replaced = new CommentTracker().replaceAndRestoreComments(methodExpr, "java.lang.IO." + methodName);
+    if (replaced instanceof PsiReferenceExpression replacedReferenceExpression) {
+      JavaCodeStyleManager.getInstance(replacedReferenceExpression.getProject()).shortenClassReferences(replacedReferenceExpression);
     }
-    replacement.append(')');
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(methodCall.getProject());
-    PsiExpression expr = factory.createExpressionFromText(replacement.toString(), methodCall);
-    new CommentTracker().replace(methodCall, expr);
   }
 
   static boolean isSystemOutPrintln(@NotNull PsiMethodCallExpression expression) {
     if (!PRINT_STREAM_PRINT.test(expression)) return false;
-    PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (!(qualifier instanceof PsiReferenceExpression ref)) return false;
-    PsiElement resolved = ref.resolve();
-    if (!(resolved instanceof PsiField field)) return false;
-    if (!field.getName().equals("out")) return false;
-    PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null) return false;
-    if (!CommonClassNames.JAVA_LANG_SYSTEM.equals(containingClass.getQualifiedName())) return false;
+    return callIOAndSystemIdentical(expression.getArgumentList());
+  }
+
+  static boolean callIOAndSystemIdentical(@NotNull PsiExpressionList list) {
+    PsiExpression[] expressions = list.getExpressions();
+    if (expressions.length == 0) return true;
+    if (expressions.length == 1) {
+      PsiType type = expressions[0].getType();
+      if (type == null) return false;
+      if (type instanceof PsiArrayType arrayType && PsiTypes.charType().equals(arrayType.getComponentType())) return false;
+    }
     return true;
   }
 }

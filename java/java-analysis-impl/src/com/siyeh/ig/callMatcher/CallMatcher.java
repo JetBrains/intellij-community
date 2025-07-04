@@ -304,6 +304,71 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       myCallType = callType;
     }
 
+    /**
+     * Creates a new matcher based on the current matcher, allowing unresolved method calls to be matched.
+     * This matcher supports verifying unresolved method calls and their context, such as method names,
+     * qualifier expressions, and class names.
+     * <p>
+     * The resulting matcher enforces the following criteria for unresolved calls:
+     * - Method name must match the specified names.
+     * - The argument list must match certain conditions based on parameter types.
+     * - Class name must end with qualifier expressions. Qualifier expression should be unresolved.
+     * - Call type (for example, static/instance) is not checked
+     * <p>
+     * This matcher supports only {@link #test(PsiMethodCallExpression)} method.
+     *
+     * @return a new CallMatcher instance that allows unresolved method calls to be matched
+     */
+    public CallMatcher allowUnresolved() {
+      return new CallMatcher() {
+        @Override
+        public Stream<String> names() {
+          return Simple.this.names();
+        }
+
+        @Override
+        public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
+          throw new UnsupportedOperationException("PsiMethodReferenceExpression is not supported");
+        }
+
+        @Override
+        public boolean test(@Nullable PsiMethodCallExpression call) {
+          if (Simple.this.test(call)) return true;
+          if (call == null) return false;
+          String name = call.getMethodExpression().getReferenceName();
+          if (name == null || !myNames.contains(name)) return false;
+          if (!unresolvedArgumentListMatch(call.getArgumentList())) return false;
+          PsiMethod method = call.resolveMethod();
+          if (method != null) return false;
+          PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
+          if (!(qualifierExpression instanceof PsiReferenceExpression qualifierRefExpression)) return false;
+          if (qualifierRefExpression.getQualifierExpression() != null) return false;
+          String referenceName = qualifierRefExpression.getReferenceName();
+          if (referenceName == null && myClassName.isEmpty()) return true;
+          if (referenceName == null) return false;
+          if (!myClassName.endsWith(referenceName)) return false;
+          PsiElement resolvedQualifier = qualifierRefExpression.resolve();
+          if (resolvedQualifier != null) return false;
+          return true;
+        }
+
+        @Override
+        public boolean methodMatches(@Nullable PsiMethod method) {
+          throw new UnsupportedOperationException("PsiMethod is not supported");
+        }
+
+        @Override
+        public boolean uCallMatches(@Nullable UCallExpression call) {
+          throw new UnsupportedOperationException("UCallExpression is not supported");
+        }
+
+        @Override
+        public boolean uCallableReferenceMatches(@Nullable UCallableReferenceExpression reference) {
+          throw new UnsupportedOperationException("UCallableReferenceExpression is not supported");
+        }
+      };
+    }
+
     @Override
     public Stream<String> names() {
       return myNames.stream();
@@ -346,6 +411,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       return psiType.equalsToText(type) || PsiTypesUtil.classNameEquals(psiType, type);
     }
 
+    private static boolean expressionTypeMatches(@Nullable String type, @NotNull PsiExpression argument) {
+      if (type == null) return true;
+      PsiType psiType = argument.getType();
+      if (psiType == null) return false;
+      return psiType.equalsToText(type) || PsiTypesUtil.classNameEquals(psiType, type);
+    }
+
     @Contract(pure = true)
     @Override
     public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
@@ -381,6 +453,20 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (myParameters.length != parameterList.getParametersCount()) return false;
       return StreamEx.zip(myParameters, parameterList.getParameters(),
                           Simple::parameterTypeMatches).allMatch(Boolean.TRUE::equals);
+    }
+
+    private boolean unresolvedArgumentListMatch(@NotNull PsiExpressionList expressionList) {
+      if (myParameters == null) return true;
+      PsiExpression[] args = expressionList.getExpressions();
+      if (myParameters.length > 0) {
+        if (args.length < myParameters.length - 1) return false;
+      }
+      for (int i = 0; i < Math.min(myParameters.length, args.length); i++) {
+        PsiExpression arg = args[i];
+        String parameter = myParameters[i];
+        if (!expressionTypeMatches(parameter, arg)) return false;
+      }
+      return true;
     }
 
     @Override

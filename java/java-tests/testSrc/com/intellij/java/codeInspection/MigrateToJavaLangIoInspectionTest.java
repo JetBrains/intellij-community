@@ -28,6 +28,10 @@ public class MigrateToJavaLangIoInspectionTest extends LightJavaCodeInsightFixtu
 
   public void testPrintRegularClass() { doTest("Replace with 'IO.print()'"); }
 
+  public void testPrintArrayChar() {
+    doNotFind(InspectionsBundle.message("fix.all.inspection.problems.in.file", JavaBundle.message("inspection.migrate.to.java.lang.io.name")));
+  }
+
   public void testPrintf() {
     doNotFind(InspectionsBundle.message("fix.all.inspection.problems.in.file", JavaBundle.message("inspection.migrate.to.java.lang.io.name")));
   }
@@ -49,7 +53,7 @@ public class MigrateToJavaLangIoInspectionTest extends LightJavaCodeInsightFixtu
     myFixture.checkResultByFile("after" + getTestName(false) + ".java");
   }
 
-  static void addIOClass(@NotNull JavaCodeInsightTestFixture fixture) {
+  public static void addIOClass(@NotNull JavaCodeInsightTestFixture fixture) {
     fixture.addClass("""
                          package java.lang;
                          public final class IO {

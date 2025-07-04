@@ -328,19 +328,21 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       if (!(file instanceof PsiJavaFile javaFile)) {
         return;
       }
-      List<PsiMethodCallExpression> systemOutPrints = new ArrayList<>();
+      List<SmartPsiElementPointer<PsiMethodCallExpression>> systemOutPrints = new ArrayList<>();
+      SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(file.getProject());
       javaFile.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           if (MigrateToJavaLangIoInspection.isSystemOutPrintln(expression)) {
-            systemOutPrints.add(expression);
-            return;
+            systemOutPrints.add(smartPointerManager.createSmartPsiElementPointer(expression));
           }
           super.visitMethodCallExpression(expression);
         }
       });
-      for (PsiMethodCallExpression print : systemOutPrints) {
-        MigrateToJavaLangIoInspection.replaceToIO(print);
+      for (SmartPsiElementPointer<PsiMethodCallExpression> print : systemOutPrints) {
+        PsiMethodCallExpression element = print.getElement();
+        if (element == null) continue;
+        MigrateToJavaLangIoInspection.replaceToIO(element);
       }
     }
 
