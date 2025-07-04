@@ -110,6 +110,10 @@ public final class TypeNullability {
   }
   
   public static @NotNull TypeNullability ofTypeParameter(@NotNull PsiTypeParameter parameter) {
+    TypeNullability nullability = intersect(ContainerUtil.map(parameter.getSuperTypes(), PsiType::getNullability)).inherited();
+    if (!nullability.equals(UNKNOWN)) {
+      return nullability;
+    }
     NullableNotNullManager manager = NullableNotNullManager.getInstance(parameter.getProject());
     if (manager != null) {
       NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(parameter);
@@ -117,7 +121,7 @@ public final class TypeNullability {
         return typeUseNullability.toTypeNullability();
       }
     }
-    return intersect(ContainerUtil.map(parameter.getSuperTypes(), PsiType::getNullability)).inherited();
+    return UNKNOWN;
   }
 
   /**
