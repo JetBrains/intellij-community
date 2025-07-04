@@ -737,8 +737,10 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun assertUnorderedPathsAreEqual(actual: Collection<String>, expected: Collection<String>) {
-    assertEquals((CollectionFactory.createFilePathSet(expected)), (CollectionFactory.createFilePathSet(actual)))
+    assertEquals(createFilePathSet(expected), createFilePathSet(actual))
   }
+
+  private fun createFilePathSet(expected: Collection<String>) = CollectionFactory.createFilePathSet(expected.map { FileUtil.toSystemIndependentName(it) })
 
   protected fun <T> assertUnorderedElementsAreEqual(actual: Array<T>, vararg expected: T) {
     assertUnorderedElementsAreEqual(actual.toList(), *expected)
