@@ -129,10 +129,8 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.util.logging.slf4j",
       "fleet.util.multiplatform",
       "fleet.fastutil",
-      // endregion
-
-      // region Fleet Language Server Protocol modules allowed for publication - https://youtrack.jetbrains.com/issue/IJI-2644
-      "fleet.lsp.protocol",
+      "fleet.lsp.protocol", // Fleet Language Server Protocol modules allowed for publication - https://youtrack.jetbrains.com/issue/IJI-2644
+      "fleet.ktor.network.tls",
       // endregion
     )
   }

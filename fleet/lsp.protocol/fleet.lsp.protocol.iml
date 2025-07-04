@@ -35,7 +35,7 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="fleet.util.core" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="ktor-network-tls" level="project" />
+    <orderEntry type="module" module-name="fleet.ktor.network.tls" />
     <orderEntry type="library" name="kotlinx-io-core" level="project" />
   </component>
 </module>

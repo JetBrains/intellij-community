@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/gradlebuild/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="io.ktor.http" level="project" />
+    <orderEntry type="library" exported="" name="io.ktor.io" level="project" />
+    <orderEntry type="library" exported="" name="io.ktor.network" level="project" />
+    <orderEntry type="library" exported="" name="io.ktor.network.tls" level="project" />
+    <orderEntry type="library" exported="" name="io.ktor.utils" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="kotlinx-io-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
+  </component>
+</module>
