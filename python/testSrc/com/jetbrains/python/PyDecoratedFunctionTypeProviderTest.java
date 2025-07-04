@@ -245,21 +245,21 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   // PY-60104
   public void testNotAnnotatedClassDecoratorIsIgnored() {
     doTest("C", "type[C]", """
-       from typing import reveal_type
-                                                                                 
-       def changing_interface(cls):
-           cls.new_attr = 42
-           return cls
-       
-       
-       @changing_interface
-       class C:
-           def __init__(self, p: int) -> None:
-               self.attr = p
-       
-       
-       value = C()
-       dec_func = C
+      from typing import reveal_type
+      
+      def changing_interface(cls):
+         cls.new_attr = 42
+         return cls
+      
+      
+      @changing_interface
+      class C:
+         def __init__(self, p: int) -> None:
+             self.attr = p
+      
+      
+      value = C()
+      dec_func = C
       """);
   }
 
@@ -374,6 +374,95 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
       value = f()
       dec_func = f
       """);
+  }
+
+  // PY-79622
+  public void testDecoratedTransformsReturnTypeOneOverload() {
+    doTest("str", "() -> str", """
+      from typing import Callable, overload
+      
+      @overload
+      def my_decorator(fn: Callable[[], int]) -> Callable[[], str]:
+          ...
+      
+      def my_decorator(fn: Callable[[], int]) :
+          pass
+      
+      @my_decorator
+      def f() -> int:
+          pass
+      
+      
+      value = f()
+      dec_func = f
+      """);
+  }
+
+  // PY-79622
+  public void testDecoratedTransformsReturnTypeTwoMatchingOverloadsChoseFirst() {
+    doTest("str", "(str) -> str", """
+      from typing import Any, Callable, overload
+      
+      @overload
+      def my_decorator(fn: Callable[[Any], int]) -> Callable[[str], str]:
+          ...
+      
+      @overload
+      def my_decorator(fn: Callable[[Any], int]) -> Callable[[bool], bool]:
+          ...
+      
+      def my_decorator(fn: Callable[[Any], int]) :
+          pass
+      
+      @my_decorator
+      def f(a: Any) -> int:
+          return 3
+      
+      # first overload is chosen
+      value = f()
+      dec_func = f
+      """);
+  }
+
+  // PY-79622
+  public void testDecoratedTransformsReturnTypeTwoMatchingOverloadsChoseSecond() {
+    doTest("bool", "(bool) -> bool", """
+      from typing import Any, Callable, overload
+      
+      @overload
+      def my_decorator(fn: Callable[[int], int]) -> Callable[[str], str]:
+          ...
+      
+      @overload
+      def my_decorator(fn: Callable[[str], int]) -> Callable[[bool], bool]:
+          ...
+      
+      def my_decorator(fn: Callable[[Any], int]) :
+          pass
+      
+      @my_decorator
+      def f(a: str) -> int:
+          return 3
+      
+      # second overload is chosen
+      value = f()
+      dec_func = f
+      """);
+  }
+
+  // PY-79622
+  public void testDecoratedTransformsReturnTypeOneImportedOverload() {
+    doMultiFileTest("str", "() -> str");
+  }
+
+  // PY-79622
+  public void testDecoratedTransformsReturnTypeTwoMatchingImportedOverloadsChoseFirst() {
+    doMultiFileTest("str", "(str) -> str");
+  }
+
+  // PY-79622
+  public void testDecoratedTransformsReturnTypeTwoMatchingImportedOverloadsChoseSecond() {
+    doMultiFileTest("bool", "(bool) -> bool");
   }
 
   private void doTest(@NotNull String expectedValueType, @NotNull String expectedFuncType, @NotNull String text) {

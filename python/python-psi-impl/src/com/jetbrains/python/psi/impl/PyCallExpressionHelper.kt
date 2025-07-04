@@ -120,13 +120,12 @@ fun multiResolveCallee(x: PyCallExpression, resolveContext: PyResolveContext): L
  * It is not the same as [getCalleeType] since
  * this method returns callable types that would be actually called, the mentioned method returns type of underlying callee.
  * Compare:
- * <pre>
- * `class A:
- * pass
+ * ```
+ * class A:
+ *     pass
  * a = A()
  * b = a()  # callee type is A, resolved callee is A.__call__
-` *
-</pre> *
+ * ```
  */
 fun PyCallExpression.multipleResolveCallee(resolveContext: PyResolveContext): List<PyCallableType> {
   return PyUtil.getParameterizedCachedValue(
