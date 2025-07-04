@@ -16,6 +16,7 @@ java_library(
     "//platform/execution-impl/frontend",
     "//platform/execution.dashboard/frontend",
     "//platform/execution.serviceView/frontend",
+    "//platform/buildView/frontend",
   ]
 )
 ### auto-generated section `build intellij.platform.frontend.main` end

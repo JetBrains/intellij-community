@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.platform.buildView.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.buildView.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/backend",
+    "//platform/buildView",
+  ],
+  runtime_deps = [":backend_resources"]
+)
+### auto-generated section `build intellij.platform.buildView.backend` end

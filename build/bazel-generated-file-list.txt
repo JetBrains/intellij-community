@@ -375,6 +375,9 @@ platform/build-scripts/testFramework
 platform/build-scripts/tests
 platform/build-scripts/usages
 platform/buildData
+platform/buildView
+platform/buildView/backend
+platform/buildView/frontend
 platform/built-in-server
 platform/built-in-server-api
 platform/code-style-api

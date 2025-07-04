@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.find.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.managed.cache.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.scopes.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.buildView.backend" scope="RUNTIME" />
   </component>
 </module>

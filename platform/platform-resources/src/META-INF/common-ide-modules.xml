@@ -35,7 +35,11 @@
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.spellchecker.xml"/>
-    
+
+    <module name="intellij.platform.buildView"/>
+    <module name="intellij.platform.buildView.backend"/>
+    <module name="intellij.platform.buildView.frontend"/>
+
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>

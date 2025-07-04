@@ -22,6 +22,7 @@ java_library(
     "//platform/find/backend",
     "//platform/managed-cache/managed.cache.backend",
     "//platform/scopes/backend",
+    "//platform/buildView/backend",
   ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end
