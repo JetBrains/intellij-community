@@ -751,7 +751,6 @@ plugins/devkit/intellij.devkit.debugger
 plugins/devkit/intellij.devkit.git
 plugins/devkit/intellij.devkit.gradle
 plugins/devkit/intellij.devkit.i18n
-plugins/devkit/intellij.devkit.images
 plugins/devkit/intellij.devkit.intelliLang
 plugins/devkit/intellij.devkit.modules
 plugins/devkit/intellij.devkit.scaffolding

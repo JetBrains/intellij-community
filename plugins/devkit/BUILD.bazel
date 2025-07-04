@@ -44,7 +44,6 @@ java_library(
     "//plugins/devkit/intellij.devkit.git:git",
     "//plugins/devkit/intellij.devkit.gradle:gradle",
     "//plugins/devkit/intellij.devkit.i18n:i18n",
-    "//plugins/devkit/intellij.devkit.images:images",
     "//plugins/devkit/intellij.devkit.intelliLang:intelliLang",
     "//plugins/devkit/intellij.devkit.themes:themes",
     "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner",
