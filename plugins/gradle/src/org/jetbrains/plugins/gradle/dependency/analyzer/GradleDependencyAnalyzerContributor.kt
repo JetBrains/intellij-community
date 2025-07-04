@@ -173,7 +173,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
     internal val MODULE_DATA = Key.create<ModuleData>("GradleDependencyAnalyzerContributor.ModuleData")
 
-    internal val DEFAULT_SCOPE = DAScope("default")
+    internal val DEFAULT_SCOPE = DAScope(ExternalSystemBundle.message("external.system.dependency.analyzer.scope.default"))
 
     private val STANDARD_SCOPES = setOf(
       "annotationProcessor",

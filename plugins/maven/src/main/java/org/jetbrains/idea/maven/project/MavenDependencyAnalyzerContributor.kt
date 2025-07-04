@@ -111,7 +111,7 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
 
     val MAVEN_ARTIFACT_ID: Key<MavenId?> = Key.create<MavenId>("MavenDependencyAnalyzerContributor.MavenId")
 
-    internal val DEFAULT_SCOPE = DAScope("default")
+    internal val DEFAULT_SCOPE = DAScope(message("external.system.dependency.analyzer.scope.default"))
 
     private val STANDARD_SCOPES = listOf(
       MavenConstants.SCOPE_COMPILE,
