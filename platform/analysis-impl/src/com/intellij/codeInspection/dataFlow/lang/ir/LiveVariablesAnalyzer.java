@@ -4,23 +4,28 @@ package com.intellij.codeInspection.dataFlow.lang.ir;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 final class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
-  private final MultiMap<Instruction, Instruction> myForwardMap;
-  private final MultiMap<Instruction, Instruction> myBackwardMap;
+  private final Map<Instruction, List<Instruction>> myForwardMap;
+  private final Map<Instruction, List<Instruction>> myBackwardMap;
   private final DfaValueFactory myFactory;
+  private final Object2IntMap<VariableDescriptor> myDescriptorNumbering = new Object2IntOpenHashMap<>();
+  private final List<VariableDescriptor> myDescriptors = new ArrayList<>();
 
   LiveVariablesAnalyzer(ControlFlow flow) {
     this.myFactory = flow.getFactory();
@@ -33,6 +38,16 @@ final class LiveVariablesAnalyzer {
     if (instruction == myInstructions[0]) return true;
     if (!instruction.getRequiredDescriptors(myFactory).isEmpty()) return true;
     return !instruction.isLinear() || instruction instanceof FinishElementInstruction;
+  }
+
+  private int getDescriptorNumber(@NotNull VariableDescriptor descriptor) {
+    int num = myDescriptorNumbering.getInt(descriptor);
+    if (num == 0) {
+      myDescriptors.add(descriptor);
+      num = myDescriptors.size();
+      myDescriptorNumbering.put(descriptor, num);
+    }
+    return num - 1;
   }
 
   private @Nullable Map<FinishElementInstruction, ProcessedState> findLiveVars() {
@@ -56,13 +71,9 @@ final class LiveVariablesAnalyzer {
 
         @Override
         public void accept(VariableDescriptor value) {
-          if (!newVars.contains(value)) {
-            if (!cloned) {
-              newVars = new ProcessedState(newVars);
-              cloned = true;
-            }
-            newVars.add(value);
-          }
+          ProcessedState newState = newVars.add(value, !cloned);
+          cloned |= newState != newVars;
+          newVars = newState;
         }
       };
       instruction.getRequiredDescriptors(myFactory).forEach(processor);
@@ -75,31 +86,32 @@ final class LiveVariablesAnalyzer {
     final Map<FinishElementInstruction, ProcessedState> liveVars = findLiveVars();
     if (liveVars == null) return;
 
-    final MultiMap<FinishElementInstruction, VariableDescriptor> toFlush = MultiMap.createSet();
+    final Map<FinishElementInstruction, BitSet> toFlush = new IdentityHashMap<>();
 
     boolean ok = runDfa(true, (instruction, prevLiveVars) -> {
       if (instruction instanceof FinishElementInstruction finishInstruction) {
         ProcessedState currentlyLive = liveVars.get(instruction);
-        if (currentlyLive == null) {
-          currentlyLive = new ProcessedState();
+        BitSet varsToFlush = (BitSet)prevLiveVars.processedVars.clone();
+        if (currentlyLive != null) {
+          varsToFlush.andNot(currentlyLive.processedVars);
         }
-        for (VariableDescriptor var : prevLiveVars.processedVars) {
-          if (!currentlyLive.contains(var)) {
-            toFlush.putValue(finishInstruction, var);
-          }
-        }
-        return currentlyLive;
+        toFlush.compute(finishInstruction, (k, set) -> {
+          if (set == null) return varsToFlush;
+          set.or(varsToFlush);
+          return set;
+        });
+        return currentlyLive == null ? new ProcessedState() : currentlyLive;
       }
 
       return prevLiveVars;
     });
 
     if (ok) {
-      for (FinishElementInstruction instruction : toFlush.keySet()) {
-        Collection<VariableDescriptor> values = toFlush.get(instruction);
-        values.removeIf(var -> var.isImplicitReadPossible());
-        instruction.flushVars(values);
-      }
+      toFlush.forEach((instruction, set) -> {
+        List<VariableDescriptor> descriptors = set.stream().mapToObj(myDescriptors::get)
+          .filter(var -> !var.isImplicitReadPossible()).toList();
+        instruction.flushVars(descriptors);
+      });
     }
   }
 
@@ -107,24 +119,27 @@ final class LiveVariablesAnalyzer {
     return IntStreamEx.of(ins.getSuccessorIndexes()).elements(myInstructions).toList();
   }
 
-  private MultiMap<Instruction, Instruction> calcBackwardMap() {
-    MultiMap<Instruction, Instruction> result = MultiMap.create();
+  private Map<Instruction, List<Instruction>> calcBackwardMap() {
+    Map<Instruction, List<Instruction>> result = new IdentityHashMap<>();
     for (Instruction instruction : myInstructions) {
-      for (Instruction next : myForwardMap.get(instruction)) {
-        result.putValue(next, instruction);
+      List<Instruction> list = myForwardMap.get(instruction);
+      if (list != null) {
+        for (Instruction next : list) {
+          result.computeIfAbsent(next, k -> new ArrayList<>()).add(instruction);
+        }
       }
     }
     return result;
   }
 
-  private MultiMap<Instruction, Instruction> calcForwardMap() {
-    MultiMap<Instruction, Instruction> result = MultiMap.create();
+  private Map<Instruction, List<Instruction>> calcForwardMap() {
+    Map<Instruction, List<Instruction>> result = new IdentityHashMap<>();
     for (Instruction instruction : myInstructions) {
       if (isInterestingInstruction(instruction)) {
         for (Instruction next : getSuccessors(instruction)) {
           while (true) {
             if (isInterestingInstruction(next)) {
-              result.putValue(instruction, next);
+              result.computeIfAbsent(instruction, k -> new ArrayList<>()).add(next);
               break;
             }
             if (next.getIndex() + 1 >= myInstructions.length) {
@@ -171,51 +186,54 @@ final class LiveVariablesAnalyzer {
       Instruction instruction = state.instruction;
       Collection<Instruction> nextInstructions = forward ? myForwardMap.get(instruction) : myBackwardMap.get(instruction);
       ProcessedState nextVars = handleState.apply(instruction, state.nextVars);
-      for (Instruction next : nextInstructions) {
-        IntSet instructionSet = processed.computeIfAbsent(nextVars, k -> new IntOpenHashSet());
-        int index = next.getIndex() + 1;
-        if (!instructionSet.contains(index)) {
-          instructionSet.add(index);
-          queue.addLast(new InstructionState(next, nextVars));
-          steps++;
+      if (nextInstructions != null) {
+        for (Instruction next : nextInstructions) {
+          IntSet instructionSet = processed.computeIfAbsent(nextVars, k -> new IntOpenHashSet());
+          int index = next.getIndex() + 1;
+          if (!instructionSet.contains(index)) {
+            instructionSet.add(index);
+            queue.addLast(new InstructionState(next, nextVars));
+            steps++;
+          }
         }
       }
     }
     return true;
   }
 
-  private static final class ProcessedState {
-    private final HashSet<VariableDescriptor> processedVars;
-    private int hash;
+  private final class ProcessedState {
+    private final @NotNull BitSet processedVars;
 
     ProcessedState() {
-      this.processedVars = new HashSet<>();
-      this.hash = 0;
+      this.processedVars = new BitSet();
     }
     
     ProcessedState(ProcessedState state) {
-      this.processedVars = new HashSet<>(state.processedVars);
-      this.hash = state.hash;
+      this.processedVars = (BitSet)state.processedVars.clone();
     }
     
     boolean isEmpty() { 
       return processedVars.isEmpty(); 
     }
-    
-    boolean contains(VariableDescriptor descriptor) { 
-      return processedVars.contains(descriptor); 
-    }
-    
-    void add(VariableDescriptor descriptor) { 
-      if (processedVars.add(descriptor)) {
-        // Rely on the fact that set hashCode is the sum of elements hashCodes
-        hash += descriptor.hashCode();
+
+    ProcessedState add(VariableDescriptor descriptor, boolean clone) {
+      int number = getDescriptorNumber(descriptor);
+      if (!processedVars.get(number)) {
+        ProcessedState newState = clone ? new ProcessedState(this) : this;
+        newState.processedVars.set(number);
+        return newState;
       }
+      return this;
     }
 
     void addAll(ProcessedState vars) {
-      for (VariableDescriptor descriptor : vars.processedVars) {
-        add(descriptor);
+      processedVars.or(vars.processedVars);
+    }
+
+    public void forEach(IntConsumer consumer) {
+      BitSet vars = processedVars;
+      for (int num = vars.nextSetBit(0); num >= 0; num = vars.nextSetBit(num + 1)) {
+        consumer.accept(num);
       }
     }
 
@@ -224,20 +242,12 @@ final class LiveVariablesAnalyzer {
       if (obj == this) return true;
       if (obj == null || obj.getClass() != this.getClass()) return false;
       var that = (ProcessedState)obj;
-      return this.hash == that.hash &&
-             this.processedVars.equals(that.processedVars);
+      return this.processedVars.equals(that.processedVars);
     }
 
     @Override
     public int hashCode() {
-      return hash;
-    }
-
-    @Override
-    public String toString() {
-      return "ProcessedState[" +
-             "processedVars=" + processedVars + ", " +
-             "hash=" + hash + ']';
+      return this.processedVars.hashCode();
     }
   }
 
