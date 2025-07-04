@@ -261,6 +261,7 @@ class PluginModelValidator(
         sourceModuleNameToFileInfo = sourceModuleNameToFileInfo,
         moduleNameToInfo = moduleNameToInfo,
       )
+      checkModuleElements(moduleDescriptor = pluginInfo.descriptor, sourceModule = pluginInfo.sourceModule, pluginInfo.descriptorFile)
     }
 
     val registeredContentModules = allMainModulesOfPlugins.flatMapTo(HashSet()) { pluginInfo ->
@@ -526,6 +527,26 @@ class PluginModelValidator(
       }
 
       checkContentModuleUnexpectedElements(moduleDescriptor, referencingModuleInfo.sourceModule, moduleInfo)
+      checkModuleElements(moduleDescriptor, moduleInfo.sourceModule, moduleInfo.descriptorFile)
+    }
+  }
+
+  /**
+   * Checks elements in the main module or a content module
+   */
+  private fun checkModuleElements(moduleDescriptor: RawPluginDescriptor, sourceModule: JpsModule, descriptorFile: Path) {
+    for (extensionPointElement in moduleDescriptor.moduleElementsContainer.extensionPoints) {
+      reportError(
+        message = """
+          |Module-level extension point '$extensionPointElement' is defined in '${sourceModule.name}'.  
+          |Module-level extension points are deprecated in general and forbidden in intellij monorepo.
+          |Use application-level or project-level extension point, and pass 'Module' instance as a parameter if needed.
+          |""".trimMargin(),
+        sourceModule = sourceModule,
+        mapOf(
+          "descriptorFile" to descriptorFile,
+        ), 
+      )
     }
   }
 
