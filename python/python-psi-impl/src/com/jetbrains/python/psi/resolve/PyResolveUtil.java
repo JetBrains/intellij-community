@@ -241,8 +241,8 @@ public final class PyResolveUtil {
    * @return all possible candidates that can be found by the given qualified name
    */
   public static @NotNull List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
-                                                             @NotNull ScopeOwner scopeOwner,
-                                                             @NotNull TypeEvalContext context) {
+                                                                      @NotNull ScopeOwner scopeOwner,
+                                                                      @NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), (param) -> {
       return doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond());
     });

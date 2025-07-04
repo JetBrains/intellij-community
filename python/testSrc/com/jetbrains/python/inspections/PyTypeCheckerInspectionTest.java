@@ -1566,11 +1566,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            from typing import NoReturn
-                                                      
+                           
                            class Test:
                                def __init__(self) -> NoReturn:
                                    raise Exception()
-                                                      
+                           
                            """)
     );
   }
@@ -1582,7 +1582,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("""
                            def foo[T: str](p: T):
                                return p
-                                                      
+                           
                            expr = foo(<warning descr="Expected type 'T ≤: str', got 'int' instead">42</warning>)
                            """)
     );
@@ -1595,7 +1595,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("""
                            def foo[T: (str, bool)](p: T):
                                return p
-                                                      
+                           
                            expr = foo(<warning descr="Expected type 'T ≤: str | bool', got 'int' instead">42</warning>)
                            """)
     );
