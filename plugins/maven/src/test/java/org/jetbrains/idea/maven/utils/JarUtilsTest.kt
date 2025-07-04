@@ -58,7 +58,7 @@ class JarUtilsTest : MavenTestCase() {
   private fun getEntryName() = "META-INF/maven/intellij.test/maven-extension/pom.properties"
 
   private fun getPathToJar(): Path {
-    val originalTestDataPath = MavenCustomNioRepositoryHelper.getOriginalTestDataPath()
+    val originalTestDataPath = MavenCustomNioRepositoryHelper.originalTestDataPath
     val jarPath = originalTestDataPath.resolve("plugins/intellij/test/maven-extension/1.0/maven-extension-1.0.jar");
     return jarPath
   }

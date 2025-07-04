@@ -13,79 +13,77 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven
 
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.NioPathUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.LocalFileSystem
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
+class MavenCustomNioRepositoryHelper(myTempDir: Path, vararg subFolders: String) {
+  private val myWorkingData: Path = myTempDir.resolve("testData")
+  private val mySubFolders = subFolders
 
-public class MavenCustomNioRepositoryHelper {
-
-  private final Path myTempDir;
-  private final Path myWorkingData;
-  private final String[] mySubFolders;
-
-  public MavenCustomNioRepositoryHelper(Path tempDir, String... subFolders) throws IOException {
-    myTempDir = tempDir;
-    mySubFolders = subFolders;
-
-    myWorkingData = myTempDir.resolve("testData");
+  init {
     if (!Files.exists(myWorkingData)) {
-      Files.createDirectories(myWorkingData);
+      Files.createDirectories(myWorkingData)
     }
 
-    for (String each : mySubFolders) {
-      addTestData(each);
+    for (each in mySubFolders) {
+      addTestData(each)
     }
   }
 
-  public void addTestData(String relativePath) throws IOException {
-    addTestData(relativePath, relativePath);
+  @Throws(IOException::class)
+  fun addTestData(relativePath: String) {
+    addTestData(relativePath, relativePath)
   }
 
-  public void addTestData(String relativePathFrom, String relativePathTo) throws IOException {
-    Path to = myWorkingData.resolve(relativePathTo);
-    Path from = getOriginalTestDataPath().resolve(relativePathFrom);
-    Files.copy(from, to);
-    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
+  @Throws(IOException::class)
+  fun addTestData(relativePathFrom: String, relativePathTo: String) {
+    val to = myWorkingData.resolve(relativePathTo)
+    val from: Path = originalTestDataPath.resolve(relativePathFrom)
+    Files.copy(from, to)
+    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
   }
 
-  public Path getTestData(String relativePath) {
-    return myWorkingData.resolve(relativePath);
+  fun getTestData(relativePath: String): Path {
+    return myWorkingData.resolve(relativePath)
   }
 
-  public void delete(String relativePath) {
+  fun delete(relativePath: String) {
     try {
-      FileUtil.delete(getTestData(relativePath));
+      NioFiles.deleteRecursively(getTestData(relativePath))
     }
-    catch (IOException e) {
-      throw new IllegalStateException("Unable to delete " + relativePath);
+    catch (_: IOException) {
+      throw IllegalStateException("Unable to delete $relativePath")
     }
   }
 
-  public void copy(String fromRelativePath, String toRelativePath) throws IOException {
-    Path from = getTestData(fromRelativePath);
-    Path to = getTestData(toRelativePath);
+  @Throws(IOException::class)
+  fun copy(fromRelativePath: String, toRelativePath: String) {
+    val from = getTestData(fromRelativePath)
+    val to = getTestData(toRelativePath)
 
     if (Files.isDirectory(from)) {
-      FileUtil.copyDir(from.toFile(), to.toFile());
+      NioFiles.copyRecursively(from, to)
     }
     else {
-      Files.copy(from, to);
+      Files.copy(from, to)
     }
 
-    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
+    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
   }
 
-  public static Path getOriginalTestDataPath() {
-    String sourcesDir = System.getProperty("maven.sources.dir", PluginPathManager.getPluginHomePath("maven"));
-    Path originalTestDataPath = NioPathUtil.toNioPathOrNull(sourcesDir);
-    return originalTestDataPath.resolve("src/test/data");
+  companion object {
+    val originalTestDataPath: Path
+      get() {
+        val sourcesDir = System.getProperty("maven.sources.dir", PluginPathManager.getPluginHomePath("maven"))
+        val originalTestDataPath = sourcesDir.toNioPathOrNull()
+        return originalTestDataPath!!.resolve("src/test/data")
+      }
   }
 }
