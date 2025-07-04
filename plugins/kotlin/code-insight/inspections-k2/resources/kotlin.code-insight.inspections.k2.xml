@@ -65,7 +65,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="INFORMATION"
                      language="kotlin"
                      cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="call.is.replaceable.with.another.scope.function" bundle="messages.KotlinBundle"/>
