@@ -138,22 +138,39 @@ internal class IslandsUICustomization : InternalUICustomization() {
       if (isIslandsEnabled) {
         Registry.get(key).setValue(true)
       }
+      else {
+        resetColorScheme()
+      }
     }
 
     Registry.get(key).addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        if (!value.asBoolean() && isIslandsEnabled) {
-          val lafManager = LafManager.getInstance()
-          val colorsManager = EditorColorsManager.getInstance()
-          val theme = if (JBColor.isBright()) lafManager.defaultLightLaf else lafManager.defaultDarkLaf
+        if (!value.asBoolean()) {
+          if (isIslandsEnabled) {
+            val lafManager = LafManager.getInstance()
+            val theme = if (JBColor.isBright()) lafManager.defaultLightLaf else lafManager.defaultDarkLaf
 
-          if (theme != null) {
-            lafManager.setCurrentLookAndFeel(theme, true)
-            theme.installEditorScheme(colorsManager.defaultScheme)
+            if (theme != null) {
+              lafManager.setCurrentLookAndFeel(theme, true)
+
+              val colorsManager = EditorColorsManager.getInstance()
+              theme.installEditorScheme(colorsManager.getScheme(if (JBColor.isBright()) "Light" else "Dark") ?: colorsManager.defaultScheme)
+            }
+          }
+          else {
+            resetColorScheme()
           }
         }
       }
     }, ApplicationManager.getApplication())
+  }
+
+  private fun resetColorScheme() {
+    val colorsManager = EditorColorsManager.getInstance()
+
+    if (colorsManager.globalScheme.displayName == "Island Dark") {
+      colorsManager.setGlobalScheme(colorsManager.getScheme("Dark"))
+    }
   }
 
   private val tabPainterAdapter = ManyIslandsTabPainterAdapter()
