@@ -88,6 +88,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//plugins/IntelliLang:langInjection",
+    "//plugins/IntelliLang/plugin",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//RegExpSupport:regexp",

@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.langInjection" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" scope="TEST" />

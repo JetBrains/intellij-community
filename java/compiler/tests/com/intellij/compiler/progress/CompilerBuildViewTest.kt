@@ -87,8 +87,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
           Parsing java… [a]
           Writing classes… [a]
           Adding nullability assertions… [a]
-          Adding threading assertions… [a]
           Adding pattern assertions… [a]
+          Adding threading assertions… [a]
           Running 'after' tasks
         """.trimIndent() else """
           Clearing build system data…
@@ -100,8 +100,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
           Parsing java… [a]
           Writing classes… [a]
           Adding nullability assertions… [a]
-          Adding threading assertions… [a]
           Adding pattern assertions… [a]
+          Adding threading assertions… [a]
           Updating dependency information… [a]
           Running 'after' tasks
         """.trimIndent())
@@ -123,8 +123,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
         Parsing java… [a]
         Writing classes… [a]
         Adding nullability assertions… [a]
-        Adding threading assertions… [a]
         Adding pattern assertions… [a]
+        Adding threading assertions… [a]
         Running 'after' tasks
       """.trimIndent() else """
         Executing pre-compile tasks…
@@ -135,8 +135,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
         Parsing java… [a]
         Writing classes… [a]
         Adding nullability assertions… [a]
-        Adding threading assertions… [a]
         Adding pattern assertions… [a]
+        Adding threading assertions… [a]
         Updating dependency information… [a]
         Running 'after' tasks
       """.trimIndent())

@@ -1,8 +1,0 @@
-- name: lib/java-langInjection-jps.jar
-  modules:
-  - name: intellij.java.langInjection.jps
-- name: lib/platform-langInjection.jar
-  modules:
-  - name: intellij.platform.langInjection
-  - name: intellij.java.langInjection
-  - name: intellij.xml.langInjection

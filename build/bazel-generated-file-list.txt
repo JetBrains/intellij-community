@@ -695,7 +695,9 @@ plugins/IntelliLang
 plugins/IntelliLang/IntelliLang-tests
 plugins/IntelliLang/intellilang-jps-plugin
 plugins/IntelliLang/java-support
+plugins/IntelliLang/plugin
 plugins/IntelliLang/xml-support
+plugins/IntelliLang/xml-support/xpath
 plugins/ant
 plugins/ant/jps-plugin
 plugins/built-in-help

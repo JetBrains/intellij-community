@@ -51,6 +51,7 @@ jvm_library(
     "//RegExpSupport:regexp_test_lib",
     "//platform/util/nanoxml",
     "//plugins/IntelliLang:langInjection",
+    "//plugins/IntelliLang/plugin",
     "//plugins/IntelliLang/java-support:java-langInjection",
     "//xml/xml-analysis-impl:analysis-impl",
     "//platform/core-ui",

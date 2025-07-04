@@ -1,6 +1,7 @@
 <idea-plugin package="org.intellij.plugins.markdown.frontmatter">
   <dependencies>
     <plugin id="org.intellij.intelliLang"/>
+    <module name="intellij.platform.langInjection"/>
     <module name="intellij.json.backend"/>
   </dependencies>
 

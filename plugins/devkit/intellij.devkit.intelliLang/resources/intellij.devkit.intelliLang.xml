@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.idea.devkit.intelliLang">
   <dependencies>
     <plugin id="org.intellij.intelliLang"/>
+    <module name="intellij.platform.langInjection"/>
   </dependencies>
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <injectionConfig config="devkit-xmlInjections.xml"/>

@@ -22,7 +22,7 @@
     <name>XPathView + XSLT</name>
     <depends>com.intellij.modules.xml</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.platform.langInjection/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.platform.langInjection.plugin/META-INF/plugin.xml">
     <id>-org-intellij-intelliLang-</id>
     <name>IntelliLang</name>
     <depends optional="true">-XPathView-</depends>

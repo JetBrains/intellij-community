@@ -3808,8 +3808,8 @@
     "name": "intellij.platform.langInjection",
     "n": "i.platform.langInjection",
     "package": null,
-    "sourceModule": "intellij.platform.langInjection",
-    "descriptor": "community/plugins/IntelliLang/src/META-INF/plugin.xml",
+    "sourceModule": "intellij.platform.langInjection.plugin",
+    "descriptor": "community/plugins/IntelliLang/plugin/src/META-INF/plugin.xml",
     "pluginId": "org.intellij.intelliLang",
     "type": 1
   }

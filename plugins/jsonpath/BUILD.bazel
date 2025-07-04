@@ -57,6 +57,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/IntelliLang:langInjection",
+    "//plugins/IntelliLang/plugin",
     "//platform/testFramework/extensions:testExtensions",
   ],
   runtime_deps = [":jsonpath_resources"]

@@ -45,7 +45,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.java.coverage",
   "intellij.java.decompiler",
   "intellij.eclipse",
-  "intellij.platform.langInjection",
+  "intellij.platform.langInjection.plugin",
   "intellij.java.debugger.streams",
   "intellij.completionMlRanking",
   "intellij.completionMlRankingModels",

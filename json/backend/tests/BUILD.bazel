@@ -36,6 +36,7 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:kotlin-stdlib",
     "//plugins/IntelliLang:langInjection",
+    "//plugins/IntelliLang/plugin",
     "@lib//:jsonpath",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:assert_j",
