@@ -1,7 +1,10 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
@@ -18,7 +21,86 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.window.Popup as ComposePopup
 import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.jewel.foundation.InternalJewelApi
+import org.jetbrains.jewel.foundation.JewelConfigs
+import org.jetbrains.jewel.ui.component.PopupRender.PopupData
+
+/**
+ * Displays a popup with the provided content at a position determined by the given [PopupPositionProvider].
+ *
+ * This function behavior is influenced by the 'jewel.customPopupRender' system property. 
+ * If set to `true`, it allows using a custom popup rendering implementation; otherwise, it defaults to the standard Compose popup.
+ * 
+ * If running on the IntelliJ Platform and setting the 'jewel.customPopupRender' property to `true`, the plugin will use the JBPopup
+ * implementation for rendering popups. This is useful if your composable content is small and you need to display a popup that is
+ * bigger than the component size.
+ *
+ * @param popupPositionProvider Determines the position of the popup on the screen.
+ * @param onDismissRequest Callback invoked when a dismiss event is requested, typically when the popup is dismissed.
+ * @param properties Configuration parameters for the popup, such as whether it should consume touch events or focusable behavior.
+ * @param onPreviewKeyEvent Callback invoked for key events before they are dispatched to children. Return `true` to consume the event.
+ * @param onKeyEvent Callback invoked for key events after they are dispatched to children. Return `true` to consume the event.
+ * @param content The composable content to be displayed inside the popup.
+ */
+@Composable
+@InternalJewelApi
+public fun Popup(
+    popupPositionProvider: PopupPositionProvider,
+    onDismissRequest: (() -> Unit)? = null,
+    properties: PopupProperties = PopupProperties(),
+    onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    content: @Composable () -> Unit,
+) {
+    val popupRender = if (JewelConfigs.useCustomPopupRender) LocalPopupRender.current else DefaultPopupRender
+    popupRender.Popup(
+        arguments =
+            PopupData(
+                popupPositionProvider = popupPositionProvider,
+                onDismissRequest = onDismissRequest,
+                properties = properties,
+                onPreviewKeyEvent = onPreviewKeyEvent,
+                onKeyEvent = onKeyEvent,
+            ),
+        content = content,
+    )
+}
+
+public interface PopupRender {
+    @Composable public fun Popup(arguments: PopupData, content: @Composable () -> Unit)
+
+    public class PopupData(
+        public val popupPositionProvider: PopupPositionProvider,
+        public val onDismissRequest: (() -> Unit)? = null,
+        public val properties: PopupProperties = PopupProperties(),
+        public val onPreviewKeyEvent: ((KeyEvent) -> Boolean)? = null,
+        public val onKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    )
+
+    public companion object
+}
+
+@InternalJewelApi
+public val LocalPopupRender: ProvidableCompositionLocal<PopupRender> = staticCompositionLocalOf { DefaultPopupRender }
+
+private object DefaultPopupRender : PopupRender {
+    @Composable
+    override fun Popup(arguments: PopupData, content: @Composable () -> Unit) {
+        with(arguments) {
+            ComposePopup(
+                popupPositionProvider = popupPositionProvider,
+                onDismissRequest = onDismissRequest,
+                properties = properties,
+                onPreviewKeyEvent = onPreviewKeyEvent,
+                onKeyEvent = onKeyEvent,
+                content = content,
+            )
+        }
+    }
+}
 
 internal fun handlePopupMenuOnKeyEvent(
     keyEvent: KeyEvent,
