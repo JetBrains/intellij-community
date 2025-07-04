@@ -390,14 +390,19 @@ public final class TerminalToolWindowManager implements Disposable {
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !names.contains(o));
   }
 
-  private @NotNull Content createTerminalContent(@NotNull AbstractTerminalRunner<?> terminalRunner,
-                                                 @NotNull TerminalEngine preferredEngine,
-                                                 @Nullable TerminalWidget terminalWidget,
-                                                 @Nullable TerminalTabState tabState,
-                                                 @Nullable TerminalSessionTab sessionTab,
-                                                 @Nullable TerminalStartupFusInfo startupFusInfo,
-                                                 boolean deferSessionStartUntilUiShown,
-                                                 @Nullable TerminalStartupMoment startupMoment) {
+  /**
+   * Creates the {@link Content} with the terminal implementation of the specified {@link TerminalEngine}.
+   * Note that the created content is not added to the tool window's {@link ContentManager} yet.
+   */
+  @ApiStatus.Internal
+  public @NotNull Content createTerminalContent(@NotNull AbstractTerminalRunner<?> terminalRunner,
+                                                @NotNull TerminalEngine preferredEngine,
+                                                @Nullable TerminalWidget terminalWidget,
+                                                @Nullable TerminalTabState tabState,
+                                                @Nullable TerminalSessionTab sessionTab,
+                                                @Nullable TerminalStartupFusInfo startupFusInfo,
+                                                boolean deferSessionStartUntilUiShown,
+                                                @Nullable TerminalStartupMoment startupMoment) {
     ToolWindow toolWindow = getOrInitToolWindow();
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel();
 

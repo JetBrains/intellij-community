@@ -21,6 +21,9 @@
     <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
 
+    <toolWindow.splitContentProvider toolWindowId="terminal"
+                                     implementationClass="com.intellij.terminal.frontend.TerminalToolWindowSplitContentProvider"/>
+
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
       serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
