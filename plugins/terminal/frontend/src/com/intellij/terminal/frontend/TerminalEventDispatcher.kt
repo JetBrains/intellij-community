@@ -198,6 +198,19 @@ internal abstract class TerminalEventDispatcher(
       "ResizeToolWindowUp",
       "ResizeToolWindowDown",
       "MaximizeToolWindow",
+      // Tool Window tabs manipulation actions
+      "NextTab",
+      "PreviousTab",
+      "ShowContent",
+      "TW.CloseOtherTabs",
+      "TW.CloseAllTabs",
+      "TW.SplitRight",
+      "TW.SplitDown",
+      "TW.SplitAndMoveRight",
+      "TW.SplitAndMoveDown",
+      "TW.Unsplit",
+      "TW.MoveToNextSplitter",
+      "TW.MoveToPreviousSplitter",
       // terminal actions, but included here because they're not essential
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
@@ -210,11 +223,6 @@ internal abstract class TerminalEventDispatcher(
     @Language("devkit-action-id")
     @NonNls
     private val TERMINAL_ACTIONS = listOf(
-      // not exactly terminal actions, but we want these to always work anyway
-      "NextTab",
-      "PreviousTab",
-      "ShowContent",
-      // true terminal actions
       "Terminal.Escape",
       "Terminal.CopySelectedText",
       "Terminal.Paste",
