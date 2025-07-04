@@ -50,8 +50,8 @@ Run the following script from project root `<IDEA_HOME>` to get the required mod
 > ##### Always `git checkout` the `intellij-community` and `android` Git repositories to the same branches/tags.
   
 > [!TIP]
-> **For faster download**: If the complete repository history isn't needed add `--depth 1` after `clone`
-> If the complete repository history isn't needed add `--shallow` flag for faster download
+> - **For faster download**: If the complete repository history isn't needed add `--depth 1` after `clone`.
+> - If the complete repository history isn't needed add `--shallow` flag for faster download
 
 
 ---
