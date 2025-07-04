@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.EmptyBorder
@@ -91,6 +92,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   private val presentationUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val forceRefreshUi = AtomicBoolean(false)
   private val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+  private val itemAddedCount = AtomicInteger()
 
   init {
     val scheme = lookup.topLevelEditor.colorsScheme
@@ -166,8 +168,10 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     @JvmField
     val MATCHED_FOREGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED)
+
     @JvmField
     val SELECTED_BACKGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.selectionBackground", JBColor(0xc5dffc, 0x113a5c))
+
     @JvmField
     val SELECTED_NON_FOCUSED_BACKGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.selectionInactiveBackground",
                                                                           JBColor(0xE0E0E0, 0x515457))
@@ -500,17 +504,16 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     }
     return null
   }
-
   /**
    * Update lookup width due to visible in lookup items
    */
   private fun updateLookupWidthFromVisibleItems() {
+    if (lookup.isLookupDisposed) return
+    scheduleVisibleItemsExpensiveRendering()
     val visibleItems = lookup.visibleItems
 
     var maxWidth = if (shrinkLookup) 0 else lookupTextWidth
     for (item in visibleItems) {
-      scheduleForRenderingIfNeeded(item)
-
       val presentation = asyncRendering.getLastComputed(item)
 
       item.putUserData(CUSTOM_NAME_FONT, getFontAbleToDisplay(presentation.itemText))
@@ -541,10 +544,15 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     }
   }
 
-  private fun scheduleForRenderingIfNeeded(element: LookupElement) {
-    if (element.getUserData(SCHEDULED_FOR_RENDERING) != true) {
-      element.putUserData(SCHEDULED_FOR_RENDERING, true)
-      updateItemPresentation(element)
+  @ApiStatus.Internal
+  fun scheduleVisibleItemsExpensiveRendering() {
+    // Ensure that all visible items plus a range of invisible items have been
+    // scheduled for async rendering.
+    for (item in lookup.getItemsForAsyncRendering()) {
+      if (item.getUserData(SCHEDULED_FOR_RENDERING) != true) {
+        item.putUserData(SCHEDULED_FOR_RENDERING, true)
+        updateItemPresentation(item)
+      }
     }
   }
 
@@ -566,6 +574,12 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     updateIconWidth(fastPresentation.icon)
     scheduleUpdateLookupWidthFromVisibleItems()
     AsyncRendering.rememberPresentation(element, fastPresentation)
+
+    // Fast path for the first 20 matched items to
+    // avoid initial lookup flickering as much as possible
+    if (itemAddedCount.incrementAndGet() < 20 && lookup.arranger.matchingItems.contains(element)) {
+      updateItemPresentation(element)
+    }
   }
 
   fun updateItemPresentation(element: LookupElement) {
