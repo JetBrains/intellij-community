@@ -1740,7 +1740,7 @@
 
     <!-- multiverse -->
     <registryKey key="intellij.platform.shared.source.support"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enables shared source support"
                  restartRequired="true"
     />
