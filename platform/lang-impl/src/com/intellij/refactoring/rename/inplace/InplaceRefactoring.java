@@ -367,11 +367,13 @@ public abstract class InplaceRefactoring {
       showBalloon();
     }
 
-    beforeTemplateStart();
+    CaretAutoMoveController.forbidCaretMovementInsideIfNeeded(topLevelEditor, () -> {
+      beforeTemplateStart();
 
-    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> startTemplate(builder));
+      WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> startTemplate(builder));
 
-    afterTemplateStart();
+      afterTemplateStart();
+    });
 
     return true;
   }
