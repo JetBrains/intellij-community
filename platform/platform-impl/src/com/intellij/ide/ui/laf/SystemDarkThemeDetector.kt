@@ -15,6 +15,8 @@ import com.sun.jna.platform.win32.WinReg
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.util.Locale
 import java.util.function.BiConsumer
 import java.util.function.Consumer
@@ -30,6 +32,7 @@ sealed class SystemDarkThemeDetector {
       return when {
         SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
+        SystemInfo.isLinux -> LinuxDetector(syncFunction)
         else -> EmptyDetector()
       }
     }
@@ -148,6 +151,87 @@ private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boo
     }
     catch (e: Throwable) {}
     return false
+  }
+}
+
+private class LinuxDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
+  var lastVal: Boolean? = null;
+  var cachedSupported: Boolean? = null;
+
+  override val detectionSupported: Boolean
+    get() = if (cachedSupported != null) {
+      cachedSupported == true
+    } else {
+      val res = testCommand(QUERY_CMD)
+      cachedSupported = res
+      res
+    }
+
+  companion object {
+    // Uses the XDG Desktop Portal spec (https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Settings.html)
+    @NonNls const val CHECK_MONITOR_CMD = "dbus-monitor --help"
+    @NonNls const val MONITOR_CMD = "dbus-monitor --profile --session type='signal',interface='org.freedesktop.portal.Settings',member='SettingChanged',arg0='org.freedesktop.appearance',arg1='color-scheme'"
+    @NonNls const val QUERY_CMD = "dbus-send --session --dest=org.freedesktop.portal.Desktop --print-reply=literal /org/freedesktop/portal/desktop org.freedesktop.portal.Settings.ReadOne string:org.freedesktop.appearance string:color-scheme"
+  }
+
+  fun testCommand(command: String): Boolean = try {
+    Runtime.getRuntime().exec(command).waitFor() == 0
+  } catch (e: Exception) {
+    e.printStackTrace()
+    false
+  }
+
+  fun query(runListener: Boolean): Boolean {
+    val proc = Runtime.getRuntime().exec(QUERY_CMD)
+
+    // Create output stream
+    val outReader = BufferedReader(InputStreamReader(proc.inputStream))
+    val output = StringBuilder()
+    outReader.use { reader ->
+      reader.forEachLine { line ->
+        output.append(line).append("\n")
+      }
+    }
+
+    // Check if resulting value is 1 (prefers dark)
+    if (proc.waitFor() == 0) {
+      val newVal = output.trim().endsWith("1")
+      if (newVal != lastVal) {
+        if (runListener) {
+          ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(newVal, null) })
+        }
+        lastVal = newVal
+      }
+    }
+
+    return lastVal != false
+  }
+
+  init {
+    if (testCommand(CHECK_MONITOR_CMD)) {
+      Thread {
+        try {
+          val runtime = Runtime.getRuntime()
+          val proc = runtime.exec(MONITOR_CMD)
+          val outReader = BufferedReader(InputStreamReader(proc.inputStream))
+          outReader.use { reader ->
+            reader.forEachLine { line ->
+              if (line.contains("SettingChanged")) query(true)
+            }
+          }
+
+          runtime.addShutdownHook(Thread {
+            proc.destroyForcibly()
+          })
+
+          proc.waitFor()
+        } catch (_: Exception) {}
+      }.start()
+    }
+  }
+
+  override fun isDark(): Boolean {
+    return query(false)
   }
 }
 
