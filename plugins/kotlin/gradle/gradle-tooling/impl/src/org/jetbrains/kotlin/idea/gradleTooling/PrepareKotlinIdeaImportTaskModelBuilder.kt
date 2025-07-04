@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.BuildIdentifier
@@ -148,6 +149,16 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
      * Note, this calculation will not be correct for nested composite builds!
      */
     private val BuildIdentifier.buildPathCompat: String
-        get() = if (GradleVersionUtil.isCurrentGradleAtLeast("8.2")) buildPath
-        else @Suppress("DEPRECATION") if (name.startsWith(":")) name else ":$name"
+        get() {
+            return if (GradleVersionUtil.isCurrentGradleAtLeast("8.2")) {
+                buildPath
+            } else {
+                val name = GradleReflectionUtil.getValue(this@buildPathCompat, "getName", String::class.java)
+                return if (name.startsWith(":")) {
+                    name
+                } else {
+                    ":$name"
+                }
+            }
+        }
 }

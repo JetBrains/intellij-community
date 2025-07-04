@@ -8,6 +8,7 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryConfigurationArtifacts;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.LegacyAuxiliaryArtifactResolver;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndex;
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -428,9 +429,10 @@ public final class GradleDependencyResolver {
     BuildIdentifier buildIdentifier = projectComponentIdentifier.getBuild();
     if (IS_83_OR_BETTER) {
       return buildIdentifier.getBuildPath();
+    } else {
+      // The getName method was removed in Gradle 9.0
+      return GradleReflectionUtil.getValue(buildIdentifier, "getName", String.class);
     }
-    //noinspection deprecation
-    return buildIdentifier.getName();
   }
 
   private static final class MyModuleVersionSelector {

@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSour
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -83,8 +84,8 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
     if (isAtLeastGradle6_3) {
       return options.getGeneratedSourceOutputDirectory().get().getAsFile();
     }
-    //noinspection deprecation
-    return options.getAnnotationProcessorGeneratedSourcesDirectory();
+    // getAnnotationProcessorGeneratedSourcesDirectory was removed in Gradle 9.0
+    return GradleReflectionUtil.getValue(options, "getAnnotationProcessorGeneratedSourcesDirectory", File.class);
   }
 
   @Override

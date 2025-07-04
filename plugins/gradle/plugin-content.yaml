@@ -128,10 +128,10 @@
   files:
   - name: $PROJECT_DIR$/community/lib/ant/lib/ant.jar
   reason: withProjectLibrary
-- name: lib/gradle-api-8.14.jar
+- name: lib/gradle-api-9.0.0-rc-3.jar
   library: Gradle
   files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8/gradle-api-8.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9/gradle-api-9.jar
   reason: withProjectLibrary
 - name: lib/gradle-tooling-extension-api.jar
   modules:

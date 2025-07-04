@@ -19,8 +19,8 @@ import com.intellij.util.lang.UrlClassLoader
 import it.unimi.dsi.fastutil.Hash
 import org.gradle.internal.classpath.ClassPath
 import org.gradle.internal.service.CloseableServiceRegistry
-import org.gradle.internal.service.DefaultServiceRegistry
 import org.gradle.tooling.internal.consumer.ConnectorServices
+import org.gradle.tooling.internal.consumer.GradleConnectorFactory
 import org.gradle.tooling.internal.consumer.connection.AbstractConsumerConnection
 import org.gradle.tooling.internal.consumer.connection.ConsumerConnection
 import org.gradle.tooling.internal.consumer.connection.ParameterValidatingConsumerConnection
@@ -32,7 +32,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.*
 import java.lang.reflect.Method
 import java.nio.file.Path
-import java.util.*
 import java.util.function.BiConsumer
 
 
@@ -173,10 +172,23 @@ private fun getObject(bytes: ByteArray?): Any? {
 }
 
 fun getConnections() : Map<ClassPath, ConsumerConnection> {
-  val registry: DefaultServiceRegistry =  getStaticFieldValue(ConnectorServices::class.java, CloseableServiceRegistry::class.java, "singletonRegistry") as DefaultServiceRegistry
-  if (registry.isClosed) {
-    return Collections.emptyMap()
+  val sharedConnectorFactory = getStaticFieldValue(
+    ConnectorServices::class.java,
+    GradleConnectorFactory::class.java,
+    "sharedConnectorFactory"
+  ) as GradleConnectorFactory
+  val defaultGradleConnectorFactoryClass = ConnectorServices::class.java.declaredClasses
+    .find { it.canonicalName == "org.gradle.tooling.internal.consumer.ConnectorServices.DefaultGradleConnectorFactory" }
+  if (defaultGradleConnectorFactoryClass == null) {
+    LOG.warn("Unable to find the DefaultGradleConnectorFactory class in the Tooling API")
+    return emptyMap()
   }
+  val registry: CloseableServiceRegistry = getField(
+    defaultGradleConnectorFactoryClass,
+    sharedConnectorFactory,
+    CloseableServiceRegistry::class.java,
+    "ownerRegistry"
+  )
   val loader = registry.get(ToolingImplementationLoader::class.java)
   val delegate = getField(SynchronizedToolingImplementationLoader::class.java,
                           loader,

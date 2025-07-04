@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:8.14">
+    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:9.0.0-rc-3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.14/gradle-api-8.14.jar">
-          <sha256sum>ec82a15ab9eae1b9991d085a6863629ca5322b75e78b7890759e0af9fbc5ebe0</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.0.0-rc-3/gradle-api-9.0.0-rc-3.jar">
+          <sha256sum>ebd8931d413d3d523128c4af01cfc340c2dbec04bacf3e1a7c0367d8b54f894b</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.14/gradle-api-8.14.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.0.0-rc-3/gradle-api-9.0.0-rc-3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

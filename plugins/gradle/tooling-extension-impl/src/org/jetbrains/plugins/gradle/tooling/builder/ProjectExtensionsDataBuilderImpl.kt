@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil
+import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.getConventionPlugins
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.lang.Closure
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
@@ -33,10 +35,10 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
     result.conventions.addAll(collectConventions(project))
 
     val extensions = project.extensions
-    extensions.extraProperties.properties.forEach { name, value ->
-      if (name == "extraModelBuilder" || name.contains(".")) return@forEach
-      val typeFqn = getType(value)
-      result.gradleProperties.add(DefaultGradleProperty(name, typeFqn))
+    extensions.extraProperties.properties.entries.forEach { entry ->
+      if (entry.key == "extraModelBuilder" || entry.key.contains(".")) return@forEach
+      val typeFqn = getType(entry.value)
+      result.gradleProperties.add(DefaultGradleProperty(entry.key, typeFqn))
     }
 
     for (it in DefaultGroovyMethods.findAll(extensions)) {
@@ -112,9 +114,10 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
         return emptyList()
       }
       val result = mutableListOf<DefaultGradleConvention>()
-      @Suppress("DEPRECATION")
-      project.convention.plugins.forEach { (key, value) ->
-        result.add(DefaultGradleConvention(key, getType(value)))
+      if (GradleConventionUtil.isGradleConventionsSupported()) {
+        getConventionPlugins(project).forEach { (key, value) ->
+          result.add(DefaultGradleConvention(key, getType(value)))
+        }
       }
       return result
     }

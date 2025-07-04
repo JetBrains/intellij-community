@@ -47,7 +47,7 @@ fun getDaemonParameters(layout: BuildLayoutParameters): DaemonParameters {
 }
 
 private fun daemonParameters8Dot14(layout: BuildLayoutParameters): DaemonParameters {
-  val daemonParametersConstructor = DaemonParameters::class.java.getConstructor(
+ val daemonParametersConstructor = DaemonParameters::class.java.getConstructor(
     File::class.java,
     FileCollectionFactory::class.java
   )
@@ -57,11 +57,10 @@ private fun daemonParameters8Dot14(layout: BuildLayoutParameters): DaemonParamet
     DefaultDirectoryFileTreeFactory(),
     DefaultPatternSetFactory(PatternSpecFactory.INSTANCE),
     PropertyHost.NO_OP,
-    null
+    GradleFileSystemNoOp.INSTANCE
   )
   return daemonParametersConstructor.newInstance(layout.gradleUserHomeDir, collectionFactory)
 }
-
 
 /**
  * DaemonParameters(File (gradleUserHomeDir), FileCollectionFactory) with DefaultFileCollectionFactory using
