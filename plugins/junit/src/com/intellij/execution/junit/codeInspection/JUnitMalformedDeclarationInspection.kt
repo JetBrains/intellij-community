@@ -350,6 +350,7 @@ private class JUnitMalformedSignatureVisitor(
     if (aClass.isInterface || aClass.javaPsi.hasModifier(JvmModifier.ABSTRACT)) return
     if (aClass.methods.none { it.javaPsi.hasAnnotation(ORG_JUNIT_TEST) }) return
     if (outerClass.uAnnotations.firstOrNull { it.qualifiedName == ORG_JUNIT_RUNNER_RUN_WITH } != null) return
+    if (aClass.isStatic) return
     val message = JUnitBundle.message("jvm.inspections.junit.malformed.missing.nested.annotation.descriptor")
     holder.registerUProblem(aClass, message, MakeJUnit4InnerClassRunnableFix(aClass))
   }
@@ -384,14 +385,16 @@ private class JUnitMalformedSignatureVisitor(
   private fun checkMalformedJUnit5NestedClass(aClass: UClass) {
     val javaClass = aClass.javaPsi
     if (aClass.isInterface || aClass.javaPsi.hasModifier(JvmModifier.ABSTRACT)) return
-    if (!javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED) && !aClass.methods.any { it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_API_TEST) }) return
-    if (javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED) && !aClass.isStatic && aClass.visibility != UastVisibility.PRIVATE) return
+    val hasNestedAnnotation = javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)
+    if (!hasNestedAnnotation && !aClass.methods.any { it.javaPsi.hasAnnotation(ORG_JUNIT_JUPITER_API_TEST) }) return
+    if (!hasNestedAnnotation && aClass.isStatic) return
+    if (hasNestedAnnotation && !aClass.isStatic && aClass.visibility != UastVisibility.PRIVATE) return
     val message = JUnitBundle.message("jvm.inspections.junit.malformed.missing.nested.annotation.descriptor")
     val fix = ClassSignatureQuickFix(
       aClass.javaPsi.name ?: return,
       false,
       aClass.visibility == UastVisibility.PRIVATE,
-      if (javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)) null else ORG_JUNIT_JUPITER_API_NESTED
+      if (hasNestedAnnotation) null else ORG_JUNIT_JUPITER_API_NESTED
     )
     holder.registerUProblem(aClass, message, fix)
   }

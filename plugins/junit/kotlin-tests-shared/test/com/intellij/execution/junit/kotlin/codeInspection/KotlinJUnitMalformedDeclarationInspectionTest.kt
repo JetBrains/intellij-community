@@ -116,11 +116,11 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         }
     """.trimIndent(), "Fix 'B' class signature", testPreview = true)
   }
-  fun `test highlighting non executable JUnit 4 nested class`() {
+  fun `test highlighting executable JUnit 4 nested class`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
       class A { 
-        class <error descr="Tests in nested class will not be executed">B</error> { 
+        class B { 
           @org.junit.Test
           fun testFoo() { }
         }
@@ -138,24 +138,24 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
       }  
     """.trimIndent())
   }
-  fun `test highlighting non executable JUnit 4 nested class top level abstract`() {
+  fun `test highlighting executable JUnit 4 nested class top level abstract`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
       abstract class A {
         class B {
-          class <error descr="Tests in nested class will not be executed">C</error> {
+          class C {
             @org.junit.Test
             fun testFoo() { }
           }
         }
-      }  
+      }
     """.trimIndent())
   }
   fun `test quickfix no nested annotation in JUnit 4`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """ 
       class A {
-          class <caret>B { 
+          inner class <caret>B { 
               @org.junit.Test
               fun testFoo() { }
           }
@@ -177,7 +177,12 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
       class A {
-          class <error descr="Tests in nested class will not be executed">B</error> { 
+          inner class <error descr="Tests in nested class will not be executed">B</error> { 
+              @org.junit.jupiter.api.Test
+              fun testFoo() { }
+          }
+          
+          class C { 
               @org.junit.jupiter.api.Test
               fun testFoo() { }
           }
@@ -1836,7 +1841,7 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         @org.junit.Test public fun <error descr="Method 'testFour' annotated with '@Test' should not declare parameter 'i'">testFour</error>(i: Int) { }
         @org.junit.Test public fun testFive() { }
         @org.junit.Test public fun testMock(@mockit.Mocked s: String) { }
-        companion <error descr="Test class 'object' is not constructable because it should have exactly one 'public' no-arg constructor"><error descr="Tests in nested class will not be executed">object</error></error> {
+        companion <error descr="Test class 'object' is not constructable because it should have exactly one 'public' no-arg constructor">object</error> {
           @JvmStatic
           @org.junit.Test public fun <error descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</error>() { }
         }

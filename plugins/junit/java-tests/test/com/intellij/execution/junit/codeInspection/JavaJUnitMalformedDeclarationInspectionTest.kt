@@ -118,6 +118,11 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         
         @org.junit.jupiter.api.Nested
         private static class <error descr="Tests in nested class will not be executed">D</error> { }
+        
+        public static class E {
+          @org.junit.jupiter.api.Test
+          public void testFoo() { }
+        }
       }
     """.trimIndent())
     }
@@ -163,6 +168,16 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A { 
         public class <error descr="Tests in nested class will not be executed">B</error> { 
+          @org.junit.Test
+          public void testFoo() { }
+        }
+      }  
+    """.trimIndent())
+    }
+    fun `test highlighting executable JUnit 4 static inner class`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class A { 
+        public static class B { 
           @org.junit.Test
           public void testFoo() { }
         }
@@ -411,6 +426,16 @@ class JavaJUnitMalformedDeclarationInspectionTest {
           @org.junit.jupiter.params.ParameterizedClass
           @org.junit.jupiter.params.provider.NullSource
           class NestedClassTest {
+            @org.junit.jupiter.params.Parameter
+            Object o;
+          
+            @org.junit.jupiter.api.Test
+            void test() { }
+          }
+          
+          @org.junit.jupiter.params.ParameterizedClass
+          @org.junit.jupiter.params.provider.NullSource
+          static class ClassStaticTest {
             @org.junit.jupiter.params.Parameter
             Object o;
           
