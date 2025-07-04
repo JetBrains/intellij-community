@@ -732,8 +732,7 @@ private fun loadPluginDescriptor(
       }
     }
     else {
-      // TODO isn't pluginPathResolver missing here?
-      val subRaw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, null).let {
+      val subRaw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pluginPathResolver.toXIncludeLoader(dataLoader)).let {
         try{
           it.consume(createXmlStreamReader(module.descriptorContent))
         }
