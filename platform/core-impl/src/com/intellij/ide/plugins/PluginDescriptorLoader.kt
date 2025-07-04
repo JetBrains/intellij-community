@@ -734,7 +734,12 @@ private fun loadPluginDescriptor(
     else {
       // TODO isn't pluginPathResolver missing here?
       val subRaw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, null).let {
-        it.consume(createXmlStreamReader(module.descriptorContent))
+        try{
+          it.consume(createXmlStreamReader(module.descriptorContent))
+        }
+        catch (e: XMLStreamException) {
+          throw IllegalArgumentException("Cannot parse module descriptor for $module in $descriptor.", e)
+        }
         it.getBuilder()
       }
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
