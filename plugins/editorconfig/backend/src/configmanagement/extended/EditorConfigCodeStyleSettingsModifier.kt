@@ -36,7 +36,6 @@ import org.ec4j.core.ResourceProperties
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.EditorConfigActionUtil
-import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory
 import org.editorconfig.configmanagement.EditorConfigUsagesCollector.logEditorConfigUsed
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
@@ -81,10 +80,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
 
         settings.setModifier(this)
         settings.addDependency(EditorConfigPropertiesService.getInstance(project))
-        
-        val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
-        navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
-        
+
         // Apply editorconfig settings for the current editor
         if (applyCodeStyleSettings(settings, properties, psiFile)) {
           LOG.debug { "Modified for ${psiFile.name}" }

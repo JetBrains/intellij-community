@@ -3,42 +3,27 @@ package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.editorconfig.common.EditorConfigBundle;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class EditorConfigActionUtil {
 
-  public static AnAction[] createNavigationActions(@NotNull PsiFile file) {
-    EditorConfigNavigationActionsFactory navigationActionsFactory =
-      EditorConfigNavigationActionsFactory.Companion.getInstance(file);
-    if (navigationActionsFactory == null) {
-      return AnAction.EMPTY_ARRAY;
-    }
-    List<AnAction> actions = new ArrayList<>(navigationActionsFactory.getNavigationActions(file.getProject(), file.getVirtualFile()));
-    return actions.toArray(AnAction.EMPTY_ARRAY);
+  public static AnAction @NotNull [] createNavigationActions(@NotNull PsiFile file) {
+    return EditorConfigNavigationActionsFactory
+      .INSTANCE
+      .getNavigationActions(file.getProject(), file.getVirtualFile())
+      .toArray(AnAction.EMPTY_ARRAY);
   }
 
   @Contract("_, _ -> new")
