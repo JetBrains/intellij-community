@@ -44,7 +44,6 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassAttributesIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyTypeAliasNameIndex"/>
-    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyImportNameIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PyModuleNameIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex"/>
 
