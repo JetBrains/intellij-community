@@ -244,7 +244,6 @@ data class ServerCapabilities(
 
 
 typealias HoverOptions = Unknown
-typealias SignatureHelpOptions = Unknown
 typealias TypeDefinitionOptions = Unknown
 typealias ImplementationOptions = Unknown
 typealias DocumentHighlightOptions = Unknown

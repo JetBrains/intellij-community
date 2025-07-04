@@ -3,6 +3,7 @@ package com.jetbrains.lsp.protocol
 import kotlinx.serialization.*
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
@@ -632,8 +633,14 @@ value class TextEditOrInsertReplaceEdit private constructor(val edit: JsonElemen
 @Serializable
 @JvmInline
 value class StringOrMarkupContent private constructor(val content: JsonElement) {
-    constructor(content: String) : this(JsonPrimitive(content))
-    constructor(content: MarkupContent) : this(LSP.json.encodeToJsonElement(MarkupContent.serializer(), content))
+  constructor(content: String) : this(JsonPrimitive(content))
+  constructor(content: MarkupContent) : this(LSP.json.encodeToJsonElement(MarkupContent.serializer(), content))
+
+  fun contentAsString(): String = when (content) {
+    is JsonPrimitive -> content.content
+    is JsonObject -> LSP.json.decodeFromJsonElement(MarkupContent.serializer(), content).value
+    else -> error("Unexpected content type: ${content::class.simpleName}")
+  }
 }
 
 class CompletionItemKindSerializer : EnumAsIntSerializer<CompletionItemKind>(

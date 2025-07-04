@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -7,6 +7,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
@@ -18,7 +19,9 @@ import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -34,6 +37,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 import java.awt.Color
 import kotlin.math.min
@@ -59,7 +63,7 @@ class KotlinHighLevelLambdaParameterInfoHandler :
 
     override fun getArgumentListAllowedParentClasses(): Set<Class<KtLambdaArgument>> = setOf(KtLambdaArgument::class.java)
 
-    override fun getCurrentArgumentIndex(context: UpdateParameterInfoContext, argumentList: KtLambdaArgument): Int {
+    override fun getCurrentArgumentIndex(offset: Int, argumentList: KtLambdaArgument): Int {
         val size = (argumentList.parent as? KtCallElement)?.valueArguments?.size ?: 1
         return size - 1
     }
@@ -99,6 +103,9 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         private val ANNOTATION_TARGET_TYPE = CallableId(StandardClassIds.AnnotationTarget, Name.identifier(AnnotationTarget.TYPE.name))
         private val ANNOTATION_TARGET_VALUE_PARAMETER = CallableId(StandardClassIds.AnnotationTarget, Name.identifier(AnnotationTarget.VALUE_PARAMETER.name))
+
+       @OptIn(KaExperimentalApi::class)
+       private val typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES
     }
 
     override fun getActualParameterDelimiterType(): KtSingleValueToken = KtTokens.COMMA
@@ -114,9 +121,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
     override fun findElementForParameterInfo(context: CreateParameterInfoContext): TArgumentList? {
         val file = context.file as? KtFile ?: return null
 
-        val token = file.findElementAt(context.offset) ?: return null
-        val argumentList = PsiTreeUtil.getParentOfType(token, argumentListClass.java, true, *STOP_SEARCH_CLASSES.toTypedArray())
-            ?: return null
+        val argumentList = findElementForParameterInfo(file, context.offset) ?: return null
 
         val callElement = argumentList.parent as? KtElement ?: return null
         return analyze(callElement) {
@@ -138,6 +143,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         }
     }
 
+    fun findElementForParameterInfo(file: KtFile, offset: Int): TArgumentList? {
+        val token = file.findElementAt(offset) ?: return null
+        return PsiTreeUtil.getParentOfType(token, argumentListClass.java, true, *STOP_SEARCH_CLASSES.toTypedArray())
+    }
+
     override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext): TArgumentList? {
         val element = context.file.findElementAt(context.offset) ?: return null
         return PsiTreeUtil.getParentOfType(element, argumentListClass.java)
@@ -148,10 +158,25 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         if (context.parameterOwner !== argumentList) {
             context.removeHint()
         }
-        val currentArgumentIndex = getCurrentArgumentIndex(context, argumentList)
+        val currentArgumentIndex = getCurrentArgumentIndex(context.offset, argumentList)
         context.setCurrentParameter(currentArgumentIndex)
 
-        val callElement = argumentList.parent as? KtElement ?: return
+        val callInfos = createCallInfos(argumentList, currentArgumentIndex) ?: return
+        for ((index, objectToView) in context.objectsToView.withIndex()) {
+            val candidateInfo = objectToView as? CandidateInfo ?: continue
+
+            if (index >= callInfos.size) {
+                // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
+                return
+            }
+            candidateInfo.callInfo = callInfos[index]
+        }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    fun createCallInfos(argumentList: TArgumentList, currentArgumentIndex: Int): List<CallInfo>? {
+        val callElement = argumentList.parent as? KtElement ?: return null
+        val result = mutableListOf<CallInfo>()
         analyze(callElement) {
             if (callElement !is KtCallElement && callElement !is KtArrayAccessExpression) return@analyze
 
@@ -160,14 +185,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
             val candidates = collectCallCandidates(callElement)
             val hasMultipleApplicableBestCandidates = candidates.count { candidate -> candidate.withMapping.isApplicableBestCandidate } > 1
-
-            for ((index, objectToView) in context.objectsToView.withIndex()) {
-                val candidateInfo = objectToView as? CandidateInfo ?: continue
-
-                if (index >= candidates.size) {
-                    // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
-                    return
-                }
+            for ((index, objectToView) in candidates.withIndex()) {
                 val (candidateSignature, argumentMapping, isApplicableBestCandidate) = candidates[index].withMapping
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
@@ -232,7 +250,32 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     else -> null
                 }
 
-                candidateInfo.callInfo = CallInfo(
+                val representation = CallStringRepresentation(
+                    buildString {
+                        candidateSignature.receiverType?.let {
+                            append(it.render(typeRenderer, position = Variance.IN_VARIANCE))
+                            append(".")
+                        }
+                        val name = when(val symbol = candidateSignature.symbol) {
+                            is KaConstructorSymbol -> (symbol.containingDeclaration as? KaClassSymbol)?.name
+                            else -> symbol.name
+                        }
+                        append(name?.render())
+                    },
+                    buildString {
+                        when(val symbol = candidateSignature.symbol) {
+                            is KaConstructorSymbol ->{}
+                            else -> {
+                                append(": ")
+                                append(candidateSignature.returnType.render(typeRenderer, position = Variance.OUT_VARIANCE))
+                            }
+                        }
+
+                    }
+                )
+
+                result += CallInfo(
+                    candidateSignature.symbol.psi,
                     callElement,
                     valueArguments,
                     firstArgumentInNamedMode,
@@ -244,13 +287,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     hasTypeMismatchBeforeCurrent,
                     highlightParameterIndex,
                     isDeprecated = candidateSignature.symbol.deprecationStatus != null,
+                    representation,
                 )
             }
         }
+        return result
     }
 
-    protected open fun getCurrentArgumentIndex(context: UpdateParameterInfoContext, argumentList: TArgumentList): Int {
-        val offset = context.offset
+    open fun getCurrentArgumentIndex(offset: Int, argumentList: TArgumentList): Int {
         return argumentList.allChildren
             .takeWhile { it.startOffset < offset }
             .count { it.node.elementType == KtTokens.COMMA }
@@ -284,7 +328,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             }
 
             val returnType = parameter.returnType.takeUnless { it is KaErrorType } ?: parameter.symbol.returnType
-            append(returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+            append(returnType.render(typeRenderer, position = Variance.INVARIANT))
 
             parameter.symbol.defaultValue?.let { defaultValue ->
                 append(" = ")
@@ -389,153 +433,205 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         if (!argumentListClass.java.isInstance(context.parameterOwner)) return false
 
         val callInfo = itemToShow.callInfo ?: return false
-        val currentArgumentIndex = min(context.currentParameterIndex, callInfo.arguments.size)
-        if (currentArgumentIndex < 0) return false
-        with(callInfo) {
-            var highlightStartOffset = -1
-            var highlightEndOffset = -1
-            var isDisabledBeforeHighlight = false
-            var hasUnmappedArgument = false
-            var hasUnmappedArgumentBeforeCurrent = false
-            var lastMappedArgumentIndex = -1
-            var namedMode = false
-            val usedParameterIndices = HashSet<Int>()
-            val text = buildString {
-                var argumentIndex = 0
-                val parameterDelimiterIndexes = mutableListOf<Int>()
-
-                fun appendParameter(
-                    parameterIndex: Int,
-                    shouldHighlight: Boolean = false,
-                    isNamed: Boolean = false,
-                    markUsedUnusedParameterBorder: Boolean = false
-                ) {
-                    argumentIndex++
-
-                    if (length > 0) {
-                        append(", ")
-                        parameterDelimiterIndexes.add(length)
-                        if (markUsedUnusedParameterBorder) {
-                            // This is used to "disable" the used parameters, when in "named mode" and there are more unused parameters.
-                            // See NamedParameter3.kt test. Disabling them gives a visual cue that they are already used.
-
-                            // Highlight something as bold to show text before as disabled
-                            highlightStartOffset = length - 1
-                            highlightEndOffset = length - 1
-                            isDisabledBeforeHighlight = true
-                        }
-                    }
-
-                    if (shouldHighlight) {
-                        highlightStartOffset = length
-                    }
-
-                    val surroundInBrackets = isNamed || namedMode
-                    if (surroundInBrackets) {
-                        append("[")
-                    }
-                    append(parameterIndexToText[parameterIndex])
-                    if (surroundInBrackets) {
-                        append("]")
-                    }
-
-                    if (shouldHighlight) {
-                        highlightEndOffset = length
-                    }
-                }
-
-                if (valueArguments != null) {
-                    for (valueArgument in valueArguments) {
-                        val parameterIndex = argumentToParameterIndex[valueArgument.getArgumentExpression()]
-                        if (valueArgument == firstArgumentInNamedMode){
-                            namedMode = true
-                        }
-
-                        if (parameterIndex == null) {
-                            hasUnmappedArgument = true
-                            if (argumentIndex < currentArgumentIndex) {
-                                hasUnmappedArgumentBeforeCurrent = true
-                            }
-                            argumentIndex++
-                            continue
-                        }
-                        lastMappedArgumentIndex = argumentIndex
-                        if (!usedParameterIndices.add(parameterIndex)) continue
-
-                        val shouldHighlight = parameterIndex == highlightParameterIndex
-                        appendParameter(parameterIndex, shouldHighlight, valueArgument.isNamed())
-                    }
-                } else {
-                    // This is for array get/set calls which don't have KtValueArguments.
-                    for (argument in arguments) {
-                        val parameterIndex = argumentToParameterIndex[argument]
-                        if (parameterIndex == null) {
-                            hasUnmappedArgument = true
-                            if (argumentIndex < currentArgumentIndex) {
-                                hasUnmappedArgumentBeforeCurrent = true
-                            }
-                            argumentIndex++
-                            continue
-                        }
-                        lastMappedArgumentIndex = argumentIndex
-                        if (!usedParameterIndices.add(parameterIndex)) continue
-
-                        val shouldHighlight = parameterIndex == highlightParameterIndex
-                        appendParameter(parameterIndex, shouldHighlight)
-                    }
-                }
-
-                for (parameterIndex in 0 until valueParameterCount) {
-                    if (parameterIndex !in usedParameterIndices) {
-                        // Highlight the first unused parameter if it is in the correct position
-                        val shouldHighlight = !namedMode && highlightStartOffset == -1
-                        appendParameter(
-                            parameterIndex,
-                            shouldHighlight,
-                            markUsedUnusedParameterBorder = namedMode && highlightStartOffset == -1
-                        )
-                    }
-                }
-
-                if (length == 0) {
-                    append(CodeInsightBundle.message("parameter.info.no.parameters"))
-                } else {
-                    val useMultilineParameters = Registry.`is`("kotlin.multiline.function.parameters.info")
-                    if (useMultilineParameters && argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
-                        parameterDelimiterIndexes.forEach { offset ->
-                            replace(offset - 1, offset, "\n")
-                        }
+        val uiModel = callInfo.toUiModel(context.currentParameterIndex) ?: return false
+        val backgroundColor = if (callInfo.shouldHighlightGreen) GREEN_BACKGROUND else context.defaultParameterColor
+        val signature = uiModel.signatureModel
+        val text = buildString {
+            signature.parts.forEach { piece -> append(piece.text) }
+            val useMultilineParameters = Registry.`is`("kotlin.multiline.function.parameters.info", false)
+            if (useMultilineParameters && signature.parts.size > SINGLE_LINE_PARAMETERS_COUNT) {
+                signature.parts.forEachIndexed { i, piece ->
+                    if (piece is SignaturePart.Parameter) {
+                        val offset = signature.getRange(i).first
+                        replace(offset - 1, offset, "\n")
                     }
                 }
             }
-
-            val backgroundColor = if (shouldHighlightGreen) GREEN_BACKGROUND else context.defaultParameterColor
-
-            // Disabled when there are too many arguments.
-            val allParametersUsed = usedParameterIndices.size == valueParameterCount
-            val supportsTrailingCommas = callElement.languageVersionSettings.supportsFeature(LanguageFeature.TrailingCommas)
-            val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
-            val isInPositionToEnterArgument = !supportsTrailingCommas && afterTrailingComma
-            val isAfterMappedArgs = currentArgumentIndex > lastMappedArgumentIndex
-            val tooManyArgs = allParametersUsed && (isInPositionToEnterArgument || hasUnmappedArgument) && (isAfterMappedArgs || namedMode)
-
-            val isDisabled = tooManyArgs || hasTypeMismatchBeforeCurrent || hasUnmappedArgumentBeforeCurrent
-
-            context.setupUIComponentPresentation(
-                text,
-                highlightStartOffset,
-                highlightEndOffset,
-                isDisabled,
-                /*strikeout=*/ isDeprecated,
-                isDisabledBeforeHighlight,
-                backgroundColor
-            )
         }
+        val highlightedRange  =run {
+            val index= signature.parts.withIndex()
+                .firstOrNull { (it.value as? SignaturePart.Parameter)?.isHighlighted == true }?.index
+                ?: return@run Pair(-1, -1)
+            signature.getRange(index)
+        }
+        context.setupUIComponentPresentation(
+            text,
+            highlightedRange.first,
+            highlightedRange.second,
+            uiModel.isDisabled,
+            /*strikeout=*/ callInfo.isDeprecated,
+            uiModel.isDisabledBeforeHighlight,
+            backgroundColor
+        )
 
         return true
     }
 
+    sealed interface SignaturePart {
+        val text: String
+
+        data class Text(override val text: String) : SignaturePart
+        data class Parameter(override val text: String, val isHighlighted: Boolean) : SignaturePart
+    }
+
+    data class UiModel(
+        val signatureModel: SignatureModel,
+        val isDisabled: Boolean,
+        val isDisabledBeforeHighlight: Boolean,
+    )
+
+    data class SignatureModel(
+        val parts: List<SignaturePart>,
+    ) {
+        val text: String get() = parts.joinToString("") { it.text }
+
+        private val ranges by lazy {
+            var offset = 0
+            val result = mutableListOf<Pair<Int, Int>>()
+            for (piece in parts) {
+                result += Pair(offset, offset + piece.text.length)
+                offset += piece.text.length
+            }
+            result
+        }
+
+        fun getRange(index: Int): Pair<Int, Int> {
+            return ranges[index]
+        }
+    }
+
+    fun CallInfo.toUiModel(
+        currentParameterIndex: Int,
+        appendNoParametersMessage: Boolean = true,
+    ): UiModel? {
+        val currentArgumentIndex = min(currentParameterIndex, arguments.size)
+        if (currentArgumentIndex < 0) return null
+        var wasParameterHighlighted = false
+        var isDisabledBeforeHighlight = false
+        var hasUnmappedArgument = false
+        var hasUnmappedArgumentBeforeCurrent = false
+        var lastMappedArgumentIndex = -1
+        var namedMode = false
+        val usedParameterIndices = HashSet<Int>()
+
+        val signatureParts = mutableListOf<SignaturePart>()
+
+        var argumentIndex = 0
+
+        fun appendParameter(
+            parameterIndex: Int,
+            shouldHighlight: Boolean = false,
+            isNamed: Boolean = false,
+            markUsedUnusedParameterBorder: Boolean = false
+        ) {
+            argumentIndex++
+
+            if (signatureParts.isNotEmpty()) {
+                signatureParts.add(SignaturePart.Text(","))
+                if (markUsedUnusedParameterBorder) {
+                    // This is used to "disable" the used parameters, when in "named mode" and there are more unused parameters.
+                    // See NamedParameter3.kt test. Disabling them gives a visual cue that they are already used.
+                    signatureParts.add(SignaturePart.Parameter("", isHighlighted = true))
+                    isDisabledBeforeHighlight = true
+                    wasParameterHighlighted = true
+                }
+                signatureParts.add(SignaturePart.Text(" "))
+            }
+
+            val surroundInBrackets = isNamed || namedMode
+            val parameterText = buildString {
+                if (surroundInBrackets) {
+                    append("[")
+                }
+                append(parameterIndexToText[parameterIndex])
+                if (surroundInBrackets) {
+                    append("]")
+                }
+            }
+            if (shouldHighlight) {
+                wasParameterHighlighted = true
+            }
+            signatureParts.add(SignaturePart.Parameter(parameterText, shouldHighlight))
+        }
+
+        if (valueArguments != null) {
+            for (valueArgument in valueArguments) {
+                val parameterIndex = argumentToParameterIndex[valueArgument.getArgumentExpression()]
+                if (valueArgument == firstArgumentInNamedMode) {
+                    namedMode = true
+                }
+
+                if (parameterIndex == null) {
+                    hasUnmappedArgument = true
+                    if (argumentIndex < currentArgumentIndex) {
+                        hasUnmappedArgumentBeforeCurrent = true
+                    }
+                    argumentIndex++
+                    continue
+                }
+                lastMappedArgumentIndex = argumentIndex
+                if (!usedParameterIndices.add(parameterIndex)) continue
+
+                val shouldHighlight = parameterIndex == highlightParameterIndex
+                appendParameter(parameterIndex, shouldHighlight, valueArgument.isNamed())
+            }
+        } else {
+            // This is for array get/set calls which don't have KtValueArguments.
+            for (argument in arguments) {
+                val parameterIndex = argumentToParameterIndex[argument]
+                if (parameterIndex == null) {
+                    hasUnmappedArgument = true
+                    if (argumentIndex < currentArgumentIndex) {
+                        hasUnmappedArgumentBeforeCurrent = true
+                    }
+                    argumentIndex++
+                    continue
+                }
+                lastMappedArgumentIndex = argumentIndex
+                if (!usedParameterIndices.add(parameterIndex)) continue
+
+                val shouldHighlight = parameterIndex == highlightParameterIndex
+                appendParameter(parameterIndex, shouldHighlight)
+            }
+        }
+
+        for (parameterIndex in 0 until valueParameterCount) {
+            if (parameterIndex !in usedParameterIndices) {
+                // Highlight the first unused parameter if it is in the correct position
+                val shouldHighlight = !namedMode && !wasParameterHighlighted
+                appendParameter(
+                    parameterIndex,
+                    shouldHighlight,
+                    markUsedUnusedParameterBorder = namedMode && !wasParameterHighlighted
+                )
+            }
+        }
+
+        if (appendNoParametersMessage && signatureParts.isEmpty()) {
+            signatureParts.add(SignaturePart.Text(CodeInsightBundle.message("parameter.info.no.parameters")))
+        }
+
+
+        // Disabled when there are too many arguments.
+        val allParametersUsed = usedParameterIndices.size == valueParameterCount
+        val supportsTrailingCommas = callElement.languageVersionSettings.supportsFeature(LanguageFeature.TrailingCommas)
+        val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
+        val isInPositionToEnterArgument = !supportsTrailingCommas && afterTrailingComma
+        val isAfterMappedArgs = currentArgumentIndex > lastMappedArgumentIndex
+        val tooManyArgs = allParametersUsed && (isInPositionToEnterArgument || hasUnmappedArgument) && (isAfterMappedArgs || namedMode)
+
+        val isDisabled = tooManyArgs || hasTypeMismatchBeforeCurrent || hasUnmappedArgumentBeforeCurrent
+
+        return UiModel(
+            SignatureModel(signatureParts),
+            isDisabled,
+            isDisabledBeforeHighlight,
+        )
+    }
+    
+
     data class CallInfo(
+        val target: PsiElement?,
         val callElement: KtElement,
         val valueArguments: List<KtValueArgument>?,
         val firstArgumentInNamedMode: KtValueArgument?,
@@ -547,6 +643,12 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val hasTypeMismatchBeforeCurrent: Boolean,
         val highlightParameterIndex: Int?,
         val isDeprecated: Boolean,
+        val representation: CallStringRepresentation,
+    )
+
+    data class CallStringRepresentation(
+        val beforeParameters: String,
+        val afterParameters: String,
     )
 
     data class CandidateInfo(
