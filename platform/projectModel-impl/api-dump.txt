@@ -307,6 +307,10 @@ c:com.intellij.openapi.roots.JavadocOrderRootType
 - com.intellij.openapi.roots.PersistentOrderRootType
 - s:getInstance():com.intellij.openapi.roots.OrderRootType
 - s:getUrls(com.intellij.openapi.roots.OrderEntry):java.lang.String[]
+f:com.intellij.openapi.roots.ModuleExtensionEp
+- com.intellij.openapi.extensions.PluginAware
+- implementationClass:java.lang.String
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 a:com.intellij.openapi.roots.ModuleRootManagerEx
 - com.intellij.openapi.roots.ModuleRootManager
 - <init>():V

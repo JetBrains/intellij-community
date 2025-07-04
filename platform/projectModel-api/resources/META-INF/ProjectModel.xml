@@ -1,6 +1,8 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE" dynamic="true"/>
+    <extensionPoint name="moduleExtension" beanClass="com.intellij.openapi.roots.ModuleExtensionEp" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.roots.ModuleExtension"/>
+    </extensionPoint>
     <extensionPoint name="orderEnumerationHandlerFactory" interface="com.intellij.openapi.roots.OrderEnumerationHandler$Factory" dynamic="true"/>
     <extensionPoint name="filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher" dynamic="true"/>
     <extensionPoint name="projectFileScanner" interface="com.intellij.util.indexing.roots.IndexableFileScanner" dynamic="true"/>
