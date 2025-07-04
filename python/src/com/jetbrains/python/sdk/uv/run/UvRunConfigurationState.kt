@@ -104,7 +104,7 @@ suspend fun requiresSync(
   // 3. script with metadata -- syncs script deps, doesn't sync project
   // 4. script with metadata and --no-project flag -- syncs script deps, doesn't sync project (flag is ignored)
 
-  val containsExact = !options.uvArgs.contains("--exact")
+  val containsExact = options.uvArgs.contains("--exact")
   var hasNoMetadata = options.runType == UvRunType.MODULE // modules have no script metadata, so it starts with true in case of a module
 
   if (options.runType == UvRunType.SCRIPT) {
