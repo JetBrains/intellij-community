@@ -95,16 +95,6 @@ public class PyHighlightingAnnotatorVisitor extends PyElementVisitor {
     }
   }
 
-  @Override
-  public void visitElement(@NotNull PsiElement element) {
-    // Highlight None, True and False as keywords once again inside annotations after PyHighlighter
-    // to keep their original color
-    if (PyTokenTypes.EXPRESSION_KEYWORDS.contains(element.getNode().getElementType()) &&
-        PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null) {
-      myHolder.addHighlightingAnnotation(element, PyHighlighter.PY_KEYWORD);
-    }
-  }
-
   private static @Nullable PyNamedParameter findParameterRecursively(@NotNull PyFunction function, @NotNull String referencedName) {
     for (PyFunction f = function; f != null; f = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(f), PyFunction.class)) {
       PyNamedParameter element = f.getParameterList().findParameterByName(referencedName);

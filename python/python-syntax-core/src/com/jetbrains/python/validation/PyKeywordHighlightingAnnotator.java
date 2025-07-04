@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PySyntaxCoreBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
@@ -106,6 +107,16 @@ public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implem
     @Override
     public void visitPyTypeAliasStatement(@NotNull PyAstTypeAliasStatement node) {
       highlightKeyword(node, PyTokenTypes.TYPE_KEYWORD);
+    }
+
+    @Override
+    public void visitElement(@NotNull PsiElement element) {
+      // Highlight None, True and False as keywords once again inside annotations after PyHighlighter
+      // to keep their original color
+      if (PyTokenTypes.EXPRESSION_KEYWORDS.contains(element.getNode().getElementType()) &&
+          PsiTreeUtil.getParentOfType(element, PyAstAnnotation.class) != null) {
+        myHolder.addHighlightingAnnotation(element, PyHighlighter.PY_KEYWORD);
+      }
     }
 
     private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {
