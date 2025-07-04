@@ -476,9 +476,10 @@ public final class ProgressRunner<R> {
         childContext.runInChildContext(() -> {
           CoroutineContext effectiveContext =
             ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit));
-          try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, true)) {
+          ThreadContext.installThreadContext(effectiveContext, true, () -> {
             runnable.run();
-          }
+            return Unit.INSTANCE;
+          });
         });
       };
       switch (myThreadToUse) {

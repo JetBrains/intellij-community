@@ -134,6 +134,8 @@ public final class Cancellation {
     if (isInNonCancelableSectionInternal()) {
       return computable.compute();
     }
+    // we use a deprecated method here to handle the exception correctly
+    //noinspection deprecation
     try (@NotNull AccessToken ignored = ThreadContext.installThreadContext(
       ThreadContext.currentThreadContext().plus(NonCancellable.INSTANCE), true)) {
       return computable.compute();

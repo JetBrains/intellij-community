@@ -1397,7 +1397,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     finally {
       // non-cancellable section here because we need to prohibit prompt cancellation of lock acquisition in this `finally`
       // otherwise the outer release in `runWriteIntentReadAction` would fail with NPE
-      installThreadContext(currentThreadContext().minusKey(Job), true).use {
+      installThreadContext(currentThreadContext().minusKey(Job), true) {
         state.acquireWriteIntentPermit()
       }
     }

@@ -297,8 +297,19 @@ fun <T> resetThreadContext(action: () -> T): T {
  * Installs [coroutineContext] as the current thread context.
  * If [replace] is `false` (default) and the current thread already has context, then this function logs an error.
  *
+ */
+fun <T> installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false, action: () -> T): T {
+  installThreadContext(coroutineContext, replace = replace).use {
+    return action()
+  }
+}
+
+/**
+ * This function is not visible in stacktraces. Consider using a sibling higher-order function
+ *
  * @return handle to restore the previous thread context
  */
+@Deprecated("Use higher-order function for installation of thread context")
 fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
   return withThreadLocal(tlCoroutineContext) { previousContext ->
     @OptIn(InternalCoroutinesApi::class)

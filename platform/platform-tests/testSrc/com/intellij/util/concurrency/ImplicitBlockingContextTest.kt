@@ -91,7 +91,7 @@ class ImplicitBlockingContextTest {
     withContext(E()) {
       val context = coroutineContext
       val newContext = currentThreadContext() + F()
-      installThreadContext(newContext).use {
+      installThreadContext(newContext) {
         assertEquals(IntellijCoroutines.currentThreadCoroutineContext(), context)
         assertNotEquals(context, currentThreadContext())
         assertEquals(newContext, currentThreadContext())
@@ -142,12 +142,12 @@ class ImplicitBlockingContextTest {
       assertEquals(e, currentThreadContext()[E])
     }
 
-    installThreadContext(currentThreadContext() + e).use {
+    installThreadContext(currentThreadContext() + e) {
       `has e, not f`()
       @Suppress("SSBasedInspection")
       CoroutineScope(f + handler).launch(start = CoroutineStart.UNDISPATCHED) {
         `has f, not e`()
-        installThreadContext(e + handler).use {
+        installThreadContext(e + handler) {
           `has e, not f`()
         }
         `has f, not e`()

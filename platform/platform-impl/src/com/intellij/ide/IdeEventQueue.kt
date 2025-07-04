@@ -794,7 +794,7 @@ class IdeEventQueue private constructor() : EventQueue() {
           // the manual call of the former event's dispatch() is required here because EventQueue.invokeAndWait() expects
           // that the invocation event's notifier is signaled and isDispatched() == true.
           // If not dispatch the original event, it hangs forever
-          installThreadContext(captured).use {
+          installThreadContext(captured) {
             event.dispatch()
           }
         })

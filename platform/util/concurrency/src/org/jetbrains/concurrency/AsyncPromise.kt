@@ -150,7 +150,7 @@ open class AsyncPromise<T> private constructor(
   override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
     return AsyncPromise(wrapWithCancellationPropagation { ctx ->
       f.thenApply { t ->
-        installThreadContext(ctx, true).use {
+        installThreadContext(ctx, true) {
           done.`fun`(t)
         }
       }

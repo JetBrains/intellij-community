@@ -160,7 +160,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
 
 private fun getLockContext(currentThreadContext: CoroutineContext): Pair<CoroutineContext, AccessToken> {
   val parallelize = with(ApplicationManager.getApplication()) {
-    installThreadContext(currentThreadContext).use {
+    installThreadContext(currentThreadContext) {
       isReadAccessAllowed
     }
   }
@@ -303,7 +303,7 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
 fun <T> withCurrentThreadCoroutineScopeBlocking(action: () -> T): Pair<T, Job> {
   val currentContext = currentThreadContext()
   val checkpoint = getFixThreadScopeElements(currentContext)
-  return installThreadContext(currentContext + checkpoint, true).use {
+  return installThreadContext(currentContext + checkpoint, true) {
     val actionResult = try {
       action()
     }
@@ -428,7 +428,7 @@ fun CoroutineContext.prepareForInstallation(): CoroutineContext = this.minusKey(
 @Throws(ProcessCanceledException::class)
 internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
   val context = currentContext.prepareForInstallation()
-  return installThreadContext(context).use {
+  return installThreadContext(context) {
     action()
   }
 }

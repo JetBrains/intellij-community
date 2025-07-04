@@ -53,8 +53,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.*;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
@@ -69,7 +67,6 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -567,10 +564,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
            new Runnable() {
              @Override
              public void run() {
-               try (AccessToken ignored = ThreadContext.installThreadContext(
-                 ThreadContext.currentThreadContext().plus(asContextElement(modalityState)), true)) {
+               ThreadContext.installThreadContext(ThreadContext.currentThreadContext().plus(asContextElement(modalityState)), true, () -> {
                  runIntendedWriteActionOnCurrentThread(runnable);
-               }
+                 return Unit.INSTANCE;
+               });
              }
 
              @Override

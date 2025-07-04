@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,9 +88,7 @@ public final class WslDistributionSafeNullableLazyValueTest {
         return CompletableFuture
           .supplyAsync(
             () -> {
-              try (var ignored = installThreadContext(coroutineContext, true)) {
-                return lazyValue.getValue();
-              }
+              return ThreadContext.installThreadContext(coroutineContext, true, () -> lazyValue.getValue());
             },
             AppExecutorUtil.getAppExecutorService())
           .get(WAIT_TIMEOUT_IN_SECONDS, SECONDS);
@@ -232,11 +231,11 @@ public final class WslDistributionSafeNullableLazyValueTest {
           }));
 
         EdtTestUtil.runInEdtAndGet(() -> {
-          try (var ignored = installThreadContext(coroutineContext, false)) {
+          return ThreadContext.installThreadContext(coroutineContext, false, () -> {
             final String result = lazyValue.getValueOrElse("not yet");
             Assertions.assertThat(result).isEqualTo("not yet");
             return null;
-          }
+          });
         });
 
         error.join();
@@ -276,19 +275,20 @@ public final class WslDistributionSafeNullableLazyValueTest {
         return CompletableFuture
           .allOf(
             CompletableFuture.runAsync(() -> {
-              try (var ignored = installThreadContext(coroutineContext, false)) {
+              ThreadContext.installThreadContext(coroutineContext, false, () -> {
                 try {
                   lazyValue.getValue();
                   ProgressManager.checkCanceled();
                 }
                 catch (ProcessCanceledException e) {
-                  return;
+                  return null;
                 }
                 Assertions.fail("This line must not execute, because the progress must have been cancelled");
-              }
+                return null;
+              });
             }),
             CompletableFuture.runAsync(() -> {
-              try (var ignored = installThreadContext(coroutineContext, false)) {
+              installThreadContext(coroutineContext, false, () -> {
                 ProgressManager.checkCanceled(); // Should not be canceled by the moment.
                 try {
                   Thread.sleep(100);
@@ -297,7 +297,8 @@ public final class WslDistributionSafeNullableLazyValueTest {
                   // Nothing.
                 }
                 getJob(currentThreadContext()).cancel(new CancellationException());
-              }
+                return null;
+              });
             })
           ).get();
       }));
@@ -318,11 +319,12 @@ public final class WslDistributionSafeNullableLazyValueTest {
       return prepareThreadContext(coroutineContext -> safeRethrow(() -> {
         CompletableFuture
           .runAsync(() -> safeRethrow(() -> {
-            try (var ignored = installThreadContext(coroutineContext, false)) {
+            installThreadContext(coroutineContext, false, () -> {
               Assertions.assertThat(lazyValue.getValue()).isEqualTo("finished");
               ProgressManager.checkCanceled(); // Should not throw.
               return null;
-            }
+            });
+            return null;
           }))
           .get();
         return null;
@@ -408,12 +410,14 @@ public final class WslDistributionSafeNullableLazyValueTest {
       try {
         return ProgressManager.getInstance().runProcess(
           () -> prepareThreadContext(coroutineContext -> {
-            try (var ignored = installThreadContext(coroutineContext, true)) {
-              return body.compute();
-            }
-            catch (Exception err) {
-              throw new Holder(err);
-            }
+            return installThreadContext(coroutineContext, true, () -> {
+              try {
+                return body.compute();
+              }
+              catch (Exception err) {
+                throw new Holder(err);
+              }
+            });
           }),
           new ProgressIndicatorBase());
       }

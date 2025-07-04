@@ -279,7 +279,7 @@ class ActionUpdaterTest {
         e!!
         val actualElement = currentThreadContext()[MyContextElement]
         assertEquals(1, actualElement?.value, "MyContextElement must be propagated to getChildren")
-        installThreadContext(currentThreadContext() + MyContextElement(2), true).use {
+        installThreadContext(currentThreadContext() + MyContextElement(2), true) {
           e.updateSession.sharedData(key) {
             val actualElement = currentThreadContext()[MyContextElement]
             assertEquals(2, actualElement?.value, "MyContextElement must be propagated to sharedData")

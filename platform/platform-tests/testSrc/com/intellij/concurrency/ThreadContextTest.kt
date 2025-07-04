@@ -12,7 +12,7 @@ class ThreadContextTest {
   @Test
   fun `reset context`() {
     assertNull(currentThreadContextOrNull())
-    installThreadContext(EmptyCoroutineContext).use {
+    installThreadContext(EmptyCoroutineContext) {
       assertNotNull(currentThreadContextOrNull())
       resetThreadContext() {
         assertNull(currentThreadContextOrNull())
@@ -25,17 +25,17 @@ class ThreadContextTest {
   @Test
   fun `replace context`() {
     val outerElement1 = TestElement("outer1")
-    installThreadContext(outerElement1).use {
+    installThreadContext(outerElement1) {
       assertSame(currentThreadContext(), outerElement1)
 
       val innerElement1 = TestElement("inner1")
-      installThreadContext(innerElement1, replace = true).use {
+      installThreadContext(innerElement1, replace = true) {
         assertSame(currentThreadContext(), innerElement1)
       }
       assertSame(currentThreadContext(), outerElement1)
 
       val innerElement2 = TestElement2("inner2")
-      installThreadContext(innerElement2, replace = true).use {
+      installThreadContext(innerElement2, replace = true) {
         assertSame(currentThreadContext(), innerElement2)
       }
       assertSame(currentThreadContext(), outerElement1)

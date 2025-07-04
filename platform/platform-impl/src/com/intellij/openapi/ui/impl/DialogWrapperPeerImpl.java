@@ -443,9 +443,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                  ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
                  : IntelliJLockingUtil.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
       lockContextWrapper = (r) -> {
-        try (AccessToken ignored = ThreadContext.installThreadContext(pair.getFirst(), true)) {
+        ThreadContext.installThreadContext(pair.getFirst(), true, () -> {
           r.run();
-        }
+          return Unit.INSTANCE;
+        });
       };
       lockCleanup = pair.getSecond();
     }

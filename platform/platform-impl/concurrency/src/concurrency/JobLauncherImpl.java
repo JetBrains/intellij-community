@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -397,9 +396,16 @@ public final class JobLauncherImpl extends JobLauncher {
                 result[0] = true;
                 break;
               }
-              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
-                ProgressManager.checkCanceled();
-                if (!thingProcessor.process(element)) {
+              try {
+                T finalElement = element;
+                boolean shouldBreak = ThreadContext.installThreadContext(myContext, true, () -> {
+                  ProgressManager.checkCanceled();
+                  if (!thingProcessor.process(finalElement)) {
+                    return true;
+                  }
+                  return false;
+                });
+                if (shouldBreak) {
                   break;
                 }
               }
