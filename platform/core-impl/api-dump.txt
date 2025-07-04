@@ -42,6 +42,8 @@ com.intellij.openapi.application.ex.ApplicationEx
 - a:restart(Z,Z):V
 - a:setSaveAllowed(Z):V
 - a:tryRunReadAction(java.lang.Runnable):Z
+f:com.intellij.openapi.application.ex.ApplicationUtil
+- f:getLOG():com.intellij.openapi.diagnostic.Logger
 com.intellij.openapi.editor.ex.DocumentBulkUpdateListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:updateFinished(com.intellij.openapi.editor.Document):V
