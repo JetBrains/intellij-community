@@ -86,6 +86,7 @@ public final class DefaultGradleLightProject implements GradleLightProject, Seri
   private static String getBuildIdentityPath(@NotNull GradleLightBuild build) {
     GradleLightBuild parentBuild = build.getParentBuild();
     if (parentBuild == null) {
+      if (build.getName().equals("buildSrc")) return ":buildSrc";
       return ":";
     }
     String parentIdentityPath = getBuildIdentityPath(parentBuild);
