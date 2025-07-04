@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -187,8 +187,14 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
   val versionItems = groups.values
     .sortedWith(Comparator.comparing(Function<JdkVersionItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR).reversed())
 
-  val defaultItem = availableItems.firstOrNull { it.isDefaultItem } /* pick the newest default JDK */
-                    ?: availableItems.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
+  val latestVersion = availableItems.filter { !it.isPreview }.maxByOrNull { it.jdkMajorVersion }?.jdkMajorVersion
+  val defaultItem = availableItems    /* pick the newest OpenJDK */
+                      .filter { it.isDefaultItem }
+                      .maxByOrNull { it.jdkMajorVersion }
+                    ?: availableItems /* pick a "lightweight" non-preview JDK is no default is available */
+                      .filter { it.jdkMajorVersion == latestVersion && !it.isPreview }
+                      .minByOrNull { it.archiveSize }
+                    ?: availableItems.firstOrNull() /* strange case, e.g., only preview JDKs aren't filtered */
                     ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
   val defaultJdkVersionItem = versionItems.firstOrNull { group -> group.includedItems.any { it.item == defaultItem } }
