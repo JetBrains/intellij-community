@@ -736,6 +736,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     assertSameElements(actual, expected)
   }
 
+  protected fun assertPathsAreEqual(actual: String, expected: String) {
+    assertUnorderedPathsAreEqual(listOf(expected), listOf(actual))
+  }
+
   protected fun assertUnorderedPathsAreEqual(actual: Collection<String>, expected: Collection<String>) {
     assertEquals(createFilePathSet(expected), createFilePathSet(actual))
   }
