@@ -18,10 +18,10 @@ private val LOG = fileLogger()
  * and when used locally, [navigatable] will return that same original instance.
  * But, when used over RPC, the link between the original instance and the de-serialized instance will only work as long as
  * the original instance is kept from being GC-ed by the calling code. Generation of [NavigatableId] doesn't prevent the collection
- * of the [Navigatable] instance by itself.
+ * of the [Navigatable] instance by itself. So, for the remote case, this is similar to a weak reference.
  */
 @ApiStatus.Internal
-fun Navigatable.rpcId(): NavigatableId {
+fun Navigatable.weakRpcId(): NavigatableId {
   val serialized = serializeToRpc(this)
   return NavigatableId(serialized, this)
 }
