@@ -6,15 +6,17 @@ import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.observable.util.whenMousePressed
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.ListUtil
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.ListLayout
+import com.intellij.ui.speedSearch.ListWithFilter
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.*
@@ -42,19 +44,34 @@ internal class ExternalProjectSelector(
 private class ExternalProjectPopupContent(
   externalProjects: List<DependencyAnalyzerProject>,
   iconProvider: ExternalSystemIconProvider,
-) : JBList<DependencyAnalyzerProject>() {
+) {
+
+  val component: JComponent
+
+  val list: JBList<DependencyAnalyzerProject>
 
   init {
     val elements = externalProjects.sortedWith(Comparator.comparing({ it.title }, NaturalComparator.INSTANCE))
-    model = createDefaultListModel(elements)
-    border = emptyListBorder()
-    cellRenderer = ExternalProjectRenderer(iconProvider)
-    selectionMode = ListSelectionModel.SINGLE_SELECTION
-    ListUtil.installAutoSelectOnMouseMove(this)
+    list = JBList(elements).apply {
+      border = emptyListBorder()
+      cellRenderer = ExternalProjectRenderer(iconProvider)
+      selectionMode = ListSelectionModel.SINGLE_SELECTION
+      ListUtil.installAutoSelectOnMouseMove(this)
+    }
+    component = ListWithFilter.wrap(
+      /* list = */ list,
+      /* scrollPane = */ ScrollPaneFactory.createScrollPane(list),
+      /* namer = */ { it.title },
+      /* highlightAllOccurrences = */ false,
+      /* searchFieldAlwaysVisible = */ false,
+      /* searchFieldWithoutBorder = */ true
+    )
   }
 
   fun afterChange(listener: (DependencyAnalyzerProject) -> Unit) {
-    whenMousePressed { listener(selectedValue) }
+    list.whenMousePressed {
+      listener(list.selectedValue)
+    }
   }
 }
 
@@ -120,9 +137,11 @@ private class ExternalProjectDropDownLink(
       val content = ExternalProjectPopupContent(externalProjects, iconProvider)
       content.afterChange(onChange)
       return JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(content, null)
+        .createComponentPopupBuilder(content.component, null)
+        .setResizable(true)
+        .setRequestFocus(true)
         .createPopup()
-        .apply { content.whenMousePressed(listener = ::closeOk) }
+        .apply { content.list.whenMousePressed(listener = ::closeOk) }
     }
   }
 }

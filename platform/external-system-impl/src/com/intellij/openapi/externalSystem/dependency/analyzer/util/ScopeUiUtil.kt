@@ -16,9 +16,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ListUtil
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.ListLayout
+import com.intellij.ui.speedSearch.ListWithFilter
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
@@ -42,7 +44,9 @@ internal class SearchScopeSelector(property: ObservableMutableProperty<List<Scop
   }
 }
 
-private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<SearchScopeItem>() {
+private class SearchScopePopupContent(scopes: List<ScopeItem>) {
+
+  val component: JComponent
 
   private val allScopes: List<SearchScopeItem.Element>
 
@@ -82,27 +86,37 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<SearchSc
     )
 
     propertyGraph.afterPropagation {
-      repaint()
+      component.repaint()
     }
     initProperties(standardGroup, standardScopes)
     initProperties(customGroup, customScopes)
   }
 
   init {
-    model = createDefaultListModel(
-      getItems(standardGroup, standardScopes) +
+    val items = ContainerUtil.concat(
+      getItems(standardGroup, standardScopes),
       getItems(customGroup, customScopes)
     )
-    border = emptyListBorder()
-    cellRenderer = SearchScopeRenderer()
-    selectionMode = ListSelectionModel.SINGLE_SELECTION
-    ListUtil.installAutoSelectOnMouseMove(this)
-    whenMousePressed {
-      when (val scope = selectedValue) {
+    val list = JBList(items).apply {
+      border = emptyListBorder()
+      cellRenderer = SearchScopeRenderer()
+      selectionMode = ListSelectionModel.SINGLE_SELECTION
+      ListUtil.installAutoSelectOnMouseMove(this)
+    }
+    list.whenMousePressed {
+      when (val scope = list.selectedValue) {
         is SearchScopeItem.Group -> scope.property.set(ThreeStateCheckBox.nextState(scope.property.get(), false))
         is SearchScopeItem.Element -> scope.property.set(!scope.property.get())
       }
     }
+    component = ListWithFilter.wrap(
+      /* list = */ list,
+      /* scrollPane = */ ScrollPaneFactory.createScrollPane(list),
+      /* namer = */ { it.title },
+      /* highlightAllOccurrences = */ false,
+      /* searchFieldAlwaysVisible = */ false,
+      /* searchFieldWithoutBorder = */ true
+    )
   }
 
   fun afterChange(listener: (List<ScopeItem>) -> Unit) {
@@ -229,7 +243,9 @@ private class SearchScopeDropDownLink(
       val content = SearchScopePopupContent(scopes)
       content.afterChange(onChange)
       return JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(content, null)
+        .createComponentPopupBuilder(content.component, null)
+        .setResizable(true)
+        .setRequestFocus(true)
         .createPopup()
     }
   }
