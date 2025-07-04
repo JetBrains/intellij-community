@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model
 
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier
+import org.jetbrains.plugins.gradle.testFramework.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet
@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
@@ -176,10 +177,13 @@ class DefaultGradleLightBuildTest {
     on { this.parent } doReturn parent
     on { this.children } doReturn ImmutableDomainObjectSet(emptyList())
 
-    when (GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.2")) {
-      true -> on { this.buildTreePath } doReturn buildTreePath
-      else -> on { this.buildTreePath } doThrow IllegalStateException(
-        "BasicGradleProject#getBuildTreePath is not available in Gradle versions below 8.2, so it should not be called."
+    if (isBuildTreePathAvailable(gradleVersion)) {
+      assertNotNull(buildTreePath) { "Please define buildTreePath for tests with Gradle 8.2 or newer." }
+      on { this.buildTreePath } doReturn buildTreePath
+    }
+    else {
+      on { this.buildTreePath } doThrow IllegalStateException(
+        "getBuildTreePath() is not available in Gradle below 8.2, so shouldn't be called."
       )
     }
 

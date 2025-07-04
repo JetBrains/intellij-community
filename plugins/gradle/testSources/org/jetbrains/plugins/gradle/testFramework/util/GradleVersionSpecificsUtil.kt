@@ -11,4 +11,11 @@ object GradleVersionSpecificsUtil {
    */
   fun isBuildSrcSyncedSeparately(gradleVersion: GradleVersion): Boolean =
     GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.0")
+
+  /**
+   * In the 8.2 version, Gradle introduced BasicGradleProject#getBuildTreePath, which is used as an identity path for GradleLightProject.
+   * Before Gradle 8.2, the identity path is calculated in IDEA in DefaultGradleLightProject#getProjectIdentityPath.
+   */
+  fun isBuildTreePathAvailable(gradleVersion: GradleVersion): Boolean =
+    GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.2")
 }

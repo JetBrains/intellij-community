@@ -2,9 +2,12 @@
 package org.jetbrains.plugins.gradle.model
 
 import com.intellij.testFramework.common.mock.NotMockedMemberError
+import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
+import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
+import org.jetbrains.plugins.gradle.testFramework.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -12,8 +15,35 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
+import java.io.File
 
 class DefaultGradleLightProjectTest {
+
+  @ParameterizedTest
+  @GradleTestSource("8.1, 8.2")
+  fun `test identity path is not calculated when buildTreePath is available`(gradleVersion: GradleVersion) {
+    val build = mock<DefaultGradleLightBuild> {
+      on { name } doReturn "project"
+    }
+    val gradleProject = mock<BasicGradleProject> {
+      on { buildTreePath } doReturn "BUILD_TREE_PATH" // intentionally wrong value
+      on { name } doReturn "project"
+      on { path } doReturn ":"
+      on { projectIdentifier } doReturn DefaultProjectIdentifier(File("project"), ":")
+      on { projectDirectory } doReturn File("project")
+    }
+
+    val lightProject = DefaultGradleLightProject(build, gradleProject, gradleVersion)
+
+    if (isBuildTreePathAvailable(gradleVersion))
+      assertEquals("BUILD_TREE_PATH", lightProject.identityPath) {
+        "Since Gradle 8.2, the identityPath should be taken from buildTreePath as is."
+      }
+    else
+      assertEquals(":", lightProject.identityPath) {
+        "Before Gradle 8.2, the identityPath is calculated in DefaultGradleLightProject#getProjectIdentityPath."
+      }
+  }
 
   @Test
   fun `test DefaultGradleLightProject#getProjectIdentityPath for composite build`() {
