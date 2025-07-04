@@ -9,6 +9,7 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.InteractionOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -47,6 +48,8 @@ object EelExecPosixApiHelpers {
     private var interactionOptions: InteractionOptions? = null
 
     private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
+
+    private var scope: CoroutineScope? = null
 
     private var workingDirectory: EelPath? = null
 
@@ -100,6 +103,13 @@ object EelExecPosixApiHelpers {
     }
 
     /**
+     * Scope this process is bound to. Once scope dies -- this process dies as well.
+     */
+    fun scope(arg: CoroutineScope?): SpawnProcess = apply {
+      this.scope = arg
+    }
+
+    /**
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
@@ -121,6 +131,7 @@ object EelExecPosixApiHelpers {
           exe = exe,
           interactionOptions = interactionOptions,
           ptyOrStdErrSettings = ptyOrStdErrSettings,
+          scope = scope,
           workingDirectory = workingDirectory,
         )
       )

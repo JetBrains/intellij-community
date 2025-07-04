@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.utils.bindToScope
 import com.intellij.util.EnvironmentUtil
 import com.pty4j.PtyProcess
 import kotlinx.coroutines.Dispatchers
@@ -30,10 +31,12 @@ class EelLocalExecPosixApi : EelExecPosixApi {
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelPosixProcess {
     val process = executeImpl(generatedBuilder)
-    return if (process is PtyProcess)
+    val r = if (process is PtyProcess)
       LocalEelPosixProcess.create(process, process::setWinSize)
     else
       LocalEelPosixProcess.create(process, null)
+    generatedBuilder.scope?.let { r.bindToScope(it) }
+    return r
   }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
@@ -59,10 +62,12 @@ class EelLocalExecWindowsApi : EelExecWindowsApi {
   ): EelWindowsProcess {
     val process = executeImpl(generatedBuilder)
     val commandLineForDebug = (listOf(generatedBuilder.exe) + generatedBuilder.args).joinToString(" ")
-    return if (process is PtyProcess)
+    val r = if (process is PtyProcess)
       LocalEelWindowsProcess.create(process, process::setWinSize, commandLineForDebug)
     else
       LocalEelWindowsProcess.create(process, null, commandLineForDebug)
+    generatedBuilder.scope?.let { r.bindToScope(it) }
+    return r
   }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
