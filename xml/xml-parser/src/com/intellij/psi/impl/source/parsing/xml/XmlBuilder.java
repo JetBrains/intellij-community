@@ -14,28 +14,28 @@ public interface XmlBuilder {
                int startOffset,
                int endOffset);
 
-  ProcessingOrder startTag(CharSequence localName,
-                           String namespace,
-                           int startOffset,
-                           int endOffset,
-                           int headerEndOffset);
+  @NotNull ProcessingOrder startTag(@NotNull CharSequence localName,
+                                    @NotNull String namespace,
+                                    int startOffset,
+                                    int endOffset,
+                                    int headerEndOffset);
 
-  void endTag(CharSequence localName,
-              String namespace,
+  void endTag(@NotNull CharSequence localName,
+              @NotNull String namespace,
               int startOffset,
               int endOffset);
 
-  void attribute(CharSequence name,
-                 CharSequence value,
+  void attribute(@NotNull CharSequence name,
+                 @NotNull CharSequence value,
                  int startOffset,
                  int endOffset);
 
-  void textElement(CharSequence display,
-                   CharSequence physical,
+  void textElement(@NotNull CharSequence display,
+                   @NotNull CharSequence physical,
                    int startOffset,
                    int endOffset);
 
-  void entityRef(CharSequence ref,
+  void entityRef(@NotNull CharSequence ref,
                  int startOffset,
                  int endOffset);
 

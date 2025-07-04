@@ -65,8 +65,8 @@ public final class CharsetDetector {
         }
 
         @Override
-        public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startOffset, final int endOffset,
-                                        final int headerEndOffset) {
+        public @NotNull ProcessingOrder startTag(final @NotNull CharSequence localName, final @NotNull String namespace, final int startOffset, final int endOffset,
+                                                 final int headerEndOffset) {
           @NonNls String name = StringUtil.toLowerCase(localName.toString());
           inTag.add(name);
           if (!inTag.contains("head") && !"html".equals(name)) terminate();
@@ -78,7 +78,7 @@ public final class CharsetDetector {
         }
 
         @Override
-        public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
+        public void endTag(final @NotNull CharSequence localName, final @NotNull String namespace, final int startoffset, final int endoffset) {
           final @NonNls String name = StringUtil.toLowerCase(localName.toString());
           if ("meta".equals(name) && (metHttpEquiv || metHtml5Charset) && contentAttributeValue != null) {
             String charsetName;
@@ -108,7 +108,7 @@ public final class CharsetDetector {
         private String contentAttributeValue;
 
         @Override
-        public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
+        public void attribute(final @NotNull CharSequence localName, final @NotNull CharSequence v, final int startoffset, final int endoffset) {
           final @NonNls String name = StringUtil.toLowerCase(localName.toString());
           if (inTag.contains("meta")) {
             @NonNls String value = StringUtil.toLowerCase(v.toString());
@@ -126,11 +126,11 @@ public final class CharsetDetector {
         }
 
         @Override
-        public void textElement(final CharSequence display, final CharSequence physical, final int startoffset, final int endoffset) {
+        public void textElement(final @NotNull CharSequence display, final @NotNull CharSequence physical, final int startoffset, final int endoffset) {
         }
 
         @Override
-        public void entityRef(final CharSequence ref, final int startOffset, final int endOffset) {
+        public void entityRef(final @NotNull CharSequence ref, final int startOffset, final int endOffset) {
         }
 
         @Override
