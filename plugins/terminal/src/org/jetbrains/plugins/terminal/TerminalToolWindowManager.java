@@ -291,7 +291,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
   /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
   public @NotNull Content newTab(@NotNull ToolWindow toolWindow, @Nullable TerminalWidget terminalWidget) {
-    return createNewTab(terminalWidget, myTerminalRunner, toolWindow, TerminalEngine.CLASSIC, null, null, null, true, true);
+    return createNewTab(terminalWidget, myTerminalRunner, TerminalEngine.CLASSIC, null, null, null, true, true);
   }
 
   /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
@@ -339,8 +339,7 @@ public final class TerminalToolWindowManager implements Disposable {
                                                    @Nullable TerminalStartupFusInfo startupFusInfo,
                                                    boolean requestFocus,
                                                    boolean deferSessionStartUntilUiShown) {
-    ToolWindow toolWindow = getOrInitToolWindow();
-    Content content = createNewTab(null, terminalRunner, toolWindow, preferredEngine, tabState, sessionTab,
+    Content content = createNewTab(null, terminalRunner, preferredEngine, tabState, sessionTab,
                                    startupFusInfo, requestFocus, deferSessionStartUntilUiShown);
     return Objects.requireNonNull(content.getUserData(TERMINAL_WIDGET_KEY));
   }
@@ -357,15 +356,15 @@ public final class TerminalToolWindowManager implements Disposable {
 
   private @NotNull Content createNewTab(@Nullable TerminalWidget terminalWidget,
                                         @NotNull AbstractTerminalRunner<?> terminalRunner,
-                                        @NotNull ToolWindow toolWindow,
                                         @NotNull TerminalEngine preferredEngine,
                                         @Nullable TerminalTabState tabState,
                                         @Nullable TerminalSessionTab sessionTab,
                                         @Nullable TerminalStartupFusInfo startupFusInfo,
                                         boolean requestFocus,
                                         boolean deferSessionStartUntilUiShown) {
+    ToolWindow toolWindow = getOrInitToolWindow();
     TerminalStartupMoment startupMoment = requestFocus && deferSessionStartUntilUiShown ? new TerminalStartupMoment() : null;
-    Content content = createTerminalContent(terminalRunner, toolWindow, preferredEngine, terminalWidget, tabState,
+    Content content = createTerminalContent(terminalRunner, preferredEngine, terminalWidget, tabState,
                                             sessionTab, startupFusInfo, deferSessionStartUntilUiShown, startupMoment);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
@@ -392,7 +391,6 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   private @NotNull Content createTerminalContent(@NotNull AbstractTerminalRunner<?> terminalRunner,
-                                                 @NotNull ToolWindow toolWindow,
                                                  @NotNull TerminalEngine preferredEngine,
                                                  @Nullable TerminalWidget terminalWidget,
                                                  @Nullable TerminalTabState tabState,
@@ -400,6 +398,7 @@ public final class TerminalToolWindowManager implements Disposable {
                                                  @Nullable TerminalStartupFusInfo startupFusInfo,
                                                  boolean deferSessionStartUntilUiShown,
                                                  @Nullable TerminalStartupMoment startupMoment) {
+    ToolWindow toolWindow = getOrInitToolWindow();
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel();
 
     Content content = ContentFactory.getInstance().createContent(panel, null, false);
