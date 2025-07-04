@@ -14,7 +14,7 @@ import com.intellij.ui.content.Content
 
 internal fun AnActionEvent.guessCurrentContent(): Content? {
   val component = getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-  val manager = getData(PlatformDataKeys.CONTENT_MANAGER)
+  val manager = getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY)
   return if (component is ContentTabLabel) {
     component.content
   }

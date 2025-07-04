@@ -541,6 +541,7 @@ class InternalDecoratorImpl internal constructor(
     if (contentManager.contentCount > 1) {
       sink[PlatformDataKeys.NONEMPTY_CONTENT_MANAGER] = contentManager
     }
+    sink[ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY] = contentManager
   }
 
   fun setTitleActions(actions: List<AnAction>) {

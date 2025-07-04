@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import javax.swing.SwingConstants
 
 internal abstract class ToolWindowSplitAndMoveActionBase(
@@ -19,7 +20,7 @@ internal abstract class ToolWindowSplitAndMoveActionBase(
 
   override fun update(e: AnActionEvent) {
     val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
-    val contentManager = e.getData(PlatformDataKeys.CONTENT_MANAGER)
+    val contentManager = e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY)
     e.presentation.isEnabledAndVisible = toolWindow != null && isToolWindowSplitAllowed(toolWindow) &&
                                          contentManager != null && contentManager.contentCount > 1
   }
