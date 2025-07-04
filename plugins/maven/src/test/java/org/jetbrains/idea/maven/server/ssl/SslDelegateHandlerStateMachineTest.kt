@@ -6,11 +6,9 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
 import junit.framework.TestCase
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.util.*
 
 class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
-
 
   fun testResultOk() {
     val data = fromFile("ssl_remote_query.txt");
@@ -18,7 +16,9 @@ class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
     val out = ByteArrayOutputStream()
     machine.output = out
     data.forEach { machine.addLine(it) }
-    TestCase.assertEquals(fromFile("ssl_remote_query_response_ok.txt").joinToString(""), out.toString())
+    val expected = fromFile("ssl_remote_query_response_ok.txt").joinToString("")
+    val actual = out.toString()
+    assertNormalizedEquals(expected, actual)
   }
 
   fun testResultFail() {
@@ -27,12 +27,18 @@ class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
     val out = ByteArrayOutputStream()
     machine.output = out
     data.forEach { machine.addLine(it) }
-    TestCase.assertEquals(fromFile("ssl_remote_query_response_error.txt").joinToString(""), out.toString())
+    val expected = fromFile("ssl_remote_query_response_error.txt").joinToString("")
+    val actual = out.toString()
+    assertNormalizedEquals(expected, actual)
   }
 
+  private fun assertNormalizedEquals(expected: String, actual: String) {
+    TestCase.assertEquals(expected.normalizeLineEndings(), actual.normalizeLineEndings())
+  }
 
-  @Throws(IOException::class)
-  protected fun fromFile(file: String): Array<String> {
+  private fun String.normalizeLineEndings(): String = this.replace("\r\n", "\n").replace("\r", "\n")
+
+  private fun fromFile(file: String): Array<String> {
     ResourceUtil.getResourceAsStream(SslDelegateHandlerStateMachineTest::class.java.classLoader, "org/jetbrains/maven/server/ssl", file).use { stream ->
       Scanner(stream).use { scanner ->
         val result: MutableList<String> = ArrayList()
