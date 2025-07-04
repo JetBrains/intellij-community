@@ -2,10 +2,11 @@
 package com.intellij.compose.ide.plugin.resources.psi
 
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesManager
+import com.intellij.compose.ide.plugin.resources.findComposeResourcesDirFor
 import com.intellij.compose.ide.plugin.resources.isValidInnerComposeResourcesDirName
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.*
 import com.intellij.psi.xml.*
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -129,9 +130,8 @@ class ComposeResourcesPsiChangesListener(private val project: Project) : PsiTree
     val virtualFile = event.file?.virtualFile /* for string values */ ?: (event.parent as? PsiDirectory)?.virtualFile /* for files */
                       ?: return
     val composeResourcesGenerationService = project.service<ComposeResourcesGenerationService>()
-    val composeResourcesManager = project.service<ComposeResourcesManager>()
-    composeResourcesManager.findComposeResourcesDirFor(virtualFile.path)?.let { composeResourcesDir ->
-      composeResourcesGenerationService.tryEmit(composeResourcesDir)
-    }
+    val path = virtualFile.toNioPathOrNull() ?: return
+    val composeResourcesDir = project.findComposeResourcesDirFor(path) ?: return
+    composeResourcesGenerationService.tryEmit(composeResourcesDir)
   }
 }
