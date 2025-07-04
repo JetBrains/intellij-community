@@ -18,8 +18,10 @@ import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.ListLayout
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.*
 
@@ -39,64 +41,55 @@ internal class SearchScopeSelector(property: ObservableMutableProperty<List<Scop
   }
 }
 
-private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<ScopeProperty>() {
+private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<SearchScopeItem>() {
 
-  private val propertyGraph = PropertyGraph(isBlockPropagation = false)
-  private val anyScopeProperty = propertyGraph.lazyProperty(::suggestAnyScopeState)
-  private val scopeProperties = scopes.map { ScopeProperty.Just(it.scope, propertyGraph.lazyProperty { it.isSelected }) }
-
-  private fun suggestAnyScopeState(): ThreeStateCheckBox.State {
-    return when {
-      scopeProperties.all { it.property.get() } -> ThreeStateCheckBox.State.SELECTED
-      !scopeProperties.any { it.property.get() } -> ThreeStateCheckBox.State.NOT_SELECTED
-      else -> ThreeStateCheckBox.State.DONT_CARE
-    }
-  }
-
-  private fun suggestScopeState(currentState: Boolean): Boolean {
-    return when (anyScopeProperty.get()) {
-      ThreeStateCheckBox.State.SELECTED -> true
-      ThreeStateCheckBox.State.NOT_SELECTED -> false
-      ThreeStateCheckBox.State.DONT_CARE -> currentState
-    }
-  }
-
-  fun afterChange(listener: (List<ScopeItem>) -> Unit) {
-    for (scope in scopeProperties) {
-      scope.property.afterChange {
-        listener(scopeProperties.map { ScopeItem(it.scope, it.property.get()) })
-      }
-    }
-  }
+  private val anyGroup: SearchScopeItem.Group
+  private val anyScopes: List<SearchScopeItem.Element>
 
   init {
-    val anyScope = ScopeProperty.Any(anyScopeProperty)
-    model = createDefaultListModel(listOf(anyScope) + scopeProperties)
-    border = emptyListBorder()
-    cellRenderer = SearchScopePropertyRenderer()
-    selectionMode = ListSelectionModel.SINGLE_SELECTION
-    ListUtil.installAutoSelectOnMouseMove(this)
-    whenMousePressed {
-      when (val scope = selectedValue) {
-        is ScopeProperty.Any -> scope.property.set(ThreeStateCheckBox.nextState(scope.property.get(), false))
-        is ScopeProperty.Just -> scope.property.set(!scope.property.get())
-      }
+    val propertyGraph = PropertyGraph(isBlockPropagation = false)
+
+    anyScopes = scopes.map { scope ->
+      SearchScopeItem.Element(
+        scope.scope,
+        propertyGraph.property(scope.isSelected)
+      )
     }
+    anyGroup = SearchScopeItem.Group(
+      ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any"),
+      propertyGraph.lazyProperty { suggestGroupState(anyScopes) }
+    )
 
     propertyGraph.afterPropagation {
       repaint()
     }
-    for (scope in scopeProperties) {
-      anyScopeProperty.dependsOn(scope.property) {
-        suggestAnyScopeState()
+    initProperties(anyGroup, anyScopes)
+  }
+
+  init {
+    model = createDefaultListModel(getItems(anyGroup, anyScopes))
+    border = emptyListBorder()
+    cellRenderer = SearchScopeRenderer()
+    selectionMode = ListSelectionModel.SINGLE_SELECTION
+    ListUtil.installAutoSelectOnMouseMove(this)
+    whenMousePressed {
+      when (val scope = selectedValue) {
+        is SearchScopeItem.Group -> scope.property.set(ThreeStateCheckBox.nextState(scope.property.get(), false))
+        is SearchScopeItem.Element -> scope.property.set(!scope.property.get())
       }
-      scope.property.dependsOn(anyScopeProperty) {
-        suggestScopeState(scope.property.get())
+    }
+  }
+
+  fun afterChange(listener: (List<ScopeItem>) -> Unit) {
+    for (scope in anyScopes) {
+      scope.property.afterChange {
+        listener(anyScopes.map { ScopeItem(it.scope, it.property.get()) })
       }
     }
   }
 
   companion object {
+
     fun createPopup(scopes: List<ScopeItem>, onChange: (List<ScopeItem>) -> Unit): JBPopup {
       val content = SearchScopePopupContent(scopes)
       content.afterChange(onChange)
@@ -104,30 +97,67 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<ScopePro
         .createComponentPopupBuilder(content, null)
         .createPopup()
     }
+
+    private fun suggestGroupState(scopes: List<SearchScopeItem.Element>): ThreeStateCheckBox.State {
+      return when {
+        scopes.all { it.property.get() } -> ThreeStateCheckBox.State.SELECTED
+        !scopes.any { it.property.get() } -> ThreeStateCheckBox.State.NOT_SELECTED
+        else -> ThreeStateCheckBox.State.DONT_CARE
+      }
+    }
+
+    private fun suggestScopeState(group: SearchScopeItem.Group, scope: SearchScopeItem.Element): Boolean {
+      return when (group.property.get()) {
+        ThreeStateCheckBox.State.SELECTED -> true
+        ThreeStateCheckBox.State.NOT_SELECTED -> false
+        ThreeStateCheckBox.State.DONT_CARE -> scope.property.get()
+      }
+    }
+
+    private fun initProperties(group: SearchScopeItem.Group, scopes: List<SearchScopeItem.Element>) {
+      for (scope in scopes) {
+        group.property.dependsOn(scope.property) {
+          suggestGroupState(scopes)
+        }
+        scope.property.dependsOn(group.property) {
+          suggestScopeState(group, scope)
+        }
+      }
+    }
+
+    private fun getItems(group: SearchScopeItem.Group, scopes: List<SearchScopeItem.Element>): List<SearchScopeItem> {
+      if (scopes.isEmpty()) {
+        return emptyList()
+      }
+      return ContainerUtil.concat(listOf(group), scopes)
+    }
   }
 }
 
-private class SearchScopePropertyRenderer : ListCellRenderer<ScopeProperty> {
+private class SearchScopeRenderer : ListCellRenderer<SearchScopeItem> {
+
   override fun getListCellRendererComponent(
-    list: JList<out ScopeProperty>,
-    value: ScopeProperty,
+    list: JList<out SearchScopeItem>,
+    value: SearchScopeItem,
     index: Int,
     isSelected: Boolean,
-    cellHasFocus: Boolean
+    cellHasFocus: Boolean,
   ): Component {
     val checkBox = when (value) {
-      is ScopeProperty.Any ->
-        ThreeStateCheckBox(ExternalSystemBundle.message("external.system.dependency.analyzer.scope.any"))
+      is SearchScopeItem.Group ->
+        ThreeStateCheckBox(value.title)
           .apply { isThirdStateEnabled = false }
-          .apply { state = value.property.get() }
           .bind(value.property)
-      is ScopeProperty.Just ->
-        JCheckBox(value.scope.title)
-          .apply { this@apply.isSelected = value.property.get() }
+      is SearchScopeItem.Element ->
+        JCheckBox(value.title)
           .bind(value.property)
     }
+    val indent = when (value) {
+      is SearchScopeItem.Group -> 0
+      is SearchScopeItem.Element -> 1
+    }
     return checkBox
-      .apply { border = emptyListCellBorder(list, index, if (index > 0) 1 else 0) }
+      .apply { border = emptyListCellBorder(list, index, indent) }
       .apply { background = if (isSelected) list.selectionBackground else list.background }
       .apply { foreground = if (isSelected) list.selectionForeground else list.foreground }
       .apply { isOpaque = true }
@@ -172,7 +202,19 @@ internal class ScopeItem(
   override fun toString() = "$isSelected: $scope"
 }
 
-private sealed interface ScopeProperty {
-  class Any(val property: GraphProperty<ThreeStateCheckBox.State>) : ScopeProperty
-  class Just(val scope: Scope, val property: GraphProperty<Boolean>) : ScopeProperty
+private sealed interface SearchScopeItem {
+
+  val title: @Nls(capitalization = Nls.Capitalization.Title) String
+
+  class Group(
+    override val title: @Nls(capitalization = Nls.Capitalization.Title) String,
+    val property: GraphProperty<ThreeStateCheckBox.State>,
+  ) : SearchScopeItem
+
+  class Element(
+    val scope: Scope,
+    val property: GraphProperty<Boolean>,
+  ) : SearchScopeItem {
+    override val title: @Nls(capitalization = Nls.Capitalization.Title) String by scope::title
+  }
 }
