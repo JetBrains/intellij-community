@@ -6,22 +6,22 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final CallMatcher IO_PRINT =
     CallMatcher.anyOf(
-      CallMatcher.staticCall("java.lang.IO", "println").parameterCount(0),
-      CallMatcher.staticCall("java.lang.IO", "println", "print").parameterCount(1)
+      CallMatcher.staticCall("java.lang.IO", "println")
+        .parameterCount(0)
+        .allowUnresolved(),
+      CallMatcher.staticCall("java.lang.IO", "println", "print")
+        .parameterCount(1)
+        .allowUnresolved()
     );
-
-  private static final Set<String> IO_PRINT_NAMES = IO_PRINT.names().collect(Collectors.toSet());
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -72,33 +72,14 @@ public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocal
     PsiReferenceExpression methodExpr = methodCall.getMethodExpression();
     String methodName = methodExpr.getReferenceName();
     if (methodName == null) return;
-    PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
-    StringBuilder replacement = new StringBuilder("System.out.").append(methodName).append("(");
-    if (arguments.length == 1) {
-      replacement.append(arguments[0].getText());
+    PsiElement replaced = new CommentTracker().replaceAndRestoreComments(methodExpr, "java.lang.System.out." + methodName);
+    if (replaced instanceof PsiReferenceExpression replacedReferenceExpression) {
+      JavaCodeStyleManager.getInstance(replacedReferenceExpression.getProject()).shortenClassReferences(replacedReferenceExpression);
     }
-    replacement.append(')');
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(methodCall.getProject());
-    PsiExpression expr = factory.createExpressionFromText(replacement.toString(), methodCall);
-    new CommentTracker().replace(methodCall, expr);
   }
 
   private static boolean isIOPrint(@NotNull PsiMethodCallExpression expression) {
-    boolean isResolvedIO = IO_PRINT.test(expression);
-    if (isResolvedIO) return true;
-    String name = expression.getMethodExpression().getReferenceName();
-    if (!IO_PRINT_NAMES.contains(name)) return false;
-    PsiExpression[] args = expression.getArgumentList().getExpressions();
-    if (!(args.length == 0 || args.length == 1)) return false;
-    PsiMethod method = expression.resolveMethod();
-    if (method != null) return false;
-    PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
-    if (!(qualifierExpression instanceof PsiReferenceExpression qualifierRefExpression)) return false;
-    if (qualifierRefExpression.getQualifierExpression() != null) return false;
-    String referenceName = qualifierRefExpression.getReferenceName();
-    if (!"IO".equals(referenceName)) return false;
-    PsiElement resolvedQualifier = qualifierRefExpression.resolve();
-    if (resolvedQualifier != null) return false;
-    return true;
+    if (!IO_PRINT.test(expression)) return false;
+    return MigrateToJavaLangIoInspection.callIOAndSystemIdentical(expression.getArgumentList());
   }
 }

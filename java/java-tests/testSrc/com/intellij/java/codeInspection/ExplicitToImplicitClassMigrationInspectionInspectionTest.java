@@ -95,6 +95,7 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   }
 
   public void testWithSeveralIO() { doTest(); }
+  public void testWithSeveralNestedIO() { doTest(); }
 
   private void doNotFind() {
     myFixture.enableInspections(new ExplicitToImplicitClassMigrationInspection());

@@ -2,7 +2,10 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.MigrateFromJavaLangIoInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +29,20 @@ public class MigrateFromJavaLangIoInspectionTest extends LightJavaCodeInsightFix
   }
 
   public void testPrintUnresolved() { doTest("Replace with 'System.out.print()'"); }
+
+  public void testPrintArrayChar() {
+    doNotFind(
+      InspectionsBundle.message("fix.all.inspection.problems.in.file", JavaBundle.message("inspection.migrate.to.java.lang.io.name")));
+  }
+
+  private void doNotFind(String message) {
+    MigrateToJavaLangIoInspectionTest.addIOClass(myFixture);
+    MigrateFromJavaLangIoInspection inspection = new MigrateFromJavaLangIoInspection();
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, true, true, "before" + getTestName(false) + ".java");
+    IntentionAction intention = myFixture.getAvailableIntention(message);
+    assertNull(intention);
+  }
 
   private void doTest(String message) {
     myFixture.enableInspections(new MigrateFromJavaLangIoInspection());

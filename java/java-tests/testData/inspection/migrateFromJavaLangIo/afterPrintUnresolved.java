@@ -1,3 +1,4 @@
 void main() {
-Sy<caret>stem.out.print("Hello");
+  <caret>  /*some*/
+    System.out.print(/*some2*/"Hello");
 }
