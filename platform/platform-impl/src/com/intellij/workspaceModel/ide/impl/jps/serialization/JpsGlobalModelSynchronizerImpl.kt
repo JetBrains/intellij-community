@@ -82,11 +82,14 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
         initialEntityStorage = initialEntityStorage,
         notifyListeners = false,
       )
-      coroutineScope.launch {
-        delay(5.seconds)
-        delayLoadGlobalWorkspaceModel(environmentName)
+
+      return@addMeasuredTime {
+        callback()
+        coroutineScope.launch {
+          delay(5.seconds)
+          delayLoadGlobalWorkspaceModel(environmentName)
+        }
       }
-      callback
     }
     else {
       loadGlobalEntitiesToEmptyStorage(
