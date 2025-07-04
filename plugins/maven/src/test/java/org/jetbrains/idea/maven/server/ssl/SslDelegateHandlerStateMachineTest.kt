@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.ssl
 
+import com.intellij.maven.testFramework.assertNormalizedEquals
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
-import junit.framework.TestCase
 import java.io.ByteArrayOutputStream
 import java.util.*
 
@@ -31,12 +31,6 @@ class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
     val actual = out.toString()
     assertNormalizedEquals(expected, actual)
   }
-
-  private fun assertNormalizedEquals(expected: String, actual: String) {
-    TestCase.assertEquals(expected.normalizeLineEndings(), actual.normalizeLineEndings())
-  }
-
-  private fun String.normalizeLineEndings(): String = this.replace("\r\n", "\n").replace("\r", "\n")
 
   private fun fromFile(file: String): Array<String> {
     ResourceUtil.getResourceAsStream(SslDelegateHandlerStateMachineTest::class.java.classLoader, "org/jetbrains/maven/server/ssl", file).use { stream ->
