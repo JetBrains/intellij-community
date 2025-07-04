@@ -80,12 +80,6 @@
 
     <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension" id="html"/>
 
-    <psi.symbolReferenceProvider hostLanguage="XML"
-                                 hostElementClass="com.intellij.psi.xml.XmlNamedReferenceHost"
-                                 anyReferenceClass="true"
-                                 targetClass="com.intellij.model.Symbol"
-                                 implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
-
     <polySymbols.queryScopeContributor
       implementation="com.intellij.polySymbols.html.HtmlSymbolQueryScopeContributor"/>
     <xml.attributeDescriptorsProvider id="html-default"

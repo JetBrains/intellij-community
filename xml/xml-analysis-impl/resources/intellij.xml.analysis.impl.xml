@@ -163,6 +163,8 @@
     <languageStubDefinition language="HTML" implementationClass="com.intellij.xml.HtmlLanguageStubDefinition"/>
     <stubElementRegistryExtension implementation="com.intellij.xml.HtmlStubRegistryExtension"/>
 
+    <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.XmlResolveReferenceSupport" serviceImplementation="com.intellij.psi.impl.source.resolve.XmlResolveReferenceSupportImpl"/>
+
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                       hostLanguage="HtmlCompatible"
                                       implementationClass="com.intellij.polySymbols.html.elements.HtmlElementSymbolReferenceProvider"/>
@@ -172,6 +174,12 @@
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
                                       hostLanguage="HtmlCompatible"
                                       implementationClass="com.intellij.polySymbols.html.attributeValues.HtmlAttributeValueSymbolReferenceProvider"/>
+
+    <psi.symbolReferenceProvider hostLanguage="XML"
+                                 hostElementClass="com.intellij.psi.xml.XmlNamedReferenceHost"
+                                 anyReferenceClass="true"
+                                 targetClass="com.intellij.model.Symbol"
+                                 implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
 
     <polySymbols.highlightingCustomizer id="html" implementation="com.intellij.polySymbols.html.HtmlSymbolHighlightingCustomizer"/>
     <polySymbols.codeCompletionItemCustomizer id="html" implementation="com.intellij.polySymbols.html.HtmlCodeCompletionItemCustomizer"/>

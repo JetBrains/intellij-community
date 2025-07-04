@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.html.HtmlEmbeddedContentImpl;
+import com.intellij.psi.impl.source.resolve.impl.XmlEntityRefUtil;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.TokenSet;
@@ -233,7 +234,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       String fastPath = StringUtil.unescapeXmlEntities(text);
       if (!StringUtil.equals(fastPath, text)) return fastPath;
       if (psi.isValid()) {
-        final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, text, psi.getContainingFile());
+        final XmlEntityDecl resolve = XmlEntityRefUtil.resolveEntity((XmlElement)psi, text, psi.getContainingFile());
         final XmlAttributeValue value = resolve != null ? resolve.getValueElement() : null;
         if (value != null) {
           return getEntityValue(value.getValue());
