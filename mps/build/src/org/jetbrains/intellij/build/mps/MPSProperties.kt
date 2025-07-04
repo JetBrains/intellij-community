@@ -11,6 +11,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.extension
 
 private val javaCompiler: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
     for (name in listOf(
@@ -124,19 +125,7 @@ class MPSProperties : JetBrainsProductProperties() {
         copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, JvmArchitecture.x64), Path.of("$targetDirectory/bin/win/amd64"))
         copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, JvmArchitecture.aarch64), Path.of("$targetDirectory/bin/win/aarch64"))
 
-        // copy mac executable
-        Files.createDirectories(Path.of("$targetDirectory/build/resources"))
-        val (execPath, _) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, context.options.targetArch ?: JvmArchitecture.x64)
-        Files.copy(
-            execPath,
-            Path.of("$targetDirectory/build/resources/$baseFileName-x64"),
-            StandardCopyOption.COPY_ATTRIBUTES)
-
-        val (execPath2, _) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, context.options.targetArch ?: JvmArchitecture.aarch64)
-        Files.copy(
-            execPath2,
-            Path.of("$targetDirectory/build/resources/$baseFileName-aarch64"),
-            StandardCopyOption.COPY_ATTRIBUTES)
+        copyExecutables(context, targetDirectory)
 
         // copy jre version
         FileSet(Path.of("$communityHome/build/dependencies")).include("dependencies.properties").copyToDir(Path.of("$targetDirectory/build/dependencies/"))
@@ -148,6 +137,21 @@ class MPSProperties : JetBrainsProductProperties() {
         FileSet(Path.of("$communityHome/platform/build-scripts/tools/mac/scripts/")).includeAll().copyToDir(Path.of("$targetDirectory/build/tools/mac/scripts/"))
 
         generateBuildTxt(context, Path.of("$targetDirectory/lib"))
+    }
+
+    private suspend fun copyExecutables(context: BuildContext, targetDirectory: Path) {
+        Files.createDirectories(Path.of("$targetDirectory/build/resources"))
+        for (osFamily in OsFamily.entries) {
+            for (arch in JvmArchitecture.entries) {
+                val (execPath, _) = NativeBinaryDownloader.getLauncher(context, osFamily, arch)
+                var ext = execPath.extension
+                ext = if (ext.isEmpty()) "" else ".$ext"
+                Files.copy(
+                    execPath,
+                    Path.of("$targetDirectory/build/resources/$baseFileName-${osFamily.dirName}-${arch.fileSuffix}$ext"),
+                    StandardCopyOption.COPY_ATTRIBUTES)
+            }
+        }
     }
 
     private fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
