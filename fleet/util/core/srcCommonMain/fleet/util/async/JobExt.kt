@@ -24,8 +24,10 @@ suspend fun <T> useAll(vararg jobs: Job, body: suspend CoroutineScope.() -> T): 
   }
 }
 
-suspend fun <T> withSupervisor(body: suspend CoroutineScope.(scope: CoroutineScope) -> T): T {
-  val context = currentCoroutineContext()
+suspend fun <T> withSupervisor(coroutineContext: CoroutineContext = EmptyCoroutineContext,
+                               body: suspend CoroutineScope.(scope: CoroutineScope) -> T): T {
+  require(coroutineContext[Job] == null) { "Don't pass job to supervisor" }
+  val context = currentCoroutineContext() + coroutineContext
   val supervisorJob = SupervisorJob(context.job)
   return try {
     coroutineScope {
