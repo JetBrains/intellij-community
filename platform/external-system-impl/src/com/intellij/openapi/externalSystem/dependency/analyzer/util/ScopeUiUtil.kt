@@ -13,6 +13,7 @@ import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink
@@ -54,12 +55,14 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<SearchSc
   init {
     val propertyGraph = PropertyGraph(isBlockPropagation = false)
 
-    allScopes = scopes.map { scope ->
-      SearchScopeItem.Element(
-        scope.scope,
-        propertyGraph.property(scope.isSelected)
-      )
-    }
+    allScopes = scopes
+      .sortedWith(Comparator.comparing({ it.scope.title }, NaturalComparator.INSTANCE))
+      .map { scope ->
+        SearchScopeItem.Element(
+          scope.scope,
+          propertyGraph.property(scope.isSelected)
+        )
+      }
     standardScopes = allScopes.filter { it.scope.type == Scope.Type.STANDARD }
     customScopes = allScopes.filter { it.scope.type == Scope.Type.CUSTOM }
 
