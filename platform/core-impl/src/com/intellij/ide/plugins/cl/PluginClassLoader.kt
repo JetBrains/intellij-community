@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ide.plugins.cl
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStreamWriter
 import java.io.Writer
 import java.net.URL
 import java.nio.file.Files
@@ -476,11 +477,11 @@ ${if (exception == null) "" else exception.message}""")
   override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
 
   override fun toString(): String {
-    return "${javaClass.simpleName}(" +
-           "plugin=$pluginDescriptor, " +
-           "packagePrefix=$packagePrefix, " +
-           "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}, " +
-           "parents=${parents.joinToString()}, " +
+    return "${javaClass.simpleName}(\n" +
+           "  plugin=$pluginDescriptor,\n" +
+           "  packagePrefix=$packagePrefix,\n" +
+           "  state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"},\n" +
+           "  parents=[${parents.map { it.toString().prependIndent("\n    ") + "," }.plus("  ]").joinToString("\n")},\n"+
            ")"
   }
 
