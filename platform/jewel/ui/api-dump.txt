@@ -16,6 +16,8 @@ e:org.jetbrains.jewel.ui.component.AutoHideBehavior
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.AutoHideBehavior
 - s:values():org.jetbrains.jewel.ui.component.AutoHideBehavior[]
+f:org.jetbrains.jewel.ui.component.LinkKt
+- sf:ExternalLink-XSU6r7E(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,androidx.compose.ui.text.TextStyle,I,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.LinkStyle,androidx.compose.runtime.Composer,I,I):V
 org.jetbrains.jewel.ui.component.MenuScope
 - a:passiveItem(kotlin.jvm.functions.Function2):V
 - a:selectableItem(Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
@@ -254,3 +256,7 @@ org.jetbrains.jewel.ui.painter.PainterProviderScope
 org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
 - org.jetbrains.jewel.ui.painter.PainterProviderScope
 - a:getClassLoaders():java.util.Set
+org.jetbrains.jewel.ui.util.LabelProvider
+- a:fetchLabelFromKey(java.lang.String):java.lang.String
+f:org.jetbrains.jewel.ui.util.LabelProviderKt
+- sf:getLocalLabelProvider():androidx.compose.runtime.ProvidableCompositionLocal
