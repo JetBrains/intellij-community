@@ -55,14 +55,6 @@ public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implem
       if (node.isAsyncAllowed()) {
         highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
       }
-      else {
-        Optional
-          .ofNullable(node.getNode())
-          .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
-          .ifPresent(asyncNode -> myHolder.newAnnotation(HighlightSeverity.ERROR,
-                                                         PySyntaxCoreBundle.message("ANN.function.cannot.be.async", node.getName()))
-            .range(asyncNode).create());
-      }
     }
 
     @Override

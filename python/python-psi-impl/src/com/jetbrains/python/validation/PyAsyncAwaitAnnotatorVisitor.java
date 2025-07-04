@@ -8,11 +8,14 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PySyntaxCoreBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
@@ -100,6 +103,18 @@ public final class PyAsyncAwaitAnnotatorVisitor extends PyElementVisitor {
   public void visitPySetCompExpression(@NotNull PySetCompExpression node) {
     super.visitPySetCompExpression(node);
     checkComprehension(node);
+  }
+
+  @Override
+  public void visitPyFunction(@NotNull PyFunction node) {
+    if (!node.isAsyncAllowed()) {
+      Optional
+        .ofNullable(node.getNode())
+        .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
+        .ifPresent(asyncNode -> myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                                       PyPsiBundle.message("ANN.function.cannot.be.async", node.getName()))
+          .range(asyncNode).create());
+    }
   }
 
   private static class ConvertIntoAsyncFunctionFix extends PsiUpdateModCommandAction<PyFunction> {
