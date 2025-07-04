@@ -14,7 +14,6 @@ kotlinSarif = "0.6.0"
 kotlinpoet = "2.1.0"
 kotlinterGradlePlugin = "5.0.1"
 kotlinxSerialization = "1.8.0"
-kotlinxBinaryCompat = "0.17.0"
 ktfmtGradlePlugin = "0.23.0"
 
 [libraries]
@@ -46,7 +45,6 @@ dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", versi
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinter-gradlePlugin = { module = "org.jmailen.gradle:kotlinter-gradle", version.ref = "kotlinterGradlePlugin" }
-kotlinx-binaryCompatValidator-gradlePlugin = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "kotlinxBinaryCompat" }
 ktfmt-gradlePlugin = { module = "com.ncorti.ktfmt.gradle:plugin", version.ref = "ktfmtGradlePlugin" }
 
 [plugins]
@@ -58,7 +56,6 @@ ideaPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "ideaPlugin
 ideaPluginBase = { id = "org.jetbrains.intellij.platform.base", version.ref = "ideaPlugin" }
 ideaPluginModule = { id = "org.jetbrains.intellij.platform.module", version.ref = "ideaPlugin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlinx-binaryCompatValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinxBinaryCompat" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinterGradlePlugin" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmtGradlePlugin" }
