@@ -367,10 +367,8 @@ public final class TerminalToolWindowManager implements Disposable {
     TerminalStartupMoment startupMoment = requestFocus && deferSessionStartUntilUiShown ? new TerminalStartupMoment() : null;
     Content content = createTerminalContent(terminalRunner, toolWindow, preferredEngine, terminalWidget, tabState,
                                             sessionTab, startupFusInfo, deferSessionStartUntilUiShown, startupMoment);
-    content.putUserData(RUNNER_KEY, terminalRunner);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
-    new TerminalTabCloseListener(content, myProject, this);
     ReworkedTerminalUsageCollector.logTabOpened(myProject, contentManager.getContentCount());
     Runnable selectRunnable = () -> {
       contentManager.setSelectedContent(content, requestFocus);
@@ -451,6 +449,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
     content.setCloseable(true);
     content.putUserData(TERMINAL_WIDGET_KEY, widget);
+    content.putUserData(RUNNER_KEY, terminalRunner);
 
     TerminalContainer container = new TerminalContainer(myProject, content, widget, this);
     panel.setContent(container.getWrapperPanel());
@@ -460,6 +459,9 @@ public final class TerminalToolWindowManager implements Disposable {
     myTerminalSetupHandlers.forEach(consumer -> consumer.accept(finalWidget));
 
     content.setPreferredFocusedComponent(() -> finalWidget.getPreferredFocusableComponent());
+    //noinspection ResultOfObjectAllocationIgnored
+    new TerminalTabCloseListener(content, myProject, this);
+
     return content;
   }
 
