@@ -25,8 +25,8 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.*
 
-
 internal class SearchScopeSelector(property: ObservableMutableProperty<List<ScopeItem>>) : JPanel() {
+
   init {
     val dropDownLink = SearchScopeDropDownLink(property)
       .apply { border = JBUI.Borders.empty(BORDER, ICON_TEXT_GAP / 2, BORDER, BORDER) }
@@ -112,14 +112,6 @@ private class SearchScopePopupContent(scopes: List<ScopeItem>) : JBList<SearchSc
 
   companion object {
 
-    fun createPopup(scopes: List<ScopeItem>, onChange: (List<ScopeItem>) -> Unit): JBPopup {
-      val content = SearchScopePopupContent(scopes)
-      content.afterChange(onChange)
-      return JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(content, null)
-        .createPopup()
-    }
-
     private fun suggestGroupState(scopes: List<SearchScopeItem.Element>): ThreeStateCheckBox.State {
       return when {
         scopes.all { it.property.get() } -> ThreeStateCheckBox.State.SELECTED
@@ -192,8 +184,9 @@ private class SearchScopeDropDownLink(
   property: ObservableMutableProperty<List<ScopeItem>>
 ) : DropDownLink<List<ScopeItem>>(
   property.get(),
-  { SearchScopePopupContent.createPopup(property.get(), it::selectedItem.setter) }
+  { createPopup(property.get(), it::selectedItem.setter) }
 ) {
+
   override fun popupPoint() =
     super.popupPoint()
       .apply { x += insets.left }
@@ -225,6 +218,17 @@ private class SearchScopeDropDownLink(
     foreground = JBUI.CurrentTheme.Label.foreground()
     whenItemSelected { text = itemToString(selectedItem) }
     bind(property)
+  }
+
+  companion object {
+
+    fun createPopup(scopes: List<ScopeItem>, onChange: (List<ScopeItem>) -> Unit): JBPopup {
+      val content = SearchScopePopupContent(scopes)
+      content.afterChange(onChange)
+      return JBPopupFactory.getInstance()
+        .createComponentPopupBuilder(content, null)
+        .createPopup()
+    }
   }
 }
 

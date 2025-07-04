@@ -21,10 +21,11 @@ import javax.swing.*
 internal class ExternalProjectSelector(
   property: ObservableMutableProperty<DependencyAnalyzerProject?>,
   externalProjects: List<DependencyAnalyzerProject>,
-  private val iconProvider: ExternalSystemIconProvider
+  iconProvider: ExternalSystemIconProvider,
 ) : JPanel() {
+
   init {
-    val dropDownLink = ExternalProjectDropDownLink(property, externalProjects)
+    val dropDownLink = ExternalProjectDropDownLink(property, externalProjects, iconProvider)
       .apply { border = JBUI.Borders.empty(BORDER, ICON_TEXT_GAP / 2, BORDER, BORDER) }
     val label = JLabel(iconProvider.projectIcon)
       .apply { border = JBUI.Borders.empty(BORDER, BORDER, BORDER, ICON_TEXT_GAP / 2) }
@@ -35,71 +36,91 @@ internal class ExternalProjectSelector(
     add(label)
     add(dropDownLink)
   }
+}
 
-  private fun createPopup(externalProjects: List<DependencyAnalyzerProject>, onChange: (DependencyAnalyzerProject) -> Unit): JBPopup {
-    val content = ExternalProjectPopupContent(externalProjects)
-      .apply { whenMousePressed { onChange(selectedValue) } }
-    return JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(content, null)
-      .createPopup()
-      .apply { content.whenMousePressed(listener = ::closeOk) }
+private class ExternalProjectPopupContent(
+  externalProject: List<DependencyAnalyzerProject>,
+  iconProvider: ExternalSystemIconProvider,
+) : JBList<DependencyAnalyzerProject>() {
+
+  init {
+    model = createDefaultListModel(externalProject)
+    border = emptyListBorder()
+    cellRenderer = ExternalProjectRenderer(iconProvider)
+    selectionMode = ListSelectionModel.SINGLE_SELECTION
+    ListUtil.installAutoSelectOnMouseMove(this)
   }
 
-  private inner class ExternalProjectPopupContent(externalProject: List<DependencyAnalyzerProject>) : JBList<DependencyAnalyzerProject>() {
-    init {
-      model = createDefaultListModel(externalProject)
-      border = emptyListBorder()
-      cellRenderer = ExternalProjectRenderer()
-      selectionMode = ListSelectionModel.SINGLE_SELECTION
-      ListUtil.installAutoSelectOnMouseMove(this)
-    }
+  fun afterChange(listener: (DependencyAnalyzerProject) -> Unit) {
+    whenMousePressed { listener(selectedValue) }
+  }
+}
+
+private class ExternalProjectRenderer(
+  private val iconProvider: ExternalSystemIconProvider,
+) : ListCellRenderer<DependencyAnalyzerProject?> {
+
+  override fun getListCellRendererComponent(
+    list: JList<out DependencyAnalyzerProject?>,
+    value: DependencyAnalyzerProject?,
+    index: Int,
+    isSelected: Boolean,
+    cellHasFocus: Boolean,
+  ): Component {
+    return JLabel()
+      .apply { if (value != null) icon = iconProvider.projectIcon }
+      .apply { if (value != null) text = value.title }
+      .apply { border = emptyListCellBorder(list, index) }
+      .apply { iconTextGap = JBUI.scale(ICON_TEXT_GAP) }
+      .apply { background = if (isSelected) list.selectionBackground else list.background }
+      .apply { foreground = if (isSelected) list.selectionForeground else list.foreground }
+      .apply { isOpaque = true }
+      .apply { isEnabled = list.isEnabled }
+      .apply { font = list.font }
+  }
+}
+
+private class ExternalProjectDropDownLink(
+  property: ObservableMutableProperty<DependencyAnalyzerProject?>,
+  externalProjects: List<DependencyAnalyzerProject>,
+  private val iconProvider: ExternalSystemIconProvider,
+) : DropDownLink<DependencyAnalyzerProject?>(
+  property.get(),
+  { createPopup(externalProjects, iconProvider, it::selectedItem.setter) }
+) {
+
+  override fun popupPoint() =
+    super.popupPoint()
+      .apply { x += insets.left }
+      .apply { x -= JBUI.scale(BORDER) }
+      .apply { x -= iconProvider.projectIcon.iconWidth }
+      .apply { x -= JBUI.scale(ICON_TEXT_GAP) }
+
+  override fun itemToString(item: DependencyAnalyzerProject?): String = when (item) {
+    null -> ExternalSystemBundle.message("external.system.dependency.analyzer.projects.empty")
+    else -> item.title
   }
 
-  private inner class ExternalProjectRenderer : ListCellRenderer<DependencyAnalyzerProject?> {
-    override fun getListCellRendererComponent(
-      list: JList<out DependencyAnalyzerProject?>,
-      value: DependencyAnalyzerProject?,
-      index: Int,
-      isSelected: Boolean,
-      cellHasFocus: Boolean
-    ): Component {
-      return JLabel()
-        .apply { if (value != null) icon = iconProvider.projectIcon }
-        .apply { if (value != null) text = value.title }
-        .apply { border = emptyListCellBorder(list, index) }
-        .apply { iconTextGap = JBUI.scale(ICON_TEXT_GAP) }
-        .apply { background = if (isSelected) list.selectionBackground else list.background }
-        .apply { foreground = if (isSelected) list.selectionForeground else list.foreground }
-        .apply { isOpaque = true }
-        .apply { isEnabled = list.isEnabled }
-        .apply { font = list.font }
-    }
+  init {
+    autoHideOnDisable = false
+    foreground = JBUI.CurrentTheme.Label.foreground()
+    whenItemSelected { text = itemToString(selectedItem) }
+    bind(property)
   }
 
-  private inner class ExternalProjectDropDownLink(
-    property: ObservableMutableProperty<DependencyAnalyzerProject?>,
-    externalProjects: List<DependencyAnalyzerProject>,
-  ) : DropDownLink<DependencyAnalyzerProject?>(
-    property.get(),
-    { createPopup(externalProjects, it::selectedItem.setter) }
-  ) {
-    override fun popupPoint() =
-      super.popupPoint()
-        .apply { x += insets.left }
-        .apply { x -= JBUI.scale(BORDER) }
-        .apply { x -= iconProvider.projectIcon.iconWidth }
-        .apply { x -= JBUI.scale(ICON_TEXT_GAP) }
+  companion object {
 
-    override fun itemToString(item: DependencyAnalyzerProject?): String = when (item) {
-      null -> ExternalSystemBundle.message("external.system.dependency.analyzer.projects.empty")
-      else -> item.title
-    }
-
-    init {
-      autoHideOnDisable = false
-      foreground = JBUI.CurrentTheme.Label.foreground()
-      whenItemSelected { text = itemToString(selectedItem) }
-      bind(property)
+    fun createPopup(
+      externalProjects: List<DependencyAnalyzerProject>,
+      iconProvider: ExternalSystemIconProvider,
+      onChange: (DependencyAnalyzerProject) -> Unit
+    ): JBPopup {
+      val content = ExternalProjectPopupContent(externalProjects, iconProvider)
+      content.afterChange(onChange)
+      return JBPopupFactory.getInstance()
+        .createComponentPopupBuilder(content, null)
+        .createPopup()
+        .apply { content.whenMousePressed(listener = ::closeOk) }
     }
   }
 }
