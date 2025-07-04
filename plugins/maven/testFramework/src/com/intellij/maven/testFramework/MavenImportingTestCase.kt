@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.backend.observation.Observation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -68,26 +67,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * This test case uses the NIO API for handling file operations.
- *
- * **Background**:
- * The test framework is transitioning from the `IO` API to the`NIO` API
- *
- * **Implementation Notes**:
- * - `<TestCase>` represents the updated implementation using the `NIO` API.
- * - `<TestCaseLegacy>` represents the legacy implementation using the `IO` API.
- * - For now, both implementations coexist to allow for a smooth transition and backward compatibility.
- * - Eventually, `<TestCaseLegacy>` will be removed from the codebase.
- *
- * **Action Items**:
- * - Prefer using `<TestCase>` for new test cases.
- * - Update existing tests to use `<TestCase>` where possible.
- *
- * **Future Direction**:
- * Once the transition is complete, all test cases relying on the `IO` API will be retired,
- * and the codebase will exclusively use the `NIO` implementation.
- */
 abstract class MavenImportingTestCase : MavenTestCase() {
 
   private var myProjectsManager: MavenProjectsManager? = null

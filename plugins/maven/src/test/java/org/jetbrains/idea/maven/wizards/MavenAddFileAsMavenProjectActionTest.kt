@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestActionEvent
@@ -16,7 +16,7 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
   fun `test import non-default pom`() = runBlocking {
     val pom1: Path = createPom()
     val pom2 = pom1.parent.resolve("pom2.xml")
-    pom2.write(MavenTestCaseLegacy.createPomXml(
+    pom2.write(MavenTestCase.createPomXml(
       """
         <groupId>test</groupId>
         <artifactId>project2</artifactId>
