@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.blockingContextToIndicator
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object IdentifierHighlightingAccessorImpl : IdentifierHighlightingAccessor {
   override suspend fun getMarkupData(psiFile: PsiFile, editor: Editor, visibleRange: ProperTextRange, offset: Int): IdentifierHighlightingResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     return readAction {
       if (!psiFile.isValid || editor.isDisposed) {
         EMPTY_RESULT
