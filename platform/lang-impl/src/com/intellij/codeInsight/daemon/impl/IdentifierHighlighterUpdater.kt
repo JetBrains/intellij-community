@@ -41,6 +41,7 @@ class IdentifierHighlighterUpdater(
   @RequiresBackgroundThread
   @ApiStatus.Internal
   suspend fun doCollectInformation(project: Project, visibleRange: ProperTextRange): IdentifierHighlightingResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     return IdentifierHighlightingManager.getInstance(project).getMarkupData(myEditor, visibleRange)
   }
 

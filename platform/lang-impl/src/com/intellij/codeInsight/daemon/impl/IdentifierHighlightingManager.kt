@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.UnfairTextRange
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface IdentifierHighlightingManager {
+  @RequiresBackgroundThread
   suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult
 
   companion object {
