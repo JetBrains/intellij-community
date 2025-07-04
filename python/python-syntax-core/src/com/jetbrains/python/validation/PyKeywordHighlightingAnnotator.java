@@ -22,16 +22,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PySyntaxCoreBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.*;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
 
 public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implements HighlightRangeExtension {
 
@@ -55,15 +51,6 @@ public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implem
       if (node.isAsyncAllowed()) {
         highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
       }
-    }
-
-    @Override
-    public void visitPyNumericLiteralExpression(@NotNull PyAstNumericLiteralExpression node) {
-      String suffix = node.getIntegerLiteralSuffix();
-      if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
-      if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
-      myHolder.newAnnotation(HighlightSeverity.ERROR, PySyntaxCoreBundle.message("INSP.python.trailing.suffix.not.support", suffix))
-        .range(node).create();
     }
 
     @Override

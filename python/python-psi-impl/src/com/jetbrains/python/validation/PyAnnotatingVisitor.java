@@ -3,8 +3,8 @@ package com.jetbrains.python.validation;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.List;
 public final class PyAnnotatingVisitor extends PyAnnotatorBase implements DumbAware {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull PyAnnotationHolder holder) {
-    List<@NotNull PyElementVisitor> visitors = List.of(
+    List<@NotNull PsiElementVisitor> visitors = List.of(
       new PyAssignTargetAnnotatorVisitor(holder),
       new PyTypeAnnotationTargetAnnotatorVisitor(holder),
       new PyParameterListAnnotatorVisitor(holder),
@@ -25,9 +25,10 @@ public final class PyAnnotatingVisitor extends PyAnnotatorBase implements DumbAw
       new PyImportAnnotatorVisitor(holder),
       new PyBuiltinAnnotatorVisitor(holder),
       new UnsupportedFeatures(holder, List.of(LanguageLevel.forElement(psiElement))),
-      new PyAsyncAwaitAnnotatorVisitor(holder)
+      new PyAsyncAwaitAnnotatorVisitor(holder),
+      new PyAstNumericLiteralAnnotatorVisitor(holder)
     );
-    for (PyElementVisitor visitor : visitors) {
+    for (PsiElementVisitor visitor : visitors) {
       psiElement.accept(visitor);
     }
   }
