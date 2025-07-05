@@ -1,3 +1,8 @@
+f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextAreasKt
+- f:getLambda$-287660472$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+- f:getLambda$-677331265$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextFieldsKt
+- f:getLambda$-1122689496$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsKt
 - <init>():V

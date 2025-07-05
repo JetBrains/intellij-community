@@ -63,6 +63,13 @@ public fun TextAreas() {
                     outline = Outline.Warning,
                     placeholder = { Text("Text area with warning") },
                 )
+
+                TextArea(
+                    state = rememberTextFieldState(""),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    placeholder = { Text("Text area without decoration") },
+                    undecorated = true,
+                )
             }
 
             Spacer(Modifier.height(16.dp))
@@ -103,6 +110,13 @@ public fun TextAreas() {
                     outline = Outline.Warning,
                     placeholder = { Text("Text area with warning") },
                     readOnly = true,
+                )
+
+                TextArea(
+                    state = rememberTextFieldState(""),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    placeholder = { Text("Text area without decoration") },
+                    undecorated = true,
                 )
             }
         }

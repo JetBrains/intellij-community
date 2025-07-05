@@ -126,8 +126,16 @@ public fun TextField(
                     )
                 }
             } else {
-                null
+                TextFieldDecorator { innerTextField ->
+                    UndecoratedTextFieldDecorationBox(
+                        innerTextField = innerTextField,
+                        textStyle = textStyle,
+                        placeholderTextColor = style.colors.placeholder,
+                        placeholder = if (state.text.isEmpty()) placeholder else null,
+                    )
+                }
             },
+        undecorated = undecorated,
         scrollState = rememberScrollState(),
     )
 }
@@ -222,6 +230,26 @@ public fun TextField(
             leadingIcon = leadingIcon,
             trailingIcon = trailingIcon,
         )
+    }
+}
+
+@Composable
+private fun UndecoratedTextFieldDecorationBox(
+    innerTextField: @Composable () -> Unit,
+    placeholder: @Composable (() -> Unit)?,
+    textStyle: TextStyle,
+    placeholderTextColor: Color,
+) {
+    Box(propagateMinConstraints = true, contentAlignment = Alignment.CenterStart) {
+        innerTextField()
+
+        if (placeholder != null) {
+            CompositionLocalProvider(
+                LocalTextStyle provides textStyle.copy(color = placeholderTextColor),
+                LocalContentColor provides placeholderTextColor,
+                content = placeholder,
+            )
+        }
     }
 }
 
