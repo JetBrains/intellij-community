@@ -12,7 +12,6 @@
 
 common --@rules_jvm//:jvm-builder=@community//:monorepo-jvm-builder_deploy.jar
 common --@rules_jvm//:default-kotlinc-opts=@community//:k17
-common --@rules_jvm//:resource-packager=@rules_jvm//src/misc:worker-jvm
 common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
 
 # configure resources
