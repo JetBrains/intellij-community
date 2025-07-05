@@ -17,7 +17,7 @@ import com.intellij.ui.content.Content
  * automatically switch to the corresponding bytecode in the bytecode viewer.
  */
 @Service(Service.Level.PROJECT)
-class BytecodeEditorSynchronizer(private val project: Project) : FileEditorManagerListener {
+internal class BytecodeEditorSynchronizer(private val project: Project) : FileEditorManagerListener {
 
   /**
    * Called when the selected editor changes.

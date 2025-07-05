@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap
  * and properly unregistered when the project is disposed.
  */
 @Service(Service.Level.PROJECT)
-class BytecodeToolWindowService(private val project: Project) {
+internal class BytecodeToolWindowService(private val project: Project) {
   private val registeredListeners = ConcurrentHashMap<ToolWindow, ContentManagerListener>()
 
   /**
