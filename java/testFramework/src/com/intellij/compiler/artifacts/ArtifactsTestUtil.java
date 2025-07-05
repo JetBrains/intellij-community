@@ -52,7 +52,7 @@ public final class ArtifactsTestUtil {
   }
 
   public static void assertLayout(PackagingElement element, String expected) {
-    assertEquals(adjustMultiLine(expected), printToString(element, 0));
+    assertPathEquals(adjustMultiLine(expected), printToString(element, 0));
   }
 
   private static String adjustMultiLine(String expected) {
