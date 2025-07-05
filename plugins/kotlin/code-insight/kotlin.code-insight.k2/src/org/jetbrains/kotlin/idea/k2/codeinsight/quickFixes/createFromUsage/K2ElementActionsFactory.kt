@@ -49,7 +49,26 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 class K2ElementActionsFactory : JvmElementActionsFactory() {
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
-        return super.createAddConstructorActions(targetClass, request)
+        if (!request.isValid) return emptyList()
+        val targetKtClass = targetClass.toKtClassOrFile() as? KtClass ?: return emptyList()
+        val parameters = request.expectedParameters
+
+        val changePrimaryConstructorAction = run {
+            val primaryConstructor = targetKtClass.primaryConstructor ?: return@run null
+            val lightMethod = primaryConstructor.toLightMethods().firstOrNull() ?: return@run null
+            val project = targetKtClass.project
+            val fakeParametersExpressions = fakeParametersExpressions(parameters, project) ?: return@run null
+            QuickFixFactory.getInstance().createChangeMethodSignatureFromUsageFix(
+                lightMethod,
+                fakeParametersExpressions,
+                PsiSubstitutor.EMPTY,
+                targetKtClass,
+                false,
+                2
+            ).takeIf { it.isAvailable(project, null, targetKtClass.containingFile) }
+        }
+
+        return listOfNotNull(changePrimaryConstructorAction)
     }
 
     override fun createChangeOverrideActions(
