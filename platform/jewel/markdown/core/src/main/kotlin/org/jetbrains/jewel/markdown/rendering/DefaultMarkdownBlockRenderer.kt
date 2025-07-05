@@ -187,6 +187,7 @@ public open class DefaultMarkdownBlockRenderer(
     ) {
         val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
         Heading(
+            block,
             renderedContent,
             styling.inlinesStyling.textStyle,
             styling.padding,
@@ -199,6 +200,7 @@ public open class DefaultMarkdownBlockRenderer(
 
     @Composable
     private fun Heading(
+        block: Heading,
         renderedContent: AnnotatedString,
         textStyle: TextStyle,
         paddingValues: PaddingValues,
@@ -210,7 +212,12 @@ public open class DefaultMarkdownBlockRenderer(
         Column(modifier = modifier.padding(paddingValues)) {
             val textColor = textStyle.color.takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
             val mergedStyle = textStyle.merge(TextStyle(color = textColor))
-            Text(text = renderedContent, style = mergedStyle, modifier = Modifier.focusProperties { canFocus = false })
+            Text(
+                text = renderedContent,
+                style = mergedStyle,
+                modifier = Modifier.focusProperties { canFocus = false },
+                inlineContent = renderedImages(block),
+            )
 
             if (underlineWidth > 0.dp && underlineColor.isSpecified) {
                 Spacer(Modifier.height(underlineGap))
