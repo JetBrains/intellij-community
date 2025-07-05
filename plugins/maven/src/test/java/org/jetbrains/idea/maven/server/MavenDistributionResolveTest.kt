@@ -10,11 +10,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.ZipUtil
-import com.intellij.util.net.NetUtils
 import com.intellij.util.net.ProxyConfiguration
 import com.intellij.util.net.ProxySettings
 import com.sun.net.httpserver.HttpExchange
@@ -29,6 +30,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.net.URI
+import java.nio.file.Path
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
@@ -38,8 +40,8 @@ import kotlin.io.path.deleteRecursively
 class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   private val myEvents: MutableList<Pair<BuildEvent, Throwable>> = ArrayList()
   private lateinit var mySyncViewManager: SyncViewManager
+  private lateinit var mavenHomeDir: Path
 
-  @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
     mySyncViewManager = object : SyncViewManager(project) {
@@ -51,6 +53,17 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
       }
     }
     project.replaceService(SyncViewManager::class.java, mySyncViewManager, testRootDisposable)
+    mavenHomeDir = createTempDirectory()
+  }
+
+  override fun tearDown() {
+    RunAll(
+      ThrowableRunnable {
+        @OptIn(ExperimentalPathApi::class)
+        mavenHomeDir.deleteRecursively()
+      },
+      ThrowableRunnable { super.tearDown() },
+    ).run()
   }
 
   @Throws(IOException::class)
@@ -174,7 +187,6 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   fun testShouldUseProxyWhenDownloadingWrapper() = runBlocking {
     assumeMaven3()
     runWithServer { url ->
-      val mavenHomeDir = createTempDirectory()
       withEnvironment("MAVEN_USER_HOME" to mavenHomeDir.absolutePathString()) {
         val uri = URI.create(url)
         val domain = "domain.available.only.via.proxy.intellij.com"
@@ -199,8 +211,6 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
         finally {
           proxySettings.setProxyConfiguration(defaultConfig)
           proxy.tearDown()
-          @OptIn(ExperimentalPathApi::class)
-          mavenHomeDir.deleteRecursively()
         }
       }
     }
