@@ -9,7 +9,10 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.resolveFromRootOrRelative
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -37,15 +40,14 @@ object ByteCodeViewerManager {
     else {
       // source code; looking for a .class file in compiler output
       val moduleExtension = CompilerModuleExtension.getInstance(fileIndex.getModuleForFile(file)) ?: return null
-      val classRoot = if (fileIndex.isInTestSourceContent(file)) {
-        moduleExtension.compilerOutputPathForTests
-      } else {
-        moduleExtension.compilerOutputPath
-      } ?: return null
+      val classRoot = if (fileIndex.isInTestSourceContent(file)) moduleExtension.compilerOutputPathForTests
+      else moduleExtension.compilerOutputPath
+      if (classRoot == null) return null
       return classRoot.resolveFromRootOrRelative(jvmClassName.replace('.', '/') + ".class")
     }
   }
 
+  @Deprecated(message = "Use findClassFile instead")
   @JvmStatic
   fun loadClassFileBytes(aClass: PsiClass): ByteArray? {
     return findClassFile(aClass)?.contentsToByteArray(false)

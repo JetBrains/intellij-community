@@ -109,7 +109,7 @@ internal class ShowBytecodeAction : AnAction() {
         }
       }
     }
-    
+
     val syncWithEditorAction = object : ToggleAction(BytecodeViewerBundle.messagePointer("action.sync.with.editor.name")) {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -121,7 +121,7 @@ internal class ShowBytecodeAction : AnAction() {
         BytecodeViewerSettings.getInstance().state.syncWithEditor = state
       }
     }
-    
+
     return DefaultActionGroup(showDebugAction, syncWithEditorAction)
   }
 }
