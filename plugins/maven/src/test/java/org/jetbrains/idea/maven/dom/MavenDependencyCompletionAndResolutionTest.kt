@@ -6,8 +6,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -21,7 +19,6 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.junit.Test
-import java.io.File
 import java.io.IOException
 
 class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
@@ -406,11 +403,8 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   fun testResolutionParentPathOutsideTheProject() = runBlocking {
     val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
-    val relativePathUnixSeparator = FileUtil.getRelativePath(
-      projectRoot.getPath(),
-      filePath.toCanonicalPath(),
-      File.separatorChar
-    )!!.replace("\\\\".toRegex(), "/")
+    val relativePath = projectRoot.toNioPath().relativize(filePath).toString()
+    val relativePathUnixSeparator = relativePath.replace("\\\\".toRegex(), "/")
 
     updateProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -419,8 +413,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
   <groupId>org.example</groupId>
   <artifactId>example</artifactId>
   <version>1.0</version>
-  <relativePath>
-$relativePathUnixSeparator<caret></relativePath>
+  <relativePath>$relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
@@ -566,8 +559,7 @@ $relativePathUnixSeparator<caret></relativePath>
     <artifactId>xxx</artifactId>
     <version><caret>xxx</version>
     <scope>system</scope>
-    <systemPath>
-$libPath</systemPath>
+    <systemPath>$libPath</systemPath>
   </dependency>
 </dependencies>
 """)
@@ -680,8 +672,7 @@ ${libPath.parent}</depDir>
     <artifactId>xxx</artifactId>
     <version>xxx</version>
     <scope>system</scope>
-    <systemPath>
-$libPath<caret></systemPath>
+    <systemPath>$libPath<caret></systemPath>
   </dependency>
 </dependencies>
 """)

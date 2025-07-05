@@ -4,11 +4,19 @@ package org.jetbrains.idea.maven.dom.references;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
@@ -119,7 +127,8 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
                 }
               }
               else {
-                super.innerResolveInContext(resolvedText, context, result, caseSensitive);
+                var systemIndependentResolvedText = FileUtil.toSystemIndependentName(resolvedText);
+                super.innerResolveInContext(systemIndependentResolvedText, context, result, caseSensitive);
               }
             }
             else {
