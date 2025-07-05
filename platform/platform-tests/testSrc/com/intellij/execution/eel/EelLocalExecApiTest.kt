@@ -15,12 +15,10 @@ import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import io.ktor.util.decodeString
 import io.mockk.coEvery
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.*
-import kotlinx.coroutines.time.delay
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
@@ -66,8 +64,7 @@ class EelLocalExecApiTest {
       val r = localEel.exec.spawnProcess("something that doesn't exist for sure").eelIt()
       Assertions.fail("Process shouldn't be created ${r}")
     }
-    catch (e: ExecuteProcessException) {
-      // **nix: ENOENT 2 No such file or directory
+    catch (e: ExecuteProcessException) { // **nix: ENOENT 2 No such file or directory
       // win: ERROR_FILE_NOT_FOUND 2 winerror.h
       Assertions.assertEquals(2, e.errno, "Wrong error code")
     }
@@ -101,6 +98,7 @@ class EelLocalExecApiTest {
     }
   }
 
+  @ThrowsChecked(ExecuteProcessException::class)
   private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType): Unit = coroutineScope {
     val builder = executor.createBuilderToExecuteMain(localEel.exec)
     builder.interactionOptions(when (ptyManagement) {
@@ -136,8 +134,7 @@ class EelLocalExecApiTest {
         delay(1.seconds) // Resize might take some time
       }
     }
-    val decoder = Charsets.UTF_8.newDecoder()
-      .onMalformedInput(CodingErrorAction.REPORT) // Not to ignore malformed input
+    val decoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT) // Not to ignore malformed input
       .onUnmappableCharacter(CodingErrorAction.REPORT)
     val dirtyBuffer = ByteBuffer.allocate(8192)
     val cleanBuffer = CleanBuffer()
@@ -193,8 +190,7 @@ class EelLocalExecApiTest {
       }
     }
 
-    coroutineScope {
-      // TODO Remove this reading after IJPL-186154 is fixed.
+    coroutineScope { // TODO Remove this reading after IJPL-186154 is fixed.
       launch {
         process.stdout.readAllBytesAsync(this)
       }
@@ -202,9 +198,7 @@ class EelLocalExecApiTest {
         process.stderr.readAllBytesAsync(this)
       }
 
-      if (ptyManagement == PTYManagement.PTY_RESIZE_LATER &&
-          (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) &&
-          process.isWinConPtyProcess) {
+      if (ptyManagement == PTYManagement.PTY_RESIZE_LATER && (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) && process.isWinConPtyProcess) {
         delay(15.seconds) // workaround: wait a bit to let ConPTY apply the resize
       }
 
@@ -217,13 +211,11 @@ class EelLocalExecApiTest {
             is EelWindowsProcess -> error("No SIGTERM analog for Windows processes")
           }
         }
-        ExitType.INTERRUPT -> {
-          // Terminate sleep with interrupt/CTRL+C signal
+        ExitType.INTERRUPT -> { // Terminate sleep with interrupt/CTRL+C signal
           process.sendCommand(Command.SLEEP)
           process.interrupt()
         }
-        ExitType.EXIT_WITH_COMMAND -> {
-          // Just command to ask script return gracefully
+        ExitType.EXIT_WITH_COMMAND -> { // Just command to ask script return gracefully
           process.sendCommand(Command.EXIT)
         }
       }
@@ -235,21 +227,18 @@ class EelLocalExecApiTest {
         assertNotEquals(0, exitCode) //Brutal kill is never 0
       }
       ExitType.TERMINATE -> {
-        if (SystemInfoRt.isWindows) {
-          // We provide 0 as `ExitProcess` on Windows
+        if (SystemInfoRt.isWindows) { // We provide 0 as `ExitProcess` on Windows
           assertEquals(0, exitCode)
         }
         else {
           val sigCode = UnixSignal.SIGTERM.getSignalNumber(SystemInfoRt.isMac)
-          assertThat("Exit code must be signal code or +128 (if run using shell)",
-                     exitCode, anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
+          assertThat("Exit code must be signal code or +128 (if run using shell)", exitCode, anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
         }
       }
       ExitType.INTERRUPT -> {
         when (ptyManagement) {
           PTYManagement.NO_PTY -> Unit // SIGINT is doubtful without PTY especially without console on Windows
-          PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
-            // CTRL+C/SIGINT handler returns 42, see script
+          PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> { // CTRL+C/SIGINT handler returns 42, see script
             assertEquals(INTERRUPT_EXIT_CODE, exitCode)
           }
         }
