@@ -27,7 +27,6 @@ def _jvm_resources_impl(ctx):
         ],
         #         arguments = [args],
         outputs = [resultJar],
-        use_default_shell_env = True,
         tools = [ctx.file._worker],
         executable = java_runtime.java_executable_exec_path,
         execution_requirements = {

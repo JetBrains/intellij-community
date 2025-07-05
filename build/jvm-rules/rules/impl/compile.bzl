@@ -305,7 +305,6 @@ def _run_jvm_builder(
             "MALLOC_ARENA_MAX": "2",
         },
         inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
-        use_default_shell_env = True,
         outputs = outputs,
         tools = [ctx.file._jvm_builder],
         executable = java_runtime.java_executable_exec_path,
