@@ -25,6 +25,7 @@ class KotlinFacetBridge(
         val moduleEntity = mutableStorage.resolve(existingFacetEntity.moduleId)!!
         mutableStorage.modifyModuleEntity(moduleEntity) module@{
             val kotlinSettingsEntity = config.getEntityBuilder(this@module)
+            val compilerArgumentsString = CompilerArgumentsSerializer.serializeToString((configuration as KotlinFacetConfigurationBridge).compilerArguments)
             mutableStorage.modifyKotlinSettingsEntity(existingFacetEntity) {
                 if (kotlinSettingsEntity.flushNeeded) flushNeeded = false
                 name = kotlinSettingsEntity.name
@@ -44,7 +45,7 @@ class KotlinFacetBridge(
                 isHmppEnabled = kotlinSettingsEntity.isHmppEnabled
                 pureKotlinSourceFolders = kotlinSettingsEntity.pureKotlinSourceFolders.toMutableList()
                 kind = kotlinSettingsEntity.kind
-                compilerArguments = kotlinSettingsEntity.compilerArguments
+                compilerArguments = compilerArgumentsString
                 compilerSettings = kotlinSettingsEntity.compilerSettings
                 targetPlatform = kotlinSettingsEntity.targetPlatform
                 externalSystemRunTasks = kotlinSettingsEntity.externalSystemRunTasks.toMutableList()
