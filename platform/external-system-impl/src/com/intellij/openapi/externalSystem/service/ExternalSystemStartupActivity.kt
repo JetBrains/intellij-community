@@ -49,7 +49,7 @@ internal class ExternalSystemStartupActivity : ProjectActivity {
       if (!isNewlyImportedProject && isNewlyCreatedProject) {
         for (manager in managers) {
           runCatching {
-            ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, manager.systemId).createDirectoriesForEmptyContentRoots())
+            ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, manager.systemId).withCreateDirectoriesForEmptyContentRoots())
           }.getOrLogException(logger<ExternalSystemStartupActivity>())
         }
       }
