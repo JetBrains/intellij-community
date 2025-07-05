@@ -52,11 +52,16 @@ class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAwa
     val parametersFilter = parameters.idFilter
 
     // we want to process only non-indexable files, yet want to respect `idFilter` from parameters
+    //FIXME RC: we can't really use IdFilter with non-indexable files, because non-indexable files could be 'transient'
+    //          (cache-avoiding), so they are not always have fileId/implement VirtualFileWithId
     val idFilter = when {
       parametersFilter == null -> nonIndexableFilesFilter
       else -> idFilter { id -> parametersFilter.containsFileId(id) && nonIndexableFilesFilter.containsFileId(id) }
     }
 
+    //FIXME RC: we do not really search among non-indexable files -- we search among indexable files, but with filter 'non-indexable'
+    //          instead we should really use FileBasedIndex.getInstance().iterateNonIndexableFiles(), and filter files by name
+    //          (better to do that multithreaded)
     DefaultFileNavigationContributor.processElementsWithName(name, processor, parameters, idFilter)
   }
 }

@@ -16,7 +16,10 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -546,13 +549,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         break;
       }
     }
-  }
-
-  @Override
-  public boolean iterateNonIndexableFiles(@NotNull Project project,
-                                          @Nullable VirtualFileFilter acceptFilter,
-                                          @NotNull ContentIterator processor) {
-    return NonIndexableFilesUtils.iterateNonIndexableFilesImpl(project, acceptFilter, processor);
   }
 
   /**

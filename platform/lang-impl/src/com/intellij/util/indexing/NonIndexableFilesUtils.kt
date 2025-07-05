@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -22,12 +23,13 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.annotations.ApiStatus
 
 
-internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
-  val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-  val roots: Set<VirtualFile> = ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.contentUnindexedRoots() }.executeSynchronously()
-  return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter ?: VirtualFileFilter.ALL, processor)
-}
-
+/**
+ * @return all workspace model's roots that are not indexable.
+ * Method tries to return those roots as [com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile]s, so tree-traversal starting
+ * from them won't trash VFS cache with useless entries
+ * @see WorkspaceFileKind.CONTENT_NON_INDEXABLE
+ * @see WorkspaceFileIndexEx.isIndexable
+ */
 @ApiStatus.Internal
 @RequiresBackgroundThread
 @RequiresReadLock
@@ -36,14 +38,18 @@ private fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
   visitFileSets { fileSet, _ ->
     val root = fileSet.root
     if (fileSet.kind == WorkspaceFileKind.CONTENT_NON_INDEXABLE) {
-      //MAYBE RC: Better wrap the root in cache-avoiding, so file-tree hierarchy walking starting from this root will
-      // not trash VFS cache with new entries -- it makes perfect sense for CONTENT_NON_INDEXABLE because such file-sets
-      // are rarely accessed. Currently it is impossible to use this API (NewVirtualFile) here though due to the lack of
-      // dependency on apt module
-      roots.add(root)
+      //Wrap the root in cache-avoiding, so file-tree hierarchy walking starting from this root will not trash VFS cache with
+      // new entries -- it makes perfect sense for CONTENT_NON_INDEXABLE because such file-sets are rarely accessed.
+      roots.add(NewVirtualFile.asCacheAvoiding(root))
     }
   }
   return roots
+}
+
+internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
+  val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
+  val roots: Set<VirtualFile> = ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.contentUnindexedRoots() }.executeSynchronously()
+  return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter ?: VirtualFileFilter.ALL, processor)
 }
 
 private data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
