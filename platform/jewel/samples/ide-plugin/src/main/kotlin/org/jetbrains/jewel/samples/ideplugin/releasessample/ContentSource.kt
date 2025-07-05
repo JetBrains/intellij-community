@@ -312,6 +312,14 @@ internal object AndroidReleases : ContentSource<ContentItem.AndroidRelease>() {
                 apiLevel = 35,
                 releaseDate = LocalDate(2024, 2, 17),
             ),
+            ContentItem.AndroidRelease(
+                displayText = "Android 16 (preview)",
+                imagePath = "/android-releases/16.svg",
+                versionName = "16",
+                codename = "Baklava",
+                apiLevel = 36,
+                releaseDate = LocalDate(2025, 1, 23),
+            ),
         )
 
     override val displayName = "Android releases"
