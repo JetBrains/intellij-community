@@ -110,13 +110,8 @@ class GradleNamedDomainCollectionContributor : AbstractGradleExtensionContributo
       }
     }
 
-    if (true)
-      return
-
     if (qualifierType !is GradleExtensionType) return
-
     val extensionsData = GradlePropertyExtensionsContributor.getExtensionsFor(containingFile) ?: return
-
     val name = "${qualifierType.path}.*"
     val allExtensions = extensionsData.extensions
     val extensionKeys = allExtensions.keys.filter { it.startsWith(name) }
