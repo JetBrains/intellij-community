@@ -2041,6 +2041,7 @@ c:com.intellij.ide.actions.searcheverywhere.ContributorSearchResult$Builder
 - setHasMore(Z):V
 com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - s:checkEssential(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):Z
+- s:checkEssentialWithoutMl(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):Z
 - isEssential():Z
 c:com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - <init>():V

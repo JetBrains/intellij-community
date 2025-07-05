@@ -15,13 +15,17 @@ public interface EssentialContributor {
     return true;
   }
 
+  static boolean checkEssentialWithoutMl(SearchEverywhereContributor<?> contributor) {
+    return (contributor instanceof EssentialContributor ic) && ic.isEssential();
+  }
+
   static boolean checkEssential(SearchEverywhereContributor<?> contributor) {
     Boolean isEssentialByMl = checkEssentialByMl(contributor);
     if (isEssentialByMl != null) {
       return isEssentialByMl;
     }
     else {
-      return (contributor instanceof EssentialContributor ic) && ic.isEssential();
+      return checkEssentialWithoutMl(contributor);
     }
   }
   /**
