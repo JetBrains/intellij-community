@@ -59,6 +59,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   override fun tearDown() {
     RunAll(
       ThrowableRunnable {
+        MavenServerManager.getInstance().closeAllConnectorsAndWait()
         @OptIn(ExperimentalPathApi::class)
         mavenHomeDir.deleteRecursively()
       },
