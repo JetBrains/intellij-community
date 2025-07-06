@@ -38,29 +38,33 @@
   - name: intellij.evaluationPlugin.inlineCompletion
   - name: intellij.evaluationPlugin.fullLine
   - name: intellij.evaluationPlugin.agent
-  - name: intellij.evaluationPlugin.llm
   - name: intellij.evaluationPlugin.ijnext
-- name: lib/jerolba.carpet.record.jar
-  library: jerolba.carpet.record
-  files:
-  - name: $MAVEN_REPOSITORY$/com/jerolba/carpet-record/0/carpet-record-0.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-common/1/parquet-common-1.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-format-structures/1/parquet-format-structures-1.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-column/1/parquet-column-1.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-encoding/1/parquet-encoding-1.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-hadoop/1/parquet-hadoop-1.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-jackson/1/parquet-jackson-1.jar
-  - name: $MAVEN_REPOSITORY$/commons-pool/commons-pool/1/commons-pool-1.jar
-  - name: $MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1/zstd-jni-1.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-common/3/hadoop-common-3.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/hadoop/thirdparty/hadoop-shaded-guava/1/hadoop-shaded-guava-1.jar
-  - name: $MAVEN_REPOSITORY$/commons-collections/commons-collections/3/commons-collections-3.jar
-  - name: $MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4/stax2-api-4.jar
-  - name: $MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/5/woodstox-core-5.jar
-  - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-mapreduce-client-core/3/hadoop-mapreduce-client-core-3.jar
-  reason: <- intellij.evaluationPlugin.llm
-- name: lib/xerial.snappy.java.jar
-  library: xerial.snappy.java
-  files:
-  - name: $MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1/snappy-java-1.jar
-  reason: <- intellij.evaluationPlugin.llm
+- name: lib/modules/intellij.evaluationPlugin.llm.jar
+  projectLibraries:
+  - name: jerolba.carpet.record
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jerolba/carpet-record/0/carpet-record-0.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-common/1/parquet-common-1.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-format-structures/1/parquet-format-structures-1.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-column/1/parquet-column-1.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-encoding/1/parquet-encoding-1.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-hadoop/1/parquet-hadoop-1.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-jackson/1/parquet-jackson-1.jar
+    - name: $MAVEN_REPOSITORY$/commons-pool/commons-pool/1/commons-pool-1.jar
+    - name: $MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1/zstd-jni-1.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-common/3/hadoop-common-3.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/hadoop/thirdparty/hadoop-shaded-guava/1/hadoop-shaded-guava-1.jar
+    - name: $MAVEN_REPOSITORY$/commons-collections/commons-collections/3/commons-collections-3.jar
+    - name: $MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4/stax2-api-4.jar
+    - name: $MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/5/woodstox-core-5.jar
+    - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-mapreduce-client-core/3/hadoop-mapreduce-client-core-3.jar
+    reason: <- intellij.evaluationPlugin.llm
+  - name: xerial.snappy.java
+    files:
+    - name: $MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1/snappy-java-1.jar
+    reason: <- intellij.evaluationPlugin.llm
+  contentModules:
+  - name: intellij.evaluationPlugin.llm
+    libraries:
+      langfuse.java:
+      - name: $MAVEN_REPOSITORY$/com/langfuse/langfuse-java/0/langfuse-java-0.jar
