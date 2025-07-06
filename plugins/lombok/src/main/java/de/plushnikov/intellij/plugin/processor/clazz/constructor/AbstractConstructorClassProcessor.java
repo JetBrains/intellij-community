@@ -300,7 +300,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodModifier;
 
-    // check, if we should skip verification for presence of any (not Tolerated) constructors
+    // check if we should skip verification for presence of any (not Tolerated) constructors
     if (!skipConstructorIfAnyConstructorExists || !isAnyConstructorDefined(psiClass)) {
       boolean hasConstructor = !validateIsConstructorNotDefined(psiClass,
                                                                 useJavaDefaults ? Collections.emptyList() : params,
@@ -317,12 +317,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     }
 
     return methods;
-  }
-
-  private static boolean isAnyConstructorDefined(@NotNull PsiClass psiClass) {
-    Collection<PsiMethod> constructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-    return ContainerUtil.exists(constructors,
-                                psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokClassNames.TOLERATE));
   }
 
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier,

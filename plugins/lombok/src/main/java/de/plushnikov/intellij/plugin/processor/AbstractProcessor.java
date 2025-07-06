@@ -60,8 +60,8 @@ public abstract class AbstractProcessor implements Processor {
     return true;
   }
 
-  protected @Unmodifiable @NotNull <T extends PsiModifierListOwner> Collection<T> filterToleratedElements(@NotNull @Unmodifiable Collection<? extends T> definedMethods) {
-    return ContainerUtil.filter(definedMethods, definedMethod -> !PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, LombokClassNames.TOLERATE));
+  protected static @Unmodifiable @NotNull <T extends PsiModifierListOwner> Collection<T> filterToleratedElements(@NotNull @Unmodifiable Collection<? extends T> definedMethods) {
+    return ContainerUtil.filter(definedMethods, definedMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(definedMethod, LombokClassNames.TOLERATE));
   }
 
   protected boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
