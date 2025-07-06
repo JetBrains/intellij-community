@@ -443,16 +443,15 @@ public class SuperBuilderHandler extends BuilderHandler {
 
     final String builderImplClassName = StringUtil.notNullize(implBuilderClass.getName());
     final PsiManager psiManager = psiClass.getManager();
-    if (!existedMethodNames.contains(builderImplClassName)) {
-      //create private no args constructor
-      final LombokLightMethodBuilder privateConstructor = new LombokLightMethodBuilder(psiManager, builderImplClassName)
-        .withConstructor(true)
-        .withContainingClass(implBuilderClass)
-        .withNavigationElement(psiClass)
-        .withModifier(PsiModifier.PRIVATE)
-        .withBodyText("");
-      result.add(privateConstructor);
-    }
+
+    //create private no args constructor
+    final LombokLightMethodBuilder privateConstructor = new LombokLightMethodBuilder(psiManager, builderImplClassName)
+      .withConstructor(true)
+      .withContainingClass(implBuilderClass)
+      .withNavigationElement(psiClass)
+      .withModifier(PsiModifier.PRIVATE)
+      .withBodyText("");
+    result.add(privateConstructor);
 
     if (!existedMethodNames.contains(SELF_METHOD)) {
       // create 'self' method
