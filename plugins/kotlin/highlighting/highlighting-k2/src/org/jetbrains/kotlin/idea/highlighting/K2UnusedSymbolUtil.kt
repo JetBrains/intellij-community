@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.DataClassResolver
-import org.jetbrains.kotlin.scripting.definitions.isScript
 
 object K2UnusedSymbolUtil {
     private val KOTLIN_ADDITIONAL_ANNOTATIONS: List<String> = listOf("kotlin.test.*", "kotlin.js.JsExport")
@@ -70,7 +69,7 @@ object K2UnusedSymbolUtil {
 
     // Simple PSI-based checks
     fun isApplicableByPsi(declaration: KtNamedDeclaration): Boolean {
-        if (declaration.containingFile.isScript()) return false
+        if (declaration.isScriptTopLevelPublicDeclaration()) return false
         // never mark companion object as unused (there are too many reasons it can be needed for)
         if (declaration is KtObjectDeclaration && declaration.isCompanion()) return false
 
@@ -134,6 +133,9 @@ object K2UnusedSymbolUtil {
         }
         return ownerFunction.containingClass()?.isInterface() == true
     }
+
+    private fun KtNamedDeclaration.isScriptTopLevelPublicDeclaration(): Boolean
+        = parent.parent is KtScript && !hasModifier(KtTokens.PRIVATE_KEYWORD)
 
     context(KaSession)
     fun isHiddenFromResolution(declaration: KtNamedDeclaration): Boolean {
