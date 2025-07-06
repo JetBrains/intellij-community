@@ -109,6 +109,7 @@ import java.util.stream.Stream
 import java.util.zip.CRC32
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
 object MavenUtil {
@@ -1132,13 +1133,15 @@ object MavenUtil {
     }
 
     val api = if (path == null || path.getEelDescriptor() is LocalEelDescriptor) localEel else path.getEelApiBlocking()
-    val result: Path = api.resolveM2Dir().resolve(REPOSITORY_DIR)
-
-    try {
-      return result.toRealPath()
+    val m2DirPath = api.resolveM2Dir()
+    val settingsPath: Path = m2DirPath.resolve(SETTINGS_XML)
+    val defaultRepo = m2DirPath.resolve(REPOSITORY_DIR)
+    if (!settingsPath.exists()) {
+      return defaultRepo
     }
-    catch (e: IOException) {
-      return result
+    else {
+      val repoPath = getRepositoryFromSettings(settingsPath) ?: return defaultRepo
+      return api.fs.getPath(repoPath).asNioPath()
     }
   }
 
