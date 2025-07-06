@@ -121,8 +121,8 @@ com.intellij.codeInsight.template.CaretAutoMoveController
 - sf:KEY:com.intellij.openapi.util.Key
 - s:forbidCaretMovementInsideIfNeeded(com.intellij.openapi.editor.Editor,java.lang.Runnable):V
 - s:install(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.template.CaretAutoMoveController):V
+- a:isCaretMovementAllowed():Z
 - s:isCaretMovementAllowed(com.intellij.openapi.editor.Editor):Z
-- a:isCaretMovingAllowed():Z
 - a:notifyCaretMovementAllowed(Z):V
 com.intellij.codeInsight.template.TemplateEditingListener
 - a:beforeTemplateFinished(com.intellij.codeInsight.template.impl.TemplateState,com.intellij.codeInsight.template.Template):V

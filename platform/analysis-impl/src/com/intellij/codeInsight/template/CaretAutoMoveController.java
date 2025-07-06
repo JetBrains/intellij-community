@@ -25,7 +25,7 @@ public interface CaretAutoMoveController {
   Key<CaretAutoMoveController> KEY = Key.create("editorCaretAutoMoveController");
 
   void notifyCaretMovementAllowed(boolean allowed);
-  boolean isCaretMovingAllowed();
+  boolean isCaretMovementAllowed();
 
   static void forbidCaretMovementInsideIfNeeded(@NotNull Editor editor, Runnable runnable) {
     CaretAutoMoveController controller = editor.getUserData(KEY);
@@ -39,10 +39,10 @@ public interface CaretAutoMoveController {
 
   static boolean isCaretMovementAllowed(@NotNull Editor editor) {
     CaretAutoMoveController controller = editor.getUserData(KEY);
-    return controller == null || controller.isCaretMovingAllowed();
+    return controller == null || controller.isCaretMovementAllowed();
   }
 
-  static void install(@NotNull Editor editor, CaretAutoMoveController adjuster) {
-    editor.putUserData(KEY, adjuster);
+  static void install(@NotNull Editor editor, CaretAutoMoveController controller) {
+    editor.putUserData(KEY, controller);
   }
 }
