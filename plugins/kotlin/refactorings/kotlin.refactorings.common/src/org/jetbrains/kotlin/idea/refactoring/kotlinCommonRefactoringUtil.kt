@@ -311,7 +311,7 @@ fun PsiElement.getAllExtractionContainers(strict: Boolean = true): List<KtElemen
     val parents = if (strict) parents else parentsWithSelf
     for (element in parents) {
         val isValidContainer = when (element) {
-            is KtFile -> true
+            is KtFile -> !element.isScript()
             is KtClassBody -> !objectOrNonInnerNestedClassFound || element.parent is KtObjectDeclaration
             is KtBlockExpression -> !objectOrNonInnerNestedClassFound
             else -> false
