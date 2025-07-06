@@ -23,7 +23,7 @@ interface XMixedModeLowLevelDebugProcessExtension : XMixedModeDebugProcessExtens
 
   suspend fun handleBreakpointDuringStep()
 
-  fun pauseMixedModeSession(stopEventThreadId: Long)
+  fun pauseMixedModeSession(stopEventThreadId: Long?)
 
   suspend fun startMixedStepInto(steppingThreadId: Long, ctx: XSuspendContext): Int
 
