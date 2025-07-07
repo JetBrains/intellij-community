@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -17,7 +18,7 @@ import java.nio.file.Path
 @Internal
 suspend fun registerProjectRoot(project: Project, projectDir: Path) {
   val workspaceModel = project.serviceAsync<WorkspaceModel>()
-  val projectBaseDirUrl = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl(projectDir.toUri().toString())
+  val projectBaseDirUrl = projectDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
   val entity = ProjectRootEntity(projectBaseDirUrl, ProjectRootEntitySource)
   val newStorage = MutableEntityStorage.create()
   newStorage.addEntity(entity)
