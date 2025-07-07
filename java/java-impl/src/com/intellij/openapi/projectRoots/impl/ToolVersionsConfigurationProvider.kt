@@ -37,6 +37,7 @@ data class AsdfReleaseData(val name: String, val vendor: String, val version: St
       "corretto" -> JdkVersionDetector.Variant.Corretto
       "dragonwell" -> JdkVersionDetector.Variant.Dragonwell
       "graalvm-community" -> JdkVersionDetector.Variant.GraalVMCE
+      "jetbrains" -> JdkVersionDetector.Variant.JBR
       "kona" -> JdkVersionDetector.Variant.Kona
       "liberica", "liberica-javafx",
       "liberica-jre", "liberica-jre-javafx", "liberica-lite" -> JdkVersionDetector.Variant.Liberica
