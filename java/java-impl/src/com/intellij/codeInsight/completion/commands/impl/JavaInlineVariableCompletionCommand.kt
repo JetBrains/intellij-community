@@ -10,10 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiIdentifier
-import com.intellij.psi.PsiJavaCodeReferenceElement
-import com.intellij.psi.PsiVariable
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 
@@ -25,6 +22,8 @@ internal class JavaInlineVariableCompletionCommandProvider : CommandProvider {
     val javaRef = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement::class.java) ?: return emptyList()
     val psiElement = javaRef.resolve() ?: return emptyList()
     if (psiElement !is PsiVariable) return emptyList()
+    if (psiElement is PsiField && psiElement.initializer == null) return emptyList()
+    if (psiElement is PsiParameter) return emptyList()
     // Check if any inline handler can handle this element
     val editor = context.editor
     val extensionList = InlineActionHandler.EP_NAME.extensionList

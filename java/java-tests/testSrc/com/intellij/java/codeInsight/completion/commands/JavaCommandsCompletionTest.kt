@@ -233,6 +233,44 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   }
 
+  fun testInlineFieldWithNoInitializerNoCommand() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+          public class User {
+              String name;
+              String some;
+          
+              public String toString(String a) {
+                  return "User{" +
+                          "name='" + name..<caret> + '\'' +
+                          ", some='" + some + '\'' +
+                          '}' + a;
+              }
+          }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertFalse(elements.any { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+  }
+
+  fun testInlineParametersNoCommand() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+          public class User {
+              String name;
+              String some;
+          
+              public String toString(String a) {
+                  return "User{" +
+                          "name='" + name + '\'' +
+                          ", some='" + some + '\'' +
+                          '}' + a..<caret>;
+              }
+          }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertFalse(elements.any { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+  }
+
   fun testCommentElementByLine() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
