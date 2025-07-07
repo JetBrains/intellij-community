@@ -70,7 +70,7 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
 
       if (Boolean.parseBoolean(System.getenv(jbEnvPrintTestSrcDirContent))) {
         try (var stream = Files.walk(testSrcDirPath)) {
-          stream.forEach(path -> System.err.println("SRCDIR " + path));
+          stream.forEach(path -> System.err.println("TEST_SRCDIR " + testSrcDirPath.relativize(path)));
         }
       }
 
