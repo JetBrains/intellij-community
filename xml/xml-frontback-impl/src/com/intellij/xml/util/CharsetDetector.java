@@ -50,7 +50,7 @@ public final class CharsetDetector {
   }
 
   private static String tryFetchCharsetFromFileContent(@NotNull CharSequence content) {
-    final Ref<String> charsetNameRef = new Ref<>();
+    Ref<String> charsetNameRef = new Ref<>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
         final @NonNls Set<String> inTag = new HashSet<>();
@@ -58,15 +58,18 @@ public final class CharsetDetector {
         boolean metHtml5Charset;
 
         @Override
-        public void doctype(final @Nullable CharSequence publicId,
-                            final @Nullable CharSequence systemId,
-                            final int startOffset,
-                            final int endOffset) {
+        public void doctype(@Nullable CharSequence publicId,
+                            @Nullable CharSequence systemId,
+                            int startOffset,
+                            int endOffset) {
         }
 
         @Override
-        public @NotNull ProcessingOrder startTag(final @NotNull CharSequence localName, final @NotNull String namespace, final int startOffset, final int endOffset,
-                                                 final int headerEndOffset) {
+        public @NotNull ProcessingOrder startTag(@NotNull CharSequence localName,
+                                                 @NotNull String namespace,
+                                                 int startOffset,
+                                                 int endOffset,
+                                                 int headerEndOffset) {
           @NonNls String name = StringUtil.toLowerCase(localName.toString());
           inTag.add(name);
           if (!inTag.contains("head") && !"html".equals(name)) terminate();
@@ -78,8 +81,8 @@ public final class CharsetDetector {
         }
 
         @Override
-        public void endTag(final @NotNull CharSequence localName, final @NotNull String namespace, final int startoffset, final int endoffset) {
-          final @NonNls String name = StringUtil.toLowerCase(localName.toString());
+        public void endTag(@NotNull CharSequence localName, @NotNull String namespace, int startoffset, int endoffset) {
+          @NonNls String name = StringUtil.toLowerCase(localName.toString());
           if ("meta".equals(name) && (metHttpEquiv || metHtml5Charset) && contentAttributeValue != null) {
             String charsetName;
             if (metHttpEquiv) {
@@ -108,8 +111,8 @@ public final class CharsetDetector {
         private String contentAttributeValue;
 
         @Override
-        public void attribute(final @NotNull CharSequence localName, final @NotNull CharSequence v, final int startoffset, final int endoffset) {
-          final @NonNls String name = StringUtil.toLowerCase(localName.toString());
+        public void attribute(@NotNull CharSequence localName, @NotNull CharSequence v, int startoffset, int endoffset) {
+          @NonNls String name = StringUtil.toLowerCase(localName.toString());
           if (inTag.contains("meta")) {
             @NonNls String value = StringUtil.toLowerCase(v.toString());
             if (name.equals("http-equiv")) {
@@ -126,11 +129,11 @@ public final class CharsetDetector {
         }
 
         @Override
-        public void textElement(final @NotNull CharSequence display, final @NotNull CharSequence physical, final int startoffset, final int endoffset) {
+        public void textElement(@NotNull CharSequence display, @NotNull CharSequence physical, int startoffset, int endoffset) {
         }
 
         @Override
-        public void entityRef(final @NotNull CharSequence ref, final int startOffset, final int endOffset) {
+        public void entityRef(@NotNull CharSequence ref, int startOffset, int endOffset) {
         }
 
         @Override
