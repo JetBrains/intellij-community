@@ -24,11 +24,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.jetbrains.jps.util.Iterators.*;
 
 /** @noinspection SSBasedInspection*/
 public class BazelIncBuilder {
+  private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncBuilder");
   // recompile all, if more than X percent of files has been changed; for incremental tests, set equal to 100
   private static final int RECOMPILE_CHANGED_RATIO_PERCENT = 85;
 
@@ -46,8 +49,10 @@ public class BazelIncBuilder {
       try {
         GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
 
+        LOG.info(() -> "Building " + context.getTargetName() + " (rebuild requested: " + context.isRebuild() + ")");
+
         if (context.isRebuild() || !storageManager.getOutputBuilder().isInputZipExist()) {
-          // either rebuild is explicitly requested, or there is no previous data, need to compile whole target
+          // either rebuild is explicitly requested, or there is no previous data, need to compile the whole target
           srcSnapshotDelta = new SnapshotDeltaImpl(context.getSources());
           srcSnapshotDelta.markRecompileAll(); // force rebuild
         }
@@ -57,6 +62,8 @@ public class BazelIncBuilder {
 
           srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
           if (shouldRecompileAll(srcSnapshotDelta) || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
+            int changedPercent = srcSnapshotDelta.getChangedPercent();
+            LOG.info(() -> "Marking whole target for recompilation [" + context.getTargetName() + "]. Changed sources: " + changedPercent + "% (threshold " + RECOMPILE_CHANGED_RATIO_PERCENT + "%) ");
             srcSnapshotDelta.markRecompileAll();
           }
           else {
@@ -89,6 +96,7 @@ public class BazelIncBuilder {
                   }
                 }
                 catch (Exception e) { // problems loading library graphs
+                  LOG.log(Level.WARNING, "Problems loading library graphs, recompiling whole target " + context.getTargetName(), e);
                   srcSnapshotDelta.markRecompileAll();
                   context.report(Message.create(null, Message.Kind.WARNING, e));
                   break;
@@ -104,6 +112,7 @@ public class BazelIncBuilder {
                   }
                 }
                 catch (IOException e) {
+                  LOG.log(Level.WARNING, "Problems loading dependency graph, recompiling whole target " + context.getTargetName(), e);
                   srcSnapshotDelta.markRecompileAll();
                   context.report(Message.create(null, Message.Kind.WARNING, e));
                 }
@@ -232,6 +241,7 @@ public class BazelIncBuilder {
       }
       catch (Throwable e) {
         // catch and report all errors before the storage manager is closed
+        LOG.log(Level.SEVERE, "Unexpected error compiling " + context.getTargetName(), e);
         diagnostic.report(Message.create(null, e));
         return ExitCode.ERROR;
       }
@@ -275,6 +285,7 @@ public class BazelIncBuilder {
             }
           }
           catch (Exception e) {
+            LOG.log(Level.WARNING, "Error running instrumenter " + instrumenter.getName(), e);
             diagnostic.report(Message.create(instrumenter, Message.Kind.ERROR, e.getMessage(), generatedFile));
             break;
           }
@@ -323,6 +334,7 @@ public class BazelIncBuilder {
         StorageManager.backupDependencies(context, deletedPaths, presentPaths);
       }
       catch (Throwable e) {
+        LOG.log(Level.SEVERE, "Error saving build state " + context.getTargetName(), e);
         context.report(Message.create(null, e));
       }
     }
