@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="kotlin-reflect" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:2.2.0-RC2">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:2.2.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.2.0-RC2/kotlin-reflect-2.2.0-RC2.jar">
-          <sha256sum>fc0db606ed5da9d4a64d6a6faf6a5eb1dc80f836362cae7925dcbdd851b8183b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.2.0/kotlin-reflect-2.2.0.jar">
+          <sha256sum>230d91c2e410e3cfca3a4dc73d255455f62ff52aac091a33397a6e30bde91bf7</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,11 +11,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.2.0-RC2/kotlin-reflect-2.2.0-RC2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.2.0/kotlin-reflect-2.2.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.2.0-RC2/kotlin-reflect-2.2.0-RC2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.2.0/kotlin-reflect-2.2.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

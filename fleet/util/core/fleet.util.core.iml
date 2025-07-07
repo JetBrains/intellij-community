@@ -16,7 +16,7 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.0-RC2-0.1/expects-compiler-plugin-2.2.0-RC2-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.0-0.1/expects-compiler-plugin-2.2.0-0.1.jar</arg>
               </args>
             </arrayArg>
           </arrayArguments>
