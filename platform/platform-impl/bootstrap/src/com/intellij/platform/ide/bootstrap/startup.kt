@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
 import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
@@ -38,6 +37,7 @@ import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.system.OS
 import com.jetbrains.JBR
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.*
@@ -137,7 +137,7 @@ fun CoroutineScope.startApplication(
   var initUiScale: Job? = null
   if (!isHeadless) {
     initUiScale = launch {
-      if (SystemInfoRt.isMac) {
+      if (OS.CURRENT == OS.macOS) {
         initAwtToolkitJob.join()
         JBUIScale.preloadOnMac()
       }
@@ -174,7 +174,7 @@ fun CoroutineScope.startApplication(
     if (!isHeadless) {
       // preload native lib
       JBR.getWindowDecorations()
-      if (SystemInfoRt.isMac) {
+      if (OS.CURRENT == OS.macOS) {
         Menu.isJbScreenMenuEnabled()
       }
     }
@@ -346,7 +346,7 @@ private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
   mainScope: CoroutineScope,
 ) {
   scope.launch {
-    if (SystemInfoRt.isWindows) {
+    if (OS.CURRENT == OS.Windows) {
       span("system libs setup") {
         if (System.getProperty("winp.folder.preferred") == null) {
           System.setProperty("winp.folder.preferred", PathManager.getTempPath())
@@ -366,7 +366,7 @@ private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
       logEssentialInfoAboutIde(log, appInfo, args)
     }
 
-    if (SystemInfoRt.isMac && !AppMode.isHeadless() && !AppMode.isRemoteDevHost()) {
+    if (OS.CURRENT == OS.macOS && !AppMode.isHeadless() && !AppMode.isRemoteDevHost()) {
       // JNA and Swing are used - invoke only after both are loaded
       initUiDeferred.join()
       launch(CoroutineName("mac app init")) {
@@ -428,7 +428,7 @@ private suspend fun checkDirectories(homePath: String, configPath: Path, systemP
     return false
   }
 
-  if (SystemInfoRt.isMac && homePath.contains(MAGIC_MAC_PATH)) {
+  if (OS.CURRENT == OS.macOS && homePath.contains(MAGIC_MAC_PATH)) {
     StartupErrorReporter.showError(
       BootstrapBundle.message("bootstrap.error.title.settings"),
       BootstrapBundle.message("bootstrap.error.message.mac.trans")
@@ -549,11 +549,11 @@ private fun setupLogger(scope: CoroutineScope, consoleLoggerJob: Job, checkSyste
 fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
   val buildTimeString = DateTimeFormatter.RFC_1123_DATE_TIME.format(appInfo.buildTime)
   log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, $buildTimeString)")
-  log.info("OS: ${SystemInfoRt.OS_NAME} (${SystemInfoRt.OS_VERSION})")
+  log.info("OS: ${OS.CURRENT.name} (${OS.CURRENT.version})")
   log.info("JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
   log.info("JVM: ${System.getProperty("java.vm.version", "-")} (${System.getProperty("java.vm.name", "-")})")
   log.info("PID: ${ProcessHandle.current().pid()}")
-  if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
+  if (OS.isGenericUnix()) {
     log.info("desktop: ${System.getenv("XDG_CURRENT_DESKTOP")}")
     log.info("toolkit: ${Toolkit.getDefaultToolkit().javaClass.name}")
   }
@@ -601,7 +601,7 @@ private fun logPath(path: String): String {
 }
 
 private fun shouldLoadShellEnv(log: Logger): Boolean {
-  if (!SystemInfoRt.isMac) {
+  if (OS.CURRENT != OS.macOS) {
     return false
   }
 

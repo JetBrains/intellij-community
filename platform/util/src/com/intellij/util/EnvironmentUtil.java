@@ -2,9 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import kotlinx.coroutines.CompletableDeferred;
 import kotlinx.coroutines.CompletableDeferredKt;
 import kotlinx.coroutines.future.FutureKt;
@@ -115,10 +115,10 @@ public final class EnvironmentUtil {
   }
 
   private static Map<String, String> getSystemEnv() {
-    if (SystemInfoRt.isWindows) {
+    if (OS.CURRENT == OS.Windows) {
       return Collections.unmodifiableMap(CollectionFactory.createCaseInsensitiveStringMap(System.getenv()));
     }
-    else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
+    else if (OS.isGenericUnix()) {
       // DESKTOP_STARTUP_ID variable can be set by an application launcher in X Window environment.
       // It shouldn't be passed to child processes as per 'Startup notification protocol'
       // (https://specifications.freedesktop.org/startup-notification-spec/startup-notification-latest.txt).
@@ -157,7 +157,7 @@ public final class EnvironmentUtil {
    */
   @Contract(value = "null -> false", pure = true)
   public static boolean isValidName(@Nullable String name) {
-    return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfoRt.isWindows ? 1 : 0) == -1;
+    return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', OS.CURRENT == OS.Windows ? 1 : 0) == -1;
   }
 
   /**
@@ -196,7 +196,7 @@ public final class EnvironmentUtil {
 
   private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
     return ContainerUtil.exists(Locale.getAvailableLocales(), l -> Objects.equals(l.toString(), candidateLanguageTerritory)) &&
-           (!SystemInfoRt.isMac || Files.exists(Paths.get(MAC_OS_LOCALE_PATH, candidateLanguageTerritory)));
+           (OS.CURRENT != OS.macOS || Files.exists(Paths.get(MAC_OS_LOCALE_PATH, candidateLanguageTerritory)));
   }
 
   public static @NotNull String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
