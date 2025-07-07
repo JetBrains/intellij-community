@@ -1,8 +1,8 @@
 // AFTER-WARNING: Parameter 'b' is never used
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Parameter 'i' is never used
-fun foo(f: (i: Int, b: <caret>Boolean) -> String) {
-    f(1, false)
+fun foo(f: <caret>Int.(Boolean) -> String) {
+    1.f(false)
     bar(f)
 }
 
@@ -21,5 +21,5 @@ fun baz(f: (Int, Boolean) -> String) {
 
     foo(lambda())
 
-    foo { i, b -> "${i + 1} $b" }
+    foo { b -> "${this + 1} $b" }
 }

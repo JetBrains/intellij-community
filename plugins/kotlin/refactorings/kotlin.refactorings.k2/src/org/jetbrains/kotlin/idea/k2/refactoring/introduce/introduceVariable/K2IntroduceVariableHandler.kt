@@ -294,7 +294,11 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 OccurrencesChooser.ReplaceChoice.ALL -> allOccurrences
                 else -> listOf(expression)
             }
-            val commonParent = PsiTreeUtil.findCommonParent(allReplaces.map { it.substringContextOrThis }) as KtElement
+            val commonParent = if (allReplaces.isNotEmpty()) {
+                PsiTreeUtil.findCommonParent(allReplaces.map { it.substringContextOrThis }) as KtElement
+            } else {
+                expression.parent as KtElement
+            }
 
             var commonContainer = commonParent as? KtFile
                 ?: commonParent.getContainer()
@@ -330,13 +334,21 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 )
 
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
-                    application.runWriteAction {
+                    val run : () -> Unit = {
                         introduceVariableContext.convertToBlockIfNeededAndRunRefactoring(
                             expression,
                             commonContainer,
                             commonParent,
                             allReplaces
                         )
+                    }
+                    if (application.isWriteAccessAllowed) {
+                        // TODO caused by KT-78904
+                        run()
+                    } else {
+                        application.runWriteAction {
+                            run()
+                        }
                     }
 
                     val property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand

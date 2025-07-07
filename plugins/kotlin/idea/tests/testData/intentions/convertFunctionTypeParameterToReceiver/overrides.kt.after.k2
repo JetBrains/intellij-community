@@ -1,0 +1,11 @@
+open class A {
+    open fun foo(f: <caret>Boolean.(Int) -> String) {
+
+    }
+}
+
+class B : A() {
+    override fun foo(f: Boolean.(Int) -> String) {
+
+    }
+}
