@@ -34,25 +34,17 @@ open class EventLogUploadSettingsClient(
     recorderId = recorderId,
     productCode = applicationInfo.productCode,
     productVersion = applicationInfo.productVersion,
-    isTestConfig = applicationInfo.isTestConfig,
+    isTestConfiguration = applicationInfo.isTestConfig,
     httpClientBuilder = JavaHttpClientBuilder()
-      .configureProxy(ProxyInfo(
-        applicationInfo.connectionSettings.provideProxy(configurationUrl()).proxy
-      )).setSSLContext(applicationInfo.connectionSettings.provideSSLContext()),
+      .setSSLContext(applicationInfo.connectionSettings.provideSSLContext())
+      .setProxyProvider { configurationUrl ->
+        ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
+      },
     httpRequestBuilder = JavaHttpRequestBuilder()
       .setExtraHeaders(applicationInfo.connectionSettings.provideExtraHeaders())
-      .setUserAgent(applicationInfo.connectionSettings.provideUserAgent())
-      .setTimeout(Duration.ofMillis(cacheTimeoutMs)),
+      .setUserAgent(applicationInfo.connectionSettings.provideUserAgent()),
     regionCode = if (applicationInfo.regionalCode == chinaRegion) RegionCode.CN else RegionCode.ALL,
-    serializer = FusKotlinSerializer()
+    serializer = FusKotlinSerializer(),
+    cacheTimeoutMs = cacheTimeoutMs
   )
-
-  private fun configurationUrl(): String {
-    val regionCode = if (applicationInfo.regionalCode == chinaRegion) RegionCode.CN else RegionCode.ALL
-    return if (applicationInfo.isTestConfig) {
-      String.format(regionCode.eventLogSettingsURLTemplate, "test/$recorderId", applicationInfo.productCode)
-    } else {
-      String.format(regionCode.eventLogSettingsURLTemplate, recorderId, applicationInfo.productCode)
-    }
-  }
 }

@@ -39,9 +39,9 @@ internal class TestEventLogUploadSettingsClient(
     productCode = applicationInfo.productCode,
     productVersion = applicationInfo.productVersion,
     httpClientBuilder = JavaHttpClientBuilder()
-      .configureProxy(ProxyInfo(
-        applicationInfo.connectionSettings.provideProxy(configUrl).proxy
-      )).setSSLContext(applicationInfo.connectionSettings.provideSSLContext()),
+      .setProxyProvider { ProxyInfo(
+        applicationInfo.connectionSettings.provideProxy(it).proxy
+      )}.setSSLContext(applicationInfo.connectionSettings.provideSSLContext()),
     httpRequestBuilder = JavaHttpRequestBuilder()
       .setExtraHeaders(applicationInfo.connectionSettings.provideExtraHeaders())
       .setUserAgent(applicationInfo.connectionSettings.provideUserAgent())

@@ -869,36 +869,36 @@ jvm_import(
 
 jvm_import(
   name = "com-jetbrains-fus-reporting-ap-validation",
-  jar = "@ap-validation-168_http//file",
-  source_jar = "@ap-validation-168-sources_http//file",
+  jar = "@ap-validation-171_http//file",
+  source_jar = "@ap-validation-171-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "com-jetbrains-fus-reporting-configuration",
-  jar = "@configuration-168_http//file",
-  source_jar = "@configuration-168-sources_http//file",
+  jar = "@configuration-171_http//file",
+  source_jar = "@configuration-171-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "com-jetbrains-fus-reporting-connection-client",
-  jar = "@connection-client-168_http//file",
-  source_jar = "@connection-client-168-sources_http//file",
+  jar = "@connection-client-171_http//file",
+  source_jar = "@connection-client-171-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "com-jetbrains-fus-reporting-model",
-  jar = "@model-168_http//file",
-  source_jar = "@model-168-sources_http//file",
+  jar = "@model-171_http//file",
+  source_jar = "@model-171-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "com-jetbrains-fus-reporting-serialization-kotlin",
-  jar = "@serialization-kotlin-168_http//file",
-  source_jar = "@serialization-kotlin-168-sources_http//file",
+  jar = "@serialization-kotlin-171_http//file",
+  source_jar = "@serialization-kotlin-171-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

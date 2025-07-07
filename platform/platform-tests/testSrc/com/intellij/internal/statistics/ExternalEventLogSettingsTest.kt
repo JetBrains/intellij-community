@@ -46,16 +46,11 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
     ExtensionTestUtil.maskExtensions(ExternalEventLogSettings.EP_NAME, listOf(TestExternalEventLogSettings()), testRootDisposable)
   }
 
-  fun setupHttpClientRequestBuilders(regionCode: RegionCode, isTestConfig: Boolean = false) {
-    val configurationUrl = if (isTestConfig) {
-      String.format(regionCode.eventLogSettingsURLTemplate, "test/$RECORDER", PRODUCT_CODE)
-    } else {
-      String.format(regionCode.eventLogSettingsURLTemplate, RECORDER, PRODUCT_CODE)
-    }
+  fun setupHttpClientRequestBuilders() {
     httpClientBuilder = JavaHttpClientBuilder()
-      .configureProxy(ProxyInfo(
-        connectionSettings.provideProxy(configurationUrl).proxy
-      )).setSSLContext(connectionSettings.provideSSLContext())
+      .setProxyProvider { configurationUrl ->
+        ProxyInfo(connectionSettings.provideProxy(configurationUrl).proxy)
+      }.setSSLContext(connectionSettings.provideSSLContext())
     httpRequestBuilder = JavaHttpRequestBuilder()
       .setExtraHeaders(connectionSettings.provideExtraHeaders())
       .setUserAgent(connectionSettings.provideUserAgent())
@@ -63,12 +58,12 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
   }
 
   fun testSubstitution() {
-    setupHttpClientRequestBuilders(RegionCode.ALL)
+    setupHttpClientRequestBuilders()
     val configurationClient = ConfigurationClientFactory.create(
       recorderId = RECORDER,
       productCode = PRODUCT_CODE,
       productVersion = PRODUCT_VERSION,
-      isTestConfig = false,
+      isTestConfiguration = false,
       httpClientBuilder = httpClientBuilder,
       httpRequestBuilder = httpRequestBuilder,
       regionCode = RegionCode.ALL,
@@ -82,12 +77,12 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
    * Check that the config url is https://resources.jetbrains.com/storage/fus/config/v4/FUS/IC.json for other regions.
    */
   fun testUsualRegionConfigurationUrl() {
-    setupHttpClientRequestBuilders(RegionCode.ALL)
+    setupHttpClientRequestBuilders()
     val configurationClient = ConfigurationClientFactory.create(
       recorderId = RECORDER,
       productCode = PRODUCT_CODE,
       productVersion = PRODUCT_VERSION,
-      isTestConfig = false,
+      isTestConfiguration = false,
       httpClientBuilder = httpClientBuilder,
       httpRequestBuilder = httpRequestBuilder,
       regionCode = RegionCode.ALL,
@@ -101,12 +96,12 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
    * Check that the config url is https://resources.jetbrains.com.cn/storage/fus/config/v4/FUS/IC.json for the China region.
    */
   fun testChinaRegionConfigurationUrl() {
-    setupHttpClientRequestBuilders(RegionCode.CN)
+    setupHttpClientRequestBuilders()
     val configurationClient = ConfigurationClientFactory.create(
       recorderId = RECORDER,
       productCode = PRODUCT_CODE,
       productVersion = PRODUCT_VERSION,
-      isTestConfig = false,
+      isTestConfiguration = false,
       httpClientBuilder = httpClientBuilder,
       httpRequestBuilder = httpRequestBuilder,
       regionCode = RegionCode.CN,
@@ -120,12 +115,12 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
    * Check that the config url is https://resources.jetbrains.com.cn/test/storage/fus/config/v4/FUS/IC.json for test.
    */
   fun testTestEnvironmentConfigurationUrl() {
-    setupHttpClientRequestBuilders(RegionCode.ALL, true)
+    setupHttpClientRequestBuilders()
     val configurationClient = ConfigurationClientFactory.create(
       recorderId = RECORDER,
       productCode = PRODUCT_CODE,
       productVersion = PRODUCT_VERSION,
-      isTestConfig = true,
+      isTestConfiguration = true,
       httpClientBuilder = httpClientBuilder,
       httpRequestBuilder = httpRequestBuilder,
       regionCode = RegionCode.ALL,

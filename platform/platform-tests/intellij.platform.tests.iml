@@ -153,5 +153,6 @@
     <orderEntry type="module" module-name="intellij.platform.locking.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.connection.client" level="project" />
   </component>
 </module>
