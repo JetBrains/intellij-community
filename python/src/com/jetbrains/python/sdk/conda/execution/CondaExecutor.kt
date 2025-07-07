@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.conda.execution
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.util.EnvReader
+import com.intellij.util.ShellEnvironmentReader
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -113,7 +113,8 @@ object CondaExecutor {
       return PyResult.success(emptyMap())
     }
     try {
-      val envs = EnvReader().readBatEnv(activateBat, emptyList())
+      val command = ShellEnvironmentReader.winShellCommand(activateBat, null)
+      val envs = ShellEnvironmentReader.readEnvironment(command, 0).first
       val transformed = transformEnvVars(envs, condaPath)
       return PyResult.success(transformed)
     }
