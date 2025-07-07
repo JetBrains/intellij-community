@@ -487,11 +487,12 @@ internal class BazelBuildFileGenerator(
       }
     }
     else {
-      load("@rules_java//java:defs.bzl", "java_library")
+      load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-      val target = Target("java_library").apply {
+      val target = Target("jvm_library").apply {
         option("name", moduleDescriptor.targetName)
         visibility(arrayOf("//visibility:public"))
+        option("srcs", sourcesToGlob(sources, moduleDescriptor))
 
         if (moduleDescriptor.testSources.isEmpty()) {
           val deps = moduleList.deps.get(moduleDescriptor)
@@ -506,7 +507,7 @@ internal class BazelBuildFileGenerator(
 
       val addPhonyTarget =
         // meaning there are some attributes besides name and visibility
-        target.optionCount() != 2 ||
+        target.optionCount() != 3 ||
         isUsedAsTestDependency ||
         module.name == "kotlin.base.frontend-agnostic" ||
         module.name == "intellij.platform.monolith" ||
@@ -517,8 +518,7 @@ internal class BazelBuildFileGenerator(
         addTarget(target)
 
         productionCompileTargets.add(moduleDescriptor.targetName)
-        // https://bazel.build/reference/be/java#java_library -> lib${name}.jar
-        productionCompileJars.add("lib" + moduleDescriptor.targetName)
+        productionCompileJars.add(moduleDescriptor.targetName)
       }
     }
 
