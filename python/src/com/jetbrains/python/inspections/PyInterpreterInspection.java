@@ -47,6 +47,7 @@ import com.jetbrains.python.projectModel.uv.UvProjectModelService;
 import com.jetbrains.python.projectModel.uv.UvProjectModelService.UvWorkspace;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
@@ -86,8 +87,8 @@ public final class PyInterpreterInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
     /** Invalidated by {@link CacheCleaner}. */
-    private static final AsyncLoadingCache<Module, List<PyDetectedSdk>> DETECTED_ASSOCIATED_ENVS_CACHE = Caffeine.newBuilder()
-      .executor(AppExecutorUtil.getAppExecutorService())
+    private static final AsyncLoadingCache<@NotNull Module, @NotNull List<PyDetectedSdk>> DETECTED_ASSOCIATED_ENVS_CACHE =
+      Caffeine.newBuilder().executor(AppExecutorUtil.getAppExecutorService())
 
       // Even though various listeners invalidate the cache on many actions, it's unfeasible to track for venv/conda interpreters
       // creation performed outside the IDE.
@@ -108,10 +109,9 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void visitPyFile(@NotNull PyFile node) {
-      Module module = guessModule(node);
-      if (module == null || isFileIgnored(node)) return;
-      final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-
+      if (isFileIgnored(node)) return;
+      @Nullable final Module module = ModuleUtilCore.findModuleForPsiElement(node);
+      @Nullable final Sdk sdk = PyBuiltinCache.findSdkForFile(node);
       final boolean pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde();
 
       final List<LocalQuickFix> fixes = new ArrayList<>();
@@ -127,7 +127,7 @@ public final class PyInterpreterInspection extends PyInspection {
       }
       else {
         final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
-        if (!PlatformUtils.isFleetBackend() &&
+        if (module != null && !PlatformUtils.isFleetBackend() &&
             (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module)) &&
             !(Registry.is("python.project.model.uv", false) && isAssociatedWithUvWorkspaceRootModule(associatedModulePath, module))) {
           final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.getExtensionList().stream()
@@ -181,15 +181,15 @@ public final class PyInterpreterInspection extends PyInspection {
 
     private void registerProblemWithCommonFixes(PyFile node,
                                                 @InspectionMessage String message,
-                                                Module module,
+                                                @Nullable Module module,
                                                 Sdk sdk,
                                                 List<LocalQuickFix> fixes,
                                                 boolean pyCharm) {
-      if (pyCharm && sdk == null) {
+      if (module != null && pyCharm && sdk == null) {
         final String sdkName = ProjectRootManager.getInstance(node.getProject()).getProjectSdkName();
         ContainerUtil.addIfNotNull(fixes, getSuitableSdkFix(sdkName, module));
       }
-      if (pyCharm) {
+      if (module != null && pyCharm) {
         fixes.add(new ConfigureInterpreterFix());
       }
       else {
@@ -376,27 +376,15 @@ public final class PyInterpreterInspection extends PyInspection {
     }
   }
 
-  private static @Nullable Module guessModule(@NotNull PsiElement element) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) {
-      Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
-      if (modules.length != 1) {
-        return null;
-      }
-      module = modules[0];
-    }
-    return module;
-  }
-
   private static boolean isFileIgnored(@NotNull PyFile pyFile) {
     return PyInspectionExtension.EP_NAME.getExtensionList().stream().anyMatch(ep -> ep.ignoreInterpreterWarnings(pyFile));
   }
 
   public static final class InterpreterSettingsQuickFix implements LocalQuickFix {
 
-    private final @NotNull Module myModule;
+    private final @Nullable Module myModule;
 
-    public InterpreterSettingsQuickFix(@NotNull Module module) {
+    public InterpreterSettingsQuickFix(@Nullable Module module) {
       myModule = module;
     }
 
@@ -458,7 +446,7 @@ public final class PyInterpreterInspection extends PyInspection {
       final PsiElement element = descriptor.getPsiElement();
       if (element == null) return;
 
-      final Module module = guessModule(element);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
       if (module == null) return;
 
       PySdkPopupFactory.Companion.createAndShow(module);
