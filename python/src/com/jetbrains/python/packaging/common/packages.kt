@@ -5,7 +5,6 @@ import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import org.jetbrains.annotations.ApiStatus
@@ -28,6 +27,7 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
 
   val name: String = NormalizedPythonPackageName.from(name).name
   val presentableName: String = name
+
   @ApiStatus.Internal
   open val sourceRepoIcon: Icon = PythonPsiApiIcons.Python
 
@@ -120,12 +120,11 @@ data class PythonRepositoryPackageSpecification(
   constructor(
     repository: PyPackageRepository,
     packageName: String,
-    version: String? = null,
-    relation: PyRequirementRelation = PyRequirementRelation.EQ,
+    version: String,
   ) : this(
     repository = repository,
     name = packageName,
-    versionSpec = version.takeIf { !it.isNullOrBlank() }?.let { pyRequirementVersionSpec(relation, it) }
+    versionSpec = pyRequirementVersionSpec(version)
   )
 }
 
