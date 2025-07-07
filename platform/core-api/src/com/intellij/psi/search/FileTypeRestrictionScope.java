@@ -12,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 final class FileTypeRestrictionScope extends DelegatingGlobalSearchScope implements VirtualFileEnumerationAware {
   private final Object myFileTypes;
@@ -52,6 +49,9 @@ final class FileTypeRestrictionScope extends DelegatingGlobalSearchScope impleme
       if (restrict.myBaseScope == myBaseScope) {
         List<FileType> intersection = new ArrayList<>(restrict.getFileTypes());
         intersection.retainAll(getFileTypes());
+        if (intersection.isEmpty()) {
+          return EMPTY_SCOPE;
+        }
         return new FileTypeRestrictionScope(myBaseScope, intersection.toArray(FileType.EMPTY_ARRAY));
       }
     }
@@ -70,24 +70,14 @@ final class FileTypeRestrictionScope extends DelegatingGlobalSearchScope impleme
     if (scope instanceof FileTypeRestrictionScope) {
       FileTypeRestrictionScope restrict = (FileTypeRestrictionScope)scope;
       if (restrict.myBaseScope == myBaseScope) {
-
         if (restrict.myFileTypes instanceof FileType && myFileTypes instanceof FileType) {
           if (restrict.myFileTypes == myFileTypes) return this;
-          FileType[] types = ArrayUtil.newArray(FileType.class, 2);
-          types[0] = (FileType)myFileTypes;
-          types[1] = (FileType)restrict.myFileTypes;
-          return new FileTypeRestrictionScope(myBaseScope, types);
         }
 
-        if (restrict.myFileTypes instanceof FileType) {
-          return new FileTypeRestrictionScope(myBaseScope, ArrayUtil.append((FileType[])myFileTypes, (FileType)restrict.myFileTypes));
-        }
-
-        if (myFileTypes instanceof FileType) {
-          return new FileTypeRestrictionScope(myBaseScope, ArrayUtil.prepend((FileType)myFileTypes, (FileType[])restrict.myFileTypes));
-        }
-
-        return new FileTypeRestrictionScope(myBaseScope, ArrayUtil.mergeArrays((FileType[])myFileTypes, (FileType[])restrict.myFileTypes));
+        LinkedHashSet<FileType> result = new LinkedHashSet<>(getFileTypes());
+        result.addAll(restrict.getFileTypes());
+        FileType[] unitedTypes = result.toArray(FileType.EMPTY_ARRAY);
+        return new FileTypeRestrictionScope(myBaseScope, unitedTypes);
       }
     }
     return super.uniteWith(scope);
@@ -118,7 +108,7 @@ final class FileTypeRestrictionScope extends DelegatingGlobalSearchScope impleme
 
   @Override
   public String toString() {
-    return "Restricted by file types: " + (myFileTypes instanceof FileType ? "[" + myFileTypes + "]" : Arrays.asList(((FileType[])myFileTypes))) + " in (" + myBaseScope + ")";
+    return "Restricted by file types: " + getFileTypes() + " in (" + myBaseScope + ")";
   }
 
   @Override
