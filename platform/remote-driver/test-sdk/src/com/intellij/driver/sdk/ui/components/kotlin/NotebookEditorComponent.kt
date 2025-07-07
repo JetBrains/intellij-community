@@ -94,6 +94,14 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun restartKernel(): Unit = restartKernel.click()
 
+  fun restartHighlighting() {
+    driver.withContext {
+      invokeActionWithRetries("RestartKotlinNotebookHighlighting")
+
+      waitForHighlighting()
+    }
+  }
+
   fun runCellAndWaitExecuted(timeout: Duration = 30.seconds): Unit = step("Executing cell") {
     runCell()
     waitFor(timeout = timeout) {
