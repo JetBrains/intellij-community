@@ -49,8 +49,6 @@
     <defaultLiveTemplates file="liveTemplates/ShellScriptHidden.xml" hidden="true"/>
     <liveTemplateContext contextId="SHELL_SCRIPT" implementation="com.intellij.sh.template.ShContextType"/>
     <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
-    <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
-
 
     <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
 

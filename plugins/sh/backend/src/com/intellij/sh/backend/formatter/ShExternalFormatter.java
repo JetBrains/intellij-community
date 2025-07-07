@@ -15,7 +15,7 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.FileTransferAttribu
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShFileType;
-import com.intellij.sh.codeStyle.ShCodeStyleSettings;
+import com.intellij.sh.backend.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.formatter.ShShfmtFormatterUtilBase;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;

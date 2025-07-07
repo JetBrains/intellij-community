@@ -17,7 +17,7 @@ import com.intellij.openapi.wm.impl.status.LineSeparatorPanel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.sh.codeStyle.ShCodeStyleSettings;
+import com.intellij.sh.backend.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
