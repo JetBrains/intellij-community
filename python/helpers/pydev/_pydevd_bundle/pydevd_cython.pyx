@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 57
+version = 58
 
 if not hasattr(sys, '_current_frames'):
 
