@@ -38,19 +38,19 @@ internal class BytecodeToolWindowService(private val project: Project) {
 
     val messageBusConnection = project.messageBus.connect(toolWindow.disposable)
     messageBusConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
-      deduplicateTabNames(toolWindow)
+      updateTabNames(toolWindow)
     })
 
     val listener = object : ContentManagerListener {
       override fun contentAdded(event: ContentManagerEvent) {
         if (UISettings.getInstance().showDirectoryForNonUniqueFilenames) {
-          deduplicateTabNames(toolWindow)
+          updateTabNames(toolWindow)
         }
       }
 
       override fun contentRemoved(event: ContentManagerEvent) {
         if (UISettings.getInstance().showDirectoryForNonUniqueFilenames) {
-          deduplicateTabNames(toolWindow)
+          updateTabNames(toolWindow)
         }
       }
     }
@@ -66,31 +66,45 @@ internal class BytecodeToolWindowService(private val project: Project) {
   }
 
   /**
-   * Updates tab titles to avoid duplicate names by adding path information when necessary.
+   * Updates tab titles based on UI settings:
+   * - If showDirectoryForNonUniqueFilenames is true: adds path information to disambiguate names
+   * - If showDirectoryForNonUniqueFilenames is false: uses just the filename
    */
-  fun deduplicateTabNames(toolWindow: ToolWindow) {
+  fun updateTabNames(toolWindow: ToolWindow) {
     val javaClassFiles = toolWindow.contentManager.contents.map { content ->
       content.getUserData(JAVA_CLASS_FILE) ?: throw IllegalStateException("Content has no JAVA_CLASS_FILE or it is null. Content: $content")
     }
 
+    // For a single tab, always use just the filename
     if (javaClassFiles.size == 1) {
       toolWindow.contentManager.contents[0].displayName = javaClassFiles[0].name
       return
     }
 
-    val commonAncestor = VfsUtil.getCommonAncestor(javaClassFiles)?.path ?: return
-    val uniqueNameBuilder = UniqueNameBuilder<String>(commonAncestor, "/")
+    // Check the UI setting to determine how to display tab names
+    if (UISettings.getInstance().showDirectoryForNonUniqueFilenames) {
+      // Add path information to disambiguate names
+      val commonAncestor = VfsUtil.getCommonAncestor(javaClassFiles)?.path ?: return
+      val uniqueNameBuilder = UniqueNameBuilder<String>(commonAncestor, "/")
 
-    for (javaClassFile in javaClassFiles) {
-      uniqueNameBuilder.addPath(javaClassFile.path, javaClassFile.path)
-    }
+      for (javaClassFile in javaClassFiles) {
+        uniqueNameBuilder.addPath(javaClassFile.path, javaClassFile.path)
+      }
 
-    for (content in toolWindow.contentManager.contents) {
-      val javaClassFile = content.getUserData(JAVA_CLASS_FILE)
-                          ?: throw IllegalStateException("Content has no JAVA_CLASS_FILE or it is null. Content: $content")
-      @NlsSafe val displayName = uniqueNameBuilder.getShortPath(javaClassFile.path)
-                                 ?: throw IllegalStateException("Cannot get short path for ${javaClassFile.path}")
-      content.displayName = displayName
+      for (content in toolWindow.contentManager.contents) {
+        val javaClassFile = content.getUserData(JAVA_CLASS_FILE)
+                            ?: throw IllegalStateException("Content has no JAVA_CLASS_FILE or it is null. Content: $content")
+        @NlsSafe val displayName = uniqueNameBuilder.getShortPath(javaClassFile.path)
+                                   ?: throw IllegalStateException("Cannot get short path for ${javaClassFile.path}")
+        content.displayName = displayName
+      }
+    } else {
+      // Use just the filename for each tab
+      for (content in toolWindow.contentManager.contents) {
+        val javaClassFile = content.getUserData(JAVA_CLASS_FILE)
+                            ?: throw IllegalStateException("Content has no JAVA_CLASS_FILE or it is null. Content: $content")
+        content.displayName = javaClassFile.name
+      }
     }
   }
 
