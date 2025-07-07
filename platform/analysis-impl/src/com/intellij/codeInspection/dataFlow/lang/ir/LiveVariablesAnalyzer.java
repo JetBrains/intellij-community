@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,11 +17,12 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
-  private final Map<Instruction, List<Instruction>> myForwardMap;
-  private final Map<Instruction, List<Instruction>> myBackwardMap;
+  private final List<List<Instruction>> myForwardMap;
+  private final List<List<Instruction>> myBackwardMap;
   private final DfaValueFactory myFactory;
   private final Object2IntMap<VariableDescriptor> myDescriptorNumbering = new Object2IntOpenHashMap<>();
   private final List<VariableDescriptor> myDescriptors = new ArrayList<>();
@@ -115,31 +115,27 @@ final class LiveVariablesAnalyzer {
     }
   }
 
-  private List<Instruction> getSuccessors(Instruction ins) {
-    return IntStreamEx.of(ins.getSuccessorIndexes()).elements(myInstructions).toList();
-  }
-
-  private Map<Instruction, List<Instruction>> calcBackwardMap() {
-    Map<Instruction, List<Instruction>> result = new IdentityHashMap<>();
+  private List<List<Instruction>> calcBackwardMap() {
+    List<List<Instruction>> result = Stream.<List<Instruction>>generate(() -> new ArrayList<>()).limit(myInstructions.length).toList();
     for (Instruction instruction : myInstructions) {
-      List<Instruction> list = myForwardMap.get(instruction);
-      if (list != null) {
-        for (Instruction next : list) {
-          result.computeIfAbsent(next, k -> new ArrayList<>()).add(instruction);
-        }
+      List<Instruction> list = myForwardMap.get(instruction.getIndex());
+      for (Instruction next : list) {
+        result.get(next.getIndex()).add(instruction);
       }
     }
     return result;
   }
 
-  private Map<Instruction, List<Instruction>> calcForwardMap() {
-    Map<Instruction, List<Instruction>> result = new IdentityHashMap<>();
+  private List<List<Instruction>> calcForwardMap() {
+    List<List<Instruction>> result = new ArrayList<>();
     for (Instruction instruction : myInstructions) {
       if (isInterestingInstruction(instruction)) {
-        for (Instruction next : getSuccessors(instruction)) {
+        List<Instruction> successors = new ArrayList<>();
+        for (int index : instruction.getSuccessorIndexes()) {
+          Instruction next = myInstructions[index];
           while (true) {
             if (isInterestingInstruction(next)) {
-              result.computeIfAbsent(instruction, k -> new ArrayList<>()).add(next);
+              successors.add(next);
               break;
             }
             if (next.getIndex() + 1 >= myInstructions.length) {
@@ -148,6 +144,9 @@ final class LiveVariablesAnalyzer {
             next = myInstructions[next.getIndex() + 1];
           }
         }
+        result.add(successors);
+      } else {
+        result.add(List.of());
       }
     }
     return result;
@@ -172,19 +171,21 @@ final class LiveVariablesAnalyzer {
       queue.addLast(new InstructionState(i, new ProcessedState()));
     }
 
-    int limit = myForwardMap.size() * 100;
+    int limit = myForwardMap.size() * 50;
     Map<ProcessedState, IntSet> processed = new HashMap<>();
     int steps = 0;
     while (!queue.isEmpty()) {
       if (steps > limit) {
         return false;
       }
-      if (steps % 1024 == 0) {
+      if (steps % 8192 == 0) {
         ProgressManager.checkCanceled();
       }
       InstructionState state = queue.removeFirst();
       Instruction instruction = state.instruction;
-      Collection<Instruction> nextInstructions = forward ? myForwardMap.get(instruction) : myBackwardMap.get(instruction);
+      Collection<Instruction> nextInstructions = forward ? 
+                                                 myForwardMap.get(instruction.getIndex()) : 
+                                                 myBackwardMap.get(instruction.getIndex());
       ProcessedState nextVars = handleState.apply(instruction, state.nextVars);
       if (nextInstructions != null) {
         for (Instruction next : nextInstructions) {

@@ -278,6 +278,10 @@ com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue$Trap
 - a:getAnchor():com.intellij.psi.PsiElement
 - getPossibleTargets():I[]
 - link(com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue):V
+c:com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+- createTempVariable(I,com.intellij.codeInspection.dataFlow.types.DfType):com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+- getTempVariableDescriptorsFrom(I):java.util.List
+- s:isTempVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue):Z
 com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 - alwaysEqualsToItself(com.intellij.codeInspection.dataFlow.types.DfType):Z
 - canBeCapturedInClosure():Z
