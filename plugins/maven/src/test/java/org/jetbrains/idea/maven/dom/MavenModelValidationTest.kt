@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiFile
@@ -10,9 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection
-import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.junit.Test
-import java.lang.Class
 
 class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   override fun setUp() = runBlocking {
@@ -282,22 +279,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                          """.trimIndent())
     importProjectAsync()
 
-    fixture.saveText(projectPom,
-                     """
-                         <project>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                           <<error descr="Parent 'test:parent:1' has problems">parent</error>>
-                             <groupId>test</groupId>
-                             <artifactId>parent</artifactId>
-                             <version>1</version>
-                             <relativePath>parent/pom.xml</relativePath>
-                           </parent>
-                         </project>
-                         """.trimIndent())
-    checkHighlighting()
+    checkHighlighting(projectPom, Highlight(text = "parent", description="Parent 'test:parent:1' has problems"))
   }
 
   @Test
