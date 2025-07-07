@@ -223,17 +223,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (PyTypeChecker.hasGenerics(type, context)) {
       final var substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
-        PyClass containingClass = getContainingClass();
-        if (containingClass != null && type instanceof PySelfType) {
-          PyCollectionType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
-          if (genericType != null) {
-            PyClassType qualifierClassType = as(substitutions.getQualifierType(), PyClassType.class);
-            if (!(qualifierClassType != null &&
-                  qualifierClassType.getPyClass().getAncestorClasses(context).contains(genericType.getPyClass()))) {
-              type = genericType;
-            }
-          }
-        }
         final var substitutionsWithUnresolvedReturnGenerics =
           PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);
         type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
