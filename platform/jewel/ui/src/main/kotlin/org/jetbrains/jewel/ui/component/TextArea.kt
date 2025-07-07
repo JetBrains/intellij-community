@@ -153,8 +153,6 @@ private fun NoTextAreaDecorator(
         calculatePaddings(scrollbarStyle, style, scrollState, LocalLayoutDirection.current)
 
     Box(contentAlignment = Alignment.TopStart) {
-        TextAreaContentWrapper(style, scrollbarStyle, scrollState, innerTextField, contentPadding, innerEndPadding)
-
         if (state.text.isEmpty() && placeholder != null) {
             Box(modifier = Modifier.padding(contentPadding)) {
                 CompositionLocalProvider(
@@ -164,6 +162,8 @@ private fun NoTextAreaDecorator(
                 )
             }
         }
+
+        TextAreaContentWrapper(style, scrollbarStyle, scrollState, innerTextField, contentPadding, innerEndPadding)
     }
 }
 

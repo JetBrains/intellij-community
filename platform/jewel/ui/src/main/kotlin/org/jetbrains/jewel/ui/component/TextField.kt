@@ -109,7 +109,16 @@ public fun TextField(
         outline = outline,
         outputTransformation = outputTransformation,
         decorator =
-            if (!undecorated) {
+            if (undecorated) {
+                TextFieldDecorator { innerTextField ->
+                    UndecoratedTextFieldDecorationBox(
+                        innerTextField = innerTextField,
+                        textStyle = textStyle,
+                        placeholderTextColor = style.colors.placeholder,
+                        placeholder = if (state.text.isEmpty()) placeholder else null,
+                    )
+                }
+            } else {
                 TextFieldDecorator { innerTextField ->
                     val minSize = style.metrics.minSize
 
@@ -123,15 +132,6 @@ public fun TextField(
                         placeholder = if (state.text.isEmpty()) placeholder else null,
                         leadingIcon = leadingIcon,
                         trailingIcon = trailingIcon,
-                    )
-                }
-            } else {
-                TextFieldDecorator { innerTextField ->
-                    UndecoratedTextFieldDecorationBox(
-                        innerTextField = innerTextField,
-                        textStyle = textStyle,
-                        placeholderTextColor = style.colors.placeholder,
-                        placeholder = if (state.text.isEmpty()) placeholder else null,
                     )
                 }
             },
@@ -241,8 +241,6 @@ private fun UndecoratedTextFieldDecorationBox(
     placeholderTextColor: Color,
 ) {
     Box(propagateMinConstraints = true, contentAlignment = Alignment.CenterStart) {
-        innerTextField()
-
         if (placeholder != null) {
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle.copy(color = placeholderTextColor),
@@ -250,6 +248,8 @@ private fun UndecoratedTextFieldDecorationBox(
                 content = placeholder,
             )
         }
+
+        innerTextField()
     }
 }
 
