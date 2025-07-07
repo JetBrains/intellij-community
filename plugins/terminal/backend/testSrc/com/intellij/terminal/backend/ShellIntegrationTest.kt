@@ -10,10 +10,7 @@ import com.intellij.terminal.backend.util.TerminalSessionTestUtil.awaitOutputEve
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toState
 import com.intellij.terminal.session.dto.toStyleRange
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
@@ -41,7 +38,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Rule
   @JvmField
-  val ruleChain: RuleChain = RuleChain(projectRule, disposableRule)
+  val ruleChain: RuleChain = RuleChain(projectRule, disposableRule, DisposeNonLightProjectsRule())
 
   companion object {
     @JvmStatic
