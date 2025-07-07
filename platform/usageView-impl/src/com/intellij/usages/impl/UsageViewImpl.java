@@ -201,7 +201,7 @@ public class UsageViewImpl implements UsageViewEx {
     // fire events every 50 ms, not more often to batch requests
     myUniqueIdentifier = COUNTER.getAndIncrement();
     myFireEventsFuture =
-      EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::fireEvents, 50, 50, TimeUnit.MILLISECONDS);
+      EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(() -> fireEvents(), 50, 50, TimeUnit.MILLISECONDS);
     Disposer.register(this, () -> myFireEventsFuture.cancel(false));
 
     myPresentation = presentation;
@@ -216,11 +216,11 @@ public class UsageViewImpl implements UsageViewEx {
 
     myGroupingRules = getActiveGroupingRules(project, getUsageViewSettings(), getPresentation());
     myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, getActiveFilteringRules(myProject), myRoot, myProject);
-    myProject.getMessageBus().connect(this).subscribe(UsageFilteringRuleProvider.RULES_CHANGED, this::rulesChanged);
+    myProject.getMessageBus().connect(this).subscribe(UsageFilteringRuleProvider.RULES_CHANGED, () -> rulesChanged());
 
     myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run((Runnable)this::initInEDT));
+      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run((Runnable)() -> initInEDT()));
     }
     myExclusionHandler = new ExclusionHandlerEx<>() {
       @Override
@@ -368,7 +368,7 @@ public class UsageViewImpl implements UsageViewEx {
     }, this);
 
     if (myPresentation.isShowCancelButton()) {
-      addButtonToLowerPane(this::close, UsageViewBundle.message("usage.view.cancel.button"));
+      addButtonToLowerPane(() -> close(), UsageViewBundle.message("usage.view.cancel.button"));
     }
 
     myTree.getSelectionModel().addTreeSelectionListener(__ -> {
@@ -544,7 +544,7 @@ public class UsageViewImpl implements UsageViewEx {
     List<Node> nodesToFire = new ArrayList<>();
 
     //first grouping changes by parent node
-    Map<Node, List<NodeChange>> groupByParent = nodeChanges.stream().collect(Collectors.groupingBy(NodeChange::getParentNode));
+    Map<Node, List<NodeChange>> groupByParent = nodeChanges.stream().collect(Collectors.groupingBy(change1 -> change1.getParentNode()));
     for (Map.Entry<Node, List<NodeChange>> entry : groupByParent.entrySet()) {
       Node parentNode = entry.getKey();
       synchronized (parentNode) {
@@ -757,7 +757,7 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings, presentation));
     }
 
-    list.sort(Comparator.comparingInt(UsageGroupingRule::getRank));
+    list.sort(Comparator.comparingInt(rule -> rule.getRank()));
     return list.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
@@ -1281,7 +1281,7 @@ public class UsageViewImpl implements UsageViewEx {
   @VisibleForTesting
   public void drainQueuedUsageNodes() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    UIUtil.invokeAndWaitIfNeeded(this::fireEvents);
+    UIUtil.invokeAndWaitIfNeeded(() -> fireEvents());
   }
 
   @Override
@@ -1395,7 +1395,7 @@ public class UsageViewImpl implements UsageViewEx {
     UsageNode nodeToSelect = toSelect != null ? myUsageNodes.get(toSelect) : null;
 
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
-    usages.forEach(myUsageNodes::remove);
+    usages.forEach(key -> myUsageNodes.remove(key));
     if (!myUsageNodes.isEmpty()) {
       Set<UsageInfo> mergedInfos = usages.stream()
         .filter(usage -> usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getMergedInfos().length > 1)
@@ -1423,18 +1423,18 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public void includeUsages(Usage @NotNull [] usages) {
     usagesToNodes(Arrays.stream(usages))
-      .forEach(myExclusionHandler::includeNode);
+      .forEach(node -> myExclusionHandler.includeNode(node));
   }
 
   @Override
   public void excludeUsages(Usage @NotNull [] usages) {
     usagesToNodes(Arrays.stream(usages))
-      .forEach(myExclusionHandler::excludeNode);
+      .forEach(node -> myExclusionHandler.excludeNode(node));
   }
 
   private @NotNull Stream<UsageNode> usagesToNodes(@NotNull Stream<? extends Usage> usages) {
     return usages
-      .map(myUsageNodes::get)
+      .map(key -> myUsageNodes.get(key))
       .filter(node -> node != NULL_NODE && node != null);
   }
 
@@ -1443,7 +1443,7 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     TreePath[] paths = usagesToNodes(Arrays.stream(usages))
       .map(node -> new TreePath(node.getPath()))
-      .toArray(TreePath[]::new);
+      .toArray(value -> new TreePath[value]);
 
     myTree.setSelectionPaths(paths);
     if (paths.length != 0) myTree.scrollPathToVisible(paths[0]);
@@ -1542,9 +1542,7 @@ public class UsageViewImpl implements UsageViewEx {
           return result;
         })
         .expireWith(this)
-        .finishOnUiThread(ModalityState.current(), usageInfos -> {
-          myCurrentUsageContextPanel.updateLayout(project, usageInfos, this);
-        })
+        .finishOnUiThread(ModalityState.current(), usageInfos -> myCurrentUsageContextPanel.updateLayout(project, usageInfos, this))
         .submit(updateRequests);
     }
   }
@@ -1683,9 +1681,7 @@ public class UsageViewImpl implements UsageViewEx {
     Node selectedNode = getSelectedNode();
     if (selectedNode != null) {
       TreePath expectedPathToBeSelected = autoSelectedGroupNode != null ? TreeUtil.getPathFromRoot(autoSelectedGroupNode) : TreeUtil.getFirstNodePath(myTree);
-      if (!Comparing.equal(TreeUtil.getPathFromRoot(selectedNode), expectedPathToBeSelected)) {
-        return true;
-      }
+      return !Comparing.equal(TreeUtil.getPathFromRoot(selectedNode), expectedPathToBeSelected);
     }
     return false;
   }
@@ -1864,7 +1860,7 @@ public class UsageViewImpl implements UsageViewEx {
            : ContainerUtil.mapNotNull(selectionPaths, p -> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
   }
 
-  private @NotNull JBIterable<TreeNode> traverseNodesRecursively(@NotNull List<TreeNode> roots) {
+  private @NotNull JBIterable<TreeNode> traverseNodesRecursively(@NotNull List<? extends TreeNode> roots) {
     return TreeUtil.treeNodeTraverser(null).withRoots(roots).traverse();
   }
 
@@ -2014,29 +2010,24 @@ public class UsageViewImpl implements UsageViewEx {
       DataSink.uiDataSnapshot(sink, TreeUtil.getUserObject(getSelectedNode()));
 
       List<TreeNode> selectedNodes = selectedNodes();
-      sink.lazy(USAGES_KEY, () -> {
-        return selectedUsages(traverseNodesRecursively(selectedNodes))
-          .toArray(Usage.EMPTY_ARRAY);
-      });
-      sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
-        return selectedUsages(traverseNodesRecursively(selectedNodes))
-          .filter(PsiElementUsage.class)
-          .filterMap(usage -> usage.getElement())
-          .toArray(PsiElement.EMPTY_ARRAY);
-      });
-      sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
-        return traverseNodesRecursively(selectedNodes)
-          .filterMap(o -> o instanceof UsageNode oo ? oo.getUsage() :
-                          o instanceof UsageTargetNode oo ? oo.getTarget() : null)
-          .flatMap(o -> o instanceof UsageInFile oo ? ContainerUtil.createMaybeSingletonList(oo.getFile()) :
-                        o instanceof UsageInFiles oo ? Arrays.asList(oo.getFiles()) :
-                        o instanceof UsageTarget oo
-                        ? Arrays.asList(ObjectUtils.notNull(oo.getFiles(), VirtualFile.EMPTY_ARRAY))
-                        : Collections.emptyList())
-          .filter(VirtualFile::isValid)
-          .unique()
-          .toArray(VirtualFile.EMPTY_ARRAY);
-      });
+      sink.lazy(USAGES_KEY, () -> selectedUsages(traverseNodesRecursively(selectedNodes))
+        .toArray(Usage.EMPTY_ARRAY));
+      sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () ->
+        selectedUsages(traverseNodesRecursively(selectedNodes))
+        .filter(PsiElementUsage.class)
+        .filterMap(usage -> usage.getElement())
+        .toArray(PsiElement.EMPTY_ARRAY));
+      sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> traverseNodesRecursively(selectedNodes)
+        .filterMap(o -> o instanceof UsageNode oo ? oo.getUsage() :
+                        o instanceof UsageTargetNode oo ? oo.getTarget() : null)
+        .flatMap(o -> o instanceof UsageInFile oo ? ContainerUtil.createMaybeSingletonList(oo.getFile()) :
+                      o instanceof UsageInFiles oo ? Arrays.asList(oo.getFiles()) :
+                      o instanceof UsageTarget oo
+                      ? Arrays.asList(ObjectUtils.notNull(oo.getFiles(), VirtualFile.EMPTY_ARRAY))
+                      : Collections.emptyList())
+        .filter(file -> file.isValid())
+        .unique()
+        .toArray(VirtualFile.EMPTY_ARRAY));
     }
   }
 
@@ -2261,7 +2252,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull Set<@NotNull GroupNode> selectedGroupNodes() {
     return selectedNodes().stream().filter(node -> node instanceof GroupNode).map(node -> (GroupNode)node)
-      .collect(Collectors.toCollection(HashSet::new));
+      .collect(Collectors.toCollection(() -> new HashSet<>()));
   }
 
   public @NotNull GroupNode getRoot() {
