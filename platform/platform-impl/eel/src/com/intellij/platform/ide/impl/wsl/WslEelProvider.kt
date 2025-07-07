@@ -61,14 +61,6 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
   private val reportedNonExistentWslIds = AtomicReference<List<String>>(listOf())
 
   override fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem? {
-    try {
-      if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
-        return null
-      }
-    }
-    catch (@Suppress("IncorrectCancellationExceptionHandling") _: AlreadyDisposedException) {
-      return null
-    }
 
     @MultiRoutingFileSystemPath
     val wslRoot: String
@@ -97,6 +89,15 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
         wslRoot = sanitizedPath.take(shareNameEndIdx + 1)
         distributionId = sanitizedPath.substring(serverNameEndIdx, shareNameEndIdx)
       }
+    }
+
+    try {
+      if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
+        return null
+      }
+    }
+    catch (@Suppress("IncorrectCancellationExceptionHandling") _: AlreadyDisposedException) {
+      return null
     }
 
     val key = if (useNewFileSystem) wslRoot else distributionId
