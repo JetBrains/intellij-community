@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -304,7 +305,14 @@ suspend fun <T> backgroundWriteAction(action: () -> T): T {
  */
 @Experimental
 suspend fun <T> writeIntentReadAction(action: () -> T): T {
-  return ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable(action))
+  if (EDT.isCurrentThreadEdt()) {
+    return ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable(action))
+  }
+  else {
+    return withContext(Dispatchers.EDT) {
+      action()
+    }
+  }
 }
 
 private fun readWriteActionSupport() = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)
