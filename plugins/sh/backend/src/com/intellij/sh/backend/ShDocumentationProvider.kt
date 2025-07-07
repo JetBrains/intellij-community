@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.sh
+package com.intellij.sh.backend
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.TreeUtil
+import com.intellij.sh.ShBundle
+import com.intellij.sh.ShTypes
 import com.intellij.sh.psi.ShGenericCommandDirective
 import com.intellij.sh.psi.ShLiteral
 import com.intellij.sh.statistics.ShCounterUsagesCollector
