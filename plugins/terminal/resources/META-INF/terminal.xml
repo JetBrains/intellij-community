@@ -161,6 +161,8 @@
                     interface="org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalWidgetProvider" dynamic="true"
                     interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalCloudCompletionSettingsProvider" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider"/>
   </extensionPoints>
 
   <applicationListeners>

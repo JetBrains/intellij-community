@@ -232,7 +232,9 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindText(optionsProvider::tabName)
             .align(AlignX.FILL)
         }
-
+        TerminalCloudCompletionSettingsProvider.getProvider()
+          ?.addSettingsRow(this)
+          ?.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED))
         row {
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)
