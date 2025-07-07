@@ -51,7 +51,7 @@ object CondaExecutor {
   }
 
   suspend fun exportEnvironmentFile(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<String> {
-    return runConda(condaPath, listOf("export") + listOf("--from-history"), envIdentity)
+    return runConda(condaPath, listOf("env", "export") + listOf("--no-builds"), envIdentity)
   }
 
   suspend fun listPackages(condaPath: Path, envIdentity: PyCondaEnvIdentity): PyResult<List<PythonPackage>> {
