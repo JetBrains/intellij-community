@@ -75,6 +75,16 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         }
       }.bottomGap(BottomGap.SMALL)
 
+      row {
+        comment(McpServerBundle.message("settings.explanation.when.server.disabled"))
+      }.bottomGap(BottomGap.NONE).visibleIf(enabledCheckboxState!!.not())
+      McpClientDetector.detectGlobalMcpClients().forEach {
+        row {
+          comment(" • " + it.name.displayName)
+        }.topGap(TopGap.NONE).bottomGap(BottomGap.NONE).visibleIf(enabledCheckboxState!!.not())
+      }
+
+
       group(McpServerBundle.message("settings.client.group"), indent = false) {
         row {
           comment(McpServerBundle.message("settings.setup.description"))
@@ -135,7 +145,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
             }
           }
         }
-      }
+      }.visibleIf(enabledCheckboxState!!)
 
       group(McpServerBundle.message("mcp.general.client"), indent = false) {
         row {
@@ -161,7 +171,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         row {
           checkBox(McpServerBundle.message("checkbox.enable.brave.mode.skip.command.execution.confirmations")).comment(McpServerBundle.message("text.warning.enabling.brave.mode.will.allow.terminal.commands.to.execute.without.confirmation.use.with.caution")).bindSelected(settings.state::enableBraveMode)
         }
-      }.enabledIf(enabledCheckboxState!!)
+      }.visibleIf(enabledCheckboxState!!)
     }
 
     settingsPanel = panel
