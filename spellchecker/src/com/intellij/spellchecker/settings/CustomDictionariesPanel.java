@@ -8,6 +8,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
+import com.intellij.spellchecker.state.AppDictionaryState;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
@@ -63,7 +64,6 @@ public final class CustomDictionariesPanel extends JPanel {
             .forEach(path -> myCustomDictionariesTableView.getListTableModel().addRow(path)));
         }
       })
-
       .setRemoveActionName(SpellCheckerBundle.message("remove.custom.dictionaries"))
       .setRemoveAction(button -> {
         removedDictionaries.addAll(myCustomDictionariesTableView.getSelectedObjects());
@@ -74,6 +74,15 @@ public final class CustomDictionariesPanel extends JPanel {
                                    x -> defaultDictionaries.contains(x) || builtInDictionaries.containsKey(x))
       )
 
+      .setEditActionUpdater(e -> {
+        String selectedDictionary = myCustomDictionariesTableView.getSelectedObject();
+        if (selectedDictionary == null) return false;
+
+        if (selectedDictionary.equals(SpellCheckerBundle.message("app.dictionary"))) {
+          return !AppDictionaryState.getInstance().words.isEmpty();
+        }
+        return true;
+      })
       .setEditActionName(SpellCheckerBundle.message("edit.custom.dictionary"))
       .setEditAction(new AnActionButtonRunnable() {
         @Override
