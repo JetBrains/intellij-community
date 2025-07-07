@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.startup.multiProcess;
 
+import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.openapi.application.PathCustomizer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.impl.P3SupportInstaller;
@@ -82,8 +83,10 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     cleanDirectory(newConfig);
     cleanDirectory(newSystem);
 
-    P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
-    
+    ClientP3Support p3Support = new ClientP3Support();
+    P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(p3Support);
+    migrateDisabledPluginsFile(PathManager.getConfigDir(), p3Support.getDisabledPluginsFileName());
+
     String originalPluginsPath = PathManager.getPluginsPath();
     boolean customizePluginsPath = useCustomPluginsPath(originalPluginsPath);
     String pluginsPath = customizePluginsPath ? originalPluginsPath + File.separator + "frontend" : originalPluginsPath;
@@ -93,6 +96,29 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     Path startupScriptDir = PerProcessPathCustomization.getStartupScriptDir().resolve("frontend");
     enabled = true;
     return new CustomPaths(newConfig.toString(), newSystem.toString(), pluginsPath, newLog.toString(), startupScriptDir);
+  }
+
+  /**
+   * Creates a separate file with the list of disabled plugins for the frontend process. 
+   * Since a separate file is supported only starting from 2025.1.4 (IJPL-193749), the standard migration of configs may not be applied.
+   */
+  private static void migrateDisabledPluginsFile(@NotNull Path configDir, @NotNull String customDisabledPluginsFileName) {
+    try {
+      Path customDisabledPluginsFile = configDir.resolve(customDisabledPluginsFileName);
+      if (!Files.exists(customDisabledPluginsFile)) {
+        Path standardDisabledPluginsFile = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
+        if (Files.exists(standardDisabledPluginsFile)) {
+          Files.copy(standardDisabledPluginsFile, customDisabledPluginsFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        else {
+          //creates an empty file as a marker to avoid performing migration next time
+          Files.createFile(customDisabledPluginsFile);
+        }
+      }
+    }
+    catch (IOException e) {
+      System.err.println("Failed to migrate files with disabled plugins: " + e.getMessage());
+    }
   }
 
   /**
