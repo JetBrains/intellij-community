@@ -4,12 +4,14 @@ package com.intellij.psi.xml
 import com.intellij.platform.syntax.psi.ElementTypeConverter
 import com.intellij.platform.syntax.psi.ElementTypeConverterFactory
 import com.intellij.platform.syntax.psi.elementTypeConverterOf
+import org.jetbrains.annotations.ApiStatus
 
 internal class XmlElementTypeConverterExtension : ElementTypeConverterFactory {
   override fun getElementTypeConverter(): ElementTypeConverter = xmlElementTypeConverter
 }
 
-private val xmlElementTypeConverter = elementTypeConverterOf(
+@ApiStatus.Internal
+val xmlElementTypeConverter: ElementTypeConverter = elementTypeConverterOf(
   XmlSyntaxElementType.XML_DOCUMENT to XmlElementType.XML_DOCUMENT,
   XmlSyntaxElementType.XML_PROLOG to XmlElementType.XML_PROLOG,
   XmlSyntaxElementType.XML_DECL to XmlElementType.XML_DECL,
