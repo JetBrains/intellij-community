@@ -2415,12 +2415,6 @@ c:com.intellij.util.containers.ArrayListSet
 - iterator():java.util.Iterator
 - remove(java.lang.Object):Z
 - size():I
-f:com.intellij.util.containers.BiDirectionalEnumerator
-- <init>(I):V
-- clear():V
-- enumerateImpl(java.lang.Object):I
-- forEachValue(java.util.function.Predicate):V
-- getValue(I):java.lang.Object
 f:com.intellij.util.containers.BidirectionalMap
 - java.util.Map
 - <init>():V
