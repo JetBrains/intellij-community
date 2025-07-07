@@ -103,7 +103,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.12.2</version>
+      <version>5.13.3</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

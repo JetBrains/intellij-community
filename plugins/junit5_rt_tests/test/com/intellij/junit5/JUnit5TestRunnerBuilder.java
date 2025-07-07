@@ -188,7 +188,7 @@ public class JUnit5TestRunnerBuilder {
   }
 
   public JUnit5TestRunnerBuilder buildTestPlan() {
-    myTestPlan = TestPlan.from(Collections.singleton(myEngineDescriptor), EMPTY_PARAMETER, EMPTY_OUTPUT_DIRECTORY_PROVIDER);
+    myTestPlan = TestPlan.from(true, Collections.singleton(myEngineDescriptor), EMPTY_PARAMETER, EMPTY_OUTPUT_DIRECTORY_PROVIDER);
     return this;
   }
 
