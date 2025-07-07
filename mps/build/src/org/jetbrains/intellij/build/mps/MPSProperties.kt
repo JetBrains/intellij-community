@@ -64,7 +64,6 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.sh",
             "intellij.markdown",
             "intellij.grazie",
-            "intellij.laf.macos"
         )
 
         // A plugin from intellij-community may refer to some additional modules located in the ultimate
