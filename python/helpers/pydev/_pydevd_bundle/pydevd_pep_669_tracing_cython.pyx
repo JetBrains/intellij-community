@@ -246,6 +246,9 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
 
     plugin_manager = py_db.plugin
 
+    if info is None:
+        return False
+
     stop_frame = info.pydev_step_stop
     step_cmd = info.pydev_step_cmd
 
@@ -321,6 +324,9 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
 
 
 def _clear_run_state(info):
+    if info is None:
+        return
+
     info.pydev_step_stop = None
     info.pydev_step_cmd = -1
     info.pydev_state = STATE_RUN
@@ -357,6 +363,9 @@ def _get_top_level_frame():
 
 def _stop_on_unhandled_exception(exc_info, py_db, thread):
     additional_info = _get_additional_info(thread)
+    if additional_info is None:
+        return
+
     if not additional_info.suspended_at_unhandled:
         additional_info.suspended_at_unhandled = True
         stop_on_unhandled_exception(py_db, thread, additional_info,
