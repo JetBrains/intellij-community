@@ -16,8 +16,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.sh.codeInsight.ShPsiReferenceSupport"
                         serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport" />
-    <applicationService serviceInterface="com.intellij.sh.formatter.ShShfmtFormatterUtilBase"
-                        serviceImplementation="com.intellij.sh.backend.formatter.ShShfmtFormatterUtil"/>
 
     <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShFindUsagesProvider"/>
     <targetElementEvaluator language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShTargetElementEvaluator"/>

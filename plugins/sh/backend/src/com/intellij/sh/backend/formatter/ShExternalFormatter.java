@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.backend.codeStyle.ShCodeStyleSettings;
-import com.intellij.sh.formatter.ShShfmtFormatterUtilBase;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.settings.ShSettings;
@@ -67,11 +66,11 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
     FormattingContext formattingContext = request.getContext();
     Project project = formattingContext.getProject();
     String shFmtExecutable = ShSettings.getShfmtPath(project);
-    if (!ShShfmtFormatterUtilBase.getInstance().isValidPath(shFmtExecutable)) {
+    if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       return null;
     }
 
-    ShShfmtFormatterUtilBase.getInstance().checkShfmtForUpdate(project);
+    ShShfmtFormatterUtil.checkShfmtForUpdate(project);
     String interpreter = ShShebangParserUtil.getInterpreter((ShFile)formattingContext.getContainingFile(), KNOWN_SHELLS, "bash");
 
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
