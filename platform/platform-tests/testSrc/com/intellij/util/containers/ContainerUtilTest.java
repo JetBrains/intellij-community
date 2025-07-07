@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.function.ThrowingRunnable;
 
+import java.util.HashSet;
+import java.util.HashMap;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
@@ -117,13 +119,13 @@ public class ContainerUtilTest extends TestCase {
      });
   }
 
-  private static List<Integer> createFilledList(int size) {
+  private static List<Integer> createSequentialList(int size) {
     return ContainerUtil.createLockFreeCopyOnWriteList(IntStream.range(0, size).boxed().toList());
   }
 
   public void testConcatenatedDynamicListsAreIterableEvenWhenTheyAreChangingDuringIteration() throws Exception {
-    List<Integer> list1 = createFilledList(32);
-    List<Integer> list2 = createFilledList(32);
+    List<Integer> list1 = createSequentialList(32);
+    List<Integer> list2 = createSequentialList(32);
     List<Integer> concat = ContainerUtil.concat(list1, list2);
 
     AtomicBoolean stop = new AtomicBoolean(false);
@@ -139,7 +141,6 @@ public class ContainerUtilTest extends TestCase {
         // must work on streams (even parallel), too.
         count += concat.parallelStream().count();
       }
-      stop.set(true);
     }
     finally {
       stop.set(true); // finally stop even in case of an error

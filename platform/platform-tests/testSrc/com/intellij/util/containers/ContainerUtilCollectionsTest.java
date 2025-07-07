@@ -700,14 +700,31 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test
   public void weakSetTossed() {
     Set<Object> set = ContainerUtil.createWeakSet();
+    checkStandardSetOperations(set);
     checkClearsEventuallyAfterGCPressure(set);
   }
+  @Test
+  public void concurrentWeakSetCreatedUsingSetFromMapTrickDoesWork() {
+    Set<Object> set = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
+    checkStandardSetOperations(set);
+    checkClearsEventuallyAfterGCPressure(set);
+  }
+  @Test
+  public void concurrentSet() {
+    Set<Object> set = ConcurrentCollectionFactory.createConcurrentSet();
+    checkStandardSetOperations(set);
+  }
 
-  @SuppressWarnings("OverwrittenKey")
   @Test
   public void testWeakSet() {
     Set<Object> set = ContainerUtil.createWeakSet();
+    checkStandardSetOperations(set);
+  }
+
+  private static void checkStandardSetOperations(Set<Object> set) {
+    //noinspection OverwrittenKey
     set.add("");
+    //noinspection OverwrittenKey
     set.add("");
     assertEquals(1, set.size());
     assertTrue(set.remove(""));
