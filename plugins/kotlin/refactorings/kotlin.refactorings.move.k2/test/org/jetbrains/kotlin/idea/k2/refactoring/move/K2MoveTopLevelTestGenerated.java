@@ -165,6 +165,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/delegateInObject/delegateInObject.test");
     }
 
+    @TestMetadata("kotlin/destructuringExtensionFunction/destructuringExtensionFunction.test")
+    public void testKotlin_destructuringExtensionFunction_DestructuringExtensionFunction() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/destructuringExtensionFunction/destructuringExtensionFunction.test");
+    }
+
     @TestMetadata("kotlin/facadeClassChangeInTheSamePackage/facadeClassChangeInTheSamePackage.test")
     public void testKotlin_facadeClassChangeInTheSamePackage_FacadeClassChangeInTheSamePackage() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/facadeClassChangeInTheSamePackage/facadeClassChangeInTheSamePackage.test");
