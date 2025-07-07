@@ -38,6 +38,7 @@ internal class JavaCreateFromUsagesCommandProvider : CommandProvider {
     if (psiElement !is PsiReferenceExpression) return emptyList()
     val qualifier = psiElement.qualifier
     if (qualifier !is PsiExpression) return emptyList()
+    if (qualifier is PsiNewExpression) return emptyList()
     val psiClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.type) ?: return emptyList()
     if (!psiClass.isWritable) return emptyList()
     if (psiElement.referenceName != null && !PsiNameHelper.getInstance(context.project).isIdentifier(psiElement.referenceName)) return emptyList()

@@ -665,7 +665,8 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       class Test {
 
           public static void main(String[] args){
-              new Test()<caret>
+              Test t = new Test()
+              t<caret>
           }
       }
       """.trimIndent())
@@ -676,15 +677,46 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       class Test {
-
+      
           public static void main(String[] args){
-              new Test().test();
+              Test t = new Test()
+              t.test();
           }
-
+      
           private void test() {
           }
       }
     """.trimIndent())
+  }
+
+  fun testCreateFromUsagesSkipConstructors() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Test {
+
+          public static void main(String[] args){
+              new Test<caret>()
+          }
+      }
+      """.trimIndent())
+    myFixture.type(".")
+    val elements = myFixture.completeBasic()
+    assertFalse(elements.any { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
+  }
+
+  fun testCreateFromUsagesSkipConstructorsDoubleDots() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Test {
+
+          public static void main(String[] args){
+              new Test<caret>()
+          }
+      }
+      """.trimIndent())
+    myFixture.type("..")
+    val elements = myFixture.completeBasic()
+    assertFalse(elements.any { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
   }
 
   fun testInspection() {
