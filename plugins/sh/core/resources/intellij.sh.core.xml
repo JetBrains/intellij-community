@@ -26,8 +26,6 @@
     <additionalTextAttributes scheme="Default" file="colors/ShDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colors/ShDarcula.xml"/>
 
-    <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.ShUrlReferenceContributor"/>
-
     <typedHandler implementation="com.intellij.sh.ShTypedHandler"/>
     <completion.contributor id="shShebang" language="Shell Script"
                             implementationClass="com.intellij.sh.completion.ShShebangCompletionContributor"
