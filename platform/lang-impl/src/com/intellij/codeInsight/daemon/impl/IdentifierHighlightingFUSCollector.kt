@@ -28,7 +28,7 @@ internal object IdentifierHighlightingFUSReporter {
 }
 internal object IdentifierHighlightingFUSCollector : CounterUsagesCollector() {
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("identifier_highlighting", 1)
+  val GROUP: EventLogGroup = EventLogGroup("identifier.highlighting", 2)
   @JvmField
   val OFFSET: IntEventField = EventFields.Int("offset")
   @JvmField
