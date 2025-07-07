@@ -8,6 +8,7 @@ import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.SearchableConfigurable
@@ -95,6 +96,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
                   runCatching {
                     mcpClient.configure()
                   }.onFailure {
+                    thisLogger().info(it)
                     errorDuringConfiguration.set(true)
                   }.onSuccess {
                     errorDuringConfiguration.set(false)
