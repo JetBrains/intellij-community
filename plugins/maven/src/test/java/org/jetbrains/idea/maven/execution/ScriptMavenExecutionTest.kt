@@ -108,6 +108,8 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     val debugOpts = debugExecInfo.stdout.lines().singleOrNull { it.startsWith("MAVEN_OPTS") }
     assertNotNull(debugExecInfo.toString(), debugOpts)
     assertTrue(debugOpts, debugOpts!!.contains("-agentlib:jdwp=transport=dt_socket"))
+    // maven.use.scripts.debug.agent = true is set to `true` by default
+    assertTrue(debugOpts, debugOpts.contains("debugger-agent.jar"))
   }
 
 

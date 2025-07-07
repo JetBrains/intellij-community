@@ -12,11 +12,7 @@ import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.toEelApiBlocking
+import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
@@ -105,21 +101,31 @@ object EelPathUtils {
   }
 
   @JvmStatic
+  @OptIn(ExperimentalPathApi::class)
   @RequiresBackgroundThread(generateAssertion = false)
-  fun createTemporaryDirectory(project: Project?, prefix: String = "", suffix: String = ""): Path {
-    if (project == null || isProjectLocal(project)) {
-      return Files.createTempDirectory(prefix)
+  fun createTemporaryDirectory(project: Project?, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = false): Path {
+    if (project == null || isProjectLocal(project) || project.projectFilePath == null) {
+      val dir = Files.createTempDirectory(prefix)
+      if (deleteOnExit) {
+        Runtime.getRuntime().addShutdownHook(Thread {
+          dir.deleteRecursively()
+        })
+      }
+      return dir
     }
-    val projectFilePath = project.projectFilePath ?: return Files.createTempDirectory(prefix)
     return runBlockingMaybeCancellable {
-      val eel = Path.of(projectFilePath).getEelDescriptor().toEelApi()
-      createTemporaryDirectory(eel, prefix, suffix)
+      val eel = Path.of(project.projectFilePath!!).getEelDescriptor().toEelApi()
+      createTemporaryDirectory(eel, prefix, suffix, deleteOnExit)
     }
   }
 
   @JvmStatic
-  suspend fun createTemporaryDirectory(eelApi: EelApi, prefix: String = "", suffix: String = ""): Path {
-    val file = eelApi.fs.createTemporaryDirectory().prefix(prefix).suffix(suffix).getOrThrowFileSystemException()
+  suspend fun createTemporaryDirectory(eelApi: EelApi, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = false): Path {
+    val file = eelApi.fs.createTemporaryDirectory()
+      .prefix(prefix)
+      .suffix(suffix)
+      .deleteOnExit(deleteOnExit)
+      .getOrThrowFileSystemException()
     return file.asNioPath()
   }
 
@@ -333,7 +339,7 @@ object EelPathUtils {
 
   private suspend fun EelApi.createTempFor(source: Path, deleteOnExit: Boolean): Path {
     return if (source.isDirectory()) {
-      fs.createTemporaryDirectory().deleteOnExit(deleteOnExit).getOrThrowFileSystemException().asNioPath()
+      createTemporaryDirectory(eelApi = this, deleteOnExit = deleteOnExit)
     }
     else {
       fs.createTemporaryFile().suffix(source.name).deleteOnExit(deleteOnExit).getOrThrowFileSystemException().asNioPath()
