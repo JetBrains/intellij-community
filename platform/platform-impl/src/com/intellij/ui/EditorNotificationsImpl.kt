@@ -240,15 +240,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
         coroutineContext.ensureActive()
 
         try {
-          if (project.isDisposed) {
-            return@launch
-          }
-          // we use read action here to prevent project cancellation during instantiation
-          val provider = readAction {
-            if (project.isDisposed) null
-            else adapter.createInstance<EditorNotificationProvider>(project)
-          } ?: continue
-
+          val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
           coroutineContext.ensureActive()
 
           val result = readAction {
@@ -263,13 +255,11 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
 
           val componentProvider = result.orElse(null)
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            writeIntentReadAction {
-              if (!file.isValid) {
-                return@writeIntentReadAction
-              }
-              for (fileEditor in fileEditors) {
-                updateNotification(fileEditor = fileEditor, provider = provider, component = componentProvider?.apply(fileEditor))
-              }
+            if (!file.isValid) {
+              return@withContext
+            }
+            for (fileEditor in fileEditors) {
+              updateNotification(fileEditor = fileEditor, provider = provider, component = componentProvider?.apply(fileEditor))
             }
           }
         }
