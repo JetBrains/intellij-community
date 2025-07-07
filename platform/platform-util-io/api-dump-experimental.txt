@@ -44,3 +44,8 @@ c:com.intellij.execution.process.KillableProcessHandler
 - *:setShouldKillProcessSoftlyWithWinP(Z):V
 com.intellij.execution.process.SelfKiller
 - *:tryDestroyGracefully():Z
+*f:com.intellij.util.ShellEnvironmentReader
+- s:powerShellCommand(java.nio.file.Path,java.util.List):java.lang.ProcessBuilder
+- s:readEnvironment(java.lang.ProcessBuilder,J):com.intellij.openapi.util.Pair
+- s:shellCommand(java.lang.String,java.nio.file.Path,java.util.List):java.lang.ProcessBuilder
+- s:winShellCommand(java.nio.file.Path,java.util.List):java.lang.ProcessBuilder

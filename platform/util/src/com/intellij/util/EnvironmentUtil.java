@@ -41,27 +41,50 @@ public final class EnvironmentUtil {
   private static final String LANG = "LANG";
   private static final String LC_ALL = "LC_ALL";
   private static final String LC_CTYPE = "LC_CTYPE";
-
   private static final String DESKTOP_STARTUP_ID = "DESKTOP_STARTUP_ID";
-
-  public static final String BASH_EXECUTABLE_NAME = "bash";
-  public static final String SHELL_VARIABLE_NAME = "SHELL";
-  private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
-  public static final String SHELL_LOGIN_ARGUMENT = "-l";
-  public static final String SHELL_COMMAND_ARGUMENT = "-c";
-  public static final String SHELL_SOURCE_COMMAND = "source";
-  public static final String SHELL_ENV_COMMAND = "/usr/bin/env";
-  public static final String ENV_ZERO_ARGUMENT = "-0";
-
-  public static final String MacOS_LOADER_BINARY = "printenv";
-
-  /**
-   * Holds the number of shell levels the current shell is running on top of.
-   * Tested with bash/zsh/fish/tcsh/csh/ksh.
-   */
   private static final String SHLVL = "SHLVL";
-
   private static final String MAC_OS_LOCALE_PATH = "/usr/share/locale";
+
+  public static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
+
+  /** @deprecated primitive well-known constant; inline */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
+  /** @deprecated primitive well-known constant; inline */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String BASH_EXECUTABLE_NAME = "bash";
+  /** @deprecated primitive well-known constant; inline */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String SHELL_VARIABLE_NAME = "SHELL";
+  /** @deprecated primitive well-known constant; inline */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String SHELL_LOGIN_ARGUMENT = "-l";
+  private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
+  /** @deprecated primitive well-known constant; inline */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String SHELL_COMMAND_ARGUMENT = "-c";
+  /** @deprecated non-standard command (POSIX specifies '.'); do not use */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String SHELL_SOURCE_COMMAND = "source";
+  /** @deprecated primitive well-known constant; inline */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String SHELL_ENV_COMMAND = "/usr/bin/env";
+  /** @deprecated primitive well-known constant; inline */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String ENV_ZERO_ARGUMENT = "-0";
+  /** @deprecated implementation detail; do not use */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String MacOS_LOADER_BINARY = "printenv";
 
   private static final AtomicReference<CompletableDeferred<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
 
@@ -217,9 +240,6 @@ public final class EnvironmentUtil {
   public static boolean isValidValue(@Nullable String value) {
     return value != null && value.indexOf('\0') == -1;
   }
-
-  public static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
-  private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
   private static Map<String, String> getShellEnv(long timeoutMillis) throws IOException {
     return new ShellEnvReader(timeoutMillis).readShellEnv(null, null);
