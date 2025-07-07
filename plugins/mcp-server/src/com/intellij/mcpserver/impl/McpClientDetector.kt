@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.addIfNotNull
+import kotlinx.serialization.json.decodeFromStream
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 
@@ -78,6 +80,9 @@ object McpClientDetector {
     if (configPath == null) return null
     val path = Paths.get(FileUtil.expandUserHome(configPath))
     if (path.exists() && path.isRegularFile()) {
+      runCatching {
+        if (VSCodeClient(path).json.decodeFromStream<VSCodeConfig>(path.inputStream()).mcp?.servers?.isNotEmpty() == true) return null
+      }
       return VSCodeClient(path)
     }
     return null
@@ -94,7 +99,7 @@ object McpClientDetector {
     val path = Paths.get(FileUtil.expandUserHome(configPath))
 
     if (path.exists() && path.isRegularFile()) {
-      return ClaudeCodeMcpClient( path)
+      return ClaudeCodeMcpClient(path)
     }
     return null
   }
@@ -110,7 +115,7 @@ object McpClientDetector {
     val path = Paths.get(FileUtil.expandUserHome(configPath))
 
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
-      return ClaudeMcpClient( path)
+      return ClaudeMcpClient(path)
     }
     return null
   }
@@ -126,7 +131,7 @@ object McpClientDetector {
   private fun detectWindsurf(): McpClient? {
     val path = Paths.get(FileUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
-      return WindsurfClient( path)
+      return WindsurfClient(path)
     }
     return null
   }
