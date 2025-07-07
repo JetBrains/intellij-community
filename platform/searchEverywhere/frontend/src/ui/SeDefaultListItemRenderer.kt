@@ -42,6 +42,7 @@ class SeDefaultListItemRenderer {
               text(it) {
                 align = LcrInitParams.Align.RIGHT
                 attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
+                accessibleName = null
               }
             }
           }
