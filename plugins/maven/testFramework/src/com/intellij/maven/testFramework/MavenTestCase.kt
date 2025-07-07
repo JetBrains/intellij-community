@@ -24,10 +24,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.findOrCreateFile
-import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
@@ -107,9 +104,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     set(projectPom) {
       myProjectPom = projectPom
     }
-
-  val allPoms: List<VirtualFile>
-    get() = myAllPoms.toList()
 
   fun addPom(pom: VirtualFile) {
     myAllPoms.add(pom)
@@ -253,7 +247,6 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   override fun tearDown() {
-    val basePath = myProject!!.basePath
     RunAll(
       ThrowableRunnable {
         val mavenProgressTracker =
@@ -476,7 +469,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     val filePath = Path.of(dir.path, fileName)
     setPomContent(filePath, xml)
     dir.refresh(false, false)
-    var f = dir.findChild(fileName) ?: throw AssertionError("can't find file ${filePath.absolutePathString()} in VFS")
+    val f = dir.findChild(fileName) ?: throw AssertionError("can't find file ${filePath.absolutePathString()} in VFS")
     myAllPoms.add(f)
     refreshFiles(listOf(f))
     return f
@@ -486,31 +479,12 @@ abstract class MavenTestCase : UsefulTestCase() {
     return createProfilesFile(projectRoot, xml, true)
   }
 
-  protected fun createProfilesXmlOldStyle(relativePath: String, xml: String): VirtualFile {
-    return createProfilesFile(createProjectSubDir(relativePath), xml, true)
-  }
-
   protected fun createProfilesXml(xml: String): VirtualFile {
     return createProfilesFile(projectRoot, xml, false)
   }
 
   protected fun createProfilesXml(relativePath: String, xml: String): VirtualFile {
     return createProfilesFile(createProjectSubDir(relativePath), xml, false)
-  }
-
-  protected fun createFullProfilesXml(content: String): VirtualFile {
-    return createProfilesFile(projectRoot, content)
-  }
-
-  protected fun createFullProfilesXml(relativePath: String, content: String): VirtualFile {
-    return createProfilesFile(createProjectSubDir(relativePath), content)
-  }
-
-  protected fun deleteProfilesXml() {
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> {
-      val f = myProjectRoot!!.findChild("profiles.xml")
-      f?.delete(this)
-    }
   }
 
   protected fun createProjectSubDirs(vararg relativePaths: String) {
@@ -620,14 +594,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  protected fun deleteDirOnTearDown(dir: Path?) {
-    FileUtil.delete(dir!!)
-    // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
-    // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
+  protected fun deleteDirOnTearDown(dir: Path) {
+    NioFiles.deleteRecursively(dir)
     if (dir.exists()) {
       System.err.println("Cannot delete $dir")
-      //printDirectoryContent(myDir);
-      dir.toFile().deleteOnExit()
     }
   }
 
@@ -825,12 +795,10 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun getRelativePath(base: Path, path: String) : String {
-    return base.relativize(Path.of(path)).toCanonicalPath().toString()
+    return base.relativize(Path.of(path)).toCanonicalPath()
   }
 
   companion object {
-    val preimportTestMode: Boolean = java.lang.Boolean.getBoolean("MAVEN_TEST_PREIMPORT")
-
     @Language("XML")
     fun createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
       return """
