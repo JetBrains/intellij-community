@@ -53,8 +53,6 @@ f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - *sf:plus(com.intellij.openapi.util.text.HtmlChunk,com.intellij.openapi.util.text.HtmlChunk):com.intellij.openapi.util.text.HtmlChunk
 com.intellij.ui.IconManager
 - *:colorizedIcon(javax.swing.Icon,kotlin.jvm.functions.Function0):javax.swing.Icon
-f:com.intellij.util.EnvironmentUtil
-- *s:buildShellProcessCommand(java.lang.String,Z,Z,Z):java.util.List
 *f:com.intellij.util.JavaCoroutines
 - sf:suspendJava(java.util.function.Consumer,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.TimeoutUtil

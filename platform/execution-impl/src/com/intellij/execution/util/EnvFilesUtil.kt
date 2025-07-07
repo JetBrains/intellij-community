@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters
@@ -9,16 +9,14 @@ import com.intellij.execution.envFile.parseEnvFile
 import com.intellij.execution.util.ProgramParametersConfigurator.ParametersConfiguratorException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.withPushPop
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.EnvReader
-import com.intellij.util.PathUtilRt
+import com.intellij.util.ShellEnvironmentReader.*
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.readText
 
 @Throws(RuntimeConfigurationException::class)
 fun checkEnvFiles(configuration: CommonProgramRunConfigurationParameters?) {
@@ -38,18 +36,23 @@ fun configureEnvsFromFiles(configuration: EnvFilesOptions, parse: Boolean = true
   val result: MutableMap<String, String> = HashMap()
   for (path in configuration.envFilePaths) {
     try {
-      val extension = FileUtilRt.getExtension(path).lowercase()
+      val file = Path.of(path)
+      val extension = file.extension.lowercase()
       if (extension == "sh" || extension == "bat") {
         if (parse) {
           val indicator = ProgressManager.getGlobalProgressIndicator()
           indicator.withPushPop {
-            indicator.text = ExecutionBundle.message("progress.title.script.running", PathUtilRt.getFileName(path))
-            result.putAll(launchScript(path, extension))
+            indicator.text = ExecutionBundle.message("progress.title.script.running", file.name)
+            val command = when (extension) {
+              "bat" -> winShellCommand(file, null)
+              else -> shellCommand(null, file, null)
+            }
+            result.putAll(readEnvironment(command, 0).first)
           }
         }
       }
       else {
-        val text = FileUtil.loadFile(File(path))
+        val text = file.readText()
         if (parse) {
           result.putAll(parseEnvFile(text))
         }
@@ -63,12 +66,4 @@ fun configureEnvsFromFiles(configuration: EnvFilesOptions, parse: Boolean = true
     }
   }
   return result
-}
-
-private fun launchScript(path: String, extension: String): MutableMap<String, String> {
-  val envReader = EnvReader()
-  when (extension) {
-    "bat" -> return envReader.readBatEnv(Path.of(path), null)
-    else -> return envReader.readShellEnv(Path.of(path), null)
-  }
 }

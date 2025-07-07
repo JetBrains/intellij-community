@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -35,14 +36,17 @@ import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -60,6 +64,9 @@ private const val IDE_SHUTDOWN = "----------------------------------------------
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
+
+private const val LOAD_SHELL_ENV_PROPERTY = "ij.load.shell.env"
+private const val LOAD_SHELL_ENV_TIMEOUT_PROPERTY = "ij.load.shell.env.timeout"
 
 private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
   CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")))
@@ -192,7 +199,8 @@ fun CoroutineScope.startApplication(
     // EnvironmentUtil wants logger
     logDeferred.join()
     span("environment loading", Dispatchers.IO) {
-      EnvironmentUtil.loadEnvironment(coroutineContext.job)
+      val log = logger<AppStarter>()
+      if (shouldLoadShellEnv(log)) loadEnvironment(coroutineContext.job, log) else null
     }
   }
 
@@ -370,7 +378,7 @@ private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
   }
 }
 
-@Internal
+@ApiStatus.Internal
 // called by the app after startup
 fun setActivationListener(processor: (List<String>) -> Deferred<CliResult>) {
   commandProcessor.set(processor)
@@ -589,6 +597,54 @@ private fun logPath(path: String): String {
   }
   catch (e: Exception) {
     return "$path -> ${e.javaClass.name}: ${e.message}"
+  }
+}
+
+private fun shouldLoadShellEnv(log: Logger): Boolean {
+  if (!SystemInfoRt.isMac) {
+    return false
+  }
+
+  if (!System.getProperty(LOAD_SHELL_ENV_PROPERTY, "true").toBoolean()) {
+    log.info("loading shell env is turned off")
+    return false
+  }
+
+  // On macOS, a login shell session is not run when a user logs in, so 'SHLVL > 0' likely means that the IDE is started from a terminal.
+  val shLvl = System.getenv("SHLVL")
+  try {
+    if (shLvl != null && shLvl.toInt() > 0) {
+      log.info("loading shell env is skipped: IDE has been launched from a terminal (SHLVL=${shLvl})")
+      return false
+    }
+  }
+  catch (_: NumberFormatException) {
+    log.info("loading shell env is skipped: IDE has been launched with malformed SHLVL=${shLvl}")
+    return false
+  }
+
+  return true
+}
+
+private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
+  val envFuture = CompletableDeferred<Map<String, String>>(parentJob)
+  EnvironmentUtil.setEnvironmentLoader(envFuture)
+
+  try {
+    val timeoutMillis = System.getProperty(LOAD_SHELL_ENV_TIMEOUT_PROPERTY)?.toLongOrNull() ?: 0
+    val env = ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(null, null, null), timeoutMillis).first
+    if ("LANG" !in env && "LC_ALL" !in env && "LC_CTYPE" !in env) {
+      val value = EnvironmentUtil.setLocaleEnv(env, Charset.defaultCharset())
+      log.info("LC_CTYPE=${value}")
+    }
+    envFuture.complete(env.toImmutableMap())
+    return true
+  }
+  catch (t: Throwable) {
+    log.warn("can't get shell environment", t)
+    (t as? ExceptionWithAttachments)?.attachments?.forEach { log.warn("${it.path}:\n${it.displayText}") }
+    envFuture.complete(emptyMap())
+    return false
   }
 }
 

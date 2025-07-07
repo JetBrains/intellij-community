@@ -1926,14 +1926,6 @@ f:com.intellij.util.EnvironmentUtil
 - s:isValidValue(java.lang.String):Z
 - s:parseEnv(java.lang.String[]):java.util.Map
 - s:setLocaleEnv(java.util.Map,java.nio.charset.Charset):java.lang.String
-c:com.intellij.util.EnvironmentUtil$ShellEnvReader
-- <init>():V
-- <init>(J):V
-- p:getShell():java.lang.String
-- p:getShellProcessCommand():java.util.List
-- f:readShellEnv(java.nio.file.Path,java.util.Map):java.util.Map
-- pf:runProcessAndReadOutputAndEnvs(java.util.List,java.nio.file.Path,java.util.Map,java.nio.file.Path):java.util.Map$Entry
-- pf:runProcessAndReadOutputAndEnvs(java.util.List,java.nio.file.Path,java.util.function.Consumer,java.nio.file.Path):java.util.Map$Entry
 f:com.intellij.util.EventDispatcher
 - addListener(java.util.EventListener):V
 - addListener(java.util.EventListener,com.intellij.openapi.Disposable):V
