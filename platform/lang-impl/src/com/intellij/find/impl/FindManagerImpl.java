@@ -56,6 +56,10 @@ import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntRBTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2IntSortedMap;
+import it.unimi.dsi.fastutil.ints.IntComparators;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -290,78 +294,74 @@ public final class FindManagerImpl extends FindManager {
     }
   }
 
-  private static final class FindExceptCommentsOrLiteralsData implements Predicate<FindResult> {
-    private final VirtualFile myFile;
-    private final FindModel myFindModel;
-    private final TreeMap<Integer, Integer> mySkipRangesSet;
-    private final CharSequence myText;
+  private record FindExceptCommentsOrLiteralsData(@NotNull VirtualFile myFile,
+                                                  @NotNull FindModel myFindModel,
+                                                  @NotNull CharSequence myText,
+                                                  @NotNull Int2IntSortedMap mySkipRangesSet) implements Predicate<FindResult> {
+      static FindExceptCommentsOrLiteralsData create(@NotNull VirtualFile file,
+                                                     @NotNull FindModel model,
+                                                     @NotNull CharSequence text,
+                                                     @NotNull FindManagerImpl manager) {
+        Int2IntSortedMap skipRangesSet = new Int2IntRBTreeMap(IntComparators.OPPOSITE_COMPARATOR);
 
-    static FindExceptCommentsOrLiteralsData create(@NotNull VirtualFile file,
-                                                   @NotNull FindModel model,
-                                                   @NotNull CharSequence text,
-                                                   @NotNull FindManagerImpl manager) {
-      TreeMap<Integer, Integer> skipRangesSet = new TreeMap<>();
+        if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
+          addRanges(file, model, text, skipRangesSet, FindModel.SearchContext.IN_COMMENTS, manager);
+        }
 
-      if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
-        addRanges(file, model, text, skipRangesSet, FindModel.SearchContext.IN_COMMENTS, manager);
+        if (model.isExceptStringLiterals() || model.isExceptCommentsAndStringLiterals()) {
+          addRanges(file, model, text, skipRangesSet, FindModel.SearchContext.IN_STRING_LITERALS, manager);
+        }
+
+        return new FindExceptCommentsOrLiteralsData(file, model.clone(), ImmutableCharSequence.asImmutable(text), skipRangesSet);
       }
 
-      if (model.isExceptStringLiterals() || model.isExceptCommentsAndStringLiterals()) {
-        addRanges(file, model, text, skipRangesSet, FindModel.SearchContext.IN_STRING_LITERALS, manager);
+      private static void addRanges(VirtualFile file,
+                                    FindModel model,
+                                    CharSequence text,
+                                    @NotNull Int2IntSortedMap result,
+                                    FindModel.SearchContext searchContext,
+                                    FindManagerImpl manager) {
+        FindModel clonedModel = model.clone();
+        clonedModel.setSearchContext(searchContext);
+        clonedModel.setForward(true);
+        int offset = 0;
+
+        while (true) {
+          FindResult customResult = manager.findStringLoop(text, offset, clonedModel, file, null);
+          if (!customResult.isStringFound()) break;
+          result.put(customResult.getStartOffset(), customResult.getEndOffset());
+          offset = Math.max(customResult.getEndOffset(), offset + 1); // avoid loop for zero size reg exps matches
+          if (offset >= text.length()) break;
+        }
       }
 
-      return new FindExceptCommentsOrLiteralsData(file, model.clone(), ImmutableCharSequence.asImmutable(text), skipRangesSet);
-    }
+      boolean isAcceptableFor(FindModel model, VirtualFile file, CharSequence text) {
+        return Comparing.equal(myFile, file) &&
+               myFindModel.equals(model) &&
+               myText.length() == text.length()
+          ;
+      }
 
-    FindExceptCommentsOrLiteralsData(@NotNull VirtualFile file,
-                                     @NotNull FindModel model,
-                                     @NotNull CharSequence text,
-                                     @NotNull TreeMap<Integer, Integer> skipRangesSet) {
-      myFile = file;
-      myFindModel = model.clone();
-      myText = ImmutableCharSequence.asImmutable(text);
-      mySkipRangesSet = skipRangesSet;
-    }
-
-    private static void addRanges(VirtualFile file,
-                                  FindModel model,
-                                  CharSequence text,
-                                  Map<Integer, Integer> result,
-                                  FindModel.SearchContext searchContext,
-                                  FindManagerImpl manager) {
-      FindModel clonedModel = model.clone();
-      clonedModel.setSearchContext(searchContext);
-      clonedModel.setForward(true);
-      int offset = 0;
-
-      while(true) {
-        FindResult customResult = manager.findStringLoop(text, offset, clonedModel, file, null);
-        if (!customResult.isStringFound()) break;
-        result.put(customResult.getStartOffset(), customResult.getEndOffset());
-        offset = Math.max(customResult.getEndOffset(), offset + 1); // avoid loop for zero size reg exps matches
-        if (offset >= text.length()) break;
+      @Override
+      public boolean test(@Nullable FindResult input) {
+        if (input == null || !input.isStringFound()) {
+          return true;
+        }
+        Int2IntSortedMap map = mySkipRangesSet.tailMap(input.getStartOffset());
+        for (Int2IntMap.Entry e : map.int2IntEntrySet()) {
+          // [e.key, e.value] intersect with [input.start, input.end]
+          int start = e.getIntKey();
+          int end = e.getIntValue();
+          if (start <= input.getStartOffset() && (input.getStartOffset() <= end || end >= input.getEndOffset())) {
+            return false;
+          }
+          if (end <= input.getStartOffset()) {
+            break;
+          }
+        }
+        return true;
       }
     }
-
-    boolean isAcceptableFor(FindModel model, VirtualFile file, CharSequence text) {
-      return Comparing.equal(myFile, file) &&
-             myFindModel.equals(model) &&
-             myText.length() == text.length()
-        ;
-    }
-
-    @Override
-    public boolean test(@Nullable FindResult input) {
-      if (input == null || !input.isStringFound()) return true;
-      NavigableMap<Integer, Integer> map = mySkipRangesSet.headMap(input.getStartOffset(), true);
-      for(Map.Entry<Integer, Integer> e:map.descendingMap().entrySet()) {
-        // [e.key, e.value] intersect with [input.start, input.end]
-        if (e.getKey() <= input.getStartOffset() && (input.getStartOffset() <= e.getValue() || e.getValue() >= input.getEndOffset())) return false;
-        if (e.getValue() <= input.getStartOffset()) break;
-      }
-      return true;
-    }
-  }
 
   private Predicate<FindResult> getFindContextPredicate(@NotNull FindModel model, @Nullable VirtualFile file, @NotNull CharSequence text) {
     if (file == null) return null;
@@ -770,7 +770,7 @@ public final class FindManagerImpl extends FindManager {
       return new RegExReplacementBuilder(matcher).createReplacement(model.getStringToReplace());
     }
     catch (Exception e) {
-      throw createMalformedReplacementException(model, e);
+      throw createMalformedReplacementException(e);
     }
   }
 
@@ -798,7 +798,8 @@ public final class FindManagerImpl extends FindManager {
     return matcher;
   }
 
-  private static MalformedReplacementStringException createMalformedReplacementException(FindModel model, Exception e) {
+  @NotNull
+  private static MalformedReplacementStringException createMalformedReplacementException(@NotNull Exception e) {
     String message = FindBundle.message("find.replace.invalid.replacement.string", e.getMessage());
     return new MalformedReplacementStringException(message, e);
   }
