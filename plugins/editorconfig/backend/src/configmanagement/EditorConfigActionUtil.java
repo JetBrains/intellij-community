@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.editorconfig.common.EditorConfigBundle;
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -50,7 +51,7 @@ public final class EditorConfigActionUtil {
 
   public static void showEditorConfigFiles(@NotNull Project project, @NotNull AnActionEvent event) {
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);//
-    String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
+    String searchProviderID = FileSearchEverywhereContributor.class.getSimpleName();
     if (seManager.isShown()) {
       if (!searchProviderID.equals(seManager.getSelectedTabID())) {
         seManager.setSelectedTabID(searchProviderID);
