@@ -33,7 +33,7 @@ object CondaExecutor {
   }
 
   suspend fun createFileEnv(condaPath: Path, environmentYaml: Path): PyResult<Unit> {
-    val args = listOf("env", "create", "-y", "-f", environmentYaml.pathString)
+    val args = listOf("env", "create", "-f", environmentYaml.pathString)
     return runConda(condaPath, args, null).mapSuccess { }
   }
 
