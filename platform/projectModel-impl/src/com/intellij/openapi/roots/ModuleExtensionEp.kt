@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
@@ -25,6 +26,25 @@ class ModuleExtensionEp @ApiStatus.Internal constructor(): PluginAware {
   @Attribute("implementation")
   @JvmField
   var implementationClass: String? = null
+  
+  private val constructorAndArgs: Pair<MethodHandle, Int> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    val implementationClass = implementationClass ?: error("'implementation' attribute is not specified'")
+    val pluginDescriptor = pluginDescriptor ?: error("plugin descriptor is not set")
+    val instanceClass = ApplicationManager.getApplication().loadClass<ModuleExtension>(implementationClass, pluginDescriptor)
+    val lookup = MethodHandles.privateLookupIn(instanceClass, methodLookup)
+    try {
+      return@lazy lookup.findConstructor(instanceClass, emptyConstructorMethodType) to 0
+    }
+    catch (_: NoSuchMethodException) {
+      try {
+        return@lazy lookup.findConstructor(instanceClass, moduleMethodType) to 1
+      }
+      catch (t: NoSuchMethodException) {
+        throw PluginException("Failed to instantiate $implementationClass: it mush have either no-arg constructor or constructor taking Module as an argument",
+                              t, pluginDescriptor.pluginId)
+      }
+    }
+  }
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
     this.pluginDescriptor = pluginDescriptor
@@ -33,22 +53,15 @@ class ModuleExtensionEp @ApiStatus.Internal constructor(): PluginAware {
   @ApiStatus.Internal
   fun createInstance(module: Module): ModuleExtension {
     try {
-      val implementationClass = implementationClass ?: error("'implementation' attribute is not specified'")
-      val pluginDescriptor = pluginDescriptor ?: error("plugin descriptor is not set")
-      val instanceClass = ApplicationManager.getApplication().loadClass<ModuleExtension>(implementationClass, pluginDescriptor)
-      val lookup = MethodHandles.privateLookupIn(instanceClass, methodLookup)
-      try {
-        return lookup.findConstructor(instanceClass, emptyConstructorMethodType).invoke() as ModuleExtension
+      val (constructor, argsCount) = constructorAndArgs
+      return when (argsCount) {
+        0 -> constructor.invoke() as ModuleExtension
+        1 -> constructor.invoke(module) as ModuleExtension
+        else -> error("Unexpected number of arguments: $argsCount")
       }
-      catch (_: NoSuchMethodException) {
-        try {
-          return lookup.findConstructor(instanceClass, moduleMethodType).invoke(module) as ModuleExtension
-        }
-        catch (t: NoSuchMethodException) {
-          throw PluginException("Failed to instantiate $implementationClass: it mush have either no-arg constructor or constructor taking Module as an argument",
-                                t, pluginDescriptor.pluginId)
-        }
-      }
+    }
+    catch (e: PluginException) {
+      throw e
     }
     catch (t: Throwable) {
       throw PluginException("Failed to instantiate ModuleExtension ($implementationClass)", t, pluginDescriptor?.pluginId)
