@@ -44,6 +44,8 @@ class TerminalOutputModelImpl(
 
   private var contentUpdateInProgress: Boolean = false
 
+  private var isTypeAhead: Boolean = false
+
   override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount + offset)
   
   private fun TerminalOffset.toRelative(): Int = ((this as TerminalOffsetImpl).absolute - trimmedCharsCount).toInt()
@@ -63,7 +65,7 @@ class TerminalOutputModelImpl(
     }
   }
 
-  override fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>, isTypeAhead: Boolean) {
+  override fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>) {
     changeDocumentContent(isTypeAhead) { 
       val relativeStartOffset = offset.toRelative()
       doReplaceContent(relativeStartOffset, length, text, newStyles)
@@ -194,6 +196,17 @@ class TerminalOutputModelImpl(
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
     dispatcher.addListener(listener, parentDisposable)
+  }
+
+  override fun withTypeAhead(block: () -> Unit) {
+    check(!isTypeAhead) { "Already in the type-ahead mode" }
+    isTypeAhead = true
+    try {
+      block()
+    }
+    finally {
+      isTypeAhead = false
+    }
   }
 
   override fun dumpState(): TerminalOutputModelState {

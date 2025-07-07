@@ -40,13 +40,15 @@ internal class TerminalTypeAhead(
 }
 
 private fun TerminalOutputModel.insertAtCursor(string: String) {
-  replaceContent(relativeOffset(cursorOffsetState.value), 0, string, emptyList(), true)
-  // Do not extract cursorOffsetState.value to a local var because replaceContent might change it.
-  updateCursorPosition(relativeOffset(cursorOffsetState.value + 1))
+  withTypeAhead {
+    replaceContent(relativeOffset(cursorOffsetState.value), 0, string, emptyList())
+    // Do not extract cursorOffsetState.value to a local var because replaceContent might change it.
+    updateCursorPosition(relativeOffset(cursorOffsetState.value + 1))
+  }
 }
 
 private fun TerminalOutputModel.backspace() {
   val offset = cursorOffsetState.value
   if (offset <= 1) return
-  replaceContent(relativeOffset(offset - 1), 1, "", emptyList(), false) // false because that's what inline completion expects
+  replaceContent(relativeOffset(offset - 1), 1, "", emptyList()) // false because that's what inline completion expects
 }

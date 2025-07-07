@@ -30,11 +30,19 @@ interface TerminalOutputModel {
   fun getHighlightings(): TerminalOutputHighlightingsSnapshot
 
   /**
+   * Executes the given block with the model in the type-ahead mode.
+   *
+   * In this mode, document changes are reported with to [TerminalOutputModelListener.afterContentChanged]
+   * with `isTypeAhead == true`.
+   */
+  fun withTypeAhead(block: () -> Unit)
+
+  /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
   fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>)
 
-  fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>, isTypeAhead: Boolean)
+  fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>)
 
   /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
