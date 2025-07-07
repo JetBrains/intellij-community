@@ -11,6 +11,7 @@ import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Path
 
@@ -38,6 +39,7 @@ abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjec
 
   protected fun createPom(pomName: String): Path {
     return createTempFile(pomName, MavenTestCase.createPomXml(
+      MavenConstants.MODEL_VERSION_4_0_0,
       """
       <groupId>test</groupId>
       <artifactId>project</artifactId>

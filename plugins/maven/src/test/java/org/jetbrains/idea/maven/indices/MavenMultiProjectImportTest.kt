@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider
@@ -76,7 +77,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val projectDir = myDir!!.resolve(dir)
     projectDir.createDirectories()
     val pom = projectDir.resolve("pom.xml")
-    pom.write(MavenTestCase.createPomXml(xml))
+    pom.write(MavenTestCase.createPomXml(MavenConstants.MODEL_VERSION_4_0_0, xml))
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom)
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -60,6 +61,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     val pom1 = createPom("pom1.xml")
     val pom2 = pom1.parent.resolve("pom2.xml")
     pom2.write(MavenTestCase.createPomXml(
+      MavenConstants.MODEL_VERSION_4_0_0,
       """
       <groupId>test</groupId>
       <artifactId>project2</artifactId>
@@ -88,6 +90,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     val projectName = dir.toFile().getName()
     val pom = dir.resolve("pom.xml")
     pom.write(MavenTestCase.createPomXml(
+      MavenConstants.MODEL_VERSION_4_0_0,
       """
       <groupId>test</groupId>
       <artifactId>

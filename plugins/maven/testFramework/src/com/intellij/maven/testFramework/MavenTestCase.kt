@@ -41,6 +41,7 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerConnectorImpl
@@ -76,6 +77,14 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   private var myProjectPom: VirtualFile? = null
   private val myAllPoms: MutableSet<VirtualFile> = mutableSetOf()
+
+  private var myModelVersion: String? = null
+
+  var modelVersion: String
+    get() = myModelVersion ?: MavenConstants.MODEL_VERSION_4_0_0
+    set(value : String) {
+      myModelVersion = value
+    }
 
   val pathTransformer: RemotePathTransformerFactory.Transformer
     get() = myPathTransformer!!
@@ -798,17 +807,23 @@ abstract class MavenTestCase : UsefulTestCase() {
     return base.relativize(Path.of(path)).toCanonicalPath()
   }
 
+  @Language("XML")
+  fun createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
+    return createPomXml(modelVersion, xml)
+  }
+
   companion object {
     @Language("XML")
-    fun createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
+    fun createPomXml(modelVersion: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
       return """
              <?xml version="1.0"?>
-             <project xmlns="http://maven.apache.org/POM/4.0.0"
+             <project xmlns="http://maven.apache.org/POM/$modelVersion"
                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-               <modelVersion>4.0.0</modelVersion>
+                      xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
+               <modelVersion>$modelVersion</modelVersion>
              
              """.trimIndent() + xml + "</project>"
     }
   }
+
 }

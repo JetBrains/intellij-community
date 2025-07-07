@@ -19,6 +19,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import junit.framework.TestCase
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -33,10 +34,11 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.math.min
 
-private const val MAVEN_4_VERSION = "4.0.0-rc-3"
+private const val MAVEN_4_VERSION = "4.0.0-rc-4"
 private val MAVEN_VERSIONS: Array<String> = arrayOf<String>(
   "bundled",
-  "4"
+  "4/4.0.0",
+  "4/4.1.0"
 )
 
 @RunWith(Parameterized::class)
@@ -49,6 +51,11 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   @Parameterized.Parameter(0)
   @JvmField
   var myMavenVersion: String? = null
+
+  @Parameterized.Parameter(1)
+  @JvmField
+  var myMavenModelVersion: String? = null
+
   protected var myWrapperTestFixture: MavenWrapperTestFixture? = null
 
   protected fun assumeVersionMoreThan(version: String) {
@@ -104,9 +111,11 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       return
     }
     val actualMavenVersion = getActualVersion(myMavenVersion!!)
+    if (isMaven4)
     MavenLog.LOG.warn("Running test with Maven $actualMavenVersion")
     myWrapperTestFixture = MavenWrapperTestFixture(project, actualMavenVersion)
     myWrapperTestFixture!!.setUp()
+    modelVersion = myMavenModelVersion ?: MavenConstants.MODEL_VERSION_4_0_0
   }
 
   override fun tearDown() {
@@ -389,7 +398,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   companion object {
-    @Parameterized.Parameters(name = "with Maven-{0}")
+    @Parameterized.Parameters(name = "with Maven-{0} and model-{1}")
     @JvmStatic
     fun getMavenVersions(): List<Array<String>> {
       val mavenVersionsString = System.getProperty("maven.versions.to.run")
@@ -397,7 +406,15 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       if (mavenVersionsString != null && !mavenVersionsString.isEmpty()) {
         mavenVersionsToRun = mavenVersionsString.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
       }
-      return mavenVersionsToRun.map { arrayOf<String>(it) }
+      return mavenVersionsToRun.map {
+        val versionAndModel = it.split('/')
+        val version = versionAndModel[0]
+        val model = versionAndModel.getOrElse(1) { MavenConstants.MODEL_VERSION_4_0_0 }
+        if (model == MavenConstants.MODEL_VERSION_4_0_0 || model == MavenConstants.MODEL_VERSION_4_1_0) {
+          return@map arrayOf(version, model)
+        }
+        throw IllegalStateException("Unknown model: $model from $it")
+      }.toList()
     }
 
     internal fun getActualVersion(version: String): String {

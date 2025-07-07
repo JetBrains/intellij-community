@@ -8,6 +8,7 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import java.nio.file.Path
@@ -17,6 +18,7 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
     val pom1: Path = createPom()
     val pom2 = pom1.parent.resolve("pom2.xml")
     pom2.write(MavenTestCase.createPomXml(
+     MavenConstants.MODEL_VERSION_4_0_0,
       """
         <groupId>test</groupId>
         <artifactId>project2</artifactId>
