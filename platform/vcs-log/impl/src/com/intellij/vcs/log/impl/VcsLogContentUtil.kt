@@ -63,6 +63,9 @@ object VcsLogContentUtil {
         if (condition(logUi)) {
           if (select) {
             ContentUtilEx.selectContent(toolWindow.contentManager, it, true)
+            if (!toolWindow.isVisible) {
+              toolWindow.activate(null)
+            }
           }
           return logUi
         }
