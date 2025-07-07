@@ -73,7 +73,7 @@ public final class ShellEnvironmentReader {
 
     var reader = OS.CURRENT == OS.macOS ? "'" + PathManager.findBinFileWithException("printenv") + "'" : "/usr/bin/env -0";
     if (shFile != null) {
-      if ("nu".equals(name) || "pwsh".equals(name))
+      if ("nu".equals(name) || "pwsh".equals(name) || "xonsh".equals(name))
         throw new UnsupportedOperationException("Sourcing external scripts is not supported for '" + name + "'");
       reader = ". '" + shFile + "' && " + reader;
     }
@@ -83,6 +83,9 @@ public final class ShellEnvironmentReader {
     }
     else if ("pwsh".equals(name) && reader.charAt(0) == '\'') {
       command.add("&" + reader + " > '" + OUTPUT_PLACEHOLDER + "'");
+    }
+    else if ("xonsh".equals(name) && reader.charAt(0) == '\'') {
+      command.add("$[" + reader + " > '" + OUTPUT_PLACEHOLDER + "']");
     }
     else {
       command.add(reader + " > '" + OUTPUT_PLACEHOLDER + "'");
