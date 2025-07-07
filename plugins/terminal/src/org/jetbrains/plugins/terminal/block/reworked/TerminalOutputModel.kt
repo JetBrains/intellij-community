@@ -21,6 +21,8 @@ interface TerminalOutputModel {
    * Offset in the document where the cursor is located now.
    */
   val cursorOffsetState: StateFlow<Int>
+  
+  fun relativeOffset(offset: Int): TerminalOffset
 
   /**
    * Returns document ranges with corresponding text attributes.
@@ -32,14 +34,14 @@ interface TerminalOutputModel {
    */
   fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>)
 
+  fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>, isTypeAhead: Boolean)
+
   /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
   fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int)
   
-  fun insertAtCursor(text: String, isTypeAhead: Boolean = false)
-  
-  fun backspace()
+  fun updateCursorPosition(offset: TerminalOffset)
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
@@ -51,3 +53,5 @@ interface TerminalOutputModel {
     val KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
   }
 }
+
+sealed interface TerminalOffset

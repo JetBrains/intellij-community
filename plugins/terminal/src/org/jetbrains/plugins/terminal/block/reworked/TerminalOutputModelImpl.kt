@@ -44,6 +44,10 @@ class TerminalOutputModelImpl(
 
   private var contentUpdateInProgress: Boolean = false
 
+  override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount + offset)
+  
+  private fun TerminalOffset.toRelative(): Int = ((this as TerminalOffsetImpl).absolute - trimmedCharsCount).toInt()
+
   override fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>) {
     changeDocumentContent {
       // If absolute line index is far in the past - in the already trimmed part of the output,
@@ -56,6 +60,13 @@ class TerminalOutputModelImpl(
 
       val documentLineIndex = (absoluteLineIndex - trimmedLinesCount).toInt()
       doUpdateContent(documentLineIndex, text, styles)
+    }
+  }
+
+  override fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>, isTypeAhead: Boolean) {
+    changeDocumentContent(isTypeAhead) { 
+      val relativeStartOffset = offset.toRelative()
+      doReplaceContent(relativeStartOffset, length, text, newStyles)
     }
   }
 
@@ -83,23 +94,8 @@ class TerminalOutputModelImpl(
     mutableCursorOffsetState.value = lineStartOffset + trimmedColumnIndex
   }
 
-  override fun insertAtCursor(text: String, isTypeAhead: Boolean) {
-    changeDocumentContent(isTypeAhead) {
-      val offset = mutableCursorOffsetState.value
-      document.insertString(offset, text)
-      offset
-    }
-    ++mutableCursorOffsetState.value
-  }
-
-  override fun backspace() {
-    val offset = mutableCursorOffsetState.value
-    if (offset <= 1) return
-    changeDocumentContent {
-      document.deleteString(offset - 1, offset)
-      offset - 1
-    }
-    --mutableCursorOffsetState.value
+  override fun updateCursorPosition(offset: TerminalOffset) {
+    mutableCursorOffsetState.value = offset.toRelative()
   }
 
   /** Returns offset from which document was updated */
@@ -111,12 +107,7 @@ class TerminalOutputModelImpl(
 
     val replaceStartOffset = document.getLineStartOffset(documentLineIndex)
     document.replaceString(replaceStartOffset, document.textLength, text)
-    // If the document became shorter, immediately ensure that the cursor is still within the document.
-    // It'll update itself later to the correct position anyway, but having the incorrect value can cause exceptions before that.
-    val newLength = document.textLength
-    if (mutableCursorOffsetState.value > newLength) {
-      mutableCursorOffsetState.value = newLength
-    }
+    ensureCorrectCursorOffset()
 
     highlightingsModel.removeAfter(replaceStartOffset)
     highlightingsModel.addHighlightings(replaceStartOffset, styles)
@@ -124,6 +115,25 @@ class TerminalOutputModelImpl(
     val trimmedCount = trimToSize()
 
     return max(0, replaceStartOffset - trimmedCount)
+  }
+
+  /** Returns offset from which document was updated */
+  private fun doReplaceContent(relativeStartOffset: Int, length: Int, text: String, styles: List<StyleRange>): Int {
+    val relativeEndOffset = relativeStartOffset + length
+    document.replaceString(relativeStartOffset, relativeEndOffset, text)
+    highlightingsModel.updateHighlightings(relativeStartOffset, length, text.length, styles)
+    val trimmedCount = trimToSize()
+    ensureCorrectCursorOffset()
+    return max(0, relativeStartOffset - trimmedCount)
+  }
+
+  private fun ensureCorrectCursorOffset() {
+    // If the document became shorter, immediately ensure that the cursor is still within the document.
+    // It'll update itself later to the correct position anyway, but having the incorrect value can cause exceptions before that.
+    val newLength = document.textLength
+    if (mutableCursorOffsetState.value > newLength) {
+      mutableCursorOffsetState.value = newLength
+    }
   }
 
   /** Returns trimmed characters count */
@@ -218,7 +228,7 @@ class TerminalOutputModelImpl(
      * Indexes of the ranges are absolute to support trimming the start of the list
      * without reassigning indexes for the remaining ranges: [removeBefore].
      */
-    private val styleRanges: MutableList<StyleRange> = ArrayDeque()
+    private val styleRanges: MutableList<StyleRange> = ArrayList()
 
     /**
      * Contains sorted ranges of the highlightings that cover all document length.
@@ -298,6 +308,78 @@ class TerminalOutputModelImpl(
       highlightingsSnapshot = null
     }
 
+    fun updateHighlightings(relativeStartOffset: Int, oldLength: Int, newLength: Int, styles: List<StyleRange>) {
+      val absoluteStartOffset = relativeStartOffset + trimmedCharsCount
+      val absoluteEndOffset = absoluteStartOffset + oldLength
+      val lastUnaffectedIndexBefore = styleRanges.binarySearch { it.endOffset.compareTo(absoluteStartOffset) }.let { i ->
+        if (i >= 0) i else -i - 2
+      }
+      val firstUnaffectedIndexAfter = styleRanges.binarySearch { it.startOffset.compareTo(absoluteEndOffset) }.let { i ->
+        if (i >= 0) i else -i - 1
+      }
+      val shift = newLength - oldLength
+
+      shift(firstUnaffectedIndexAfter, shift)
+
+      updateAffectedRanges(
+        affectedIndexes = lastUnaffectedIndexBefore + 1 until firstUnaffectedIndexAfter,
+        affectedAbsoluteOffsets = absoluteStartOffset until absoluteEndOffset,
+        shift = shift,
+      )
+      
+      // We could've calculated it in updateAffectedRanges, but it's error-prone and fragile,
+      // it's much easier to just look it up.
+      val insertionIndex = styleRanges.binarySearch { it.startOffset.compareTo(absoluteEndOffset + shift) }.let { i ->
+        if (i >= 0) i else -i - 1
+      }
+      val absoluteStyles = styles.map { styleRange -> 
+        styleRange.copy(
+          startOffset = styleRange.startOffset + absoluteStartOffset,
+          endOffset = styleRange.endOffset + absoluteStartOffset,
+        )
+      }
+      styleRanges.addAll(insertionIndex, absoluteStyles)
+    }
+
+    private fun shift(shiftFromIndex: Int, shift: Int) {
+      if (shift == 0) return
+      for (i in shiftFromIndex until styleRanges.size) {
+        val styleRange = styleRanges[i]
+        styleRanges[i] = styleRange.copy(
+          startOffset = styleRange.startOffset + shift,
+          endOffset = styleRange.endOffset + shift,
+        )
+      }
+    }
+
+    private fun updateAffectedRanges(affectedIndexes: IntRange, affectedAbsoluteOffsets: LongRange, shift: Int) {
+      if (affectedIndexes.isEmpty()) return // affectedAbsoluteOffsets might be empty in case of an insertion, but we still need to split then
+      val absoluteStartOffset = affectedAbsoluteOffsets.first
+      val absoluteEndOffset = affectedAbsoluteOffsets.last + 1
+      val affectedRanges = styleRanges.subList(affectedIndexes.first, affectedIndexes.last + 1)
+      val updatedRanges = mutableListOf<StyleRange>()
+      for (range in affectedRanges) {
+        when {
+          range.startOffset < absoluteStartOffset && range.endOffset <= absoluteEndOffset -> {
+            // the start of the range is retained, the end is trimmed
+            updatedRanges.add(range.copy(endOffset = absoluteStartOffset))
+          }
+          range.startOffset in affectedAbsoluteOffsets && range.endOffset > absoluteEndOffset -> {
+            // the start of the range is trimmed, the end is retained, the range is shifted
+            updatedRanges.add(range.copy(startOffset = absoluteEndOffset + shift, endOffset = range.endOffset + shift))
+          }
+          range.startOffset < absoluteStartOffset && range.endOffset > absoluteEndOffset -> {
+            // the range is split, both parts are trimmed, the right part is also shifted
+            updatedRanges.add(range.copy(endOffset = absoluteStartOffset))
+            updatedRanges.add(range.copy(startOffset = absoluteEndOffset + shift, endOffset = range.endOffset + shift))
+          }
+          // else the entire range is inside the removed range and therefore is removed
+        }
+      }
+      affectedRanges.clear()
+      affectedRanges.addAll(updatedRanges)
+    }
+
     fun dumpState(): List<StyleRange> {
       return styleRanges.toList()
     }
@@ -310,3 +392,5 @@ class TerminalOutputModelImpl(
     }
   }
 }
+
+private data class TerminalOffsetImpl(val absolute: Long) : TerminalOffset
