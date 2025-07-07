@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.libraries.junit5.launcher` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "junit5-launcher_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "junit5-launcher",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   exports = ["@lib//:junit5Launcher"],
   runtime_deps = [
     ":junit5-launcher_resources",

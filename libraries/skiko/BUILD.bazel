@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.libraries.skiko` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "skiko_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "skiko",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   exports = [
     "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
     "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",

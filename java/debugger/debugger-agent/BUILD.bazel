@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.java.debugger.agent.holder` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "java-debugger-agent-holder",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = ["@lib//:java-debugger-agent-holder-debugger-agent"]
 )
 ### auto-generated section `build intellij.java.debugger.agent.holder` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.resources.en` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "java-resources-en_test_resources",
@@ -9,9 +8,10 @@ jvm_resources(
   visibility = ["//visibility:public"]
 )
 
-java_library(
+jvm_library(
   name = "java-resources-en",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java.resources.en` end

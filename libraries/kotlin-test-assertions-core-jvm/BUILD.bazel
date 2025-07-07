@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.libraries.kotlinTestAssertionsCoreJvm` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "kotlin-test-assertions-core-jvm_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "kotlin-test-assertions-core-jvm",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   exports = ["@lib//:kotlin-test-assertions-core-jvm"],
   runtime_deps = [
     ":kotlin-test-assertions-core-jvm_resources",

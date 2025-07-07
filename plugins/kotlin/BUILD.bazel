@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.kotlin.plugin.community.main` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "kotlin-plugin-community-main",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   exports = [
     "//plugins/kotlin/plugin",
     "//plugins/kotlin/plugin/common",

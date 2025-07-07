@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.compose.markdown` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "markdown_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "markdown",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   exports = [
     "//platform/compose",
     "//platform/jewel/markdown/core",

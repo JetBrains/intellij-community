@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.keymap.visualStudioForMac` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "keymap-visualStudioForMac_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "keymap-visualStudioForMac",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [":keymap-visualStudioForMac_resources"]
 )
 ### auto-generated section `build intellij.keymap.visualStudioForMac` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "compose-foundation-desktop-junit_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "compose-foundation-desktop-junit",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   exports = [
     "//libraries/compose-foundation-desktop",
     "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4",

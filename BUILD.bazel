@@ -77,11 +77,12 @@ java_binary(
 exports_files(["intellij.idea.community.main.iml"])
 
 ### auto-generated section `build intellij.idea.community.main` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "main",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//platform/main/intellij.platform.monolith.main:monolith-main",
     "//plugins/coverage",
@@ -262,11 +263,12 @@ java_library(
 ### auto-generated section `build intellij.idea.community.main` end
 
 ### auto-generated section `build intellij.idea.community.main.android` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "main-android",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//android/android:core",
     "//:main",
