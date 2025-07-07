@@ -18,7 +18,7 @@
                         serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport" />
 
     <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.backend.ShUrlReferenceContributor"/>
-
+    <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.backend.ShStructureViewFactory"/>
     <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShFindUsagesProvider"/>
     <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.backend.ShDocumentationProvider"/>
     <targetElementEvaluator language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShTargetElementEvaluator"/>

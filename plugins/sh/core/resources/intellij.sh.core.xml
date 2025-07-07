@@ -19,8 +19,6 @@
     <lang.elementManipulator forClass="com.intellij.sh.psi.ShLiteral" implementationClass="com.intellij.sh.psi.manipulator.ShLiteralManipulator" />
     <editor.backspaceModeOverride language="Shell Script" implementationClass="com.intellij.sh.ShBackspaceModeOverride"/>
 
-    <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.ShStructureViewFactory"/>
-
     <annotator language="Shell Script" implementationClass="com.intellij.sh.ShAnnotator"/>
     <colorSettingsPage implementation="com.intellij.sh.highlighter.ShColorPage"/>
     <additionalTextAttributes scheme="Default" file="colors/ShDefault.xml"/>
