@@ -207,7 +207,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     int totalSize = 0;
     for (Document document : documents) {
       totalSize += document.getTextLength();
-      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) return true;
+      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) {
+        return true;
+      }
     }
     return false;
   }
@@ -259,12 +261,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
-        if (file == null) continue;
-        Project project = ProjectUtil.guessProjectForFile(file);
-        if (project == null) continue;
-        if (PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) continue;
-
-        saveDocument(document);
+        if (file != null) {
+          Project project = ProjectUtil.guessProjectForFile(file);
+          if (project == null || !PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
+            saveDocument(document);
+          }
+        }
       }
     });
   }
