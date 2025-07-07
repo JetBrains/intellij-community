@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-compiler-common">
+  <library name="kotlinc.kotlin-compiler-common" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.2.20-dev-8169">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-8169/kotlin-compiler-common-for-ide-2.2.20-dev-8169.jar">
+          <sha256sum>a1823cef8b380c851f94d62c3901d2e205f7b58e11d8046184562c96457b184e</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.255-dev-255/kotlin-compiler-common-for-ide-2.2.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-8169/kotlin-compiler-common-for-ide-2.2.20-dev-8169.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.255-dev-255/kotlin-compiler-common-for-ide-2.2.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-8169/kotlin-compiler-common-for-ide-2.2.20-dev-8169-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
