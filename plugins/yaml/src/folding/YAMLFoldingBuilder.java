@@ -129,12 +129,7 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
     else if (psiElement instanceof YAMLMapping) {
       final int size = ((YAMLMapping)psiElement).getKeyValues().size();
       final String placeholder = size + " " + StringUtil.pluralize("key", size);
-      if (psiElement instanceof YAMLHashImpl) {
-        return "{" + placeholder + "}";
-      }
-      else if (psiElement instanceof YAMLBlockMappingImpl) {
-        return "<" + placeholder + ">";
-      }
+      return "{" + placeholder + "}";
     }
     else if (psiElement instanceof YAMLKeyValue) {
       return normalizePlaceHolderText(((YAMLKeyValue)psiElement).getKeyText())
