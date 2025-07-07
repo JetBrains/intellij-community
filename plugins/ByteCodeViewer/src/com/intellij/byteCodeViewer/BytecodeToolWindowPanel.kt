@@ -36,7 +36,7 @@ import kotlin.math.min
 
 internal class BytecodeToolWindowPanel(
   private val project: Project,
-  private val psiClass: PsiClass,
+  private val psiClass: PsiClass?,
   private val classFile: VirtualFile,
 ) : JBPanel<Nothing>(BorderLayout()), Disposable {
   private val bytecodeEditor: Editor = EditorFactory.getInstance()
@@ -114,7 +114,7 @@ internal class BytecodeToolWindowPanel(
     get() = FileEditorManager.getInstance(project).getSelectedTextEditor()?.takeIf { editor ->
       val document = editor.getDocument()
       val virtualFile = FileDocumentManager.getInstance().getFile(document)
-      virtualFile == psiClass.containingFile.virtualFile
+      virtualFile == psiClass?.containingFile?.virtualFile
     }
 
   override fun dispose() {

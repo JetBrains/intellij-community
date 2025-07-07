@@ -2,20 +2,26 @@
 package com.intellij.byteCodeViewer
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.PsiClass
 import com.intellij.ui.content.ContentFactory
+import org.jetbrains.annotations.Nls
 
 internal val JAVA_CLASS_FILE = Key.create<VirtualFile>("JAVA_CLASS_FILE")
 
-internal class ShowBytecodeAction : AnAction() {
+internal class ShowBytecodeAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
@@ -42,43 +48,42 @@ internal class ShowBytecodeAction : AnAction() {
     )
 
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-    val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
-    val psiElement = psiFile.findElementAt(editor.caretModel.offset) ?: return
-    val psiClass = ByteCodeViewerManager.getContainingClass(psiElement) ?: return
-    val javaClassFile = ByteCodeViewerManager.findClassFile(psiClass)
+    val psiFileInEditor = event.getData(CommonDataKeys.PSI_FILE) ?: return
+    val virtualFileInEditor = event.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+    val fileTypeInEditor = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFileInEditor.nameSequence)
 
-    if (javaClassFile == null) {
-      val title = BytecodeViewerBundle.message("bytecode.not.found.title")
-      val content = BytecodeViewerBundle.message("please.build.project")
-      val notification = Notification("Bytecode Viewer Errors", title, content, NotificationType.WARNING).setImportant(false)
-
-      val actionManager = ActionManager.getInstance()
-      val originalBuildAction = actionManager.getAction("CompileProject")
-      if (originalBuildAction != null) {
-        // Wrap the "build project" action because existing ones have various presentations problems:
-        // - "Compile" doesn't work
-        // - "CompileDirty" works but has only an ugly icon
-        // - "CompileProject" works fine but has the wrong text "Rebuild Project"
-        val buildAction = object : AnAction(BytecodeViewerBundle.message("build.project")) {
-          override fun actionPerformed(e: AnActionEvent) {
-            originalBuildAction.actionPerformed(e)
-            notification.expire()
-          }
-        }
-
-        notification.addAction(buildAction)
+    var psiClass: PsiClass? = null
+    val classFile = if (fileTypeInEditor == JavaClassFileType.INSTANCE) {
+      // The user has a class file opened in the focused editor.
+      virtualFileInEditor
+    }
+    else {
+      // The user has a source file opened in the focused editor.
+      val psiElement = psiFileInEditor.findElementAt(editor.caretModel.offset)
+      if (psiElement == null) {
+        project.showErrorNotification(BytecodeViewerBundle.message("could.not.find.class.at.cursor"))
+        return
       }
-
-      notification.notify(project)
-      return
+      psiClass = ByteCodeViewerManager.getContainingClass(psiElement)
+      if (psiClass == null) {
+        project.showErrorNotification(BytecodeViewerBundle.message("could.not.find.class.at.cursor"))
+        return
+      }
+      val javaClassFile = ByteCodeViewerManager.findClassFile(psiClass)
+      if (javaClassFile == null) {
+        project.showErrorNotification(BytecodeViewerBundle.message("please.build.project"), suggestBuild = true)
+        return
+      }
+      javaClassFile
     }
 
-    val panel = BytecodeToolWindowPanel(project, psiClass, javaClassFile)
 
-    val content = toolWindow.contentManager.contents.firstOrNull { it.getUserData(JAVA_CLASS_FILE) == javaClassFile }
-                  ?: ContentFactory.getInstance().createContent(panel, javaClassFile.presentableName, false).apply {
-                    description = javaClassFile.presentableUrl // appears on tab hover
-                    putUserData(JAVA_CLASS_FILE, javaClassFile)
+    val panel = BytecodeToolWindowPanel(project, psiClass, classFile)
+
+    val content = toolWindow.contentManager.contents.firstOrNull { it.getUserData(JAVA_CLASS_FILE) == classFile }
+                  ?: ContentFactory.getInstance().createContent(panel, classFile.presentableName, false).apply {
+                    description = classFile.presentableUrl // appears on tab hover
+                    putUserData(JAVA_CLASS_FILE, classFile)
                   }
 
 
@@ -124,4 +129,29 @@ internal class ShowBytecodeAction : AnAction() {
 
     return DefaultActionGroup(showDebugAction, syncWithEditorAction)
   }
+}
+
+private fun Project.showErrorNotification(@Nls content: String, suggestBuild: Boolean = false) {
+  val title = BytecodeViewerBundle.message("bytecode.not.found.title")
+  val notification = Notification("Bytecode Viewer Errors", title, content, NotificationType.WARNING).setImportant(false)
+
+  val actionManager = ActionManager.getInstance()
+  val originalBuildAction = actionManager.getAction("CompileProject")
+  if (originalBuildAction != null && suggestBuild) {
+    // Wrap the "build project" action because existing ones have various presentations problems:
+    // - "Compile" doesn't work
+    // - "CompileDirty" works but has only an ugly icon
+    // - "CompileProject" works fine but has the wrong text "Rebuild Project"
+    val buildAction = object : AnAction(BytecodeViewerBundle.message("build.project")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        originalBuildAction.actionPerformed(e)
+        notification.expire()
+      }
+    }
+
+    notification.addAction(buildAction)
+  }
+
+  notification.notify(this)
+  return
 }
