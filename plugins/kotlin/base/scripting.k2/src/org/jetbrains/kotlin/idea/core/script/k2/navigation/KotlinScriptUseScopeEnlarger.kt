@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.navigation
 
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -12,7 +13,9 @@ import org.jetbrains.kotlin.psi.KtFile
 class KotlinScriptUseScopeEnlarger : UseScopeEnlarger() {
     override fun getAdditionalUseScope(element: PsiElement): SearchScope? {
         val file = element.containingFile as? KtFile ?: return null
-        return if (file.isScript()) ProjectFileByExtensionSearchScope(element.project, "kts") else null
+        val isInjection = file.virtualFile is VirtualFileWindow
+        // Kotlin Notebook injections shall contain local scope
+        return if (file.isScript() && !isInjection) ProjectFileByExtensionSearchScope(element.project, "kts") else null
     }
 
     private class ProjectFileByExtensionSearchScope(project: Project, private val extension: String) :
