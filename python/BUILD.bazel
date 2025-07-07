@@ -114,6 +114,65 @@ jvm_library(
     "//python/intellij.python.ml.features:ml-features",
   ]
 )
+
+jvm_library(
+  name = "pycharm-community-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  deps = [
+    "//plugins/terminal",
+    "//plugins/terminal:terminal_test_lib",
+    "//python:pycharm-community",
+    "//python:pycharm-community-customization",
+    "//python/pluginCore:community-plugin",
+    "//platform/starter",
+    "//plugins/tasks/tasks-core/jira",
+    "//plugins/settings-repository",
+    "//plugins/properties:properties-backend",
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/plugin:plugin-main",
+    "//plugins/sh",
+    "//plugins/changeReminder",
+    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//plugins/textmate",
+    "//plugins/textmate:textmate_test_lib",
+    "//plugins/color-schemes/monokai-color-scheme:color-scheme-monokai",
+    "//plugins/color-schemes/twilight-color-scheme:color-scheme-twilight",
+    "//plugins/color-schemes/warm-neon-color-scheme:color-scheme-warmNeon",
+    "//plugins/color-schemes/github-color-scheme:color-scheme-github",
+  ],
+  runtime_deps = [
+    "//platform/main/intellij.platform.monolith.main:monolith-main",
+    "//platform/bootstrap",
+    "//plugins/hg4idea:vcs-hg",
+    "//plugins/svn4idea:vcs-svn",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea/shared",
+    "//plugins/git4idea/frontend",
+    "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+    "//xml/relaxng",
+    "//plugins/github/github-core:vcs-github",
+    "//plugins/terminal/frontend",
+    "//plugins/terminal/backend",
+    "//python:python-community-plugin-modules",
+    "//plugins/configuration-script",
+    "//plugins/completion-ml-ranking",
+    "//plugins/stats-collector",
+    "//plugins/terminal/sh",
+    "//plugins/completion-ml-ranking-models",
+    "//plugins/emojipicker",
+    "//plugins/grazie",
+    "//platform/lvcs-impl",
+    "//plugins/search-everywhere-ml",
+    "//notebooks/visualization",
+    "//plugins/dev:dev-noJava-plugin-main",
+    "//plugins/evaluation-plugin",
+    "//plugins/evaluation-plugin/languages/python",
+    "//platform/new-ui-onboarding",
+    "//plugins/github/community",
+    "//python/intellij.python.ml.features:ml-features",
+  ]
+)
 ### auto-generated section `build intellij.pycharm.community.main` end
 
 ### auto-generated section `build intellij.python.commonTests` start
@@ -325,6 +384,21 @@ jvm_library(
     "//python/pluginMinor:community-plugin-minor",
     "//python:python-community-plugin-modules",
   ]
+)
+
+jvm_library(
+  name = "python-community-plugin-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  deps = [
+    "//java/openapi:java",
+    "//java/idea-ui:ui",
+    "//python/pluginCore:community-plugin",
+    "//python/pluginJava:community-plugin-java",
+    "//python/pluginMinor:community-plugin-minor",
+    "//python:python-community-plugin-modules",
+  ],
+  runtime_deps = ["//:main"]
 )
 ### auto-generated section `build intellij.python.community.plugin.main` end
 

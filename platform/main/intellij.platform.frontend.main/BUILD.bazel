@@ -20,4 +20,24 @@ jvm_library(
     "//platform/buildView/frontend",
   ]
 )
+
+jvm_library(
+  name = "frontend-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  deps = ["//platform/execution-impl/frontend"],
+  runtime_deps = [
+    "//platform/main/intellij.platform.main:main",
+    "//platform/navbar/frontend",
+    "//platform/xdebugger-impl/frontend",
+    "//platform/searchEverywhere/frontend",
+    "//platform/vcs-impl/frontend",
+    "//platform/bookmarks/frontend",
+    "//platform/recentFiles/frontend",
+    "//platform/pluginManager/frontend",
+    "//platform/execution.dashboard/frontend",
+    "//platform/execution.serviceView/frontend",
+    "//platform/buildView/frontend",
+  ]
+)
 ### auto-generated section `build intellij.platform.frontend.main` end

@@ -12,4 +12,16 @@ jvm_library(
     "//platform/navbar/monolith",
   ]
 )
+
+jvm_library(
+  name = "monolith-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/main/intellij.platform.frontend.main:frontend-main",
+    "//platform/main/intellij.platform.backend.main:backend-main",
+    "//platform/monolith",
+    "//platform/navbar/monolith",
+  ]
+)
 ### auto-generated section `build intellij.platform.monolith.main` end

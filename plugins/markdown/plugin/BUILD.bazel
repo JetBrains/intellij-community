@@ -18,4 +18,22 @@ jvm_library(
     "//plugins/markdown/core/frontend",
   ]
 )
+
+jvm_library(
+  name = "plugin-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/markdown/fenceInjection",
+    "//plugins/markdown/frontmatter",
+    "//plugins/markdown/frontmatter/toml",
+    "//plugins/markdown/frontmatter/yaml",
+    "//plugins/markdown/images",
+    "//plugins/markdown/model",
+    "//plugins/markdown/spellchecker",
+    "//plugins/markdown/xml",
+    "//plugins/markdown/compose:compose-preview",
+    "//plugins/markdown/core/frontend",
+  ]
+)
 ### auto-generated section `build intellij.markdown.plugin.main` end

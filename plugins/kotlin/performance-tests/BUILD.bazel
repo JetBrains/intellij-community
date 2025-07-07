@@ -11,7 +11,8 @@ jvm_resources(
 jvm_library(
   name = "performance-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":performance-tests_resources"]
 )
 
 jvm_library(

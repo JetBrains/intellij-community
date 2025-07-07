@@ -26,4 +26,30 @@ jvm_library(
     "//platform/buildView/backend",
   ]
 )
+
+jvm_library(
+  name = "backend-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  deps = ["//platform/execution-impl/backend"],
+  runtime_deps = [
+    "//platform/main/intellij.platform.main:main",
+    "//platform/kernel/backend",
+    "//platform/navbar/backend",
+    "//platform/project/backend",
+    "//platform/progress/backend",
+    "//platform/xdebugger-impl/backend",
+    "//platform/searchEverywhere/backend",
+    "//platform/vcs-impl/backend",
+    "//platform/bookmarks/backend",
+    "//platform/recentFiles/backend",
+    "//platform/editor/backend",
+    "//platform/execution.dashboard/backend",
+    "//spellchecker/xml",
+    "//platform/find/backend",
+    "//platform/managed-cache/managed.cache.backend",
+    "//platform/scopes/backend",
+    "//platform/buildView/backend",
+  ]
+)
 ### auto-generated section `build intellij.platform.backend.main` end

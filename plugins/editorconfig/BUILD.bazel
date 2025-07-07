@@ -29,4 +29,16 @@ jvm_library(
     "//plugins/editorconfig/backend",
   ]
 )
+
+jvm_library(
+  name = "editorconfig-plugin-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/editorconfig:editorconfig-plugin",
+    "//plugins/editorconfig/common",
+    "//plugins/editorconfig/frontend",
+    "//plugins/editorconfig/backend",
+  ]
+)
 ### auto-generated section `build intellij.editorconfig.plugin.main` end

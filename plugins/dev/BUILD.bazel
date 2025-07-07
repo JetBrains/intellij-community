@@ -12,6 +12,18 @@ jvm_library(
     "//platform/statistics/devkit",
   ]
 )
+
+jvm_library(
+  name = "dev-noJava-plugin-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/dev/intellij.dev:dev",
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight",
+    "//plugins/dev/intellij.dev.psiViewer:psiViewer",
+    "//platform/statistics/devkit",
+  ]
+)
 ### auto-generated section `build intellij.dev.noJava.plugin.main` end
 
 ### auto-generated section `build intellij.dev.plugin.main` start
@@ -19,6 +31,18 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "dev-plugin-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/dev:dev-noJava-plugin-main",
+    "//plugins/dev/intellij.java.dev:java-dev",
+    "//plugins/dev/intellij.groovy.dev:groovy-dev",
+    "//plugins/dev/intellij.kotlin.dev:kotlin-dev",
+  ]
+)
+
+jvm_library(
+  name = "dev-plugin-main_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [

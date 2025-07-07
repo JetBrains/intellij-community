@@ -30,6 +30,23 @@ jvm_library(
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
   ]
 )
+
+jvm_library(
+  name = "devkit-plugin-main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  deps = [
+    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
+    "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
+  ],
+  runtime_deps = [
+    "//plugins/devkit:devkit-plugin-main-noKotlin",
+    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+    "//plugins/devkit/intellij.kotlin.devkit/k1",
+    "//plugins/devkit/intellij.kotlin.devkit/k2",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+  ]
+)
 ### auto-generated section `build intellij.devkit.plugin.main` end
 
 ### auto-generated section `build intellij.devkit.plugin.main.noKotlin` start
@@ -39,6 +56,30 @@ jvm_library(
   name = "devkit-plugin-main-noKotlin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit",
+    "//plugins/devkit/devkit-core:core",
+    "//plugins/devkit/intellij.devkit.debugger:debugger",
+    "//plugins/devkit/intellij.devkit.git:git",
+    "//plugins/devkit/intellij.devkit.gradle:gradle",
+    "//plugins/devkit/intellij.devkit.i18n:i18n",
+    "//plugins/devkit/intellij.devkit.intelliLang:intelliLang",
+    "//plugins/devkit/intellij.devkit.themes:themes",
+    "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner",
+    "//plugins/devkit/jps-plugin:jps",
+    "//plugins/devkit/runtimeModuleRepository/jps",
+    "//plugins/devkit/intellij.devkit.scaffolding:scaffolding",
+    "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
+    "//plugins/devkit/api-dump",
+    "//plugins/devkit/api-dump-lang:apiDump-lang",
+  ]
+)
+
+jvm_library(
+  name = "devkit-plugin-main-noKotlin_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  deps = ["//plugins/devkit/devkit-java-tests:java-tests_test_lib"],
   runtime_deps = [
     "//plugins/devkit",
     "//plugins/devkit/devkit-core:core",

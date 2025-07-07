@@ -11,7 +11,8 @@ jvm_resources(
 jvm_library(
   name = "community",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":community_resources"]
 )
 
 jvm_library(

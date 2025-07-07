@@ -22,4 +22,28 @@ jvm_library(
     "//platform/xdebugger-impl/rpc",
   ]
 )
+
+jvm_library(
+  name = "main_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  deps = [
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
+  ],
+  runtime_deps = [
+    "//platform/bootstrap",
+    "//platform/remote-servers/clouds",
+    "//platform/execution.dashboard",
+    "//platform/execution.serviceView",
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/intellij.platform.kernel.impl:impl",
+    "//platform/platform-impl/ui-inspector:ide-ui-inspector",
+    "//platform/inline-completion/shared:inline-completion",
+    "//platform/bookmarks",
+    "//platform/todo",
+    "//platform/find",
+    "//platform/settings-local",
+  ]
+)
 ### auto-generated section `build intellij.platform.main` end
