@@ -7,7 +7,7 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 57
+version = 58
 
 if not hasattr(sys, '_current_frames'):
 
