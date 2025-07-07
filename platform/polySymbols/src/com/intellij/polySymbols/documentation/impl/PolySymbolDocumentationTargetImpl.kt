@@ -3,6 +3,7 @@ package com.intellij.polySymbols.documentation.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
@@ -64,9 +65,13 @@ internal class PolySymbolDocumentationTargetImpl<T : PolySymbol>(
 
   companion object {
     internal fun check(lambda: Any) {
-      assert(!ApplicationManager.getApplication().isUnitTestMode ||
-             lambda::class.java.declaredFields.none { it.name.startsWith("arg$") || it.name.startsWith("this$") }) {
-        "Do not capture object instance or method parameters in documentation target builder lambda : $lambda"
+      if (!ApplicationManager.getApplication().let { it.isUnitTestMode || it.isInternal || it.isEAP }) return
+      if (lambda::class.java.declaredFields.any { it.name.startsWith("arg$") || it.name.startsWith("this$") }) {
+        val message = "Do not capture object instance or method parameters in documentation target builder lambda : $lambda"
+        if (ApplicationManager.getApplication().isUnitTestMode)
+          throw AssertionError(message)
+        else
+          thisLogger().error(message)
       }
     }
   }
