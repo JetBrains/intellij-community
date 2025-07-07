@@ -2823,10 +2823,6 @@
       <add-to-group group-id="Internal" anchor="after" relative-to-action="Internal.Java"/>
     </group>
 
-    <action id="ParseSdkmanrcAction" class="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction" icon="AllIcons.Actions.Refresh">
-      <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
-    </action>
-
     <action id="DownloadJdkAction" class="com.intellij.ide.actions.DownloadJdkAction" icon="AllIcons.Actions.Download"/>
     <action id="AddJdkAction" class="com.intellij.ide.actions.AddJdkAction" icon="AllIcons.Nodes.PpJdk"/>
   </actions>
