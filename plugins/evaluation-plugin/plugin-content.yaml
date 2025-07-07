@@ -68,3 +68,9 @@
     libraries:
       langfuse.java:
       - name: $MAVEN_REPOSITORY$/com/langfuse/langfuse-java/0/langfuse-java-0.jar
+- name: lib/opencsv.jar
+  library: opencsv
+  files:
+  - name: $MAVEN_REPOSITORY$/com/opencsv/opencsv/5/opencsv-5.jar
+  - name: $MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1/commons-beanutils-1.jar
+  reason: <- intellij.evaluationPlugin.ijnext
