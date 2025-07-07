@@ -4,39 +4,22 @@ package com.intellij.openapi.vfs.impl.eel
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.utils.JEelUtils
-import kotlin.io.path.Path
 
 internal class EelData(val descriptor: EelDescriptor) {
 
-  val recursive: MutableMap<String, String> = mutableMapOf()
-  val flat: MutableMap<String, String> = mutableMapOf()
-
-  @Volatile
-  var ignored: List<String> = emptyList()
+  val recursive: MutableSet<EelPath> = mutableSetOf()
+  val flat: MutableSet<EelPath> = mutableSetOf()
 
   fun reload(other: EelData) {
     recursive.clear()
-    recursive.putAll(other.recursive)
+    recursive.addAll(other.recursive)
     flat.clear()
-    flat.putAll(other.flat)
-    ignored = emptyList()
+    flat.addAll(other.flat)
   }
 
   fun getWatchedPaths(): Set<WatchedPath> {
-    return (recursive.values.mapNotNull {
-      toContainerPath(it)?.let { eelPath -> WatchedPath.from(eelPath).recursive() }
-    } + flat.values.mapNotNull {
-      toContainerPath(it)?.let { eelPath -> WatchedPath.from(eelPath) }
-    }).toSet()
-  }
-
-  fun toContainerPath(path: String): EelPath? =
-    JEelUtils.toEelPath(kotlin.io.path.Path(path))
-
-  internal fun findPath(path: String): String? {
-    val originalRoot = recursive.keys.firstOrNull { path.startsWith(it) }?.let { recursive[it] }
-             ?: flat.keys.firstOrNull { path.startsWith(it) }?.let { flat[it] } ?: return null
-    return Path(originalRoot).resolve(Path(path)).toString()
+    return recursive.map { eelPath -> WatchedPath.from(eelPath).recursive() }
+      .plus(flat.map { eelPath -> WatchedPath.from(eelPath) })
+      .toSet()
   }
 }

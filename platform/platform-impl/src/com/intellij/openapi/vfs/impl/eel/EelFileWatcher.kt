@@ -10,8 +10,11 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
 import com.intellij.platform.eel.fs.EelFileSystemApi.PathChange
 import com.intellij.platform.eel.fs.WatchOptionsBuilder
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.upgradeBlocking
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
@@ -73,7 +76,6 @@ class EelFileWatcher : PluggableFileWatcher() {
           existing.data.reload(incoming)
           myWatchedEels[key] = WatchedEel(incoming, setupWatcherJob(incoming))
         }
-        else -> myNotificationSink.notifyManualWatchRoots(this, existing.data.ignored)
       }
     }
 
@@ -85,22 +87,29 @@ class EelFileWatcher : PluggableFileWatcher() {
     }
   }
 
-  private fun filterAndNotifyManualWatchRoots(all: List<String>): List<EelPathInfo> {
-    val (result, ignored) = all.map { it to it.getDevcontainerPathInfo() }.partition { it.second != null }
-    myNotificationSink.notifyManualWatchRoots(this, ignored.map { it.first })
+  private fun filterAndNotifyManualWatchRoots(all: List<String>): List<EelPath> {
+    val filtered = all
+      .map(String::toNioPathOrNull)
+      .map { nioPath -> nioPath?.asEelPath() }
+      .map { eelPath ->
+        // The original IntelliJ platform's file watcher is responsible for local files.
+        if (eelPath == null || eelPath.descriptor == LocalEelDescriptor) null
+        else eelPath
+      }
+    val ignoredPaths = all.zip(filtered).mapNotNull { (sourcePath, flag) -> sourcePath.takeIf { flag == null } }
+    myNotificationSink.notifyManualWatchRoots(this, ignoredPaths)
 
-    return result.mapNotNull { it.second }
+    return filtered.filterNotNull()
   }
 
   private fun sortRoots(
-    roots: List<EelPathInfo>,
+    roots: List<EelPath>,
     eelData: MutableMap<EelDescriptor, EelData>,
     recursive: Boolean,
   ) {
-    roots.forEach { info ->
-      val descriptor = info.descriptor
-      val data: EelData = eelData.computeIfAbsent(descriptor) { EelData(info.descriptor) }
-      (if (recursive) data.recursive else data.flat)[info.path] = info.absolutePath
+    roots.forEach { path ->
+      val data: EelData = eelData.computeIfAbsent(path.descriptor, ::EelData)
+      (if (recursive) data.recursive else data.flat).add(path)
     }
   }
 
@@ -128,10 +137,22 @@ class EelFileWatcher : PluggableFileWatcher() {
   }
 
   private fun notifyChange(change: PathChange, data: EelData) {
-    val root: String = data.findPath(change.path) ?: return
+    val eelPath =
+      try {
+        EelPath.parse(change.path, data.descriptor)
+      }
+      catch (_: EelPathException) {
+        return
+      }
+
+    if (!data.flat.contains(eelPath) && !data.recursive.any(eelPath::startsWith)){
+      return
+    }
+
+    val mrfsPath: String = eelPath.asNioPath().toString()
     when (change.type) {
-      FileChangeType.CHANGED -> myNotificationSink.notifyDirtyPath(root)
-      FileChangeType.CREATED, FileChangeType.DELETED -> myNotificationSink.notifyPathCreatedOrDeleted(root)
+      FileChangeType.CHANGED -> myNotificationSink.notifyDirtyPath(mrfsPath)
+      FileChangeType.CREATED, FileChangeType.DELETED -> myNotificationSink.notifyPathCreatedOrDeleted(mrfsPath)
     }
   }
 
@@ -144,14 +165,6 @@ class EelFileWatcher : PluggableFileWatcher() {
 
   override fun shutdown(): Unit = shutdownWatcherJobs()
 }
-
-private fun String.getDevcontainerPathInfo(): EelPathInfo? {
-  val path = this.toNioPathOrNull()?.asEelPath() ?: return null
-  val descriptor = path.descriptor
-  return if (descriptor is LocalEelDescriptor) null else EelPathInfo(descriptor, path.toString(), this)
-}
-
-private data class EelPathInfo(val descriptor: EelDescriptor, val path: String, val absolutePath: String)
 
 private class WatchedEel(val data: EelData, private val cancelCallback: () -> Unit) {
   fun cancel() {
