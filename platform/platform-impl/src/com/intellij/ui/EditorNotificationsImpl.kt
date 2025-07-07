@@ -244,7 +244,10 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
             return@launch
           }
           // we use read action here to prevent project cancellation during instantiation
-          val provider = readAction { adapter.createInstance<EditorNotificationProvider>(project) } ?: continue
+          val provider = readAction {
+            if (project.isDisposed) null
+            else adapter.createInstance<EditorNotificationProvider>(project)
+          } ?: continue
 
           coroutineContext.ensureActive()
 
