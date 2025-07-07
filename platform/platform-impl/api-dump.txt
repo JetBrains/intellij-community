@@ -1233,17 +1233,19 @@ com.intellij.ui.dsl.validation.CellValidation
 - a:getEnabled():Z
 - a:setEnabled(Z):V
 com.intellij.ui.layout.CellBuilder
-- a:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
+- ba:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - a:constraints(com.intellij.ui.layout.CCFlags[]):com.intellij.ui.layout.CellBuilder
 - ba:focused():com.intellij.ui.layout.CellBuilder
 - a:getComponent():javax.swing.JComponent
 - a:growPolicy(com.intellij.ui.layout.GrowPolicy):com.intellij.ui.layout.CellBuilder
-- a:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
-- a:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
-- a:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
+- ba:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
+- ba:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
+- ba:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - ba:withValidationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 - ba:withValidationOnInput(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
+f:com.intellij.ui.layout.CellKt
+- sf:createPropertyBinding(kotlin.reflect.KMutableProperty0,java.lang.Class):com.intellij.ui.layout.PropertyBinding
 com.intellij.ui.layout.LayoutBuilderImpl
 - a:build(java.awt.Container,com.intellij.ui.layout.LCFlags[]):V
 - a:getComponentValidateCallbacks():java.util.Map

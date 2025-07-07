@@ -4,24 +4,21 @@
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.Label
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.event.ActionEvent
-import javax.swing.*
-import javax.swing.text.JTextComponent
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
@@ -36,7 +33,7 @@ data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
 @PublishedApi
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
 internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
   if (prop is CallableReference) {
     val name = prop.name
@@ -70,12 +67,6 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
   return PropertyBinding(prop.getter, prop.setter)
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL 2")
-internal inline fun <reified T : Any> KMutableProperty0<T>.intToBinding(): PropertyBinding<T> {
-  return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
-}
-
 class ValidationInfoBuilder(val component: JComponent) {
   fun error(@DialogMessage message: String): ValidationInfo = ValidationInfo(message, component)
   fun warning(@DialogMessage message: String): ValidationInfo = ValidationInfo(message, component).asWarning().withOKEnabled()
@@ -90,7 +81,7 @@ interface CellBuilder<out T : JComponent> {
   val component: T
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL 2")
+  @Deprecated("Use Kotlin UI DSL 2", level = DeprecationLevel.HIDDEN)
   fun comment(@DetailedDescription text: String, maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
               forComponent: Boolean = false): CellBuilder<T>
 
@@ -107,42 +98,25 @@ interface CellBuilder<out T : JComponent> {
   fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun onApply(callback: () -> Unit): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun onReset(callback: () -> Unit): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun onIsModified(callback: () -> Boolean): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
   fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
-  @ApiStatus.ScheduledForRemoval
-  @ApiStatus.Internal
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun <V> withBindingInt(
-    componentGet: (T) -> V,
-    componentSet: (T, V) -> Unit,
-    modelBinding: PropertyBinding<V>
-  ): CellBuilder<T> {
-    onApply { modelBinding.set(componentGet(component)) }
-    onReset { componentSet(component, modelBinding.get()) }
-    onIsModified { componentGet(component) != modelBinding.get() }
-    return this
-  }
-}
-
-private fun <T : JComponent> CellBuilder<T>.intApplyToComponent(task: T.() -> Unit): CellBuilder<T> {
-  return also { task(component) }
 }
 
 // separate class to avoid row related methods in the `cell { } `
@@ -190,108 +164,9 @@ abstract class Cell : BaseBuilder {
     return component(button)
   }
 
-  @JvmOverloads
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun checkBox(@Checkbox text: String,
-               isSelected: Boolean = false,
-               @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
-    val result = JBCheckBox(text, isSelected)
-    return result.intInvoke(comment = comment)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun checkBox(@Checkbox text: String, prop: KMutableProperty0<Boolean>, @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
-    return checkBox(text, prop.intToBinding(), comment)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun checkBox(@Checkbox text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
-    return checkBox(text, PropertyBinding(getter, setter), comment)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  private fun checkBox(@Checkbox text: String,
-                       modelBinding: PropertyBinding<Boolean>,
-                       @DetailedDescription comment: String?): CellBuilder<JBCheckBox> {
-    val component = JBCheckBox(text, modelBinding.get())
-    return component.intInvoke(comment = comment).withBindingInt(AbstractButton::isSelected, AbstractButton::setSelected, modelBinding)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun <T> comboBox(model: ComboBoxModel<T>,
-                   getter: () -> T?,
-                   setter: (T?) -> Unit,
-                   renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
-    return comboBoxInt(model, PropertyBinding(getter, setter), renderer)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun <T> comboBox(model: ComboBoxModel<T>,
-                   modelBinding: PropertyBinding<T?>,
-                   renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
-    return comboBoxInt(model, modelBinding, renderer)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @ApiStatus.Internal
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun <T> comboBoxInt(model: ComboBoxModel<T>,
-                   modelBinding: PropertyBinding<T?>,
-                   renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
-    return component(ComboBox(model))
-      .intApplyToComponent {
-        this.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
-        selectedItem = modelBinding.get()
-      }
-      .withBindingInt(
-        { component -> component.selectedItem as T? },
-        { component, value -> component.setSelectedItem(value) },
-        modelBinding
-      )
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun textField(binding: PropertyBinding<@Nls String>, columns: Int? = null): CellBuilder<JBTextField> {
-    return textFieldInt(binding, columns)
-  }
-
-  private fun textFieldInt(binding: PropertyBinding<@Nls String>, columns: Int? = null): CellBuilder<JBTextField> {
-    return component(JBTextField(binding.get(), columns ?: 0))
-      .withBindingInt(JTextComponent::getText, JTextComponent::setText, binding)
-  }
-
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  operator fun <T : JComponent> T.invoke(
-    vararg constraints: CCFlags,
-    growPolicy: GrowPolicy? = null,
-    @DetailedDescription comment: String? = null
-  ): CellBuilder<T> = component(this).apply {
-    constraints(*constraints)
-    if (comment != null) comment(comment)
-    if (growPolicy != null) growPolicy(growPolicy)
-  }
-
-  private fun <T : JComponent> T.intInvoke(
-    vararg constraints: CCFlags,
-    growPolicy: GrowPolicy? = null,
-    @DetailedDescription comment: String? = null
-  ): CellBuilder<T> = component(this).apply {
-    constraints(*constraints)
-    if (comment != null) comment(comment)
-    if (growPolicy != null) growPolicy(growPolicy)
-  }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")

@@ -118,7 +118,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var visible: Boolean = true
+  private var visible: Boolean = true
     set(value) {
       if (field == value) {
         return
