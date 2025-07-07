@@ -251,12 +251,9 @@ public final class EnvironmentUtil {
 
   @ApiStatus.Internal
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  public static void appendSearchPath(@NotNull Map<String, String> env, @NotNull String envName, @Nullable String pathToAppend) {
-    if (pathToAppend == null) return;
-
+  public static void appendSearchPath(@NotNull Map<String, String> env, @NotNull String envName, @NotNull String pathToAppend) {
     String currentPath = env.get(envName);
     String newPath = currentPath != null ? currentPath + java.io.File.pathSeparator + pathToAppend : pathToAppend;
-
     env.put(envName, newPath);
   }
 }
