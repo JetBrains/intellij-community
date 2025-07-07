@@ -5,10 +5,8 @@ import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
-import com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintViewWithMargins
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
-import com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStamp
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.editor.Inlay

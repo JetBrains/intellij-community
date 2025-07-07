@@ -3,6 +3,9 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationEntry
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
+import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import junit.framework.TestCase

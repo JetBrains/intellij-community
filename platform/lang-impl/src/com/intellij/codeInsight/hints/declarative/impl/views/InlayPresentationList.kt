@@ -1,9 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.hints.declarative.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.hints.declarative.impl.views
 
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayActionService
+import com.intellij.codeInsight.hints.declarative.impl.InlayData
+import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
+import com.intellij.codeInsight.hints.declarative.impl.InlayTags
+import com.intellij.codeInsight.hints.declarative.impl.views.PresentationEntryBuilder
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
-import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintView
 import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
@@ -34,7 +38,7 @@ interface DeclarativeHintViewWithMargins: DeclarativeHintView<InlayData> {
 }
 
 /**
- * @see PresentationTreeBuilderImpl
+ * @see com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
  */
 @ApiStatus.Internal
 class InlayPresentationList(

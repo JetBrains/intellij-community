@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.hints.declarative.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.hints.declarative.impl.inlayRenderer
 
-import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
+import com.intellij.codeInsight.hints.declarative.impl.InlayData
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
 import com.intellij.codeInsight.hints.declarative.impl.views.SingleDeclarativeHintView
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import org.jetbrains.annotations.ApiStatus

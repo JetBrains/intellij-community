@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints.declarative.impl.util
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayDumpUtil.InlayDumpPlacement
 import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ExtractedHintInfo.*

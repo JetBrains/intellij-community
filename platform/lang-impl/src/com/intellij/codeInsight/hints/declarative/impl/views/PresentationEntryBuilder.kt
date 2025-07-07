@@ -1,9 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.hints.declarative.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.hints.declarative.impl.views
 
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.SymbolPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.impl.ActionWithContent
+import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
+import com.intellij.codeInsight.hints.declarative.impl.InlayTags
+import com.intellij.codeInsight.hints.declarative.impl.ZombieSmartPointer
+import com.intellij.codeInsight.hints.declarative.impl.ZombieSymbolPointer
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.diagnostic.PluginException
 import org.jetbrains.annotations.ApiStatus
@@ -58,7 +63,8 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerCl
           }
           is ActionWithContent -> {
             val area = this.currentClickArea ?: mouseAreaIfNotZombie(dataPayload.actionData)
-            val entry = TextInlayPresentationEntry(dataPayload.content as String, clickArea = area, parentIndexToSwitch = parentIndexToSwitch)
+            val entry = TextInlayPresentationEntry(dataPayload.content as String, clickArea = area,
+                                                   parentIndexToSwitch = parentIndexToSwitch)
             addEntry(entry)
             area?.entries?.add(entry)
           }
@@ -128,4 +134,3 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerCl
     entries.add(presentation)
   }
 }
-
