@@ -73,12 +73,16 @@ public final class ShellEnvironmentReader {
 
     var reader = OS.CURRENT == OS.macOS ? "'" + PathManager.findBinFileWithException("printenv") + "'" : "/usr/bin/env -0";
     if (shFile != null) {
-      if ("nu".equals(name)) throw new UnsupportedOperationException("Sourcing external scripts is not supported for 'nu'");
+      if ("nu".equals(name) || "pwsh".equals(name))
+        throw new UnsupportedOperationException("Sourcing external scripts is not supported for '" + name + "'");
       reader = ". '" + shFile + "' && " + reader;
     }
     command.add("-c");
     if ("nu".equals(name)) {
       command.add((reader.charAt(0) == '\'' ? "^" : "") + reader + " out> '" + OUTPUT_PLACEHOLDER + "'");
+    }
+    else if ("pwsh".equals(name) && reader.charAt(0) == '\'') {
+      command.add("&" + reader + " > '" + OUTPUT_PLACEHOLDER + "'");
     }
     else {
       command.add(reader + " > '" + OUTPUT_PLACEHOLDER + "'");
