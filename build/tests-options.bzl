@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_java//java:defs.bzl", "java_test")
 
 PKGS = [
     "java.base/java.io",
@@ -45,7 +45,7 @@ PKGS = [
 
 ADD_OPENS_FLAGS = ["--add-opens=" + pkg + "=ALL-UNNAMED" for pkg in PKGS]
 
-JVM_FLAGS = [
+JAVA_TEST_FLAGS = [
     "-Didea.classpath.index.enabled=false",
     "-Djava.awt.headless=true",
     "-Djunit.jupiter.extensions.autodetection.enabled=true",
@@ -54,12 +54,21 @@ JVM_FLAGS = [
     "-Dintellij.build.use.compiled.classes=false",
 ]
 
-JVM_TEST_ARGS = [
-    "--disable-banner",
-    "--fail-if-no-tests",
+JAVA_TEST_ARGS = [
+    # Classpath jar does not work for us (needs investigating why)
+    # --classpath_limit is set to pass classpath unconditionally via java binary command line parameters
+    # see output_base/external/rules_java+/java/bazel/rules/java_stub_template.txt
+    #
+    # A better way would be passing java command line parameters via java argfile:
+    # https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html#java-command-line-argument-files
+    # (available since java 9)
+    "--classpath_limit=10000000",
 ]
 
 TEST_FRAMEWORK_DEPS = [
+  # TODO Review this list, most likely only tools-testsBootstrap is required
+  # junit stuff should be propagated via runtime deps of testsBootstrap
+
   "@community//platform/testFramework/bootstrap:tools-testsBootstrap",
   "@community//platform/util:util-tests_test_lib",
 
@@ -67,9 +76,6 @@ TEST_FRAMEWORK_DEPS = [
   "@lib//:junit5Vintage-provided",
   "@lib//:junit4",
   "@lib//:junit4-provided",
-  "@community//platform/main/intellij.platform.monolith.main:monolith-main",
-  "@community//plugins/IntelliLang/xml-support:xml-langInjection",
-  "@community//community-resources:customization",
 ]
 
 # needed to avoid runtime duplications in jps_test of community/platform/util/BUILD.bazel
@@ -83,21 +89,30 @@ def _normalize_runtime_dep(dep):
         return "@community//platform/util:util-tests_test_lib"
     return dep
 
-def jps_test(name, jvm_flags = [], runtime_deps = [], tags = [], args = [], **kwargs):
+def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], **kwargs):
     # Merge user-provided args with our default ones
-    all_jvm_flags = JVM_FLAGS + ADD_OPENS_FLAGS + jvm_flags
-    all_args = JVM_TEST_ARGS + args
+    all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + jvm_flags
+    all_args = JAVA_TEST_ARGS + args
 
     normalized_runtime_deps = [_normalize_runtime_dep(d) for d in runtime_deps]
     all_runtime_deps = depset(TEST_FRAMEWORK_DEPS + normalized_runtime_deps).to_list()
 
-    jvm_test(
+    # https://bazel.build/reference/be/java#java_test
+    # https://bazel.build/reference/be/common-definitions#common-attributes-tests
+    java_test(
         name = name,
         main_class = "com.intellij.tests.JUnit5BazelRunner",
         jvm_flags = all_jvm_flags,
         args = all_args,
         runtime_deps = all_runtime_deps,
-        tags = tags,
-        data = ["@community//:intellij.idea.community.main.iml"],
+        # maximum available test size, do not enforce more precise limits for now
+        # settings size also sets test timeout to 1 hours
+        # which is also a reasonable tests timeout for current state of things
+        size = "enormous",
+        data = [
+            # so com.intellij.tests.JUnit5BazelRunner.guessBazelWorkspaceDir will find a real workspace root
+            "@community//:intellij.idea.community.main.iml",
+        ],
+        use_testrunner = False,
         **kwargs
     )
