@@ -16,25 +16,30 @@ public class JsonFoldingTest extends JsonTestCase {
   }
 
   public void testObjectFolding() {
-    doTest();
+    withFoldingSettings()
+      .execute(() -> doTest());
   }
 
   public void testCommentaries() {
-    doTest();
+    withFoldingSettings()
+      .execute(() -> doTest());
   }
 
   // Moved from JavaScript
 
   public void testObjectLiteral2() {
-    doTest();
+    withFoldingSettings()
+      .execute(() -> doTest());
   }
 
   public void testObjectLiteral3() {
-    doTest();
+    withFoldingSettings()
+      .execute(() -> doTest());
   }
 
   public void testObjectLiteral4() {
-    doTest();
+    withFoldingSettings()
+      .execute(() -> doTest());
   }
 
   public void testObjectFoldingWithKeyCountZeroKeys() {

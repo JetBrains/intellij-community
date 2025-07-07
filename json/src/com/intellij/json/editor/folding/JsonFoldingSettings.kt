@@ -17,7 +17,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class JsonFoldingSettings : PersistentStateComponent<JsonFoldingSettings?> {
 
   @JvmField
-  var showKeyCount: Boolean = false
+  var showKeyCount: Boolean = true
 
   @JvmField
   var showFirstKey: Boolean = false

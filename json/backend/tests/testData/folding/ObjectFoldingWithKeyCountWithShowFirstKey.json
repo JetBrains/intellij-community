@@ -1,4 +1,4 @@
-<fold text='{ 3 keys... }'>{
+<fold text='{ 3 keys }'>{
   "first": "value",
   "second": "another value",
   "third": "yet another value"
