@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.setType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
-import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntentionBase
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyExplicitLambdaSignatureIntentionBase
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -63,7 +63,7 @@ internal class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspec
         }
         val specifyExplicitTypeQuickFix = CallableReturnTypeUpdaterUtils.SpecifyExplicitTypeQuickFix(callableDeclaration, typeInfo)
 
-        val used = ReferencesSearch.search(callableDeclaration).findAll().any()
+        val used = ReferencesSearch.search(callableDeclaration).anyMatch { true }
         val removeBracesFix = if (!used &&
             lambdaBody.statements.size == 1 &&
             lambdaBody.allChildren.none { it is PsiComment }
@@ -74,13 +74,11 @@ internal class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspec
 
         return listOfNotNull(
             specifyExplicitTypeQuickFix,
-            AddArrowIntention(),
+            SpecifyExplicitLambdaSignatureIntentionBase(), // Add arrow
             removeBracesFix,
             wrapFix
         ).map { it.asQuickFix() }
     }
-
-    private class AddArrowIntention : SpecifyExplicitLambdaSignatureIntentionBase()
 
     private class RemoveBracesFix(element: KtLambdaExpression) : PsiUpdateModCommandAction<KtLambdaExpression>(element) {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.braces.fix.text")
