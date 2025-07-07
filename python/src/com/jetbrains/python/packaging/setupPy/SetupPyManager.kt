@@ -14,7 +14,6 @@ import com.intellij.psi.PsiManager
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.dependencies.cache.PythonDependenciesManagerCached
-import com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.sdkFlavor
@@ -59,6 +58,9 @@ class SetupPyManager private constructor(project: Project, val sdk: Sdk) : Pytho
 
   companion object {
     private val KEY = Key<SetupPyManager>(this::class.java.name)
+
+    @ApiStatus.Internal
+    const val SETUP_PY: String = SetupPyHelpers.SETUP_PY
 
     @JvmStatic
     fun getInstance(project: Project, sdk: Sdk): SetupPyManager = sdk.getOrCreateUserDataUnsafe(KEY) {

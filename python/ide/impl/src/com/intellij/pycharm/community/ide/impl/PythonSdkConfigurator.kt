@@ -69,10 +69,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       PyPackageCoroutine.launch(project) {
-        val extension = findExtension(module)
-        val lifetime = extension?.let { suppressTipAndInspectionsFor(module, it) }
-
-        withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), extension == null) {
+        withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
+          val extension = findExtension(module)
+          val lifetime = extension?.let { suppressTipAndInspectionsFor(module, it) }
           lifetime.use { configureSdk(project, module, extension) }
         }
       }

@@ -30,6 +30,8 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.uv.isUv
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object PyProjectSdkConfiguration {
 
@@ -45,7 +47,9 @@ object PyProjectSdkConfiguration {
           setSdkUsingExtension(module, extension) {
             reportRawProgress {
               it.text(extension.getIntention(module) ?: "")
-              extension.createAndAddSdkForInspection(module)
+              withContext(Dispatchers.Default) {
+                extension.createAndAddSdkForInspection(module)
+              }
             }
           }
         }

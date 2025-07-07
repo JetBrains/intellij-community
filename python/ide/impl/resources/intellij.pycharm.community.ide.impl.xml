@@ -128,7 +128,8 @@
   <extensions defaultExtensionNs="Pythonid">
     <projectSdkConfigurationExtension
       implementation="com.intellij.pycharm.community.ide.impl.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
-      id="requirementsTxtOrSetupPy"/>
+      id="
+      requirementsTxtOrSetupPy"/>
     <projectSdkConfigurationExtension
       implementation="com.intellij.pycharm.community.ide.impl.conda.PyEnvironmentYmlSdkConfiguration"
       id="environmentYml"/>
