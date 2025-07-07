@@ -9,6 +9,8 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.options.BeanConfigurable
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(name = "JsonFoldingSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
@@ -38,11 +40,20 @@ class JsonFoldingSettings : PersistentStateComponent<JsonFoldingSettings?> {
 
 
 class JsonFoldingOptionsProvider : BeanConfigurable<JsonFoldingSettings>(
-    JsonFoldingSettings.getInstance(),
-    JsonBundle.message("JsonFoldingSettings.title")),
-                                   CodeFoldingOptionsProvider {
-  init {
-    checkBox(JsonBundle.message("JsonFoldingSettings.show.key.count"), instance::showKeyCount)
-    checkBox(JsonBundle.message("JsonFoldingSettings.show.first.key"), instance::showFirstKey)
+  JsonFoldingSettings.getInstance(),
+  JsonBundle.message("JsonFoldingSettings.title")), CodeFoldingOptionsProvider {
+
+  override fun Panel.createContent() {
+    group(JsonBundle.message("JsonFoldingSettings.title")) {
+      row {
+        checkBox(JsonBundle.message("JsonFoldingSettings.show.key.count"))
+          .bindSelected(instance::showKeyCount)
+      }
+      row {
+        checkBox(JsonBundle.message("JsonFoldingSettings.show.first.key"))
+          .bindSelected(instance::showFirstKey)
+          .comment(JsonBundle.message("JsonFoldingSettings.show.first.key.description"))
+      }
+    }
   }
 }
