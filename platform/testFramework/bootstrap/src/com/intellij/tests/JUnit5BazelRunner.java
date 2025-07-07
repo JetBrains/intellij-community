@@ -10,10 +10,12 @@ import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.launcher.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
@@ -25,11 +27,17 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
   private static final String bazelEnvTestTmpDir = "TEST_TMPDIR";
   private static final String bazelEnvRunFilesDir = "RUNFILES_DIR";
   private static final String bazelEnvJavaRunFilesDir = "JAVA_RUNFILES";
-  private static final String bazelEnvTestSrdDir = "TEST_SRCDIR";
+  private static final String bazelEnvTestSrcDir = "TEST_SRCDIR";
   private static final String bazelEnvTestBridgeTestOnly = "TESTBRIDGE_TEST_ONLY";
+
+  private static final String jbEnvPrintSortedClasspath = "JB_TEST_PRINT_SORTED_CLASSPATH";
+  private static final String jbEnvPrintTestSrcDirContent = "JB_TEST_PRINT_TEST_SRCDIR_CONTENT";
+  private static final String jbEnvSandbox = "JB_TEST_SANDBOX";
 
   public static void main(String[] args) throws IOException {
     try {
+      System.err.println("Running tests via " + JUnit5BazelRunner.class.getName());
+
       JUnit5BaseRunner runner = new JUnit5BazelRunner();
 
       var isBazelTestRun = isBazelTestRun();
@@ -42,8 +50,56 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
       // as intellij.test.jars.location value required not only here (for tests discovery) but also in other parts of the test framework
       System.setProperty("intellij.test.jars.location", Path.of(bazelTestSelfLocation).getParent().toString());
 
-      Path bazelWorkDir = guessBazelWorkspaceDir();
-      setBazelSandboxPaths(bazelWorkDir);
+      if (Boolean.parseBoolean(System.getenv(jbEnvPrintSortedClasspath))) {
+        Arrays.stream(System.getProperty("java.class.path")
+          .split(Pattern.quote(File.pathSeparator)))
+          .sorted()
+          .toList()
+          .forEach(x -> System.err.println("CLASSPATH " + x));
+      }
+
+      String testSrcDir = System.getenv(bazelEnvTestSrcDir);
+      if (testSrcDir == null) {
+        throw new RuntimeException("Missing TEST_SRCDIR env variable in bazel test environment");
+      }
+
+      Path testSrcDirPath = Path.of(testSrcDir);
+      if (!Files.isDirectory(testSrcDirPath)) {
+        throw new RuntimeException("$TEST_SRCDIR is not a directory: " + testSrcDirPath);
+      }
+
+      if (Boolean.parseBoolean(System.getenv(jbEnvPrintTestSrcDirContent))) {
+        try (var stream = Files.walk(testSrcDirPath)) {
+          stream.forEach(path -> System.err.println("SRCDIR " + path));
+        }
+      }
+
+      Path ideaHome;
+      Path tempDir = getBazelTempDir();
+
+      // TODO Probably could be derived from the environment
+      boolean sandbox = Boolean.parseBoolean(System.getenv(jbEnvSandbox));
+      System.err.println("Use sandbox: " + sandbox);
+
+      if (sandbox) {
+        // Fully isolated tests
+        ideaHome = tempDir.resolve("home");
+
+        // Make com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources return true
+        Files.createDirectories(ideaHome.resolve(".idea"));
+
+        // org/jetbrains/intellij/build/dependencies/BuildDependenciesCommunityRoot.kt -> ctor
+        Files.writeString(ideaHome.resolve("intellij.idea.community.main.iml"), "");
+      }
+      else {
+        // Traditional arts: idea.home is set to monorepo checkout root
+        ideaHome = guessBazelWorkspaceDir();
+      }
+
+      System.err.println("Using ideaHome: " + ideaHome);
+      System.err.println("Using tempDir: " + tempDir);
+
+      setBazelSandboxPaths(ideaHome, tempDir);
 
       System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
 
@@ -53,6 +109,7 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
         execute(testPlan, testExecutionListener);
 
         if (testExecutionListener instanceof ConsoleTestLogger && ((ConsoleTestLogger)testExecutionListener).hasTestsWithThrowableResults()) {
+          System.err.println("Some tests failed");
           System.exit(1);
         }
       }
@@ -61,7 +118,15 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
         System.err.println("No tests found");
         System.exit(42);
       }
-    } finally {
+    }
+    catch (Throwable e) {
+      // Internal error, exit with non-zero code
+
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+      System.exit(155);
+    }
+    finally {
       System.exit(0);
     }
   }
@@ -107,11 +172,17 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
       return Collections.emptyList();
     }
 
+    System.err.println("Test filter: " + testFilter);
+
     String[] parts = testFilter.split("#", 2);
     String classNamePart = parts[0];
     String className;
     if (!classNamePart.contains(".")) {
       className = findFullyQualifiedName(classNamePart, classLoader);
+      if (className == null) {
+        // TODO Add optional classpath info?
+        throw new RuntimeException("Cannot find class by simple name: " + classNamePart);
+      }
     }
     else {
       className = classNamePart;
@@ -119,9 +190,12 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
 
     if (parts.length == 2) {
       String methodName = parts[1];
+      System.err.println("Selecting class: " + className);
+      System.err.println("Selecting method: " + methodName);
       return List.of(selectMethod(classLoader, className, methodName));
     }
     else {
+      System.err.println("Selecting class: " + className);
       return List.of(selectClass(classLoader, className));
     }
   }
@@ -141,6 +215,17 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
     }
   }
 
+  private static Path getBazelTempDir() throws IOException {
+    String tempDir = System.getenv(bazelEnvTestTmpDir);
+    if (tempDir == null || tempDir.isBlank()) {
+      throw new RuntimeException("Missing TEST_TMPDIR env variable in bazel test environment");
+    }
+
+    Path path = Path.of(tempDir);
+    Files.createDirectories(path);
+    return path.toAbsolutePath();
+  }
+
   private static Boolean isBazelTestRun() {
     return Stream.of(bazelEnvSelfLocation, bazelEnvTestTmpDir, bazelEnvRunFilesDir, bazelEnvJavaRunFilesDir)
       .allMatch(bazelTestEnv -> {
@@ -149,23 +234,27 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
       });
   }
 
-  private static void setBazelSandboxPaths(Path bazelWorkDir) throws IOException {
-    setSandboxPath("idea.home.path", bazelWorkDir);
-    setSandboxPath("idea.config.path", bazelWorkDir.resolve("config").resolve("test"));
-    setSandboxPath("idea.system.path", bazelWorkDir.resolve("system"));
+  private static void setBazelSandboxPaths(Path ideaHomePath, Path tempDir) throws IOException {
+    setSandboxPath("idea.home.path", ideaHomePath);
+
+    setSandboxPath("idea.config.path", tempDir.resolve("config"));
+    setSandboxPath("idea.system.path", tempDir.resolve("system"));
+
     String testUndeclaredOutputsDir = System.getenv("TEST_UNDECLARED_OUTPUTS_DIR");
     if (testUndeclaredOutputsDir != null) {
       setSandboxPath("idea.log.path", Path.of(testUndeclaredOutputsDir).resolve("logs"));
     }
-    setSandboxPath("idea.log.path", bazelWorkDir.resolve("logs"));
+    else {
+      setSandboxPath("idea.log.path", tempDir.resolve("logs"));
+    }
 
-    setSandboxPath("java.util.prefs.userRoot", bazelWorkDir.resolve("userRoot"));
-    setSandboxPath("java.util.prefs.systemRoot", bazelWorkDir.resolve("systemRoot"));
+    setSandboxPath("java.util.prefs.userRoot", tempDir.resolve("userRoot"));
+    setSandboxPath("java.util.prefs.systemRoot", tempDir.resolve("systemRoot"));
   }
 
   private static Path guessBazelWorkspaceDir() throws IOException {
     // see https://bazel.build/concepts/dependencies#data-dependencies
-    String testSrcDir = System.getenv(bazelEnvTestSrdDir);
+    String testSrcDir = System.getenv(bazelEnvTestSrcDir);
     if (testSrcDir == null) {
       throw new RuntimeException("Missing TEST_SRCDIR env variable in bazel test environment");
     }
