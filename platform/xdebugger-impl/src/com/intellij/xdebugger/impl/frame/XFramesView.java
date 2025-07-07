@@ -165,7 +165,7 @@ public final class XFramesView extends XDebugView {
       }
     });
 
-    myScrollPane = ScrollPaneFactory.createScrollPane(myFramesList);
+    myScrollPane = ScrollPaneFactory.createScrollPane(myFramesList, true);
     Component centerComponent = DebuggerUIUtil.wrapWithAntiFlickeringPanel(myScrollPane);
     myMainPanel.add(centerComponent, BorderLayout.CENTER);
 
