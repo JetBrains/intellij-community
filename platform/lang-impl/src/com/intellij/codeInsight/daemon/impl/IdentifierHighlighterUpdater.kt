@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase
 import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
