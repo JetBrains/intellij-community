@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.UiDispatcherKind.RELAX
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
@@ -13,13 +10,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.IOException
-import java.nio.file.Files
 import kotlin.coroutines.CoroutineContext
-import kotlin.io.path.writeText
-import kotlin.math.absoluteValue
-import kotlin.random.Random
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Suspends until it's possible to obtain the read lock and then
@@ -275,17 +266,6 @@ suspend fun <T> writeAction(action: () -> T): T {
   }
 }
 
-private object RunInBackgroundWriteActionMarker
-  : CoroutineContext.Element,
-    CoroutineContext.Key<RunInBackgroundWriteActionMarker> {
-  override val key: CoroutineContext.Key<*> get() = this
-}
-
-@Internal
-@ApiStatus.Obsolete
-fun CoroutineContext.isBackgroundWriteAction(): Boolean =
-  currentThreadContext()[RunInBackgroundWriteActionMarker] != null
-
 /**
  * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
  *
@@ -304,49 +284,7 @@ fun CoroutineContext.isBackgroundWriteAction(): Boolean =
  */
 @Experimental
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
-  val context = if (useBackgroundWriteAction) {
-    Dispatchers.Default + RunInBackgroundWriteActionMarker
-  }
-  else {
-    Dispatchers.EDT
-  }
-
-  return withContext(context) {
-    val dumpJob = if (useBackgroundWriteAction) launch {
-      delay(10.seconds)
-      val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
-      val dumpDir = PathManager.getLogDir().resolve("bg-wa")
-      val file = dumpDir.resolve("thread-dump-${Random.nextInt().absoluteValue}.txt")
-      try {
-        Files.createDirectories(dumpDir)
-        Files.createFile(file)
-        file.writeText(dump.rawDump)
-        logger<ApplicationManager>().warn(
-          """Cannot execute background write action in 10 seconds. Thread dump is stored in ${file.toUri()}""")
-      }
-      catch (_: IOException) {
-        logger<ApplicationManager>().warn(
-          """Cannot execute background write action in 10 seconds.
-Thread dump:
-${dump.rawDump}""")
-      }
-
-    }
-    else null
-    val application = ApplicationManager.getApplication()
-    val lock = application.threadingSupport
-    try {
-      if (useBackgroundWriteAction && useTrueSuspensionForWriteAction && lock != null) {
-        lock.runWriteAction(action)
-      } else {
-        @Suppress("ForbiddenInSuspectContextMethod")
-        application.runWriteAction(ThrowableComputable(action))
-      }
-    }
-    finally {
-      dumpJob?.cancel()
-    }
-  }
+  return readWriteActionSupport().runWriteAction(action)
 }
 
 /**

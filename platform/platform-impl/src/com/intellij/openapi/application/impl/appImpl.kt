@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.ThreadingSupport.RunnableWithTransferredWriteAction
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
@@ -17,11 +18,13 @@ import com.intellij.util.ui.EDT
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.EventQueue
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -117,6 +120,35 @@ internal fun <T> rethrowCheckedExceptions(f: ThrowableComputable<T, *>): () -> T
 
 @ApiStatus.Internal
 object InternalThreading {
+  private val backgroundWriteActionCounter = AtomicInteger(0)
+
+  @JvmStatic
+  fun incrementBackgroundWriteActionCount() {
+    backgroundWriteActionCounter.incrementAndGet()
+  }
+
+  @JvmStatic
+  fun isBackgroundWriteActionRunning(): Boolean {
+    return backgroundWriteActionCounter.get() > 0
+  }
+
+  @JvmStatic
+  fun decrementBackgroundWriteActionCount() {
+    backgroundWriteActionCounter.decrementAndGet()
+  }
+
+  object RunInBackgroundWriteActionMarker
+    : CoroutineContext.Element,
+      CoroutineContext.Key<RunInBackgroundWriteActionMarker> {
+    override val key: CoroutineContext.Key<*> get() = this
+  }
+
+  @Internal
+  @JvmStatic
+  fun isBackgroundWriteActionAllowed(): Boolean =
+    currentThreadContext()[RunInBackgroundWriteActionMarker] != null
+
+
 
   @RequiresBackgroundThread(generateAssertion = false)
   @RequiresWriteLock(generateAssertion = false)
@@ -143,3 +175,4 @@ object InternalThreading {
     exceptionRef.get()?.let { throw it }
   }
 }
+

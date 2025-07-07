@@ -26,4 +26,6 @@ interface ReadWriteActionSupport {
     runWriteActionOnEdt: Boolean,
     action: ReadAndWriteScope.() -> ReadResult<X>,
   ): X
+
+  suspend fun <T> runWriteAction(action: () -> T): T
 }
