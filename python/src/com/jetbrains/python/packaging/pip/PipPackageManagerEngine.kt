@@ -17,6 +17,7 @@ import com.intellij.util.net.HttpConfigurable
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -44,13 +45,11 @@ class PipPackageManagerEngine(
 ) : PythonPackageManagerEngine {
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val manager = PythonPackageManager.forSdk(project, sdk)
-      PipManagementInstaller(sdk, manager).installManagementIfNeeded()
-    val result = runPackagingTool(
-      operation = "install",
-      arguments = installRequest.indexUrlIfApplicable() + options
-    )
 
-    return result.mapSuccess { }
+    PipManagementInstaller(sdk, manager).installManagementIfNeeded()
+
+    val argumentsGroups = partitionPackagesBySource(installRequest)
+    return performInstall(argumentsGroups, options)
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
@@ -60,13 +59,8 @@ class PipPackageManagerEngine(
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    val indexUrlIfApplicable = specifications.firstNotNullOfOrNull { it.indexUrlIfApplicable() } ?: emptyList()
-    val packages = specifications.map { it.name }
-    val result = runPackagingTool(
-      operation = "install",
-      arguments = packages + listOf("--upgrade") + indexUrlIfApplicable
-    )
-    return result.mapSuccess { }
+    val argumentsGroups = partitionPackagesBySource(specifications.toList())
+    return performInstall(argumentsGroups, listOf("--upgrade"))
   }
 
   suspend fun syncProject(): PyResult<Unit> {
@@ -199,19 +193,56 @@ class PipPackageManagerEngine(
       return null
     }
 
-  private fun PythonPackageInstallRequest.indexUrlIfApplicable(): List<String> = when (this) {
-    is PythonPackageInstallRequest.ByLocation -> listOf(location.toString())
-    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
-      val pypiSpecs = specifications.filter { it.repository is PyPIPackageRepository }
-      val index = pypiSpecs.firstNotNullOfOrNull { spec -> spec.indexUrlIfApplicable() } ?: emptyList()
-      pypiSpecs.map { it.nameWithVersionSpec } + index
+  private fun partitionPackagesBySource(installRequest: PythonPackageInstallRequest): List<List<String>> {
+    when (installRequest) {
+      is PythonPackageInstallRequest.ByLocation -> {
+        return listOf(listOf(installRequest.location.toString()))
+      }
+      is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
+        return partitionPackagesBySource(installRequest.specifications)
+      }
     }
   }
 
-  private fun PythonRepositoryPackageSpecification.indexUrlIfApplicable(): List<String>? {
-    val urlForInstallation = repository.urlForInstallation?.toString() ?: return null
-    if (urlForInstallation == PyPIPackageUtil.PYPI_LIST_URL)
-      return null
-    return listOf("--index-url", urlForInstallation)
+  private fun partitionPackagesBySource(specifications: List<PythonRepositoryPackageSpecification>): List<List<String>> {
+    val (pypiSpecs, nonPypi) = specifications.partition {
+      val url = it.repository.urlForInstallation?.toString()
+      url == null || url == PyPIPackageUtil.PYPI_LIST_URL
+    }
+
+    val byRepository = nonPypi
+      .groupBy { it.repository.repositoryUrl }
+      .mapNotNull { (url, specs) ->
+        if (url == null || specs.isEmpty()) {
+          return@mapNotNull null
+        }
+
+        listOf(
+          "--index-url",
+          url
+        ) + specs.map { it.nameWithVersionSpec }
+      }
+
+    val pypi = mutableListOf<List<String>>()
+    if (pypiSpecs.isNotEmpty()) {
+      pypi.add(pypiSpecs.map { it.nameWithVersionSpec })
+    }
+
+    return pypi + byRepository
+  }
+
+  suspend fun performInstall(argumentsGroups: List<List<String>>, options: List<String>): PyResult<Unit> {
+    for (argumentsGroup in argumentsGroups) {
+      val result = runPackagingTool(
+        operation = "install",
+        arguments = argumentsGroup + options
+      )
+
+      result.onFailure {
+        return PyResult.failure(it)
+      }
+    }
+
+    return PyResult.success(Unit)
   }
 }

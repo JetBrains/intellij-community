@@ -31,7 +31,6 @@ import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.*
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
-import com.jetbrains.python.packaging.management.ui.updatePackagesByNamesBackground
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
 import com.jetbrains.python.packaging.repository.*
@@ -147,23 +146,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     managerUI.uninstallPackagesBackground(selectedPackages.map { it.instance.name }) ?: return
     handleActionCompleted(message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }))
   }
-
-  suspend fun updatePackages(vararg packages: String) {
-    managerUI.updatePackagesByNamesBackground(packages.toList()) ?: return
-
-
-    val singlePackage = packages.singleOrNull()
-    if (singlePackage != null) {
-      val version = manager?.getInstalledPackage(singlePackage)?.version ?: return
-      handleActionCompleted(message("python.packaging.notification.updated", singlePackage, version))
-    }
-    else {
-      handleActionCompleted(message("python.packaging.notification.all.updated"))
-    }
-
-    refreshInstalledPackages()
-  }
-
 
   internal suspend fun initForSdk(sdk: Sdk?) {
     if (sdk == null) {
