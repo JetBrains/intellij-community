@@ -87,9 +87,9 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     }
   }
 
-  protected suspend fun runAndExpectPluginIndexEvents(expectedArtifactIds: Set<String>?, action: suspend () -> Unit) {
+  protected suspend fun runAndExpectPluginIndexEvents(expectedArtifactIds: Set<String>, action: suspend () -> Unit) {
     val artifactIdsToIndex: MutableSet<String> = ConcurrentHashMap.newKeySet()
-    artifactIdsToIndex.addAll(expectedArtifactIds!!)
+    artifactIdsToIndex.addAll(expectedArtifactIds)
 
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
       .subscribe(MavenIndicesManager.INDEXER_TOPIC, object : MavenIndexerListener {
@@ -109,13 +109,13 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     assertTrue("Maven plugins are not indexed in time: " + java.lang.String.join(", ", artifactIdsToIndex), artifactIdsToIndex.isEmpty())
   }
 
-  protected suspend fun runAndExpectArtifactDownloadEvents(groupId: String, artifactIds: Set<String>, action: suspend () -> Unit) {
-    val groupFolder = groupId.replace('.', '/')
+  protected suspend fun runAndExpectArtifactDownloadEvents(expectedGroupId: String, expectedArtifactIds: Set<String>, action: suspend () -> Unit) {
+    val groupFolder = expectedGroupId.replace('.', '/')
     val actualEvents: MutableSet<String> = ConcurrentHashMap.newKeySet()
-    val downloadListener = MavenServerDownloadListener { file, relativePath ->
+    val downloadListener = MavenServerDownloadListener { _, relativePath ->
       if (relativePath.startsWith(groupFolder)) {
         val artifactId = relativePath.substring(groupFolder.length).split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1]
-        if (artifactIds.contains(artifactId)) {
+        if (expectedArtifactIds.contains(artifactId)) {
           actualEvents.add(artifactId)
         }
       }
@@ -128,7 +128,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
 
     awaitConfiguration()
 
-    assertUnorderedElementsAreEqual(artifactIds, actualEvents)
+    assertUnorderedElementsAreEqual(actualEvents, expectedArtifactIds)
   }
 
   override suspend fun checkHighlighting() {
