@@ -307,6 +307,7 @@
     </action>
 
     <group id="NewJavaSpecialFile">
+      <action id="NewCompactSourceFile" class="com.intellij.ide.actions.CreateCompactSourceFileAction"/>
       <action id="NewPackageInfo" class="com.intellij.ide.actions.CreatePackageInfoAction"/>
       <action id="NewModuleInfo" class="com.intellij.ide.actions.CreateModuleInfoAction"/>
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>

@@ -2776,6 +2776,10 @@
                  defaultValue="true"
                  description="Use additional tags for methods for completion"/>
 
+    <registryKey key="java.create.compact.source.file.separately"
+                 defaultValue="true"
+                 description="Show 'Create java compact source file' separately from all other classes"/>
+
     <virtualFileCustomDataProvider implementation="com.intellij.ide.JavaCodeStyleSettingsCustomDataSynchronizer"/>
   </extensions>
 
