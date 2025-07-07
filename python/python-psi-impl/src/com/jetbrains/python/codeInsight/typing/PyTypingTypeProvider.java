@@ -961,7 +961,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (typedDictType != null) {
         return Ref.create(typedDictType);
       }
-      final Ref<PyType> classType = getClassType(resolved, context.getTypeContext());
+      final Ref<PyType> classType = getClassType(typeHint, resolved, context);
       if (classType != null) {
         return classType;
       }
@@ -1113,12 +1113,29 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return ANY.equals(getQualifiedName(element)) ? Ref.create() : null;
   }
 
-  private static @Nullable Ref<PyType> getClassType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+  private static @Nullable Ref<PyType> getClassType(@NotNull PyExpression typeHint, @NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PyTypedElement) {
-      final PyType type = context.getType((PyTypedElement)element);
-      if (type instanceof PyClassLikeType classType) {
-        if (classType.isDefinition() || isNoneType(classType)) {
-          final PyType instanceType = classType.toInstance();
+      TypeEvalContext typeContext = context.getTypeContext();
+      final PyType type = typeContext.getType((PyTypedElement)element);
+      if (type instanceof PyClassLikeType classLikeType) {
+        if (classLikeType.isDefinition()) {
+          // If we're interpreting a type hint like "MyGeneric" that is not followed by a list of type arguments (e.g. MyGeneric[int]),
+          // we want to parameterize it with its type parameters defaults already here.
+          // We need this check for the type argument list because getParameterizedType() relies on getClassType() for
+          // getting the type corresponding to the subscription expression operand.
+          if (classLikeType instanceof PyClassType classType &&
+              isGeneric(classLikeType, typeContext) &&
+              !(typeHint.getParent() instanceof PySubscriptionExpression se && typeHint.equals(se.getOperand()))) {
+            PyCollectionType parameterized = parameterizeClassDefaultAware(classType.getPyClass(), List.of(), context);
+            if (parameterized != null) {
+              return Ref.create(parameterized.toInstance());
+            }
+          }
+          final PyType instanceType = classLikeType.toInstance();
+          return Ref.create(instanceType);
+        }
+        else if (isNoneType(classLikeType)) {
+          final PyType instanceType = classLikeType.toInstance();
           return Ref.create(instanceType);
         }
       }

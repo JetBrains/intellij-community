@@ -2,9 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -402,12 +400,12 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("TextIOWrapper",
+    doTest("TextIOWrapper[_WrappedBuffer]",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("TextIOWrapper",
+    doTest("TextIOWrapper[_WrappedBuffer]",
            "expr = open('foo', 'r')\n");
   }
 
@@ -417,7 +415,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenDefault() {
-    doTest("TextIOWrapper",
+    doTest("TextIOWrapper[_WrappedBuffer]",
            """
              import io
              expr = io.open('foo')
@@ -425,7 +423,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenText() {
-    doTest("TextIOWrapper",
+    doTest("TextIOWrapper[_WrappedBuffer]",
            """
              import io
              expr = io.open('foo', 'r')
