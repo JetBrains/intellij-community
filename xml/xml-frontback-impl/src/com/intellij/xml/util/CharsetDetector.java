@@ -81,7 +81,7 @@ public final class CharsetDetector {
         }
 
         @Override
-        public void endTag(@NotNull CharSequence localName, @NotNull String namespace, int startoffset, int endoffset) {
+        public void endTag(@NotNull CharSequence localName, @NotNull String namespace, int startOffset, int endOffset) {
           @NonNls String name = StringUtil.toLowerCase(localName.toString());
           if ("meta".equals(name) && (metHttpEquiv || metHtml5Charset) && contentAttributeValue != null) {
             String charsetName;
@@ -93,7 +93,7 @@ public final class CharsetDetector {
               if (end == -1) end = contentAttributeValue.length();
               charsetName = contentAttributeValue.substring(start, end);
             }
-            else /*if (metHttml5Charset) */ {
+            else /*if (metHtml5Charset) */ {
               charsetName = StringUtil.unquoteString(contentAttributeValue);
             }
             charsetNameRef.set(charsetName);
@@ -111,7 +111,7 @@ public final class CharsetDetector {
         private String contentAttributeValue;
 
         @Override
-        public void attribute(@NotNull CharSequence localName, @NotNull CharSequence v, int startoffset, int endoffset) {
+        public void attribute(@NotNull CharSequence localName, @NotNull CharSequence v, int startOffset, int endOffset) {
           @NonNls String name = StringUtil.toLowerCase(localName.toString());
           if (inTag.contains("meta")) {
             @NonNls String value = StringUtil.toLowerCase(v.toString());
@@ -129,7 +129,7 @@ public final class CharsetDetector {
         }
 
         @Override
-        public void textElement(@NotNull CharSequence display, @NotNull CharSequence physical, int startoffset, int endoffset) {
+        public void textElement(@NotNull CharSequence display, @NotNull CharSequence physical, int startOffset, int endOffset) {
         }
 
         @Override
@@ -145,7 +145,7 @@ public final class CharsetDetector {
       //ignore
     }
     catch (Exception ignored) {
-      // some weird things can happen, like unbalanaced tree
+      // some weird things can happen, like an unbalanced tree
     }
 
     return charsetNameRef.get();
