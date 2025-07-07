@@ -333,9 +333,15 @@ ${dump.rawDump}""")
 
     }
     else null
+    val application = ApplicationManager.getApplication()
+    val lock = application.threadingSupport
     try {
-      @Suppress("ForbiddenInSuspectContextMethod")
-      ApplicationManager.getApplication().runWriteAction(ThrowableComputable(action))
+      if (useBackgroundWriteAction && useTrueSuspensionForWriteAction && lock != null) {
+        lock.runWriteAction(action)
+      } else {
+        @Suppress("ForbiddenInSuspectContextMethod")
+        application.runWriteAction(ThrowableComputable(action))
+      }
     }
     finally {
       dumpJob?.cancel()

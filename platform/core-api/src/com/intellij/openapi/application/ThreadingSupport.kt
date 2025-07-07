@@ -272,6 +272,11 @@ interface ThreadingSupport {
   fun transferWriteActionAndBlock(blockingExecutor: (RunnableWithTransferredWriteAction) -> Unit, action: Runnable)
 
   /**
+   * Executes write action while suspending for lock acquisition.
+   */
+  suspend fun <T> runWriteAction(action: () -> T): T
+
+  /**
    * A marker class that helps others to identify that the runnable needs to run quickly
    */
   abstract class RunnableWithTransferredWriteAction : Runnable {

@@ -713,4 +713,9 @@ public interface Application extends ComponentManager {
   default @NonNls @Nullable String isLockingProhibited() {
     return null;
   }
+
+  @ApiStatus.Internal
+  default @Nullable ThreadingSupport getThreadingSupport() {
+    return null;
+  }
 }

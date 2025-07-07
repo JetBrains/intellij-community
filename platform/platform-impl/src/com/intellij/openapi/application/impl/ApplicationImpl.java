@@ -1504,6 +1504,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return getThreadingSupport().isParallelizedReadAction(context);
   }
 
+  @Override
   public @NotNull ThreadingSupport getThreadingSupport() {
     return lock;
   }
