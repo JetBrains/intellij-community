@@ -445,5 +445,6 @@
                                        toolShortName="HtmlUnknownTag"/>
 
     <virtualFileCustomDataProvider implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
+    <virtualFileCustomDataProvider implementation="com.intellij.xml.XmlCodeStyleSettingsCustomDataSynchronizer"/>
   </extensions>
 </idea-plugin>

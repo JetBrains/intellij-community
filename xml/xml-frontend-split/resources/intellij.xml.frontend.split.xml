@@ -10,6 +10,7 @@
     <highlightErrorFilter implementation="com.intellij.xml.frontend.split.editor.FrontendHtmlHighlightErrorFilter"/>
 
     <virtualFileCustomDataConsumer implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
+    <virtualFileCustomDataConsumer implementation="com.intellij.xml.XmlCodeStyleSettingsCustomDataSynchronizer"/>
 
     <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
                         serviceImplementation="com.intellij.javaee.ExternalResourceManagerExBase"/>
