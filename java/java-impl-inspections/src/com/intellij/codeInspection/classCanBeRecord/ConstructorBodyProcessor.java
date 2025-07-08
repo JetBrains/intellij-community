@@ -265,10 +265,15 @@ final class ConstructorBodyProcessor {
         if (resolved instanceof PsiField field && !field.hasModifierProperty(STATIC) && field.getContainingClass() == containingClass) {
           hasReferenceToClassUnderConstruction.set(true);
         }
-        else if (resolved instanceof PsiMethod method &&
-                 !method.hasModifierProperty(STATIC) &&
-                 method.getContainingClass() == containingClass) {
-          hasReferenceToClassUnderConstruction.set(true);
+        else if (resolved instanceof PsiMethod method) {
+          if (method.hasModifierProperty(STATIC)) return;
+          if (method.getContainingClass() == containingClass) {
+            hasReferenceToClassUnderConstruction.set(true);
+            return;
+          }
+          if (containingClass.findMethodBySignature(method, true) != null) {
+            hasReferenceToClassUnderConstruction.set(true);
+          }
         }
       }
     });
