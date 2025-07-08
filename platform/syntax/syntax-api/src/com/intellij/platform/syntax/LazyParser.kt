@@ -28,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 @ApiStatus.OverrideOnly
-interface LazyParser {
+fun interface LazyParser {
   /**
    * Called when the node is requested to be parsed.
    *
