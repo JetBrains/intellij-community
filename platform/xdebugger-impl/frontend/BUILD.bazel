@@ -38,6 +38,7 @@ jvm_library(
     "//platform/execution-impl/frontend",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
   ],
   runtime_deps = [":frontend_resources"]
 )
@@ -77,6 +78,7 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
   ],
   runtime_deps = [":frontend_resources"]
 )

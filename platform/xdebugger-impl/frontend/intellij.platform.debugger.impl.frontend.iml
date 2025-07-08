@@ -61,5 +61,6 @@
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
   </component>
 </module>

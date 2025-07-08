@@ -4,6 +4,8 @@
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <module name="intellij.platform.rpc.topics"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
@@ -23,5 +25,6 @@
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
+    <platform.rpc.remoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.ShowBreakpointsDialogRemoteTopicListener"/>
   </extensions>
 </idea-plugin>

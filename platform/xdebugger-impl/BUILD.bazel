@@ -56,6 +56,7 @@ jvm_library(
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
   ],
   runtime_deps = [":debugger-impl_resources"]
 )
@@ -115,6 +116,7 @@ jvm_library(
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
   ],
   runtime_deps = [":debugger-impl_resources"]
 )

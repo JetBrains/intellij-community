@@ -1,23 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui
 
-import com.intellij.openapi.application.EDT
+
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.project.projectId
+import com.intellij.platform.rpc.topics.sendToClient
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.impl.breakpoints.SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
+import com.intellij.xdebugger.impl.breakpoints.ShowBreakpointDialogRequest
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -30,16 +29,6 @@ class BreakpointsDialogFactory(private val project: Project) {
 
   @VisibleForTesting
   var showingDialog: BreakpointsDialog? = null
-
-  private val showDialogEvents = MutableSharedFlow<XBreakpointId?>(extraBufferCapacity = 1)
-
-  fun subscribeToShowDialogEvents(cs: CoroutineScope, onShowDialogRequest: suspend (breakpointId: XBreakpointId?) -> Unit) {
-    cs.launch(Dispatchers.EDT) {
-      showDialogEvents.collectLatest {
-        onShowDialogRequest(it)
-      }
-    }
-  }
 
   fun setBalloonToHide(balloon: Balloon, breakpoint: Any?) {
     balloonToHide = balloon
@@ -67,7 +56,7 @@ class BreakpointsDialogFactory(private val project: Project) {
   fun showDialog(initialBreakpointId: XBreakpointId?) {
     if (useFeProxy()) {
       hideBalloon()
-      showDialogEvents.tryEmit(initialBreakpointId)
+      SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC.sendToClient(ShowBreakpointDialogRequest(project.projectId(), initialBreakpointId))
       return
     }
     showDialogImpl(initialBreakpointId)
