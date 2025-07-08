@@ -34,11 +34,10 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.math.min
 
-private const val MAVEN_4_VERSION = "4.0.0-rc-4"
+private const val MAVEN_4_VERSION = "4.0.0-rc-3"
 private val MAVEN_VERSIONS: Array<String> = arrayOf<String>(
   "bundled",
   "4/4.0.0",
-  "4/4.1.0"
 )
 
 @RunWith(Parameterized::class)
@@ -165,16 +164,20 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     get() = StringUtil.compareVersionNumbers(
       getActualVersion(myMavenVersion!!), "4.0") >= 0
 
-  protected fun maven4orNull(value: String): String? {
-    return if (this.isMaven4) value else null
+  protected fun withModel410Only(value: String?): String? {
+    return if (this.isMaven4 && this.myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0) value else null
+  }
+
+  protected fun isModel410(): Boolean {
+    return this.isMaven4 && this.myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0
   }
 
   protected fun defaultResources(): Array<String> {
-    return arrayOfNotNull("src/main/resources", maven4orNull("src/main/resources-filtered"))
+    return arrayOfNotNull("src/main/resources", withModel410Only("src/main/resources-filtered"))
   }
 
   protected fun defaultTestResources(): Array<String> {
-    return arrayOfNotNull("src/test/resources", maven4orNull("src/test/resources-filtered"))
+    return arrayOfNotNull("src/test/resources", withModel410Only("src/test/resources-filtered"))
   }
 
   protected fun allDefaultResources(): Array<String> {
