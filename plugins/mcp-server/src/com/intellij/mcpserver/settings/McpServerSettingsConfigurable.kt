@@ -15,6 +15,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.JBColor
@@ -248,7 +249,7 @@ private class CheckboxWithValidation(@Nls checkboxText: String, var validator: C
 
 private object ConsentValidator : CheckboxValidator {
   override fun isValidNewValue(isSelected: Boolean): Boolean = if (isSelected) {
-    MessageDialogBuilder.yesNo(McpServerBundle.message("dialog.title.mcp.server.consent"), McpServerBundle.message("dialog.message.mcp.server.consent")).ask(getLastFocusedOrOpenedProject())
+    MessageDialogBuilder.yesNo(McpServerBundle.message("dialog.title.mcp.server.consent"), McpServerBundle.message("dialog.message.mcp.server.consent"), Messages.getWarningIcon()).ask(getLastFocusedOrOpenedProject())
   }
   else true
 }
