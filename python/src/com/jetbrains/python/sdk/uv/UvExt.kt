@@ -60,7 +60,7 @@ suspend fun setupNewUvSdkAndEnv(
       return it
     }
 
-  return setupExistingEnvAndSdk(envExecutable, null, false, workingDir, existingSdks)
+  return setupExistingEnvAndSdk(envExecutable, workingDir, false, workingDir, existingSdks)
 }
 
 suspend fun setupExistingEnvAndSdk(
