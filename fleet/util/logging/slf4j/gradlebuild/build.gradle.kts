@@ -34,6 +34,8 @@ kotlin {
   jvm {}
   pluginManager.withPlugin("fleet-build-jps-module-plugin") {
     tasks.named("syncJvmMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { destinationDirectory.set(layout.buildDirectory.dir("copiedSources/jvmMain")) }
+    tasks.named("syncJvmMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { resources.add(layout.projectDirectory.dir("../resources")) }
+    sourceSets.jvmMain.configure { resources.srcDir(layout.buildDirectory.dir("copiedSources/jvmMain/resources")) }
     tasks.named("syncJvmMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { resources.add(layout.projectDirectory.dir("../resourcesJvmMain")) }
     sourceSets.jvmMain.configure { resources.srcDir(layout.buildDirectory.dir("copiedSources/jvmMain/resources")) }
     tasks.named("syncJvmMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { sources.add(layout.projectDirectory.dir("../srcJvmMain")) }

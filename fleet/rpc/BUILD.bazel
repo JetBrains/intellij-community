@@ -15,7 +15,7 @@ jvm_library(
   name = "rpc",
   module_name = "fleet.rpc",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom_rpc",
   exported_compiler_plugins = ["@lib//:rpc-plugin"],
   deps = [

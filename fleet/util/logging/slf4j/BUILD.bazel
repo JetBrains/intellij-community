@@ -3,6 +3,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "slf4j_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "slf4j_resources_1",
   files = glob(["resourcesJvmMain/**/*"]),
   strip_prefix = "resourcesJvmMain"
 )
@@ -18,6 +24,9 @@ jvm_library(
     "//fleet/util/logging/api",
   ],
   exports = ["@lib//:slf4j-api"],
-  runtime_deps = [":slf4j_resources"]
+  runtime_deps = [
+    ":slf4j_resources",
+    ":slf4j_resources_1",
+  ]
 )
 ### auto-generated section `build fleet.util.logging.slf4j` end
