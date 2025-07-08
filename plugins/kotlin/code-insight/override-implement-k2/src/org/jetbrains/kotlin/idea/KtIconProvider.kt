@@ -56,9 +56,9 @@ object KtIconProvider {
         return when (symbol) {
             is KaPackageSymbol -> AllIcons.Nodes.Package
             is KaFunctionSymbol -> {
-                val suspend = (symbol as? KaNamedFunctionSymbol)?.isSuspend == true
                 val isMember = symbol.location == KaSymbolLocation.CLASS
-                if (suspend) {
+                val isSuspend = (symbol as? KaNamedFunctionSymbol)?.isSuspend == true
+                if (isSuspend) {
                     return if (isMember) KotlinIcons.SUSPEND_METHOD else KotlinIcons.SUSPEND_FUNCTION
                 }
                 val isExtension = symbol.isExtension
