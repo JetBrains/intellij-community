@@ -122,6 +122,12 @@
       <override-text place="MainMenu"/>
       <override-text place="popup@GoToAction"/>
     </action>
+    <action id="GitLab.Open.Settings"
+            class="org.jetbrains.plugins.gitlab.GitLabOpenSettingsAction"
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
+      <override-text place="MainMenu"/>
+      <override-text place="popup@GoToAction"/>
+    </action>
 
     <action id="GitLab.Create.Snippet"
             class="org.jetbrains.plugins.gitlab.snippets.GitLabCreateSnippetAction"
@@ -138,6 +144,8 @@
       <reference ref="GitLab.Merge.Request.Show.List"/>
       <separator/>
       <reference ref="GitLab.Clone"/>
+      <separator/>
+      <reference ref="GitLab.Open.Settings"/>
       <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
     </group>
 

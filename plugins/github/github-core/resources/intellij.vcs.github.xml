@@ -136,6 +136,12 @@
       <override-text place="MainMenu"/>
       <override-text place="popup@GoToAction"/>
     </action>
+    <action id="Github.Open.Settings"
+            class="org.jetbrains.plugins.github.ui.GHOpenSettingsAction"
+            icon="AllIcons.Vcs.Vendors.Github">
+      <override-text place="MainMenu"/>
+      <override-text place="popup@GoToAction"/>
+    </action>
     <group id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
       <override-text place="EditorTabPopup"/>
       <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
@@ -175,7 +181,8 @@
       <reference ref="Github.Open.In.Browser"/>
       <separator/>
       <reference ref="Github.Clone"/>
-
+      <separator/>
+      <reference ref="Github.Open.Settings"/>
       <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
       <add-to-group group-id="GitRepositoryActions" relative-to-action="Git.Configure.Remotes" anchor="before"/>
     </group>
