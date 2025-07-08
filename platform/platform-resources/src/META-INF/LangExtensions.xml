@@ -1550,7 +1550,7 @@
                  key="ide.completion.auto.insert.item.timeout"/>
     <registryKey key="ide.completion.command.force.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="false"/>
-    <registryKey key="ide.completion.command.enabled" defaultValue="true"
+    <registryKey key="ide.completion.command.enabled" defaultValue="false"
                  description="Enable experimental support command completion for internal mode" restartRequired="false"/>
     <registryKey key="ide.completion.command.support.read.only.files" defaultValue="false"
                  description="Enable experimental support command completion for read-only files" restartRequired="false"/>
