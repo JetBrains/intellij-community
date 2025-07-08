@@ -15,6 +15,7 @@ import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.*
+import org.jetbrains.kotlin.psi.KtElement
 
 private val isNestedIndexAccessEnabled: Boolean by lazy { Registry.`is`("kotlin.indices.nested.access.enabled") }
 
@@ -72,7 +73,7 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
         }
     }
 
-    inline fun <reified SubKey> getAllElements(
+    inline fun <reified SubKey : KtElement> getAllElements(
         project: Project,
         scope: GlobalSearchScope,
         noinline keyFilter: (String) -> Boolean = { true },
