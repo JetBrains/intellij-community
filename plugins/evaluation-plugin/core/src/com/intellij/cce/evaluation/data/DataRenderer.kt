@@ -96,6 +96,8 @@ interface TextUpdate {
 
 data class FileUpdate(val filePath: String, override val originalText: String, override val updatedText: String) : TextUpdate, HasDescription {
   override val descriptionText: String = filePath
+
+  val isRemoved: Boolean = updatedText.isEmpty()
 }
 
 interface Range {
