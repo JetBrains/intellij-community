@@ -31,6 +31,12 @@ internal class ModuleList(
   @JvmField val ultimate: List<ModuleDescriptor>,
   val skippedModules: List<String>,
 ) {
+  private val nameToDescriptor = community.associateBy { it.module.name } + ultimate.associateBy { it.module.name }
+
+  fun getModuleDescriptor(name: String): ModuleDescriptor {
+    return nameToDescriptor[name] ?: error("Unknown module name: $name")
+  }
+
   @JvmField val deps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
   @JvmField val testDeps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
 }
@@ -545,9 +551,14 @@ internal class BazelBuildFileGenerator(
         load("@rules_jvm//:jvm.bzl", "jvm_test")
         load("@community//build:tests-options.bzl", "jps_test")
 
+        val mainModuleLabel = getTestClasspathModule(moduleDescriptor, moduleList)?.let { mainModule ->
+          val productionLabel = getBazelDependencyLabel(mainModule, moduleDescriptor)
+          "$productionLabel$TEST_LIB_NAME_SUFFIX"
+        }
+
         target("jps_test") {
           option("name", "${moduleDescriptor.targetName}_test")
-          option("runtime_deps", arrayOf(":$testLibTargetName"))
+          option("runtime_deps", listOfNotNull(":$testLibTargetName", mainModuleLabel))
         }
       }
     }
@@ -706,6 +717,17 @@ internal class BazelBuildFileGenerator(
 // ex.: intellij.idea.community.main intellij.rubymine.main
 private fun isTestClasspathModule(module: ModuleDescriptor): Boolean {
   return module.module.name.split('.').contains("main")
+}
+
+private fun getTestClasspathModule(module: ModuleDescriptor, moduleList: ModuleList): ModuleDescriptor? {
+  val moduleName = module.module.name
+
+  val mainModuleName = when {
+    moduleName.startsWith("kotlin.jvm-debugger.") -> "intellij.idea.community.main"
+    else -> null
+  }
+
+  return mainModuleName?.let { moduleList.getModuleDescriptor(it) }
 }
 
 private fun computeSources(module: JpsModule, contentRoots: List<Path>, bazelBuildDir: Path, type: JpsModuleSourceRootType<*>): List<SourceDirDescriptor> {
