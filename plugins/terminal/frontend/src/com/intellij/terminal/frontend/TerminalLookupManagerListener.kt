@@ -30,7 +30,9 @@ class TerminalLookupListener : LookupListener {
     }
 
     val commandSize = lookup.itemPattern(item).length
-    terminalInput.sendBytes(ByteArray(commandSize) { Ascii.BS })
+    if (commandSize > 0) {
+      terminalInput.sendBytes(ByteArray(commandSize) { Ascii.BS })
+    }
     terminalInput.sendString(item.lookupString)
     // if one of the listeners returns false - the item is not inserted
     return false
