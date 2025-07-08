@@ -19,7 +19,6 @@ import static com.intellij.psi.PsiModifier.STATIC;
 
 @NotNullByDefault
 final class ConstructorBodyProcessor {
-  private final PsiClass containingClass;
   private final PsiMethod constructor;
   private final Map<PsiParameter, @Nullable PsiField> paramsToFields = new HashMap<>();
   // TODO(bartekpacia): change type to SequencedMap once we move to Java 21
@@ -42,7 +41,6 @@ final class ConstructorBodyProcessor {
 
   ConstructorBodyProcessor(PsiMethod constructor,
                            List<PsiField> instanceFields) {
-    this.containingClass = Objects.requireNonNull(constructor.getContainingClass(), "constructor must have containing class");
     this.constructor = constructor;
     this.instanceFields = instanceFields;
     final PsiCodeBlock body = Objects.requireNonNull(constructor.getBody(), "constructor must have body");
@@ -59,6 +57,9 @@ final class ConstructorBodyProcessor {
       return;
     }
     final PsiExpression expression = expressionStatement.getExpression();
+
+    final PsiClass containingClass = constructor.getContainingClass();
+    if (containingClass == null) return;
 
     if (expression instanceof PsiMethodCallExpression methodCallExpr && JavaPsiConstructorUtil.isChainedConstructorCall(methodCallExpr)) {
       delegating = true;
