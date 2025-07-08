@@ -25,7 +25,6 @@ import com.intellij.searchEverywhereMl.typos.splitText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlin.text.lowercase
 import java.util.regex.Pattern
 
 @Service(Service.Level.APP)
