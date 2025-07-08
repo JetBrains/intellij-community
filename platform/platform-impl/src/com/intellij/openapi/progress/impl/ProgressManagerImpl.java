@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOCancellationCallback;
 import com.intellij.util.io.IOCancellationCallbackHolder;
 import com.intellij.util.ui.EDT;
@@ -25,11 +25,11 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
+import java.util.List;
 
 public final class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
-  private final Set<CheckCanceledHook> myHooks = ConcurrentCollectionFactory.createConcurrentSet();
+  private final List<CheckCanceledHook> myHooks = ContainerUtil.createEmptyCOWList();
   private volatile boolean myRunSleepHook; // optimization: to avoid adding/removing mySleepHook to myHooks constantly this flag is used
 
   public ProgressManagerImpl() {
@@ -65,22 +65,12 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    CheckCanceledHook hook = progress instanceof PingProgress && EDT.isCurrentThreadEdt() ?p -> {
-      ((PingProgress)progress).interact();
-      return true;
-    }
-                             : null;
-    if (hook != null) {
-      addCheckCanceledHook(hook);
-    }
-
-    try {
+    CheckCanceledHook hook = progress instanceof PingProgress pingProgress && EDT.isCurrentThreadEdt() ? pingProgress : null;
+    if (hook == null) {
       super.executeProcessUnderProgress(process, progress);
     }
-    finally {
-      if (hook != null) {
-        removeCheckCanceledHook(hook);
-      }
+    else {
+      runWithHook(hook, () -> super.executeProcessUnderProgress(process, progress));
     }
   }
 
@@ -191,10 +181,13 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
    */
   @VisibleForTesting
   @ApiStatus.Internal
-  public void addCheckCanceledHook(@NotNull CheckCanceledHook hook) {
-    if (myHooks.add(hook)) {
+  public boolean addCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+    if (!myHooks.contains(hook)) {
+      myHooks.add(hook);
       updateShouldCheckCanceled();
+      return true;
     }
+    return false;
   }
 
   @VisibleForTesting
@@ -202,6 +195,19 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   public void removeCheckCanceledHook(@NotNull CheckCanceledHook hook) {
     if (myHooks.remove(hook)) {
       updateShouldCheckCanceled();
+    }
+  }
+
+  @ApiStatus.Internal
+  public void runWithHook(@NotNull CheckCanceledHook hook, @NotNull Runnable runnable) {
+    boolean added = addCheckCanceledHook(hook);
+    try {
+      runnable.run();
+    }
+    finally {
+      if (added) {
+        removeCheckCanceledHook(hook);
+      }
     }
   }
 
@@ -216,13 +222,12 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
       return result;
     }
 
-    boolean[] resultAsArr = {result};
-    myHooks.forEach(hook -> {
+    for (CheckCanceledHook hook : myHooks) {
       if (hook.runHook(indicator)) {
-        resultAsArr[0] = true; // but still continue to other hooks
+        result = true; // but still continue to other hooks
       }
-    });
-    return resultAsArr[0];
+    }
+    return result;
   }
 
   @Override
