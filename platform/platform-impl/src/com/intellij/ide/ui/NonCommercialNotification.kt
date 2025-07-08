@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.BundleBase
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.*
+import com.intellij.ui.LicensingFacade.LicenseStateListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
@@ -38,74 +39,88 @@ import java.util.*
 import javax.accessibility.AccessibleAction
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JEditorPane
-import javax.swing.JLabel
-import javax.swing.LayoutFocusTraversalPolicy
-import javax.swing.UIManager
+import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 
 private const val ID = "NonCommercial"
 
 @ApiStatus.Internal
-internal class NonCommercialFactory : StatusBarWidgetFactory {
+abstract class LicenseRelatedStatusBarWidgetFactory : StatusBarWidgetFactory {
+
   init {
     val messageBus = ApplicationManager.getApplication().messageBus
-    messageBus.connect().subscribe(LicensingFacade.LicenseStateListener.TOPIC, object : LicensingFacade.LicenseStateListener {
-      override fun licenseStateChanged(newState: LicensingFacade?) {
-        ApplicationManager.getApplication()?.invokeLater(
-          {
-            ProjectManager.getInstance().openProjects.forEach {
-              it.service<StatusBarWidgetsManager>().updateWidget(NonCommercialFactory::class.java)
-            }
-          },
-          ModalityState.any())
-      }
+    messageBus.connect().subscribe(LicenseStateListener.TOPIC, LicenseStateListener {
+      ApplicationManager.getApplication().invokeLater(
+        {
+          ProjectManager.getInstance().openProjects.forEach {
+            it.service<StatusBarWidgetsManager>().updateWidget(this@LicenseRelatedStatusBarWidgetFactory)
+          }
+        },
+        ModalityState.any())
     })
   }
 
-  override fun getId() = ID
+  final override fun getDisplayName(): String = "" // unused
+  final override fun canBeEnabledOn(statusBar: StatusBar): Boolean = false
+  final override fun isConfigurable(): Boolean = false
+  abstract override fun isAvailable(project: Project): Boolean
+}
 
-  override fun getDisplayName() = ""
+
+internal class NonCommercialFactory : LicenseRelatedStatusBarWidgetFactory() {
+  override fun getId() = ID
 
   override fun isAvailable(project: Project): Boolean {
     val metadata = LicensingFacade.getInstance()?.metadata ?: return false
     return metadata.length > 10 && metadata[10] == 'F'
   }
 
-  override fun createWidget(project: Project): StatusBarWidget = NonCommercialWidget()
-
-  override fun canBeEnabledOn(statusBar: StatusBar) = false
-
-  override fun isConfigurable() = false
+  override fun createWidget(project: Project): StatusBarWidget = NonCommercialWidget(this)
 }
 
-private class NonCommercialWidget : CustomStatusBarWidget {
-  private val myComponent by lazy { createComponent() }
+
+@ApiStatus.Internal
+abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelatedStatusBarWidgetFactory) : CustomStatusBarWidget {
+  final override fun ID(): String = factory.id
+
+  private val myComponent: JLabel by lazy { createComponent() }
+
+  final override fun getComponent(): JComponent = myComponent
 
   override fun install(statusBar: StatusBar) {
+    val project = statusBar.project ?: return
+
+    // The purpose of this listener is to guarantee that license-related widgets are the rightmost ones.
     statusBar.addListener(object : StatusBarListener {
-      override fun widgetAdded(widget: StatusBarWidget, anchor: @NonNls String?) {
-        if (widget.ID() != ID) {
-          statusBar.removeWidget(ID)
-          statusBar.addWidget(NonCommercialWidget(), "last")
+      override fun widgetAdded(addedWidget: StatusBarWidget, anchor: @NonNls String?) {
+        if (addedWidget is LicenseRelatedStatusBarWidget) return
+
+        val myIndex = statusBar.allWidgets?.lastIndexOf(this@LicenseRelatedStatusBarWidget) ?: 0
+        val rightmostLicenseUnrelated = statusBar.allWidgets?.indexOfLast { it !is LicenseRelatedStatusBarWidget } ?: 0
+        if (myIndex < rightmostLicenseUnrelated) {
+          statusBar.removeWidget(ID())
+          statusBar.addWidget(factory.createWidget(project), "last")
         }
       }
     }, this)
   }
 
-  private fun createComponent(): JLabel {
-    val title = IdeBundle.message("status.bar.widget.non.commercial.usage")
-    val foreground = JBColor.namedColor("Badge.greenOutlineForeground", JBColor(0x208A3C, 0x5FAD65))
-    val borderColor = JBColor.namedColor("Badge.greenOutlineBorderColor", JBColor(0x55A76A, 0x4E8052))
-    val uiSettings = UISettings.Companion.getInstance()
-    val icon = TextIcon(title, foreground, null, borderColor, 0, true)
-    icon.setFont(getStatusFont())
-    icon.setRound(18)
-    icon.setInsets(JBUI.insets(if (!ExperimentalUI.Companion.isNewUI() || uiSettings.compactMode) 3 else 4, 8))
+  protected abstract val text: String
+  protected open val tooltip: String? = null
+  protected open val foreground: JBColor = JBColor.namedColor("Badge.greenOutlineForeground", JBColor(0x208A3C, 0x5FAD65))
+  protected open val borderColor: JBColor = JBColor.namedColor("Badge.greenOutlineBorderColor", JBColor(0x55A76A, 0x4E8052))
 
-    val label = if (ExperimentalUI.Companion.isNewUI()) {
+  protected abstract fun createClickListener(): ClickListener
+
+  private fun createComponent(): JLabel {
+    val uiSettings = UISettings.getInstance()
+    val text = text
+    val icon = TextIcon(text, foreground, null, borderColor, 0, true)
+    icon.setFont(getStatusFont())
+    icon.round = 18
+    icon.insets = JBUI.insets(if (!ExperimentalUI.isNewUI() || uiSettings.compactMode) 3 else 4, 8)
+
+    val label = if (ExperimentalUI.isNewUI()) {
       object : WidgetLabel(icon) {
         var compactMode = uiSettings.compactMode
         var scale = uiSettings.ideScale
@@ -118,7 +133,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
             compactMode = newValue
             scale = newScale
             oldFont = font
-            icon.setInsets(JBUI.insets(if (newValue) 3 else 4, 8))
+            icon.insets = JBUI.insets(if (newValue) 3 else 4, 8)
             icon.font = getStatusFont()
             icon.setFontTransform(getFontMetrics(icon.font).fontRenderContext.transform)
             parent.revalidate()
@@ -131,20 +146,23 @@ private class NonCommercialWidget : CustomStatusBarWidget {
       WidgetLabel(icon)
     }
     icon.setFontTransform(label.getFontMetrics(icon.font).fontRenderContext.transform)
-    label.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, title)
+    label.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, text)
 
-    val popup = NonCommercialPopup(this)
+    val popup = createClickListener()
     label.clickListener = popup
     popup.installOn(label)
 
+    label.toolTipText = tooltip
     return label
   }
 
   private fun getStatusFont() = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBFont.medium()
+}
 
-  override fun getComponent(): JComponent = myComponent
 
-  override fun ID() = ID
+private class NonCommercialWidget(factory: LicenseRelatedStatusBarWidgetFactory) : LicenseRelatedStatusBarWidget(factory) {
+  override val text: String = IdeBundle.message("status.bar.widget.non.commercial.usage")
+  override fun createClickListener(): ClickListener = NonCommercialPopup(this)
 }
 
 private class NonCommercialPopup(private val widget: NonCommercialWidget) : ClickListener() {
