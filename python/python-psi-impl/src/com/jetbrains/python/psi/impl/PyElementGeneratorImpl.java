@@ -37,11 +37,6 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  protected void specifyFileLanguageLevel(@NotNull VirtualFile virtualFile, @Nullable LanguageLevel langLevel) {
-    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, langLevel);
-  }
-
-  @Override
   public ASTNode createNameIdentifier(String name, LanguageLevel languageLevel) {
     final PsiFile dummyFile = createDummyFile(languageLevel, name);
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();

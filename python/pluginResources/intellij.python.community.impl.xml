@@ -63,6 +63,8 @@
     <projectOpenProcessor implementation="com.jetbrains.python.projectModel.uv.UvProjectOpenProcessor"/>
     <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.uv.UvUnlinkedProjectAware"/>
     <postStartupActivity implementation="com.jetbrains.python.projectModel.uv.UvProjectAware$UvSyncStartupActivity"/>
+
+    <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
   </extensions>
 
   <projectListeners>

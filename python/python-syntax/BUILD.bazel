@@ -28,6 +28,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:fastutil-min",
     "@lib//:guava",
+    "@lib//:kotlinx-serialization-core",
   ],
   runtime_deps = [":syntax_resources"]
 )
