@@ -111,6 +111,11 @@
       description="If enabled, any action will cause auto-hide tool windows to be hidden"
       defaultValue="true"
     />
+    <registryKey
+      key="build.toolwindow.split.tree"
+      description="Use split implementation (frontend/backend) of Build tool window"
+      defaultValue="false"
+    />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
                     serviceImplementation="com.intellij.toolWindow.ToolWindowStripeManagerImpl"/>

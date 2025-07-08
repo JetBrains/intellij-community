@@ -57,11 +57,14 @@ public abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
     if (descriptor != null && descriptor.canNavigate()) {
       descriptor.navigate(true);
     }
-    if (occurenceInfo.getOccurenceNumber() == -1 || occurenceInfo.getOccurencesCount() == -1) {
-      return;
+    displayOccurrencesInfoInStatusBar(project, occurenceInfo.getOccurenceNumber(), occurenceInfo.getOccurencesCount());
+  }
+
+  public static void displayOccurrencesInfoInStatusBar(Project project, int occurrenceNumber, int occurenceCount) {
+    if (occurrenceNumber > 0 && occurenceCount > 0) {
+      WindowManager.getInstance().getStatusBar(project).setInfo(
+        IdeBundle.message("message.occurrence.N.of.M", occurrenceNumber, occurenceCount));
     }
-    WindowManager.getInstance().getStatusBar(project).setInfo(
-      IdeBundle.message("message.occurrence.N.of.M", occurenceInfo.getOccurenceNumber(), occurenceInfo.getOccurencesCount()));
   }
 
   @Override

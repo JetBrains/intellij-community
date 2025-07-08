@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
@@ -38,6 +39,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -45,12 +47,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.render.RenderingHelper;
+import com.intellij.ui.split.SplitComponentFactory;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
@@ -65,6 +69,8 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 
@@ -82,6 +88,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -90,9 +97,25 @@ import java.util.function.Supplier;
  */
 public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, BuildConsoleView, Filterable<ExecutionNode>, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
+  @ApiStatus.Internal
+  public static final DataKey<BuildTreeConsoleView> COMPONENT_KEY = DataKey.create("BuildTreeConsoleView");
 
   private static final @NonNls String TREE = "tree";
   private static final @NonNls String SPLITTER_PROPERTY = "BuildView.Splitter.Proportion";
+
+  @Service(Service.Level.PROJECT)
+  private static final class ScopeHolder {
+    private final CoroutineScope scope;
+
+    private ScopeHolder(CoroutineScope scope) {
+      this.scope = scope;
+    }
+
+    public static CoroutineScope getScope(Project project) {
+      return project.getService(ScopeHolder.class).scope;
+    }
+  }
+
   private final JPanel myPanel = new JPanel();
   private final Map<Object, ExecutionNode> nodesMap = new ConcurrentHashMap<>();
 
@@ -105,13 +128,19 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   private final AtomicBoolean myShownFirstError = new AtomicBoolean();
   private final AtomicBoolean myExpandedFirstMessage = new AtomicBoolean();
   private final boolean myNavigateToTheFirstErrorLocation;
+  private final Invoker myInvoker;
   private final StructureTreeModel<AbstractTreeStructure> myTreeModel;
   private final Tree myTree;
+  private final CoroutineScope myScope;
+  private final BuildTreeViewModel myTreeVm;
+  private final ComponentContainer mySplitComponent;
   private final ExecutionNode myRootNode;
   private final ExecutionNode myBuildProgressRootNode;
   private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
-  private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
+  private final OccurenceNavigator myOccurrenceNavigatorSupport;
   private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
+
+  private final boolean mySplitImplementation = Registry.is("build.toolwindow.split.tree", false);
 
   /**
    * @deprecated BuildViewSettingsProvider is not used anymore.
@@ -137,37 +166,61 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
     myRootNode = new ExecutionNode(myProject, null, true, this::isCorrectThread);
     myBuildProgressRootNode = new ExecutionNode(myProject, myRootNode, true, this::isCorrectThread);
-    myRootNode.setFilter(getFilter());
+    if (!mySplitImplementation) {
+      myRootNode.setFilter(getFilter());
+    }
     myRootNode.add(myBuildProgressRootNode);
 
-    AbstractTreeStructure treeStructure = new MyTreeStructure();
-    myTreeModel = new StructureTreeModel<>(treeStructure, null, Invoker.forBackgroundThreadWithoutReadAction(this), this);
-    AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
-    asyncTreeModel.addTreeModelListener(new ExecutionNodeAutoExpandingListener());
-    myTree = initTree(asyncTreeModel);
-    myTree.getAccessibleContext().setAccessibleName(IdeBundle.message("buildToolWindow.tree.accessibleName"));
+    myInvoker = Invoker.forBackgroundThreadWithoutReadAction(this);
 
-    JPanel myContentPanel = new JPanel();
-    myContentPanel.setLayout(new CardLayout());
-    myContentPanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.NONE), TREE);
-    if (Boolean.getBoolean("rd.build.tree.as.becontrol")) {
-      RemoteTransferUIManager.setWellBeControlizable(myContentPanel);
+    JComponent treeComponent;
+    if (mySplitImplementation) {
+      myScope = CoroutineScopeKt.childScope(ScopeHolder.getScope(project), "BuildTreeConsoleView", EmptyCoroutineContext.INSTANCE, true);
+      myTreeVm = new BuildTreeViewModel(this, myScope);
+      Disposer.register(this, myTreeVm);
+      mySplitComponent = SplitComponentFactory.getInstance().createComponent(myTreeVm);
+
+      treeComponent = mySplitComponent.getComponent();
+
+      myOccurrenceNavigatorSupport = new SplitProblemOccurrenceNavigatorSupport(myTreeVm);
+
+      myTreeModel = null;
+      myTree = null;
     }
+    else {
+      AbstractTreeStructure treeStructure = new MyTreeStructure();
+      myTreeModel = new StructureTreeModel<>(treeStructure, null, myInvoker, this);
+      AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
+      asyncTreeModel.addTreeModelListener(new ExecutionNodeAutoExpandingListener());
+      myTree = initTree(asyncTreeModel);
+      myTree.getAccessibleContext().setAccessibleName(IdeBundle.message("buildToolWindow.tree.accessibleName"));
 
-    if (ExperimentalUI.isNewUI()) {
-      UIUtil.setBackgroundRecursively(myContentPanel, JBUI.CurrentTheme.ToolWindow.background());
+      JPanel myContentPanel = new JPanel();
+      myContentPanel.setLayout(new CardLayout());
+      myContentPanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.NONE), TREE);
+
+      if (ExperimentalUI.isNewUI()) {
+        UIUtil.setBackgroundRecursively(myContentPanel, JBUI.CurrentTheme.ToolWindow.background());
+      }
+
+      treeComponent = myContentPanel;
+
+      myOccurrenceNavigatorSupport = new ProblemOccurrenceNavigatorSupport(myTree);
+
+      myScope = null;
+      myTreeVm = null;
+      mySplitComponent = null;
     }
 
     myPanel.setLayout(new BorderLayout());
     OnePixelSplitter myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, 0.33f);
-    myThreeComponentsSplitter.setFirstComponent(myContentPanel);
+    myThreeComponentsSplitter.setFirstComponent(treeComponent);
     List<Filter> filters = myBuildDescriptor.getExecutionFilters();
     myConsoleViewHandler = new ConsoleViewHandler(myProject, myTree, myBuildProgressRootNode, this,
                                                   executionConsole, filters);
     myThreeComponentsSplitter.setSecondComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
     BuildTreeFilters.install(this);
-    myOccurrenceNavigatorSupport = new ProblemOccurrenceNavigatorSupport(myTree);
   }
 
   private static boolean isNavigateToTheFirstErrorLocation(@NotNull Project project, @NotNull BuildDescriptor buildDescriptor) {
@@ -181,53 +234,63 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
            : isNavigateToError.toBoolean();
   }
 
-  private boolean isCorrectThread() {
-    if (myTreeModel != null) {
-      return myTreeModel.getInvoker().isValidThread();
+  boolean isCorrectThread() {
+    if (myInvoker != null) {
+      return myInvoker.isValidThread();
     }
     return true;
   }
 
-  private void installContextMenu() {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
-      List<AnAction> restartActions = myBuildDescriptor.getRestartActions();
-      rerunActionGroup.addAll(restartActions);
-      if (!restartActions.isEmpty()) {
-        rerunActionGroup.addSeparator();
+  @NotNull
+  private Function<@Nullable ExecutionNode, @NotNull ActionGroup> getContextMenuSupplier() {
+    final DefaultActionGroup rerunActionGroup = new DefaultActionGroup();
+    List<AnAction> restartActions = myBuildDescriptor.getRestartActions();
+    rerunActionGroup.addAll(restartActions);
+    if (!restartActions.isEmpty()) {
+      rerunActionGroup.addSeparator();
+    }
+
+    final DefaultActionGroup sourceActionGroup = new DefaultActionGroup();
+    EditSourceAction edit = new EditSourceAction();
+    ActionUtil.copyFrom(edit, "EditSource");
+    sourceActionGroup.add(edit);
+    DefaultActionGroup filteringActionsGroup = BuildTreeFilters.createFilteringActionsGroup(this);
+    final DefaultActionGroup navigationActionGroup = new DefaultActionGroup();
+    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    final AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
+    navigationActionGroup.add(prevAction);
+    final AnAction nextAction = actionsManager.createNextOccurenceAction(this);
+    navigationActionGroup.add(nextAction);
+
+    return node -> {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      group.addAll(rerunActionGroup);
+      group.addAll(sourceActionGroup);
+      group.addSeparator();
+      if (node != null) {
+        List<AnAction> contextActions = myBuildDescriptor.getContextActions(node);
+        if (!contextActions.isEmpty()) {
+          group.addAll(contextActions);
+          group.addSeparator();
+        }
       }
+      group.addAll(filteringActionsGroup);
+      group.addSeparator();
+      group.addAll(navigationActionGroup);
+      return group;
+    };
+  }
 
-      final DefaultActionGroup sourceActionGroup = new DefaultActionGroup();
-      EditSourceAction edit = new EditSourceAction();
-      ActionUtil.copyFrom(edit, "EditSource");
-      sourceActionGroup.add(edit);
-      DefaultActionGroup filteringActionsGroup = BuildTreeFilters.createFilteringActionsGroup(this);
-      final DefaultActionGroup navigationActionGroup = new DefaultActionGroup();
-      final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-      final AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
-      navigationActionGroup.add(prevAction);
-      final AnAction nextAction = actionsManager.createNextOccurenceAction(this);
-      navigationActionGroup.add(nextAction);
-
+  private void installContextMenu() {
+    if (myTree == null) return;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      Function<ExecutionNode, ActionGroup> supplier = getContextMenuSupplier();
       myTree.addMouseListener(new PopupHandler() {
         @Override
         public void invokePopup(Component comp, int x, int y) {
-          final DefaultActionGroup group = new DefaultActionGroup();
-          group.addAll(rerunActionGroup);
-          group.addAll(sourceActionGroup);
-          group.addSeparator();
           ExecutionNode[] selectedNodes = getSelectedNodes();
-          if (selectedNodes.length == 1) {
-            ExecutionNode selectedNode = selectedNodes[0];
-            List<AnAction> contextActions = myBuildDescriptor.getContextActions(selectedNode);
-            if (!contextActions.isEmpty()) {
-              group.addAll(contextActions);
-              group.addSeparator();
-            }
-          }
-          group.addAll(filteringActionsGroup);
-          group.addSeparator();
-          group.addAll(navigationActionGroup);
+          ExecutionNode selectedNode = selectedNodes.length == 1 ? selectedNodes[0] : null;
+          ActionGroup group = supplier.apply(selectedNode);
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("BuildView", group);
           popupMenu.setTargetComponent(myTree);
           JPopupMenu menu = popupMenu.getComponent();
@@ -237,14 +300,28 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     });
   }
 
+  @ApiStatus.Internal
+  public ActionGroup getContextMenuGroup(DataContext context) {
+    SelectedBuildTreeNode selectedNode = context.getData(BuildTreeContextKt.getBUILD_TREE_SELECTED_NODE());
+    ExecutionNode node = selectedNode == null ? null : myTreeVm.getNodeById(selectedNode.getNodeId());
+    return getContextMenuSupplier().apply(node);
+  }
+
   @Override
   public void clear() {
-    myTreeModel.getInvoker().invoke(() -> {
+    myInvoker.invoke(() -> {
       getRootElement().removeChildren();
       nodesMap.clear();
       myConsoleViewHandler.clear();
+      if (mySplitImplementation) {
+        myTreeVm.clearNodes();
+      }
     });
     scheduleUpdate(getRootElement(), true);
+  }
+
+  boolean isAlwaysVisible(ExecutionNode node) {
+    return node == getBuildProgressRootNode() || node.isRunning() || node.isFailed();
   }
 
   @Override
@@ -254,42 +331,81 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
   @Override
   public @NotNull Predicate<ExecutionNode> getFilter() {
-    return executionNode -> executionNode == getBuildProgressRootNode() ||
-                            executionNode.isRunning() ||
-                            executionNode.isFailed() ||
+    return executionNode -> isAlwaysVisible(executionNode) ||
                             ContainerUtil.exists(myNodeFilters, predicate -> predicate.test(executionNode));
   }
 
   @Override
   public void addFilter(@NotNull Predicate<? super ExecutionNode> executionTreeFilter) {
-    myNodeFilters.add(executionTreeFilter);
-    updateFilter();
+    if (mySplitImplementation) {
+      if (executionTreeFilter == BuildTreeFilters.getSUCCESSFUL_STEPS_FILTER()) {
+        myTreeVm.setShowingSuccessful(true);
+      }
+      else if (executionTreeFilter == BuildTreeFilters.getWARNINGS_FILTER()) {
+        myTreeVm.setShowingWarnings(true);
+      }
+      else {
+        LOG.error("Unknown filter: " + executionTreeFilter);
+      }
+    }
+    else {
+      myNodeFilters.add(executionTreeFilter);
+      updateFilter();
+    }
   }
 
   @Override
   public void removeFilter(@NotNull Predicate<? super ExecutionNode> filter) {
-    myNodeFilters.remove(filter);
-    updateFilter();
+    if (mySplitImplementation) {
+      if (filter == BuildTreeFilters.getSUCCESSFUL_STEPS_FILTER()) {
+        myTreeVm.setShowingSuccessful(false);
+      }
+      else if (filter == BuildTreeFilters.getWARNINGS_FILTER()) {
+        myTreeVm.setShowingWarnings(false);
+      }
+      else {
+        LOG.error("Unknown filter: " + filter);
+      }
+    }
+    else {
+      myNodeFilters.remove(filter);
+      updateFilter();
+    }
   }
 
   @Override
   public boolean contains(@NotNull Predicate<? super ExecutionNode> filter) {
-    return myNodeFilters.contains(filter);
+    if (mySplitImplementation) {
+      if (filter == BuildTreeFilters.getSUCCESSFUL_STEPS_FILTER()) {
+        return myTreeVm.getShowingSuccessful();
+      }
+      else if (filter == BuildTreeFilters.getWARNINGS_FILTER()) {
+        return myTreeVm.getShowingWarnings();
+      }
+      else {
+        LOG.error("Unknown filter: " + filter);
+        return false;
+      }
+    }
+    else {
+      return myNodeFilters.contains(filter);
+    }
   }
 
   private void updateFilter() {
+    if (mySplitImplementation) return;
     ExecutionNode rootElement = getRootElement();
-    myTreeModel.getInvoker().invoke(() -> {
+    myInvoker.invoke(() -> {
       rootElement.setFilter(getFilter());
       scheduleUpdate(rootElement, true);
     });
   }
 
-  private ExecutionNode getRootElement() {
+  ExecutionNode getRootElement() {
     return myRootNode;
   }
 
-  private ExecutionNode getBuildProgressRootNode() {
+  ExecutionNode getBuildProgressRootNode() {
     return myBuildProgressRootNode;
   }
 
@@ -298,18 +414,20 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   }
 
   private @Nullable ExecutionNode getOrMaybeCreateParentNode(@NotNull BuildEvent event,
-                                                             @NotNull Set<? super ExecutionNode> structureChanged) {
+                                                             @NotNull Set<? super ExecutionNode> updatedNodes) {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     if (event instanceof MessageEvent) {
-      parentNode = createMessageParentNodes((MessageEvent)event, parentNode);
-      ContainerUtil.addIfNotNull(structureChanged, parentNode);
+      parentNode = createMessageParentNodes((MessageEvent)event, parentNode, updatedNodes);
+      if (!mySplitImplementation) {
+        ContainerUtil.addIfNotNull(updatedNodes, parentNode);
+      }
     }
     return parentNode;
   }
 
   private void onEventInternal(@NotNull Object buildId, @NotNull BuildEvent event) {
-    Set<ExecutionNode> structureChanged = new SmartHashSet<>();
-    final ExecutionNode parentNode = getOrMaybeCreateParentNode(event, structureChanged);
+    Set<ExecutionNode> updatedNodes = mySplitImplementation ? new LinkedHashSet<>() : new SmartHashSet<>();
+    final ExecutionNode parentNode = getOrMaybeCreateParentNode(event, updatedNodes);
     final Object eventId = event.getId();
     ExecutionNode currentNode = nodesMap.get(eventId);
     ExecutionNode buildProgressRootNode = getBuildProgressRootNode();
@@ -321,11 +439,17 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
           if (myFinishedBuildEventReceived.get()) {
             if (parentNode != null &&
                 parentNode.findFirstChild(node -> event.getMessage().equals(node.getName())) != null) {
+              if (mySplitImplementation) {
+                myTreeVm.createOrUpdateNodes(updatedNodes);
+              }
               return;
             }
           }
           else {
             myDeferredEvents.add(event);
+            if (mySplitImplementation) {
+              myTreeVm.createOrUpdateNodes(updatedNodes);
+            }
             return;
           }
         }
@@ -345,7 +469,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
             Navigatable messageEventNavigatable = messageEvent.getNavigatable(myProject);
             currentNode.setNavigatable(messageEventNavigatable);
             MessageEventResult messageEventResult = messageEvent.getResult();
-            ContainerUtil.addIfNotNull(structureChanged, currentNode.setResult(messageEventResult));
+            ContainerUtil.addIfNotNull(updatedNodes, currentNode.setResult(messageEventResult, !mySplitImplementation));
 
             if (messageEventResult instanceof FailureResult) {
               for (Failure failure : ((FailureResult)messageEventResult).getFailures()) {
@@ -363,12 +487,14 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
                 myConsoleViewHandler.addOutput(parentNode, buildId, event);
                 myConsoleViewHandler.addOutput(parentNode);
               }
-              reportMessageKind(messageEvent.getKind(), parentNode, structureChanged);
+              reportMessageKind(messageEvent.getKind(), parentNode, updatedNodes);
             }
             myConsoleViewHandler.addOutput(currentNode, buildId, event);
           }
           if (parentNode != null) {
-            structureChanged.add(parentNode);
+            if (!mySplitImplementation) {
+              updatedNodes.add(parentNode);
+            }
             parentNode.add(currentNode);
           }
         }
@@ -377,6 +503,9 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       else {
         if (LOG.isDebugEnabled()) {
           LOG.debug("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        }
+        if (mySplitImplementation) {
+          myTreeVm.createOrUpdateNodes(updatedNodes);
         }
         return;
       }
@@ -389,7 +518,9 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
           currentNode = new ExecutionNode(myProject, parentNode, parentNode == buildProgressRootNode, this::isCorrectThread);
           nodesMap.put(eventId, currentNode);
           if (parentNode != null) {
-            structureChanged.add(parentNode);
+            if (!mySplitImplementation) {
+              updatedNodes.add(parentNode);
+            }
             parentNode.add(currentNode);
           }
         }
@@ -397,8 +528,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
           myConsoleViewHandler.addOutput(parentNode, buildId, event);
         }
         else if (event instanceof PresentableBuildEvent) {
-          currentNode =
-            addAsPresentableEventNode((PresentableBuildEvent)event, structureChanged, parentNode, eventId, buildProgressRootNode);
+          currentNode = addAsPresentableEventNode((PresentableBuildEvent)event, updatedNodes, parentNode, eventId, buildProgressRootNode);
         }
       }
 
@@ -413,9 +543,15 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     }
 
     if (currentNode == null) {
+      if (mySplitImplementation) {
+        myTreeVm.createOrUpdateNodes(updatedNodes);
+      }
       return;
     }
 
+    if (mySplitImplementation) {
+      updatedNodes.add(currentNode);
+    }
     currentNode.setName(event.getMessage());
     currentNode.setHint(event.getHint());
     if (currentNode.getStartTime() == 0) {
@@ -428,12 +564,12 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
         result = calculateDerivedResult((DerivedResult)result, currentNode);
       }
       currentNode.setResult(result, false);
-      ContainerUtil.addIfNotNull(structureChanged, currentNode.setEndTime(event.getEventTime()));
+      ContainerUtil.addIfNotNull(updatedNodes, currentNode.setEndTime(event.getEventTime(), !mySplitImplementation));
       SkippedResult skippedResult = new SkippedResultImpl();
-      finishChildren(structureChanged, currentNode, skippedResult);
+      finishChildren(updatedNodes, currentNode, skippedResult);
       if (result instanceof FailureResult) {
         for (Failure failure : ((FailureResult)result).getFailures()) {
-          Runnable task = addChildFailureNode(currentNode, failure, event.getMessage(), event.getEventTime(), structureChanged);
+          Runnable task = addChildFailureNode(currentNode, failure, event.getMessage(), event.getEventTime(), updatedNodes);
           if (selectErrorNodeTask == null) selectErrorNodeTask = task;
         }
       }
@@ -453,31 +589,46 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       }
       myConsoleViewHandler.stopProgressBar();
     }
-    if (structureChanged.isEmpty()) {
-      scheduleUpdate(currentNode, false);
+    if (mySplitImplementation) {
+      myTreeVm.createOrUpdateNodes(updatedNodes);
     }
     else {
-      for (ExecutionNode node : structureChanged) {
-        scheduleUpdate(node, true);
+      if (updatedNodes.isEmpty()) {
+        scheduleUpdate(currentNode, false);
+      }
+      else {
+        for (ExecutionNode node : updatedNodes) {
+          scheduleUpdate(node, true);
+        }
       }
     }
     if (selectErrorNodeTask != null) {
       myExpandedFirstMessage.set(true);
-      Runnable finalSelectErrorTask = selectErrorNodeTask;
-      myTreeModel.invalidate(getRootElement(), true).onProcessed(p -> finalSelectErrorTask.run());
+      if (mySplitImplementation) {
+        selectErrorNodeTask.run();
+      }
+      else {
+        Runnable finalSelectErrorTask = selectErrorNodeTask;
+        myTreeModel.invalidate(getRootElement(), true).onProcessed(p -> finalSelectErrorTask.run());
+      }
     }
     else {
       if (isMessageEvent && myExpandedFirstMessage.compareAndSet(false, true)) {
-        ExecutionNode finalCurrentNode = currentNode;
-        myTreeModel.invalidate(getRootElement(), false).onProcessed(p -> {
-          TreeUtil.promiseMakeVisible(myTree, visitor(finalCurrentNode));
-        });
+        if (mySplitImplementation) {
+          myTreeVm.makeVisible(currentNode, false);
+        }
+        else {
+          ExecutionNode finalCurrentNode = currentNode;
+          myTreeModel.invalidate(getRootElement(), false).onProcessed(p -> {
+            TreeUtil.promiseMakeVisible(myTree, visitor(finalCurrentNode));
+          });
+        }
       }
     }
   }
 
   private @NotNull ExecutionNode addAsPresentableEventNode(@NotNull PresentableBuildEvent event,
-                                                           @NotNull Set<? super ExecutionNode> structureChanged,
+                                                           @NotNull Set<? super ExecutionNode> updatedNodes,
                                                            @Nullable ExecutionNode parentNode,
                                                            @NotNull Object eventId,
                                                            @NotNull ExecutionNode buildProgressRootNode) {
@@ -486,7 +637,9 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     executionNode.applyFrom(presentationData);
     nodesMap.put(eventId, executionNode);
     if (parentNode != null) {
-      structureChanged.add(parentNode);
+      if (!mySplitImplementation) {
+        updatedNodes.add(parentNode);
+      }
       parentNode.add(executionNode);
     }
     myConsoleViewHandler.maybeAddExecutionConsole(executionNode, presentationData);
@@ -519,16 +672,23 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
   private void reportMessageKind(@NotNull MessageEvent.Kind eventKind,
                                  @NotNull ExecutionNode parentNode,
-                                 @NotNull Set<? super ExecutionNode> structureChanged) {
+                                 @NotNull Set<? super ExecutionNode> updatedNodes) {
     if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING || eventKind == MessageEvent.Kind.INFO) {
       ExecutionNode executionNode = parentNode;
       do {
         ExecutionNode updatedRoot = executionNode.reportChildMessageKind(eventKind);
-        if (updatedRoot != null) {
-          structureChanged.add(updatedRoot);
+        if (mySplitImplementation) {
+          if (executionNode != myRootNode) {
+            updatedNodes.add(executionNode);
+          }
         }
         else {
-          scheduleUpdate(executionNode, false);
+          if (updatedRoot != null) {
+            updatedNodes.add(updatedRoot);
+          }
+          else {
+            scheduleUpdate(executionNode, false);
+          }
         }
       }
       while ((executionNode = executionNode.getParent()) != null);
@@ -539,7 +699,12 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   private @Nullable Runnable showErrorIfFirst(@NotNull ExecutionNode node, @Nullable Navigatable navigatable) {
     if (myShownFirstError.compareAndSet(false, true)) {
       return () -> {
-        TreeUtil.promiseSelect(myTree, visitor(node));
+        if (mySplitImplementation) {
+          myTreeVm.makeVisible(node, true);
+        }
+        else {
+          TreeUtil.promiseSelect(myTree, visitor(node));
+        }
         if (myNavigateToTheFirstErrorLocation && navigatable != null && navigatable != NonNavigatable.INSTANCE) {
           ApplicationManager.getApplication()
             .invokeLater(() -> navigatable.navigate(true), ModalityState.defaultModalityState(), myProject.getDisposed());
@@ -588,7 +753,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
                                                  @NotNull Failure failure,
                                                  @NotNull String defaultFailureMessage,
                                                  long eventTime,
-                                                 @NotNull Set<? super ExecutionNode> structureChanged) {
+                                                 @NotNull Set<? super ExecutionNode> updatedNodes) {
     String message = ObjectUtils.chooseNotNull(failure.getMessage(), failure.getDescription());
     if (message == null && failure.getError() != null) {
       message = failure.getError().getMessage();
@@ -602,10 +767,10 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     if (failureNavigatable instanceof OpenFileDescriptor fileDescriptor) {
       File file = VfsUtilCore.virtualToIoFile(fileDescriptor.getFile());
       filePosition = new FilePosition(file, fileDescriptor.getLine(), fileDescriptor.getColumn());
-      parentNode = createMessageParentNodes(eventTime, filePosition, failureNavigatable, parentNode);
+      parentNode = createMessageParentNodes(eventTime, filePosition, failureNavigatable, parentNode, updatedNodes);
     } else if (failureNavigatable instanceof FileNavigatable) {
       filePosition = ((FileNavigatable)failureNavigatable).getFilePosition();
-      parentNode = createMessageParentNodes(eventTime, filePosition, failureNavigatable, parentNode);
+      parentNode = createMessageParentNodes(eventTime, filePosition, failureNavigatable, parentNode, updatedNodes);
     }
 
     ExecutionNode failureNode = parentNode.findFirstChild(executionNode -> failureNodeName.equals(executionNode.getName()));
@@ -617,7 +782,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
         failureNode.setHint(hint);
       }
       parentNode.add(failureNode);
-      reportMessageKind(MessageEvent.Kind.ERROR, parentNode, structureChanged);
+      reportMessageKind(MessageEvent.Kind.ERROR, parentNode, updatedNodes);
     }
     if (failureNavigatable != null && failureNavigatable != NonNavigatable.INSTANCE) {
       failureNode.setNavigatable(failureNavigatable);
@@ -633,15 +798,17 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       failures = Collections.singletonList(failure);
     }
     ExecutionNode updatedRoot = failureNode.setResult(new FailureResultImpl(failures));
-    if (updatedRoot == null) {
-      updatedRoot = parentNode;
+    if (mySplitImplementation) {
+      updatedNodes.add(failureNode);
     }
-    structureChanged.add(updatedRoot);
+    else {
+      updatedNodes.add(ObjectUtils.notNull(updatedRoot, parentNode));
+    }
     myConsoleViewHandler.addOutput(failureNode, failure);
     return showErrorIfFirst(failureNode, failureNavigatable);
   }
 
-  private static void finishChildren(@NotNull Set<? super ExecutionNode> structureChanged,
+  private void finishChildren(@NotNull Set<? super ExecutionNode> updatedNodes,
                                      @NotNull ExecutionNode node,
                                      @NotNull EventResult result) {
     List<ExecutionNode> childList = node.getChildList();
@@ -651,8 +818,11 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       if (!child.isRunning()) {
         continue;
       }
-      finishChildren(structureChanged, child, result);
-      ContainerUtil.addIfNotNull(structureChanged, child.setResult(result));
+      finishChildren(updatedNodes, child, result);
+      ContainerUtil.addIfNotNull(updatedNodes, child.setResult(result, !mySplitImplementation));
+      if (mySplitImplementation) {
+        updatedNodes.add(child);
+      }
     }
   }
 
@@ -720,12 +890,16 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
   @Override
   public JComponent getPreferredFocusableComponent() {
-    return myTree;
+    return mySplitImplementation ? ObjectUtils.notNull(mySplitComponent.getPreferredFocusableComponent(), mySplitComponent.getComponent())
+                                 : myTree;
   }
 
   @Override
   public void dispose() {
     myDisposed.set(true);
+    if (mySplitImplementation) {
+      kotlinx.coroutines.CoroutineScopeKt.cancel(myScope, null);
+    }
   }
 
   public boolean isDisposed() {
@@ -734,19 +908,26 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
   @Override
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
-    myTreeModel.getInvoker().invoke(() -> onEventInternal(buildId, event));
+    myInvoker.invoke(() -> onEventInternal(buildId, event));
   }
 
   void scheduleUpdate(ExecutionNode executionNode, boolean parentStructureChanged) {
+    if (mySplitImplementation) return;
     ExecutionNode node = (executionNode.getParent() == null || !parentStructureChanged) ? executionNode : executionNode.getParent();
     myTreeModel.invalidate(node, parentStructureChanged);
   }
 
-  private ExecutionNode createMessageParentNodes(MessageEvent messageEvent, ExecutionNode parentNode) {
+  private ExecutionNode createMessageParentNodes(MessageEvent messageEvent,
+                                                 ExecutionNode parentNode,
+                                                 @NotNull Set<? super ExecutionNode> updatedNodes) {
     Object messageEventParentId = messageEvent.getParentId();
     if (messageEventParentId == null) return null;
     if (messageEvent instanceof FileMessageEvent) {
-      return createMessageParentNodes(messageEvent.getEventTime(), ((FileMessageEvent)messageEvent).getFilePosition(), messageEvent.getNavigatable(myProject), parentNode);
+      return createMessageParentNodes(messageEvent.getEventTime(),
+                                      ((FileMessageEvent)messageEvent).getFilePosition(),
+                                      messageEvent.getNavigatable(myProject),
+                                      parentNode,
+                                      updatedNodes);
     } else {
       return parentNode;
     }
@@ -755,7 +936,8 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   private ExecutionNode createMessageParentNodes(long eventTime,
                                                  @NotNull FilePosition filePosition,
                                                  @Nullable Navigatable navigatable,
-                                                 ExecutionNode parentNode) {
+                                                 ExecutionNode parentNode,
+                                                 @NotNull Set<? super ExecutionNode> updatedNodes) {
     File filePositionFile = filePosition.getFile();
     String filePath = filePositionFile == null ? "" : FileUtilRt.toSystemIndependentName(filePositionFile.getPath());
     String parentsPath = "";
@@ -792,7 +974,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
         return file.getFileType().getIcon();
       }
       return null;
-    }, navigatable, nodesMap, myProject);
+    }, navigatable, nodesMap, myProject, updatedNodes);
     return parentNode;
   }
 
@@ -818,8 +1000,13 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(PlatformCoreDataKeys.HELP_ID, "reference.build.tool.window");
     sink.set(CommonDataKeys.PROJECT, myProject);
-    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, extractSelectedNodesNavigatables());
-    sink.set(CommonDataKeys.NAVIGATABLE, extractSelectedNodeNavigatable());
+    if (mySplitImplementation) {
+      sink.set(COMPONENT_KEY, this);
+    }
+    else {
+      sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, extractSelectedNodesNavigatables());
+      sink.set(CommonDataKeys.NAVIGATABLE, extractSelectedNodeNavigatable());
+    }
   }
 
   private @Nullable Navigatable extractSelectedNodeNavigatable() {
@@ -858,6 +1045,16 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     return myTree;
   }
 
+  @ApiStatus.Internal
+  public void clearTreeSelection() {
+    if (mySplitImplementation) {
+      myTreeVm.clearSelection();
+    }
+    else {
+      myTree.clearSelection();
+    }
+  }
+
   private static Tree initTree(@NotNull AsyncTreeModel model) {
     Tree tree = new Tree(model);
     tree.setLargeModel(true);
@@ -883,7 +1080,8 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
                                                          @Nullable Supplier<? extends Icon> iconProvider,
                                                          @Nullable Navigatable navigatable,
                                                          Map<Object, ExecutionNode> nodesMap,
-                                                         Project project) {
+                                                         Project project,
+                                                         @NotNull Set<? super ExecutionNode> updatedNodes) {
     ExecutionNode node = nodesMap.get(nodeId);
     if (node == null) {
       node = new ExecutionNode(project, parentNode, false, this::isCorrectThread);
@@ -901,13 +1099,20 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       }
       parentNode.add(node);
       nodesMap.put(nodeId, node);
+      if (mySplitImplementation) {
+        updatedNodes.add(node);
+      }
     }
     return node;
   }
 
   @ApiStatus.Internal
   public Promise<?> invokeLater(@NotNull Runnable task) {
-    return myTreeModel.getInvoker().invokeLater(task);
+    return myInvoker.invokeLater(task);
+  }
+
+  void selectNode(@NotNull ExecutionNode node) {
+    myConsoleViewHandler.setNodeIfChanged(node);
   }
 
   private static final class ConsoleViewHandler implements Disposable {
@@ -924,7 +1129,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     private final ActionToolbar myToolbar;
 
     ConsoleViewHandler(@NotNull Project project,
-                       @NotNull Tree tree,
+                       @Nullable Tree tree,
                        @NotNull ExecutionNode buildProgressRootNode,
                        @NotNull Disposable parentDisposable,
                        @Nullable ExecutionConsole executionConsole,
@@ -962,15 +1167,17 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
         UIUtil.setBackgroundRecursively(myPanel, JBUI.CurrentTheme.ToolWindow.background());
       }
 
-      tree.addTreeSelectionListener(e -> {
-        if (Disposer.isDisposed(myView)) return;
-        TreePath path = e.getPath();
-        if (path == null) {
-          return;
-        }
-        TreePath selectionPath = tree.getSelectionPath();
-        setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
-      });
+      if (tree != null) {
+        tree.addTreeSelectionListener(e -> {
+          if (Disposer.isDisposed(myView)) return;
+          TreePath path = e.getPath();
+          if (path == null) {
+            return;
+          }
+          TreePath selectionPath = tree.getSelectionPath();
+          setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
+        });
+      }
     }
 
     private void showTextConsoleToolbarActions() {
@@ -1031,6 +1238,12 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
         return ((ConsoleViewImpl)console).getEditor();
       }
       return null;
+    }
+
+    private void setNodeIfChanged(@NotNull ExecutionNode node) {
+      if (myProject.isDisposed() || node == myExecutionNode) return;
+      myExecutionNode = node;
+      setNode(node);
     }
 
     private boolean setNode(@NotNull ExecutionNode node) {
@@ -1192,6 +1405,46 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
       if (!navigatables.isEmpty()) {
         return navigatables.get(0);
       }
+      return null;
+    }
+
+    @Override
+    public @NotNull String getNextOccurenceActionName() {
+      return IdeBundle.message("action.next.problem");
+    }
+
+    @Override
+    public @NotNull String getPreviousOccurenceActionName() {
+      return IdeBundle.message("action.previous.problem");
+    }
+  }
+
+  private static final class SplitProblemOccurrenceNavigatorSupport implements OccurenceNavigator {
+    private final BuildTreeViewModel vm;
+
+    private SplitProblemOccurrenceNavigatorSupport(BuildTreeViewModel model) {
+      vm = model;
+    }
+
+    @Override
+    public boolean hasNextOccurence() {
+      return vm.canNavigate(true);
+    }
+
+    @Override
+    public boolean hasPreviousOccurence() {
+      return vm.canNavigate(false);
+    }
+
+    @Override
+    public OccurenceInfo goNextOccurence() {
+      vm.navigate(true);
+      return null;
+    }
+
+    @Override
+    public OccurenceInfo goPreviousOccurence() {
+      vm.navigate(false);
       return null;
     }
 

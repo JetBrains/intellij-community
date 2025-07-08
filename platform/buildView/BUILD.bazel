@@ -14,7 +14,10 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
     "//platform/kernel/shared:kernel",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
   ],
   runtime_deps = [":buildView_resources"]
 )

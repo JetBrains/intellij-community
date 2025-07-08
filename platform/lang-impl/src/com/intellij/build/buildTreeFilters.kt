@@ -16,9 +16,8 @@ import java.util.function.Predicate
 
 
 
-
-private val SUCCESSFUL_STEPS_FILTER = Predicate { node: ExecutionNode -> !node.isFailed && !node.hasWarnings() }
-private val WARNINGS_FILTER = Predicate { node: ExecutionNode -> node.hasWarnings() || node.hasInfos() }
+internal val SUCCESSFUL_STEPS_FILTER = Predicate { node: ExecutionNode -> !node.isFailed && !node.hasWarnings() }
+internal val WARNINGS_FILTER = Predicate { node: ExecutionNode -> node.hasWarnings() || node.hasInfos() }
 
 @ApiStatus.Experimental
 fun createFilteringActionsGroup(filterable: Filterable<ExecutionNode>): DefaultActionGroup {

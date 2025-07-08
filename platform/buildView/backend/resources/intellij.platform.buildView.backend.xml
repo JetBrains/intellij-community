@@ -3,4 +3,10 @@
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.buildView"/>
   </dependencies>
+  <actions>
+    <group id="BuildTree" class="com.intellij.platform.buildView.backend.BuildTreeContextMenuActionGroup"/>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.buildView.backend.BuildTreeApiProvider"/>
+  </extensions>
 </idea-plugin>

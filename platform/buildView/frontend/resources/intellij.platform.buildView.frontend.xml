@@ -3,4 +3,7 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.buildView"/>
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <frontend.splitComponentProvider id="BuildTree" implementation="com.intellij.platform.buildView.frontend.BuildTreeComponentProvider"/>
+  </extensions>
 </idea-plugin>

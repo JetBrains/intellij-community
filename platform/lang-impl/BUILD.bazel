@@ -125,6 +125,7 @@ jvm_library(
     "//platform/experiment",
     "//platform/platform-impl/concurrency",
     "//platform/project/shared:project",
+    "//platform/platform-impl/rpc",
   ],
   exports = [
     "//platform/lang-api:lang",

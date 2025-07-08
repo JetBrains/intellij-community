@@ -16,6 +16,13 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/kernel/shared:kernel",
     "//platform/buildView",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util/coroutines",
+    "//platform/platform-impl/rpc",
   ],
   runtime_deps = [":frontend_resources"]
 )
