@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -51,4 +52,25 @@ public interface ModuleFileIndex extends FileIndex {
    */
   @RequiresReadLock
   @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir);
+
+  /**
+   * Processes all files and directories under content roots of the given module, skipping excluded and ignored files and directories.
+   * <br>
+   * <strong>It doesn't work efficiently if you need to process content of multiple modules</strong>
+   * {@code ProjectFileIndex.getInstance(project).iterateContent()} should be used instead in such cases.
+   * 
+   * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
+   */
+  @Override
+  boolean iterateContent(@NotNull ContentIterator processor);
+
+  /**
+   * Same as {@link #iterateContent(ContentIterator)} but allows to pass {@code filter} to
+   * provide filtering in condition for directories.
+   * <br>
+   * <strong>It doesn't work efficiently if you need to process content of multiple modules</strong>
+   * {@code ProjectFileIndex.getInstance(project).iterateContent()} should be used instead in such cases.
+   */
+  @Override
+  boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter);
 }

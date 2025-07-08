@@ -593,6 +593,8 @@ com.intellij.openapi.roots.ModuleFileIndex
 - com.intellij.openapi.roots.FileIndex
 - a:getOrderEntriesForFile(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - a:getOrderEntryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.OrderEntry
+- a:iterateContent(com.intellij.openapi.roots.ContentIterator):Z
+- a:iterateContent(com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.vfs.VirtualFileFilter):Z
 com.intellij.openapi.roots.ModuleJdkOrderEntry
 - com.intellij.openapi.roots.JdkOrderEntry
 - a:getJdkTypeName():java.lang.String
