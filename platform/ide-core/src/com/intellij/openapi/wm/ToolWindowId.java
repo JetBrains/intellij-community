@@ -1,6 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
+import org.jetbrains.annotations.ApiStatus;
+
+import java.util.Set;
+
 public interface ToolWindowId {
   String COMMANDER = "Commander";
   String MESSAGES_WINDOW = "Messages";
@@ -45,4 +49,34 @@ public interface ToolWindowId {
   String SERVICES = "Services";
   String ENDPOINTS = "Endpoints";
   String MEET_NEW_UI = "Meet New UI";
+
+  @ApiStatus.Internal
+  Set<String> TOOL_WINDOW_IDS = Set.of(
+    COMMANDER,
+    MESSAGES_WINDOW,
+    PROJECT_VIEW,
+    STRUCTURE_VIEW,
+    PROBLEMS_VIEW,
+    FAVORITES_VIEW,
+    BOOKMARKS,
+    ANT_BUILD,
+    DEBUG,
+    RUN,
+    FIND,
+    HIERARCHY,
+    TODO_VIEW,
+    ANALYZE_DEPENDENCIES,
+    BUILD_DEPENDENCIES,
+    VCS,
+    COMMIT,
+    MODULES_DEPENDENCIES,
+    DUPLICATES,
+    EXTRACT_METHOD,
+    TASKS,
+    DATABASE_VIEW,
+    PREVIEW,
+    SERVICES,
+    ENDPOINTS,
+    MEET_NEW_UI
+  );
 }

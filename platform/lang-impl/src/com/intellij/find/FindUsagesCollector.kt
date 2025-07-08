@@ -7,13 +7,18 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.ToolWindowId
 
 internal object FindUsagesCollector : CounterUsagesCollector() {
 
-  private val GROUP = EventLogGroup("find", 7)
+  private val GROUP = EventLogGroup("find", 8)
 
   const val FIND_IN_FILE: String = "FindInFile"
   const val FIND_IN_PATH: String = "FindInPath"
@@ -41,6 +46,36 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
 
   private val OPTION_VALUE = EventFields.Boolean("option_value")
 
+  private val NOTHING_FOUND_SHOWN = GROUP.registerEvent("nothing.found.shown", EventFields.Boolean("is_filters_applied"))
+
+  private val TOOL_WINDOW_ACTIVE = EventFields.String("active_tool_window_id", ToolWindowId.TOOL_WINDOW_IDS.plus(UNKNOWN).toList())
+
+  private enum class ContextElement {
+    EDITOR, TOOLWINDOW, STAUS_BAR, UNKNOWN;
+  }
+
+  private enum class PredefinedText {
+    EMPTY, FROM_PREVIOUS_SEARCH, FROM_SELECTION;
+  }
+
+  private val CONTEXT_ELEMENT = EventFields.Enum("context_element", ContextElement::class.java)
+  private val PREDEFINED_TEXT_FIELD = EventFields.Enum("prefilled_text_field", PredefinedText::class.java)
+  private val MODE = EventFields.Enum("mode", FindReplaceMode::class.java)
+  private val FIND_POPUP_SHOWN = GROUP.registerVarargEvent("find.popup.shown", CONTEXT_ELEMENT, TOOL_WINDOW_ACTIVE, PREDEFINED_TEXT_FIELD, MODE)
+
+  private val TIME_TO_FIRST_RESULT_MS = GROUP.registerEvent("time.to.first.result.ms", EventFields.Long("time_ms"))
+  private val SEARCH_FINISHED = GROUP.registerEvent("search.finished", EventFields.Long("time_ms"), EventFields.Int("results_count"), EventFields.Int("count_limit"))
+
+  private enum class FindReplaceMode {
+    FIND, REPLACE
+  }
+
+  private val SEARCH_HISTORY_SHOWN = GROUP.registerEvent("search.history.shown", EventFields.Enum("source", FindReplaceMode::class.java))
+  private val SEARCH_HISTORY_ITEM_SELECTED = GROUP.registerEvent("search.history.item.selected", EventFields.Enum("source", FindReplaceMode::class.java))
+
+  private val REPLACE_ALL_INVOKED = GROUP.registerEvent("replace.all.invoked")
+  private val REPLACE_ONE_INVOKED = GROUP.registerEvent("replace.one.invoked")
+
   @JvmField
   val CHECK_BOX_TOGGLED: EventId3<String?, FindPopupPanel.ToggleOptionName, Boolean> = GROUP.registerEvent("check.box.toggled",
                                                                                                            EventFields.String("type",
@@ -53,6 +88,43 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
 
   @JvmField
   val PIN_TOGGLED: EventId1<Boolean> = GROUP.registerEvent("pin.toggled", OPTION_VALUE)
+
+  @JvmStatic
+  fun findPopupShown(dataContext: DataContext, findModel: FindModel, stringToFindChanged: Boolean) {
+    var toolWindowId = PlatformDataKeys.TOOL_WINDOW.getData(dataContext)?.id
+    val contextElement = when {
+      toolWindowId != null -> {
+        if (!ToolWindowId.TOOL_WINDOW_IDS.contains(toolWindowId)) toolWindowId = UNKNOWN
+        ContextElement.TOOLWINDOW
+      }
+      CommonDataKeys.EDITOR.getData(dataContext) != null -> ContextElement.EDITOR
+      PlatformDataKeys.STATUS_BAR.getData(dataContext) != null -> ContextElement.STAUS_BAR
+      else -> ContextElement.UNKNOWN
+    }
+
+    val predefinedText = when {
+      findModel.stringToFind.isEmpty() -> PredefinedText.EMPTY
+      stringToFindChanged -> PredefinedText.FROM_SELECTION
+      else -> PredefinedText.FROM_PREVIOUS_SEARCH
+    }
+    val data = mutableListOf<EventPair<*>>()
+    data.add(CONTEXT_ELEMENT.with(contextElement))
+    toolWindowId?.let { data.add(TOOL_WINDOW_ACTIVE.with(it)) }
+    data.add(PREDEFINED_TEXT_FIELD.with(predefinedText))
+    data.add(MODE.with(if (findModel.isReplaceState) FindReplaceMode.REPLACE else FindReplaceMode.FIND))
+
+    FIND_POPUP_SHOWN.log(data)
+  }
+
+  @JvmStatic
+  fun recordFirstResultTime(time: Long) {
+    TIME_TO_FIRST_RESULT_MS.log(time)
+  }
+
+  @JvmStatic
+  fun recordSearchFinished(time: Long, resultsCount: Int, countLimit: Int) {
+    SEARCH_FINISHED.log(time, resultsCount, countLimit)
+  }
 
   @JvmStatic
   @JvmOverloads
@@ -79,6 +151,31 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
   @JvmStatic
   fun triggerScopeSelected(scopeType: FindPopupScopeUI.ScopeType?) {
     SEARCH_SCOPE_CHANGED.log(SelectedSearchScope.getByScopeType(scopeType))
+  }
+
+  @JvmStatic
+  fun recordNothingFoundShown(isFiltersApplied: Boolean) {
+    NOTHING_FOUND_SHOWN.log(isFiltersApplied)
+  }
+
+  @JvmStatic
+  fun searchHistoryShown(isFind: Boolean) {
+    SEARCH_HISTORY_SHOWN.log(if (isFind) FindReplaceMode.FIND else FindReplaceMode.REPLACE)
+  }
+
+  @JvmStatic
+  fun searchHistoryItemSelected(isFind: Boolean) {
+    SEARCH_HISTORY_ITEM_SELECTED.log(if (isFind) FindReplaceMode.FIND else FindReplaceMode.REPLACE)
+  }
+
+  @JvmStatic
+  fun replaceAllInvoked() {
+    REPLACE_ALL_INVOKED.log()
+  }
+
+  @JvmStatic
+  fun replaceOneInvoked() {
+    REPLACE_ONE_INVOKED.log()
   }
 
   override fun getGroup(): EventLogGroup = GROUP

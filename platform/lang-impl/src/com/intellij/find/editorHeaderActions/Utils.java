@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,12 +34,24 @@ public final class Utils {
                                          @NlsContexts.PopupTitle String title,
                                          JTextComponent textField,
                                          @NlsContexts.PopupAdvertisement String ad) {
+    showCompletionPopup(toolbarComponent, list, title, textField, ad, () -> {
+    });
+  }
+
+  @ApiStatus.Internal
+  public static void showCompletionPopup(JComponent toolbarComponent,
+                                         JList<String> list,
+                                         @NlsContexts.PopupTitle String title,
+                                         JTextComponent textField,
+                                         @NlsContexts.PopupAdvertisement String ad,
+                                         @NotNull Runnable onSelect) {
 
     final Runnable callback = () -> {
       String selectedValue = list.getSelectedValue();
       if (selectedValue != null) {
         textField.setText(selectedValue);
         IdeFocusManager.getGlobalInstance().requestFocus(textField, false);
+        onSelect.run();
       }
     };
 
