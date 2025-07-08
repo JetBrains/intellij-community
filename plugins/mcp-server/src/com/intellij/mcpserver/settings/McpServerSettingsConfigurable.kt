@@ -122,7 +122,9 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
                   }) as CharSequence))
                   if (e != null) showCopiedBallon(e)
                 }
-              })))
+              })).apply {
+                addSeparator = false
+              })
               icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
               text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
 
