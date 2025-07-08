@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components.common.dialogs
 
 import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
@@ -16,8 +17,8 @@ fun IdeaFrameUI.editRunConfigurationsDialog(action: EditRunConfigurationsDialogU
     .apply(action)
 
 class EditRunConfigurationsDialogUiComponent(data: ComponentData) : DialogUiComponent(data) {
-  val addNewConfigurationButton = x { byAccessibleName("Add New Configuration") }
-  val runButton = x { and(byType("com.intellij.ui.components.BasicOptionButtonUI${"$"}MainButton"), byAccessibleName("Run")) }
+  val addNewConfigurationButton: UiComponent = x { byAccessibleName("Add New Configuration") }
+  val runButton: UiComponent = x { and(byType("com.intellij.ui.components.BasicOptionButtonUI${"$"}MainButton"), byAccessibleName("Run")) }
 
   fun addNewRunConfigurationPopup(block: PopupUiComponent.() -> Unit = {}): PopupUiComponent =
     popup(xQuery { componentWithChild(byType(JWindow::class.java), byAccessibleName("Add New Configuration")) }).apply(block)
@@ -29,6 +30,6 @@ class EditRunConfigurationsDialogUiComponent(data: ComponentData) : DialogUiComp
       enter()
     }
 
-    textField { and(byClass("JTextField"), byAccessibleName("Name:")) }.waitFound(10.seconds).text = name
+    textField { and(byClass("JTextField"), byVisibleText("Unnamed")) }.waitFound(10.seconds).text = name
   }
 }
