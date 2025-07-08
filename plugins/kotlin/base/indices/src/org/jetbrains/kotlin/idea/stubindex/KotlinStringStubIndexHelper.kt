@@ -78,15 +78,14 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
         noinline keyFilter: (String) -> Boolean = { true },
         noinline valueFilter: (SubKey) -> Boolean = { true },
     ): Sequence<SubKey> {
-        val results = mutableListOf<SubKey>()
-        val processor = cancelableCollectFilterProcessor(results, filter = valueFilter)
-        processAllElements(project, scope, keyFilter) { key ->
-            if (key is SubKey)
-                processor.process(key)
-            else
-                true
-        }
-        return results.asSequence() // todo move valueFilter out
+        val results = mutableListOf<Any>()
+        val processor = cancelableCollectFilterProcessor(results) { key -> key is SubKey && valueFilter(key) }
+
+        processAllElements(project, scope, keyFilter, processor)
+
+        @Suppress("UNCHECKED_CAST")
+        val castedResults = results as List<SubKey>
+        return castedResults.asSequence() // todo move valueFilter out
     }
 
     fun processAllElements(
