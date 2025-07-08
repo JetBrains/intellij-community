@@ -41,7 +41,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
   public @NotNull ConversionStrategy myConversionStrategy = SHOW_AFFECTED_MEMBERS;
   public boolean suggestAccessorsRenaming = true;
 
-  public List<@NlsSafe String> myIgnoredAnnotations = new ArrayList<>();
+  public final List<@NlsSafe String> myIgnoredAnnotations = new ArrayList<>();
 
   @SuppressWarnings("unused") // See IDEA-371903
   public ClassCanBeRecordInspection() {
