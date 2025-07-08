@@ -73,6 +73,15 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     if (version.startsWith("4.")) r.run()
   }
 
+  protected fun forModel40(r: Runnable) {
+    if (myMavenModelVersion == MavenConstants.MODEL_VERSION_4_0_0) r.run()
+  }
+
+  protected fun forModel41(r: Runnable) {
+    if (myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0) r.run()
+  }
+
+
   protected fun assumeMaven3() {
     val version: String = getActualVersion(myMavenVersion!!)
     Assume.assumeTrue(version.startsWith("3."))
