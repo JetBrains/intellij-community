@@ -2844,6 +2844,7 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of elements in the input collection
+   * TODO replace with {@link List#copyOf(Collection)} when the language level allow
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> copyList(@NotNull List<? extends T> list) {
