@@ -110,7 +110,7 @@ public final class CoroutinesDebugHelper {
     Object current = continuation;
     while(current != null && coroutineStackFrame.isInstance(current) && !isCoroutineOwner(current)) {
 
-      StackTraceElement stackTraceElement = (StackTraceElement)getStackTraceElement.invoke(current);
+      StackTraceElement stackTraceElement = (StackTraceElement)invoke(current, getStackTraceElement);
       continuationStackElements.add(stackTraceElement);
 
       if (baseContinuation.isInstance(current)) {
