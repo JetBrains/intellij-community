@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
+import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,14 +21,19 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
+import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
 
 /**
  * Common interface of archive-based file systems (jar://, phar://, etc.).
  */
-public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
+public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements BatchingFileSystem {
   private static final Key<VirtualFile> LOCAL_FILE = Key.create("vfs.archive.local.file");
 
   /**
@@ -131,12 +137,57 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return StringUtil.trimLeading(relativePath, '/');
   }
 
-  private final Function<VirtualFile, FileAttributes> myAttrGetter =
-    ManagingFS.getInstance().accessDiskWithCheckCanceled(file -> getHandler(file).getAttributes(getRelativePath(file)));
+  private final Function<VirtualFile, FileAttributes> myAttrGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
+    file -> getHandler(file).getAttributes(getRelativePath(file))
+  );
 
   @Override
   public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
     return myAttrGetter.apply(file);
+  }
+
+  private final Function<Pair<VirtualFile, Set<String>>, Map<@NotNull String, @NotNull FileAttributes>> myListWithAttrGetter =
+    ManagingFS.getInstance().accessDiskWithCheckCanceled(
+      dirAndNames -> {
+        VirtualFile dir = dirAndNames.first;
+        Set<String> childNames = dirAndNames.second;
+
+        return childrenWithAttributes(dir, childNames);
+      }
+    );
+
+  private @NotNull Map<@NotNull String, @NotNull FileAttributes> childrenWithAttributes(@NotNull VirtualFile dir,
+                                                                                        @Nullable Set<String> childNames) {
+    String directoryRelativePath = getRelativePath(dir);
+    String normalizedDirectoryPath = directoryRelativePath.isEmpty() ?
+                                     "" :
+                                     StringUtil.trimTrailing(directoryRelativePath, '/') + '/';
+
+    ArchiveHandler handler = getHandler(dir);
+    if (childNames == null) {
+      childNames = createFilePathSet(handler.list(directoryRelativePath), isCaseSensitive());
+    }
+
+    Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(childNames.size(), isCaseSensitive());
+
+    for (String childName : childNames) {
+      String childRelativePath = normalizedDirectoryPath + childName;
+      FileAttributes childAttributes = handler.getAttributes(childRelativePath);
+      if (childAttributes != null) {
+        childrenWithAttributes.put(childName, childAttributes);
+      }
+    }
+    return childrenWithAttributes;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir,
+                                                                                   @Nullable Set<String> childrenNames) {
+    if (childrenNames != null && childrenNames.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    return myListWithAttrGetter.apply(new Pair<>(dir, childrenNames));
   }
 
   @ApiStatus.Internal

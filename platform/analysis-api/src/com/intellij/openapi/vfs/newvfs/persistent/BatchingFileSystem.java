@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -10,6 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Implement if your {@link com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem} could benefit from batch queries -- i.e.
+ * if directory's children with their attributes could be collected significantly faster in 1 request, than in
+ * N individual requests to {@link com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem#getAttributes(VirtualFile)}
+ */
 @ApiStatus.Internal
 public interface BatchingFileSystem {
   /**

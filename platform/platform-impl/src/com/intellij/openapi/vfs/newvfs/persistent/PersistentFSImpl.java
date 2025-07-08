@@ -345,8 +345,19 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     NewVirtualFileSystem fs = getFileSystem(dir);
 
     try {
-      //MAYBE RC: .listWithCaching() uses DiskQueryRelay offloading under the hood -- which seems useless here,
+      //MAYBE RC: .listWithCaching()/.list() use DiskQueryRelay offloading under the hood -- which seems useless here,
       //          because it seems there is no cancellability anyway, and only makes it slower
+      //TODO RC: LocalFileSystemImpl.listWithCaching() actually serves the same function as batchingFileSystem.listWithAttributes()
+      //         both methods query children with attributes in batch, in a single request. Batching provides benefits on a
+      //         different levels:
+      //         1. For a LocalFileSystem on Windows there is a platform-specific method to get all the children together with their
+      //            attributes, see PlatformNioHelper.visitDirectory()
+      //         2. For most FS the actual IO is wrapped in DiskQueryRelay for cancellability, which has it's own overhead so query
+      //            more data at once is a way to amortise that overhead.
+      //         But historically LocalFileSystem uses it's own unique listWithCaching() approach, while BatchingFileSystem was invented
+      //         later, to solve very similar issue. Hence, it seems natural to use a single unified approach for both cases, which seems
+      //         to be BatchingFileSystem. I.e. drop LocalFileSystem.listWithCaching(), and make LocalFileSystem implements
+      //         BatchingFileSystem instead
       String[] fsNames = VfsUtil.filterNames(
         fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir)
       );
