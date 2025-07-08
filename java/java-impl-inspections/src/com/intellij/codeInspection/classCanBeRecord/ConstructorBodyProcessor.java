@@ -77,7 +77,7 @@ final class ConstructorBodyProcessor {
       // This means that:
       //  - all instance variables must be already initialized, OR
       //  - (JDK 25+) this statement is inside early construction context, more specifically: in constructor prologue (see JEP 513).
-      //      This means that it must NOT use use 'this', either implicitly or explicitly, except for simple assignment statements.
+      //      This means that it must NOT use 'this', either implicitly or explicitly, except for simple assignment statements.
 
       otherStatements.add(statement);
       if (fieldNamesToInitializers.isEmpty() && PsiUtil.isAvailable(JavaFeature.STATEMENTS_BEFORE_SUPER, statement)) {

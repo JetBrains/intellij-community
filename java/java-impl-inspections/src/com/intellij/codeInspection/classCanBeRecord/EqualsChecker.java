@@ -71,7 +71,7 @@ final class EqualsChecker {
   }
 
   /**
-   * Matches {@code Objects.equals(this.x, that.x)} or {@code this.x == that.x} or 
+   * Matches {@code Objects.equals(this.x, that.x)} or {@code this.x == that.x} or
    * {@code Double.doubleToLongBits(this.x) == Double.doubleToLongBits(that.x)}
    * and returns the field x; null if not matched
    */

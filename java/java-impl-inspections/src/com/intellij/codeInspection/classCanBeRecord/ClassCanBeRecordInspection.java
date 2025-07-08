@@ -32,6 +32,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy.*;
+import static com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.*;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class ClassCanBeRecordInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -136,7 +137,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
       super.visitClass(aClass);
       PsiIdentifier classIdentifier = aClass.getNameIdentifier();
       if (classIdentifier == null) return;
-      RecordCandidate recordCandidate = ConvertToRecordFix.tryCreateRecordCandidate(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
+      RecordCandidate recordCandidate = tryCreateRecordCandidate(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
 
       boolean suggestQuickFix = true;
