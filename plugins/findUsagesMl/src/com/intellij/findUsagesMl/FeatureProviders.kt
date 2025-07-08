@@ -14,17 +14,17 @@ data class FindUsagesRankingFileInfo(
 )
 
 object FindUsagesFileRankerFeatures {
-  val QUERY_JARO_WINKLER_SIMILARITY: FeatureDeclaration<Double> = FeatureDeclaration.double(name = "query_jaro_winkler_similarity") { "Jaro-Winkler similarity of syntactic element to file name" }
-  val FILENAME_JARO_WINKLER_SIMILARITY: FeatureDeclaration<Double> = FeatureDeclaration.double(name = "filename_jaro_winkler_similarity") { "Jaro-Winkler similarity of the files' names" }
-  val QUERY_FILE_TYPE: FeatureDeclaration<String> = FeatureDeclaration.string(name = "query_file_type", "file_type") { "Query file's type" }
-  val CANDIDATE_TYPE: FeatureDeclaration<String> = FeatureDeclaration.string(name = "file_type", "file_type") { "Candidate file's type" }
+  val QUERY_JARO_WINKLER_SIMILARITY: FeatureDeclaration<Double?> = FeatureDeclaration.double(name = "query_jaro_winkler_similarity") { "Jaro-Winkler similarity of syntactic element to file name" }.nullable()
+  val FILENAME_JARO_WINKLER_SIMILARITY: FeatureDeclaration<Double?> = FeatureDeclaration.double(name = "filename_jaro_winkler_similarity") { "Jaro-Winkler similarity of the files' names" }.nullable()
+  val QUERY_FILE_TYPE: FeatureDeclaration<String?> = FeatureDeclaration.string(name = "query_file_type", "file_type") { "Query file's type" }.nullable()
+  val CANDIDATE_TYPE: FeatureDeclaration<String?> = FeatureDeclaration.string(name = "file_type", "file_type") { "Candidate file's type" }.nullable()
   val CANDIDATE_LENGTH: FeatureDeclaration<Long?> = FeatureDeclaration.long(name = "file_length") { "Candidate file's length" }.nullable()
-  val FILE_TYPE_SAME: FeatureDeclaration<Boolean> = FeatureDeclaration.boolean(name = "file_type_same") { "True if the query and the candidate have the same file type" }
-  val QUERY_COUNT: FeatureDeclaration<Int> = FeatureDeclaration.int(name = "query_count") { "The number of differing query texts" }
-  val TIME_MODIFIED_DIFFERENCE_MS: FeatureDeclaration<Long> = FeatureDeclaration.long(name = "time_modified_difference_ms") { "Query file's modified timestamp - candidate file's modified timestamp in ms" }
-  val TIME_SINCE_LAST_MODIFIED_MS: FeatureDeclaration<Long> = FeatureDeclaration.long(name = "time_since_modified_ms") { "Time since candidate file's modified timestamp in ms at the time of feature calculation" }
-  val RECENT_FILES_INDEX: FeatureDeclaration<Int> = FeatureDeclaration.int(name = "recent_files_index") { "Index of the candidate file in the list of the most recent files" }
-  val DIRECTORY_DISTANCE: FeatureDeclaration<Double> = FeatureDeclaration.double(name = "directory_distance") { "Normalized distance between the query file and candidate file" }
+  val FILE_TYPE_SAME: FeatureDeclaration<Boolean?> = FeatureDeclaration.boolean(name = "file_type_same") { "True if the query and the candidate have the same file type" }.nullable()
+  val QUERY_COUNT: FeatureDeclaration<Int?> = FeatureDeclaration.int(name = "query_count") { "The number of differing query texts" }.nullable()
+  val TIME_MODIFIED_DIFFERENCE_MS: FeatureDeclaration<Long?> = FeatureDeclaration.long(name = "time_modified_difference_ms") { "Query file's modified timestamp - candidate file's modified timestamp in ms" }.nullable()
+  val TIME_SINCE_LAST_MODIFIED_MS: FeatureDeclaration<Long?> = FeatureDeclaration.long(name = "time_since_modified_ms") { "Time since candidate file's modified timestamp in ms at the time of feature calculation" }.nullable()
+  val RECENT_FILES_INDEX: FeatureDeclaration<Int?> = FeatureDeclaration.int(name = "recent_files_index") { "Index of the candidate file in the list of the most recent files" }.nullable()
+  val DIRECTORY_DISTANCE: FeatureDeclaration<Double?> = FeatureDeclaration.double(name = "directory_distance") { "Normalized distance between the query file and candidate file" }.nullable()
 
   fun declarations(): List<List<FeatureDeclaration<*>>> = listOf(extractFeatureDeclarations(FindUsagesFileRankerFeatures))
 }
