@@ -29,6 +29,7 @@ kotlin {
     "-opt-in=kotlin.ExperimentalStdlibApi",
     "-Xallow-kotlin-package",
     "-Xlambdas=class",
+    "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
   )
   jvm {}

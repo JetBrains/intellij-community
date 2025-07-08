@@ -79,7 +79,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val valueArguments = SmartList<UNamedExpression>()
             // NB: we need a loop over call element's value arguments to preserve their order.
             ktCallElement.valueArguments.forEach { valueArg ->
-                val exp = valueArg.getArgumentExpression()?.unwrapParenthesesLabelsAndAnnotations()
+                val exp = valueArg.getArgumentExpression()
                 val parameter = argumentMapping[exp]?.symbol ?: return@forEach
                 if (!handledParameters.add(parameter)) return@forEach
                 val arguments = argumentMapping.entries

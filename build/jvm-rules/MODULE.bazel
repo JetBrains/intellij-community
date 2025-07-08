@@ -12,10 +12,11 @@ http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-bazel_dep(name = "hermetic_cc_toolchain", version = "3.2.0")
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 
 toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-use_repo(toolchains, "zig_sdk", "zig_sdk-linux-amd64", "zig_sdk-linux-arm64", "zig_sdk-macos-amd64", "zig_sdk-macos-arm64", "zig_sdk-windows-amd64")
+
+use_repo(toolchains, "zig_sdk")
 
 register_toolchains(
     "@zig_sdk//toolchain/...",
@@ -921,4 +922,13 @@ http_jar(
     name = "opentest4j",
     integrity = "sha256-SOLfY2yrZWPO1k3N/4q7I1VifLI27wvzdZhoLd90Lxs=",
     url = "https://repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
+)
+
+# allows aarch64 windows as a valid platform, uses x64 python in that case
+# https://github.com/JetBrains/rules_python/commit/92bf73a6867f143c5af49274f02140d118b84bb0
+bazel_dep(name = "rules_python", version = "1.4.1")
+git_override(
+    module_name = "rules_python",
+    remote = "https://github.com/JetBrains/rules_python.git",
+    commit = "92bf73a6867f143c5af49274f02140d118b84bb0"
 )

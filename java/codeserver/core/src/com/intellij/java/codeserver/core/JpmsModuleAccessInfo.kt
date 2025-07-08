@@ -95,7 +95,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
       }
     }
     else if (current.module != null) {
-      val autoModule = JpmsModuleInfo.TargetModuleInfo(detectAutomaticModule(target), target.packageName)
+      val autoModule = JpmsModuleInfo.TargetModuleInfoByJavaModule(detectAutomaticModule(target), target.packageName)
       if (autoModule.module == null) {
         return JpmsModuleAccessProblem.TO_UNNAMED
       }
@@ -154,7 +154,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
       }
     }
     else if (current.module != null) {
-      val autoModule = JpmsModuleInfo.TargetModuleInfo(detectAutomaticModule(target), target.packageName)
+      val autoModule = JpmsModuleInfo.TargetModuleInfoByJavaModule(detectAutomaticModule(target), target.packageName)
       if (autoModule.module != null &&
           !JpmsModuleAccessInfo(current, autoModule).isAccessible() &&
           !inAddedReads(current.module, null) &&

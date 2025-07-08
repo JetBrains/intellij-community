@@ -336,7 +336,7 @@ internal class WorkspaceModuleImporter(
     val coordinates = importData.mavenProject.mavenId.toMavenCoordinatesOrNull() ?: return
 
     builder.modifyModuleEntity(moduleEntity) {
-      mavenCoordinates = ModuleMavenCoordinateEntity(coordinates, entitySource)
+      mavenCoordinates = ModuleMavenCoordinateEntity(coordinates, MavenEntitySource)
     }
   }
 
@@ -351,7 +351,7 @@ internal class WorkspaceModuleImporter(
     val coordinates = mavenArtifact.toMavenCoordinates()
 
     builder.modifyLibraryEntity(libraryEntity) {
-      mavenCoordinates = LibraryMavenCoordinateEntity(coordinates, entitySource)
+      mavenCoordinates = LibraryMavenCoordinateEntity(coordinates, MavenEntitySource)
     }
   }
 

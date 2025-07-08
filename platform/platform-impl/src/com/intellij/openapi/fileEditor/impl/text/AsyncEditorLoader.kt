@@ -171,7 +171,7 @@ class  AsyncEditorLoader internal constructor(
   }
 
   private fun executeDelayedActions(delayedActions: Array<Runnable>) {
-    resetThreadContext().use {
+    resetThreadContext {
       for (action in delayedActions) {
         action.run()
       }

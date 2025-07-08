@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -109,7 +110,7 @@ public final class PyCustomType implements PyClassLikeType {
   }
 
   @Override
-  public @Nullable String getClassQName() {
+  public @Nullable @NlsSafe String getClassQName() {
     return myQualifiedName;
   }
 

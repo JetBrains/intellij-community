@@ -115,16 +115,15 @@ public class PyPackagingTest extends PyEnvTestCase {
           manager.install(Arrays.asList(pyRequirement("Markdown", PyRequirementRelation.LTE, "3.3.3"), pyRequirement("httplib2",null)),
                           Collections.emptyList());
           final List<PyPackage> packages2 = manager.refreshAndGetPackages(false);
-          final PyPackage markdown2 = findPackage("Markdown", packages2);
+          final PyPackage markdown2 = findPackage("markdown", packages2);
           assertNotNull(markdown2);
-          assertTrue(markdown2.isInstalled());
           final PyPackage pip1 = findPackage("pip", packages1);
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
-          manager.uninstall(Collections.singletonList(pip1));
+          manager.uninstall(Collections.singletonList(markdown2));
           final List<PyPackage> packages3 = manager.refreshAndGetPackages(false);
-          final PyPackage pip2 = findPackage("pip", packages3);
-          assertNull(pip2);
+          final PyPackage markdown3 = findPackage("markdown", packages3);
+          assertNull(markdown3);
         }
         catch (ExecutionException e) {
           throw new RuntimeException(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()), e);

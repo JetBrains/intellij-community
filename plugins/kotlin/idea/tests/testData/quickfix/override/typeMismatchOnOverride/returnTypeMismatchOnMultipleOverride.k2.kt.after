@@ -1,5 +1,5 @@
 // "Change return type to 'S'" "true"
-// K2_AFTER_ERROR: Return type of 'foo' is not a subtype of the return type of the overridden member 'fun foo(): T' defined in '/X'.
+// K2_AFTER_ERROR: Return type of 'foo' is not a subtype of the return type of the overridden member 'fun foo(): T' defined in 'X'.
 open class S {}
 open class T : S() {}
 

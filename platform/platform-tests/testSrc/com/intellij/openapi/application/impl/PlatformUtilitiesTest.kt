@@ -15,6 +15,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
@@ -204,7 +205,7 @@ class PlatformUtilitiesTest {
       backgroundWriteAction {
         bgWaStarted.complete()
         Thread.sleep(100) // give chance EDT to start waiting for a coroutine
-        (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+        InternalThreading.invokeAndWaitWithTransferredWriteAction {
           assertThat(EDT.isCurrentThreadEdt()).isTrue
           assertThat(application.isWriteAccessAllowed).isTrue
           assertThat(application.isReadAccessAllowed).isTrue
@@ -222,7 +223,7 @@ class PlatformUtilitiesTest {
   @Test
   fun `transferredWriteAction can run as invokeAndWait`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     backgroundWriteAction {
-      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+      InternalThreading.invokeAndWaitWithTransferredWriteAction {
         assertThat(EDT.isCurrentThreadEdt()).isTrue
         assertThat(application.isWriteAccessAllowed).isTrue
         assertThat(application.isReadAccessAllowed).isTrue
@@ -236,7 +237,7 @@ class PlatformUtilitiesTest {
   @Test
   fun `transferredWriteAction is not available without write lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     assertThrows<AssertionError> {
-      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+      InternalThreading.invokeAndWaitWithTransferredWriteAction {
         fail<Nothing>()
       }
     }
@@ -245,7 +246,7 @@ class PlatformUtilitiesTest {
   @Test
   fun `transferredWriteAction is not available on EDT`(): Unit = timeoutRunBlocking(context = Dispatchers.ui(UiDispatcherKind.RELAX)) {
     assertThrows<AssertionError> {
-      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+      InternalThreading.invokeAndWaitWithTransferredWriteAction {
         fail<Nothing>()
       }
     }
@@ -255,7 +256,7 @@ class PlatformUtilitiesTest {
   fun `transferredWriteAction rethrows exceptions`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     backgroundWriteAction {
       val exception = assertThrows<IllegalStateException> {
-        (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+        InternalThreading.invokeAndWaitWithTransferredWriteAction {
           throw IllegalStateException("custom message")
         }
       }
@@ -304,7 +305,12 @@ class PlatformUtilitiesTest {
         })
       }
       catch (_: CustomException) {
-        delay(1000)
+        customExceptionWasRethrown.set(true)
+      }
+      try {
+        UIUtil.dispatchAllInvocationEvents()
+      }
+      catch (e: CustomException) {
         customExceptionWasRethrown.set(true)
       }
     }

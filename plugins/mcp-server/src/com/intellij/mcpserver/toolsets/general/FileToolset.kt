@@ -208,7 +208,7 @@ class FileToolset : McpToolset {
 
     @McpTool
     @McpDescription("""
-        Lists full path relative paths to project root of all currently open files in the JetBrains IDE editor.
+        Lists full path relative paths to the project root of all currently open files in the JetBrains IDE editor.
         Returns a list of file paths that are currently open in editor tabs.
         Returns an empty list if no files are open.
         

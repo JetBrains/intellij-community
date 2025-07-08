@@ -97,5 +97,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
+    <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
   </component>
 </module>

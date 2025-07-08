@@ -8,8 +8,8 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -81,7 +81,10 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     }
   }
 
-  override suspend fun attachToProjectAsync(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
+  override suspend fun attachToProjectAsync(project: Project,
+                                            projectDir: Path,
+                                            callback: ProjectOpenedCallback?,
+                                            beforeOpen: (suspend (Project) -> Boolean)?): Boolean {
     LOG.info("Attaching directory: $projectDir")
     val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
     if (!Files.exists(dotIdeaDir)) {

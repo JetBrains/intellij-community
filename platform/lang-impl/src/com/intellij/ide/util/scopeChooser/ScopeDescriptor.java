@@ -4,6 +4,7 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,14 @@ public class ScopeDescriptor implements ColoredItem {
 
   public @Nullable SearchScope getScope() {
     return myScope;
+  }
+
+  /**
+   * @return true if obtaining this scope requires user interaction (e.g., UI dialog, confirmation); false if it can be resolved programmatically.
+   */
+  @ApiStatus.Internal
+  public boolean needsUserInputForScope() {
+    return false;
   }
 
   public boolean scopeEquals(SearchScope scope) {

@@ -65,6 +65,12 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <actions>
+    <!-- Kotlin Console REPL-->
+    <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.LAUNCH">
+      <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
+    </action>
+
     <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction">
       <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>

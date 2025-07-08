@@ -36,13 +36,15 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
-internal class PipPackageManagerEngine(
+
+@ApiStatus.Internal
+class PipPackageManagerEngine(
   private val project: Project,
   private val sdk: Sdk,
 ) : PythonPackageManagerEngine {
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val manager = PythonPackageManager.forSdk(project, sdk)
-    PipManagementInstaller(sdk, manager).installManagementIfNeeded()
+      PipManagementInstaller(sdk, manager).installManagementIfNeeded()
     val result = runPackagingTool(
       operation = "install",
       arguments = installRequest.indexUrlIfApplicable() + options
@@ -173,7 +175,7 @@ internal class PipPackageManagerEngine(
       val message = if (result.stdout.isBlank() && result.stderr.isBlank()) PySdkBundle.message(
         "python.conda.permission.denied")
       else PySdkBundle.message("python.sdk.packaging.non.zero.exit.code", exitCode)
-      PyExecutionException(message, commandLineString, args, result).let {
+      PyExecutionException(message, commandLine[0], args, result).let {
         return@withContext PyResult.failure(it.pyError)
       }
     }

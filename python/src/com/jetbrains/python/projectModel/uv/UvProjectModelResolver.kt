@@ -2,6 +2,7 @@
 package com.jetbrains.python.projectModel.uv
 
 import com.intellij.openapi.util.getPathMatcher
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.projectModel.ExternalProject
 import com.jetbrains.python.projectModel.ExternalProjectDependency
 import com.jetbrains.python.projectModel.ExternalProjectGraph
@@ -43,7 +44,7 @@ private data class UvPyProjectToml(
 @OptIn(ExperimentalPathApi::class)
 object UvProjectModelResolver : PythonProjectModelResolver<UvProject> {
   override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph<UvProject>? {
-    if (!root.resolve(UvConstants.PYPROJECT_TOML).exists()) {
+    if (!root.resolve(PY_PROJECT_TOML).exists()) {
       return null
     }
     val workspaceMembers = mutableMapOf<UvPyProjectToml, MutableMap<String, UvPyProjectToml>>()
@@ -54,7 +55,7 @@ object UvProjectModelResolver : PythonProjectModelResolver<UvProject> {
         if (dir.name == DEFAULT_VENV_DIR) {
           return@onPreVisitDirectory FileVisitResult.SKIP_SUBTREE
         }
-        val projectToml = readUvPyProjectToml(dir / "pyproject.toml")
+        val projectToml = readUvPyProjectToml(dir / PY_PROJECT_TOML)
         if (projectToml == null) {
           return@onPreVisitDirectory FileVisitResult.CONTINUE
         }
@@ -162,7 +163,7 @@ object UvProjectModelResolver : PythonProjectModelResolver<UvProject> {
           }
           else if (depSpec.getBoolean("editable") == true) {
             val depPath = depSpec.getString("path")?.let { pyprojectTomlPath.parent.resolve(it).normalize() }
-            if (depPath != null && depPath.isDirectory() && (depPath / UvConstants.PYPROJECT_TOML).exists()) {
+            if (depPath != null && depPath.isDirectory() && (depPath / PY_PROJECT_TOML).exists()) {
               editablePathDependencies[depName] = depPath
             }
           }

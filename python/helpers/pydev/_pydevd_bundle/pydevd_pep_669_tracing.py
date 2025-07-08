@@ -235,8 +235,13 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
     # print('PY_START (should enable line events check) %s %s %s %s' % (line_number, code.co_name, filename, info.pydev_step_cmd))
 
     py_db = GlobalDebuggerHolder.global_dbg
+    if py_db is None:
+        return monitoring.DISABLE
 
     plugin_manager = py_db.plugin
+
+    if info is None:
+        return False
 
     stop_frame = info.pydev_step_stop
     step_cmd = info.pydev_step_cmd
@@ -313,6 +318,9 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
 
 
 def _clear_run_state(info):
+    if info is None:
+        return
+
     info.pydev_step_stop = None
     info.pydev_step_cmd = -1
     info.pydev_state = STATE_RUN
@@ -349,6 +357,9 @@ def _get_top_level_frame():
 
 def _stop_on_unhandled_exception(exc_info, py_db, thread):
     additional_info = _get_additional_info(thread)
+    if additional_info is None:
+        return
+
     if not additional_info.suspended_at_unhandled:
         additional_info.suspended_at_unhandled = True
         stop_on_unhandled_exception(py_db, thread, additional_info,
@@ -423,10 +434,8 @@ def call_callback(code, instruction_offset, callable, arg0):
     frame = _getframe(1)
     # print('ENTER: CALL ', code.co_filename, frame.f_lineno, code.co_name)
 
-
-
     try:
-        if py_db._finish_debugging_session:
+        if py_db.pydb_disposed:
             return monitoring.DISABLE
 
         try:
@@ -445,6 +454,9 @@ def call_callback(code, instruction_offset, callable, arg0):
         frame_cache_key = _make_frame_cache_key(code)
 
         info = thread_info.additional_info
+        if info is None:
+            return
+
         pydev_step_cmd = info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
 
@@ -494,7 +506,7 @@ def py_start_callback(code, instruction_offset):
             return
 
     try:
-        if py_db._finish_debugging_session:
+        if py_db.pydb_disposed:
             return monitoring.DISABLE
 
         if not thread_info.trace or not thread_info.is_thread_alive():
@@ -511,6 +523,9 @@ def py_start_callback(code, instruction_offset):
         frame_cache_key = _make_frame_cache_key(code)
 
         info = thread_info.additional_info
+        if info is None:
+            return
+
         pydev_step_cmd = info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
 
@@ -635,6 +650,8 @@ def py_line_callback(code, line_number):
         return
 
     info = thread_info.additional_info
+    if info is None:
+        return
 
     # print('LINE %s %s %s %s' % (frame.f_lineno, code.co_name, code.co_filename, info.pydev_step_cmd))
 
@@ -646,7 +663,10 @@ def py_line_callback(code, line_number):
 
         py_db = GlobalDebuggerHolder.global_dbg
 
-        if py_db._finish_debugging_session:
+        if py_db is None:
+            return monitoring.DISABLE
+
+        if py_db.pydb_disposed:
             return monitoring.DISABLE
 
         stop_frame = info.pydev_step_stop
@@ -906,6 +926,9 @@ def py_return_callback(code, instruction_offset, retval):
         return
 
     info = thread_info.additional_info
+    if info is None:
+        return
+
     stop_frame = info.pydev_step_stop
     filename = _get_abs_path_real_path_and_base_from_frame(frame)[1]
     plugin_stop = False
@@ -1005,3 +1028,22 @@ def py_return_callback(code, instruction_offset, retval):
 
     if py_db.quitting:
         raise KeyboardInterrupt()
+
+def disable_pep669_monitoring(all_threads=False):
+    if all_threads:
+        monitoring.set_events(monitoring.DEBUGGER_ID, 0)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.PY_START, None)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.LINE, None)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.PY_RETURN, None)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.RAISE, None)
+        monitoring.register_callback(monitoring.DEBUGGER_ID, monitoring.events.CALL, None)
+        monitoring.free_tool_id(monitoring.DEBUGGER_ID)
+    else:
+        try:
+            thread_info = _thread_local_info.thread_info
+        except:
+            thread_info = _get_thread_info(False, 1)
+            if thread_info is None:
+                return
+        # print('stop monitoring, thread=', thread_info.thread)
+        thread_info.trace = False

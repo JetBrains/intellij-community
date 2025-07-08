@@ -13,8 +13,9 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
+import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toComposeColor
-import org.jetbrains.jewel.bridge.toDpSize
+import org.jetbrains.jewel.bridge.toNonNegativeDpSize
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonColors
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
@@ -46,21 +47,21 @@ internal fun readSegmentedControlButtonStyle(): SegmentedControlButtonStyle {
                 SolidColor(JBUI.CurrentTheme.SegmentedButton.FOCUSED_SELECTED_BUTTON_COLOR.toComposeColor()),
             content = retrieveColorOrUnspecified("Button.foreground"),
             contentDisabled = retrieveColorOrUnspecified("Label.disabledForeground"),
-            border = normalBorder,
+            border = SolidColor(Color.Transparent),
             borderSelected = normalBorder,
             borderSelectedDisabled = selectedDisabledBorder,
             borderSelectedFocused = SolidColor(JBUI.CurrentTheme.Button.focusBorderColor(false).toComposeColor()),
         )
 
-    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toDpSize()
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toNonNegativeDpSize()
     return SegmentedControlButtonStyle(
         colors = colors,
         metrics =
             SegmentedControlButtonMetrics(
-                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
+                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp.safeValue() / 2),
                 segmentedButtonPadding = PaddingValues(horizontal = 14.dp),
                 minSize = DpSize(minimumSize.width, minimumSize.height),
-                borderWidth = DarculaUIUtil.LW.dp,
+                borderWidth = borderWidth,
             ),
     )
 }

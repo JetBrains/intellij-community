@@ -7,7 +7,9 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
+import com.intellij.ide.plugins.newui.PluginDependencyModel;
 import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -20,6 +22,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,6 +35,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
@@ -48,7 +52,7 @@ public final class PluginDownloader {
   private final int myReleaseVersion;
   private final boolean myLicenseOptional;
   private final String myDescription;
-  private final List<? extends IdeaPluginDependency> myDependencies;
+  private final List<PluginDependencyModel> myDependencies;
 
   private final String myPluginUrl;
   private final BuildNumber myBuildNumber;
@@ -57,42 +61,48 @@ public final class PluginDownloader {
   private final @Nullable MarketplacePluginDownloadService myDownloadService;
 
   private @NlsSafe String myPluginVersion;
+  private PluginUiModel myModel;
   private IdeaPluginDescriptor myDescriptor;
   private Path myFile;
   private Path myOldFile;
   private boolean myShownErrors;
 
   private PluginDownloader(
-    IdeaPluginDescriptor descriptor,
+    PluginUiModel model,
     String pluginUrl,
     @Nullable BuildNumber buildNumber,
     Consumer<@NotNull @NotificationContent String> errorsConsumer,
     @Nullable MarketplacePluginDownloadService service
   ) {
-    myPluginId = descriptor.getPluginId();
-    myPluginName = descriptor.getName();
-    myProductCode = descriptor.getProductCode();
-    myReleaseDate = descriptor.getReleaseDate();
-    myReleaseVersion = descriptor.getReleaseVersion();
-    myLicenseOptional = descriptor.isLicenseOptional();
-    myDescription = descriptor.getDescription();
-    myDependencies = descriptor.getDependencies();
+    myPluginId = model.getPluginId();
+    myPluginName = model.getName();
+    myProductCode = model.getProductCode();
+    if (model.getReleaseDate() != null) {
+      myReleaseDate = Date.from(Instant.ofEpochMilli(model.getReleaseDate()));
+    } else {
+      myReleaseDate = null;
+    }
+    myReleaseVersion = model.getReleaseVersion();
+    myLicenseOptional = model.isLicenseOptional();
+    myDescription = model.getDescription();
+    myDependencies = model.getDependencies();
 
     myPluginUrl = pluginUrl;
     myBuildNumber = buildNumber;
 
-    myPluginVersion = descriptor.getVersion();
-    myDescriptor = descriptor;
+    myPluginVersion = model.getVersion();
+    myDescriptor = model.getDescriptor();
+    myModel = model;
     myErrorsConsumer = errorsConsumer;
     myDownloadService = service;
   }
 
   public @NotNull PluginDownloader withErrorsConsumer(@NotNull Consumer<@NotNull @NotificationContent String> errorsConsumer) {
-    return new PluginDownloader(myDescriptor, myPluginUrl, myBuildNumber, errorsConsumer, myDownloadService);
+    return new PluginDownloader(myModel, myPluginUrl, myBuildNumber, errorsConsumer, myDownloadService);
   }
 
   public @NotNull PluginDownloader withDownloadService(@Nullable MarketplacePluginDownloadService downloadService) {
-    return new PluginDownloader(myDescriptor, myPluginUrl, myBuildNumber, myErrorsConsumer, downloadService);
+    return new PluginDownloader(myModel, myPluginUrl, myBuildNumber, myErrorsConsumer, downloadService);
   }
 
   /** @deprecated Use {@link #getId()} */
@@ -144,6 +154,12 @@ public final class PluginDownloader {
 
   public @NotNull IdeaPluginDescriptor getDescriptor() {
     return myDescriptor;
+  }
+
+  // TODO this method is nullable for extra safety, can probably be dropped later with some caution
+  @ApiStatus.Internal
+  public @Nullable PluginUiModel getUiModel() {
+    return myModel;
   }
 
   public @NotNull Path getFilePath() throws IOException {
@@ -332,7 +348,9 @@ public final class PluginDownloader {
     node.setLicenseOptional(isLicenseOptional());
     node.setVersion(getPluginVersion());
     node.setDownloadUrl(myPluginUrl);
-    node.setDependencies(myDependencies);
+    List<PluginDependencyImpl> dependencies =
+      ContainerUtil.map(myDependencies, dep -> new PluginDependencyImpl(dep.getPluginId(), null, dep.isOptional()));
+    node.setDependencies(dependencies);
     node.setDescription(myDescription);
     return node;
   }
@@ -394,7 +412,7 @@ public final class PluginDownloader {
   public static @NotNull PluginDownloader createDownloader(@NotNull PluginUiModel pluginUiModel,
                                                            @Nullable String host,
                                                            @Nullable BuildNumber buildNumber) throws IOException {
-    return createDownloader(pluginUiModel.getDescriptor(), host, buildNumber, pluginUiModel.getDownloadUrl(),
+    return createDownloader(pluginUiModel, host, buildNumber, pluginUiModel.getDownloadUrl(),
                             pluginUiModel.isFromMarketplace());
   }
 
@@ -405,11 +423,11 @@ public final class PluginDownloader {
   ) throws IOException {
     boolean fromMarketplace = descriptor instanceof PluginNode;
     String downloadUrl = fromMarketplace ? ((PluginNode)descriptor).getDownloadUrl() : null;
-    return createDownloader(descriptor, host, buildNumber, downloadUrl, fromMarketplace);
+    return createDownloader(new PluginUiModelAdapter(descriptor), host, buildNumber, downloadUrl, fromMarketplace);
   }
 
   private static @NotNull PluginDownloader createDownloader(
-    @NotNull IdeaPluginDescriptor descriptor,
+    @NotNull PluginUiModel descriptor,
     @Nullable String host,
     @Nullable BuildNumber buildNumber,
     @Nullable String downloadUrl,

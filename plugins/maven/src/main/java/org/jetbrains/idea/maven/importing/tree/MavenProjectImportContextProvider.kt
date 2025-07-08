@@ -299,11 +299,14 @@ internal class MavenProjectImportContextProvider(
   private fun needCreateCompoundModule(project: MavenProject, languageLevels: LanguageLevels): Boolean {
     if (!`is`("maven.import.separate.main.and.test.modules.when.needed")) return false
     if (project.isAggregator) return false
-    if (!isCompilerTestSupport(project)) return false
 
-    if (languageLevels.mainAndTestLevelsDiffer()) return true
-    if (hasTestCompilerArgs(project)) return true
-    if (mainAndTestCompilerArgsDiffer(project)) return true
+    if (`is`("maven.import.separate.main.and.test.modules.when.lang.level") && languageLevels.mainAndTestLevelsDiffer()) return true
+
+    if (`is`("maven.import.separate.main.and.test.modules.when.compiler.args") && isCompilerTestSupport(project)) {
+      if (hasTestCompilerArgs(project)) return true
+      if (mainAndTestCompilerArgsDiffer(project)) return true
+    }
+
     if (getNonDefaultCompilerExecutions(project).isNotEmpty()) return true
 
     return false

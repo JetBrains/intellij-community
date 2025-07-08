@@ -8,12 +8,12 @@ import andel.operation.Operation
 import andel.operation.isNotIdentity
 import andel.text.Text
 import andel.text.TextRange
+import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.Durable
 import fleet.kernel.DurableEntityType
 import fleet.kernel.deprecatedUid
 import fleet.util.UID
-import fleet.util.logging.logger
 import fleet.util.openmap.OpenMap
 import fleet.util.singleOrNullOrThrow
 import kotlinx.serialization.builtins.serializer
@@ -75,7 +75,7 @@ class DocumentEntity(override val eid: EID) : Entity {
       runCatching {
         component.onCommit()
       }.onFailure {
-        logger.error(it) { "failed onCommit" }
+        logger.error("failed onCommit", it)
       }
     }
     return result

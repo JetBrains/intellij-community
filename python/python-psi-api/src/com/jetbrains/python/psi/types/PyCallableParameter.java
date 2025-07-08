@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParameter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,12 @@ public interface PyCallableParameter {
   boolean isKeywordContainer();
 
   boolean isSelf();
+
+  @ApiStatus.Experimental
+  boolean isPositionOnlySeparator();
+
+  @ApiStatus.Experimental
+  boolean isKeywordOnlySeparator();
 
   /**
    * @param includeDefaultValue if true, include the default value after an "=".

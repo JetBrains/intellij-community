@@ -420,7 +420,7 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   fun updateActions() {
-    updateActionsWithoutLoadingIcon(/* includeInvisible = */ false)
+    updateActionsWithoutLoadingIcon(includeInvisible = false)
   }
 
   override fun getChildPreferredSize(index: Int): Dimension {

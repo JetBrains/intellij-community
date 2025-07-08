@@ -13,7 +13,6 @@ import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selec
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.event.MouseEvent
 
@@ -22,7 +21,7 @@ internal class ChangeVersionPackageAction : DumbAwareAction() {
     val project = e.project ?: return
     val pkg = e.selectedPackage as? InstalledPackage ?: return
     val service = PyPackagingToolWindowService.getInstance(project)
-    PyPackageCoroutine.getIoScope(project).launch {
+    PyPackageCoroutine.launch(project, Dispatchers.IO) {
       val details = service.detailsForPackage(pkg) ?: return@launch
       withContext(Dispatchers.EDT) {
         PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project).show(

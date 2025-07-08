@@ -3,7 +3,7 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.hatch.runtime.HatchRuntime
-import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
 
 /**
  * Manage environment dependencies
@@ -12,28 +12,28 @@ class HatchConfig(runtime: HatchRuntime) : HatchCommand("config", runtime) {
   /**
    * Open the config location in your file manager
    */
-  suspend fun explore(): PyExecResult<String> {
+  suspend fun explore(): PyResult<String> {
     return executeAndHandleErrors("explore", transformer = ZeroCodeStdoutTransformer)
   }
 
   /**
    * Show the location of the config file
    */
-  suspend fun find(): PyExecResult<String> {
+  suspend fun find(): PyResult<String> {
     return executeAndHandleErrors("find", transformer = ZeroCodeStdoutTransformer)
   }
 
   /**
    * Restore the config file to default settings
    */
-  suspend fun restore(): PyExecResult<String> {
+  suspend fun restore(): PyResult<String> {
     return executeAndHandleErrors("restore", transformer = ZeroCodeStdoutTransformer)
   }
 
   /**
    * Assign values to config file entries
    */
-  suspend fun set(key: String, value: String): PyExecResult<String> {
+  suspend fun set(key: String, value: String): PyResult<String> {
     return executeAndHandleErrors("set", key, value, transformer = ZeroCodeStdoutTransformer)
   }
 
@@ -42,7 +42,7 @@ class HatchConfig(runtime: HatchRuntime) : HatchCommand("config", runtime) {
    *
    * @param all Do not scrub secret fields
    */
-  suspend fun show(all: Boolean? = null): PyExecResult<String> {
+  suspend fun show(all: Boolean? = null): PyResult<String> {
     val options = listOf(all to "--all").makeOptions()
     return executeAndHandleErrors("show", *options, transformer = ZeroCodeStdoutTransformer)
   }
@@ -50,7 +50,7 @@ class HatchConfig(runtime: HatchRuntime) : HatchCommand("config", runtime) {
   /**
    * Update the config file with any new fields
    */
-  suspend fun update(): PyExecResult<String> {
+  suspend fun update(): PyResult<String> {
     return executeAndHandleErrors("update", transformer = ZeroCodeStdoutTransformer)
   }
 }

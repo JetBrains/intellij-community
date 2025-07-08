@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -81,7 +81,8 @@ public final class FileAttributes {
       throw new IllegalArgumentException("Invalid length: " + length);
     }
     this.flags = flags;
-    this.length = length;
+    //length is undefined for directories, set to 0
+    this.length = isDirectory() ? 0 : length;
     this.lastModified = lastModified;
   }
 

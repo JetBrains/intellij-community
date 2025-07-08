@@ -5,19 +5,45 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewService
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.SimpleTextAttributes
 import junit.framework.AssertionFailedError
 import junit.framework.ComparisonFailure
+import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertTrue
 import javax.swing.Icon
 
 private const val MAX_DEPTH = 20
 
 fun assertLogicalStructure(
   psiFile: PsiFile,
+  expectedStructureInitializer: LogicalStructureNode.() -> Unit,
+) {
+  assertLogicalStructure(psiFile, null, null, expectedStructureInitializer)
+}
+
+fun assertLogicalStructure(
+  psiFile: PsiFile,
+  nodePath: String,
+  expectedStructureInitializer: LogicalStructureNode.() -> Unit,
+) {
+  assertLogicalStructure(psiFile, null, nodePath, expectedStructureInitializer)
+}
+
+/**
+ * @param psiFile - is a file which will be created the structure for
+ * @param selectedElement - selected psiElement in the file.
+ *  If not null then the corresponding logical element will be found and compared with expected
+ * @param nodePath - path to subtree if one wants to check not the whole structure, but only some branch
+ * @param expectedStructureInitializer - the builder for the expected structure
+ */
+fun assertLogicalStructure(
+  psiFile: PsiFile,
+  selectedElement: PsiElement? = null,
   nodePath: String? = null,
   expectedStructureInitializer: LogicalStructureNode.() -> Unit,
 ) {
@@ -48,6 +74,24 @@ fun assertLogicalStructure(
                             expectedRoot.print("", false),
                             actualRoot.print("", false))
   }
+  if (selectedElement != null) {
+    val expectedSelectedPath = expectedRoot.getSelectedNodePath().let { it.subList(1, it.size) }
+    val select = (structureView as StructureViewComponent).select(selectedElement, true)
+    val actualPaths = PlatformTestUtil.waitForPromise(select)!!.path.toList().let { it.subList(1, it.size) }
+    val nodePaths = nodePath?.split("/") ?: emptyList()
+    for ((index, any) in actualPaths.withIndex()) {
+      if (index < nodePaths.size) {
+        assertTrue("Selected node is different: ", any.toString().startsWith(nodePaths[index]))
+      }
+      else {
+        val expectedNode = expectedSelectedPath.getOrNull(index - nodePaths.size)!!
+        val expectedName = if (expectedNode.coloredTextElements.isNotEmpty()) {
+          expectedNode.coloredTextElements.joinToString("") { it.text }
+        } else expectedNode.name
+        assertEquals("Selected node is different: ", expectedName, any.toString())
+      }
+    }
+  }
 }
 
 private fun createActualNode(element: StructureViewTreeElement): LogicalStructureNode {
@@ -77,6 +121,7 @@ class LogicalStructureNode(
   private var childrenDontMatter = false
   private var childrenOrderDontMatter = false
   private var navigationElementSupplier: (() -> PsiElement?)? = null
+  private var isSelected = false
 
   fun subNode(subNode: LogicalStructureNode) {
     subNodes.add(subNode)
@@ -101,6 +146,10 @@ class LogicalStructureNode(
 
   fun arbitraryChildrenOrder() {
     childrenOrderDontMatter = true
+  }
+
+  fun selected() {
+    isSelected = true
   }
 
   fun navigationElement(element: PsiElement) {
@@ -177,6 +226,19 @@ class LogicalStructureNode(
     }
     if (!printItself) result = result.substringAfter("\n")
     return result
+  }
+
+  fun getSelectedNodePath(): List<LogicalStructureNode> {
+    if (isSelected) {
+      return listOf(this)
+    }
+    for (subNode in subNodes) {
+      val selectedPath = subNode.getSelectedNodePath()
+      if (selectedPath.isNotEmpty()) {
+        return listOf(this) + selectedPath
+      }
+    }
+    return emptyList()
   }
 
 }

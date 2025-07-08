@@ -18,6 +18,7 @@
     <module name="intellij.platform.vcs.impl.lang"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.xml.dom.impl"/>
+    <module name="intellij.regexp"/>
   </dependencies>
 
   <depends optional="true" config-file="java-copyright.xml">com.intellij.copyright</depends>

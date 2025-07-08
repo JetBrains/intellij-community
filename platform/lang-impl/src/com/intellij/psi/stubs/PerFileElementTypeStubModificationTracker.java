@@ -274,6 +274,15 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myStubUpdatingIndexStorage.drop();
   }
 
+  @Override
+  public String toString() {
+    return super.toString() + " (isDisposed=" + (disposeTrace.get() != null) +
+           ", pendingUpdates=" + myPendingUpdates.size() +
+           ", probablyExpensiveUpdates=" + myProbablyExpensiveUpdates.size() +
+           ", modificationsInCurrentBatch=" + myModificationsInCurrentBatch.size() +
+           ", modCounts=" + myModCounts + ")";
+  }
+
   private static @Nullable IFileElementType determineCurrentFileElementType(IndexedFile indexedFile) {
     if (shouldSkipFile(indexedFile.getFile())) return null;
     var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);

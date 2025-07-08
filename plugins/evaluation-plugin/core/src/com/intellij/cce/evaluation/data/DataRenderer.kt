@@ -27,6 +27,10 @@ sealed interface DataRenderer<in T> {
     override val serialName: String = "inline_int"
   }
 
+  data object NamedRanges : DataRenderer<List<NamedRange>> {
+    override val serialName: String = "named_ranges"
+  }
+
   data object ClickableLink : DataRenderer<String> {
     override val serialName: String = "clickable_link"
   }
@@ -63,6 +67,7 @@ sealed interface DataRenderer<in T> {
         "inline_long" -> InlineLong
         "inline_double" -> InlineDouble
         "inline_int" -> InlineInt
+        "named_ranges" -> NamedRanges
         "clickable_link" -> ClickableLink
         "text" -> context?.deserialize(json, Text::class.java)
         "lines" -> Lines
@@ -92,3 +97,10 @@ interface TextUpdate {
 data class FileUpdate(val filePath: String, override val originalText: String, override val updatedText: String) : TextUpdate, HasDescription {
   override val descriptionText: String = filePath
 }
+
+interface Range {
+  val start: Int
+  val end: Int
+}
+
+data class NamedRange(override val start: Int, override val end: Int, val text: String) : Range

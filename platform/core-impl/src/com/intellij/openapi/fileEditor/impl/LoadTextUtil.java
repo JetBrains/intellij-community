@@ -45,7 +45,7 @@ import java.util.Set;
 public final class LoadTextUtil {
   private static final Logger LOG = Logger.getInstance(LoadTextUtil.class);
 
-  public enum AutoDetectionReason { FROM_BOM, FROM_BYTES }
+  public enum AutoDetectionReason {FROM_BOM, FROM_BYTES}
 
   private static final int UNLIMITED = -1;
 
@@ -222,7 +222,7 @@ public final class LoadTextUtil {
      * should be {@code this.name().contains(CharsetToolkit.UTF8)} for {@link #getOverriddenCharsetByBOM(byte[], Charset)} to work
      */
     SevenBitCharset(@NotNull Charset baseCharset) {
-      super("IJ__7BIT_"+baseCharset.name(), ArrayUtilRt.EMPTY_STRING_ARRAY);
+      super("IJ__7BIT_" + baseCharset.name(), ArrayUtilRt.EMPTY_STRING_ARRAY);
       myBaseCharset = baseCharset;
     }
 
@@ -309,7 +309,21 @@ public final class LoadTextUtil {
       setCharsetAutoDetectionReason(file, AutoDetectionReason.FROM_BOM);
     }
 
-    file.setCharset(charset);
+    //This method could be called with 'partial' content (i.e. length < file.length). In this case charset
+    //detection is not reliable, because some symbols crucial to charset detection may be outside of partial
+    //content. So, for partial content, file.charset shouldn't be updated -- because it could lead to incorrect
+    //detection of the charset (which is a source of errors by itself), and re-detection of correct charset
+    //later, with consequent WA and property change notification (see VirtualFileManager.notifyPropertyChanged)
+    //See IJPL-173099 as an example of incorrect behaviour.
+    //Unfortunately, the method is called from too many places already, and it is quite hard to validate when
+    //it is called with partial or not partial content. Hence, the current solution is just a heuristic: if
+    //(length == file.length) we do update file.charset, otherwise we use detected charset only temporarily,
+    //to decode the current chunk of content, but do NOT store it in file.charset.
+    //I'm not sure if this will solve the issues like IJPL-173099 completely, but at least performance effect must
+    //be much more limited.
+    if (file.getLength() == length ) {
+      file.setCharset(charset);
+    }
 
     Charset result = charset;
     // optimisation
@@ -336,6 +350,8 @@ public final class LoadTextUtil {
 
   private static final boolean GUESS_UTF = Boolean.parseBoolean(System.getProperty("idea.guess.utf.encoding", "true"));
 
+  //TODO RC: this method should NOT be used with partial content, i.e. when length < content.length -- because partial
+  //         content may lead to incorrect charset detection (e.g. some non-UTF8 symbols are at the end of the file)
   private static @NotNull DetectResult guessFromContent(@NotNull VirtualFile virtualFile, byte @NotNull [] content, int length) {
     AutoDetectionReason detectedFromBytes = null;
     try {
@@ -371,7 +387,8 @@ public final class LoadTextUtil {
     }
     CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(0, endOffset);
     if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-      return new DetectResult(StandardCharsets.UTF_8, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
+      return new DetectResult(StandardCharsets.UTF_8, CharsetToolkit.GuessedEncoding.VALID_UTF8,
+                              null); //UTF detected, ignore all directives
     }
     if (guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8
         && defaultCharset != StandardCharsets.UTF_8
@@ -408,16 +425,17 @@ public final class LoadTextUtil {
     write(project, file, requestor, newText, -1);
   }
 
-  /**
-   * Normally, one should not use this method.
-   */
+  @ApiStatus.Internal
   public static void write(@Nullable Project project,
                            @NotNull VirtualFile virtualFile,
                            @NotNull Object requestor,
                            @NotNull String text,
-                           long newModificationStamp) throws IOException {
+                           long newModificationStamp,
+                           boolean applyTextTransformer) throws IOException {
     Charset existing = virtualFile.getCharset();
-    text = TextPresentationTransformers.toPersistent(text, virtualFile).toString();
+    if (applyTextTransformer) {
+      text = TextPresentationTransformers.toPersistent(text, virtualFile).toString();
+    }
     Pair.NonNull<Charset, byte[]> chosen = charsetForWriting(project, virtualFile, text, existing);
     Charset charset = chosen.first;
     byte[] buffer = chosen.second;
@@ -431,6 +449,17 @@ public final class LoadTextUtil {
     try (OutputStream stream = virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       stream.write(buffer);
     }
+  }
+
+  /**
+   * Normally, one should not use this method.
+   */
+  public static void write(@Nullable Project project,
+                           @NotNull VirtualFile virtualFile,
+                           @NotNull Object requestor,
+                           @NotNull String text,
+                           long newModificationStamp) throws IOException {
+    write(project, virtualFile, requestor, text, newModificationStamp, true);
   }
 
   public static @NotNull Pair.NonNull<Charset, byte[]> charsetForWriting(@Nullable Project project,
@@ -460,7 +489,9 @@ public final class LoadTextUtil {
     }
   }
 
-  public static @NotNull Pair.NonNull<Charset, byte[]> chooseMostlyHarmlessCharset(@NotNull Charset existing, @NotNull Charset specified, @NotNull String text) {
+  public static @NotNull Pair.NonNull<Charset, byte[]> chooseMostlyHarmlessCharset(@NotNull Charset existing,
+                                                                                   @NotNull Charset specified,
+                                                                                   @NotNull String text) {
     try {
       if (specified.equals(existing)) {
         return Pair.createNonNull(specified, text.getBytes(existing));
@@ -480,11 +511,13 @@ public final class LoadTextUtil {
     }
     catch (RuntimeException e) {
       Charset defaultCharset = Charset.defaultCharset();
-      return Pair.createNonNull(defaultCharset, text.getBytes(defaultCharset)); //if both are bad and there is no hope, use the default charset
+      return Pair.createNonNull(defaultCharset,
+                                text.getBytes(defaultCharset)); //if both are bad and there is no hope, use the default charset
     }
   }
 
-  private static byte @Nullable("null means not supported, otherwise it is converted byte stream") [] isSupported(@NotNull Charset charset, @NotNull String str) {
+  private static byte @Nullable("null means not supported, otherwise it is converted byte stream") [] isSupported(@NotNull Charset charset,
+                                                                                                                  @NotNull String str) {
     try {
       if (!charset.canEncode()) return null;
       byte[] bytes = str.getBytes(charset);
@@ -499,12 +532,16 @@ public final class LoadTextUtil {
     }
   }
 
-  public static @NotNull Charset extractCharsetFromFileContent(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull CharSequence text) {
+  public static @NotNull Charset extractCharsetFromFileContent(@Nullable Project project,
+                                                               @NotNull VirtualFile virtualFile,
+                                                               @NotNull CharSequence text) {
     Charset value = charsetFromContentOrNull(project, virtualFile, text);
     return value == null ? virtualFile.getCharset() : value;
   }
 
-  public static @Nullable("returns null if cannot determine from content") Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull CharSequence text) {
+  public static @Nullable("returns null if cannot determine from content") Charset charsetFromContentOrNull(@Nullable Project project,
+                                                                                                            @NotNull VirtualFile virtualFile,
+                                                                                                            @NotNull CharSequence text) {
     return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
@@ -535,7 +572,8 @@ public final class LoadTextUtil {
   public static @NotNull CharSequence loadText(@NotNull VirtualFile file, int limit) {
     FileType type = file.getFileType();
     if (type.isBinary()) {
-      throw new IllegalArgumentException("Attempt to load truncated text for binary file: " + file.getPresentableUrl() + ". File type: " + type.getName());
+      throw new IllegalArgumentException(
+        "Attempt to load truncated text for binary file: " + file.getPresentableUrl() + ". File type: " + type.getName());
     }
 
     if (file instanceof LightVirtualFile) {
@@ -583,7 +621,8 @@ public final class LoadTextUtil {
                                                        saveDetectedSeparators, info, info.hardCodedCharset);
     if (applyTextTransformer) {
       return TextPresentationTransformers.fromPersistent(result.text, virtualFile);
-    } else {
+    }
+    else {
       return result.text;
     }
   }
@@ -615,12 +654,15 @@ public final class LoadTextUtil {
     Charset internalCharset = detectResult.hardCodedCharset;
     CharsetToolkit.GuessedEncoding guessed = detectResult.guessed;
     CharSequence toProcess;
-    if (internalCharset == null || internalCharset.equals(StandardCharsets.UTF_8) && (guessed == CharsetToolkit.GuessedEncoding.BINARY || guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8)) {
+    if (internalCharset == null ||
+        internalCharset.equals(StandardCharsets.UTF_8) &&
+        (guessed == CharsetToolkit.GuessedEncoding.BINARY || guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8)) {
       // the charset was not detected, so the file is likely binary
       toProcess = null;
     }
     else {
-      ConvertResult result = convertBytesAndSetSeparator(buffer, bytes.length(), virtualFile, saveDetectedSeparators, detectResult, internalCharset);
+      ConvertResult result =
+        convertBytesAndSetSeparator(buffer, bytes.length(), virtualFile, saveDetectedSeparators, detectResult, internalCharset);
       toProcess = result.text;
     }
     return fileTextProcessor.fun(toProcess);
@@ -659,7 +701,8 @@ public final class LoadTextUtil {
         getTextByBinaryPresentation(file.contentsToByteArray(), file);
         lineSeparator = file.getDetectedLineSeparator();
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
     }
     return lineSeparator;
   }
@@ -675,7 +718,7 @@ public final class LoadTextUtil {
   private static @NotNull ConvertResult convertBytes(byte @NotNull [] bytes,
                                                      int startOffset, int endOffset,
                                                      @NotNull Charset internalCharset) {
-    assert startOffset >= 0 && startOffset <= endOffset && endOffset <= bytes.length: startOffset + "," + endOffset+": "+bytes.length;
+    assert startOffset >= 0 && startOffset <= endOffset && endOffset <= bytes.length : startOffset + "," + endOffset + ": " + bytes.length;
     if (internalCharset instanceof SevenBitCharset || internalCharset == StandardCharsets.US_ASCII) {
       // optimization: skip byte-to-char conversion for ascii chars
       return convertLineSeparatorsToSlashN(bytes, startOffset, endOffset);
@@ -707,7 +750,7 @@ public final class LoadTextUtil {
       this.CRLF_count = CRLF_count;
     }
 
-    String majorLineSeparator () {
+    String majorLineSeparator() {
       String detectedLineSeparator = null;
       if (CRLF_count > CR_count && CRLF_count > LF_count) {
         detectedLineSeparator = "\r\n";

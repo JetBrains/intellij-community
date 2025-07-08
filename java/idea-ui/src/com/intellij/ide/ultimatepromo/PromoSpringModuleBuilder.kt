@@ -8,8 +8,8 @@ import com.intellij.ide.wizard.withVisualPadding
 import com.intellij.java.ui.icons.JavaUIIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -23,7 +23,7 @@ private const val SPRING_PLUGIN_ID = "com.intellij.spring"
 internal class PromoSpringModuleBuilder : ModuleBuilder(), PromoModuleBuilder {
   override fun isAvailable(): Boolean = Registry.`is`("idea.ultimate.features.hints.enabled")
 
-  override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
+  override fun getModuleType(): ModuleType<*> = JavaModuleType.getModuleType()
   override fun getWeight(): Int = JVM_WEIGHT
 
   override fun getBuilderId(): String = "promo-spring"

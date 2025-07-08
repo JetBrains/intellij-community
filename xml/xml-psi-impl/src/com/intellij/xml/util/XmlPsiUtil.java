@@ -15,6 +15,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IdempotenceChecker;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +162,9 @@ public final class XmlPsiUtil {
     }
   }
 
-  private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
+  private static @Nullable PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
+    if (PlatformUtils.isJetBrainsClient()) return null;
+
     XmlEntityContextType type = getContextType(ref);
 
     {

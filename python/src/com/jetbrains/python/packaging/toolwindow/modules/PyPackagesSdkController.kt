@@ -12,10 +12,13 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
+import com.intellij.util.asDisposable
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -32,7 +35,9 @@ import javax.swing.event.ListSelectionListener
 
 internal class PyPackagesSdkController(private val project: Project) : Disposable.Default {
 
-  private val packagingScope: CoroutineScope = PyPackageCoroutine.getIoScope(project)
+  private val packagingScope: CoroutineScope = PyPackageCoroutine.getScope(project).childScope("Packages SDK Controller").also {
+    Disposer.register(this, it.asDisposable())
+  }
 
   private val toolWindowService: PyPackagingToolWindowService
     get() = project.service<PyPackagingToolWindowService>()

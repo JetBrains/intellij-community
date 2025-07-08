@@ -18,13 +18,25 @@ label_flag(
 
 label_flag(
     name = "resource-packager",
-    build_setting_default = "//src/misc:worker-jvm",
+    build_setting_default = "//src/misc:worker-jvm_deploy.jar",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "resource-packager-jvm_flags",
+    build_setting_default = "//src/misc:worker-jvm-jvm_flags",
     visibility = ["//visibility:public"],
 )
 
 label_flag(
     name = "jvm-builder",
-    build_setting_default = "//src/jvm-builder",
+    build_setting_default = "//src/jvm-builder:jvm-builder_deploy.jar",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "jvm-builder-jvm_flags",
+    build_setting_default = "//src/jvm-builder:jvm-builder-jvm_flags",
     visibility = ["//visibility:public"],
 )
 

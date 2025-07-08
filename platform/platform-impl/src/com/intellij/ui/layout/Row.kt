@@ -50,28 +50,9 @@ interface RowBuilder : BaseBuilder {
 @Deprecated("Use Kotlin UI DSL Version 2")
 abstract class Row : Cell(), RowBuilder {
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @set:ApiStatus.ScheduledForRemoval
-  abstract var visible: Boolean
-
-  /**
-   * Shares cell between components.
-   *
-   * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
-    setCellMode(true, isVerticalFlow, isFullWidth)
-    InnerCell(this).init()
-    setCellMode(false, isVerticalFlow, isFullWidth)
-  }
-
   @PublishedApi
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
 }
 

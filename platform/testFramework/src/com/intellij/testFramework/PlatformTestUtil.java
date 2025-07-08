@@ -33,7 +33,10 @@ import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -485,7 +488,7 @@ public final class PlatformTestUtil {
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
     assertDispatchThreadWithoutWriteAccess();
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    ThreadContext.resetThreadContext(() -> {
       while (true) {
         AWTEvent event = eventQueue.peekEvent();
         if (event == null) break;
@@ -494,7 +497,8 @@ public final class PlatformTestUtil {
           eventQueue.dispatchEvent(event);
         }
       }
-    }
+      return null;
+    });
   }
 
   /**
@@ -516,7 +520,7 @@ public final class PlatformTestUtil {
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
   public static AWTEvent dispatchNextEventIfAny() throws InterruptedException {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    return ThreadContext.resetThreadContext(() -> {
       assertEventQueueDispatchThread();
       IdeEventQueue eventQueue = IdeEventQueue.getInstance();
       AWTEvent event = eventQueue.peekEvent();
@@ -524,7 +528,7 @@ public final class PlatformTestUtil {
       AWTEvent event1 = eventQueue.getNextEvent();
       eventQueue.dispatchEvent(event1);
       return event1;
-    }
+    });
   }
 
   public static @NotNull StringBuilder print(@NotNull AbstractTreeStructure structure,

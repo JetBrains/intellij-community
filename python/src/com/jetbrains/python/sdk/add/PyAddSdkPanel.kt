@@ -32,23 +32,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
-  override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
-    get() = mapOf(PyAddSdkDialogFlowAction.OK.enabled())
-
   override val component: Component
     get() = this
-
-  /**
-   * [component] is permanent. [PyAddSdkStateListener.onComponentChanged] won't
-   * be called anyway.
-   */
-  override fun addStateListener(stateListener: PyAddSdkStateListener): Unit = Unit
-
-  override fun previous(): Nothing = throw UnsupportedOperationException()
-
-  override fun next(): Nothing = throw UnsupportedOperationException()
-
-  override fun complete(): Unit = Unit
 
   abstract override val panelName: String
   override val icon: Icon = PythonPsiApiIcons.Python
@@ -59,8 +44,6 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override fun getOrCreateSdk(): Sdk? = sdk
 
   open fun getStatisticInfo(): InterpreterStatisticsInfo? = null
-
-  override fun onSelected(): Unit = Unit
 
   override fun validateAll(): List<ValidationInfo> = emptyList()
 

@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleDslPropertiesFileTest : GradleCodeInsightTestCase() {
@@ -54,8 +55,10 @@ class GradleDslPropertiesFileTest : GradleCodeInsightTestCase() {
     }
   }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
+  // the test is unstable on TeamCity
+  // @ParameterizedTest
+  // @AllGradleVersionsSource
+  @Disabled("IDEA-375504")
   fun `test go to definition`(gradleVersion: GradleVersion) {
     test(gradleVersion, PROPERTIES_FIXTURE) {
       testGotoDefinition("fo<caret>o") {

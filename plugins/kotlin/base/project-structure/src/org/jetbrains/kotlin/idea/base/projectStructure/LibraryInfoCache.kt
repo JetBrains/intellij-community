@@ -61,8 +61,9 @@ class LibraryInfoCache(project: Project) : Disposable {
             initialize()
         }
 
-        // Due to ordering issues with other workspace model listeners that access `LibraryInfoCache`, workspace model changes for
-        // `LibraryInfoCache` are listened to via `FirOrderedWorkspaceModelChangeListener` and `FE10IdeOrderedWorkspaceModelChangeListener`.
+        // Due to historical issues with other workspace model listeners that accessed `LibraryInfoCache` in the FIR implementation,
+        // workspace model changes for `LibraryInfoCache` are listened to via `Fe10WorkspaceModelChangeListener`. The FIR implementation
+        // doesn't use `LibraryInfoCache` anymore.
         // Note that, even if the order was insignificant, `LibraryInfoCache`'s workspace model listener would still need to be registered
         // eagerly. The reason is that some other workspace model listener might access `LibraryInfoCache` and cause first-time
         // initialization (including a call to `subscribe`). Subscribing to workspace model events while a workspace model event is being

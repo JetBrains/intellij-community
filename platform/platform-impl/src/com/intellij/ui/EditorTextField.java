@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -30,6 +29,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorThreading;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -559,17 +559,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     EditorEx editor = createEditor();
     editor.getContentComponent().setEnabled(isEnabled());
     if (myCaretPosition >= 0) {
-      //  at com.intellij.openapi.application.impl.ApplicationImpl.assertReadAccessAllowed(ApplicationImpl.java:1009)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.getOffset(CaretImpl.java:661)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.doMoveToLogicalPosition(CaretImpl.java:419)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.moveToLogicalPosition(CaretImpl.java:610)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.lambda$moveToOffset$0(CaretImpl.java:105)
-      //	at com.intellij.openapi.editor.impl.CaretModelImpl.doWithCaretMerging(CaretModelImpl.java:413)
-      //	at com.intellij.openapi.editor.impl.CaretImpl.moveToOffset(CaretImpl.java:103)
-      //	at com.intellij.openapi.editor.CaretModel.moveToOffset(CaretModel.java:91)
-      //	at com.intellij.openapi.editor.CaretModel.moveToOffset(CaretModel.java:77)
-      //	at com.intellij.ui.EditorTextField.initEditorInner(EditorTextField.java:562)
-      ReadAction.run(() -> {
+      EditorThreading.run(() -> {
         editor.getCaretModel().moveToOffset(myCaretPosition);
       });
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -711,7 +701,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     editor.setCaretEnabled(!myIsViewer);
 
     if (project != null) {
-      PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
+      PsiFile psiFile = EditorThreading.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
       if (psiFile != null) {
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, !myIsViewer);
       }
@@ -720,7 +710,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (project != null) {
       EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
       VirtualFile virtualFile = myDocument == null ? null : FileDocumentManager.getInstance().getFile(myDocument);
-      EditorHighlighter highlighter = ReadAction.compute(() -> {
+      EditorHighlighter highlighter = EditorThreading.compute(() -> {
         return virtualFile != null ? highlighterFactory.createEditorHighlighter(project, virtualFile) :
                myFileType != null ? highlighterFactory.createEditorHighlighter(project, myFileType) : null;
       });

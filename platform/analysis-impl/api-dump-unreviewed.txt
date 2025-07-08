@@ -1571,8 +1571,6 @@ f:com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 - getNextOffset():com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$ControlFlowOffset
 - getPsiAnchor():com.intellij.psi.PsiElement
 - getStartOffset(com.intellij.psi.PsiElement):com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$ControlFlowOffset
-- getSynthetics(com.intellij.psi.PsiElement):java.util.List
-- s:isTempVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue):Z
 - keepVariables(java.util.function.Predicate):V
 - makeNop(I):V
 - startElement(com.intellij.psi.PsiElement):V
@@ -1588,10 +1586,6 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$FixedOffset
 - com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$ControlFlowOffset
 - <init>(I):V
 - getInstructionOffset():I
-f:com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$Synthetic
-- com.intellij.codeInspection.dataFlow.value.VariableDescriptor
-- getDfType(com.intellij.codeInspection.dataFlow.value.DfaVariableValue):com.intellij.codeInspection.dataFlow.types.DfType
-- isStable():Z
 c:com.intellij.codeInspection.dataFlow.lang.ir.ControlTransferInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - <init>(com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue):V

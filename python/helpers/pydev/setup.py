@@ -116,10 +116,17 @@ args = dict(
         '_pydevd_bundle',
         '_pydevd_bundle.smart_step_into',
         '_pydevd_bundle.tables',
+        '_pydevd_bundle.tables.images',
         '_pydevd_frame_eval',
         'pydev_ipython',
         # 'pydev_sitecustomize', -- Not actually a package (not added)
         'pydevd_attach_to_process',
+        'pydevd_attach_to_process.common',
+        'pydevd_attach_to_process.linux_and_mac',
+        'pydevd_attach_to_process.winappdbg',
+        'pydevd_attach_to_process.winappdbg.plugins',
+        'pydevd_attach_to_process.winappdbg.win32',
+        'pydevd_attach_to_process.windows',
         'pydevd_concurrency_analyser',
         'pydevd_plugins',
         'pydevd_plugins.extensions',
@@ -143,8 +150,6 @@ args = dict(
         'Development Status :: 6 - Mature',
         'Environment :: Console',
         'Intended Audience :: Developers',
-
-        'License :: OSI Approved :: Apache Software License',
 
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',

@@ -213,6 +213,13 @@
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
+<!--    <intentionAction>-->
+<!--      <language>kotlin</language>-->
+<!--      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertFunctionTypeParameterToReceiverIntention</className>-->
+<!--      <bundleName>messages.KotlinBundle</bundleName>-->
+<!--      <categoryKey>group.names.kotlin</categoryKey>-->
+<!--    </intentionAction>-->
+
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddLabeledReturnInLambdaIntention</className>
@@ -644,6 +651,13 @@
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertReceiverParameterToContextParameterIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertFunctionToPropertyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>

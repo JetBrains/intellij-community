@@ -3,15 +3,13 @@ package com.intellij.debugger.engine.dfaassist.java
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider.Companion.wrap
-import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyEx
@@ -20,27 +18,30 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import com.sun.jdi.*
+import java.util.*
 
 private class JavaDfaAssistProvider : DfaAssistProvider {
   override suspend fun locationMatches(element: PsiElement, location: Location): Boolean {
     val method = location.method()
     val methodName = method.name()
     val methodArgumentsSize = method.argumentTypeNames().size
-    val context = readAction { DebuggerUtilsEx.getContainingMethod(element) }
-    if (context is PsiMethod) {
-      return readAction {
-        val name = if (context.isConstructor()) "<init>" else context.getName()
-        name == methodName && context.getParameterList().getParametersCount() == methodArgumentsSize
+    val isLambda = DebuggerUtilsEx.isLambda(method)
+    return readAction {
+      when (val context = DebuggerUtilsEx.getContainingMethod(element)) {
+        is PsiMethod -> {
+          val name = if (context.isConstructor()) "<init>" else context.getName()
+          name == methodName && context.getParameterList().getParametersCount() == methodArgumentsSize
+        }
+        is PsiLambdaExpression -> {
+          isLambda && methodArgumentsSize >= context.getParameterList().getParametersCount()
+        }
+        is PsiClassInitializer -> {
+          val expectedMethod = if (context.hasModifierProperty(PsiModifier.STATIC)) "<clinit>" else "<init>"
+          methodName == expectedMethod
+        }
+        else -> false
       }
     }
-    if (context is PsiLambdaExpression) {
-      return DebuggerUtilsEx.isLambda(method) && readAction { methodArgumentsSize >= context.getParameterList().getParametersCount() }
-    }
-    if (context is PsiClassInitializer) {
-      val expectedMethod = readAction { if (context.hasModifierProperty(PsiModifier.STATIC)) "<clinit>" else "<init>" }
-      return methodName == expectedMethod
-    }
-    return false
   }
 
   override fun getAnchor(element: PsiElement): PsiElement? {
@@ -101,42 +102,8 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
     return null
   }
 
-  @Throws(EvaluateException::class)
-  override suspend fun getJdiValueForDfaVariable(
-    proxy: StackFrameProxyEx,
-    dfaVar: DfaVariableValue,
-    anchor: PsiElement,
-  ): Value? {
-    val qualifier = dfaVar.qualifier
-    if (qualifier != null) {
-      val descriptor = dfaVar.descriptor
-      if (descriptor is SpecialField) {
-        // Special fields facts are applied from qualifiers
-        return null
-      }
-      val qualifierValue = getJdiValueForDfaVariable(proxy, qualifier, anchor)
-      if (qualifierValue == null) return null
-      val element = readAction { descriptor.psiElement }
-      if (element is PsiField && qualifierValue is ObjectReference) {
-        val type = qualifierValue.referenceType()
-        val psiClass = readAction { element.getContainingClass() }
-        if (psiClass != null && type.name() == readAction { JVMNameUtil.getClassVMName(psiClass) }) {
-          val field = DebuggerUtils.findField(type, readAction { element.getName() })
-          if (field != null) {
-            return wrap(qualifierValue.getValue(field))
-          }
-        }
-      }
-      if (descriptor is ArrayElementDescriptor && qualifierValue is ArrayReference) {
-        val index = descriptor.index
-        val length = qualifierValue.length()
-        if (index in 0..<length) {
-          return wrap(qualifierValue.getValue(index))
-        }
-      }
-      return null
-    }
-    val psi = readAction { dfaVar.psiVariable }
+  override suspend fun getJdiValueForDfaVariable(proxy: StackFrameProxyEx, descriptor: VariableDescriptor, anchor: PsiElement): Value? {
+    val psi = readAction { descriptor.psiElement }
     if (psi is PsiClass) {
       // this; probably qualified
       val captureTraverser = readAction {
@@ -146,8 +113,10 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
       return captureTraverser.traverse(proxy.thisObject())
     }
     if (psi is PsiLocalVariable || psi is PsiParameter) {
-      val varName: String = readAction { psi.getName()!! }
-      val resolveVariable = readAction { PsiResolveHelper.getInstance(psi.getProject()).resolveReferencedVariable(varName, anchor) }
+      val (varName, resolveVariable) = readAction {
+        val name = psi.getName()!!
+        name to PsiResolveHelper.getInstance(psi.getProject()).resolveReferencedVariable(name, anchor)
+      }
       if (resolveVariable !== psi) {
         // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location
         return null
@@ -172,22 +141,63 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
         }
       }
     }
-    if (psi is PsiField && readAction { psi.hasModifierProperty(PsiModifier.STATIC) }) {
-      val psiClass = readAction { psi.getContainingClass() }
-      if (psiClass != null) {
-        val name = readAction { psiClass.getQualifiedName() }
-        if (name != null) {
-          val type = ContainerUtil.getOnlyItem(proxy.getVirtualMachine().classesByName(name))
-          if (type != null && type.isPrepared) {
-            val field = DebuggerUtils.findField(type, psi.getName())
-            if (field != null && field.isStatic) {
-              return wrap(type.getValue(field))
-            }
-          }
+    val fieldData = readAction {
+      if (psi !is PsiField) return@readAction null
+      if (!psi.hasModifierProperty(PsiModifier.STATIC)) return@readAction null
+      val psiClass = psi.getContainingClass() ?: return@readAction null
+      val name = psiClass.getQualifiedName() ?: return@readAction null
+      val fieldName = psi.getName()
+      name to fieldName
+    }
+    if (fieldData != null) {
+      val (className, fieldName) = fieldData
+      val type = ContainerUtil.getOnlyItem(proxy.getVirtualMachine().classesByName(className))
+      if (type != null && type.isPrepared) {
+        val field = DebuggerUtils.findField(type, fieldName)
+        if (field != null && field.isStatic) {
+          return wrap(type.getValue(field))
         }
       }
     }
     return null
+  }
+
+  override suspend fun getJdiValuesForQualifier(
+    proxy: StackFrameProxyEx,
+    qualifier: Value,
+    descriptors: List<VariableDescriptor>,
+    anchor: PsiElement,
+  ): Map<VariableDescriptor, Value> {
+    // Avoid relying on hashCode/equals, as descriptors are known to be deduplicated here
+    val map = IdentityHashMap<VariableDescriptor, Value>()
+    when (qualifier) {
+      is ArrayReference -> {
+        val length = qualifier.length()
+        for (descriptor in descriptors) {
+          if (descriptor is ArrayElementDescriptor) {
+            val index = descriptor.index
+            if (index in 0..<length) {
+              map[descriptor] = wrap(qualifier.getValue(index))
+            }
+          }
+        }
+      }
+      is ObjectReference -> {
+        val type = qualifier.referenceType()
+        val typeName = type.name()
+        for (descriptor in descriptors) {
+          val fieldName = readAction {
+            val element = descriptor.psiElement as? PsiField ?: return@readAction null
+            val psiClass = element.getContainingClass() ?: return@readAction null
+            if (typeName != JVMNameUtil.getClassVMName(psiClass)) return@readAction null
+            element.getName()
+          } ?: continue
+          val field = DebuggerUtils.findField(type, fieldName) ?: continue
+          map[descriptor] = wrap(qualifier.getValue(field))
+        }
+      }
+    }
+    return map
   }
 
   override fun createListener(): DebuggerDfaListener {

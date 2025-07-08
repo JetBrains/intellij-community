@@ -455,7 +455,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
             else
               CompletableFuture.completedFuture(emptyList())
           }
-          .thenAccept { tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true) }
+          .thenCompose { tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true) }
           .exceptionally { DebuggerUtilsAsync.logError(it) }
       }
 

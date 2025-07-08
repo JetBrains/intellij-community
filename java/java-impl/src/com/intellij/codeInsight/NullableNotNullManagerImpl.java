@@ -30,7 +30,10 @@ import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -291,29 +294,52 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
+  protected @NotNull ContextNullabilityInfo findNullityDefaultOnPackage(PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                                                        PsiFile file) {
+    boolean superPackage = false;
+    ContextNullabilityInfo info = ContextNullabilityInfo.EMPTY;
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return info;
+    VirtualFile root = index.getSourceRootForFile(vFile);
+    boolean compiled = false;
+    if (root == null) {
+      root = index.getClassRootForFile(vFile);
+      if (root == null) return info;
+      compiled = true;
+    }
+    // Single-file source root -- no package-info processing for now
+    if (root.equals(vFile)) return info;
+    PsiDirectory directory = file.getContainingDirectory();
+    while (directory != null) {
+      PsiFile packageFile = directory.findFile(compiled ? PsiPackage.PACKAGE_INFO_CLS_FILE : PsiPackage.PACKAGE_INFO_FILE);
+      if (packageFile instanceof PsiJavaFile javaFile) {
+        PsiPackageStatement stmt = javaFile.getPackageStatement();
+        if (stmt != null) {
+          PsiModifierList modifierList = stmt.getAnnotationList();
+          if (modifierList != null) {
+            for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+              info = info.orElse(checkNullityDefault(annotation, placeTargetTypes, superPackage));
+            }
+          }
+        }
+      }
+      if (root.equals(directory.getVirtualFile())) break;
+      directory = directory.getParentDirectory();
+      superPackage = true;
+    }
+    return info;
+  }
+
+  @Override
   protected @NotNull ContextNullabilityInfo getNullityDefault(@NotNull PsiModifierListOwner container,
-                                                              PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                                              boolean superPackage) {
+                                                              PsiAnnotation.TargetType @NotNull [] placeTargetTypes) {
+    LOG.assertTrue(!(container instanceof PsiPackage)); // Packages are handled separately in findNullityDefaultOnPackage
     ContextNullabilityInfo res = ContextNullabilityInfo.EMPTY;
     PsiModifierList modifierList = container.getModifierList();
     if (modifierList != null) {
       for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-        ContextNullabilityInfo info = checkNullityDefault(annotation, placeTargetTypes, superPackage);
-        if (container instanceof PsiPackage) {
-          VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
-          info = info.filtering(context -> {
-            VirtualFile ownerFile = PsiUtilCore.getVirtualFile(context);
-            if (annotationFile != null && ownerFile != null && !annotationFile.equals(ownerFile)) {
-              ProjectFileIndex index = ProjectRootManager.getInstance(container.getProject()).getFileIndex();
-              VirtualFile annotationRoot = index.getClassRootForFile(annotationFile);
-              VirtualFile ownerRoot = index.getClassRootForFile(ownerFile);
-              if (ownerRoot != null && !ownerRoot.equals(annotationRoot)) {
-                return false;
-              }
-            }
-            return true;
-          });
-        }
+        ContextNullabilityInfo info = checkNullityDefault(annotation, placeTargetTypes, false);
         res = res.orElse(info);
       }
     }
@@ -407,7 +433,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
                                                                        @NotNull PsiElement element) {
     PsiJavaModule module = JavaPsiModuleUtil.findDescriptorByElement(element);
     if (module != null) {
-      return getNullityDefault(module, targetTypes, false);
+      return getNullityDefault(module, targetTypes);
     }
     return ContextNullabilityInfo.EMPTY;
   }

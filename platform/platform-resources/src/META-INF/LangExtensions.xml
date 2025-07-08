@@ -80,8 +80,6 @@
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
                  description="Dumb mode during scanning will be triggered as soon as IDE discovers this count of unindexed files."/>
-    <registryKey defaultValue="true" key="scanning.trust.indexing.flag" restartRequired="true"
-                 description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
     <registryKey defaultValue="true" key="full.scanning.on.startup.can.be.skipped" restartRequired="false"
                  description="Full scanning on startup will be skipped when possible."/>
     <registryKey defaultValue="1000000" key="maximum.size.of.orphan.dirty.files.queue" restartRequired="false"
@@ -97,7 +95,7 @@
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <registryKey defaultValue="true" key="use.workspace.file.index.to.generate.iterators" restartRequired="true"
                  description="Use WorkspaceFileIndex instead of IndexableFileIndex to generate IndexingIterators"/>
-    <registryKey defaultValue="true" key="search.in.non.indexable" restartRequired="false"
+    <registryKey defaultValue="false" key="search.in.non.indexable" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
     <registryKey defaultValue="false"
                  description="Enable reformat action execution on frontend in remote development"
@@ -595,10 +593,6 @@
                  description="Show action icons for logical structure nodes"
                  defaultValue="false"
                  restartRequired="false"/>
-    <registryKey key="logical.structure.actions.on.hover"
-                 description="Show action icons on hover instead of on selection"
-                 defaultValue="false"
-                 restartRequired="false"/>
 
     <idIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer"/>
     <todoIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
@@ -1092,6 +1086,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.DaemonFusCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.IdentifierHighlightingFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInspection.ex.GlobalInspectionContextImpl$InspectionPerformanceCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.projectFilter.IndexableFilesFilterHealthCheckCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.completion.command.CommandCompletionCollector"/>
@@ -1170,7 +1165,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbarCollector" />
     <textEditorCustomizer implementation="com.intellij.ui.codeFloatingToolbar.FloatingCodeToolbarEditorCustomizer" />
     <customizableActionGroupProvider implementation="com.intellij.ui.codeFloatingToolbar.FloatingCodeToolbarGroupCustomizer"/>
-    <refactoring.elementListenerProvider implementation="com.intellij.ui.EditorNotificationsImpl$RefactoringListenerProvider"/>
+    <refactoring.elementListenerProvider implementation="com.intellij.ui.RefactoringListenerProvider"/>
 
     <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
 

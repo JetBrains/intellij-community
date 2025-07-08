@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -18,14 +17,11 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.CoroutineContext
 import kotlin.text.Regex.Companion.escape
 
 /**
@@ -38,8 +34,6 @@ import kotlin.text.Regex.Companion.escape
 @ApiStatus.Internal
 abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
   protected val errorSink: ErrorSink = ShowingMessageErrorSync
-  protected val scope: CoroutineScope = service<PythonSdkCoroutineService>().cs
-  protected val context: CoroutineContext = Dispatchers.IO
 
   /**
    * The regex pattern that matches the file names that this action is applicable to.
@@ -80,7 +74,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
     val psiFile = e.getData(PSI_FILE) ?: return
     ModuleUtil.findModuleForFile(psiFile) ?: return
 
-    scope.launch(context) {
+    PyPackageCoroutine.launch(e.project, Dispatchers.IO) {
       edtWriteAction {
         FileDocumentManager.getInstance().saveAllDocuments()
       }

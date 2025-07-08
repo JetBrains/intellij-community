@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.flow.StateFlow;
@@ -26,6 +27,7 @@ import java.util.List;
 public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
+  @RequiresBlockingContext
   public static FileEditorManager getInstance(@NotNull Project project) {
     return project.getService(FileEditorManager.class);
   }

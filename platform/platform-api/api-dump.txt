@@ -163,6 +163,20 @@ com.intellij.openapi.actionSystem.ActionButtonComponent
 - a:getInsets():java.awt.Insets
 - a:getPopState():I
 - a:getWidth():I
+c:com.intellij.openapi.actionSystem.ActionGroupWrapper
+- com.intellij.openapi.actionSystem.ActionGroup
+- com.intellij.openapi.actionSystem.ActionWithDelegate
+- com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
+- <init>(com.intellij.openapi.actionSystem.ActionGroup):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- getDelegate():com.intellij.openapi.actionSystem.ActionGroup
+- isDumbAware():Z
+- isInInjectedContext():Z
+- isPerformWithDocumentsCommitted():Z
+- postProcessVisibleChildren(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List):java.util.List
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.actionSystem.ActionPromoter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
@@ -172,8 +186,26 @@ com.intellij.openapi.actionSystem.ActionStubBase
 - a:getId():java.lang.String
 - a:getPlugin():com.intellij.openapi.extensions.PluginDescriptor
 - getPluginId():com.intellij.openapi.extensions.PluginId
+f:com.intellij.openapi.actionSystem.ActionWrapperUtil
+- sf:INSTANCE:com.intellij.openapi.actionSystem.ActionWrapperUtil
+- sf:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
+- sf:getActionUpdateThread(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ActionUpdateThread
+- sf:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.AnAction[]
+- sf:update(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
 com.intellij.openapi.actionSystem.AnActionHolder
 - a:getAction():com.intellij.openapi.actionSystem.AnAction
+c:com.intellij.openapi.actionSystem.AnActionWrapper
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.actionSystem.ActionWithDelegate
+- com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
+- <init>(com.intellij.openapi.actionSystem.AnAction):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getDelegate():com.intellij.openapi.actionSystem.AnAction
+- isDumbAware():Z
+- isInInjectedContext():Z
+- isPerformWithDocumentsCommitted():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.actionSystem.CheckedActionGroup
 com.intellij.openapi.actionSystem.DataConstants
 - sf:PROJECT:java.lang.String
@@ -331,6 +363,9 @@ com.intellij.openapi.keymap.KeymapManagerListener
 - shortcutChanged(com.intellij.openapi.keymap.Keymap,java.lang.String):V
 - shortcutChanged(com.intellij.openapi.keymap.Keymap,java.lang.String,Z):V
 - shortcutsChanged(com.intellij.openapi.keymap.Keymap,java.util.Collection,Z):V
+f:com.intellij.openapi.observable.util.BindUtil
+- sf:bindLoading(com.intellij.ui.components.JBLoadingPanel,com.intellij.openapi.observable.properties.ObservableBooleanProperty):com.intellij.ui.components.JBLoadingPanel
+- sf:bindLoadingText(com.intellij.ui.components.JBLoadingPanel,com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.components.JBLoadingPanel
 com.intellij.openapi.options.ConfigurableGroup
 - com.intellij.openapi.options.Configurable$Composite
 - getDescription():java.lang.String
@@ -405,6 +440,8 @@ com.intellij.openapi.ui.GenericListComponentUpdater
 com.intellij.openapi.ui.MasterDetailsComponent$ActionGroupWithPreselection
 - a:getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - getDefaultIndex():I
+Fc:com.intellij.openapi.ui.Messages
+- s:showInputDialog(java.awt.Component,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator,com.intellij.openapi.util.TextRange,java.lang.String):java.lang.String
 com.intellij.openapi.ui.Namer
 - a:canRename(java.lang.Object):Z
 - a:getName(java.lang.Object):java.lang.String
@@ -891,6 +928,23 @@ com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 - a:getBottom():I
 - getHeight():I
 - a:getTop():I
+f:com.intellij.ui.navigation.BackAction
+- com.intellij.ui.navigation.NavigationAction
+- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+f:com.intellij.ui.navigation.ForwardAction
+- com.intellij.ui.navigation.NavigationAction
+- <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+a:com.intellij.ui.navigation.NavigationAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- p:<init>(javax.swing.JComponent,java.lang.String,com.intellij.openapi.Disposable):V
+- pa:doUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
+- ps:getHistory(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ui.navigation.History
+- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.ui.navigation.Place$Navigator
 - isValid(com.intellij.ui.navigation.Place):Z
 - navigateTo(com.intellij.ui.navigation.Place,Z):com.intellij.openapi.util.ActionCallback
@@ -943,6 +997,7 @@ com.intellij.ui.tabs.JBTabs
 - a:processDropOver(com.intellij.ui.tabs.TabInfo,com.intellij.ui.awt.RelativePoint):V
 - a:removeAllTabs():V
 - a:removeTab(com.intellij.ui.tabs.TabInfo):com.intellij.openapi.util.ActionCallback
+- a:removeTabMouseListener(java.awt.event.MouseListener):com.intellij.ui.tabs.JBTabs
 - a:requestFocus():V
 - a:resetDropOver(com.intellij.ui.tabs.TabInfo):V
 - a:select(com.intellij.ui.tabs.TabInfo,Z):com.intellij.openapi.util.ActionCallback

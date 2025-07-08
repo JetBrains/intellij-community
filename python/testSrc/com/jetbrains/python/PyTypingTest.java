@@ -5838,7 +5838,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformOwnKwOnlyOmittedAndTakenFromKwOnlyDefault() {
-    doTestExpressionUnderCaret("(Any, id: int, name: str) -> MyClass", """
+    doTestExpressionUnderCaret("(*, id: int, name: str) -> MyClass", """
       from typing import dataclass_transform, Callable
       
       
@@ -5858,7 +5858,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformFieldSpecifierKwOnlyDefaultOverridesDecoratorsKwOnly() {
-    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+    doTestExpressionUnderCaret("(id: str, *, addr: list[str]) -> Order", """
       from typing import Callable, dataclass_transform
       
       def my_field(kw_only=False):
@@ -5878,7 +5878,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformFieldSpecifierKwOnlyDefaultOverridesDecoratorsKwOnlyDefault() {
-    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+    doTestExpressionUnderCaret("(id: str, *, addr: list[str]) -> Order", """
       from typing import Callable, dataclass_transform
       
       def my_field(kw_only=False):
@@ -5898,7 +5898,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformFieldSpecifierKwOnlyOverridesDecoratorsKwOnly() {
-    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+    doTestExpressionUnderCaret("(id: str, *, addr: list[str]) -> Order", """
       from typing import Callable, dataclass_transform
       
       def my_field(kw_only=False):
@@ -5918,7 +5918,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDataclassTransformFieldSpecifierKwOnlyOverridesDecoratorsKwOnlyDefault() {
-    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+    doTestExpressionUnderCaret("(id: str, *, addr: list[str]) -> Order", """
       from typing import Callable, dataclass_transform
       
       def my_field(kw_only=False):

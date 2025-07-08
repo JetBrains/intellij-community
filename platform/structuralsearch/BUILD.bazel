@@ -44,12 +44,12 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.structuralSearch.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-java_library(
+jvm_library(
   name = "structuralSearch-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
@@ -66,13 +66,12 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/structuralsearch:structuralSearch",
-    "//java/testFramework",
     "//xml/impl",
-    "//java/structuralsearch-java:structuralSearch",
-    "//java/structuralsearch-java:structuralSearch_test_lib",
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
   ]
 )
 

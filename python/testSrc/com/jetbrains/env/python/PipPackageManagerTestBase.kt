@@ -2,6 +2,7 @@
 package com.jetbrains.env.python
 
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert.assertThat
@@ -22,7 +23,7 @@ abstract class PipPackageManagerTestBase {
   protected abstract val sdkRule: PySDKRule
 
   @Test
-  fun testList(): Unit = runTest(timeout = 5.minutes) {
+  fun testList(): Unit =  timeoutRunBlocking(5.minutes) {
     PipPythonPackageManager(projectRule.project, sdkRule.sdk).apply {
       assertThat("No packages return", reloadPackages().successOrNull, not(empty()))
       assertThat("Installed packages shouldn't be empty", listInstalledPackages(), not(empty()))

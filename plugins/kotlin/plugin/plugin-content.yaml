@@ -279,6 +279,7 @@
   - name: kotlin-ultimate.native-debugger
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs
+  - name: kotlin-ultimate.wasm.debugger
   - name: kotlin-ultimate.ultimate-plugin
   - name: kotlin-ultimate.ultimate-native
   - name: kotlin-ultimate.profiler

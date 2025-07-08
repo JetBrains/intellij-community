@@ -8,12 +8,14 @@ import com.intellij.ide.plugins.PluginManagerCore.buildPluginIdMap
 import com.intellij.ide.plugins.PluginManagerCore.getLoadingError
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.plugins.PluginManagerCore.isCompatible
+import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.isIncompatible
 import com.intellij.ide.plugins.PluginManagerCore.isUpdatedBundledPlugin
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.*
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
@@ -31,8 +33,8 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
@@ -47,6 +49,24 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override fun getPlugins(): List<PluginUiModel> {
     return PluginManagerCore.plugins.map { PluginUiModelAdapter(it).withSource() }
+  }
+
+  override fun initSession(sessionId: String): InitSessionResult {
+    val session = findSession(sessionId) ?: return InitSessionResult(emptyList(), emptyMap())
+    val applicationInfo = ApplicationInfo.getInstance()
+    val visiblePlugins = mutableListOf<PluginUiModel>()
+    for (plugin in getInstalledAndPendingPlugins()) {
+      val pluginId: PluginId = plugin.pluginId
+      if (applicationInfo.isEssentialPlugin(pluginId)) {
+        session.pluginStates[pluginId] = PluginEnabledState.ENABLED
+      }
+      else {
+        val state = if (isDisabled(pluginId)) PluginEnabledState.DISABLED else if (plugin.isEnabled()) PluginEnabledState.ENABLED else null
+        session.pluginStates[pluginId] = state
+        visiblePlugins.add(PluginUiModelAdapter(plugin))
+      }
+    }
+    return InitSessionResult(visiblePlugins, session.pluginStates.mapValues { it.value?.isEnabled })
   }
 
   override fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
@@ -127,7 +147,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val pluginIdMap = buildPluginIdMap()
     val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
     val pluginsToEnable = updatePluginDependencies(session, pluginIdMap, contentModuleIdMap)
-    assertCanApply(session, pluginIdMap)
+    val errorMessage = getApplyError(session, pluginIdMap)
+    if (errorMessage != null) {
+      return ApplyPluginsStateResult(error = errorMessage)
+    }
 
     val pluginEnabler = PluginEnabler.getInstance()
     val uninstallsRequiringRestart: MutableSet<PluginId> = mutableSetOf()
@@ -214,7 +237,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId)
     val service = PluginUpdatesService.connectWithCounter(callback)
-    service.setFilter { session?.pluginStates[it.pluginId]?.isEnabled ?: true }
+    service.setFilter { session?.isPluginEnabled(it.pluginId) ?: true }
     session?.updateService = service
     return service
   }
@@ -234,16 +257,16 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val status = when {
       pluginsState.wasInstalledWithoutRestart(pluginId) -> PluginStatus.INSTALLED_WITHOUT_RESTART
       pluginsState.wasUninstalledWithoutRestart(pluginId) || isDeleted -> PluginStatus.UNINSTALLED_WITHOUT_RESTART
+      pluginsState.wasInstalled(pluginId) -> PluginStatus.INSTALLED_AND_REQUIRED_RESTART
       pluginsState.wasUpdatedWithRestart(pluginId) -> PluginStatus.UPDATED_WITH_RESTART
       pluginsState.wasUpdated(pluginId) -> PluginStatus.UPDATED
-      pluginsState.wasInstalled(pluginId) -> PluginStatus.INSTALLED_AND_REQUIRED_RESTART
       else -> null
     }
     return PluginInstallationState(plugin != null, status)
   }
 
-  override fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState> {
-    return pluginIds.associateWith { pluginId ->
+  override fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
+    return getAllInstalledPlugins().associateWith { pluginId ->
       return@associateWith getPluginInstallationState(pluginId)
     }
   }
@@ -373,14 +396,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     project: Project?,
   ): SetEnabledStateResult {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId) ?: return SetEnabledStateResult()
-    val tempEnabled: MutableMap<PluginId, PluginEnabledState> = session.pluginStates.toMutableMap()
+    val tempEnabled: MutableMap<PluginId, PluginEnabledState?> = session.pluginStates.toMutableMap()
     val descriptors = descriptorIds.toPluginDescriptors()
 
     val action = if (enable) PluginEnableDisableAction.ENABLE_GLOBALLY else PluginEnableDisableAction.DISABLE_GLOBALLY
     setNewEnabled(descriptors, tempEnabled, action)
 
     val pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl> = buildPluginIdMap()
-    val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()    
+    val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
     val descriptorsToUpdate = if (action.isEnable) {
       getDependenciesToEnable(descriptors, tempEnabled, pluginIdMap, contentModuleIdMap)
     }
@@ -432,7 +455,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         requiredPlugins.add(result)
       }
     }
-    return enableDependencies(session, requiredPlugins.toList(), PluginEnableDisableAction.ENABLE_GLOBALLY, 
+    return enableDependencies(session, requiredPlugins.toList(), PluginEnableDisableAction.ENABLE_GLOBALLY,
                               buildPluginIdMap(), getPluginSet().buildContentModuleIdMap()).pluginsIdsToSwitch
   }
 
@@ -636,7 +659,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val oldState = oldPair?.getSecond()
     val newState = pair.getSecond()
     if (oldState != newState) {
-      val state = oldState ?: session.pluginStates[pluginId]
+      val state = oldState ?: session.pluginStates[pluginId] ?: PluginEnabledState.ENABLED
       session.statesDiff[descriptor] = Pair.create<PluginEnableDisableAction, PluginEnabledState>(pair.getFirst(), state)
     }
     else {
@@ -658,7 +681,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   private fun setNewEnabled(
     descriptors: List<IdeaPluginDescriptor>,
-    enabledMap: MutableMap<PluginId, PluginEnabledState>,
+    enabledMap: MutableMap<PluginId, PluginEnabledState?>,
     action: PluginEnableDisableAction,
     beforeHandler: (IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>) -> Unit = { _, _ -> },
   ): MutableMap<PluginId, Boolean> {
@@ -680,7 +703,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   private fun hasProblematicDependencies(session: PluginManagerSession, pluginId: PluginId): Boolean {
     return getRequiredPluginsById(session, pluginId).any {
       val descriptor: IdeaPluginDescriptor? = it.getSecond()
-      descriptor != null && session.pluginStates[descriptor.pluginId]?.isDisabled ?: false
+      descriptor != null && !session.isPluginEnabled(descriptor.pluginId)
     }
   }
 
@@ -740,15 +763,20 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         LOG.warn("pending dynamic plugins probably won't finish their installation: " + session.dynamicPluginsToInstall + " " + session.dynamicPluginsToUninstall)
       }
     }
-    result.errors = getErrors(session, request.pluginId)
+    result.errors = getPlugins().map { it.pluginId }.associateWith { getErrors(session, it) }
     installCallback(result)
   }
 
+  override fun getApplyError(sessionId: String): String? {
+    val session = findSession(sessionId) ?: return null
+    return getApplyError(session, buildPluginIdMap())
+  }
+
   @Throws(ConfigurationException::class)
-  private fun assertCanApply(
+  private fun getApplyError(
     session: PluginManagerSession,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-  ) {
+  ): @Nls String? {
     val descriptors = mutableListOf<IdeaPluginDescriptorImpl>()
     for (entry in session.dependentToRequiredListMap.entries) {
       val pluginId: PluginId = entry.key
@@ -765,6 +793,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         val descriptor = pluginIdMap[dependencyPluginId]
         if (descriptor != null && !InstalledPluginsTableModel.isHidden(descriptor)) {
           descriptors.add(descriptor)
+          LOG.warn("For ${entry.key} dependent plugin: ${descriptor.pluginId} not found")
         }
         break
       }
@@ -772,13 +801,19 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
     if (!descriptors.isEmpty()) {
       val pluginNames = MyPluginModel.getPluginNames(descriptors)
-      val message = IdeBundle.message("dialog.message.unable.to.apply.changes", pluginNames.size, MyPluginModel.joinPluginNamesOrIds(pluginNames))
-      throw ConfigurationException(XmlStringUtil.wrapInHtml(message)).withHtmlMessage()
+      return IdeBundle.message("dialog.message.unable.to.apply.changes", pluginNames.size, MyPluginModel.joinPluginNamesOrIds(pluginNames))
     }
+    return null
   }
 
   private fun getInstalledAndPendingPlugins(): List<IdeaPluginDescriptor> {
     return InstalledPluginsState.getInstance().installedPlugins + PluginManagerCore.plugins
+  }
+
+  private fun getAllInstalledPlugins(): Set<PluginId> {
+    val installedPluginsState = InstalledPluginsState.getInstance()
+    val ids = installedPluginsState.installedPlugins.map { it.pluginId } + installedPluginsState.installedWithoutRestartPlugins + PluginManagerCore.plugins.map { it.pluginId }
+    return ids.toSet()
   }
 
   private fun isBundledUpdate(descriptor: IdeaPluginDescriptor?): Boolean {
@@ -804,7 +839,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   private fun getDependenciesToEnable(
     descriptors: List<IdeaPluginDescriptorImpl>,
-    enabledMap: Map<PluginId, PluginEnabledState>,
+    enabledMap: Map<PluginId, PluginEnabledState?>,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     contentModuleIdMap: Map<String, ContentModuleDescriptor>,
   ): List<IdeaPluginDescriptor> {
@@ -895,7 +930,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   private fun getDependentsToDisable(
     pluginIds: List<PluginId>,
-    enabledMap: MutableMap<PluginId, PluginEnabledState>,
+    enabledMap: MutableMap<PluginId, PluginEnabledState?>,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     contentModuleIdMap: Map<String, ContentModuleDescriptor>,
   ): List<IdeaPluginDescriptor> {

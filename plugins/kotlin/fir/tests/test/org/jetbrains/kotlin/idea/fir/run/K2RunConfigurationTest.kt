@@ -51,6 +51,7 @@ class K2RunConfigurationTest : AbstractRunConfigurationTest() {
             searchReferences = true,
             searchInComments = false,
             mppDeclarations = false,
+            isMoveToExplicitPackage = false,
             dirStructureMatchesPkg = true
         )
 
@@ -96,6 +97,7 @@ class K2RunConfigurationTest : AbstractRunConfigurationTest() {
             searchReferences = true,
             searchInComments = false,
             mppDeclarations = false,
+            isMoveToExplicitPackage = false,
             dirStructureMatchesPkg = true
         )
 

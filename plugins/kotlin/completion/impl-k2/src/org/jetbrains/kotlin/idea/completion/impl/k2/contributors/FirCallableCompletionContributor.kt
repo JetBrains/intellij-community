@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.childrenOfType
@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.exceptions.KotlinIllegalArgumentExceptionWithAttachments
 
 private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
 
@@ -59,7 +58,8 @@ internal open class FirCallableCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
     private val withTrailingLambda: Boolean = false, // TODO find a better solution
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority),
+    ChainCompletionContributor {
 
     context(KaSession)
     protected open fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
@@ -203,7 +203,7 @@ internal open class FirCallableCompletionContributor(
         callables: Sequence<KaCallableSymbol>,
         positionContext: KotlinNameReferencePositionContext,
     ): Sequence<CallableWithMetadataForCompletion> = callables.filter { filter(it) }
-        .filter { runCatchingKnownIssues { visibilityChecker.isVisible(it, positionContext) } == true }
+        .filter { visibilityChecker.isVisible(it, positionContext) }
         .map { it.asSignature() }
         .map { signature ->
             CallableWithMetadataForCompletion(
@@ -291,9 +291,9 @@ internal open class FirCallableCompletionContributor(
                 else if (invocationCount > 1 && prefix.isNotEmpty()) visibilityChecker::canBeVisible
                 else if (expectedType != null) { enumEntry ->
                     visibilityChecker.canBeVisible(enumEntry)
-                            && runCatchingKnownIssues { enumEntry.returnType }
-                        ?.withNullability(KaTypeNullability.NON_NULLABLE)
-                        ?.semanticallyEquals(expectedType) == true
+                            && enumEntry.returnType
+                        .withNullability(KaTypeNullability.NON_NULLABLE)
+                        .semanticallyEquals(expectedType)
                 }
                 else return@sequence
 
@@ -315,9 +315,10 @@ internal open class FirCallableCompletionContributor(
                     it is PsiEnumConstant
                 }.filterIsInstance<KaEnumEntrySymbol>()
                     .filter { enumEntrySymbol ->
-                        expectedType == null || runCatchingKnownIssues { enumEntrySymbol.returnType }
-                            ?.withNullability(KaTypeNullability.NON_NULLABLE)
-                            ?.semanticallyEquals(expectedType) == true
+                        expectedType == null
+                                || enumEntrySymbol.returnType
+                            .withNullability(KaTypeNullability.NON_NULLABLE)
+                            .semanticallyEquals(expectedType)
                     }
                 yieldAll(enumConstants)
             })
@@ -326,7 +327,11 @@ internal open class FirCallableCompletionContributor(
 
             val callables = if (invocationCount > 1) {
                 symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) {
-                    visibilityChecker.canBeVisible(it)
+                    if (!visibilityChecker.canBeVisible(it)) return@getKotlinCallableSymbolsByNameFilter false
+                    // We should not show class members when we do not have a receiver.
+                    // See: KT-78882 for why we need `runCatching` here.
+                    val containingSymbol = runCatching { it.symbol.containingSymbol }.getOrNull()
+                    containingSymbol !is KaClassSymbol || containingSymbol.classKind.isObject
                 }
             } else {
                 symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
@@ -344,6 +349,34 @@ internal open class FirCallableCompletionContributor(
             extensionChecker = extensionChecker,
         )
         yieldAll(extensionDescriptors)
+    }
+
+    context(KaSession)
+    override fun createChainedLookupElements(
+        positionContext: KotlinNameReferencePositionContext,
+        receiverExpression: KtDotQualifiedExpression,
+        importingStrategy: ImportStrategy
+    ): Sequence<LookupElement> {
+        val weighingContext = WeighingContext.create(parameters, positionContext)
+
+        return collectDotCompletion(
+            positionContext = positionContext,
+            scopeContext = weighingContext.scopeContext,
+            explicitReceiver = receiverExpression,
+            extensionChecker = null,
+            showReceiver = true,
+        ).flatMap { callableWithMetadata ->
+            val signature = callableWithMetadata.signature
+
+            createCallableLookupElements(
+                context = weighingContext,
+                signature = signature,
+                options = callableWithMetadata.options.copy(importingStrategy = importingStrategy),
+                scopeKind = callableWithMetadata.scopeKind,
+                presentableText = callableWithMetadata.itemText,
+                withTrailingLambda = true,
+            )
+        }
     }
 
     context(KaSession)
@@ -375,30 +408,8 @@ internal open class FirCallableCompletionContributor(
                     )
                 }
 
-                if (showReceiver) return@sequence
-                runChainCompletion(positionContext, explicitReceiver) { receiverExpression,
-                                                                        positionContext,
-                                                                        importingStrategy ->
-                    val weighingContext = WeighingContext.create(parameters, positionContext)
-
-                    collectDotCompletion(
-                        positionContext = positionContext,
-                        scopeContext = weighingContext.scopeContext,
-                        explicitReceiver = receiverExpression,
-                        extensionChecker = null,
-                        showReceiver = true,
-                    ).flatMap { callableWithMetadata ->
-                        val signature = callableWithMetadata.signature
-
-                        createCallableLookupElements(
-                            context = weighingContext,
-                            signature = signature,
-                            options = callableWithMetadata.options.copy(importingStrategy),
-                            scopeKind = callableWithMetadata.scopeKind,
-                            presentableText = callableWithMetadata.itemText,
-                            withTrailingLambda = true,
-                        )
-                    }
+                if (!showReceiver) {
+                    sink.registerChainContributor(this@FirCallableCompletionContributor)
                 }
             }
         }
@@ -984,20 +995,4 @@ internal class FirKDocCallableCompletionContributor(
             }
         }
     }
-}
-
-context(KaSession)
-private fun <T> runCatchingKnownIssues(
-    action: () -> T,
-): T? = try {
-    action()
-} catch (e: Exception) {
-    val ticketId = when (e) {
-        is NoSuchElementException -> "KT-72988"
-        is KotlinIllegalArgumentExceptionWithAttachments -> "KT-73334"
-        else -> throw e
-    }
-
-    logger<FirCallableCompletionContributor>().debug("Temporal wrapping for $ticketId", e)
-    null
 }

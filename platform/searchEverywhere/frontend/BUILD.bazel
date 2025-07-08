@@ -33,6 +33,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/usageView",
     "//platform/refactoring",
+    "//platform/scopes",
   ],
   exports = ["//platform/searchEverywhere/shared:searchEverywhere"],
   runtime_deps = [":frontend_resources"]

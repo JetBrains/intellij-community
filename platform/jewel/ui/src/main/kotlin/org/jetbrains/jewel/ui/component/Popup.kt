@@ -24,7 +24,7 @@ internal fun handlePopupMenuOnKeyEvent(
     keyEvent: KeyEvent,
     focusManager: FocusManager,
     inputModeManager: InputModeManager,
-    menuManager: MenuManager,
+    menuController: MenuController,
 ): Boolean {
     if (keyEvent.type != KeyEventType.KeyDown) return false
 
@@ -43,14 +43,14 @@ internal fun handlePopupMenuOnKeyEvent(
 
         Key.Escape -> {
             inputModeManager.requestInputMode(InputMode.Keyboard)
-            menuManager.closeAll(InputMode.Keyboard, true)
+            menuController.closeAll(InputMode.Keyboard, true)
             true
         }
 
         Key.DirectionLeft -> {
-            if (menuManager.isSubmenu()) {
+            if (menuController.isSubmenu()) {
                 inputModeManager.requestInputMode(InputMode.Keyboard)
-                menuManager.close(InputMode.Keyboard)
+                menuController.close(InputMode.Keyboard)
                 true
             } else {
                 false

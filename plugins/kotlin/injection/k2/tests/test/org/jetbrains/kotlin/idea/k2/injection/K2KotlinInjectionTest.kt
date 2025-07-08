@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.base.injection.KotlinInjectionTestBase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 
 class K2KotlinInjectionTest: KotlinInjectionTestBase() {
 
@@ -40,5 +41,31 @@ class K2KotlinInjectionTest: KotlinInjectionTestBase() {
         )
 
         assertEquals("Wrong injection language", KotlinLanguage.INSTANCE, injectedFile?.language)
+    }
+
+    fun testInjectionIntoMultiDollarString() {
+        val file = myFixture.configureByText(
+            "a.kt",
+            """
+                // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+                
+                import org.intellij.lang.annotations.Language
+                
+                @Language("JSON")
+                val json = $$$""${'"'}
+                {
+                  "openapi": "3.0.2",
+                  "info": {
+                    "title": "REST",
+                    "version": "1.0.0"
+                  }
+                }
+                ""${'"'}
+            """.trimIndent()
+        )
+
+        withCustomCompilerOptions(file.text, project, module) {
+            myFixture.checkHighlighting()
+        }
     }
 }

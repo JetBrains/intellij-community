@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.psi.*
@@ -253,9 +252,8 @@ class ExpressionReplacementPerformer(
                                 allowAnalysisOnEdt {
                                     analyze(parent) {
                                         ConvertToBlockBodyUtils.createContext(
-                                            parent,
-                                            ShortenReferencesFacility.getInstance(),
-                                            reformat = false
+                                          parent,
+                                          reformat = false
                                         )
                                     }
                                 }

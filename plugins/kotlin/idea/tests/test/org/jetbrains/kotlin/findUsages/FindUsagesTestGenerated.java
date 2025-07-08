@@ -798,6 +798,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinExtensionFunction.0.kt");
             }
 
+            @TestMetadata("kotlinFunctionWithPropertyFromSuperClass.0.kt")
+            public void testKotlinFunctionWithPropertyFromSuperClass() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinFunctionWithPropertyFromSuperClass.0.kt");
+            }
+
             @TestMetadata("kotlinInterfaceImplThroughDelegate.0.kt")
             public void testKotlinInterfaceImplThroughDelegate() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceImplThroughDelegate.0.kt");

@@ -12,7 +12,6 @@
   - name: intellij.devkit.git
   - name: intellij.devkit.gradle
   - name: intellij.devkit.i18n
-  - name: intellij.devkit.images
   - name: intellij.devkit.intelliLang
   - name: intellij.devkit.themes
   - name: intellij.devkit.uiDesigner

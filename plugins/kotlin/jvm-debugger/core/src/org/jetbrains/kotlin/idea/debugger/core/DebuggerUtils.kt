@@ -47,7 +47,15 @@ object DebuggerUtils {
     @set:TestOnly
     var forceRanking = false
 
+    /**
+     * Regex for lambda names before Kotlin 2.2.20, e.g foo$lambda$0$lambda$1$lambda$2
+     */
     private val IR_BACKEND_LAMBDA_REGEX = ".+\\\$lambda[$-]\\d+".toRegex()
+
+    /**
+     * Regex for lambda names for Kotlin 2.2.20+, e.g. foo$lambda$0$1$2
+     */
+    private val IR_BACKEND_NEW_LAMBDA_REGEX = ".+\\\$lambda([$-]\\d+)+".toRegex()
 
     fun findSourceFileForClassIncludeLibrarySources(
         project: Project,
@@ -191,7 +199,10 @@ object DebuggerUtils {
         substringBefore('-')
 
     fun String.isGeneratedIrBackendLambdaMethodName() =
-        matches(IR_BACKEND_LAMBDA_REGEX)
+        matches(IR_BACKEND_LAMBDA_REGEX) || matches(IR_BACKEND_NEW_LAMBDA_REGEX)
+
+    fun String.isGeneratedNewIrBackendLambdaMethodName() =
+        matches(IR_BACKEND_NEW_LAMBDA_REGEX)
 
     fun LocalVariable.getBorders(): ClosedRange<Location>? {
         val localVariableImpl = this as? LocalVariableImpl ?: return null

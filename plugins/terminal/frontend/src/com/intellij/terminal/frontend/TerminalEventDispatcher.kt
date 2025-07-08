@@ -227,6 +227,7 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.EnterCommandCompletion",
       "Terminal.UpCommandCompletion",
       "Terminal.DownCommandCompletion",
+      "Terminal.InsertInlineCompletion",
     )
   }
 }

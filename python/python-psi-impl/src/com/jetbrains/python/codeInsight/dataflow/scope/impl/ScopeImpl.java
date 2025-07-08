@@ -112,14 +112,6 @@ public class ScopeImpl implements Scope {
     return myNonlocals.contains(name);
   }
 
-  @Override
-  public boolean hasNestedScopes() {
-    if (myNestedScopes == null) {
-      collectDeclarations();
-    }
-    return !myNestedScopes.isEmpty();
-  }
-
   private boolean isAugAssignment(final String name) {
     if (myAugAssignments == null || myNestedScopes == null) {
       collectDeclarations();
@@ -132,12 +124,10 @@ public class ScopeImpl implements Scope {
     if (myNamedElements == null || myImportedNameDefiners == null) {
       collectDeclarations();
     }
-    // Check for isGlobal is omitted intentionally, since it visits nested scopes.
-    // Thus, containsDeclaration would always return false for globals.
     if (isNonlocal(name)) {
       return false;
     }
-    if (!getNamedElements(name, true).isEmpty()) {
+    if (!getNamedElements(name, myFlowOwner instanceof PyFile).isEmpty()) {
       return true;
     }
     if (isAugAssignment(name)) {
@@ -161,24 +151,29 @@ public class ScopeImpl implements Scope {
 
   @Override
   public @NotNull Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
-    if (myNamedElements == null) {
+    if (myNamedElements == null || myNestedScopes == null) {
       collectDeclarations();
     }
-    if (myNamedElements.containsKey(name)) {
-      final Collection<PsiNamedElement> elements = myNamedElements.get(name);
-      elements.forEach(PyPsiUtils::assertValid);
-      return elements;
-    }
-    if (includeNestedGlobals && isGlobal(name)) {
+    final Collection<PsiNamedElement> elements = new ArrayList<>(myNamedElements.getOrDefault(name, List.of()));
+    if (includeNestedGlobals) {
       for (Scope scope : myNestedScopes) {
-        final Collection<PsiNamedElement> globals = scope.getNamedElements(name, true);
-        if (!globals.isEmpty()) {
-          globals.forEach(PyPsiUtils::assertValid);
-          return globals;
-        }
+        ((ScopeImpl)scope).collectGlobals(name, elements);
       }
     }
-    return Collections.emptyList();
+    elements.forEach(PyPsiUtils::assertValid);
+    return elements;
+  }
+
+  private void collectGlobals(String name, @NotNull Collection<PsiNamedElement> results) {
+    if (myGlobals == null || myNamedElements == null || myNestedScopes == null) {
+      collectDeclarations();
+    }
+    if (myGlobals.contains(name)) {
+      results.addAll(myNamedElements.getOrDefault(name, List.of()));
+    }
+    for (Scope scope : myNestedScopes) {
+      ((ScopeImpl)scope).collectGlobals(name, results);
+    }
   }
 
   @Override
@@ -199,6 +194,14 @@ public class ScopeImpl implements Scope {
       collectDeclarations();
     }
     return myTargetExpressions;
+  }
+
+  @Override
+  public @NotNull Set<String> getGlobals() {
+    if (myGlobals == null) {
+      collectDeclarations();
+    }
+    return myGlobals;
   }
 
   private void collectDeclarations() {

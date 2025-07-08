@@ -579,6 +579,18 @@ public final class EnvironmentUtil {
     }
   }
 
+  @ApiStatus.Internal
+  public static void appendSearchPath(@NotNull Map<String, String> env, @NotNull String envName, @Nullable String pathToAppend) {
+    if (pathToAppend == null) return;
+
+    String currentPath = env.get(envName);
+    String newPath = currentPath != null
+                     ? currentPath + File.pathSeparator + pathToAppend
+                     : pathToAppend;
+
+    env.put(envName, newPath);
+  }
+
   private static final class EnvironmentReaderException extends IOException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 

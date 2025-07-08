@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclarationBase
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
@@ -22,9 +23,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons.*
+import org.jetbrains.kotlin.idea.util.isFileInRoots
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.stubs.elements.KtTokenSets
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import javax.swing.Icon
 
@@ -82,24 +85,89 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
         fun isSingleClassFile(file: KtFile): Boolean = getSingleClass(file) != null
 
         fun getSingleClass(file: KtFile): KtClassOrObject? {
+            // no reason to show a difference between single class and kotlin file for non-source roots kotlin files
+            // in consistence with [org.jetbrains.kotlin.idea.projectView.KotlinSelectInProjectViewProvider#getTopLevelElement]
+            if (!file.project.isFileInRoots(file.virtualFile)){
+                return null
+            }
+
             var targetDeclaration: KtDeclaration? = null
-            for (declaration: KtDeclaration in file.declarations) {
+
+            /**
+             * Returns true if more iterations are needed.
+             *
+             * [targetDeclaration] points to the only one non-private declaration, otherwise it is null.
+             */
+            fun handleDeclaration(psiElement: PsiElement?): Boolean {
+                val declaration = psiElement as? KtDeclaration ?: return true
                 if (!declaration.isPrivate() && declaration !is KtTypeAlias) {
-                    if (targetDeclaration != null) return null
+                    if (targetDeclaration != null) {
+                        targetDeclaration = null
+                        return false
+                    }
                     targetDeclaration = declaration
                 }
+                return true
             }
+
+            // do not build AST for stubs when it is unnecessary.
+            file.withGreenStubOrAst(
+                { fileStub ->
+                    for (stubElement in fileStub.childrenStubs) {
+                        val elementType = stubElement.elementType
+                        if (elementType != KtNodeTypes.TYPEALIAS && elementType in KtTokenSets.DECLARATION_TYPES) {
+                            if (!handleDeclaration(stubElement.psi)) return@withGreenStubOrAst
+                        }
+                    }
+                }, { fileElement ->
+                    for (node in fileElement.children()) {
+                        if (!handleDeclaration(node.psi)) return@withGreenStubOrAst
+                    }
+                }
+            )
             return targetDeclaration?.takeIf { it is KtClassOrObject && StringUtil.getPackageName(file.name) == it.name } as? KtClassOrObject
         }
 
         fun getMainClass(file: KtFile): KtClassOrObject? {
-            var targetClassOrObject: KtClassOrObject? = null
-            for (declaration in file.declarations) {
-                if (!declaration.isPrivate() && declaration is KtClassOrObject) {
-                    if (targetClassOrObject != null) return null
-                    targetClassOrObject = declaration
-                }
+            // no reason to show a difference between single class and kotlin file for non-source roots kotlin files
+            // in consistence with [org.jetbrains.kotlin.idea.projectView.KotlinSelectInProjectViewProvider#getTopLevelElement]
+            if (!file.project.isFileInRoots(file.virtualFile)){
+                return null
             }
+
+            var targetClassOrObject: KtClassOrObject? = null
+            /**
+             * Returns true if more iterations are needed.
+             *
+             * [targetClassOrObject] points to the only one non-private class or object, otherwise it is null.
+             */
+            fun handleDeclaration(psiElement: PsiElement?): Boolean {
+                val classOrObject = psiElement as? KtClassOrObject ?: return true
+                if (!classOrObject.isPrivate()) {
+                    if (targetClassOrObject != null) {
+                        targetClassOrObject = null
+                        return false
+                    }
+                    targetClassOrObject = classOrObject
+                }
+                return true
+            }
+
+            // do not build AST for stubs when it is unnecessary.
+            file.withGreenStubOrAst(
+                { fileStub ->
+                    for (stubElement in fileStub.childrenStubs) {
+                        val elementType = stubElement.elementType
+                        if (elementType == KtNodeTypes.CLASS || elementType == KtNodeTypes.OBJECT_DECLARATION) {
+                            if (!handleDeclaration(stubElement.psi)) return@withGreenStubOrAst
+                        }
+                    }
+                }, { fileElement ->
+                    for (node in fileElement.children()) {
+                        if (!handleDeclaration(node.psi)) return@withGreenStubOrAst
+                    }
+                }
+            )
             return targetClassOrObject?.takeIf { StringUtil.getPackageName(file.name) == it.name }
         }
 

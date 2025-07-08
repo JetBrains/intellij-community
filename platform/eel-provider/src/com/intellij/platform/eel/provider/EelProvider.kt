@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
@@ -57,7 +58,7 @@ object EelInitialization {
 
 @ApiStatus.Experimental
 fun Path.getEelDescriptor(): EelDescriptor {
-  return EelNioBridgeService.getInstanceSync().tryGetEelDescriptor(this) ?: LocalEelDescriptor
+  return EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider -> eelProvider.getEelDescriptor(this) } ?: LocalEelDescriptor
 }
 
 /**
@@ -66,6 +67,7 @@ fun Path.getEelDescriptor(): EelDescriptor {
  */
 @ApiStatus.Experimental
 fun Project.getEelDescriptor(): EelDescriptor {
+  @MultiRoutingFileSystemPath
   val filePath = projectFilePath
   if (filePath == null) {
     // The path to project file can be null if the project is default or used in tests.
@@ -128,7 +130,26 @@ interface EelProvider {
    * This function is called for every opening [Project],
    * so the implementation is expected to exit quickly if it decides that it is not responsible for [path].
    */
-  suspend fun tryInitialize(path: String)
+  suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String)
+
+  /**
+   * Returns the descriptor for some path or `null` if this provider doesn't support such paths.
+   */
+  fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor?
+
+  /**
+   * Makes sense only on Windows, because on Posix there's the only root `/`.
+   *
+   * Returns additional elements to be returned by `FileSystems.getDefault().getRootDirectories()`
+   */
+  fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>?
+
+  // TODO Better name.
+  // TODO Move it into the EelDescriptor?
+  fun getInternalName(eelDescriptor: EelDescriptor): String?
+
+  // TODO Better name.
+  fun getEelDescriptorByInternalName(internalName: String): EelDescriptor?
 }
 
 @ApiStatus.Internal

@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -22,13 +23,14 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
                                         val idsWithDisplayNames: Map<SeProviderId, @Nls String>,
                                         private val sessionRef: DurableRef<SeSessionEntity>,
                                         private val dataContextId: DataContextId,
-                                        private val isAllTab: Boolean) {
+                                        private val isAllTab: Boolean,
+                                        val essentialProviderIds: Set<SeProviderId>) {
 
   val providerIds: List<SeProviderId> = idsWithDisplayNames.keys.toList()
 
   fun hasId(providerId: SeProviderId): Boolean = idsWithDisplayNames.containsKey(providerId)
 
-  fun getItems(params: SeParams, disabledProviders: List<SeProviderId>): Flow<SeItemData> {
+  fun getItems(params: SeParams, disabledProviders: List<SeProviderId>): Flow<SeTransferEvent> {
     val ids = providerIds.filter { !disabledProviders.contains(it) }
 
     return channelFlow {
@@ -37,15 +39,24 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
       channel.send(DEFAULT_CHUNK_SIZE)
       var pendingCount = DEFAULT_CHUNK_SIZE
 
-      SeRemoteApi.getInstance().getItems(projectId, sessionRef, ids, isAllTab, params, dataContextId, channel).collect {
+      SeRemoteApi.getInstance().getItems(projectId, sessionRef, ids, isAllTab, params, dataContextId, channel).collect { transferEvent ->
         pendingCount--
         if (pendingCount == 0) {
           pendingCount += DEFAULT_CHUNK_SIZE
           channel.send(DEFAULT_CHUNK_SIZE)
         }
 
-        SeLog.log(ITEM_EMIT) { "Frontend provider for ${it.providerId.value} receives: ${it.uuid} - ${it.presentation.text}" }
-        send(it)
+        when (transferEvent) {
+         is SeTransferEnd -> {
+           SeLog.log(ITEM_EMIT) { "Frontend provider for ${transferEvent.providerId.value} receives transfer end event" }
+         }
+         is SeTransferItem -> {
+           val itemData = transferEvent.itemData
+           SeLog.log(ITEM_EMIT) { "Frontend provider for ${itemData.providerId.value} receives: ${itemData.uuid} - ${itemData.presentation.text}" }
+         }
+        }
+
+        send(transferEvent)
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
@@ -58,7 +69,7 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText, isAllTab = isAllTab)
   }
 
-  suspend fun getSearchScopesInfos(): Map<SeProviderId, SeSearchScopesInfo> =
+  suspend fun getSearchScopesInfos(): Map<SeProviderId, SearchScopesInfo> =
     SeRemoteApi.getInstance().getSearchScopesInfoForProviders(
       projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab
     )

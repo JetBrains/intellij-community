@@ -37,7 +37,6 @@ import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -223,7 +222,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     progressIndicatorComponent.removeAll()
     progressIndicatorComponent.add(progressIndicator.component, BorderLayout.CENTER)
 
-    val job = PyPackageCoroutine.getIoScope(project).launch(Dispatchers.IO) {
+    val job = PyPackageCoroutine.launch(project, Dispatchers.IO) {
       try {
         progressIndicator.start()
         actionPerformed()

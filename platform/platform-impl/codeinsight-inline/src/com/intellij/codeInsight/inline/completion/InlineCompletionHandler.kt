@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
-import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentChangesTrackerImpl
+import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
@@ -208,9 +208,14 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     context.copyUserDataTo(insertEnvironment)
     hide(context, FinishType.SELECTED)
 
-    editor.document.insertString(offset, textToInsert)
-    editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
-    PsiDocumentManager.getInstance(session.request.file.project).commitDocument(editor.document)
+    val insertingHandler = InlineCompletionEditorInsertHandler.EP_NAME.extensionList.firstOrNull { it.isApplicable(editor) }
+    if (insertingHandler == null) {
+      LOG.error("[Inline Completion] Cannot insert completion due to missing InlineCompletionEditorInsertHandler.")
+      return
+    }
+
+    insertingHandler.insert(editor = editor, textToInsert = textToInsert, offset = offset, file = session.request.file)
+
     session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
     editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     traceBlocking(InlineCompletionEventType.AfterInsert)
@@ -244,8 +249,8 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     }
   }
 
-  internal val documentChangesTracker = InlineCompletionDocumentChangesTrackerImpl(
-    parentDisposable,
+  @ApiStatus.Internal
+  val typingSessionTracker: InlineCompletionTypingSessionTracker = InlineCompletionTypingSessionTracker(
     sendEvent = ::invokeEvent,
     invalidateOnUnknownChange = { sessionManager.invalidate(UpdateSessionResult.Invalidated.Reason.UnclassifiedDocumentChange) }
   )
@@ -334,14 +339,14 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @ApiStatus.Experimental
   @RequiresEdt
   fun <T> withIgnoringDocumentChanges(block: () -> T): T {
-    return documentChangesTracker.withIgnoringDocumentChanges(block)
+    return typingSessionTracker.withIgnoringDocumentChanges(block)
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
   @RequiresEdt
   fun setIgnoringDocumentChanges(value: Boolean) {
-    documentChangesTracker.ignoreDocumentChanges = value
+    typingSessionTracker.ignoreDocumentChanges = value
   }
 
   /**
@@ -355,7 +360,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @ApiStatus.Experimental
   @RequiresEdt
   internal fun <T> withIgnoringCaretMovement(block: () -> T): T {
-    return documentChangesTracker.withIgnoringCaretMovement(block)
+    return typingSessionTracker.withIgnoringCaretMovement(block)
   }
 
   private suspend fun request(
@@ -531,7 +536,10 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
         }
 
       override val mode: Mode
-        get() = if (documentChangesTracker.ignoreCaretMovements) Mode.ADAPTIVE else Mode.PROHIBIT_MOVEMENT
+        get() = if (typingSessionTracker.ignoreCaretMovements) Mode.ADAPTIVE else Mode.PROHIBIT_MOVEMENT
+
+      override val isTypingSessionInProgress: Boolean
+        get() = typingSessionTracker.isTypingInProgress(editor)
 
       override fun cancel() {
         if (!context.isDisposed) hide(context, FinishType.CARET_CHANGED)

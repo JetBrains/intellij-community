@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.runBlocking
@@ -385,7 +384,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testPluginConfigurationWithStandardVariable() = runBlocking {
-    importProjectAsync("""
+    importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -396,15 +395,15 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                           <artifactId>id</artifactId>
                           <version>1</version>
                           <configuration>
-                            <one>${'$'}{project.build.directory}</one>
+                            <one>${project.build.directory}</one>
                           </configuration>
                         </plugin>
                       </plugins>
                     </build>
                     """.trimIndent())
 
-    assertEquals("$projectPath/target",
-                 FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")!!))
+    assertPathsAreEqual("$projectPath/target",
+                        findPluginConfig("group", "id", "one")!!)
   }
 
   @Test

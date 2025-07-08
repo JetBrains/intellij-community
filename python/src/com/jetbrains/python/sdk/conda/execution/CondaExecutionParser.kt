@@ -6,16 +6,22 @@ import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 internal object CondaExecutionParser {
   private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
   fun parseCondaPackageList(text: String): List<CondaPackage> {
-    return text.lineSequence()
-      .filterNot { it.startsWith("#") }
-      .map { line -> line.split(listLineParser) }
-      .filterNot { it.size < 2 }
-      //TODO: fix
-      .map { CondaPackage(it[0], it[1], editableMode = false, installedWithPip = (it.size >= 4 && it[3] == "pypi")) }
+    val parsed = json.parseToJsonElement(text).jsonArray
+    return parsed.map {
+      val jsonObject = it.jsonObject
+      val name = jsonObject["name"]?.jsonPrimitive?.content ?: ""
+      val version = jsonObject["version"]?.jsonPrimitive?.content ?: ""
+      val channel = jsonObject["channel"]?.jsonPrimitive?.content ?: ""
+      val isPypi = channel == "pypi"
+      CondaPackage(name, version, editableMode = false, installedWithPip = isPypi)
+    }
       .sortedWith(compareBy(CondaPackage::name))
       .toList()
   }
@@ -51,6 +57,4 @@ internal object CondaExecutionParser {
 
   @Serializable
   private data class CondaPackageInfo(val name: String, val version: String)
-
-  private val listLineParser = "\\s+".toRegex()
 }

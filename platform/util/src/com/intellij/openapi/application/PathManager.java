@@ -476,7 +476,7 @@ public final class PathManager {
    * Returns the path to the directory where caches are stored by default for IDE with the given path selector.
    */
   public static @NotNull String getDefaultSystemPathFor(@NotNull String selector) {
-    return getDefaultSystemPathFor(getLocalOS(), System.getProperty("user.home"), selector).toString();
+    return getDefaultSystemPathFor(getLocalOS(), System.getProperty("user.home"), selector, System.getenv()).toString();
   }
 
   @ApiStatus.Internal
@@ -509,12 +509,17 @@ public final class PathManager {
 
   @ApiStatus.Internal
   public static @NotNull Path getDefaultSystemPathFor(@NotNull OS os, @NotNull String userHome, @NotNull String selector) {
-    return Paths.get(platformPath(os, userHome, selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", ""));
+    return getDefaultSystemPathFor(os, userHome, selector, System.getenv());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Path getDefaultSystemPathFor(@NotNull OS os, @NotNull String userHome, @NotNull String selector, @NotNull Map<String, String> env) {
+    return Paths.get(platformPath(os, env, userHome, selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", ""));
   }
 
   @ApiStatus.Internal
   public static @NotNull String getDefaultUnixSystemPath(@NotNull String userHome, @NotNull String selector) {
-    return getUnixPlatformPath(userHome, selector, null, ".cache", "");
+    return getUnixPlatformPath(userHome, System.getenv(), selector, null, ".cache", "");
   }
 
   /**
@@ -929,10 +934,11 @@ public final class PathManager {
                                      String macDir, String macSub,
                                      String winVar, String winSub,
                                      String xdgVar, String xdgDfl, String xdgSub) {
-    return platformPath(getLocalOS(), System.getProperty("user.home"), selector, macDir, macSub, winVar, winSub, xdgVar, xdgDfl, xdgSub);
+    return platformPath(getLocalOS(), System.getenv(), System.getProperty("user.home"), selector, macDir, macSub, winVar, winSub, xdgVar, xdgDfl, xdgSub);
   }
 
   private static String platformPath(@NotNull OS os,
+                                     @NotNull Map<String, String> env,
                                      String userHome,
                                      String selector,
                                      String macDir, String macSub,
@@ -948,7 +954,7 @@ public final class PathManager {
     }
 
     if (os == OS.WINDOWS) {
-      String dir = System.getenv(winVar);
+      String dir = env.get(winVar);
       if (dir == null || dir.isEmpty()) dir = userHome + "\\AppData\\" + (winVar.startsWith("LOCAL") ? "Local" : "Roaming");
       dir = dir + '\\' + vendorName;
       if (!selector.isEmpty()) dir = dir + '\\' + selector;
@@ -957,14 +963,14 @@ public final class PathManager {
     }
 
     if (os == OS.LINUX || os == OS.GENERIC_UNIX) {
-      return getUnixPlatformPath(userHome, selector, xdgVar, xdgDfl, xdgSub);
+      return getUnixPlatformPath(userHome, env, selector, xdgVar, xdgDfl, xdgSub);
     }
 
     throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
   }
 
-  private static String getUnixPlatformPath(String userHome, String selector, @Nullable String xdgVar, String xdgDfl, String xdgSub) {
-    String dir = xdgVar != null ? System.getenv(xdgVar) : null;
+  private static String getUnixPlatformPath(String userHome, Map<String, String> env, String selector, @Nullable String xdgVar, String xdgDfl, String xdgSub) {
+    String dir = xdgVar != null ? env.get(xdgVar) : null;
     if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
     dir = dir + '/' + vendorName();
     if (!selector.isEmpty()) dir = dir + '/' + selector;

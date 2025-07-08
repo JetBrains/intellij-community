@@ -1,6 +1,7 @@
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.example.SubclassOfProcessCanceledException;
+import java.util.concurrent.CancellationException;
 
 class IncorrectPceHandlingWhenMultipleCatchClausesTests {
   private static final Logger LOG = Logger.getInstance(IncorrectPceHandlingWhenMultipleCatchClausesTests.class);
@@ -142,6 +143,21 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
     catch (Throwable e) {
       LOG.error(e);
     }
+  }
+
+  // IJPL-192063
+  public static void foo() {
+    try {
+      bar();
+    } catch (CancellationException e) {
+      throw e;
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  static void bar() throws ProcessCanceledException {
+    throw new ProcessCanceledException();
   }
 
 }

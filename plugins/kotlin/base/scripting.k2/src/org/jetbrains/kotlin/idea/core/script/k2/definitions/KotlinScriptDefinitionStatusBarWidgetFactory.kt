@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -31,7 +32,7 @@ class KotlinScriptDefinitionStatusBarWidgetFactory : StatusBarWidgetFactory {
 
     override fun isAvailable(project: Project): Boolean = getSelectedEditorDefinition(project) != null
 
-    override fun isEnabledByDefault(): Boolean = false
+    override fun isEnabledByDefault(): Boolean = Registry.`is`("kotlin.scripting.show.widget", false)
 
     override fun createWidget(project: Project): StatusBarWidget {
         component = JLabel().apply {

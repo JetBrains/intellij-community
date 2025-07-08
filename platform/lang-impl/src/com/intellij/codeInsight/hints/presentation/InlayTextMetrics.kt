@@ -39,6 +39,19 @@ class InlayTextMetricsStorage(val editor: Editor) {
 
   @RequiresEdt
   fun getCurrentStamp(): InlayTextMetricsStamp {
+    val lastStamp = lastStamp
+    if (lastStamp == null
+        || normalTextSize != lastStamp.editorFontSize2D
+        || UISettings.getInstance().ideScale != lastStamp.ideScale
+        || getFontFamilyName() != lastStamp.familyName
+        || getFontRenderContext(editor.component) != lastStamp.fontRenderContext) {
+      return doGetCurrentStamp()
+    }
+    return lastStamp
+  }
+
+  @RequiresEdt
+  private fun doGetCurrentStamp(): InlayTextMetricsStamp {
     return InlayTextMetricsStamp(
       // smallTextSize is derived from normalTextSize, so it can serve as a stamp for both metrics
       normalTextSize,
@@ -51,7 +64,8 @@ class InlayTextMetricsStorage(val editor: Editor) {
   @RequiresEdt
   fun getFontMetrics(small: Boolean): InlayTextMetrics {
     val currentStamp = getCurrentStamp()
-    if (lastStamp != currentStamp) {
+    // a new stamp is only ever constructed if a change is detected
+    if (lastStamp !== currentStamp) {
       lastStamp = currentStamp
       smallTextMetrics = null
       normalTextMetrics = null
@@ -90,8 +104,7 @@ class InlayTextMetricsStorage(val editor: Editor) {
 }
 
 @ApiStatus.Internal
-@ConsistentCopyVisibility
-data class InlayTextMetricsStamp internal constructor(
+class InlayTextMetricsStamp internal constructor(
   val editorFontSize2D: Float,
   val familyName: String,
   val ideScale: Float,

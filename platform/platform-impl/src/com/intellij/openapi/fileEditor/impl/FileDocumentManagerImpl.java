@@ -8,7 +8,10 @@ import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -204,7 +207,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     int totalSize = 0;
     for (Document document : documents) {
       totalSize += document.getTextLength();
-      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) return true;
+      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) {
+        return true;
+      }
     }
     return false;
   }
@@ -256,12 +261,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
-        if (file == null) continue;
-        Project project = ProjectUtil.guessProjectForFile(file);
-        if (project == null) continue;
-        if (PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) continue;
-
-        saveDocument(document);
+        if (file != null) {
+          Project project = ProjectUtil.guessProjectForFile(file);
+          if (project == null || !PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
+            saveDocument(document);
+          }
+        }
       }
     });
   }
@@ -727,15 +732,15 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    ThreadContext.resetThreadContext(() -> {
       ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);
       assert file != null;
-      if (!file.isValid()) return;
+      if (!file.isValid()) return null;
 
       if (!fireBeforeFileContentReload(file, document)) {
-        return;
+        return null;
       }
 
       boolean[] isReloadable = {isReloadable(file, document, project)};
@@ -771,7 +776,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       myUnsavedDocuments.remove(document);
       document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
-    }
+      return null;
+    });
   }
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {

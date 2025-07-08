@@ -605,6 +605,8 @@ com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
 com.intellij.ide.structureView.newStructureView.TreeActionsOwner
 - a:isActionActive(java.lang.String):Z
 - a:setActionActive(java.lang.String,Z):V
+f:com.intellij.ide.util.EditorHelper
+- s:openInMaybeInjectedEditor(com.intellij.psi.PsiElement):com.intellij.openapi.editor.Editor
 com.intellij.ide.util.PsiElementRenderingInfo
 - s:getComparator(com.intellij.ide.util.PsiElementRenderingInfo):java.util.Comparator
 - getContainerText(com.intellij.psi.PsiElement):java.lang.String
@@ -899,6 +901,8 @@ com.intellij.platform.ModuleAttachListener
 - sf:Companion:com.intellij.platform.ModuleAttachListener$Companion
 - afterAttach(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module,java.nio.file.Path,java.util.List):V
 - beforeDetach(com.intellij.openapi.module.Module):V
+f:com.intellij.platform.ModuleAttachProcessor
+- attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.platform.backend.documentation.DocumentationContent
 - s:content(java.lang.String):com.intellij.platform.backend.documentation.DocumentationContent
 - s:content(java.lang.String,java.util.Map):com.intellij.platform.backend.documentation.DocumentationContent

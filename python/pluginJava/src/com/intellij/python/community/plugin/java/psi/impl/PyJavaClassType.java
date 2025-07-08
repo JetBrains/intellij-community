@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java.psi.impl;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -116,7 +117,7 @@ public class PyJavaClassType implements PyClassLikeType {
   }
 
   @Override
-  public @Nullable String getClassQName() {
+  public @Nullable @NlsSafe String getClassQName() {
     return myClass.getQualifiedName();
   }
 

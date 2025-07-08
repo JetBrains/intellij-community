@@ -43,6 +43,7 @@ Fa:com.intellij.util.indexing.FileBasedIndex
 - *a:getContainingFilesIterator(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.Iterator
 - *:ignoreDumbMode(com.intellij.util.indexing.DumbModeAccessType,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - *:ignoreDumbMode(com.intellij.util.indexing.DumbModeAccessType,java.lang.Runnable):V
+- *a:iterateNonIndexableFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFileFilter,com.intellij.openapi.roots.ContentIterator):Z
 - *:processFilesContainingAllKeys(java.util.Collection,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
 *f:com.intellij.util.indexing.FileBasedIndex$AllKeysQuery
 - <init>(com.intellij.util.indexing.ID,java.util.Collection,com.intellij.openapi.util.Condition):V

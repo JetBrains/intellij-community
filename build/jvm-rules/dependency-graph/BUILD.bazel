@@ -1,5 +1,11 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+    name = "dependency-graph_resources",
+    files = glob(["resources/**/*"]),
+    strip_prefix = "resources",
+)
 
 kt_jvm_library(
   name = "dependency-graph",
@@ -13,6 +19,7 @@ kt_jvm_library(
   kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
   #module_name = "intellij.platform.jps.build.dependencyGraph",
   visibility = ["//visibility:public"],
+  runtime_deps = [":dependency-graph_resources"],
   # buildifier: leave-alone
   deps = [
     "//:annotations",

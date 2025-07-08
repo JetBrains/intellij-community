@@ -48,7 +48,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   /**
    * Checks whether the element belongs to this context. Could be called inside the dumb mode!
-   * 
+   *
    * @param element element to check
    * @return true if the given element belongs to this context.
    */
@@ -70,7 +70,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(fragment, false);
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
-  
+
   public static final class Generic extends JavaCodeContextType {
     public Generic() {
       super(JavaLanguage.INSTANCE.getDisplayName());
@@ -226,7 +226,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      return isInRecordHeader(element) || 
+      return isInRecordHeader(element) ||
              JavaKeywordCompletion.isSuitableForClass(element) ||
              JavaKeywordCompletion.isInsideParameterList(element) ||
              PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;
@@ -270,6 +270,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
   public static final class JavaLangIOStatement extends JavaCodeContextType {
     private final JavaCodeContextType statementContext = new Statement();
+
     public JavaLangIOStatement() {
       super(JavaBundle.message("live.template.context.statement.java.lang.io"));
     }
@@ -306,6 +307,35 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       return PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, element) &&
              declarationContext.isInContext(element) &&
              !implicitClassContext.isInContext(element);
+    }
+  }
+
+  public static final class JavaStructuredConcurrencyConstructors extends JavaCodeContextType {
+    private final JavaCodeContextType statementContext = new Statement();
+
+    JavaStructuredConcurrencyConstructors() {
+      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.constructors"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return statementContext.isInContext(element) &&
+             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY_TASK_SCOPE_CONSTRUCTORS, element);
+    }
+  }
+
+
+  public static final class JavaStructuredConcurrencyStaticFactoryMethods extends JavaCodeContextType {
+    private final JavaCodeContextType statementContext = new Statement();
+
+    JavaStructuredConcurrencyStaticFactoryMethods() {
+      super(JavaBundle.message("live.template.context.statement.java.structured.concurrency.static.factory.methods"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return statementContext.isInContext(element) &&
+             PsiUtil.isAvailable(JavaFeature.STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS, element);
     }
   }
 }

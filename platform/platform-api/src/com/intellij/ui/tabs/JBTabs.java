@@ -54,6 +54,9 @@ public interface JBTabs extends DropAreaAware {
   @NotNull
   JBTabs addTabMouseListener(@NotNull MouseListener listener);
 
+  @NotNull
+  JBTabs removeTabMouseListener(@NotNull MouseListener listener);
+
   JBTabs addListener(@NotNull TabsListener listener);
 
   JBTabs addListener(@NotNull TabsListener listener, @Nullable Disposable disposable);

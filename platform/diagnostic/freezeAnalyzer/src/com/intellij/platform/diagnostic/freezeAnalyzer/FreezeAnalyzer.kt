@@ -24,13 +24,17 @@ object FreezeAnalyzer {
 
   private fun analyzeEDThread(edt: ThreadState, threadDumpParsed: List<ThreadState>, testName: String?): FreezeAnalysisResult? =
     when {
-      !edt.isWaiting && !edt.isSleeping -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", listOf(edt)) }
+      !edt.isWaiting && !edt.isSleeping && !isWaitingOnSuvorod(edt) -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", listOf(edt)) }
       edt.isWaiting && isWriteLockWait(edt) -> findThreadThatTookReadWriteLock(threadDumpParsed)?.let { FreezeAnalysisResult(it.message, it.threads + listOf(edt), it.additionalMessage) }
       edt.isWaiting && !isEDTFreezed(edt) && testName == null -> null
       edt.isWaiting && !isEDTFreezed(edt) && testName != null -> FreezeAnalysisResult("${testName}: EDT is not blocked/busy (freeze can be the result of extensive GC)", listOf(edt))
       edt.isWaiting -> analyzeLock(edt, threadDumpParsed)
       else -> null
     }
+
+  private fun isWaitingOnSuvorod(edt: ThreadState): Boolean{
+    return getMethodList(edt.stackTrace).any { it.contains("SuvorovProgress") }
+  }
 
   private fun isEDTFreezed(edt: ThreadState): Boolean {
     return findFirstRelevantMethod(edt.stackTrace) != "com.intellij.ide.IdeEventQueue.getNextEvent"
@@ -72,7 +76,8 @@ object FreezeAnalyzer {
     threadState.stackTrace.lineSequence().map { it.trimStart() }.any {
       it.startsWith("at com.intellij.openapi.application.impl.ReadMostlyRWLock.writeLock") ||
       it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit") ||
-      it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
+      it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit") ||
+      it.contains("SuvorovProgress")
     }
 
   private fun findThreadThatTookReadWriteLock(threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? =
@@ -102,7 +107,8 @@ object FreezeAnalyzer {
         it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getReadPermit") ||
         it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit") ||
         it.startsWith("at com.intellij.openapi.application.impl.ComputationState.acquireReadPermit") ||
-        it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
+        it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit") ||
+        it.startsWith("at com.intellij.platform.locking.impl.RunSuspend.await")
       }
 
   private fun isReadWriteLockTaken(stackTrace: String): Boolean =
@@ -117,10 +123,10 @@ object FreezeAnalyzer {
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.runReadAction") ||
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.runWriteIntentReadAction") ||
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.tryRunReadAction") ||
-    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runWriteAction") ||
-    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runReadAction") ||
-    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runWriteIntentReadAction") ||
-    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.tryRunReadAction")
+    contains("NestedLocksThreadingSupport.runWriteAction") ||
+    contains("NestedLocksThreadingSupport.runReadAction") ||
+    contains("NestedLocksThreadingSupport.runWriteIntentReadAction") ||
+    contains("NestedLocksThreadingSupport.tryRunReadAction")
 
 
   private fun String.isJDKMethod(): Boolean {

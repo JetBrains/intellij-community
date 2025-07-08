@@ -276,7 +276,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
             // todo exclude plugins - layoutAdditionalResources should perform codesign -
             //  that's why we process files and zip in plugins (but not JARs)
             // and also kotlin compiler includes JNA
-            recursivelySignMacBinaries(root = file, context)
+            recursivelySignMacBinaries(coroutineScope = this, file, context)
           }
         }
       }

@@ -10,6 +10,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.components.QualifierToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
@@ -71,7 +72,9 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
     val rangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset + temporarySuffix.length)
     val fqNameRangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset)
 
-    if (shortenCommand != null) {
+    if (shortenCommand != null
+        && editor.caretModel.caretCount == 1
+    ) {
         ShortenCommandWrapper(
             delegate = shortenCommand,
             copy = file,
@@ -123,6 +126,7 @@ private fun PsiElement.isContextReceiverWithoutFunctionalTypeDeclaration(): Bool
     return contextReceiverList.parent.let { it is KtTypeReference || it?.parent is KtTypeReference }
 }
 
+@OptIn(KaImplementationDetail::class)
 private class ShortenCommandWrapper(
     delegate: ShortenCommand,
     private val copy: KtFile,

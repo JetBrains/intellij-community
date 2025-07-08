@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.ui.proofreading.component
 
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.GrazieScope
 import com.intellij.grazie.ide.ui.components.GrazieUIComponent
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.ide.ui.components.dsl.padding
@@ -12,17 +13,19 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-class GrazieLanguagesComponent(download: (Lang) -> Boolean) : GrazieUIComponent {
+class GrazieLanguagesComponent(download: suspend (Lang) -> Unit) : GrazieUIComponent {
   private val languages = GrazieLanguagesList(download) {
     updateLinkToDownloadMissingLanguages()
   }
 
   private val link: LinkLabel<Any?> = LinkLabel<Any?>(msg("grazie.notification.missing-languages.action"), AllIcons.General.Warning).configure {
     border = padding(JBUI.insetsTop(10))
-    setListener({ _, _ -> GrazieConfig.get().missedLanguages.forEach { download(it) } }, null)
+    setListener({ _, _ -> GrazieConfig.get().missedLanguages.forEach { GrazieScope.coroutineScope().launch { download(it) } } }, null)
   }
 
   override val component: JPanel = panel {

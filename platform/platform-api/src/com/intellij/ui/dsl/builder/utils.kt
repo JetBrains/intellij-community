@@ -8,7 +8,6 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -41,16 +40,6 @@ enum class DslComponentProperty {
    * Value: [VerticalComponentGap]
    */
   VERTICAL_COMPONENT_GAP,
-
-  /**
-   * By default, we're trying to assign [javax.swing.JLabel.setLabelFor] for the cell component itself.
-   * In some cases, a wrapper component needs to be used - and this property allows delegating this feature to a child component.
-   *
-   * Value: [JComponent]
-   */
-  @Deprecated(message = "Use INTERACTIVE_COMPONENT/SKIP_LABEL_FOR_ASSIGNMENT instead", level = DeprecationLevel.ERROR)
-  @ScheduledForRemoval
-  LABEL_FOR,
 
   /**
    * By default, [Cell.label] assigns [javax.swing.JLabel.setLabelFor] for the cell component.

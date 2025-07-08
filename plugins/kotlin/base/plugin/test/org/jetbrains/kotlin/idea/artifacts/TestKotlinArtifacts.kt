@@ -10,11 +10,13 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpack
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import org.jetbrains.kotlin.konan.file.unzipTo
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.io.IOException
+import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -323,6 +325,13 @@ fun downloadArtifact(
     packaging: String = "jar",
     repository: KotlinArtifactRepository = KotlinArtifactRepository.INTELLIJ_DEPENDENCIES
 ): File {
+    val classifierStr = if (classifier != null) "-${classifier}" else ""
+    val suffix = "$classifierStr.$packaging"
+    // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
+    KotlinMavenUtils.findArtifact(groupId, artifactId, version, suffix)?.let {
+        return it.toFile()
+    }
+
     val url = BuildDependenciesDownloader.getUriForMavenArtifact(
         repository.url, groupId, artifactId, version, classifier, packaging)
     return BuildDependenciesDownloader.downloadFileToCacheLocation(

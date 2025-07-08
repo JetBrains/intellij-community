@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.ProjectWidgetGradientLocationService
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.GradientTextureCache
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
@@ -40,6 +41,10 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
   }
 
   private fun doPaint(component: Component, g: Graphics2D) {
+    if (DistractionFreeModeController.shouldMinimizeCustomHeader()) {
+      return
+    }
+
     val project = frame.project ?: return
 
     val centerColor = projectWindowCustomizer.getGradientProjectColor(project)

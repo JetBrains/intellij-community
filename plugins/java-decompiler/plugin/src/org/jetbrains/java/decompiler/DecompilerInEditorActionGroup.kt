@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
 
 internal class DecompilerInEditorActionGroup(private val settings: IdeaDecompilerSettings) : ActionGroup() {
@@ -26,7 +27,7 @@ internal class DecompilerInEditorActionGroup(private val settings: IdeaDecompile
     )
   }
 
-  private inner class ChangeDecompilerPresetAction(private val preset: DecompilerPreset) : ToggleAction() {
+  private inner class ChangeDecompilerPresetAction(private val preset: DecompilerPreset) : DumbAwareToggleAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(event: AnActionEvent) {

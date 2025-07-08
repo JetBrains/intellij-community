@@ -105,14 +105,6 @@ FSTRING_FRAGMENT_TYPE_CONVERSION = "!" [^=:'\"} \t\r\n]*
 %xstate FSTRING_FRAGMENT_FORMAT
 %{
 private final PyLexerFStringHelper fStringHelper = new PyLexerFStringHelper(this);
-
-private int getSpaceLength(CharSequence string) {
-  String string1 = string.toString();
-  string1 = StringUtil.trimEnd(string1, "\\");
-  string1 = StringUtil.trimEnd(string1, ";");
-  final String s = StringUtil.trimTrailing(string1);
-  return yylength() - s.length();
-}
 %}
 
 %%
@@ -182,28 +174,27 @@ private int getSpaceLength(CharSequence string) {
 [\f]                        { return PyTokenTypes.FORMFEED; }
 "\\"                        { return PyTokenTypes.BACKSLASH; }
 
+
 <YYINITIAL> {
 [\n]                        { if (zzCurrentPos == 0 && !isConsole()) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK; }
 {END_OF_LINE_COMMENT}       { if (zzCurrentPos == 0 && !isConsole()) yybegin(PENDING_DOCSTRING); return PyTokenTypes.END_OF_LINE_COMMENT; }
 
 {SINGLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0 && !isConsole()) return PyTokenTypes.DOCSTRING;
-                                 else return PyTokenTypes.SINGLE_QUOTED_STRING; }
+                                  else return PyTokenTypes.SINGLE_QUOTED_STRING; }
 {TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0 && !isConsole()) return PyTokenTypes.DOCSTRING;
-                                 else return PyTokenTypes.TRIPLE_QUOTED_STRING; }
+                                  else return PyTokenTypes.TRIPLE_QUOTED_STRING; }
 
-{SINGLE_QUOTED_STRING}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || isConsole()) return PyTokenTypes.SINGLE_QUOTED_STRING;
-return PyTokenTypes.DOCSTRING; }
+{SINGLE_QUOTED_STRING} / [\ \t]*[\n;#]   { if (zzCurrentPos != 0 || isConsole()) return PyTokenTypes.SINGLE_QUOTED_STRING;
+                                           return PyTokenTypes.DOCSTRING; }
 
-{TRIPLE_QUOTED_STRING}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || isConsole()) return PyTokenTypes.TRIPLE_QUOTED_STRING;
-return PyTokenTypes.DOCSTRING; }
+{TRIPLE_QUOTED_STRING} / [\ \t]*[\n;#]   { if (zzCurrentPos != 0 || isConsole()) return PyTokenTypes.TRIPLE_QUOTED_STRING;
+                                           return PyTokenTypes.DOCSTRING; }
 
-{SINGLE_QUOTED_STRING}[\ \t]*"\\"  {
- yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || isConsole()) return PyTokenTypes.SINGLE_QUOTED_STRING;
- yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }
+{SINGLE_QUOTED_STRING} / [\ \t]*"\\"     { if (zzCurrentPos != 0 || isConsole()) return PyTokenTypes.SINGLE_QUOTED_STRING;
+                                           yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }
 
-{TRIPLE_QUOTED_STRING}[\ \t]*"\\"  {
- yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || isConsole()) return PyTokenTypes.TRIPLE_QUOTED_STRING;
- yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }
+{TRIPLE_QUOTED_STRING} / [\ \t]*"\\"     { if (zzCurrentPos != 0 || isConsole()) return PyTokenTypes.TRIPLE_QUOTED_STRING;
+                                           yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }
 
 }
 
@@ -305,15 +296,15 @@ return PyTokenTypes.DOCSTRING; }
 }
 
 <IN_DOCSTRING_OWNER> {
-":"(\ )*{END_OF_LINE_COMMENT}?"\n"          { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
+":"(\ )*{END_OF_LINE_COMMENT}?"\n"  { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
 }
 
 <PENDING_DOCSTRING> {
-{SINGLE_QUOTED_STRING}          { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
-                                 else yybegin(YYINITIAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
-{TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
-                                 else yybegin(YYINITIAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
-{DOCSTRING_LITERAL}[\ \t]*[\n;] { yypushback(getSpaceLength(yytext())); yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING; }
-{DOCSTRING_LITERAL}[\ \t]*"\\"  { yypushback(getSpaceLength(yytext())); return PyTokenTypes.DOCSTRING; }
-.                               { yypushback(1); yybegin(YYINITIAL); }
+{SINGLE_QUOTED_STRING}              { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
+                                      else yybegin(YYINITIAL); return PyTokenTypes.SINGLE_QUOTED_STRING; }
+{TRIPLE_QUOTED_STRING}              { if (zzInput == YYEOF) return PyTokenTypes.DOCSTRING;
+                                      else yybegin(YYINITIAL); return PyTokenTypes.TRIPLE_QUOTED_STRING; }
+{DOCSTRING_LITERAL} / [\ \t]*[\n;#] { yybegin(YYINITIAL); return PyTokenTypes.DOCSTRING; }
+{DOCSTRING_LITERAL} / [\ \t]*"\\"   { return PyTokenTypes.DOCSTRING; }
+.                                   { yypushback(1); yybegin(YYINITIAL); }
 }

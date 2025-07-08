@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.SingleFileDiffPreviewProcessor
-import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
+import com.intellij.vcs.log.ui.frame.VcsLogAsyncChangesTreeModel
 
 internal class FileHistoryDiffProcessor(project: Project,
                                         private val changeGetter: () -> Change?,
@@ -28,6 +28,6 @@ internal class FileHistoryDiffProcessor(project: Project,
 
   override fun getCurrentRequestProvider(): DiffRequestProducer? {
     val change = changeGetter() ?: return null
-    return VcsLogChangesBrowser.createDiffRequestProducer(project!!, change, HashMap())
+    return VcsLogAsyncChangesTreeModel.createDiffRequestProducer(project!!, change, HashMap())
   }
 }

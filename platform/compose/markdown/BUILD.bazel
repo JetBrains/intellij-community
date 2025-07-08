@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.platform.compose.markdown` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "markdown_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "markdown",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/compose",
+    "//platform/jewel/markdown/core",
+    "//platform/jewel/markdown/extensions/autolink",
+    "//platform/jewel/markdown/extensions/gfm-alerts",
+    "//platform/jewel/markdown/extensions/gfm-strikethrough",
+    "//platform/jewel/markdown/extensions/gfm-tables",
+    "//platform/jewel/markdown/extensions/images",
+    "//platform/jewel/markdown/ide-laf-bridge-styling",
+  ],
+  runtime_deps = [
+    ":markdown_resources",
+    "//platform/compose",
+    "//platform/jewel/markdown/core",
+    "//platform/jewel/markdown/extensions/autolink",
+    "//platform/jewel/markdown/extensions/gfm-alerts",
+    "//platform/jewel/markdown/extensions/gfm-strikethrough",
+    "//platform/jewel/markdown/extensions/gfm-tables",
+    "//platform/jewel/markdown/extensions/images",
+    "//platform/jewel/markdown/ide-laf-bridge-styling",
+  ]
+)
+### auto-generated section `build intellij.platform.compose.markdown` end

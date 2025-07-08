@@ -42,9 +42,11 @@ jvm_library(
     "//platform/jewel/markdown/extensions/gfm-alerts",
     "//platform/jewel/markdown/extensions/gfm-tables",
     "//platform/jewel/markdown/extensions/gfm-strikethrough",
+    "//platform/jewel/markdown/extensions/images",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/samples/showcase",
+    "//platform/icons",
   ],
   runtime_deps = [
     ":standalone_resources",

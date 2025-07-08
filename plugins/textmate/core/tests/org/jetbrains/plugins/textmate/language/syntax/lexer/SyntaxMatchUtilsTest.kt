@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.replaceGroupsWithMatchDataInCaptures
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex
 import org.jetbrains.plugins.textmate.regex.MatchData
-import org.jetbrains.plugins.textmate.regex.TextMateString.Companion.fromString
+import org.jetbrains.plugins.textmate.regex.TextMateStringImpl.Companion.fromString
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

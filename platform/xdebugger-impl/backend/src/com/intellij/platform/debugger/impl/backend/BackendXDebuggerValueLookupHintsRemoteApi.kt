@@ -22,7 +22,9 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.platform.debugger.impl.rpc.RemoteValueHintId
+import com.intellij.platform.debugger.impl.rpc.ValueHintEvent
 import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -135,6 +137,11 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
     finally {
       deleteValueById(hintId, type = RemoteValueHintValueIdType)
     }
+  }
+
+  override suspend fun getManagerEventsFlow(projectId: ProjectId): Flow<ValueHintEvent> {
+    val project = projectId.findProject()
+    return ValueLookupManagerController.getInstance(project).getEventsFlow()
   }
 
   private object RemoteValueHintValueIdType : BackendValueIdType<RemoteValueHintId, XValueHint>(::RemoteValueHintId)

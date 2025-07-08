@@ -877,4 +877,27 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testKeywordPatternResolvesToInheritedProperty() {
     assertResolvesTo(PyFunction.class, "foo");
   }
+
+  // PY-82115
+  public void testNonlocalInPresenceOfGlobalInNestedFunction() {
+    PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "s");
+    PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("outer1", function.getName());
+  }
+
+  // PY-82115
+  public void testNonlocalInPresenceOfGlobalInOuterScope() {
+    assertResolvesToItself();
+  }
+
+  // PY-82115
+  public void testNonlocalNotResolvedToGlobalName() {
+    assertResolvesToItself();
+  }
+
+  private void assertResolvesToItself() {
+    PsiElement resolved = doResolve();
+    PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
+    assertEquals(reference.getElement(), resolved);
+  }
 }

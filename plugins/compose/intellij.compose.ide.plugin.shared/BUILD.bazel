@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.compose.ide.plugin.shared` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True
+)
 
 jvm_resources(
   name = "ide-plugin-shared_resources",
@@ -12,6 +18,7 @@ jvm_library(
   module_name = "intellij.compose.ide.plugin.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
     "//plugins/compose:compose-ide-plugin",
     "//platform/analysis-api:analysis",
@@ -28,6 +35,7 @@ jvm_library(
     "//uast/uast-common:uast",
     "//platform/util",
     "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
     "//java/java-psi-api:psi",
@@ -40,12 +48,12 @@ jvm_library(
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-java_library(
+jvm_library(
   name = "ide-plugin-shared-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(

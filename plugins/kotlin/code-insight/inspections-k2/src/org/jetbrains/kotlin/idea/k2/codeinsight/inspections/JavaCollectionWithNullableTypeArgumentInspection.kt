@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.base.psi.typeArguments
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -197,7 +196,7 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
 
         private fun KtTypeProjection.removeQuestionMark() {
             val initialNullableType = this.typeReference?.typeElement as? KtNullableType ?: return
-            val deepestNullableType = generateSequence(initialNullableType) { it.innerType as? KtNullableType }.last()
+            val deepestNullableType = getDeepestNullableType(initialNullableType)
             val innerType = deepestNullableType.innerType ?: return
             innerType.let { initialNullableType.replace(innerType) }
         }
@@ -300,7 +299,13 @@ private fun KtTypeProjection.isTypeAlias(): Boolean {
 private fun KtElement.getTypeArguments(): List<KtTypeProjection>? {
     return when (this) {
         is KtTypeReference -> {
-            this.typeArguments()
+            val typeElement = this.typeElement
+            val userType = if (typeElement is KtNullableType) {
+                getDeepestNullableType(typeElement).innerType
+            } else {
+                typeElement
+            } as? KtUserType
+            userType?.typeArguments.orEmpty()
         }
 
         is KtCallExpression -> {
@@ -309,4 +314,8 @@ private fun KtElement.getTypeArguments(): List<KtTypeProjection>? {
 
         else -> null
     }
+}
+
+private fun getDeepestNullableType(initialNullableType: KtNullableType): KtNullableType {
+    return generateSequence(initialNullableType) { it.innerType as? KtNullableType }.last()
 }

@@ -19,8 +19,11 @@ import com.intellij.formatting.Wrap;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 
-public abstract class WrappingStrategy {
+import java.util.Set;
 
+public abstract class WrappingStrategy {
+  private static final Set<IElementType> COMMA_TOKENS = Set.of(JavaTokenType.COMMA, JavaTokenType.SEMICOLON);
+  private static final Set<IElementType> COMMENT_TOKENS = Set.of(JavaTokenType.END_OF_LINE_COMMENT, JavaTokenType.C_STYLE_COMMENT);
   public static final WrappingStrategy DO_NOT_WRAP = new WrappingStrategy(null) {
     @Override
     protected boolean shouldWrap(final IElementType type) {
@@ -32,7 +35,19 @@ public abstract class WrappingStrategy {
     return new WrappingStrategy(wrap) {
       @Override
       protected boolean shouldWrap(final IElementType type) {
-        return type != JavaTokenType.COMMA && type != JavaTokenType.SEMICOLON;
+        return !COMMA_TOKENS.contains(type);
+      }
+    };
+  }
+
+  /**
+   * @return strategy that doesn't wrap blocks if they are commas or plain comments (excluding javadoc)
+   */
+  public static WrappingStrategy createDoNotWrapCommaAndCommentStrategy(Wrap wrap) {
+    return new WrappingStrategy(wrap) {
+      @Override
+      protected boolean shouldWrap(final IElementType type) {
+        return !COMMA_TOKENS.contains(type) && !COMMENT_TOKENS.contains(type);
       }
     };
   }

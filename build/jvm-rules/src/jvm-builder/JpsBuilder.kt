@@ -97,7 +97,7 @@ internal suspend fun incrementalBuild(
     .use { span ->
       buildUsingJps(
         baseDir = baseDir,
-        args = parseArgs(request.arguments),
+        args = parseArgs(request.arguments, baseDir),
         out = writer,
         sources = sources,
         dependencyFileToDigest = dependencyFileToDigest,

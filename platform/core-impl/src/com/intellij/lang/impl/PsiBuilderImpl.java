@@ -428,7 +428,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void remapTokenType(@NotNull IElementType type) {
-      //assert myType != null && type != null;
+      LOG.assertTrue(myType != null, "Marker is not done yet.");
       myType = type;
     }
 

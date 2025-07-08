@@ -14,7 +14,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportProgressScope
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -23,8 +23,11 @@ import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRIPTS_MODULE_NAME
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.isNonScript
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
@@ -38,26 +41,27 @@ import kotlin.script.experimental.jvm.jvm
 class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScope: CoroutineScope) : ScriptRefinedConfigurationResolver,
                                                                                                      ScriptWorkspaceModelManager {
     private val data = ConcurrentHashMap<VirtualFile, ScriptConfigurationWithSdk>()
-    private val importedScripts = TreeMultimap.create(COMPARATOR, COMPARATOR)
-    private val importedScriptsTraverser = Traverser.forTree<VirtualFile> { importedScripts.get(it) }
+    private val visitedScripts = TreeMultimap.create(COMPARATOR, COMPARATOR)
+    private val visitedScriptsTraverser = Traverser.forTree<VirtualFile> { visitedScripts.get(it) }
 
-    fun getImportedScripts(mainKts: VirtualFile): List<VirtualFile> = importedScriptsTraverser.breadthFirst(mainKts) - mainKts
+    fun getImportedScripts(mainKts: VirtualFile): List<VirtualFile> = visitedScriptsTraverser.breadthFirst(mainKts) - mainKts
 
     var reporter: ProgressReporter? = null
         private set
 
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data[virtualFile]
 
-    fun removeConfiguration(virtualFile: VirtualFile) {
-        importedScripts.removeAll(virtualFile)
+    override fun remove(virtualFile: VirtualFile) {
+        visitedScripts.removeAll(virtualFile)
         data.remove(virtualFile)
     }
 
     override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk? {
         val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
-        if (mainKtsConfiguration.importedScripts.isNotEmpty()) {
-            importedScripts.putAll(virtualFile, mainKtsConfiguration.importedScripts)
-            resolveDeeply(mainKtsConfiguration.importedScripts)
+        val scriptsToResolve = mainKtsConfiguration.importedScripts - visitedScripts.keys()
+        if (scriptsToResolve.isNotEmpty()) {
+            visitedScripts.putAll(virtualFile, scriptsToResolve)
+            resolveDeeply(scriptsToResolve)
         }
 
         data[virtualFile] = mainKtsConfiguration
@@ -86,7 +90,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         }
 
         val result = withBackgroundProgress(project, title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution", mainKts.name)) {
-            reportProgress {
+            reportProgressScope {
                 try {
                     reporter = it
                     smartReadAction(project) {
@@ -118,9 +122,11 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         }
     }
 
-    private val ScriptConfigurationWithSdk.importedScripts
-        get() = this.scriptConfiguration.valueOrNull()?.importedScripts?.mapNotNull { imported -> (imported as? VirtualFileScriptSource)?.virtualFile }
-            ?: emptyList()
+    private val ScriptConfigurationWithSdk.importedScripts: List<VirtualFile>
+        get() {
+            val importedScripts = this.scriptConfiguration.valueOrNull()?.importedScripts ?: return emptyList()
+            return importedScripts.mapNotNull { (it as? VirtualFileScriptSource)?.virtualFile }.filterNot { it.isNonScript() }
+        }
 
     private fun getUpdatedStorage(
         project: Project,
@@ -146,7 +152,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             val existingModule = storageToUpdate.resolve(scriptModuleId)
             if (existingModule == null) {
                 storageToUpdate.addEntity(
-                    ModuleEntity.Companion(scriptModuleId.name, allDependencies, source)
+                    ModuleEntity(scriptModuleId.name, allDependencies, source)
                 )
             } else {
                 storageToUpdate.modifyModuleEntity(existingModule) {

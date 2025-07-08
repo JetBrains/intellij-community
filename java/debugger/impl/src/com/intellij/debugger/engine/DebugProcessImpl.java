@@ -60,7 +60,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -71,7 +70,6 @@ import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -96,7 +94,9 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
+import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Job;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -113,6 +113,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
@@ -158,7 +159,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
-  private final SingleEdtTaskScheduler statusUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private final CoroutineScope myCoroutineScope;
+  private final ShowStatusManager myShowStatusManager;
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, disposable);
 
@@ -177,7 +179,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   protected DebugProcessImpl(Project project) {
     this.project = project;
+    CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
+    myCoroutineScope = com.intellij.platform.util.coroutines.CoroutineScopeKt
+      .childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
     myDebuggerManagerThread = createManagerThread();
+    myShowStatusManager = new ShowStatusManager(project, myCoroutineScope);
     requestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, disposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, disposable);
@@ -224,7 +230,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           myRenderers.addAll(NodeRendererSettings.getInstance().getAllRenderers(project));
         }
         finally {
-          DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+          DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> {
             final DebuggerSession session = mySession;
             if (session != null && session.isAttached()) {
               DebuggerAction.refreshViews(mySession.getXDebugSession());
@@ -401,7 +407,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       extendedVM.disableSoftReferences();
       if (mask == VirtualMachine.TRACE_NONE && Registry.is("debugger.log.jdi.in.unit.tests")) {
         mask = VirtualMachine.TRACE_ALL;
-        extendedVM.setDebugTraceConsumer(string -> LOG.debug("[JDI: " + string + "]"));
+        extendedVM.setDebugTraceConsumer(
+          strings -> LOG.debug(strings.stream().map(s -> "[JDI: " + s + "]").collect(Collectors.joining("\n"))));
       }
     }
     vm.setDebugTraceMode(mask);
@@ -720,11 +727,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void showStatusText(final @Nls String text) {
     LOG.debug("Show status text: " + text);
-    statusUpdateAlarm.cancelAndRequest(50, () -> {
-      if (!project.isDisposed()) {
-        StatusBarUtil.setStatusBarInfo(project, text);
-      }
-    });
+    myShowStatusManager.showStatus(text);
   }
 
   private Connector getConnector() throws ExecutionException {
@@ -763,7 +766,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected void checkVirtualMachineVersion(VirtualMachine vm) {
     final String versionString = vm.version();
     if ("1.4.0".equals(versionString)) {
-      DebuggerInvocationUtil.swingInvokeLater(project, () -> Messages.showMessageDialog(
+      DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> Messages.showMessageDialog(
         project,
         JavaDebuggerBundle.message("warning.jdk140.unstable"), JavaDebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
       ));
@@ -1099,7 +1102,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void dispose() {
-    statusUpdateAlarm.dispose();
+    CoroutineScopeKt.cancel(myCoroutineScope, null);
     LOG.debug("Debug has been finished");
     Disposer.dispose(disposable);
     requestManager.setThreadFilter(null);
@@ -2087,7 +2090,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         super.contextAction(context);
       }
       else {
-        DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+        DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> {
           Messages.showErrorDialog(
             JavaDebuggerBundle.message("error.running.to.cursor.no.executable.code",
                                        myRunToCursorBreakpoint.getFileName(),
@@ -2442,7 +2445,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       if (myStackFrame.isBottom()) {
-        DebuggerInvocationUtil.swingInvokeLater(project, () -> Messages.showMessageDialog(project, JavaDebuggerBundle
+        DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> Messages.showMessageDialog(project, JavaDebuggerBundle
           .message("error.pop.bottom.stackframe"), XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
         return;
       }
@@ -2462,7 +2465,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     private void showError(@NlsContexts.DialogMessage String message) {
-      DebuggerInvocationUtil.swingInvokeLater(project, () ->
+      DebuggerInvocationUtil.invokeLaterAnyModality(project, () ->
         Messages.showMessageDialog(project, message,
                                    XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
     }
@@ -2537,7 +2540,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
 
         private void doReattach() {
-          DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+          DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> {
             ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
             myState.set(State.INITIAL);
             myConnection = connection;
@@ -2665,7 +2668,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   LOG.debug(ex);
                 }
                 fail();
-                DebuggerInvocationUtil.swingInvokeLater(project, () -> {
+                DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
                   // propagate exception only in case we succeeded to obtain execution result,
                   // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user

@@ -12,6 +12,7 @@ import com.intellij.find.replaceInProject.ReplaceInProjectManager
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.ui.toSerializableTextChunk
+import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
@@ -19,6 +20,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInFilesResult
 import com.intellij.platform.find.FindRemoteApi
@@ -56,6 +58,8 @@ internal class FindRemoteApiImpl : FindRemoteApi {
           return@coroutineScope
         }
         val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
+        // SearchScope is not serializable, so we will get it by id from the client
+        setCustomScopeById(project, findModel)
         //read action is necessary in case of the loading from a directory
         val scope = readAction {  FindInProjectUtil.getGlobalSearchScope(project, findModel) }
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
@@ -113,6 +117,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
       LOG.warn("Project not found for id ${projectId}. FindAll/ReplaceAll operation skipped")
       return
     }
+    setCustomScopeById(project, findModel)
     if (findModel.isReplaceState) {
       ReplaceInProjectManager.getInstance(project).replaceInPath(findModel)
     }
@@ -124,5 +129,14 @@ internal class FindRemoteApiImpl : FindRemoteApi {
 
   override suspend fun checkDirectoryExists(findModel: FindModel): Boolean {
     return FindInProjectUtil.getDirectory(findModel) != null
+  }
+
+  private fun setCustomScopeById(project: Project, findModel: FindModel) {
+    if (findModel.customScope == null && findModel.isCustomScope) {
+      val scopeId = findModel.customScopeId ?: return
+      ScopesStateService.getInstance(project).getScopeById(scopeId)?.let {
+        findModel.customScope = it
+      }
+    }
   }
 }

@@ -12,14 +12,16 @@ private val eventsCounter: AtomicLong = AtomicLong()
 
 internal val ijentMetricsScope = Scope("ijent", PlatformMetrics, verbose = true)
 internal val ijentTracer by lazy { TelemetryManager.getTracer(ijentMetricsScope) }
-internal val ijentMeter = TelemetryManager.getMeter(ijentMetricsScope)
+internal val ijentMeter by lazy { TelemetryManager.getMeter(ijentMetricsScope) }
 
 @Suppress("Unused")
-internal val eventsCounterMeter = ijentMeter.counterBuilder("ijent.events.count").buildObserver().also {
-  ijentMeter.batchCallback(
-    { it.record(eventsCounter.get()) },
-    it
-  )
+internal val eventsCounterMeter by lazy {
+  ijentMeter.counterBuilder("ijent.events.count").buildObserver().also {
+    ijentMeter.batchCallback(
+      { it.record(eventsCounter.get()) },
+      it
+    )
+  }
 }
 
 object Measurer {

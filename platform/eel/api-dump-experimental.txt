@@ -53,6 +53,7 @@
 - *:getEnv():java.util.Map
 - *a:getExe():java.lang.String
 - *:getInteractionOptions():com.intellij.platform.eel.EelExecApi$InteractionOptions
+- getScope():kotlinx.coroutines.CoroutineScope
 - *:getWorkingDirectory():com.intellij.platform.eel.path.EelPath
 *:com.intellij.platform.eel.EelExecApi$InteractionOptions
 *f:com.intellij.platform.eel.EelExecApi$Pty
@@ -75,6 +76,7 @@
 - *f:env(java.util.Map):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - *f:exe(java.lang.String):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 f:com.intellij.platform.eel.EelExecApiHelpersKt
 - *sf:spawnProcess(com.intellij.platform.eel.EelExecApi,java.lang.String):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
@@ -96,6 +98,7 @@ f:com.intellij.platform.eel.EelExecApiKt
 - *f:env(java.util.Map):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - *f:exe(java.lang.String):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 - *sf:spawnProcess(com.intellij.platform.eel.EelExecPosixApi,java.lang.String):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
@@ -112,6 +115,7 @@ f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 - *f:env(java.util.Map):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:exe(java.lang.String):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 - *sf:spawnProcess(com.intellij.platform.eel.EelExecWindowsApi,java.lang.String):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
@@ -338,6 +342,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - *f:env(java.util.Map):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:exe(java.lang.String):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 *f:com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
 - <init>():V

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-@ApiStatus.Internal
 public final class BackAction extends NavigationAction {
   public BackAction(JComponent c, @NotNull Disposable parentDisposable) {
     super(c, "Back", parentDisposable);

@@ -20,6 +20,7 @@ import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import fleet.kernel.DurableRef
@@ -37,13 +38,15 @@ class SeTabVm(
   private val tab: SeTab,
   private val searchPattern: StateFlow<String>,
 ) {
-  val searchResults: StateFlow<Flow<ThrottledItems<SeResultEvent>>> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<Flow<ThrottledItems<SeResultEvent>>?> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val tabId: String get() = tab.id
   val reportableTabId: String =
     if (SearchEverywhereUsageTriggerCollector.isReportable(tab)) tabId
     else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
+
+  val isIndexingDependent: Boolean get() = tab.isIndexingDependent
 
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean
@@ -52,7 +55,7 @@ class SeTabVm(
       shouldLoadMoreFlow.value = value
     }
 
-  private val _searchResults: MutableStateFlow<Flow<ThrottledItems<SeResultEvent>>> = MutableStateFlow(emptyFlow())
+  private val _searchResults: MutableStateFlow<Flow<ThrottledItems<SeResultEvent>>?> = MutableStateFlow(null)
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
   private val dumbModeStateFlow =
@@ -76,13 +79,14 @@ class SeTabVm(
       isActiveFlow.combine(dumbModeStateFlow) { isActive, _ ->
         isActive
       }.collectLatest { isActive ->
-        if (!isActive) return@collectLatest
+        if (!isActive) {
+          _searchResults.value = null
+          return@collectLatest
+        }
 
-        val searchPatternWithAutoToggle = searchPattern.withNewValueSideEffect { old, new ->
-          if (!new.startsWith(old)) {
-            withContext(Dispatchers.EDT) {
-              (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
-            }
+        val searchPatternWithAutoToggle = searchPattern.onEach {
+          withContext(Dispatchers.EDT) {
+            (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
           }
         }
 
@@ -94,8 +98,13 @@ class SeTabVm(
           val params = SeParams(searchPattern, filterData)
 
           val resultsFlow = tab.getItems(params).let {
-            if (shouldThrottle.load()) it.throttledWithAccumulation()
-            else it.map { event -> ThrottledOneItem(event) }
+            val essential = tab.essentialProviderIds()
+            if (essential.isEmpty()) {
+              if (shouldThrottle.load()) it.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
+              else it.map { event -> ThrottledOneItem(event) }
+            }
+            else it.throttleUntilEssentialsArrive(essential)
+
           }.map { item ->
             shouldLoadMoreFlow.first { it }
             item
@@ -104,6 +113,7 @@ class SeTabVm(
           shouldThrottle.store(true)
           resultsFlow
         }.collect {
+          if (!isActiveFlow.value) return@collect
           _searchResults.value = it
         }
       }
@@ -167,12 +177,26 @@ class SeTabVm(
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
   }
+}
 
-  private fun StateFlow<String>.withNewValueSideEffect(sideEffect: suspend (String, String) -> Unit): Flow<String> =
-    scan(Pair("", "")) { acc, new -> Pair(acc.second, new) }
-      .drop(1)
-      .map { (old, new) ->
-        sideEffect(old, new)
-        new
-      }
+private const val ESSENTIALS_WAITING_TIMEOUT: Long = 2000
+private const val ESSENTIALS_THROTTLE_DELAY: Long = 100
+
+private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderIds: Set<SeProviderId>): Flow<ThrottledItems<SeResultEvent>> {
+  val nonArrivedEssentialProviders = essentialProviderIds.toMutableSet()
+
+  SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds"}
+  return throttledWithAccumulation(ESSENTIALS_WAITING_TIMEOUT, { it !is SeResultEndEvent }) { event, size ->
+    val idToRemove = when (event) {
+      is SeResultAddedEvent -> event.itemData.providerId
+      is SeResultReplacedEvent -> event.newItemData.providerId
+      is SeResultEndEvent -> event.providerId
+    }
+
+    if (nonArrivedEssentialProviders.remove(idToRemove)) {
+      SeLog.log(SeLog.THROTTLING) { "Arrived: $idToRemove" }
+    }
+
+    return@throttledWithAccumulation if (nonArrivedEssentialProviders.isEmpty()) ESSENTIALS_THROTTLE_DELAY else null
+  }
 }

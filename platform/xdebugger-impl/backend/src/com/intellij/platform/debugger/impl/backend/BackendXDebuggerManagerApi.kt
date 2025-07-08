@@ -151,6 +151,13 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         trySend(XDebuggerSessionEvent.StackFrameChanged(stackTraceDto))
       }
 
+      override fun stackFrameChanged(changedByUser: Boolean) {
+        // Ignore changes from the frontend side, they're already handled in FrontendXDebuggerSession
+        if (!changedByUser) {
+          stackFrameChanged()
+        }
+      }
+
       override fun settingsChanged() {
         trySend(XDebuggerSessionEvent.SettingsChanged)
       }

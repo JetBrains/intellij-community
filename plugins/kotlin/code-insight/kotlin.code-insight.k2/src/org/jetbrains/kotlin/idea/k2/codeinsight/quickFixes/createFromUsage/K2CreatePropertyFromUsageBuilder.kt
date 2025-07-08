@@ -250,8 +250,17 @@ object K2CreatePropertyFromUsageBuilder {
         @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
         private fun computeDeclarationText(): String {
             val container = pointer.element ?: return ""
+            val psiFactory = KtPsiFactory(container.project)
 
             return buildString {
+                for (annotation in request.annotations) {
+                    if (isNotEmpty()) append(" ")
+                    append('@')
+                    append(renderAnnotation(container, annotation, psiFactory))
+                }
+
+                if (isNotEmpty()) append(" ")
+
                 if (request is CreateFieldFromJavaUsageRequest && !lateinit) {
                     append("@")
                     append(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)

@@ -600,7 +600,7 @@ public class FileUtil {
 
   /**
    * Converts {@code filePath} to file system independent form which uses forward slashes ('/'). Such paths can be stored in internal structures
-   * and configuration files. They must be converted to {@link #toSystemDependentName file system dependenct form} to show in UI.
+   * and configuration files. They must be converted to {@link #toSystemDependentName file system dependent form} to show in UI.
    */
   public static @NotNull @NonNls String toSystemIndependentName(@NotNull String filePath) {
     return FileUtilRt.toSystemIndependentName(filePath);

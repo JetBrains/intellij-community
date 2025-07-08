@@ -1219,7 +1219,11 @@ class PyTypeHintsInspection : PyInspection() {
       else {
         val first = parameters.first()
         if (!isSdkAvailable(first) || isParamSpecOrConcatenate(first, myTypeEvalContext)) return
-
+        if (first is PySubscriptionExpression &&
+            PyTypingTypeProvider.resolveToQualifiedNames(first.operand, myTypeEvalContext)
+              .any { it == PyTypingTypeProvider.CONCATENATE || it == PyTypingTypeProvider.CONCATENATE_EXT }) {
+          return
+        }
         if (first !is PyListLiteralExpression && first !is PyEllipsisLiteralExpression) {
           registerProblem(first,
                           PyPsiBundle.message("INSP.type.hints.illegal.first.parameter"),

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -12,7 +11,7 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 interface UvCli {
-  suspend fun runUv(workingDir: Path, vararg args: String): PyExecResult<String>
+  suspend fun runUv(workingDir: Path, vararg args: String): PyResult<String>
 }
 
 @ApiStatus.Internal
@@ -24,26 +23,26 @@ interface UvLowLevel {
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
   */
-  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit>
-  suspend fun removeDependencies(pyPackages: Array<out String>): PyExecResult<Unit>
+  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
+  suspend fun removeDependencies(pyPackages: Array<out String>): PyResult<Unit>
 
   /**
    * Managing environment packages directly w/o depending or changing the project
    */
-  suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit>
-  suspend fun uninstallPackages(pyPackages: Array<out String>): PyExecResult<Unit>
+  suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
+  suspend fun uninstallPackages(pyPackages: Array<out String>): PyResult<Unit>
 
-  suspend fun listPackages(): PyExecResult<List<PythonPackage>>
+  suspend fun listPackages(): PyResult<List<PythonPackage>>
   suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>
   suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>>
   suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<NormalizedPythonPackageName>>
   suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String>
 
-  suspend fun isProjectSynced(inexact: Boolean): PyExecResult<Boolean>
-  suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyExecResult<ScriptSyncCheckResult>
+  suspend fun isProjectSynced(inexact: Boolean): PyResult<Boolean>
+  suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult>
 
-  suspend fun sync(): PyExecResult<String>
-  suspend fun lock(): PyExecResult<String>
+  suspend fun sync(): PyResult<String>
+  suspend fun lock(): PyResult<String>
 }
 
 @ApiStatus.Internal

@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.openapi.application.EDT
@@ -40,7 +41,7 @@ object PluginManagerPanelFactory {
       )
 
       val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
-      val errors = myPluginModel.getErrors(errorCheckResults)
+      val errors = MyPluginModel.getErrors(errorCheckResults)
       try {
         for (query in queries) {
           val result = pluginManager.executeMarketplaceQuery(query, 18, false)
@@ -66,9 +67,15 @@ object PluginManagerPanelFactory {
       val installedPlugins = pluginManager.getInstalledPlugins()
       val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
       val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
-      val errors = myPluginModel.getErrors(errorCheckResults)
+      val errors = MyPluginModel.getErrors(errorCheckResults)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins, errors))
+        try {
+          PluginLogo.startBatchMode()
+          callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins, errors))
+        }
+        finally {
+          PluginLogo.endBatchMode()
+        }
       }
     }
   }

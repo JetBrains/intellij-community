@@ -32,10 +32,6 @@ internal data class ModuleDescriptor(
       "bazelBuildFileDir must end with relativePathFromProjectRoot: bazelBuildFileDir=$bazelBuildFileDir, relativePathFromProjectRoot=$relativePathFromProjectRoot"
     }
 
-    require(relativePathFromProjectRoot.startsWith("community") == isCommunity) {
-      "relativePathFromProjectRoot must start with 'community' if isCommunity is true: $relativePathFromProjectRoot, isCommunity=$isCommunity"
-    }
-
     require(imlFile.isAbsolute) {
       "imlFile must be an absolute path: $imlFile"
     }

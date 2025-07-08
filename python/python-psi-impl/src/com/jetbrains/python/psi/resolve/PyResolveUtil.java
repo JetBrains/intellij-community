@@ -63,14 +63,17 @@ public final class PyResolveUtil {
     PsiElement parent = element.getParent();
     ScopeOwner owner = originalOwner;
     if (parent instanceof PyNonlocalStatement) {
-      /* wee need to search in one step out scope for nonlocal statements */
-      final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
-      if (outerScopeOwner != null) {
-        owner = outerScopeOwner;
+      /* we need to search in one step out scope for nonlocal statements */
+      if (owner == roof) {
+        return;
+      }
+      owner = ScopeUtil.getScopeOwner(owner);
+      if (owner == null) {
+        return;
       }
     }
     else if (parent instanceof PyGlobalStatement) {
-      /* wee need to search directly in global scope of the module for global statements */
+      /* we need to search directly in the global scope of the module for global statements */
       final PsiFile globalScope = element.getContainingFile();
       if (globalScope instanceof PyFile) {
         owner = (PyFile)globalScope;
@@ -106,26 +109,17 @@ public final class PyResolveUtil {
                                   @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
     while (scopeOwner != null) {
       final Scope scope = ControlFlowCache.getScope(scopeOwner);
+      final Collection<PsiNamedElement> namedElements;
       if (name != null) {
         final boolean includeNestedGlobals = scopeOwner instanceof PyFile;
-        for (PsiNamedElement resolved : scope.getNamedElements(name, includeNestedGlobals)) {
-          if (isClassLevelDefinitionInvisibleToReference(resolved, scopeOwner, originalScopeOwner)) continue;
-          if (!processor.execute(resolved, ResolveState.initial())) {
-            return;
-          }
-        }
+        namedElements = scope.getNamedElements(name, includeNestedGlobals);
       }
       else {
-        for (PsiNamedElement element : scope.getNamedElements()) {
-          if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
-          if (!processor.execute(element, ResolveState.initial())) {
-            return;
-          }
-        }
+        namedElements = scope.getNamedElements();
       }
-      for (PyImportedNameDefiner definer : scope.getImportedNameDefiners()) {
-        if (isClassLevelDefinitionInvisibleToReference(definer, scopeOwner, originalScopeOwner)) continue;
-        if (!processor.execute(definer, ResolveState.initial())) {
+      for (PsiElement element : ContainerUtil.concat(namedElements, scope.getImportedNameDefiners())) {
+        if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
+        if (!processor.execute(element, ResolveState.initial())) {
           return;
         }
       }
@@ -247,8 +241,8 @@ public final class PyResolveUtil {
    * @return all possible candidates that can be found by the given qualified name
    */
   public static @NotNull List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
-                                                             @NotNull ScopeOwner scopeOwner,
-                                                             @NotNull TypeEvalContext context) {
+                                                                      @NotNull ScopeOwner scopeOwner,
+                                                                      @NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), (param) -> {
       return doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond());
     });
@@ -521,7 +515,7 @@ public final class PyResolveUtil {
     return rate;
   }
 
-  public static @Nullable List<PsiElement> multiResolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+  public static @NotNull List<@NotNull PsiElement> multiResolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
     final PsiElement element = reference.getElement();
 
     final var context = resolveContext.getTypeEvalContext();
@@ -534,7 +528,7 @@ public final class PyResolveUtil {
 
         final var constructor = ContainerUtil.find(
           PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext)),
-          it -> it instanceof PyPossibleClassMember && ((PyPossibleClassMember)it).getContainingClass() == cls
+          it -> it instanceof PyPossibleClassMember possibleClassMember && possibleClassMember.getContainingClass() == cls
         );
 
         if (constructor != null) {
@@ -544,16 +538,16 @@ public final class PyResolveUtil {
     }
 
     if (reference instanceof PsiPolyVariantReference multiReference) {
-      return Stream.of(multiReference.multiResolve(false)).map(result -> result.getElement()).toList();
+      return PyUtil.multiResolveTopPriority(multiReference);
     }
     final var result = reference.resolve();
-    if (result == null) return null;
+    if (result == null) return List.of();
     return List.of(result);
   }
 
   public static @Nullable PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
     final var result = multiResolveDeclaration(reference, resolveContext);
-    if (result == null || result.isEmpty()) return null;
+    if (result.isEmpty()) return null;
     return result.get(0);
   }
 

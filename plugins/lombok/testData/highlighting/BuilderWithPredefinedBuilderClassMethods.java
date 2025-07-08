@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class BuilderWithPredefinedBuilderClassMethods {
-  public static void main(String[] args) {
+  public static void main() {
     new BuilderWithPredefinedBuilderClassMethods().test();
     System.out.println(new MathContext(1).getSomeInt());
   }

@@ -96,7 +96,7 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
     public @Nls @Nullable String vetoPluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor) {
       if (activeExecutionCount.get() > 0 &&
           PluginId.getId("com.jetbrains.performancePlugin").equals(pluginDescriptor.getPluginId())) {
-        return "Cannot unload plugin during playback execution";
+        return PerformanceTestingBundle.message("performancePlugin.can.not.be.unloaded");
       }
       return null;
     }

@@ -30,9 +30,11 @@ import java.util.function.Predicate;
  */
 public final class PlainDescriptor extends PsiVarDescriptor {
   private final @NotNull PsiVariable myVariable;
+  private final int myHash;
 
   public PlainDescriptor(@NotNull PsiVariable variable) {
     myVariable = variable;
+    myHash = System.identityHashCode(variable);
   }
 
   @Override
@@ -82,7 +84,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myVariable.getName());
+    return myHash;
   }
 
   @Override

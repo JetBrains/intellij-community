@@ -46,7 +46,6 @@ jvm_library(
     "//xml/impl",
     "//java/openapi:java",
     "@lib//:guava",
-    "@lib//:xerces",
     "//platform/observable",
     "//spellchecker",
     "//plugins/properties/properties-psi-api:psi",
@@ -91,6 +90,7 @@ jvm_library(
     "//platform/markdown-utils",
     "@lib//:snakeyaml",
     "//platform/eel-provider",
+    "//libraries/xerces",
   ],
   runtime_deps = [":core_resources"]
 )

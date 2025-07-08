@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -136,11 +137,7 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
             val implementingIdeaModules = module.openapiModule.implementingModules
 
             val moduleKind = module.sourceModuleKind
-            if (moduleKind != null) {
-                return implementingIdeaModules.mapNotNull { it.toKaSourceModule(moduleKind) }
-            } else {
-                return implementingIdeaModules.mapNotNull { it.toKaSourceModuleForProductionOrTest() }
-            }
+            return implementingIdeaModules.mapNotNull { it.toKaSourceModule(moduleKind) }
         }
 
         return emptyList()
@@ -234,11 +231,11 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
 
     override fun getKaSourceModule(
         moduleId: ModuleId,
-        type: KaSourceModuleKind
+        kind: KaSourceModuleKind
     ): KaSourceModule? {
         val snapshot = project.workspaceModel.currentSnapshot
         val openapiModule = moduleId.resolve(snapshot)?.findModule(snapshot) ?: return null
-        return getKaSourceModule(openapiModule, type)
+        return getKaSourceModule(openapiModule, kind)
     }
 
     override fun getKaSourceModule(
@@ -248,12 +245,6 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
         val snapshot = project.workspaceModel.currentSnapshot
         val openapiModule = moduleEntity.findModule(snapshot) ?: return null
         return getKaSourceModule(openapiModule, kind)
-    }
-
-    override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
-        require(module is KtSourceModuleByModuleInfo)
-        val moduleInfo = module.moduleInfo as ModuleSourceInfo
-        return moduleInfo.sourceModuleKind
     }
 
     override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {
@@ -270,6 +261,24 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
             KaSourceModuleKind.TEST -> openapiModule.testSourceInfo
         } ?: return null
         return getKtModuleByModuleInfo(moduleInfo) as KtSourceModuleByModuleInfo
+    }
+
+    override fun getKaSourceModules(moduleId: ModuleId): List<KaSourceModule> {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val openapiModule = moduleId.resolve(snapshot)?.findModule(snapshot) ?: return emptyList()
+        return getKaSourceModules(openapiModule)
+    }
+
+    override fun getKaSourceModules(moduleEntity: ModuleEntity): List<KaSourceModule> {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val openapiModule = moduleEntity.findModule(snapshot) ?: return emptyList()
+        return getKaSourceModules(openapiModule)
+    }
+
+    override fun getKaSourceModules(openapiModule: Module): List<KaSourceModule> {
+        val productionModule = getKaSourceModule(openapiModule, KaSourceModuleKind.PRODUCTION)
+        val testModule = getKaSourceModule(openapiModule, KaSourceModuleKind.TEST)
+        return listOfNotNull(productionModule, testModule)
     }
 
     override fun getOpenapiModule(module: KaSourceModule): Module {
@@ -329,6 +338,8 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
         val kotlinLibrary = (module.moduleInfo as? AbstractKlibLibraryInfo)?.resolvedKotlinLibrary ?: return emptyList()
         return listOf(kotlinLibrary)
     }
+
+    override fun getCacheDependenciesTracker(): ModificationTracker = ProjectRootModificationTracker.getInstance(project)
 
     companion object {
         // TODO maybe introduce some cache?

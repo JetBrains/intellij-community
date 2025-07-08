@@ -4,7 +4,7 @@ package com.intellij.compose.ide.plugin.k2.highlighting
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.compose.ide.plugin.shared.COMPOSABLE_ANNOTATION_CLASS_ID
 import com.intellij.compose.ide.plugin.shared.highlighting.COMPOSABLE_CALL_TEXT_TYPE
-import com.intellij.compose.ide.plugin.shared.isComposeEnabledInModule
+import com.intellij.compose.ide.plugin.shared.isComposeEnabledForElementModule
 import com.intellij.compose.ide.plugin.shared.isElementInLibrarySource
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -29,7 +29,7 @@ internal class ComposableFunctionCallHighlighterExtension : KotlinCallHighlighte
     val memberCall = call as? KaCallableMemberCall<*, *> ?: return null
     if (!isComposableInvocation(memberCall)) return null
 
-    return if (isComposeEnabledInModule(elementToHighlight) || isElementInLibrarySource(elementToHighlight))
+    return if (isComposeEnabledForElementModule(elementToHighlight) || isElementInLibrarySource(elementToHighlight))
       COMPOSABLE_CALL_TEXT_TYPE
     else null
   }

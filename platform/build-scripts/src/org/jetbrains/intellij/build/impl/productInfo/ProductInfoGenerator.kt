@@ -8,7 +8,6 @@ import com.intellij.platform.buildData.productInfo.ProductFlavorData
 import com.intellij.platform.buildData.productInfo.ProductInfoData
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
-import com.jetbrains.plugin.structure.base.utils.exists
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildContext
@@ -24,6 +23,7 @@ import java.nio.file.attribute.FileTime
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 const val PRODUCT_INFO_FILE_NAME: String = "product-info.json"
 

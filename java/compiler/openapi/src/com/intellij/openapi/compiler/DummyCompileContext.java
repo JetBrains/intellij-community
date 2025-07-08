@@ -65,20 +65,6 @@ public class DummyCompileContext implements CompileContext {
   }
 
   @Override
-  public void requestRebuildNextTime(String message) {
-  }
-
-  @Override
-  public boolean isRebuildRequested() {
-    return false;
-  }
-
-  @Override
-  public @Nullable String getRebuildReason() {
-    return null;
-  }
-
-  @Override
   public Module getModuleByFile(@NotNull VirtualFile file) {
     return null;
   }

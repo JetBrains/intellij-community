@@ -58,6 +58,7 @@ import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -91,7 +92,9 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected void tearDown() throws Exception {
     try {
       if (myFixture != null) {
-        PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        if (myFixture.getModule() != null) {
+          PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        }
         PyModuleNameCompletionContributor.ENABLED = true;
         setLanguageLevel(null);
 
@@ -360,7 +363,12 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected static void assertNotParsed(PsiFile file) {
     assertInstanceOf(file, PyFileImpl.class);
-    assertNull("Operations should have been performed on stubs but caused file to be parsed: " + file.getVirtualFile().getPath(),
+    VirtualFile virtualFile = file.getVirtualFile();
+    String path = virtualFile.getPath();
+    String name = virtualFile.getName();
+    String errorMessage = "Operations should have been performed on stubs but caused file to be parsed: " + path;
+    String tip = "As a starting point for an investigation, a breakpoint can be set in com.intellij.psi.impl.source.PsiFileImpl#loadTreeElement with a condition `getName().equals(\"" + name + "\")`.\nThen the stacktrace can be investigated to find the root cause.";
+    assertNull(errorMessage + "\n" + tip,
                ((PyFileImpl)file).getTreeElement());
   }
 

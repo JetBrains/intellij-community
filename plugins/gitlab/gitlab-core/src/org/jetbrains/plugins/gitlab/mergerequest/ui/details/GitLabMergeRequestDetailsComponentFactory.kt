@@ -33,6 +33,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabCommitViewModel
@@ -47,12 +48,13 @@ import javax.swing.JPanel
 
 @ApiStatus.Internal
 object GitLabMergeRequestDetailsComponentFactory {
-  internal fun createDetailsComponent(
+  fun createDetailsComponent(
     project: Project,
     scope: CoroutineScope,
     detailsLoadingVm: GitLabMergeRequestDetailsLoadingViewModel,
     accountVm: GitLabAccountViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    withTitle: Boolean = true,
   ): JComponent {
     return Wrapper(LoadingLabel()).apply {
       isOpaque = false
@@ -66,7 +68,7 @@ object GitLabMergeRequestDetailsComponentFactory {
           }
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
             val detailsVm = loadingState.detailsVm
-            val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
+            val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider, withTitle).apply {
               setupDetailsComponent(this@bindContentIn, detailsVm)
             }
 
@@ -81,6 +83,7 @@ object GitLabMergeRequestDetailsComponentFactory {
     project: Project,
     detailsVm: GitLabMergeRequestDetailsViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    withTitle: Boolean,
   ): JComponent {
     val cs = this
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
@@ -88,14 +91,20 @@ object GitLabMergeRequestDetailsComponentFactory {
 
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
 
-    val title = CodeReviewDetailsTitleComponentFactory.create(cs, detailsVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
-                                                              htmlPaneFactory = {
-                                                                SimpleHtmlPane(addBrowserListener = false).apply {
-                                                                  addGitLabHyperlinkListener(project)
-                                                                }
-                                                              })
-    val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
-      detailsVm.showTimeline()
+    val titlePanel = if (withTitle) {
+      val title = CodeReviewDetailsTitleComponentFactory.create(cs, detailsVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
+                                                                htmlPaneFactory = {
+                                                                  SimpleHtmlPane(addBrowserListener = false).apply {
+                                                                    addGitLabHyperlinkListener(project)
+                                                                  }
+                                                                })
+      val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
+        detailsVm.showTimeline()
+      }
+      ReviewDetailsUIUtil.createTitlePanel(title, timelineLink)
+    }
+    else {
+      null
     }
 
     val commitsAndBranches = createCommitAndBranchesComponent(cs, changesVm, detailsVm.branchesVm)
@@ -114,8 +123,10 @@ object GitLabMergeRequestDetailsComponentFactory {
       background = UIUtil.getListBackground()
 
 
-      add(ReviewDetailsUIUtil.createTitlePanel(title, timelineLink),
-          CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
+      if (titlePanel != null) {
+        add(titlePanel,
+            CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
+      }
       add(commitsAndBranches,
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(createChangesComponent(project, cs, changesVm), CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
@@ -128,7 +139,7 @@ object GitLabMergeRequestDetailsComponentFactory {
     }
   }
 
-  fun createErrorComponent(
+  private fun createErrorComponent(
     cs: CoroutineScope,
     detailsLoadingVm: GitLabMergeRequestDetailsLoadingViewModel,
     loadingState: GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error,
@@ -138,13 +149,14 @@ object GitLabMergeRequestDetailsComponentFactory {
       accountVm,
       swingAction(GitLabBundle.message("merge.request.reload")) {
         detailsLoadingVm.reloadData()
-      })
+      },
+      GitLabLoginSource.MR_DETAILS)
     val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(loadingState.exception), errorPresenter)
     CollaborationToolsUIUtil.moveToCenter(errorPanel)
     return errorPanel
   }
 
-  fun JComponent.setupDetailsComponent(
+  private fun JComponent.setupDetailsComponent(
     cs: CoroutineScope,
     detailsVm: GitLabMergeRequestDetailsViewModel,
   ) {
@@ -162,7 +174,7 @@ object GitLabMergeRequestDetailsComponentFactory {
     }
   }
 
-  fun createCommitAndBranchesComponent(
+  private fun createCommitAndBranchesComponent(
     cs: CoroutineScope,
     changesVm: GitLabMergeRequestChangesViewModel,
     branchesVm: CodeReviewBranchesViewModel,
@@ -176,7 +188,7 @@ object GitLabMergeRequestDetailsComponentFactory {
     }
   }
 
-  fun createChangesComponent(project: Project, cs: CoroutineScope, changesVm: GitLabMergeRequestChangesViewModel): JComponent {
+  private fun createChangesComponent(project: Project, cs: CoroutineScope, changesVm: GitLabMergeRequestChangesViewModel): JComponent {
     return CodeReviewDetailsCommitInfoComponentFactory.create(
       cs, changesVm.selectedCommit,
       commitPresentation = { commit ->

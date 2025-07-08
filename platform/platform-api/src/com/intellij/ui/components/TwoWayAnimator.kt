@@ -3,7 +3,9 @@ package com.intellij.ui.components
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.ui
 import com.intellij.util.ui.Animator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -57,7 +59,7 @@ abstract class TwoWayAnimator(
 
   fun start(forward: Boolean) {
     if (job == null) {
-      val context = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
+      val context = Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.defaultModalityState().asContextElement()
       job = coroutineScope.launch {
         animateRequests.collectLatest { animator ->
           if (animator == null) return@collectLatest

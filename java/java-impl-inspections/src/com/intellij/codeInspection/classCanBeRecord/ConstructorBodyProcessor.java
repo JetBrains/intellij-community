@@ -1,13 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
-import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -18,6 +20,7 @@ import static com.intellij.psi.PsiModifier.STATIC;
 
 @NotNullByDefault
 final class ConstructorBodyProcessor {
+  private final PsiClass containingClass;
   private final PsiMethod constructor;
   private final Map<PsiParameter, @Nullable PsiField> paramsToFields = new HashMap<>();
   // TODO(bartekpacia): change type to SequencedMap once we move to Java 21
@@ -28,16 +31,23 @@ final class ConstructorBodyProcessor {
   private boolean delegating = false;
   private boolean hasUnresolvedRefs = false;
   private boolean tooComplex = false;
+
+  /// Even if false, it doesn't necessarily mean that conversion to record isn't possible.
+  ///
+  /// It is OK to have statements before all fields are assigned if:
+  ///  - this constructor is a canonical constructor, OR
+  ///  - (JDK 25+) this statement is in constructor prologue (see JEP 513)
   private boolean statementsBeforeAllFieldsAssigned = false;
   private final List<PsiStatement> otherStatements = new ArrayList<>();
   private final MultiMap<PsiField, PsiParameter> fieldsToParams = new MultiMap<>();
 
   ConstructorBodyProcessor(PsiMethod constructor,
                            List<PsiField> instanceFields) {
+    this.containingClass = Objects.requireNonNull(constructor.getContainingClass(), "constructor must have containing class");
     this.constructor = constructor;
     this.instanceFields = instanceFields;
-    assert constructor.getBody() != null; // The caller asserts this
-    for (PsiStatement statement : constructor.getBody().getStatements()) {
+    final PsiCodeBlock body = Objects.requireNonNull(constructor.getBody(), "constructor must have body");
+    for (PsiStatement statement : body.getStatements()) {
       execute(statement);
     }
 
@@ -51,25 +61,37 @@ final class ConstructorBodyProcessor {
     }
     final PsiExpression expression = expressionStatement.getExpression();
 
-    // Is it an assignment expression to an instance field?
-    // If not, then all instance variables must already be assigned.
-    if (!expressionIsAssignmentToInstanceField(expression) && !expressionIsDelegatingConstructorCall(expression) && !delegating) {
-      otherStatements.add(statement);
-
-      // If not all instance fields are assigned up to this point,
-      // then this constructor cannot be converted to a non-canonical record constructor.
-      if (fieldNamesToInitializers.size() < instanceFields.size()) {
-        statementsBeforeAllFieldsAssigned = true;
-        // It is OK to have statements before all fields are assigned if this constructor is a canonical constructor.
+    if (expression instanceof PsiMethodCallExpression methodCallExpr && JavaPsiConstructorUtil.isChainedConstructorCall(methodCallExpr)) {
+      delegating = true;
+      for (PsiExpression arg : methodCallExpr.getArgumentList().getExpressions()) {
+        if (hasReferenceToContainingClass(containingClass, arg)) {
+          statementsBeforeAllFieldsAssigned = true;
+        }
       }
       return;
     }
 
-    if (expression instanceof PsiMethodCallExpression methodCallExpr) {
-      if (JavaPsiConstructorUtil.isChainedConstructorCall(methodCallExpr)) {
-        delegating = true;
-        return;
+    // Is it an assignment expression to an instance field?
+    if (!expressionIsAssignmentToInstanceField(expression) && !delegating) {
+      // It is NOT an assignment expression to an instance field.
+      // This means that:
+      //  - all instance variables must be already initialized, OR
+      //  - (JDK 25+) this statement is inside early construction context, more specifically: in constructor prologue (see JEP 513).
+      //      This means that it must NOT use use 'this', either implicitly or explicitly, except for simple assignment statements.
+
+      otherStatements.add(statement);
+      if (fieldNamesToInitializers.isEmpty() && PsiUtil.isAvailable(JavaFeature.STATEMENTS_BEFORE_SUPER, statement)) {
+        PsiExpression exprToConsider = expression instanceof PsiAssignmentExpression assignExpr ? assignExpr.getRExpression() : expression;
+        if (hasReferenceToContainingClass(containingClass, exprToConsider)) {
+          statementsBeforeAllFieldsAssigned = true;
+        }
       }
+      else if (fieldNamesToInitializers.size() < instanceFields.size()) {
+        // If not all instance fields are assigned up to this point,
+        // then this constructor cannot be converted to a non-canonical record constructor.
+        statementsBeforeAllFieldsAssigned = true;
+      }
+      return;
     }
 
     if (!(expression instanceof PsiAssignmentExpression assignExpr)) return;
@@ -218,17 +240,32 @@ final class ConstructorBodyProcessor {
     return true;
   }
 
-  private static boolean expressionIsDelegatingConstructorCall(PsiExpression expr) {
-    if (!(expr instanceof PsiMethodCallExpression methodCallExpr)) return false;
-    return JavaKeywords.THIS.equals(methodCallExpr.getMethodExpression().getReferenceName()) ||
-           JavaKeywords.SUPER.equals(methodCallExpr.getMethodExpression().getReferenceName());
-  }
-
   private static boolean expressionIsAssignmentToInstanceField(PsiExpression expr) {
     if (!(expr instanceof PsiAssignmentExpression assignExpr)) return false;
     PsiExpression leftExpr = assignExpr.getLExpression();
-    if (!(leftExpr instanceof PsiReferenceExpression)) return false;
-    PsiElement resolved = ((PsiReferenceExpression)leftExpr).resolve();
-    return resolved instanceof PsiField && !((PsiField)resolved).hasModifierProperty(STATIC);
+    if (!(leftExpr instanceof PsiReferenceExpression referenceExpr)) return false;
+    PsiElement resolved = referenceExpr.resolve();
+    return resolved instanceof PsiField psiField && !psiField.hasModifierProperty(STATIC);
+  }
+
+  private static boolean hasReferenceToContainingClass(@NotNull PsiClass containingClass, @Nullable PsiExpression expression) {
+    if (expression == null) return false;
+    Ref<Boolean> hasReferenceToClassUnderConstruction = new Ref<>(false);
+    expression.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiField field && !field.hasModifierProperty(STATIC) && field.getContainingClass() == containingClass) {
+          hasReferenceToClassUnderConstruction.set(true);
+        }
+        else if (resolved instanceof PsiMethod method &&
+                 !method.hasModifierProperty(STATIC) &&
+                 method.getContainingClass() == containingClass) {
+          hasReferenceToClassUnderConstruction.set(true);
+        }
+      }
+    });
+    return hasReferenceToClassUnderConstruction.get();
   }
 }

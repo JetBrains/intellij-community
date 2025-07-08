@@ -39,6 +39,9 @@
 *:com.intellij.codeInsight.multiverse.MultiverseEnabler
 - a:enableMultiverse(com.intellij.openapi.project.Project):Z
 *:com.intellij.ide.lightEdit.LightEditCompatible
+com.intellij.ide.plugins.DynamicPluginListener
+- *:beforePluginsLoaded():V
+- *:pluginsLoaded():V
 *e:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - java.lang.Enum
 - *sf:Companion:com.intellij.ide.plugins.IdeaPluginOsRequirement$Companion

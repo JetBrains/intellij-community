@@ -3,6 +3,7 @@ package com.intellij.polySymbols.documentation
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationBuilderImpl
@@ -119,7 +120,7 @@ interface PolySymbolDocumentation {
 
     @JvmStatic
     fun create(
-      symbol: PolySymbolWithDocumentation,
+      symbol: PolySymbol,
       location: PsiElement?,
       builder: (PolySymbolDocumentationBuilder.() -> Unit),
     ): PolySymbolDocumentation =
@@ -128,8 +129,8 @@ interface PolySymbolDocumentation {
         .build()
 
     @JvmStatic
-    fun create(
-      symbol: PolySymbolWithDocumentation,
+    fun builder(
+      symbol: PolySymbol,
       location: PsiElement?,
     ): PolySymbolDocumentationBuilder =
       PolySymbolDocumentationBuilderImpl(symbol, location)

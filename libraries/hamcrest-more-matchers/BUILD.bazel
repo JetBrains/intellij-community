@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.libraries.hamcrest.more.matchers` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "hamcrest-more-matchers_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "hamcrest-more-matchers",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   exports = ["@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers"],
   runtime_deps = [
     ":hamcrest-more-matchers_resources",

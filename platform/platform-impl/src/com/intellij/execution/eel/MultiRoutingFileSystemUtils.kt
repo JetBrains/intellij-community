@@ -2,12 +2,10 @@
 package com.intellij.execution.eel
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import org.jetbrains.annotations.ApiStatus
-import java.io.BufferedReader
 import java.nio.file.FileSystems
 import kotlin.io.path.bufferedReader
 
@@ -18,7 +16,7 @@ object MultiRoutingFileSystemUtils {
   val isMultiRoutingFsEnabled: Boolean by lazy {
     val defaultProvider = FileSystems.getDefault().provider()
     when {
-      defaultProvider.javaClass.name == MultiRoutingFileSystemProvider::class.java.name -> true
+      defaultProvider is MultiRoutingFileSystemProvider -> true
       else -> {
         val vmOptions = runCatching {
           VMOptions.getUserOptionsFile()?.bufferedReader()?.use { it.readText() }

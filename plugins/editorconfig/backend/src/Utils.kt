@@ -4,19 +4,24 @@ package org.editorconfig
 import com.intellij.application.options.CodeStyle
 import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -43,6 +48,7 @@ object Utils {
   // TODO Ec4j has nicer mechanisms to handle "unset", but does not know "none", could it be extended?
   private val UNSET_VALUES = arrayOf("none", "unset")
   private var ourIsFullSettingsSupportEnabledInTest = false
+  private val EDITOR_CONFIGS = Key.create<List<VirtualFile>>("EDITOR_CONFIGS")
 
   @TestOnly
   @JvmStatic
@@ -159,7 +165,7 @@ object Utils {
   }
 
   fun getLineSeparatorString(separator: String): String? =
-    LineSeparator.values()
+    LineSeparator.entries
       .find { separator == it.separatorString }
       ?.let { StringUtil.toLowerCase(it.name) }
 
@@ -230,12 +236,45 @@ object Utils {
   fun isApplicableTo(virtualFile: VirtualFile): Boolean =
     virtualFile.run { isInLocalFileSystem && isValid }
 
+  fun isEditorConfigName(name: String?): Boolean =
+    EDITOR_CONFIG_FILE_NAME.equals(name, ignoreCase = true)
+
   fun isEditorConfigFile(virtualFile: VirtualFile): Boolean =
-    EDITOR_CONFIG_FILE_NAME.equals(virtualFile.name, ignoreCase = true)
+    isEditorConfigName(virtualFile.name)
 
   fun isEnabledFor(project: Project, virtualFile: VirtualFile): Boolean {
     return isEnabled(CodeStyle.getSettings(project)) &&
            isApplicableTo(virtualFile) && !isEditorConfigFile(virtualFile) &&
            (!ApplicationManager.getApplication().isUnitTestMode() || isEnabledInTests)
+  }
+
+  fun processEditorConfig(project: Project, file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+    EDITOR_CONFIGS.set(file, null)
+    val filePath = getFilePath(project, file)
+    if (filePath != null) {
+      val propertiesAndEditorConfigs = EditorConfigPropertiesService.getInstance(project).getPropertiesAndEditorConfigs(file)
+      EDITOR_CONFIGS.set(file, propertiesAndEditorConfigs.second)
+      return propertiesAndEditorConfigs
+    }
+    else if (VfsUtilCore.isBrokenLink(file)) {
+      thisLogger().warn("${file.presentableUrl} is a broken link")
+    }
+    thisLogger().debug { "null filepath for ${file.name}" }
+    return Pair(ResourceProperties.Builder().build(), emptyList())
+  }
+
+  fun relatedEditorConfigFiles(vCodeFile: VirtualFile): List<VirtualFile> {
+    return EDITOR_CONFIGS.get(vCodeFile)?: emptyList()
+  }
+  
+  fun hasEditorConfig(file: PsiFile): Boolean = relatedEditorConfigFiles(file.virtualFile).isNotEmpty()
+
+  fun fireEditorConfigChanged(project: Project) {
+    if (!project.isDisposed) {
+      val editorConfigPropertiesService = EditorConfigPropertiesService.getInstance(project)
+      editorConfigPropertiesService.clearCache()
+      editorConfigPropertiesService.incModificationCount()
+      CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged()
+    }
   }
 }

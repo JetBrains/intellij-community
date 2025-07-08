@@ -58,11 +58,6 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   @Override
-  public boolean validateConfiguration(CompileScope scope) {
-    return true;
-  }
-
-  @Override
   public ProcessingItem @NotNull [] getProcessingItems(final @NotNull CompileContext context) {
     final Project project = context.getProject();
     GuiDesignerConfiguration designerConfiguration = GuiDesignerConfiguration.getInstance(project);

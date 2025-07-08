@@ -34,7 +34,7 @@ public final class XDebuggerTreePanel implements DnDSource {
                             final @NotNull @NonNls String popupActionGroupId, @Nullable XValueMarkers<?, ?> markers) {
     myTree = new XDebuggerTree(project, editorsProvider, sourcePosition, popupActionGroupId, markers);
     myMainPanel = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
     myContentComponent = DebuggerUIUtil.wrapWithAntiFlickeringPanel(scrollPane);
     myMainPanel.add(myContentComponent, BorderLayout.CENTER);
     Disposer.register(parentDisposable, myTree);

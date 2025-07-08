@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gradle.dsl.notations
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleDependencyNotationTest : GradleCodeInsightTestCase() {
@@ -55,8 +57,14 @@ class GradleDependencyNotationTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testRecognizeDependency(gradleVersion: GradleVersion) {
+    assumeThatGradleIsOlderThan(gradleVersion, "9.0") {
+      """
+      ClientModule dependencies were a legacy precursor to ComponentMetadataRules, and have since been replaced and removed in Gradle 9.0.
+      See gradle/pull/32743 for more information. 
+      """.trimIndent()
+    }
     testJavaProject(gradleVersion) {
       codeInsightFixture.enableInspections(GradleIncorrectDependencyNotationArgumentInspection::class.java)
       testHighlighting("dependencies { implementation(module('org.apache.groovy:groovy:4.0.0')) }")

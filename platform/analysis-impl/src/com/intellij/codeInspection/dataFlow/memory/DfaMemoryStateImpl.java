@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.dataFlow.memory;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
@@ -213,11 +212,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (qualifier != null && !var.getDescriptor().isStable()) {
       flushFields(new QualifierStatusMap(Set.of(qualifier), var.getDescriptor(), dfType));
     }
-    if (value instanceof DfaVariableValue varValue && !ControlFlow.isTempVariable(var) &&
-        !ControlFlow.isTempVariable(varValue) &&
-        (qualifier == null || !ControlFlow.isTempVariable(qualifier))) {
-      // assigning a = b when b is known to be null: could be ephemeral
-      checkEphemeral(var, value);
+    if (value instanceof DfaVariableValue varValue && !DfaValueFactory.isTempVariable(var)) {
+      if (!DfaValueFactory.isTempVariable(varValue) &&
+          (qualifier == null || !DfaValueFactory.isTempVariable(qualifier))) {
+        // assigning a = b when b is known to be null: could be ephemeral
+        checkEphemeral(var, value);
+      }
     }
     recordVariableType(var, dfType);
     applyBinOpRelations(value, RelationType.EQ, var);
@@ -1528,13 +1528,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else {
       DfaVariableValue newCanonical = varClass.getCanonicalVariable();
-      if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical &&
-          (ControlFlow.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
-           newCanonical.getDepth() <= previousCanonical.getDepth())) {
-        // Do not transfer to deeper qualifier. E.g., if we have two classes like (a, b.c) (a.d, e),
-        // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
-        boolean successfullyConverted = convertQualifiers(previousCanonical, newCanonical);
-        assert successfullyConverted;
+      if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical) {
+        if (DfaValueFactory.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
+         newCanonical.getDepth() <= previousCanonical.getDepth()) {
+          // Do not transfer to deeper qualifier. E.g., if we have two classes like (a, b.c) (a.d, e),
+          // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
+          boolean successfullyConverted = convertQualifiers(previousCanonical, newCanonical);
+          assert successfullyConverted;
+        }
       }
     }
 

@@ -118,5 +118,11 @@ object SearchEverywhereMlExperiment {
      * (see, for example, IJPL-171760 or IJPL-55751)
      */
     object ExactMatchManualFix : ActiveExperiment(true)
+
+    /**
+     * An experiment group that combines both EssentialContributorPrediction and ExperimentalModel
+     * functionality for the All tab.
+     */
+    object CombinedExperiment : ActiveExperiment(true)
   }
 }

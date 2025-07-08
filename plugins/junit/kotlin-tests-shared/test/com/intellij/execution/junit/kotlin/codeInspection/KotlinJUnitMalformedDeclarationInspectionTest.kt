@@ -116,11 +116,11 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         }
     """.trimIndent(), "Fix 'B' class signature", testPreview = true)
   }
-  fun `test highlighting non executable JUnit 4 nested class`() {
+  fun `test highlighting executable JUnit 4 nested class`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
       class A { 
-        class <error descr="Tests in nested class will not be executed">B</error> { 
+        class B { 
           @org.junit.Test
           fun testFoo() { }
         }
@@ -138,24 +138,24 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
       }  
     """.trimIndent())
   }
-  fun `test highlighting non executable JUnit 4 nested class top level abstract`() {
+  fun `test highlighting executable JUnit 4 nested class top level abstract`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
       abstract class A {
         class B {
-          class <error descr="Tests in nested class will not be executed">C</error> {
+          class C {
             @org.junit.Test
             fun testFoo() { }
           }
         }
-      }  
+      }
     """.trimIndent())
   }
   fun `test quickfix no nested annotation in JUnit 4`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """ 
       class A {
-          class <caret>B { 
+          inner class <caret>B { 
               @org.junit.Test
               fun testFoo() { }
           }
@@ -177,7 +177,12 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
       class A {
-          class <error descr="Tests in nested class will not be executed">B</error> { 
+          inner class <error descr="Tests in nested class will not be executed">B</error> { 
+              @org.junit.jupiter.api.Test
+              fun testFoo() { }
+          }
+          
+          class C { 
               @org.junit.jupiter.api.Test
               fun testFoo() { }
           }
@@ -575,6 +580,10 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("stream")
         fun simpleStream(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("stream()")
+        fun withBraces(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("iterable")
@@ -606,9 +615,48 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
-        fun injectTestReporter(x: Int, testReporter: org.junit.jupiter.api.TestReporter) { 
-          System.out.println("${'$'}x, ${'$'}testReporter") 
+        fun injectTestReporter(x: Int, testReporter: org.junit.jupiter.api.TestReporter) { System.out.println("${'$'}x, ${'$'}testReporter") }
+
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
+        fun intStreamProvider(x: Int, testReporter: org.junit.jupiter.api.TestReporter) { System.out.println("${'$'}x, ${'$'}testReporter") }
+        
+        @PerClass
+        abstract class PerClassBase1 {
+            fun getParameters() = java.util.stream.Stream.of("Another execution", "Last execution")
         }
+
+        class PerClassTest1 : PerClassBase1() {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.MethodSource("getParameters")
+            fun shouldExecuteWithParameterizedMethodSource(arguments: String) = Unit
+        }
+
+        abstract class PerClassBase2 {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.MethodSource("getParameters")
+            fun shouldExecuteWithParameterizedMethodSource(arguments: String) = Unit
+        }
+
+        @PerClass
+        class PerClassTest2 : PerClassBase2() {
+            fun getParameters() = java.util.stream.Stream.of("Another execution", "Last execution")
+        }
+
+        abstract class PerClassBase3 {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.MethodSource("getParameters")
+            fun shouldExecuteWithParameterizedMethodSource(arguments: String) = Unit
+
+            fun getParameters() = java.util.stream.Stream.of("Another execution", "Last execution")
+        }
+
+        @PerClass
+        class PerClassTest3 : PerClassBase3()
+
+        @kotlin.annotation.Retention(kotlin.annotation.AnnotationRetention.RUNTIME)
+        @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
+        annotation class PerClass
 
         companion object {
           @JvmStatic
@@ -1793,7 +1841,7 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         @org.junit.Test public fun <error descr="Method 'testFour' annotated with '@Test' should not declare parameter 'i'">testFour</error>(i: Int) { }
         @org.junit.Test public fun testFive() { }
         @org.junit.Test public fun testMock(@mockit.Mocked s: String) { }
-        companion <error descr="Test class 'object' is not constructable because it should have exactly one 'public' no-arg constructor"><error descr="Tests in nested class will not be executed">object</error></error> {
+        companion <error descr="Test class 'object' is not constructable because it should have exactly one 'public' no-arg constructor">object</error> {
           @JvmStatic
           @org.junit.Test public fun <error descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</error>() { }
         }

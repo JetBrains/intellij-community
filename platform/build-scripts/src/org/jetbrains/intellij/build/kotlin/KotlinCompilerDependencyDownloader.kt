@@ -17,7 +17,7 @@ import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
 import kotlin.io.path.name
 
-private const val MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+private const val MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/intellij-dependencies"
 private const val ARTIFACT_GROUP_ID = "org.jetbrains.kotlin"
 
 object KotlinCompilerDependencyDownloader {

@@ -17,7 +17,7 @@ class LogicalStructureAssembledModel<T> private constructor(
 ) {
 
   companion object {
-    fun <T> getInstance(project: Project, root: T): LogicalStructureAssembledModel<T> {
+    fun <T: Any> getInstance(project: Project, root: T): LogicalStructureAssembledModel<T> {
       return LogicalStructureAssembledModel(project, root, null)
     }
   }
@@ -39,6 +39,47 @@ class LogicalStructureAssembledModel<T> private constructor(
         model.getElements().map { LogicalStructureAssembledModel(project, it, parent) },
         result
       )
+    }
+    return result
+  }
+
+  fun hasChildren(): Boolean {
+    if (model is LogicalContainer<*> && model.getElements().isNotEmpty()) {
+      return true
+    }
+    for (provider in LogicalStructureElementsProvider.getProviders(model!!)) {
+      if (provider is ExternalElementsProvider<*, *> || provider.getElements(model).isNotEmpty()) return true
+    }
+    return false
+  }
+
+  fun getLogicalPsiDescriptions(): Set<LogicalPsiDescription> {
+    return model?.let { getLogicalPsiDescriptions(it) } ?: emptySet()
+  }
+
+  private fun getLogicalPsiDescriptions(model: Any): Set<LogicalPsiDescription> {
+    val result = mutableSetOf<LogicalPsiDescription>()
+    if (model is LogicalPsiDescription) {
+      if (!model.isAskChildren()) {
+        return setOf(model)
+      }
+      else {
+        result.add(model)
+      }
+    }
+    for (provider in LogicalStructureElementsProvider.getProviders(model)) {
+      if (provider is LogicalPsiDescription) {
+        if (!provider.isAskChildren()) {
+          return setOf(provider)
+        }
+        else {
+          result.add(provider)
+        }
+      }
+      if (provider is ExternalElementsProvider<*, *>) continue
+      provider.getElements(model).forEach { child ->
+        result.addAll(getLogicalPsiDescriptions(child))
+      }
     }
     return result
   }

@@ -42,12 +42,22 @@ maven.install(
 )
 use_repo(maven, "j2b_maven")
 
-bazel_dep(name = "hermetic_cc_toolchain", version = "3.2.0")
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 
 toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-use_repo(toolchains, "zig_sdk", "zig_sdk-linux-amd64", "zig_sdk-linux-arm64", "zig_sdk-macos-amd64", "zig_sdk-macos-arm64", "zig_sdk-windows-amd64")
+
+use_repo(toolchains, "zig_sdk")
 
 register_toolchains(
     "@zig_sdk//toolchain/...",
     "@zig_sdk//libc_aware/toolchain/...",
+)
+
+# allows aarch64 windows as a valid platform, uses x64 python in that case
+# https://github.com/JetBrains/rules_python/commit/92bf73a6867f143c5af49274f02140d118b84bb0
+bazel_dep(name = "rules_python", version = "1.4.1")
+git_override(
+    module_name = "rules_python",
+    remote = "https://github.com/JetBrains/rules_python.git",
+    commit = "92bf73a6867f143c5af49274f02140d118b84bb0"
 )

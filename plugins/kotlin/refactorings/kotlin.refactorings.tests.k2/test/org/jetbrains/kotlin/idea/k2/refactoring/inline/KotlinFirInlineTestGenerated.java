@@ -844,6 +844,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 public void testWhen() throws Exception {
                     runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/when.kt");
                 }
+
+                @TestMetadata("withContextParameters.kt")
+                public void testWithContextParameters() throws Exception {
+                    runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/withContextParameters.kt");
+                }
+
+                @TestMetadata("withContextParametersNamed.kt")
+                public void testWithContextParametersNamed() throws Exception {
+                    runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/withContextParametersNamed.kt");
+                }
             }
         }
 
@@ -2758,6 +2768,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             @TestMetadata("varargrsWithSpread.kt")
             public void testVarargrsWithSpread() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/varargrsWithSpread.kt");
+            }
+
+            @TestMetadata("withContextParameters.kt")
+            public void testWithContextParameters() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withContextParameters.kt");
+            }
+
+            @TestMetadata("withContextParameters1.kt")
+            public void testWithContextParameters1() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withContextParameters1.kt");
             }
 
             @TestMetadata("withImportAlias.kt")

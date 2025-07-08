@@ -37,7 +37,9 @@
 
     <!-- Typing -->
     <applicationService serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
+    <applicationService serviceImplementation="com.intellij.json.editor.folding.JsonFoldingSettings"/>
     <applicationSettings service="com.intellij.json.editor.JsonEditorOptions"/>
+    <codeFoldingOptionsProvider instance="com.intellij.json.editor.folding.JsonFoldingOptionsProvider"/>
     <rdct.remoteSettingProvider implementation="com.intellij.json.editor.JSONRemoteSettingInfoProvider"/>
 
     <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable" id="editor.preferences.jsonOptions"/>

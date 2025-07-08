@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.ide.DataManager;
@@ -19,17 +18,14 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.ExceptionFix;
-import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -45,9 +41,9 @@ import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
-import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import one.util.streamex.StreamEx;
@@ -76,12 +72,9 @@ public final class PythonSdkType extends SdkType {
 
   @ApiStatus.Internal public static final @NotNull Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
 
-  @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = KeyWithDefaultValue.create("MOCK_PY_MARKER_KEY", true);
+  @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = Key.create("MOCK_PY_MARKER_KEY");
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
-
-  private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
-  private static final @NonNls String SKELETONS_TOPIC = "Skeletons";
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
@@ -92,7 +85,7 @@ public final class PythonSdkType extends SdkType {
   private static final @NotNull String LEGACY_TARGET_PREFIX = "target://";
 
   public static PythonSdkType getInstance() {
-    return SdkType.findInstance(PythonSdkType.class);
+    return findInstance(PythonSdkType.class);
   }
 
   private PythonSdkType() {
@@ -187,11 +180,9 @@ public final class PythonSdkType extends SdkType {
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
-    PyAddSdkDialog.show(project, null, Arrays.asList(sdkModel.getSdks()), sdk -> {
-      if (sdk != null) {
-        sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
-        sdkCreatedCallback.consume(sdk);
-      }
+    PyAddSdkDialog.show(project, null, sdk -> {
+      sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
+      sdkCreatedCallback.consume(sdk);
     });
   }
 
@@ -375,29 +366,7 @@ public final class PythonSdkType extends SdkType {
   public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, final @Nullable Runnable restartAction) {
     NotificationListener notificationListener;
     String notificationMessage;
-    if (e.getCause() instanceof VagrantNotStartedException) {
-      notificationListener =
-        (notification, event) -> {
-          final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-          if (manager != null) {
-            try {
-              VagrantNotStartedException cause = (VagrantNotStartedException)e.getCause();
-              manager.runVagrant(cause.getVagrantFolder(), cause.getMachineName());
-            }
-            catch (ExecutionException e1) {
-              throw new RuntimeException(e1);
-            }
-          }
-          if (restartAction != null) {
-            restartAction.run();
-          }
-        };
-      notificationMessage = new HtmlBuilder()
-        .append(e.getMessage())
-        .appendLink("#", PyBundle.message("python.vagrant.refresh.skeletons"))
-        .toString();
-    }
-    else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
+    if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
       notificationListener =
         (notification, event) -> {
@@ -561,7 +530,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   /**
-   * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(com.intellij.openapi.projectRoots.Sdk)} instead
+   * @deprecated use {@link PySdkUtil#getLanguageLevelForSdk(Sdk)} instead
    */
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {

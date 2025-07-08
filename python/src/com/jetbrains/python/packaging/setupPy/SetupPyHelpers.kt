@@ -2,8 +2,10 @@
 package com.jetbrains.python.packaging.setupPy
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.packaging.PyRequirement
@@ -12,6 +14,7 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.sdk.rootManager
 
 
 internal object SetupPyHelpers {
@@ -21,6 +24,15 @@ internal object SetupPyHelpers {
   private const val DEPENDENCY_LINKS: String = "dependency_links"
   private const val SETUP_TOOLS_PACKAGE = "setuptools"
   private val SETUP_PY_REQUIRES_KWARGS_NAMES: Array<String> = arrayOf<String>(REQUIRES, INSTALL_REQUIRES, "setup_requires", "tests_require")
+
+  @JvmStatic
+  fun detectSetupPyInModule(module: Module): PyFile? {
+    val file = module.rootManager.contentRoots.firstNotNullOfOrNull {
+      it.findChild(SETUP_PY)
+    } ?: return null
+
+    return PsiManager.getInstance(module.project).findFile(file) as? PyFile
+  }
 
   fun parseSetupPy(file: PyFile): List<PyRequirement>? {
     val setupCall = findSetupCall(file) ?: return null

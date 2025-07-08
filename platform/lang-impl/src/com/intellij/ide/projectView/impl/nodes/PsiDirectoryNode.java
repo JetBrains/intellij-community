@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText, PathElementIdProvider {
@@ -105,7 +106,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project)) {
       ProjectFileIndex fi = ProjectRootManager.getInstance(project).getFileIndex();
-      Set<Module> modules = fi.getModulesForFile(directoryFile, true);
+      List<Module> modules =
+        ContainerUtil.filter(fi.getModulesForFile(directoryFile, true), module -> !ModuleType.isInternal(module));
 
       var directoryName = getPossiblyCompactedDirectoryName();
       data.setPresentableText(directoryName);
@@ -113,7 +115,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
         if (!(parentValue instanceof Module)) {
           if (modules.size() == 1) {
             Module module = modules.iterator().next();
-            if (ModuleType.isInternal(module) || !shouldShowModuleName()) {
+            if (!shouldShowModuleName()) {
               data.addText(directoryName + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
             }
             else if (moduleNameMatchesDirectoryName(module, directoryFile, fi)) {

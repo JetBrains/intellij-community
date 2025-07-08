@@ -30,29 +30,13 @@ interface PyAddSdkView {
    */
   fun getOrCreateSdk(): Sdk?
 
-  fun onSelected()
-
-  /**
-   * [PyAddSdkStateListener.onActionsStateChanged] is called after changes in
-   * [actions].
-   */
-  val actions: Map<PyAddSdkDialogFlowAction, Boolean>
+  fun onSelected(): Unit = Unit
 
   /**
    * The [component] *might* return the new [Component] after [next] or
    * [previous].
    */
   val component: Component
-
-  /**
-   * @throws IllegalStateException
-   */
-  fun previous()
-
-  /**
-   * @throws IllegalStateException
-   */
-  fun next()
 
   /**
    * Completes SDK creation.
@@ -69,7 +53,7 @@ interface PyAddSdkView {
    *
    * @throws Exception if SDK creation failed for some reason
    */
-  fun complete()
+  fun complete(): Unit = Unit
 
   /**
    * Returns the list of validation errors. The returned list is empty if there
@@ -79,6 +63,4 @@ interface PyAddSdkView {
    */
   @RequiresEdt
   fun validateAll(): List<ValidationInfo>
-
-  fun addStateListener(stateListener: PyAddSdkStateListener)
 }

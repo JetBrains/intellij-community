@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.local.wizard
 
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.shared.*
+import com.intellij.ide.starters.shared.CommonStarterInitialStep
+import com.intellij.ide.starters.shared.StarterAppType
+import com.intellij.ide.starters.shared.validateFormFields
 import com.intellij.ide.wizard.withVisualPadding
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
+import com.intellij.openapi.roots.ui.configuration.validateJdkIntentVersion
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
@@ -69,7 +71,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     wizardContext.projectName = entityName
     wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
-    val sdk = sdkProperty.get()
+    val sdk = jdkIntentProperty.get()?.prepareJdk()
     moduleBuilder.moduleJdk = sdk
 
     if (wizardContext.project == null) {
@@ -152,7 +154,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     if (!validateFormFields(component, contentPanel, validatedTextComponents)) {
       return false
     }
-    if (!validateJavaVersion(sdkProperty, moduleBuilder.getMinJavaVersionInternal()?.toFeatureString(), moduleBuilder.presentableName)) {
+    if (!validateJdkIntentVersion(jdkIntentProperty, moduleBuilder.getMinJavaVersionInternal()?.toFeatureString(), moduleBuilder.presentableName)) {
       return false
     }
     return true

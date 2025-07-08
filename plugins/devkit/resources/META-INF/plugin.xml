@@ -21,7 +21,6 @@
     <module name="intellij.devkit.git"/>
     <module name="intellij.devkit.gradle"/>
     <module name="intellij.devkit.i18n"/>
-    <module name="intellij.devkit.images"/>
     <module name="intellij.devkit.intelliLang"/>
     <module name="intellij.devkit.themes"/>
     <module name="intellij.devkit.uiDesigner"/>

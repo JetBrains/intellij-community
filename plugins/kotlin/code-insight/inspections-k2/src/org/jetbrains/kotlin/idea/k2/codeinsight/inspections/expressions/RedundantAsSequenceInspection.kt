@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
-import org.jetbrains.kotlin.name.StandardClassIds
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
@@ -13,20 +12,18 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
-import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
-
-private const val KOTLIN_SEQUENCES_FQ_NAME = "kotlin.sequences.Sequence"
 
 internal class RedundantAsSequenceInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, Unit>() {
 
@@ -55,7 +52,7 @@ internal class RedundantAsSequenceInspection : KotlinApplicableInspectionBase.Si
         val receiverType = functionSymbol.receiverType ?: return null
 
         // Case 1: asSequence() called on a Sequence
-        if (receiverType.expandedSymbol?.classId?.asSingleFqName()?.asString() == KOTLIN_SEQUENCES_FQ_NAME) {
+        if (receiverType.expandedSymbol?.classId?.asSingleFqName() == StandardKotlinNames.Sequences.Sequence) {
             if (call.typeArgumentList != null && !areTypeArgumentsRedundant(call)) return null
 
             return Unit
@@ -236,13 +233,13 @@ private val collectionTransformationFunctionNames: List<String> = listOf(
     "zipWithNext",
 )
 
-private val allowedSequenceFunctionFqNames: Sequence<FqName> = sequenceOf(
-    FqName("kotlin.sequences.asSequence"),
-    FqName("kotlin.collections.asSequence"),
+private val allowedSequenceFunctionFqNames = listOf(
+    StandardKotlinNames.Sequences.asSequence,
+    StandardKotlinNames.Collections.asSequence,
 )
 
 private val terminations: Map<String, FqName> =
-    collectionTerminationFunctionNames.associateWith { FqName("kotlin.sequences.$it") }
+    collectionTerminationFunctionNames.associateWith { BASE_SEQUENCES_PACKAGE + it }
 
 private val transformationsAndTerminations: Map<String, FqName> =
-    collectionTransformationFunctionNames.associateWith { FqName("kotlin.sequences.$it") } + terminations
+    collectionTransformationFunctionNames.associateWith { BASE_SEQUENCES_PACKAGE + it } + terminations

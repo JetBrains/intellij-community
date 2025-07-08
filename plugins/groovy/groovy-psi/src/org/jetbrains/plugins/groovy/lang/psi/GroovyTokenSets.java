@@ -8,14 +8,13 @@ import static com.intellij.psi.tree.TokenSet.orSet;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 public interface GroovyTokenSets {
-
   /**
-   * http://docs.groovy-lang.org/latest/html/documentation/core-syntax.html#_keywords
+   * Keywords that are always treated as keywords.
    */
-  TokenSet KEYWORDS = create(
+  TokenSet RESERVED_KEYWORDS = create(
     KW_AS, KW_ASSERT, KW_BREAK, KW_CASE,
     KW_CATCH, KW_CLASS, /*const,*/ KW_CONTINUE,
-    KW_DEF, KW_VAR, KW_DEFAULT, KW_DO, KW_ELSE,
+    KW_DEF, KW_DEFAULT, KW_DO, KW_ELSE,
     KW_ENUM, KW_EXTENDS, KW_FALSE, KW_FINALLY,
     KW_FOR, /*goto,*/ KW_IF, KW_IMPLEMENTS,
     KW_IMPORT, KW_IN, T_NOT_IN, KW_INSTANCEOF, T_NOT_INSTANCEOF, KW_INTERFACE,
@@ -24,6 +23,12 @@ public interface GroovyTokenSets {
     KW_THROWS, KW_TRAIT, KW_TRUE, KW_TRY,
     KW_WHILE, KW_YIELD
   );
+
+  /**
+   * http://docs.groovy-lang.org/latest/html/documentation/core-syntax.html#_keywords. Reserved + Contextual keywords.
+   */
+  TokenSet KEYWORDS = orSet(RESERVED_KEYWORDS, create(KW_PERMITS, KW_RECORD, KW_VAR, KW_YIELD));
+
 
   TokenSet STRING_LITERALS = create(STRING_SQ, STRING_TSQ, STRING_DQ, STRING_TDQ);
 

@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
@@ -34,7 +33,6 @@ import java.util.stream.Collectors;
 
 final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
-  private static final boolean TRUST_INDEXING_FLAG = Registry.is("scanning.trust.indexing.flag", true);
 
   private final Project myProject;
   private final FileBasedIndexImpl myFileBasedIndex;
@@ -192,10 +190,8 @@ final class UnindexedFilesFinder {
     FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
     FileIndexingResult.ApplicationMode applicationMode = FileBasedIndexImpl.getContentIndependentIndexesApplicationMode();
 
-    if (TRUST_INDEXING_FLAG) {
-      if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
-        return new UnindexedFileStatusBuilder(applicationMode);
-      }
+    if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
+      return new UnindexedFileStatusBuilder(applicationMode);
     }
 
     Supplier<@NotNull Boolean> checker = CachedFileType.getFileTypeChangeChecker();

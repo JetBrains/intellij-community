@@ -1,22 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.ide.projectWizard.generators
 
-import com.intellij.ide.projectWizard.JDK_INTENT_KEY
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.icon
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shortcut
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRenderOnboardingTips
+import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.javaData
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
-import com.intellij.openapi.util.removeUserData
 import com.intellij.pom.java.JavaFeature
-import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -35,14 +32,9 @@ object AssetsJava {
 
   @ApiStatus.Internal
   fun getJavaSampleTemplateName(projectWizardStep: AssetsNewProjectWizardStep?): String {
-    val projectJdk = projectWizardStep?.context?.projectJdk
-    var javaVersion = (projectJdk?.sdkType as? JavaSdkImpl)?.getJavaVersion(projectJdk)?.feature ?: 0
-    if (javaVersion == 0) {
-      val jdkIntentVersion = projectWizardStep?.data?.removeUserData(JDK_INTENT_KEY)
-      javaVersion = JavaVersion.tryParse(jdkIntentVersion)?.feature ?: 0
-    }
+    val intent = projectWizardStep?.javaData?.jdkIntent
     val minimumLevel = JavaFeature.JAVA_LANG_IO.minimumLevel
-    if (javaVersion >= minimumLevel.feature()) {
+    if (intent != null && intent.isAtLeast(minimumLevel.feature())) {
       //use compact source file
       return when (shouldRenderOnboardingTips()) {
         true -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN

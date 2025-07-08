@@ -8,8 +8,8 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.impl.ui.FacetEditorFacade;
 import com.intellij.facet.impl.ui.FacetTreeModel;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public class MockFacetEditorFacade implements FacetEditorFacade {
   @Override
   @Nullable
   public ModuleType getSelectedModuleType() {
-    return StdModuleTypes.JAVA;
+    return JavaModuleType.getModuleType();
   }
 
   @Override

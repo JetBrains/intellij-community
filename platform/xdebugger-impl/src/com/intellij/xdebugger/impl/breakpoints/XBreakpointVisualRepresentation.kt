@@ -108,8 +108,10 @@ class XBreakpointVisualRepresentation(
       }
       return
     }
-    val range = myBreakpoint.getHighlightRange()
     withContext(Dispatchers.EDT) {
+      val highlightRange = myBreakpoint.getHighlightRangeSuspend()
+      if (highlightRange !is XLineBreakpointHighlighterRange.Available) return@withContext
+      val range = highlightRange.range
       if (rangeMarker != null && rangeMarker !is RangeHighlighter) {
         removeHighlighter()
         assert(highlighter == null)
@@ -121,7 +123,7 @@ class XBreakpointVisualRepresentation(
       myBreakpoint.updateIcon()
 
       if (highlighter == null) {
-        creteHighlighter(document, range, attributes)
+        createHighlighter(document, range, attributes)
       }
       else {
         val markupModel = DocumentMarkupModel.forDocument(document, myProject, false) as MarkupModelEx?
@@ -165,7 +167,7 @@ class XBreakpointVisualRepresentation(
     return attributes
   }
 
-  private fun creteHighlighter(document: Document, range: TextRange?, attributes: TextAttributes?) {
+  private fun createHighlighter(document: Document, range: TextRange?, attributes: TextAttributes?) {
     var highlighter: RangeHighlighter? = null
     val line = myBreakpoint.getLine()
     if (!DocumentUtil.isValidLine(line, document)) return

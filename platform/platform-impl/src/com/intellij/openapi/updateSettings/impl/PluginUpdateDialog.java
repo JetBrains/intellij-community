@@ -64,7 +64,7 @@ public final class PluginUpdateDialog extends DialogWrapper {
 
   public PluginUpdateDialog(@Nullable Project project,
                      @NotNull Collection<PluginDownloader> downloaders,
-                     @Nullable Collection<PluginNode> customRepositoryPlugins) {
+                     @Nullable Collection<PluginUiModel> customRepositoryPlugins) {
     this(project, downloaders, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
@@ -76,7 +76,7 @@ public final class PluginUpdateDialog extends DialogWrapper {
 
   private PluginUpdateDialog(@Nullable Project project,
                              Collection<PluginDownloader> downloaders,
-                             @Nullable Collection<PluginNode> customRepositoryPlugins,
+                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
@@ -98,7 +98,7 @@ public final class PluginUpdateDialog extends DialogWrapper {
       }
 
       @Override
-      protected @NotNull Collection<PluginNode> getCustomRepoPlugins() {
+      protected @NotNull Collection<PluginUiModel> getCustomRepoPlugins() {
         return customRepositoryPlugins != null ? customRepositoryPlugins : super.getCustomRepoPlugins();
       }
     };

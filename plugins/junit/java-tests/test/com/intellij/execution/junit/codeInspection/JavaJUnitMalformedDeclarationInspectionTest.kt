@@ -118,6 +118,11 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         
         @org.junit.jupiter.api.Nested
         private static class <error descr="Tests in nested class will not be executed">D</error> { }
+        
+        public static class E {
+          @org.junit.jupiter.api.Test
+          public void testFoo() { }
+        }
       }
     """.trimIndent())
     }
@@ -163,6 +168,16 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A { 
         public class <error descr="Tests in nested class will not be executed">B</error> { 
+          @org.junit.Test
+          public void testFoo() { }
+        }
+      }  
+    """.trimIndent())
+    }
+    fun `test highlighting executable JUnit 4 static inner class`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class A { 
+        public static class B { 
           @org.junit.Test
           public void testFoo() { }
         }
@@ -417,6 +432,16 @@ class JavaJUnitMalformedDeclarationInspectionTest {
             @org.junit.jupiter.api.Test
             void test() { }
           }
+          
+          @org.junit.jupiter.params.ParameterizedClass
+          @org.junit.jupiter.params.provider.NullSource
+          static class ClassStaticTest {
+            @org.junit.jupiter.params.Parameter
+            Object o;
+          
+            @org.junit.jupiter.api.Test
+            void test() { }
+          }
         }
         """.trimIndent()
       )
@@ -627,12 +652,29 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         void implicitConversionClass(Book book) { }
 
         static class Book { public Book(String title) { } }
+        
+        static class StaticInnerTest {
+          @org.junit.jupiter.params.ParameterizedTest
+          @org.junit.jupiter.params.provider.ValueSource(strings = {"1","2"})
+          public void test(String data) {}
+        }
+        
+        @org.junit.jupiter.api.Nested
+        class NestedInnerTest {
+          @org.junit.jupiter.params.ParameterizedTest
+          @org.junit.jupiter.params.provider.ValueSource(strings = {"1","2"})
+          public void test(String data) {}
+        }
       }
       
       class MethodSource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("stream")
         void simpleStream(int x, int y) { System.out.println(x + ", " + y); }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("stream()")
+        void withBraces(int x, int y) { System.out.println(x + ", " + y); }
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("iterable")
@@ -669,6 +711,14 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
         void injectTestReporter(int x, org.junit.jupiter.api.TestReporter testReporter) { System.out.println(x); }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("intStreamProvider")
+        void intStreamProvider(int x, org.junit.jupiter.api.TestReporter testReporter) { System.out.println(x); }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("MethodSource${'$'}InnerClass#intStreamProvider()")
+        void directLink(int x) { System.out.println(x); }
 
         static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> stream() { return null; }
         static java.util.Iterator<org.junit.jupiter.params.provider.Arguments> iterator() { return null; }
@@ -679,6 +729,10 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         static Object[] objectsArrayProvider() { return new Object[] { org.junit.jupiter.params.provider.Arguments.of(1, "one") }; }
         static Object[][] objects2DArrayProvider() { return new Object[][] { {1, "s"} }; }
         static java.util.stream.IntStream intStreamProvider() { return null; }
+        
+        static class InnerClass {
+          static java.util.stream.IntStream intStreamProvider() { return null; }
+        }
       }
       
       interface MyMethodSourceInterface {
@@ -704,6 +758,44 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       
         public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
       }
+      
+      @PerClass
+      abstract class PerClassBase1 {
+        public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
+      }
+      
+      class PerClassTest1 extends PerClassBase1 {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("getParameters")
+        public void shouldExecuteWithParameterizedMethodSource(String arguments) { }
+      }
+      
+      abstract class PerClassBase2 {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("getParameters")
+        public void shouldExecuteWithParameterizedMethodSource(String arguments) { }
+      }
+      
+      @PerClass
+      class PerClassTest2 extends PerClassBase2 {
+        public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
+      }
+      
+      abstract class PerClassBase3 {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("getParameters")
+        public void shouldExecuteWithParameterizedMethodSource(String arguments) { }
+
+        public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
+      }
+
+      @PerClass
+      class PerClassTest3 extends PerClassBase3 {
+      }
+      
+      @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+      @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
+      @interface PerClass { }
       
       class EnumSource { 
         @org.junit.jupiter.params.ParameterizedTest
@@ -894,6 +986,21 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         void testWithEnumSource(int i) { }
       }
     """.trimIndent())
+    }
+    fun `test malformed ParameterizedTest inner class should be nested highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class OuterTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.ValueSource(strings = {"1","2"})
+        public void test(String data) {}
+      
+        class <error descr="Tests in nested class will not be executed">InnerTest</error> {
+          @org.junit.jupiter.params.ParameterizedTest
+          @org.junit.jupiter.params.provider.ValueSource(strings = {"1","2"})
+          public void test(String data) {}
+        }
+      }
+      """.trimIndent())
     }
     fun `test malformed parameterized multiple types highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """

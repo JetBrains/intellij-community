@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
+import com.intellij.ide.wizard.NewProjectWizardActivityKey
+import com.intellij.platform.backend.observation.trackActivityBlocking
+import com.intellij.testFramework.TestObservation
 import org.jetbrains.kotlin.tools.projectWizard.cli.BuildSystem
 import org.jetbrains.kotlin.tools.projectWizard.cli.assertSuccess
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
@@ -23,7 +26,9 @@ class GradleProjectSettingsTest : AbstractProjectTemplateNewWizardProjectImportT
         val distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE
 
         val projectDependentServices = IdeaServices.createScopeDependent(project)
-        wizard.apply(projectDependentServices, GenerationPhase.ALL).assertSuccess()
+        waitForAllProjectActivities {
+            wizard.apply(projectDependentServices, GenerationPhase.ALL).assertSuccess()
+        }
 
         val settings = GradleSettings.getInstance(project)
         val projectSettings = settings.linkedProjectsSettings
@@ -35,5 +40,10 @@ class GradleProjectSettingsTest : AbstractProjectTemplateNewWizardProjectImportT
         assert(actualDistributionType == expectedDistributionType) {
             "Distribution type $actualDistributionType, but $expectedDistributionType was expected"
         }
+    }
+
+    fun <R> waitForAllProjectActivities(action: () -> R): R {
+        return project.trackActivityBlocking(NewProjectWizardActivityKey, action)
+            .also { TestObservation.waitForConfiguration(project, 5000) }
     }
 }

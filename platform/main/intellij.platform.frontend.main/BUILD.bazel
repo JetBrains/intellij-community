@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.platform.frontend.main` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "frontend-main",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//platform/main/intellij.platform.main:main",
     "//platform/navbar/frontend",
@@ -16,6 +17,7 @@ java_library(
     "//platform/execution-impl/frontend",
     "//platform/execution.dashboard/frontend",
     "//platform/execution.serviceView/frontend",
+    "//platform/buildView/frontend",
   ]
 )
 ### auto-generated section `build intellij.platform.frontend.main` end

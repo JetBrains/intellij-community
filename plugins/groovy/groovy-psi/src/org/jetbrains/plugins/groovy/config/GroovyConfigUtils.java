@@ -41,6 +41,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public static final @NlsSafe String GROOVY2_5 = "2.5";
   public static final @NlsSafe String GROOVY3_0 = "3.0";
   public static final @NlsSafe String GROOVY4_0 = "4.0";
+  public static final @NlsSafe String GROOVY5_0 = "5.0";
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
   private static final Map<String, Map<String, Integer>> versionsCompareMap = new LRUMap<>();

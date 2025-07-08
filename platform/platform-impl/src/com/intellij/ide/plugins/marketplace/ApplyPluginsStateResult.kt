@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -9,5 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 data class ApplyPluginsStateResult(
   val pluginsToEnable: Set<PluginId> = emptySet(),
-  var needRestart: Boolean = false
+  var needRestart: Boolean = false,
+  @get:NlsSafe var error: String? = null,
 )

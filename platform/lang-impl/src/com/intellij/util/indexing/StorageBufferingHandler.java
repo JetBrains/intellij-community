@@ -3,7 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.indexing.events.VfsEventsMerger;
+import com.intellij.util.indexing.events.IndexingEventsLogger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
@@ -39,8 +39,8 @@ abstract class StorageBufferingHandler {
             }
           });
           myPreviousDataBufferingState = transientInMemoryIndices;
-          VfsEventsMerger.tryLog(() -> "New buffering state: " +
-                                       (transientInMemoryIndices ? "transientInMemoryIndices" : "persistentIndices")
+          IndexingEventsLogger.tryLog(() -> "New buffering state: " +
+                                            (transientInMemoryIndices ? "transientInMemoryIndices" : "persistentIndices")
           );
         }
       }

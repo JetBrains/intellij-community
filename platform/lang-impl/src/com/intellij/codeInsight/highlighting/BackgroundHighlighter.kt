@@ -4,6 +4,8 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.application.options.editor.EditorOptionsListener
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
@@ -199,7 +201,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     val offsetBefore = hostEditor.caretModel.offset
     val visibleRange = hostEditor.calculateVisibleRange()
     val needMatching = BackgroundHighlightingUtil.needMatching(hostEditor, CodeInsightSettings.getInstance())
-    coroutineScope.launch {
+    coroutineScope.launch(context = CoroutineName("BackgroundHighlighter.updateHighlighted(${hostEditor.document})")) {
       val job:Job = coroutineContext.job
       val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK) {
         job
@@ -239,7 +241,13 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         var result = EMPTY_RESULT
         var infos = listOf<HighlightInfo>()
         try {
-          result = identPass.doCollectInformation(newPsiFile.project, visibleRange)
+          result = identPass.doCollectInformation(project, visibleRange)
+          if (result == WRONG_DOCUMENT_VERSION) {
+            launch(Dispatchers.EDT + modalityState) {
+              updateHighlighted(project, hostEditor, coroutineScope)
+            }
+            return@launch
+          }
           infos = readAction {
             identPass.createHighlightInfos(result)
           }

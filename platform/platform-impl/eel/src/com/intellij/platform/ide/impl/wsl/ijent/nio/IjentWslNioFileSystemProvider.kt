@@ -3,7 +3,6 @@ package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.execution.ijent.nio.getCachedFileAttributesAndWrapToDosAttributesAdapter
 import com.intellij.execution.ijent.nio.readAttributesUsingDosAttributesAdapter
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +12,7 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
@@ -45,13 +45,12 @@ import kotlin.io.path.ExperimentalPathApi
  */
 @ApiStatus.Internal
 class IjentWslNioFileSystemProvider(
-  private val wslDistribution: WSLDistribution,
+  val wslId: @NlsSafe String,
   private val ijentFsProvider: FileSystemProvider,
   internal val originalFsProvider: FileSystemProvider,
 ) : FileSystemProvider(), RoutingAwareFileSystemProvider {
-  private val ijentFsUri: URI = URI("ijent", "wsl", "/${wslDistribution.id}", null, null)
+  private val ijentFsUri: URI = URI("ijent", "wsl", "/$wslId", null, null)
   private val originalFs = originalFsProvider.getFileSystem(URI("file:/"))
-  private val wslId: @NlsSafe String = wslDistribution.id
   private val createdFileSystems: MutableMap<String, IjentWslNioFileSystem> = ConcurrentHashMap()
 
   internal fun removeFileSystem(wslId: String) {
@@ -100,6 +99,8 @@ class IjentWslNioFileSystemProvider(
   override fun getFileSystem(uri: URI): IjentWslNioFileSystem {
     require(uri.scheme == scheme) { "Wrong scheme in `$uri` (expected `$scheme`)" }
     val wslId = wslIdFromPath(originalFsProvider.getPath(uri))
+                ?: throw FileSystemNotFoundException(
+                  "Cannot find WSL distribution for $uri. The URL is incorrect or the distribution does not exist.")
     return getFileSystem(wslId)
   }
 
@@ -117,12 +118,12 @@ class IjentWslNioFileSystemProvider(
     }
   }
 
-  private fun wslIdFromPath(path: Path): String {
+  private fun wslIdFromPath(path: Path): String? {
     val root = path.toAbsolutePath().root.toString()
     val wslMarker = """\\wsl"""
-    require(root.startsWith(wslMarker, ignoreCase = true)) { "`$path` doesn't look like a file on WSL" }
+    if (!root.startsWith(wslMarker, ignoreCase = true)) return null
     val wslIdWithProbablyWrongCase = root.substring(wslMarker.length).substringAfter('\\').trimEnd('\\')
-    return allWslDistributionIds.get().single { wslId -> wslId.equals(wslIdWithProbablyWrongCase, ignoreCase = true) }
+    return allWslDistributionIds.get().singleOrNull { wslId -> wslId.equals(wslIdWithProbablyWrongCase, ignoreCase = true) }
   }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode): Unit =
@@ -160,14 +161,20 @@ class IjentWslNioFileSystemProvider(
 
   override fun readSymbolicLink(link: Path): IjentWslNioPath =
     IjentWslNioPath(
-      getFileSystem(wslIdFromPath(link)),
+      getFileSystem(
+        wslIdFromPath(link)
+        ?: throw IOException("Cannot find WSL distribution for $link. The URL is incorrect or the distribution does not exist.")
+      ),
       ijentFsProvider.readSymbolicLink(link.toIjentPath()),
       null,
     )
 
   override fun getPath(uri: URI): Path =
     IjentWslNioPath(
-      getFileSystem(wslIdFromPath(originalFsProvider.getPath(uri))),
+      getFileSystem(
+        wslIdFromPath(originalFsProvider.getPath(uri))
+        ?: throw IllegalArgumentException("Cannot find WSL distribution for $uri. The URL is incorrect or the distribution does not exist.")
+      ),
       originalFsProvider.getPath(uri),
       null,
     )
@@ -178,7 +185,9 @@ class IjentWslNioFileSystemProvider(
   override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>?): DirectoryStream<Path> =
     object : DirectoryStream<Path> {
       val delegate = ijentFsProvider.newDirectoryStream(dir.toIjentPath(), filter)
-      val wslId = wslIdFromPath(dir)
+      val wslId =
+        wslIdFromPath(dir)
+        ?: throw FileSystemException("Cannot find WSL distribution for $dir. The URL is incorrect or the distribution does not exist.")
 
       override fun iterator(): MutableIterator<Path> =
         object : MutableIterator<Path> {

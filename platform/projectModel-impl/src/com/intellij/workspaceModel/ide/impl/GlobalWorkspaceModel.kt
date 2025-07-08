@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -16,7 +15,7 @@ import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.EelNioBridgeService
+import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
@@ -49,7 +48,7 @@ import kotlin.system.measureTimeMillis
 
 @OptIn(EntityStorageInstrumentationApi::class)
 @ApiStatus.Internal
-class GlobalWorkspaceModel(
+class GlobalWorkspaceModel internal constructor(
   /**
    * Despite the prefix `Global`, the IDE can have multiple workspace models per isolated environment, such as WSL and Docker containers.
    *
@@ -60,7 +59,7 @@ class GlobalWorkspaceModel(
    */
   private val eelDescriptor: EelDescriptor,
   private val internalEnvironmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
-) : Disposable {
+)  {
 
   /**
    * Store link to the project from which changes came from. It's needed to avoid redundant changes application at [applyStateToProject]
@@ -183,9 +182,6 @@ class GlobalWorkspaceModel(
     globalWorkspaceModelCache?.setVirtualFileUrlManager(virtualFileManager)
   }
 
-  override fun dispose() {
-  }
-
   @RequiresWriteLock
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ThreadingAssertions.assertWriteAccess()
@@ -235,12 +231,15 @@ class GlobalWorkspaceModel(
     }
   }
 
-  fun applyStateToProjectBuilder(project: Project,
-                                 targetBuilder: MutableEntityStorage): Unit = applyStateToProjectBuilderTimeMs.addMeasuredTime {
+  fun applyStateToProjectBuilder(
+    targetBuilder: MutableEntityStorage,
+    workspaceModel: WorkspaceModelImpl
+  ): Unit = applyStateToProjectBuilderTimeMs.addMeasuredTime {
     LOG.info("Sync global entities with mutable entity storage")
-    targetBuilder.replaceBySource(globalEntitiesFilter,
-                                  copyEntitiesToEmptyStorage(entityStorage.current,
-                                                             WorkspaceModel.getInstance(project).getVirtualFileUrlManager()))
+    targetBuilder.replaceBySource(
+      sourceFilter = globalEntitiesFilter,
+      replaceWith = copyEntitiesToEmptyStorage(entityStorage.current, workspaceModel.getVirtualFileUrlManager()),
+    )
   }
 
   @RequiresWriteLock
@@ -413,7 +412,9 @@ class GlobalWorkspaceModelRegistry {
       GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID
     }
     else {
-      EelNioBridgeService.getInstanceSync().tryGetId(protectedDescriptor)
+      EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
+        eelProvider.getInternalName(protectedDescriptor)
+      }
       ?: throw IllegalArgumentException("Descriptor $protectedDescriptor must be registered before using in Workspace Model")
     }
     return environmentToModel.computeIfAbsent(protectedDescriptor) { GlobalWorkspaceModel(protectedDescriptor, InternalEnvironmentNameImpl(internalName)) }
@@ -425,8 +426,7 @@ class GlobalWorkspaceModelRegistry {
       LocalEelDescriptor
     }
     else {
-      EelNioBridgeService.getInstanceSync().tryGetDescriptorByName(protectedName)
-      ?: throw IllegalArgumentException("Descriptor $protectedName must be registered in ${EelNioBridgeService::class.qualifiedName} before using in Workspace Model")
+      EelProvider.EP_NAME.extensionList.firstNotNullOf { eelProvider -> eelProvider.getEelDescriptorByInternalName(protectedName) }
     }
     val model = getGlobalModel(descriptor)
     return model

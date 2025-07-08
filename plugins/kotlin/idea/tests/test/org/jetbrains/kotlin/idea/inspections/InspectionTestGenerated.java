@@ -301,11 +301,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/spelling/inspectionData/inspections.test");
         }
 
-        @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")
-        public void testTwoSetOfTypeparameters_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/twoSetOfTypeparameters/inspectionData/inspections.test");
-        }
-
         @TestMetadata("unusedEquals/inspectionData/inspections.test")
         public void testUnusedEquals_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/unusedEquals/inspectionData/inspections.test");

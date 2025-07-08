@@ -6,10 +6,13 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
+import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -341,6 +344,7 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
         })
     }
 
+    @OptIn(KaIdeApi::class)
     override fun postprocessLambda(lambda: KtLambdaArgument) {
         val filter = { element: PsiElement ->
             if (element is KtThisExpression && element.getLabelName() != null)
@@ -350,7 +354,8 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
             else
                 ShortenReferences.FilterResult.GO_INSIDE
         }
-        ShortenReferences { ShortenReferences.Options(removeThis = true, removeThisLabels = true) }.process(lambda, filter)
+        ShortenReferencesFacility.getInstance().shorten(lambda, ShortenOptions.ALL_ENABLED)
+        //ShortenReferences { ShortenReferences.Options(removeThis = true, removeThisLabels = true) }.process(lambda, filter)
     }
 }
 

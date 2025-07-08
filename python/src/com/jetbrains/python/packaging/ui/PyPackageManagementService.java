@@ -19,6 +19,7 @@ import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.errorProcessing.Exe;
 import com.jetbrains.python.errorProcessing.ExecError;
 import com.jetbrains.python.errorProcessing.ExecErrorReason;
 import com.jetbrains.python.packaging.*;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
@@ -195,7 +195,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       extraArgs.add("-U");
     }
     final PyRequirement req = version == null
-                              ? PyRequirementsKt.pyRequirement(packageName,null)
+                              ? PyRequirementsKt.pyRequirement(packageName, null)
                               : PyRequirementsKt.pyRequirement(packageName, PyRequirementRelation.EQ, version);
 
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
@@ -358,8 +358,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
         }
       }
 
-      var fileName = e.getExe().getFileName();
-      if (fileName.startsWith("pip") && sdk != null) {
+      var fileName = e.getExe();
+      if (fileName instanceof Exe.OnEel exeOnEel && exeOnEel.getEelPath().getFileName().startsWith("pip") && sdk != null) {
         return PySdkBundle.message("python.sdk.try.to.run.command.from.system.terminal", sdk.getHomePath());
       }
     }

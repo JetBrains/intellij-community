@@ -1,15 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.ui.proofreading.component.list
 
+import com.intellij.grazie.GrazieScope
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class GrazieLanguagesPopupStep(@NlsContexts.PopupTitle title: String, available: List<Lang>, toDownload: List<Lang>,
-                               private val download: (Lang) -> Boolean, private val onResult: (Lang) -> Unit)
+class GrazieLanguagesPopupStep(
+  @NlsContexts.PopupTitle title: String, available: List<Lang>, toDownload: List<Lang>,
+  private val download: suspend (Lang) -> Unit, private val onResult: (Lang) -> Unit,
+)
   : BaseListPopupStep<Lang>(title, available + toDownload) {
   private val firstOther = toDownload.firstOrNull()
 
@@ -19,6 +28,13 @@ class GrazieLanguagesPopupStep(@NlsContexts.PopupTitle title: String, available:
   override fun getTextFor(value: Lang) = value.nativeName
 
   override fun onChosen(selectedValue: Lang, finalChoice: Boolean): PopupStep<*>? {
-    return doFinalStep { if (download(selectedValue)) onResult(selectedValue) }
+    return doFinalStep {
+      GrazieScope.coroutineScope().launch {
+        download(selectedValue)
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          onResult(selectedValue)
+        }
+      }
+    }
   }
 }

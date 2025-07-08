@@ -25,6 +25,49 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
+  // PY-81482
+  public void testTryAssertFinally() {
+    doTestByText("""
+try:
+    assert True
+finally:
+    pass
+print('Reachable')
+                   """);
+  }
+
+  // PY-81936
+  public void testUnreachableWithLangLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> doTestByText("""
+import sys
+
+if sys.version_info < (2, 7):
+    <warning descr="This code is unreachable">print("Unreachable")</warning>
+
+if sys.version_info > (3, 11):
+    <warning descr="This code is unreachable">print("Unreachable")</warning>
+                   """));
+  }
+  
+  // PY-81947
+  public void testAnyOrNoneAfterIsNotNoneCast(){
+    doTestByText("""
+def func(x: Any | None = None):
+    if x is not None:
+        print("foo")
+                   """);
+  }
+
+  // PY-81729
+  public void testTypeVarOrNoneAfterIsNotNoneCast(){
+    doTestByText("""
+def func[T](x: T | None = None) -> T | None:
+    if x is not None:
+        print("foo")
+    return x
+                   """);
+  }
+
   // PY-81674
   public void testFinallyEarlyExit() {
     doTestByText("""

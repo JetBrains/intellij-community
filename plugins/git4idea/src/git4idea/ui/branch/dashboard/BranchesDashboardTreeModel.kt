@@ -6,7 +6,7 @@ import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -71,7 +71,8 @@ class AsyncBranchesDashboardTreeModel(private val cs: CoroutineScope, logData: V
 
   override fun refreshTree() {
     startLoading()
-    cs.launch(Dispatchers.UI) {
+    // EDT because listener of `setTree` starts RA in TreeUtil.promiseVisit
+    cs.launch(Dispatchers.EDT) {
       try {
         val treeNodes = refreshMutex.withPermit {
           val refs = refs.copy()
@@ -148,7 +149,7 @@ abstract class BranchesDashboardTreeModelBase(
     })
     project.messageBus.connect(this)
       .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
-        runInEdt { updateBranchesIncomingOutgoingState() }
+        updateBranchesIncomingOutgoingState()
       })
 
     val changeListener = DataPackChangeListener { updateBranchesTree() }
@@ -240,7 +241,9 @@ abstract class BranchesDashboardTreeModelBase(
       localBranch.incomingOutgoingState = incomingOutgoing
     }
 
-    refreshTree()
+    runInEdt {
+      onTreeDataChange()
+    }
   }
 
   private fun updateBranchesIsMyState() {

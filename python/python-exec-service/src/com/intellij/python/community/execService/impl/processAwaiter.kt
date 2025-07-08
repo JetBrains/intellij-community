@@ -10,19 +10,13 @@ import com.intellij.python.community.execService.ProcessEvent.OutputType.STDERR
 import com.intellij.python.community.execService.ProcessEvent.OutputType.STDOUT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.FlowCollector
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Awaits of process result and reports its stdout/stderr as a progress.
  */
 internal suspend fun EelProcess.awaitWithReporting(progressListener: FlowCollector<ProcessEvent.ProcessOutput>?): EelProcessExecutionResult =
   coroutineScope {
-    coroutineContext.job.invokeOnCompletion { err ->
-      if (err != null) {
-        GlobalScope.launch {
-          this@awaitWithReporting.kill()
-        }
-      }
-    }
     val stdout = async { report(STDOUT, progressListener) }
     val stderr = async { report(STDERR, progressListener) }
     EelProcessExecutionResult(exitCode.await(), stdout = stdout.await(), stderr = stderr.await())
@@ -34,13 +28,46 @@ private suspend fun EelProcess.report(outputType: OutputType, to: FlowCollector<
     STDERR -> stderr
   }
   val result = StringBuilder()
-  from.consumeAsInputStream().bufferedReader().useLines { lines ->
-    for (line in lines) {
-      if (to != null && line.isNotBlank()) {
-        to.emit(ProcessEvent.ProcessOutput(outputType, line))
+
+
+  from.consumeAsInputStream().use { inputStream ->
+    val reader = inputStream.reader()
+
+    val currentLine = StringBuilder()
+    while (true) {
+      val char = reader.read()
+      if (char == -1) break // EOF
+
+      when (val c = char.toChar()) {
+        '\b' -> {
+          if (to != null && currentLine.isNotBlank()) {
+            to.emit(ProcessEvent.ProcessOutput(outputType, currentLine.toString()))
+          }
+
+          // Backspace - remove last character
+          if (currentLine.isNotEmpty()) {
+            currentLine.deleteCharAt(currentLine.length - 1)
+          }
+        }
+        '\r' -> {
+          //ignore
+        }
+        '\n' -> {
+          // Line feed - emit final line and add to result
+          val finalLine = currentLine.toString()
+          result.appendLine(finalLine)
+          if (to != null && finalLine.isNotEmpty()) {
+            to.emit(ProcessEvent.ProcessOutput(outputType, finalLine))
+          }
+          currentLine.clear()
+        }
+        else -> {
+          // Regular character
+          currentLine.append(c)
+        }
       }
-      result.appendLine(line)
     }
+    result.append(currentLine)
   }
   return@withContext result.toString().encodeToByteArray()
 }

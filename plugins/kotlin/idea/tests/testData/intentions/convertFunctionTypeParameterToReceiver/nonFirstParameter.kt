@@ -1,7 +1,7 @@
 // AFTER-WARNING: Parameter 'b' is never used
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Parameter 'i' is never used
-fun foo(f: (Int, <caret>Boolean) -> String) {
+fun foo(f: (i: Int, b: <caret>Boolean) -> String) {
     f(1, false)
     bar(f)
 }

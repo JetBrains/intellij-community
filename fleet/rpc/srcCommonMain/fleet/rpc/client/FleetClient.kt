@@ -46,8 +46,8 @@ class FleetClient internal constructor(
   }
 }
 
-fun <A : RemoteApi<*>> FleetClient.proxy(remoteApiDescriptor: RemoteApiDescriptor<A>, route: UID, serviceId: InstanceId): A =
-  asServiceProxy().proxy(remoteApiDescriptor, route, serviceId)
+fun <A : RemoteApi<*>> FleetClient.proxy(remoteApiDescriptor: RemoteApiDescriptor<A>, route: UID, instanceId: InstanceId): A =
+  asServiceProxy().proxy(remoteApiDescriptor, route, instanceId)
 
 fun fleetClient(
   clientId: ClientId,

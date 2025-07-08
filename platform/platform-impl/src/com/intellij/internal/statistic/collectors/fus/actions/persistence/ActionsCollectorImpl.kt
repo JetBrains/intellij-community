@@ -330,12 +330,12 @@ class ActionsCollectorImpl : ActionsCollector() {
       }
     }
 
-    private fun toReportedResult(result: AnActionResult): ObjectEventData = when {
-      result.isPerformed -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"))
-      result.isIgnored -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"))
-      else -> ObjectEventData(
+    private fun toReportedResult(result: AnActionResult): ObjectEventData = when (result) {
+      is AnActionResult.Performed -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"))
+      is AnActionResult.Ignored -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"))
+      is AnActionResult.Failed -> ObjectEventData(
         ActionsEventLogGroup.RESULT_TYPE.with("failed"),
-        ActionsEventLogGroup.ERROR.with(result.failureCause.javaClass)
+        ActionsEventLogGroup.ERROR.with(result.cause.javaClass)
       )
     }
 

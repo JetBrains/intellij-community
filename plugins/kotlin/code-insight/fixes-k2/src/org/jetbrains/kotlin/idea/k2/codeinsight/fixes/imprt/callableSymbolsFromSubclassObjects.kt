@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -55,7 +56,10 @@ internal fun KtSymbolFromIndexProvider.getCallableSymbolsFromSubclassObjects(nam
     return allObjects.asSequence().flatMap { objectSymbol ->
         val memberScope = objectSymbol.memberScope
         val callablesByName = memberScope.callables(name)
-        callablesByName.map { objectSymbol to it }
+        callablesByName.map {
+            ProgressManager.checkCanceled()
+            objectSymbol to it
+        }
     }
 }
 

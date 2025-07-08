@@ -1265,20 +1265,6 @@ a:com.intellij.openapi.actionSystem.AbbreviationManager
 - a:removeAllAbbreviations(java.lang.String):V
 @:com.intellij.openapi.actionSystem.ActionButtonComponent$ButtonState
 - java.lang.annotation.Annotation
-c:com.intellij.openapi.actionSystem.ActionGroupWrapper
-- com.intellij.openapi.actionSystem.ActionGroup
-- com.intellij.openapi.actionSystem.ActionWithDelegate
-- com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
-- <init>(com.intellij.openapi.actionSystem.ActionGroup):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- f:getDelegate():com.intellij.openapi.actionSystem.ActionGroup
-- isDumbAware():Z
-- isInInjectedContext():Z
-- isPerformWithDocumentsCommitted():Z
-- postProcessVisibleChildren(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List):java.util.List
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.actionSystem.ActionInGroup
 - getGroup():com.intellij.openapi.actionSystem.ActionGroup
 - setAsSecondary(Z):com.intellij.openapi.actionSystem.ActionInGroup
@@ -1302,23 +1288,6 @@ e:com.intellij.openapi.actionSystem.ActionToolbarPosition
 - sf:TOP:com.intellij.openapi.actionSystem.ActionToolbarPosition
 - s:valueOf(java.lang.String):com.intellij.openapi.actionSystem.ActionToolbarPosition
 - s:values():com.intellij.openapi.actionSystem.ActionToolbarPosition[]
-f:com.intellij.openapi.actionSystem.ActionWrapperUtil
-- s:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
-- s:getActionUpdateThread(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.AnAction[]
-- s:update(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
-c:com.intellij.openapi.actionSystem.AnActionWrapper
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.actionSystem.ActionWithDelegate
-- com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
-- <init>(com.intellij.openapi.actionSystem.AnAction):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getDelegate():com.intellij.openapi.actionSystem.AnAction
-- isDumbAware():Z
-- isInInjectedContext():Z
-- isPerformWithDocumentsCommitted():Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.actionSystem.Anchor
 - sf:AFTER:com.intellij.openapi.actionSystem.Anchor
 - sf:BEFORE:com.intellij.openapi.actionSystem.Anchor
@@ -7540,7 +7509,6 @@ e:com.intellij.ui.dsl.builder.DslComponentProperty
 - java.lang.Enum
 - sf:ICONS_PROVIDER:com.intellij.ui.dsl.builder.DslComponentProperty
 - sf:INTERACTIVE_COMPONENT:com.intellij.ui.dsl.builder.DslComponentProperty
-- sf:LABEL_FOR:com.intellij.ui.dsl.builder.DslComponentProperty
 - sf:ROW_LABEL:com.intellij.ui.dsl.builder.DslComponentProperty
 - sf:SKIP_LABEL_FOR_ASSIGNMENT:com.intellij.ui.dsl.builder.DslComponentProperty
 - sf:VERTICAL_COMPONENT_GAP:com.intellij.ui.dsl.builder.DslComponentProperty
@@ -9507,7 +9475,6 @@ f:com.intellij.util.net.ssl.CertificateManager$Companion
 - f:getDefaultKeyManagers():javax.net.ssl.KeyManager[]
 - f:getInstance():com.intellij.util.net.ssl.CertificateManager
 - f:getSystemSslContext():javax.net.ssl.SSLContext
-- f:showAcceptDialog(java.util.concurrent.Callable):Z
 f:com.intellij.util.net.ssl.CertificateManager$Config
 - ACCEPT_AUTOMATICALLY:Z
 - <init>():V

@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.shared.inspections
 
+import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.compose.ide.plugin.shared.COMPOSABLE_ANNOTATION_FQ_NAME
+import com.intellij.compose.ide.plugin.shared.isAndroidFile
 import com.intellij.compose.ide.plugin.shared.isComposableAnnotation
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.annotations.Nls
@@ -66,8 +68,13 @@ abstract class BasePreviewAnnotationInspection(
     holder: ProblemsHolder,
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
-  ): PsiElementVisitor =
-    object : KtVisitorVoid() {
+  ): PsiElementVisitor {
+    // disable this inspection if Android provides a similar one.
+    if (isAndroidFile(session.file) && hasAndroidPreviewInspection()) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+
+    return object : KtVisitorVoid() {
       override fun visitImportDirective(importDirective: KtImportDirective) {
         super.visitImportDirective(importDirective)
 
@@ -108,8 +115,15 @@ abstract class BasePreviewAnnotationInspection(
         }
       }
     }
+  }
 
   final override fun getGroupDisplayName(): String {
     return groupDisplayName
   }
+
+  private fun hasAndroidPreviewInspection() =
+    LocalInspectionEP.LOCAL_INSPECTION.extensionList.firstOrNull {
+      it.bundle == "com.android.tools.idea.compose.preview.ComposePreviewBundle" &&
+      this.shortName.endsWith(it.shortName.orEmpty())
+    } != null
 }

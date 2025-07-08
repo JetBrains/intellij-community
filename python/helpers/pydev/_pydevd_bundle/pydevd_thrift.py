@@ -15,7 +15,8 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
     GET_FRAME_RETURN_GROUP
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
-from _pydevd_bundle.pydevd_utils import  is_string, should_evaluate_full_value, should_evaluate_shape
+from _pydevd_bundle.pydevd_utils import is_string, should_evaluate_full_value, \
+    should_evaluate_shape, is_container_with_shape_dtype
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
     get_column_formatter_by_type, get_formatted_row_elements, IAtPolarsAccessor, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
@@ -333,7 +334,7 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
 
     # shape to struct
     try:
-        if should_evaluate_shape():
+        if should_evaluate_shape() and is_container_with_shape_dtype(type_qualifier, typeName, v):
             if hasattr(v, 'shape') and not callable(v.shape):
                 debug_value.shape = str(tuple(v.shape))
             elif hasattr(v, '__len__') and not is_string(v):
@@ -344,7 +345,7 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     # data type info to xml (for arrays and tensors)
     debug_value.arrayElementType = ''
     try:
-        if hasattr(v, 'dtype'):
+        if is_container_with_shape_dtype(type_qualifier, typeName, v) and hasattr(v, 'dtype'):
             debug_value.arrayElementType = str(v.dtype)
     except:
         pass
@@ -420,17 +421,26 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
     return array_chunk
 
 
-def tensor_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+def tf_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
     try:
         return array_to_thrift_struct(tensor.numpy(), name, roffset, coffset, rows, cols, format)
     except TypeError:
         return array_to_thrift_struct(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
 
 
-def sparse_tensor_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+def torch_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        if tensor.requires_grad:
+            tensor = tensor.detach()
+        return array_to_thrift_struct(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_thrift_struct(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def tf_sparse_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
     try:
         import tensorflow as tf
-        return tensor_to_thrift_struct(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+        return tf_to_thrift_struct(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
     except ImportError:
         pass
 
@@ -646,10 +656,10 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
 TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
     "ndarray": array_to_thrift_struct,
     "recarray": array_to_thrift_struct,
-    "EagerTensor": tensor_to_thrift_struct,
-    "ResourceVariable": tensor_to_thrift_struct,
-    "SparseTensor": sparse_tensor_to_thrift_struct,
-    "Tensor": tensor_to_thrift_struct,
+    "EagerTensor": tf_to_thrift_struct,
+    "ResourceVariable": tf_to_thrift_struct,
+    "SparseTensor": tf_sparse_to_thrift_struct,
+    "Tensor": torch_to_thrift_struct,
     "DataFrame": dataframe_to_thrift_struct,
     "Series": dataframe_to_thrift_struct,
     "Dataset": dataset_to_thrift_struct,

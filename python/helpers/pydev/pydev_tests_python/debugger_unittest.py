@@ -250,7 +250,16 @@ class ReaderThread(threading.Thread):
     def do_kill(self):
         self._kill = True
         if hasattr(self, 'sock'):
-            self.sock.close()
+            from socket import SHUT_RDWR
+
+            try:
+                self.sock.shutdown(SHUT_RDWR)
+            except:
+                pass
+            try:
+                self.sock.close()
+            except:
+                pass
 
 
 def read_process(stream, buffer, debug_stream, stream_name, finish):
@@ -352,6 +361,7 @@ class DebuggerRunner(object):
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             cwd=writer.get_cwd() if writer is not None else '.',
             env=writer.get_environ() if writer is not None else None,
         )
@@ -364,6 +374,7 @@ class DebuggerRunner(object):
         stderr = []
         finish = [False]
         dct_with_stdout_stder = {}
+        fail_with_message = False
 
         try:
             start_in_daemon_thread(read_process, (process.stdout, stdout, sys.stdout, 'stdout', finish))
@@ -378,9 +389,22 @@ class DebuggerRunner(object):
             shown_intermediate = False
             dumped_threads = False
 
-            dct_with_stdout_stder['stdout'] = stdout
-            dct_with_stdout_stder['stderr'] = stderr
-            yield dct_with_stdout_stder
+            dct_with_stdout_stder["stdout"] = stdout
+            dct_with_stdout_stder["stderr"] = stderr
+            try:
+                yield dct_with_stdout_stder
+            except:
+                fail_with_message = True
+                # Let's print the actuayl exception here (it doesn't appear properly on Python 2 and
+                # on Python 3 it's hard to find because pytest output is too verbose).
+                sys.stderr.write("***********\n")
+                sys.stderr.write("***********\n")
+                sys.stderr.write("***********\n")
+                traceback.print_exc()
+                sys.stderr.write("***********\n")
+                sys.stderr.write("***********\n")
+                sys.stderr.write("***********\n")
+                raise
 
             if not writer.finished_ok:
                 self.fail_with_message(
@@ -440,10 +464,21 @@ class DebuggerRunner(object):
                         time.sleep(.1)
 
         except TimeoutError:
+            msg = "TimeoutError"
             writer.write_dump_threads()
             time.sleep(.2)
-            raise
+            self.fail_with_message(msg, stdout, stderr, writer)
+        except Exception as e:
+            if fail_with_message:
+                self.fail_with_message(str(e), stdout, stderr, writer)
+            else:
+                raise
         finally:
+            try:
+                if process.poll() is None:
+                    process.kill()
+            except:
+                traceback.print_exc()
             finish[0] = True
 
     def fail_with_message(self, msg, stdout, stderr, writerThread):
@@ -514,6 +549,13 @@ class AbstractWriterThread(threading.Thread):
             'pydev debugger: To debug that process',
             'pydev debugger: process',
             'warning: PYDEVD_USE_CYTHON environment variable is set to \'NO\'',
+            'Unable to set tracing',
+            'Suspending all threads',
+            'Sending suspend',
+            'Sending resume',
+            'Suspend not sent',
+            'Resume not sent',
+            'Connected to:'
         )):
             return True
 
@@ -571,9 +613,9 @@ class AbstractWriterThread(threading.Thread):
         return os.path.abspath(os.path.join(dirname, 'pydevd.py'))
 
     def get_line_index_with_content(self, line_content):
-        '''
+        """
         :return the line index which has the given content (1-based).
-        '''
+        """
         with open(self.TEST_FILE, 'r') as stream:
             for i_line, line in enumerate(stream):
                 if line_content in line:
@@ -632,9 +674,20 @@ class AbstractWriterThread(threading.Thread):
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Socket:', new_sock, addr)
 
+        curr_socket = getattr(self, "sock", None)
+        if curr_socket:
+            try:
+                curr_socket.shutdown(socket.SHUT_WR)
+            except:
+                pass
+            try:
+                curr_socket.close()
+            except:
+                pass
+
         reader_thread = self.reader_thread = ReaderThread(new_sock)
-        reader_thread.start()
         self.sock = new_sock
+        reader_thread.start()
 
         # initial command is always the version
         self.write_version()
@@ -1020,7 +1073,6 @@ class AbstractWriterThread(threading.Thread):
             def accept_message(msg):
                 return msg.startswith(msg_starts_with)
 
-        import untangle
         from io import StringIO
         prev = None
         while True:
@@ -1030,11 +1082,15 @@ class AbstractWriterThread(threading.Thread):
             if accept_message(last):
                 if expect_xml:
                     # Extract xml and return untangled.
+                    xml = ""
                     try:
                         xml = last[last.index('<xml>'):]
                         if isinstance(xml, bytes):
                             xml = xml.decode('utf-8')
+                        import untangle
                         xml = untangle.parse(StringIO(xml))
+                    except ImportError:
+                        pass
                     except:
                         traceback.print_exc()
                         raise AssertionError('Unable to parse:\n%s\nxml:\n%s' % (last, xml))

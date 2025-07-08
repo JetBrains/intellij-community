@@ -2,8 +2,11 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl.Companion.EDITOR_IDENT_RESULTS
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -20,11 +23,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ProperTextRange
-import com.intellij.openapi.util.Segment
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.TextRangeScalarUtil
+import com.intellij.openapi.util.*
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.util.PsiUtilBase
@@ -49,7 +48,11 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   init {
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
-        clearCache(event.editor.getDocument()) // to avoid leaks
+        val virtualFile = event.editor.virtualFile
+        // clear document cache only when the last editor for this document (out of several possible splits) is closed
+        if (virtualFile == null || FileEditorManager.getInstance(myProject).getAllEditors(virtualFile).isEmpty()) {
+          clearCache(event.editor.getDocument()) // to avoid leaks
+        }
       }
     }, this)
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(object : DocumentListener {
@@ -91,6 +94,8 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   }
 
   override suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val start = System.currentTimeMillis()
     val document = editor.getDocument()
     val modStamp = (document as DocumentEx).modificationSequence
     var result: IdentifierHighlightingResult? = null
@@ -127,33 +132,43 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
       }
       else {
         val hostRes = IdentifierHighlightingAccessor.getInstance(myProject).getMarkupData(psiFile, editor, visibleRange, offset)
-        result = readAction {
-          if (document.modificationSequence != modStamp) {
-            throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))
+        if (hostRes == WRONG_DOCUMENT_VERSION) {
+          result = WRONG_DOCUMENT_VERSION
+        }
+        else {
+          result = readAction {
+            if (document.modificationSequence != modStamp) {
+              throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))
+            }
+            val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
+            val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
+            val cache = mutableMapOf<TextRange, RangeMarker>()
+            val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
+              val marker = createMarker(hostDocument, o.range, cache)
+              occurrenceRangeMarkers.add(marker)
+              IdentifierOccurrence(marker, o.highlightInfoType)
+            }
+            val rangeMarkerTargets = hostRes.targets.map { r ->
+              createMarker(hostDocument, r, cache)
+            }
+            val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
+            for (marker in cache.values) {
+              marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
+            }
+            val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
+              ConcurrentCollectionFactory.createConcurrentSet()
+            }
+            editorResults.add(rangeMarkerResult)
+            rangeMarkerResult
           }
-          val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
-          val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
-          val cache = mutableMapOf<TextRange, RangeMarker>()
-          val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
-            val marker = createMarker(hostDocument, o.range, cache)
-            occurrenceRangeMarkers.add(marker)
-            IdentifierOccurrence(marker, o.highlightInfoType)
-          }
-          val rangeMarkerTargets = hostRes.targets.map { r ->
-            createMarker(hostDocument, r, cache)
-          }
-          val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
-          for (marker in cache.values) {
-            marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
-          }
-          val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
-            ConcurrentCollectionFactory.createConcurrentSet()
-          }
-          editorResults.add(rangeMarkerResult)
-          rangeMarkerResult
         }
       }
     }
+    val end = System.currentTimeMillis()
+    val file = readAction {
+      FileDocumentManager.getInstance().getFile(editor.document)
+    }
+    IdentifierHighlightingFUSReporter.report(myProject, file, offset, result, bestMarker != null, end-start)
     return result
   }
 

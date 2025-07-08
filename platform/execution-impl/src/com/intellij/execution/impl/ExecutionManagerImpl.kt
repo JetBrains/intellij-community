@@ -94,10 +94,19 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
       return currentThreadContext()[EnvDataContextElement]?.dataContext
     }
 
+    @Suppress("unused") // used in 3rd party plugin
     @Internal
     fun withEnvironmentDataContext(dataContext: DataContext?): AccessToken {
       val context = currentThreadContext()
       return installThreadContext(context + EnvDataContextElement(dataContext), true)
+    }
+
+    @Internal
+    fun <T> withEnvironmentDataContext(dataContext: DataContext?, action: () -> T): T {
+      val context = currentThreadContext()
+      return installThreadContext(context + EnvDataContextElement(dataContext), true).use {
+        action()
+      }
     }
 
     private class EnvDataContextElement(val dataContext: DataContext?) : CoroutineContext.Element, IntelliJContextElement {
@@ -731,7 +740,7 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
 
   @ApiStatus.Internal
   fun executeConfiguration(environment: ExecutionEnvironment, showSettings: Boolean, assignNewId: Boolean = true) {
-    withEnvironmentDataContext(environment.dataContext).use {
+    withEnvironmentDataContext(environment.dataContext) {
       val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
       val project = environment.project
       val runner = environment.runner
@@ -741,14 +750,14 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
           handleExecutionError(environment, ExecutionException(
             ProgramRunnerUtil.getCannotRunOnErrorMessage(environment.runProfile, environment.executionTarget)))
           processNotStarted(environment, null)
-          return
+          return@withEnvironmentDataContext
         }
 
         if (!DumbService.isDumb(project)) {
           if (showSettings && runnerAndConfigurationSettings.isEditBeforeRun) {
             if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
               processNotStarted(environment, null)
-              return
+              return@withEnvironmentDataContext
             }
             editConfigurationUntilSuccess(environment, assignNewId)
           }
@@ -777,7 +786,7 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
               .expireWith(this)
               .submit(AppExecutorUtil.getAppExecutorService())
           }
-          return
+          return@withEnvironmentDataContext
         }
       }
 

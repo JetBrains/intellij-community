@@ -21,6 +21,8 @@ desktop-optimized theme and set of components.
 >
 > Use at your own risk!
 
+![logo](https://avatars.githubusercontent.com/u/878437?s=48)
+
 Jewel provides an implementation of the IntelliJ Platform themes that can be used in any Compose for Desktop
 application. Additionally, it has a Swing LaF Bridge that only works in the IntelliJ Platform (i.e., used to create IDE
 plugins), but automatically mirrors the current Swing LaF into Compose for a native-looking, consistent UI.

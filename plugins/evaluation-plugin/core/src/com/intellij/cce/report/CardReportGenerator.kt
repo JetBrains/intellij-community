@@ -353,6 +353,7 @@ private data class PropertyValue(
         is DataRenderer.InlineLong -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineDouble -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineInt -> PropertyValue(null, "${property.value}")
+        is DataRenderer.NamedRanges -> PropertyValue(null, "${property.value}")
         is DataRenderer.ClickableLink -> PropertyValue(null, null, "${property.value}")
         is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]}, ${description}, ${property.renderer.wrapping});""", null)
         is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]}, ${description});""", null)
@@ -398,6 +399,11 @@ private data class PropertyValue(
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].originalText""",
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].updatedText"""
         )
+        is DataPlacement.AdditionalNamedRanges -> listOf(
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].start""",
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].end""",
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].text"""
+        )
       }
     }
 
@@ -414,6 +420,11 @@ private data class PropertyValue(
         DataRenderer.TextDiff -> listOf(
           embedString((value as TextUpdate).originalText),
           embedString((value as TextUpdate).updatedText)
+        )
+        DataRenderer.NamedRanges -> listOf(
+          "\"${(value as NamedRange).start}\"",
+          "\"${(value as NamedRange).end}\"",
+          embedString((value as NamedRange).text)
         )
       }
     }

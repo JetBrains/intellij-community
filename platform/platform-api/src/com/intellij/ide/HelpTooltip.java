@@ -2,7 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.UiDispatcherKind;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -131,7 +131,8 @@ public class HelpTooltip {
   private BooleanSupplier masterPopupOpenCondition;
 
   private JBPopup myPopup;
-  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  // todo use strict when Editor will be fixed (EditorImpl.logicalPositionToOffset requires read action)
+  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler(UiDispatcherKind.RELAX);
   private boolean isOverPopup;
   private boolean isMultiline;
   private int myInitialDelay = -1;
@@ -621,7 +622,7 @@ public class HelpTooltip {
       return;
     }
 
-    popupAlarm.request(delay, () -> WriteIntentReadAction.run((Runnable)() ->{
+    popupAlarm.request(delay, () -> {
       initialShowScheduled = false;
       if (masterPopupOpenCondition != null && !masterPopupOpenCondition.getAsBoolean()) {
         return;
@@ -631,12 +632,15 @@ public class HelpTooltip {
       String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
       if (myPopup != null && !myPopup.isDisposed()) {
         if (Strings.isEmpty(text) && Strings.isEmpty(myToolTipText)) {
-          return; // do nothing if a tooltip becomes empty
+          // do nothing if a tooltip becomes empty
+          return;
         }
         if (Objects.equals(text, myToolTipText)) {
-          return; // do nothing if a tooltip is not changed
+          // do nothing if a tooltip is not changed
+          return;
         }
-        myPopup.cancel(); // cancel the previous popup before showing a new one
+        // cancel the previous popup before showing a new one
+        myPopup.cancel();
       }
 
       myToolTipText = text;
@@ -650,7 +654,7 @@ public class HelpTooltip {
         int dismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
         scheduleHide(true, dismissDelay);
       }
-    }));
+    });
   }
 
   private void scheduleHide(boolean force, int delay) {

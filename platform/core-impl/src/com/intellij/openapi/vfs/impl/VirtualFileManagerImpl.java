@@ -35,8 +35,9 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 @ApiStatus.Internal
 public class VirtualFileManagerImpl extends VirtualFileManager implements Disposable {
@@ -217,11 +218,12 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
     ApplicationManager.getApplication().invokeLater(() -> {
       if (virtualFile.isValid()) {
         ApplicationManager.getApplication().runWriteAction(() -> {
-          List<VFileEvent> events =
-            Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue));
-          BulkFileListener listener = app.getMessageBus().syncPublisher(VFS_CHANGES);
-          listener.before(events);
-          listener.after(events);
+          if (virtualFile.isValid()) {//re-check isValid under WA
+            List<VFileEvent> events = singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue));
+            BulkFileListener listener = app.getMessageBus().syncPublisher(VFS_CHANGES);
+            listener.before(events);
+            listener.after(events);
+          }
         });
       }
     }, ModalityState.nonModal());

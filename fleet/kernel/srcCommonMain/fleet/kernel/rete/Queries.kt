@@ -111,7 +111,7 @@ fun <E : Entity> EntityType<E>.each(): SetQuery<E> = let { entityType ->
 }
 
 /**
- * Query<Unit> can be seen as predicate.
+ * Query<Maybe, Unit> can be seen as predicate.
  * It yields Unit when it becomes true, and retracts it back when falsified.
  * */
 typealias PredicateQuery = Query<Maybe, Unit>

@@ -43,12 +43,10 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -71,13 +69,14 @@ import org.jetbrains.plugins.gradle.util.GradleJvmCriteriaUtil;
 import org.jetbrains.plugins.gradle.util.GradleJvmResolutionUtil;
 import org.jetbrains.plugins.gradle.util.GradleJvmValidationUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @ApiStatus.Internal
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
@@ -129,6 +128,50 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
+  public @NotNull String getContentEntryPath() {
+    String contentEntryPath = super.getContentEntryPath();
+    assert StringUtil.isNotEmpty(contentEntryPath);
+    return FileUtil.toCanonicalPath(contentEntryPath);
+  }
+
+  private @NotNull String getLinkedProjectId(@NotNull Module module) {
+    var gradleBuildName = getGradleBuildName(module);
+    var gradlePath = getGradlePath();
+    if (gradlePath.equals(":")) {
+      return gradleBuildName;
+    }
+    return gradleBuildName + ":" + gradlePath;
+  }
+
+  /**
+   * @see GradleAssetsNewProjectWizardStep#addOrConfigureSettingsScript
+   */
+  private @NotNull String getGradlePath() {
+    var relativeModulePath = rootProjectPath.relativize(Path.of(getContentEntryPath()));
+    return ":" + StreamSupport.stream(relativeModulePath.spliterator(), false)
+      .map(it -> it.getFileName().toString())
+      .filter(it -> !it.equals(".."))
+      .collect(Collectors.joining(":"));
+  }
+
+  private @NotNull String getGradleBuildName(@NotNull Module module) {
+    if (myParentProject == null) {
+      return getGradleProjectName(module);
+    }
+    return myParentProject.getExternalName();
+  }
+
+  private @NotNull String getGradleProjectName(@NotNull Module module) {
+    if (myProjectId == null) {
+      return module.getName();
+    }
+    if (myProjectId.getArtifactId() == null) {
+      return module.getName();
+    }
+    return myProjectId.getArtifactId();
+  }
+
+  @Override
   public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, ConfigurationException {
     LOG.assertTrue(getName() != null);
@@ -144,14 +187,12 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   @Override
   public void setupRootModel(final @NotNull ModifiableRootModel modifiableRootModel) throws ConfigurationException {
-    String contentEntryPath = getContentEntryPath();
-    if (StringUtil.isEmpty(contentEntryPath)) {
-      return;
-    }
-    File contentRootDir = new File(contentEntryPath);
-    FileUtilRt.createDirectory(contentRootDir);
+    var contentEntryPath = Path.of(getContentEntryPath());
+
+    rootProjectPath = myParentProject != null ? Paths.get(myParentProject.getLinkedExternalProjectPath()) : contentEntryPath;
+
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    VirtualFile modelContentRootDir = fileSystem.refreshAndFindFileByIoFile(contentRootDir);
+    VirtualFile modelContentRootDir = fileSystem.refreshAndFindFileByNioFile(contentEntryPath);
     if (modelContentRootDir == null) {
       return;
     }
@@ -160,12 +201,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     Project project = modifiableRootModel.getProject();
     Module module = modifiableRootModel.getModule();
-    if (myParentProject != null) {
-      rootProjectPath = Paths.get(myParentProject.getLinkedExternalProjectPath());
-    }
-    else {
-      rootProjectPath = isCreatingNewProject ? Paths.get(Objects.requireNonNull(project.getBasePath())) : modelContentRootDir.toNioPath();
-    }
 
     if (isCreatingBuildScriptFile) {
       buildScriptFile = setupGradleBuildFile(modelContentRootDir);
@@ -183,7 +218,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     if (isCreatingBuildScriptFile) {
       buildScriptBuilder = GradleBuildScriptBuilder.create(gradleVersion, myUseKotlinDSL);
       var scriptDataBuilder = new BuildScriptDataBuilder(buildScriptFile, buildScriptBuilder);
-      modifiableRootModel.getModule().putUserData(BUILD_SCRIPT_DATA, scriptDataBuilder);
+      module.putUserData(BUILD_SCRIPT_DATA, scriptDataBuilder);
     }
   }
 
@@ -199,11 +234,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     FileDocumentManager.getInstance().saveAllDocuments();
 
     // it will be set later in any case, but save is called immediately after project creation, so, to ensure that it will be properly saved as external system module
-    ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
-    modulePropertyManager.setExternalId(GradleConstants.SYSTEM_ID);
-    // set linked project path to be able to map the module with the module data obtained from the import
-    modulePropertyManager.setRootProjectPath(PathKt.getSystemIndependentPath(rootProjectPath));
-    modulePropertyManager.setLinkedProjectPath(PathKt.getSystemIndependentPath(rootProjectPath));
+    setupExternalModuleOptions(module);
 
     Project project = module.getProject();
 
@@ -234,6 +265,14 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
         () -> finishModuleSetup(project), ModalityState.nonModal(), project.getDisposed()
       )
     );
+  }
+
+  private void setupExternalModuleOptions(@NotNull Module module) {
+    var externalModuleOptions = ExternalSystemModulePropertyManager.getInstance(module);
+    externalModuleOptions.setExternalId(GradleConstants.SYSTEM_ID);
+    externalModuleOptions.setRootProjectPath(NioPathUtil.toCanonicalPath(rootProjectPath));
+    externalModuleOptions.setLinkedProjectPath(getContentEntryPath());
+    externalModuleOptions.setLinkedProjectId(getLinkedProjectId(module));
   }
 
   @Override
@@ -268,10 +307,9 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       callback.run();
       return;
     }
-    var externalProjectPath = NioPathUtil.toCanonicalPath(rootProjectPath);
     var vcs = GitSilentFileAdderProvider.create(project);
     vcs.markFileForAdding(GradleDaemonJvmPropertiesFile.getPropertyPath(rootProjectPath), false);
-    GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, daemonJvmCriteria)
+    GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, NioPathUtil.toCanonicalPath(rootProjectPath), daemonJvmCriteria)
       .whenComplete((__, ___) -> vcs.finish())
       .whenComplete((isSuccess, exception) -> {
         if (exception != null || !isSuccess) {
@@ -305,7 +343,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       importSpec.createDirectoriesForEmptyContentRoots();
     }
     importSpec.callback(new ConfigureGradleModuleCallback(importSpec));
-    ExternalSystemUtil.refreshProject(PathKt.getSystemIndependentPath(rootProjectPath), importSpec);
+    ExternalSystemUtil.refreshProject(NioPathUtil.toCanonicalPath(rootProjectPath), importSpec);
   }
 
   private void generateGradleWrapper(@NotNull Project project) {
@@ -358,7 +396,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   @Override
   public ModuleType<?> getModuleType() {
-    return StdModuleTypes.JAVA;
+    return JavaModuleType.getModuleType();
   }
 
   private @NotNull VirtualFile setupGradleBuildFile(@NotNull VirtualFile modelContentRootDir)
@@ -671,7 +709,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     ConfigureGradleModuleCallback(@NotNull ImportSpecBuilder importSpecBuilder) {
       this.defaultCallback = new ImportSpecBuilder.DefaultProjectRefreshCallback(importSpecBuilder.build());
       this.sdkName = myJdk == null ? null : myJdk.getName();
-      this.externalConfigPath = FileUtil.toCanonicalPath(getContentEntryPath());
+      this.externalConfigPath = getContentEntryPath();
     }
 
     @Override

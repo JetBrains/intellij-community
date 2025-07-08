@@ -211,7 +211,7 @@ public final class Annotation implements Segment {
   /**
    * @deprecated do not use, does nothing
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setNeedsUpdateOnTyping(boolean __) {
   }
 

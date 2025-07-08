@@ -11,6 +11,7 @@ val COMPOSABLE_ANNOTATION_CLASS_ID: ClassId = ClassId.topLevel(COMPOSABLE_ANNOTA
 val COMPOSE_MODIFIER_NAME: Name = Name.identifier("Modifier")
 val COMPOSE_MODIFIER_FQN: FqName = FqName("androidx.compose.ui.$COMPOSE_MODIFIER_NAME")
 val COMPOSE_MODIFIER_CLASS_ID: ClassId = ClassId.topLevel(COMPOSE_MODIFIER_FQN)
+val DISALLOW_COMPOSABLE_CALLS_FQ_NAME: FqName = FqName("androidx.compose.runtime.DisallowComposableCalls")
 
 val PREVIEW_CLASS_NAME: Name = Name.identifier("Preview")
 val PREVIEW_PARAMETER_CLASS_NAME: Name = Name.identifier("PreviewParameter")

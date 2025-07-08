@@ -113,8 +113,14 @@ class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationPro
             setProjectName("project")
         }
 
+        val kotlinGradlePluginVersion = if (isGradleOlderThan("9.0")) {
+            KotlinGradlePluginVersions.V_1_8_22
+        } else {
+            KotlinGradlePluginVersions.V_1_9_25
+        }
+
         createBuildFile {
-            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.latestStable.toString())
+            withPlugin("org.jetbrains.kotlin.multiplatform", kotlinGradlePluginVersion.toString())
             withPrefix {
                 code(
                     """

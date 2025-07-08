@@ -176,6 +176,8 @@
       implementationClass="com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.ui.breakpoints.JavaBreakpointsUsageCollector"/>
 
+    <statistics.validation.customValidationRule implementation="com.intellij.debugger.statistics.ThreadDumpTriggeringExceptionValidator"/>
+
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
     <debugger.steppingListener implementation="com.intellij.debugger.engine.CancelingSteppingListener"/>
 
@@ -205,6 +207,8 @@
                  description="Allow to compile the code before evaluation if needed"/>
     <registryKey key="debugger.compiling.evaluator.force" defaultValue="false"
                  description="Always compile the code before evaluation"/>
+    <registryKey key="debugger.async.stack.trace.for.all.threads" defaultValue="true"
+                 description="Get async stack trace for any thread using the same evaluationContext. By default debugger-agent only returns async stack trace for the current suspended thread."/>
   </extensions>
 
   <actions>
@@ -364,11 +368,6 @@
     </group>
 
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
-
-    <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction"
-            icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges">
-      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
-    </action>
 
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction">

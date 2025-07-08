@@ -16,7 +16,6 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.eel.codegen` start
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
@@ -57,7 +56,6 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.eel.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(

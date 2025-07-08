@@ -10,7 +10,6 @@
   <module value="com.intellij.platform.ide.impl.wsl"/>
 
   <xi:include href="PlatformLangComponents.xml"/>
-  <xi:include href="/META-INF/ide-concurrency.xml"/>
   <xi:include href="/idea/PriorityEditorLangActions.xml"/>
   <xi:include href="/idea/PlatformActions.xml"/>
   <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
@@ -48,6 +47,8 @@
   <xi:include href="/META-INF/credential-store.xml">
     <xi:fallback/>
   </xi:include>
+
+  <xi:include href="/META-INF/ide-concurrency.xml"/>
 
   <xi:include href="/META-INF/LangExtensions.xml"/>
   <xi:include href="/META-INF/ProjectModelLangExtensions.xml"/>

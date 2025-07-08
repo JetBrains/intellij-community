@@ -6,7 +6,11 @@ import org.jetbrains.annotations.Nullable;
 
 /** Describes a markdown reference link */
 public interface PsiMarkdownReferenceLink extends PsiElement {
-  /** @return The PsiElement that acts as a label. On short links, returns the same as {@link #getValueElement()} */
+  /**
+   * @return The PsiElement that acts as a label.
+   *         On short links, returns the same as {@link #getLinkElement()}.
+   *         When there is a user-defined label, returns a {@link PsiMarkdownReferenceLabel}.
+   */
   @Nullable PsiElement getLabel();
 
   /** @return The PsiElement that act as a reference. */

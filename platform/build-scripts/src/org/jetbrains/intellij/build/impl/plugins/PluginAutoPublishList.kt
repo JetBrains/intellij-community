@@ -48,7 +48,7 @@ class PluginAutoPublishList(private val context: BuildContext) : Predicate<Plugi
 
     val includeInAllProducts = config.contains(mainModuleName)
     val includeInProduct = config.contains("+$productCode:$mainModuleName")
-    val excludedFromProduct = config.contains("-$productCode:$mainModuleName")
+    val excludedFromProduct = config.contains("-$productCode:$mainModuleName") || config.contains("-$productCode:*")
 
     if (includeInProduct && (excludedFromProduct || includeInAllProducts)) {
       context.messages.error("Unsupported rules combination: " + config.filter {

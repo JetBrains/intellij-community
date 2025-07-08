@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.icons` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "icons_resources",
@@ -14,9 +13,10 @@ jvm_resources(
   strip_prefix = "src"
 )
 
-java_library(
+jvm_library(
   name = "icons",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":icons_resources",
     ":icons_resources_1",

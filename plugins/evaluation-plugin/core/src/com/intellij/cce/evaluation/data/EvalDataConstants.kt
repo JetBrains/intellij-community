@@ -75,6 +75,26 @@ object Execution {
     )
   )
 
+  val LLM_JUDGE_RESPONSE: TrivialEvalData<String> = EvalDataDescription(
+    name = "LLM judge response",
+    description = "Raw response of the llm as a judge",
+    placement = DataPlacement.AdditionalText(AIA_LLM_JUDGE_RESPONSE_KEY),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text()
+    )
+  )
+
+  val LLM_JUDGE_SCORE: TrivialEvalData<Double> = EvalDataDescription(
+    name = "LLM judge score",
+    description = "The LLM Judge score, parsed from the raw LLM judge response",
+    placement = DataPlacement.AdditionalDouble(AIA_LLM_JUDGE_SCORE_KEY),
+    presentation = EvalDataPresentation(
+      PresentationCategory.METRIC,
+      DataRenderer.InlineDouble
+    )
+  )
+
   val LLM_CONTEXT: TrivialEvalData<String> = EvalDataDescription(
     name = "LLM context",
     description = "Result prompt used for LLM",
@@ -119,6 +139,10 @@ object Execution {
     name = "Reference",
     description = null,
     DataPlacement.AdditionalText(REFERENCE_PROPERTY),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text(wrapping = true),
+    )
   )
 
   val NAME: TrivialEvalData<String> = EvalDataDescription(
@@ -152,6 +176,26 @@ object Execution {
       PresentationCategory.EXECUTION,
       DataRenderer.Text(wrapping = true),
       ignoreMissingData = true,
+    )
+  )
+
+  val REFERENCE_NAMED_RANGES: TrivialEvalData<List<NamedRange>> = EvalDataDescription(
+    name = "Reference named ranges",
+    description = "Ground truth named ranges",
+    DataPlacement.AdditionalNamedRanges(REFERENCE_NAMED_RANGE_PROPERTY),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.NamedRanges
+    )
+  )
+
+  val PREDICTED_NAMED_RANGES: TrivialEvalData<List<NamedRange>> = EvalDataDescription(
+    name = "Predicted named ranges",
+    description = "Predicted named ranges",
+    DataPlacement.AdditionalNamedRanges(PREDICTED_NAMED_RANGE_PROPERTY),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.NamedRanges
     )
   )
 }

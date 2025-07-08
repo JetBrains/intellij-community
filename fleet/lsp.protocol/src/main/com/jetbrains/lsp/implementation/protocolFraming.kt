@@ -1,7 +1,6 @@
 package com.jetbrains.lsp.implementation
 
 import com.jetbrains.lsp.protocol.*
-import fleet.util.async.useAll
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -147,7 +146,7 @@ fun main() {
         }
     }
     runBlocking(Dispatchers.Default) {
-        tcpServer(TcpConnectionConfig.Server(9999, isMulticlient = true)) { connection ->
+        tcpServer(TcpConnectionConfig.Server("127.0.0.1", 9999, isMultiClient = true)) { connection ->
             withBaseProtocolFraming(connection, exitSignal = null) { incoming, outgoing ->
                 withLsp(incoming, outgoing, handler) { lsp ->
                     awaitCancellation()

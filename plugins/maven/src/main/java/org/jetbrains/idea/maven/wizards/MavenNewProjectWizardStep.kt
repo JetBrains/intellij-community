@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -16,9 +17,7 @@ import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -36,17 +35,14 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null)
-  final override val sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?> = propertyGraph.property(null)
-
-  final override var sdk: Sdk? by sdkProperty
-  final override var sdkDownloadTask: SdkDownloadTask? by sdkDownloadTaskProperty
+  final override val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?> = propertyGraph.property(null)
+  final override var jdkIntent: ProjectWizardJdkIntent? by jdkIntentProperty
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      projectWizardJdkComboBox(this, sdkProperty, sdkDownloadTaskProperty)
-        .whenItemSelectedFromUi { logSdkChanged(sdk) }
-        .onApply { logSdkFinished(sdk) }
+      projectWizardJdkComboBox(this, jdkIntentProperty)
+        .whenItemSelectedFromUi { jdkIntent?.javaVersion?.let { logSdkChanged(it.feature) } }
+        .onApply { jdkIntent?.javaVersion?.let { logSdkFinished(it.feature) } }
     }.bottomGap(BottomGap.SMALL)
   }
 
@@ -82,15 +78,16 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   protected fun <T : AbstractMavenModuleBuilder> linkMavenProject(project: Project, builder: T, configure: (T) -> Unit = {}): Module? {
+    val sdk = jdkIntent?.prepareJdk()
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
     builder.isCreatingNewProject = context.isCreatingNewProject
 
-    //if (context.isCreatingNewProject) {
-    //  context.projectJdk = sdk
-    //}
+    if (context.isCreatingNewProject) {
+      context.projectJdk = sdk
+    }
 
     builder.parentProject = parentData
     builder.aggregatorProject = parentData
@@ -100,7 +97,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     configure(builder)
 
-    val sdkDownloadTask = sdkDownloadTask
+    val sdkDownloadTask = jdkIntent?.downloadTask
     val isCreatingNewProject = context.isCreatingNewProject
 
     if (isCreatingNewProject) {

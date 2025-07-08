@@ -69,12 +69,12 @@ internal class WordListLoader(private val project: Project, private val coroutin
   }
 
   private fun readAll(loader: Loader): Set<String> {
-    val set = CollectionFactory.createSmallMemoryFootprintSet<String>()
+    val words = mutableListOf<String>()
     loader.load {
       ProgressManager.checkCanceled()
-      set.add(it)
+      words.add(it)
     }
-    return set
+    return CollectionFactory.createSmallMemoryFootprintSet(words)
   }
 
   private fun queueWordListLoad(loader: Loader, consumer: (String, WordList) -> Unit) {

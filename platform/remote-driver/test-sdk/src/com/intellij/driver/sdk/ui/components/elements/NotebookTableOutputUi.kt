@@ -27,13 +27,11 @@ class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
   val isStatic: JButtonUiComponent
     get() = x("//div[@class='ActionButtonWithText' and contains(@visible_text, 'Static Output')]", JButtonUiComponent::class.java)
 
-  val tableDimension: JLabelUiComponent
-    get() = x("//div[@class='MyLabel' and contains(@text, 'rows × ')]", JLabelUiComponent::class.java)
-
+  val tableDimension: JButtonUiComponent
+    get() = x("//div[@class='ActionButtonWithText' and contains(@myaction, 'Show Table Dimensions')]", JButtonUiComponent::class.java)
 
   val tableBreadcrumbs: JTextFieldUI
     get() = x("//div[@class='Breadcrumbs']", JTextFieldUI::class.java)
-
 
   val header: UiComponent
     get() = x(xQuery { byClass("MyTableHeader") })

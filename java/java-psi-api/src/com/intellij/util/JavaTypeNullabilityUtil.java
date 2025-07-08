@@ -82,7 +82,7 @@ public final class JavaTypeNullabilityUtil {
     for (PsiAnnotation annotation : annotations) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager manager = NullableNotNullManager.getInstance(annotation.getProject());
-      if (manager == null) continue;
+      if (manager == null) return TypeNullability.UNKNOWN;
       Optional<Nullability> optionalNullability = manager.getAnnotationNullability(qualifiedName);
       if (optionalNullability.isPresent()) {
         Nullability nullability = optionalNullability.get();

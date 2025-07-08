@@ -8,6 +8,8 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
+import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator

@@ -9,9 +9,12 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface PluginManagerCustomizer {
+  fun initCustomizer(parentComponent: JComponent)
+
   fun getInstallButonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginToInstallModel: PluginUiModel,
@@ -33,6 +36,10 @@ interface PluginManagerCustomizer {
 
   fun updateAfterModification(updateUi: () -> Unit)
 
+  fun getExtraPluginsActions(): List<AnAction>
+
+  fun onPluginDeleted(pluginModel: PluginUiModel, pluginSource: PluginSource)
+
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
@@ -44,8 +51,8 @@ interface PluginManagerCustomizer {
 
     @JvmStatic
     fun getInstance(): PluginManagerCustomizer? {
-      if (Registry.`is`("reworked.plugin.manager.enabled")) {
-        return EP_NAME.extensionList.first()
+      if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+        return EP_NAME.extensionList.firstOrNull()
       }
       return null
     }

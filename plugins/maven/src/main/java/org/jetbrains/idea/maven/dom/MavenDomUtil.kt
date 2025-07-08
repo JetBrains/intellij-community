@@ -236,7 +236,12 @@ object MavenDomUtil {
 
   @JvmStatic
   fun getMavenDomProjectModel(project: Project, file: VirtualFile): MavenDomProjectModel? {
-    return getMavenDomModel<MavenDomProjectModel>(project, file, MavenDomProjectModel::class.java)
+    return getMavenDomModel(project, file, MavenDomProjectModel::class.java)
+  }
+
+  @JvmStatic
+  fun getMavenDomProjectModel(file: PsiFile): MavenDomProjectModel? {
+    return getMavenDomModel(file, MavenDomProjectModel::class.java)
   }
 
   @JvmStatic
@@ -250,7 +255,7 @@ object MavenDomUtil {
   fun <T : MavenDomElement?> getMavenDomModel(
     project: Project,
     file: VirtualFile,
-    clazz: Class<T>
+    clazz: Class<T>,
   ): T? {
     if (!file.isValid()) return null
     val psiFile = PsiManager.getInstance(project).findFile(file)
@@ -427,7 +432,7 @@ object MavenDomUtil {
   fun createDomDependency(
     model: MavenDomProjectModel,
     editor: Editor?,
-    id: MavenId
+    id: MavenId,
   ): MavenDomDependency {
     return createDomDependency(model.getDependencies(), editor, id)
   }
@@ -437,7 +442,7 @@ object MavenDomUtil {
   fun createDomDependency(
     dependencies: MavenDomDependencies,
     editor: Editor?,
-    id: MavenCoordinate
+    id: MavenCoordinate,
   ): MavenDomDependency {
     val dep = createDomDependency(dependencies, editor)
 

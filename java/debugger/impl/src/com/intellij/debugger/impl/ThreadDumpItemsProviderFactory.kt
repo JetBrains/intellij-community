@@ -2,10 +2,10 @@
 package com.intellij.debugger.impl
 
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.unscramble.DumpItem
 import com.intellij.unscramble.MergeableDumpItem
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 /**
  * A provider of [DumpItem] instances, which may be shown in [com.intellij.unscramble.ThreadDumpPanel].
@@ -18,8 +18,8 @@ abstract class ThreadDumpItemsProviderFactory {
 
 @ApiStatus.Internal
 interface ThreadDumpItemsProvider {
-  @get:NlsContexts.ProgressTitle
-  val progressText: String
+  @get:Nls
+  val itemsName: String
 
   /**
    * Returns whether this provider requires [SuspendContextImpl] which can be used to evaluate some information to provide dump items.

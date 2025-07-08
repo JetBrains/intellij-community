@@ -13,6 +13,7 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -42,10 +43,11 @@ class KtVariableDescriptor(
      */
     private val sourceAnchorPsi: PsiElement?,
 ) : JvmVariableDescriptor(), KtBaseDescriptor {
+    @OptIn(KaExperimentalApi::class)
     val stable: Boolean by lazy {
         when (val result = analyze(module) {
             when (val symbol = pointer.restoreSymbol()) {
-                is KaValueParameterSymbol, is KaEnumEntrySymbol -> return@analyze true
+                is KaValueParameterSymbol, is KaContextParameterSymbol, is KaEnumEntrySymbol -> return@analyze true
                 is KaPropertySymbol, is KaJavaFieldSymbol -> return@analyze symbol.isVal
                 is KaLocalVariableSymbol -> {
                     if (symbol.isVal) return@analyze true
@@ -174,6 +176,7 @@ class KtVariableDescriptor(
                 return@getProjectPsiDependentCache result
             }
 
+        @OptIn(KaExperimentalApi::class)
         context(KaSession)
         fun createFromSimpleName(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             val varFactory = factory.varFactory
@@ -182,7 +185,7 @@ class KtVariableDescriptor(
             }
             if (expr !is KtSimpleNameExpression) return null
             val symbol: KaVariableSymbol = expr.mainReference.resolveToSymbol() as? KaVariableSymbol ?: return null
-            if (symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol) {
+            if (symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol || symbol is KaContextParameterSymbol) {
                 return varFactory.createVariableValue(symbol.variableDescriptor())
             }
             val qualifier = findQualifier(factory, expr, symbol)

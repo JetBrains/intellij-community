@@ -28,7 +28,7 @@ class Foo {
 }
 
 public class BuilderWithDefaultReinitializeInConstructor {
-  public static void main(String[] args) {
+  public static void main() {
     new Bar("FooBar", "Foo");
     new Foo("FooBar", "Foo");
   }

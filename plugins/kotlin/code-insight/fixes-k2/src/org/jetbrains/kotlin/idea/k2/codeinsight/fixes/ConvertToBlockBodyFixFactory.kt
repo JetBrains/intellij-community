@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils.createContext
 import org.jetbrains.kotlin.idea.quickfix.ConvertToBlockBodyFix
@@ -17,7 +16,7 @@ object ConvertToBlockBodyFixFactory {
             val declaration = element.getStrictParentOfType<KtDeclarationWithBody>()
                 ?: return@ModCommandBased emptyList()
 
-            val context = createContext(declaration, ShortenReferencesFacility.getInstance(), reformat = false)
+            val context = createContext(declaration, reformat = false)
                 ?: return@ModCommandBased emptyList()
 
             listOf(ConvertToBlockBodyFix(declaration, context))

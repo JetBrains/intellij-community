@@ -85,7 +85,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
           }
 
           checkIndexed(fileOrDir, false, "has no indexing timestamp") {
-            val indexedFlagSetOrDisabled = IndexingFlag.isIndexedFlagDisabled() || IndexingFlag.isFileIndexed(it, indexingRequest.getFileIndexingStamp(fileOrDir))
+            val indexedFlagSetOrDisabled = IndexingFlag.isFileIndexed(it, indexingRequest.getFileIndexingStamp(fileOrDir))
             val hasIndexingStamp = IndexingStamp.hasIndexingTimeStamp(it.id)
 
             // TODO-ank: should be (indexedFlagSetOrDisabled && hasIndexingStamp) || ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)

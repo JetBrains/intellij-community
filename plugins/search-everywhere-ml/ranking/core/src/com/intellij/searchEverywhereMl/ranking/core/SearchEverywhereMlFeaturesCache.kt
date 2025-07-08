@@ -15,7 +15,7 @@ import kotlin.math.round
 internal class SearchEverywhereMlFeaturesCache {
   private val idToElementCacheStorage = hashMapOf<Int, SearchEverywhereMLElementCache>()
 
-  fun getUpdateEventsAndCache(project: Project?, shouldLogFeatures: Boolean,
+  fun getUpdateEventsAndCache(project: Project?,
                               elements: List<SearchEverywhereFoundElementInfoWithMl>,
                               contributorFeaturesProvider: (SearchEverywhereFoundElementInfoWithMl) -> List<EventPair<*>>,
                               elementIdProvider: SearchEverywhereMlItemIdProvider): List<ObjectEventData>? {
@@ -28,7 +28,7 @@ internal class SearchEverywhereMlFeaturesCache {
 
       val elementId = ReadAction.compute<Int?, Nothing> { elementIdProvider.getId(it.element) }
 
-      val elementCache = buildElementCache(it, shouldLogFeatures, actionManager, contributorFeaturesProvider(it), elementId)
+      val elementCache = buildElementCache(it, actionManager, contributorFeaturesProvider(it), elementId)
 
       val diffCache = getDiffCacheAndUpdateStorage(elementCache, elementId)
       ObjectEventData(diffCache.toEvents())
@@ -52,29 +52,19 @@ internal class SearchEverywhereMlFeaturesCache {
   }
 
   private fun buildElementCache(it: SearchEverywhereFoundElementInfoWithMl,
-                                shouldLogFeatures: Boolean,
                                 actionManager: ActionManager,
                                 contributorFeatures: List<EventPair<*>>,
                                 elementId: Int?): SearchEverywhereMLElementCache {
     val mlWeight = it.mlWeight ?: -1.0
 
-    if (shouldLogFeatures) {
-      return SearchEverywhereMLElementCache(
-        contributor = contributorFeatures,
-        id = elementId,
-        mlFeatures = it.mlFeatures.ifEmpty { null },
-        priority = it.priority,
-        mlWeight = if (mlWeight >= 0) roundDouble(mlWeight) else null,
-        actionId = getActionIdIfApplicable(it.element, actionManager)
-      )
-    }
-    else {
-      return SearchEverywhereMLElementCache(
-        contributor = contributorFeatures,
-        id = elementId,
-        priority = it.priority,
-      )
-    }
+    return SearchEverywhereMLElementCache(
+      contributor = contributorFeatures,
+      id = elementId,
+      mlFeatures = it.mlFeatures.ifEmpty { null },
+      priority = it.priority,
+      mlWeight = if (mlWeight >= 0) roundDouble(mlWeight) else null,
+      actionId = getActionIdIfApplicable(it.element, actionManager)
+    )
   }
 
   private fun getActionIdIfApplicable(element: Any, actionManager: ActionManager): String? {

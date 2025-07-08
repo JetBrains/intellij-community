@@ -7,10 +7,10 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -195,14 +195,14 @@ public class FindClassTest extends JavaPsiTestCase {
     final List<Module> newModules = new ArrayList<>();
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableModuleModel modifiableModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-      Module module2 = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
+      Module module2 = modifiableModel.newModule("a.iml", JavaModuleType.getModuleType().getId());
       newModules.add(module2);
       ModuleRootModificationUtil.addDependency(module2, getModule());
       File repoLib = new File(PathManagerEx.getTestDataPath(), "/psi/cls/repo/");
       VirtualFile repoRoot = LocalFileSystem.getInstance().findFileByIoFile(repoLib);
       assertNotNull(repoRoot);
       ModuleRootModificationUtil.addModuleLibrary(module2, repoRoot.getUrl());
-      newModules.add(modifiableModel.newModule("b.iml", StdModuleTypes.JAVA.getId()));
+      newModules.add(modifiableModel.newModule("b.iml", JavaModuleType.getModuleType().getId()));
       modifiableModel.commit();
     });
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());

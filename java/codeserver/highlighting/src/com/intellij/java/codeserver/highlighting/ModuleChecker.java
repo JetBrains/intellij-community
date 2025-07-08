@@ -327,7 +327,7 @@ final class ModuleChecker {
       reportUnresolvedJavaModule(refElement);
       return;
     }
-    JpmsModuleAccessInfo moduleAccess = new JpmsModuleInfo.TargetModuleInfo(target, "").accessAt(myVisitor.file().getOriginalFile());
+    JpmsModuleAccessInfo moduleAccess = new JpmsModuleInfo.TargetModuleInfoByJavaModule(target, "").accessAt(myVisitor.file().getOriginalFile());
     JpmsModuleAccessProblem problem = moduleAccess.checkModuleAccess(statement);
     if (problem != null) {
       myVisitor.report(accessError(problem).create(statement, moduleAccess));

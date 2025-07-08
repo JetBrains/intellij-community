@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 # load("@rules_graalvm//graalvm:defs.bzl", "native_image")
@@ -18,7 +19,13 @@ java_binary(
     name = "worker-jvm",
     runtime_deps = [":worker-lib"],
     main_class = "org.jetbrains.bazel.jvm.JvmWorker",
-    jvm_flags = [
+#     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use :worker-jvm-jvm_flags
+    visibility = ["//visibility:public"],
+)
+
+string_list_flag(
+    name = "worker-jvm-jvm_flags",
+    build_setting_default = [
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
         "-Dio.netty.allocator.useCachedMagazinesForNonEventLoopThreads=true",

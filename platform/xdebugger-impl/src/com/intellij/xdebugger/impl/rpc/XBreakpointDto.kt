@@ -5,7 +5,6 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -64,6 +63,7 @@ data class XBreakpointDtoState(
   val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
   val customPresentation: XBreakpointCustomPresentationDto?,
   val lineBreakpointInfo: XLineBreakpointInfo?,
+  val requestId: Long,
 )
 
 @ApiStatus.Internal
@@ -151,10 +151,12 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
 private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugSessionImpl?): XBreakpointDtoState {
   val breakpoint = this
   return withContext(Dispatchers.Default) {
+    val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl
+    val completedRequestId = manager.requestCounter.getRequestId()
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
-      sourcePosition = readAction { sourcePosition?.toRpc () },
-      isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(breakpoint),
+      sourcePosition = readAction { sourcePosition?.toRpc() },
+      isDefault = manager.isDefaultBreakpoint(breakpoint),
       logExpressionObject = logExpressionObject?.toRpc(),
       conditionExpression = conditionExpression?.toRpc(),
       enabled = isEnabled,
@@ -174,7 +176,8 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugS
       timestamp = timeStamp,
       currentSessionCustomPresentation = currentSession?.getBreakpointPresentation(breakpoint)?.toRpc(),
       customPresentation = breakpoint.customizedPresentation?.toRpc(),
-      lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() }
+      lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() },
+      requestId = completedRequestId,
     )
   }
 }

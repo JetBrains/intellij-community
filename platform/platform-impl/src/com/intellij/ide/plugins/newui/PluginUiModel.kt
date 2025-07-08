@@ -55,12 +55,16 @@ interface PluginUiModel {
   @get:NlsSafe
   val productCode: String?
 
+  val releaseDate: Long?
+
   @get:NlsSafe
   val size: String?
   val releaseVersion: Int
 
   @get:NlsSafe
   val displayCategory: String?
+
+  val isImplementationDetail: Boolean
 
   var source: PluginSource?
 
@@ -247,10 +251,15 @@ fun PluginUiModel.isPaidPlugin(): Boolean = isPaid || isConverted
 
 @ApiStatus.Internal
 fun PluginUiModel.addInstalledSource(pluginSource: PluginSource) {
-  if (source == null || source == pluginSource) {
-    source = pluginSource
+  source = source.addSource(pluginSource)
+}
+
+@ApiStatus.Internal
+fun PluginSource?.addSource(pluginSource: PluginSource): PluginSource {
+  if (this == null || this == pluginSource) {
+    return pluginSource
   }
   else {
-    this.source = PluginSource.BOTH
+    return PluginSource.BOTH
   }
 }

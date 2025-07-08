@@ -195,7 +195,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return importResult.createdModules
   }
 
-  private fun runImportProjectActivity(
+  private suspend fun runImportProjectActivity(
     projectsToImport: List<MavenProject>,
     modelsProvider: IdeModifiableModelsProvider,
     parentActivity: StructuredIdeActivity,
@@ -204,7 +204,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       project, projectsTree, projectsToImport,
       modelsProvider, importingSettings, myPreviewModule, parentActivity
     )
-    val postTasks = tracer.spanBuilder("importProject").use {
+    val postTasks = tracer.spanBuilder("importProject").useWithScope {
       projectImporter.importProject()
     }
     return ImportResult(projectImporter.createdModules(), postTasks ?: emptyList())

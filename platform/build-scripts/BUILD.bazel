@@ -91,6 +91,7 @@ jvm_library(
     "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
     "@lib//:com-jetbrains-fus-reporting-model",
     "@lib//:platform-build_scripts-netty",
+    "@lib//:platform-build_scripts-jetbrains-intellij-deps-coverage-reporter",
   ],
   runtime_deps = [
     "@lib//:commons-cli",

@@ -113,7 +113,9 @@ public final class StartupErrorReporter {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message, @Nullable Throwable error) {
+  private static void showError(@Nls(capitalization = Title) String title,
+                                @Nls(capitalization = Sentence) String message,
+                                @Nullable Throwable error) {
     System.err.println();
     System.err.println("**" + title + "**");
     System.err.println();
@@ -126,12 +128,14 @@ public final class StartupErrorReporter {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     }
-    catch (Throwable ignore) { }
+    catch (Throwable ignore) {
+    }
 
     try {
       SplashManagerKt.hideSplash();
     }
-    catch (Throwable ignore) { }
+    catch (Throwable ignore) {
+    }
 
     try {
       var messageObj = prepareMessage(message);
@@ -147,7 +151,8 @@ public final class StartupErrorReporter {
         }
       });
       if (error != null) {
-        var options = new Object[]{close, BootstrapBundle.message("bootstrap.error.option.reset"), BootstrapBundle.message("bootstrap.error.option.report"), learnMore};
+        var options = new Object[]{close, BootstrapBundle.message("bootstrap.error.option.reset"),
+          BootstrapBundle.message("bootstrap.error.option.report"), learnMore};
         var choice = JOptionPane.showOptionDialog(
           JOptionPane.getRootFrame(), messageObj, title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]
         );
@@ -188,7 +193,8 @@ public final class StartupErrorReporter {
     var uploadId = (String)null;
     if (error instanceof ExceptionWithAttachments ewa) {
       var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.confirm"));
-      var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.option.report"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+      var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.option.report"),
+                                             JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
       if (ok != JOptionPane.OK_OPTION) return;
 
       try {
@@ -198,7 +204,8 @@ public final class StartupErrorReporter {
         var buf = new StringWriter();
         t.printStackTrace(new PrintWriter(buf));
         message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.no.logs", buf));
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.no.logs"), JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.no.logs"),
+                                      JOptionPane.ERROR_MESSAGE);
         return;
       }
     }
@@ -207,7 +214,8 @@ public final class StartupErrorReporter {
     }
 
     try {
-      var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
+      var url = System.getProperty(REPORT_URL_PROPERTY,
+                                   "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
         .replace("$TITLE$", URLUtil.encodeURIComponent(title))
         .replace("$DESCR$", URLUtil.encodeURIComponent(description))
         .replace("$SUBSYSTEM$", URLUtil.encodeURIComponent("Subsystem: IDE. Startup"));
@@ -298,17 +306,20 @@ public final class StartupErrorReporter {
       var backupPath = ConfigBackup.Companion.getNextBackupPath(PathManager.getConfigDir());
       CustomConfigMigrationOption.StartWithCleanConfig.INSTANCE.writeConfigMarkerFile();
       var message = BootstrapBundle.message("bootstrap.error.message.reset", backupPath);
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"),
+                                    JOptionPane.INFORMATION_MESSAGE);
     }
     catch (Throwable t) {
       var message = BootstrapBundle.message("bootstrap.error.message.reset.failed", t);
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"),
+                                    JOptionPane.ERROR_MESSAGE);
     }
   }
 
   private static void showBrowserError(Throwable t) {
     var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.browser", t));
-    JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.browser"), JOptionPane.ERROR_MESSAGE);
+    JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.browser"),
+                                  JOptionPane.ERROR_MESSAGE);
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "HardCodedStringLiteral"})
@@ -319,7 +330,8 @@ public final class StartupErrorReporter {
     textPane.setBackground(UIManager.getColor("Panel.background"));
     textPane.setCaretPosition(0);
 
-    var scrollPane = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    var scrollPane =
+      new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setBorder(null);
 
     var maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;
@@ -355,7 +367,8 @@ public final class StartupErrorReporter {
       try {
         PluginManagerCore.getLogger().error(t);
       }
-      catch (Throwable ignore) { }
+      catch (Throwable ignore) {
+      }
       // workaround for SOE on parsing a PAC file (JRE-247)
       if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
         return;

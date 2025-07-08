@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -318,7 +319,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testAmbiguousModuleImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       prepareAmbiguousModuleTests();
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.checkHighlighting();
@@ -326,7 +327,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testModuleImportWithPackageImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       prepareAmbiguousModuleTests();
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.checkHighlighting();
@@ -337,7 +338,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testOptimizeImportWithModuleConflict() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       prepareAmbiguousModuleTests();
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
         String fileName = getTestName(false) + ".java";
@@ -357,7 +358,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testModuleImportWithDefaultPackageImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       addCode("module-info.java", """
       module my.source.moduleB {
         exports my.source.moduleB;
@@ -376,7 +377,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testAmbiguousModuleImportWithPackageImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.MODULE_IMPORT_DECLARATIONS.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, ()->{
       prepareAmbiguousModuleTests();
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.checkHighlighting();
@@ -384,7 +385,7 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
     public void testModuleImportWithSingleImport() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), ()->{
       prepareAmbiguousModuleTests();
       myFixture.configureByFile(getTestName(false) + ".java");
       myFixture.checkHighlighting();

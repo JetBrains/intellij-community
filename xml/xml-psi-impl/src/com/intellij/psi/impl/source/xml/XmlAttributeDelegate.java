@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformUtils;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
@@ -213,6 +214,9 @@ public abstract class XmlAttributeDelegate {
   }
 
   PsiReference @NotNull [] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
+    //todo can it be moved to reference provider?
+    if (PlatformUtils.isJetBrainsClient()) return PsiReference.EMPTY_ARRAY;
+
     if (hints.offsetInElement != null) {
       XmlElement nameElement = myAttribute.getNameElement();
       if (nameElement == null || hints.offsetInElement > nameElement.getStartOffsetInParent() + nameElement.getTextLength()) {

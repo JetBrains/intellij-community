@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleWithElementSourceModuleKindOrProduction
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -28,12 +28,14 @@ class KotlinK2CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
             If the given module has refining (modules that have a 'refines' edge to this module) modules,
             Then we'll try to find a leaf jvm module which we can use as context for evaluating the expressions.
              */
-            val jvmLeafModule = contextElement?.module?.implementingModules
-                .orEmpty()
-                .filter { module -> module.implementingModules.isEmpty() } // Looking for a leave
-                .firstOrNull { module -> module.platform.isJvm() }
+            if (contextElement != null) {
+                val jvmLeafModule = contextElement.module?.implementingModules
+                    .orEmpty()
+                    .filter { module -> module.implementingModules.isEmpty() } // Looking for a leave
+                    .firstOrNull { module -> module.platform.isJvm() }
 
-            virtualFile.analysisContextModule = jvmLeafModule?.toKaSourceModuleForProductionOrTest()
+                virtualFile.analysisContextModule = jvmLeafModule?.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElement)
+            }
         }
     }
 

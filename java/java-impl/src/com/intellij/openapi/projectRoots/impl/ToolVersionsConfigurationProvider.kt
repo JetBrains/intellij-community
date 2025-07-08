@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.diagnostic.logger
@@ -12,10 +12,10 @@ private val LOG = logger<ToolVersionsConfigurationProvider>()
 
 data class AsdfReleaseData(val name: String, val vendor: String, val version: String) {
   companion object {
-    private val regex: Regex = Regex("([\\w\\-]+)-([0-9][^-_+]*)")
+    private val regex: Regex = Regex("([\\w\\-]+)-([0-9][^-_+b\\s]*)\\S*")
 
     fun parse(text: String): AsdfReleaseData? {
-      val matchResult = regex.find(text) ?: return null
+      val matchResult = regex.matchEntire(text) ?: return null
       return AsdfReleaseData(
         text,
         matchResult.groups[1]?.value ?: return null,
@@ -24,9 +24,11 @@ data class AsdfReleaseData(val name: String, val vendor: String, val version: St
     }
   }
 
+  val normalizedVersion: String = version.split(".").take(3).joinToString(".")
+
   fun matchVersionString(versionString: @NlsSafe String): Boolean {
     LOG.info("Matching '$versionString'")
-    if (version !in versionString) return false
+    if (normalizedVersion !in versionString) return false
 
     val variant = when (vendor) {
       "adoptopenjdk", "adoptopenjdk-jre" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
@@ -35,6 +37,7 @@ data class AsdfReleaseData(val name: String, val vendor: String, val version: St
       "corretto" -> JdkVersionDetector.Variant.Corretto
       "dragonwell" -> JdkVersionDetector.Variant.Dragonwell
       "graalvm-community" -> JdkVersionDetector.Variant.GraalVMCE
+      "jetbrains" -> JdkVersionDetector.Variant.JBR
       "kona" -> JdkVersionDetector.Variant.Kona
       "liberica", "liberica-javafx",
       "liberica-jre", "liberica-jre-javafx", "liberica-lite" -> JdkVersionDetector.Variant.Liberica
@@ -61,7 +64,7 @@ class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvider<Asdf
     val releaseDataText = text.lines()
       .find { it.split(" ").firstOrNull() == "java" }
       ?.substringAfter(" ") ?: return null
-    return AsdfReleaseData.parse(releaseDataText)
+    return AsdfReleaseData.parse(releaseDataText.trim())
   }
 
   override fun matchAgainstSdk(releaseData: AsdfReleaseData, sdk: Sdk): Boolean {

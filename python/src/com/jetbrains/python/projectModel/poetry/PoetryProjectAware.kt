@@ -18,7 +18,7 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.toPath
 import com.jetbrains.python.projectModel.poetry.PoetryProjectAware.CoroutineScopeService.Companion.coroutineScope
-import com.jetbrains.python.sdk.poetry.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 

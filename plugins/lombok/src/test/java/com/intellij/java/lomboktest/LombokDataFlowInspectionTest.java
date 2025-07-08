@@ -48,4 +48,9 @@ public class LombokDataFlowInspectionTest extends DataFlowInspectionTestCase {
 
     doTest();
   }
+
+  @Override
+  protected @NotNull String getTestFileName() {
+    return "test/" + super.getTestFileName();
+  }
 }

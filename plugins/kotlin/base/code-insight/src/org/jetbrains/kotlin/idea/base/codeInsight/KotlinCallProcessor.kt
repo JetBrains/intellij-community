@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.progress.ProgressManager
@@ -158,8 +158,12 @@ object KotlinCallProcessor {
         return current
     }
 
+    // TODO: KTIJ-34670 drop this implementation
+    @OptIn(KaImplementationDetail::class)
     private object ReadAccess : KaSimpleVariableAccess.Read
 
+    // TODO: KTIJ-34670 drop this implementation
+    @OptIn(KaImplementationDetail::class)
     private class SpecialPartiallyAppliedSymbol<out S : KaCallableSymbol, out C : KaCallableSignature<S>>(
         private val backingSignature: C
     ) : KaPartiallyAppliedSymbol<S, C> {
@@ -188,6 +192,8 @@ object KotlinCallProcessor {
                             is KaFunctionSymbol -> {
                                 val signature = symbol.asSignature()
                                 val partiallyAppliedSymbol = SpecialPartiallyAppliedSymbol(signature)
+
+                                // TODO: KTIJ-34670 drop this implementation
                                 val call = object : KaSimpleFunctionCall {
                                     override val isImplicitInvoke: Boolean get() = withValidityAssertion { false }
                                     override val argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> get() = withValidityAssertion { emptyMap() }
@@ -202,6 +208,8 @@ object KotlinCallProcessor {
                             is KaVariableSymbol -> {
                                 val signature = symbol.asSignature()
                                 val partiallyAppliedSymbol = SpecialPartiallyAppliedSymbol(signature)
+
+                                // TODO: KTIJ-34670 drop this implementation
                                 val call = object : KaSimpleVariableAccessCall {
                                     override val simpleAccess: KaSimpleVariableAccess.Read get() = withValidityAssertion { ReadAccess }
                                     override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> get() = withValidityAssertion { partiallyAppliedSymbol }

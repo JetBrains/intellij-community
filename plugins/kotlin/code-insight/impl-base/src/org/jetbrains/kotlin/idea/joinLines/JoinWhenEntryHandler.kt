@@ -5,7 +5,9 @@ import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JO
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhenExpression
@@ -19,12 +21,26 @@ class JoinWhenEntryHandler : JoinRawLinesHandlerDelegate {
         val entry = element.getPrevSiblingIgnoringWhitespaceAndComments() as? KtWhenEntry ?: return CANNOT_JOIN
         val entryLastCondition = entry.conditions.lastOrNull() ?: return CANNOT_JOIN
         val whenExpression = entry.parent as? KtWhenExpression ?: return CANNOT_JOIN
+
+        val prevSiblingIgnoringWhitespace = element.getPrevSiblingIgnoringWhitespace()
+        val nextSiblingIgnoringWhitespace = element.getNextSiblingIgnoringWhitespace()
+
+        if (nextSiblingIgnoringWhitespace is PsiComment && nextSiblingIgnoringWhitespace.noKtWhenEntryTillNewLine())
+            return CANNOT_JOIN
+
         val nextEntry = entry.getNextSiblingIgnoringWhitespaceAndComments() as? KtWhenEntry ?: return CANNOT_JOIN
 
         if (nextEntry.isElse) return CANNOT_JOIN
+
+        if (element is PsiWhiteSpace && element.text.contains('\n') && element.noKtWhenEntryTillNewLine(false))
+            return CANNOT_JOIN
+
         if (entry.hasComments() || nextEntry.hasComments() || !nextEntry.hasSameExpression(entry)) {
-            return joinWithSemicolon(document, entry, nextEntry)
+            return joinWithSemicolon(document,
+                                     prevSiblingIgnoringWhitespace ?: entry,
+                                     nextSiblingIgnoringWhitespace ?: nextEntry)
         }
+
         val nextEntryFirstCondition = nextEntry.conditions.firstOrNull() ?: return CANNOT_JOIN
         val separator = if (whenExpression.subjectExpression != null) ", " else " || "
         document.replaceString(entryLastCondition.endOffset, nextEntryFirstCondition.startOffset, separator)
@@ -33,8 +49,8 @@ class JoinWhenEntryHandler : JoinRawLinesHandlerDelegate {
 
     private fun joinWithSemicolon(
         document: Document,
-        entry: KtWhenEntry,
-        nextEntry: KtWhenEntry
+        entry: PsiElement,
+        nextEntry: PsiElement
     ): Int {
         document.replaceString(entry.textRange.endOffset, nextEntry.textRange.startOffset, "; ")
         return entry.textRange.endOffset + 1
@@ -46,4 +62,7 @@ class JoinWhenEntryHandler : JoinRawLinesHandlerDelegate {
         allChildren.any { it is PsiComment } || siblings(withItself = false).takeWhile { !it.textContains('\n') }.any { it is PsiComment }
 
     private fun KtWhenEntry.hasSameExpression(other: KtWhenEntry) = expression?.text == other.expression?.text
+
+    private fun PsiElement.noKtWhenEntryTillNewLine(forward: Boolean = true) =
+        siblings(forward = forward, withItself = false).takeWhile { !it.textContains('\n') }.none { it is KtWhenEntry }
 }

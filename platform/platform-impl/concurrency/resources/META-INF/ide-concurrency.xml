@@ -5,5 +5,8 @@
     <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceInterface="com.intellij.concurrency.AsyncFutureFactory"
                         serviceImplementation="com.intellij.concurrency.AsyncFutureFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.application.CoroutineSupport"
+                        serviceImplementation="com.intellij.application.impl.AssertingPlatformCoroutineSupport" overrides="true"/>
   </extensions>
 </idea-plugin>

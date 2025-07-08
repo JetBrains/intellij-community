@@ -4,18 +4,11 @@ package com.jetbrains.python.codeInsight.typing
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
-import com.jetbrains.python.psi.AccessDirection
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyPossibleClassMember
-import com.jetbrains.python.psi.PyTypeParameter
-import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.getImplicitlyInvokedMethodTypes
 import com.jetbrains.python.psi.impl.resolveImplicitlyInvokedMethods
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.resolve.RatedResolveResult
-import com.jetbrains.python.psi.types.PyClassLikeType
-import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
 
 fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext): Boolean = containsProtocol(classLikeType.getSuperClassTypes(context))
@@ -29,11 +22,11 @@ fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: Typ
                                                                                                          isProtocol(expected, context) &&
                                                                                                          isProtocol(actual, context)
 
-typealias ProtocolAndSubclassElements = Pair<PyTypedElement, List<RatedResolveResult>?>
+typealias ProtocolAndSubclassElements = Pair<PyTypedElement, List<PyTypedResolveResult>>
 
 fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> {
   val resolveContext = PyResolveContext.defaultContext(context)
-  val result = mutableListOf<Pair<PyTypedElement, List<RatedResolveResult>?>>()
+  val result = mutableListOf<Pair<PyTypedElement, List<PyTypedResolveResult>>>()
 
   protocol.toInstance().visitMembers(
     { e ->
@@ -51,8 +44,33 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
         val name = e.name ?: return@visitMembers true
         when (name) {
           PyNames.CLASS_GETITEM -> return@visitMembers true
-          PyNames.CALL -> result.add(Pair(e, subclass.resolveImplicitlyInvokedMethods(null, resolveContext)))
-          else -> result.add(Pair(e, subclass.resolveMember(name, null, AccessDirection.READ, resolveContext)))
+          PyNames.CALL -> {
+            val types = subclass.getImplicitlyInvokedMethodTypes(null, resolveContext)
+            if (types.isNotEmpty()) {
+              result.add(Pair(e, types))
+            }
+            else {
+              val fallbackTypes = subclass.resolveImplicitlyInvokedMethods(null, resolveContext)
+                .mapNotNull { it.element }
+                .filterIsInstance<PyTypedElement>()
+                .mapNotNull {
+                  val type = resolveContext.typeEvalContext.getType(it)
+                  if (type != null) {
+                    it to type
+                  }
+                  else {
+                    null
+                  }
+                }
+              result.add(Pair(e, fallbackTypes.map { PyTypedResolveResult(it.first, it.second) }))
+            }
+          }
+          else -> {
+            val types = subclass.getMemberTypes(name, null, AccessDirection.READ, resolveContext)
+            if (types != null) {
+              result.add(Pair(e, types))
+            }
+          }
         }
       }
 

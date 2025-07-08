@@ -315,6 +315,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       })
 
       files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter<SwitcherVirtualFile>(maybeSearchableModel, null)
+      files.visibleRowCount = files.itemsCount
 
       val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
@@ -663,7 +664,7 @@ private class SwitcherScrollPane(view: Component, noBorder: Boolean)
   init {
     border = if (noBorder) JBUI.Borders.empty() else JBUI.Borders.customLineRight(JBUI.CurrentTheme.Popup.separatorColor())
     viewportBorder = JBUI.Borders.empty()
-    minimumSize = JBUI.DialogSizes.medium()
+    minimumSize = JBUI.size(if (noBorder) 250 else 0, 100)
   }
 
   override fun getPreferredSize(): Dimension {

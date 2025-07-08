@@ -3,20 +3,22 @@ package com.intellij.spellchecker.grazie.dictionary
 
 import ai.grazie.nlp.similarity.Levenshtein
 import ai.grazie.spell.lists.WordList
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
 
 internal class WordListAdapter : WordList, EditableWordListAdapter() {
   fun isAlien(word: String): Boolean {
-    return dictionaries.values.all { it.contains(word) == null } && !aggregator.contains(word)
+    return dictionaries.values.all { it.lookup(word) == Alien } && !aggregator.contains(word)
   }
 
   override fun contains(word: String, caseSensitive: Boolean): Boolean {
     val inDictionary = if (caseSensitive) {
-      dictionaries.values.any { it.contains(word) ?: false }
+      dictionaries.values.any { it.lookup(word) == Present }
     } else {
       val lowered = word.lowercase()
       // NOTE: dictionary may not contain a lowercase form, but may contain any form in a different case
       // current dictionary interface does not support caseSensitive
-      dictionaries.values.any { (it.contains(word) ?: false) || it.contains(lowered) ?: false }
+      dictionaries.values.any { (it.lookup(word) == Present) || it.lookup(lowered) == Present }
     }
 
     return inDictionary || aggregator.contains(word, caseSensitive)

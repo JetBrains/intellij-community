@@ -34,7 +34,7 @@ internal sealed class RedundantLetInspection :
         ApplicabilityRanges.calleeExpression(element)
 
     override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
-        if (!element.isCalling(sequenceOf(KOTLIN_LET_FQ_NAME))) return null
+        if (!element.isCalling(KOTLIN_LET_FQ_NAME)) return null
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return null
         val parameterName = lambdaExpression.getParameterName() ?: return null
         val bodyExpression = lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return null

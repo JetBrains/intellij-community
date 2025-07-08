@@ -3,11 +3,12 @@
 
 package com.jetbrains.python.packaging.management
 
+import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.util.messages.Topic
@@ -23,13 +24,13 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
 import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.sdk.PythonSdkType
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
-import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -38,19 +39,13 @@ import java.util.concurrent.CancellationException
  */
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
-  private val lazyInitialization = service<PythonSdkCoroutineService>().cs.launch(start = CoroutineStart.LAZY) {
-    try {
-      repositoryManager.initCaches()
-      reloadPackages()
-      Unit
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (t: Throwable) {
-      thisLogger().error("Failed to initialize PythonPackageManager for $sdk", t)
+  private val isInited = AtomicBoolean(false)
+  private val initializationJob by lazy {
+    PyPackageCoroutine.launch(project, start = CoroutineStart.LAZY) {
+      initManager()
     }
   }
+
 
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
@@ -120,22 +115,19 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   @ApiStatus.Internal
   open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
     val packages = loadPackagesCommand().getOr {
-      outdatedPackages = emptyMap()
-      installedPackages = emptyList()
       return it
     }
-    if (packages == installedPackages)
-      return PyResult.success(packages)
 
-    installedPackages = packages
-
-    ApplicationManager.getApplication().messageBus.apply {
-      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
-      syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
-    }
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      service<PythonSdkCoroutineService>().cs.launch {
+    reloadDependencies()
+    if (packages != installedPackages) {
+      installedPackages = packages
+      PyPackageCoroutine.launch(project) {
         reloadOutdatedPackages()
+      }
+
+      ApplicationManager.getApplication().messageBus.apply {
+        syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
+        syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
       }
     }
 
@@ -186,11 +178,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
 
   @ApiStatus.Internal
-  suspend fun waitForInit() {
-    lazyInitialization.join()
-  }
-
-  @ApiStatus.Internal
   @CheckReturnValue
   protected abstract suspend fun syncCommand(): PyResult<Unit>
 
@@ -215,21 +202,56 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   @ApiStatus.Internal
   suspend fun reloadDependencies(): List<PythonPackage> {
-    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(sdk) ?: return emptyList()
-    val targetModule = project.modules.find { it.pythonSdk == sdk } ?: return emptyList()
-    dependencies = dependenciesExtractor.extract(targetModule)
+    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(project, sdk) ?: return emptyList()
+    dependencies = dependenciesExtractor.extract()
     return dependencies
   }
 
   @ApiStatus.Internal
   fun listDependencies(): List<PythonPackage> = dependencies
 
+  @ApiStatus.Internal
+  suspend fun waitForInit() {
+    if (shouldBeInitInstantly()) {
+      initManager()
+    }
+    else {
+      initializationJob.join()
+    }
+  }
+
+  private suspend fun initManager() {
+    try {
+      if (isInited.getAndSet(true))
+        return
+      repositoryManager.initCaches()
+      if (installedPackages.isEmpty() && !PythonSdkType.isMock(sdk)) {
+        reloadPackages()
+      }
+    }
+    catch (t: CancellationException) {
+      throw t
+    }
+    catch (t: ExecutionException) {
+      thisLogger().warn("Failed to initialize PythonPackageManager for $sdk", t)
+    }
+  }
+
+  //Some test on EDT so need to be inited on first create
+  private fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isUnitTestMode
+
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
       val manager = pythonPackageManagerService.forSdk(project, sdk)
-      //We need to call the lazy load if not inited
-      manager.lazyInitialization.start()
+
+
+      if (manager.shouldBeInitInstantly()) {
+        runBlockingMaybeCancellable {
+          manager.initManager()
+        }
+      }
+
       return manager
     }
 

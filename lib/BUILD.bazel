@@ -1472,8 +1472,8 @@ jvm_import(
 
 jvm_import(
   name = "fastutil-min",
-  jar = "@intellij-deps-fastutil-8_5_15-jb1_http//file",
-  source_jar = "@intellij-deps-fastutil-8_5_15-jb1-sources_http//file",
+  jar = "@intellij-deps-fastutil-8_5_16-jb1_http//file",
+  source_jar = "@intellij-deps-fastutil-8_5_16-jb1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2159,8 +2159,8 @@ jvm_import(
 
 jvm_import(
   name = "io-ktor-utils",
-  jar = "@ktor-utils-jvm-3_0_3_http//file",
-  source_jar = "@ktor-utils-jvm-3_0_3-sources_http//file",
+  jar = "@ktor-utils-jvm-3_1_3_http//file",
+  source_jar = "@ktor-utils-jvm-3_1_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2455,8 +2455,8 @@ jvm_import(
 
 jvm_import(
   name = "java-debugger-agent-holder-debugger-agent",
-  jar = "@debugger-agent-1_53_http//file",
-  source_jar = "@debugger-agent-1_53-sources_http//file",
+  jar = "@debugger-agent-1_71_http//file",
+  source_jar = "@debugger-agent-1_71-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2613,8 +2613,8 @@ jvm_import(
 
 jvm_import(
   name = "jb-jdi",
-  jar = "@jb-jdi-2_42_http//file",
-  source_jar = "@jb-jdi-2_42-sources_http//file",
+  jar = "@jb-jdi-2_43_http//file",
+  source_jar = "@jb-jdi-2_43-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2808,13 +2808,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "jetbrains-ml-models-python-imports-ranking-model",
-  jar = "@python-imports-ranking-model-nebulous-albatross_http//file",
-  source_jar = "@python-imports-ranking-model-nebulous-albatross-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "jetbrains-mlapi-catboost-shadow-need-slf4j",
   jar = "@catboost-shadow-need-slf4j-1_2_5_http//file",
   visibility = ["//visibility:public"]
@@ -2822,22 +2815,15 @@ jvm_import(
 
 jvm_import(
   name = "jetbrains-mlapi-ml-api",
-  jar = "@ml-api-86_http//file",
-  source_jar = "@ml-api-86-sources_http//file",
+  jar = "@ml-api-0_1_94_http//file",
+  source_jar = "@ml-api-0_1_94-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jetbrains-mlapi-ml-tools",
-  jar = "@ml-tools-86_http//file",
-  source_jar = "@ml-tools-86-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jetbrains-mlapi-ml-tools-suspendable",
-  jar = "@ml-tools-suspendable-76_http//file",
-  source_jar = "@ml-tools-suspendable-76-sources_http//file",
+  jar = "@ml-tools-0_1_94_http//file",
+  source_jar = "@ml-tools-0_1_94-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3110,18 +3096,18 @@ java_library(
 java_library(
   name = "junit5",
   exports = [
-    ":junit-jupiter-api-5_12_2_http_import",
+    ":junit-jupiter-api-5_13_3_http_import",
     ":opentest4j-1_3_0_http_import",
-    ":junit-platform-commons-1_12_2_http_import",
+    ":junit-platform-commons-1_13_3_http_import",
     ":apiguardian-api-1_1_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "junit-jupiter-api-5_12_2_http_import",
-  jar = "@junit-jupiter-api-5_12_2_http//file",
-  source_jar = "@junit-jupiter-api-5_12_2-sources_http//file"
+  name = "junit-jupiter-api-5_13_3_http_import",
+  jar = "@junit-jupiter-api-5_13_3_http//file",
+  source_jar = "@junit-jupiter-api-5_13_3-sources_http//file"
 )
 
 jvm_import(
@@ -3131,9 +3117,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "junit-platform-commons-1_12_2_http_import",
-  jar = "@junit-platform-commons-1_12_2_http//file",
-  source_jar = "@junit-platform-commons-1_12_2-sources_http//file"
+  name = "junit-platform-commons-1_13_3_http_import",
+  jar = "@junit-platform-commons-1_13_3_http//file",
+  source_jar = "@junit-platform-commons-1_13_3-sources_http//file"
 )
 
 jvm_import(
@@ -3151,8 +3137,8 @@ java_library(
 
 jvm_import(
   name = "junit5Jupiter",
-  jar = "@junit-jupiter-engine-5_12_2_http//file",
-  source_jar = "@junit-jupiter-engine-5_12_2-sources_http//file",
+  jar = "@junit-jupiter-engine-5_13_3_http//file",
+  source_jar = "@junit-jupiter-engine-5_13_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3166,22 +3152,22 @@ java_library(
 java_library(
   name = "junit5Launcher",
   exports = [
-    ":junit-platform-launcher-1_12_2_http_import",
-    ":junit-platform-engine-1_12_2_http_import",
+    ":junit-platform-launcher-1_13_3_http_import",
+    ":junit-platform-engine-1_13_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "junit-platform-launcher-1_12_2_http_import",
-  jar = "@junit-platform-launcher-1_12_2_http//file",
-  source_jar = "@junit-platform-launcher-1_12_2-sources_http//file"
+  name = "junit-platform-launcher-1_13_3_http_import",
+  jar = "@junit-platform-launcher-1_13_3_http//file",
+  source_jar = "@junit-platform-launcher-1_13_3-sources_http//file"
 )
 
 jvm_import(
-  name = "junit-platform-engine-1_12_2_http_import",
-  jar = "@junit-platform-engine-1_12_2_http//file",
-  source_jar = "@junit-platform-engine-1_12_2-sources_http//file"
+  name = "junit-platform-engine-1_13_3_http_import",
+  jar = "@junit-platform-engine-1_13_3_http//file",
+  source_jar = "@junit-platform-engine-1_13_3-sources_http//file"
 )
 
 java_library(
@@ -3193,8 +3179,8 @@ java_library(
 
 jvm_import(
   name = "junit5Params",
-  jar = "@junit-jupiter-params-5_12_2_http//file",
-  source_jar = "@junit-jupiter-params-5_12_2-sources_http//file",
+  jar = "@junit-jupiter-params-5_13_3_http//file",
+  source_jar = "@junit-jupiter-params-5_13_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3215,42 +3201,42 @@ jvm_import(
 java_library(
   name = "junit5Suites",
   exports = [
-    ":junit-platform-suite-1_12_2_http_import",
-    ":junit-platform-suite-api-1_12_2_http_import",
-    ":junit-platform-suite-engine-1_12_2_http_import",
-    ":junit-platform-suite-commons-1_12_2_http_import",
+    ":junit-platform-suite-1_13_3_http_import",
+    ":junit-platform-suite-api-1_13_3_http_import",
+    ":junit-platform-suite-engine-1_13_3_http_import",
+    ":junit-platform-suite-commons-1_13_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "junit-platform-suite-1_12_2_http_import",
-  jar = "@junit-platform-suite-1_12_2_http//file",
-  source_jar = "@junit-platform-suite-1_12_2-sources_http//file"
+  name = "junit-platform-suite-1_13_3_http_import",
+  jar = "@junit-platform-suite-1_13_3_http//file",
+  source_jar = "@junit-platform-suite-1_13_3-sources_http//file"
 )
 
 jvm_import(
-  name = "junit-platform-suite-api-1_12_2_http_import",
-  jar = "@junit-platform-suite-api-1_12_2_http//file",
-  source_jar = "@junit-platform-suite-api-1_12_2-sources_http//file"
+  name = "junit-platform-suite-api-1_13_3_http_import",
+  jar = "@junit-platform-suite-api-1_13_3_http//file",
+  source_jar = "@junit-platform-suite-api-1_13_3-sources_http//file"
 )
 
 jvm_import(
-  name = "junit-platform-suite-engine-1_12_2_http_import",
-  jar = "@junit-platform-suite-engine-1_12_2_http//file",
-  source_jar = "@junit-platform-suite-engine-1_12_2-sources_http//file"
+  name = "junit-platform-suite-engine-1_13_3_http_import",
+  jar = "@junit-platform-suite-engine-1_13_3_http//file",
+  source_jar = "@junit-platform-suite-engine-1_13_3-sources_http//file"
 )
 
 jvm_import(
-  name = "junit-platform-suite-commons-1_12_2_http_import",
-  jar = "@junit-platform-suite-commons-1_12_2_http//file",
-  source_jar = "@junit-platform-suite-commons-1_12_2-sources_http//file"
+  name = "junit-platform-suite-commons-1_13_3_http_import",
+  jar = "@junit-platform-suite-commons-1_13_3_http//file",
+  source_jar = "@junit-platform-suite-commons-1_13_3-sources_http//file"
 )
 
 jvm_import(
   name = "junit5Vintage",
-  jar = "@junit-vintage-engine-5_12_2_http//file",
-  source_jar = "@junit-vintage-engine-5_12_2-sources_http//file",
+  jar = "@junit-vintage-engine-5_13_3_http//file",
+  source_jar = "@junit-vintage-engine-5_13_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3263,8 +3249,8 @@ java_library(
 
 jvm_import(
   name = "jvm-native-trusted-roots",
-  jar = "@jvm-native-trusted-roots-1_0_24_http//file",
-  source_jar = "@jvm-native-trusted-roots-1_0_24-sources_http//file",
+  jar = "@jvm-native-trusted-roots-1_1_7_http//file",
+  source_jar = "@jvm-native-trusted-roots-1_1_7-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3446,8 +3432,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-allopen-compiler-plugin",
-  jar = "@allopen-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@allopen-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@allopen-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@allopen-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3460,8 +3446,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-analysis-api",
-  jar = "@analysis-api-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@analysis-api-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@analysis-api-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@analysis-api-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3474,8 +3460,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-analysis-api-fe10",
-  jar = "@analysis-api-fe10-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@analysis-api-fe10-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@analysis-api-fe10-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@analysis-api-fe10-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3488,8 +3474,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-analysis-api-impl-base",
-  jar = "@analysis-api-impl-base-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@analysis-api-impl-base-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@analysis-api-impl-base-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@analysis-api-impl-base-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3502,15 +3488,15 @@ java_library(
 
 jvm_import(
   name = "kotlinc-analysis-api-impl-base-tests",
-  jar = "@analysis-api-impl-base-tests-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@analysis-api-impl-base-tests-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@analysis-api-impl-base-tests-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@analysis-api-impl-base-tests-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api-k2",
-  jar = "@analysis-api-k2-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@analysis-api-k2-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@analysis-api-k2-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@analysis-api-k2-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3523,15 +3509,15 @@ java_library(
 
 jvm_import(
   name = "kotlinc-analysis-api-k2-tests",
-  jar = "@analysis-api-k2-tests-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@analysis-api-k2-tests-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@analysis-api-k2-tests-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@analysis-api-k2-tests-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-analysis-api-platform-interface",
-  jar = "@analysis-api-platform-interface-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@analysis-api-platform-interface-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@analysis-api-platform-interface-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@analysis-api-platform-interface-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3544,15 +3530,15 @@ java_library(
 
 jvm_import(
   name = "kotlinc-assignment-compiler-plugin",
-  jar = "@assignment-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@assignment-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@assignment-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@assignment-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-compose-compiler-plugin",
-  jar = "@compose-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@compose-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@compose-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@compose-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3565,29 +3551,29 @@ java_library(
 
 jvm_import(
   name = "kotlinc-incremental-compilation-impl-tests",
-  jar = "@incremental-compilation-impl-tests-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@incremental-compilation-impl-tests-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@incremental-compilation-impl-tests-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@incremental-compilation-impl-tests-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-js-plain-objects-compiler-plugin",
-  jar = "@js-plain-objects-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@js-plain-objects-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@js-plain-objects-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@js-plain-objects-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-build-common-tests",
-  jar = "@kotlin-build-common-tests-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-build-common-tests-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-build-common-tests-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-build-common-tests-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-cli",
-  jar = "@kotlin-compiler-cli-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-compiler-cli-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-compiler-cli-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-compiler-cli-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3600,8 +3586,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-common",
-  jar = "@kotlin-compiler-common-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-compiler-common-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-compiler-common-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-compiler-common-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3614,8 +3600,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-fe10",
-  jar = "@kotlin-compiler-fe10-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-compiler-fe10-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-compiler-fe10-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-compiler-fe10-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3628,8 +3614,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-fir",
-  jar = "@kotlin-compiler-fir-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-compiler-fir-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-compiler-fir-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-compiler-fir-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3642,8 +3628,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-ir",
-  jar = "@kotlin-compiler-ir-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-compiler-ir-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-compiler-ir-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-compiler-ir-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3656,8 +3642,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-compiler-tests",
-  jar = "@kotlin-compiler-tests-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-compiler-tests-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-compiler-tests-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-compiler-tests-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3670,8 +3656,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-dataframe-compiler-plugin",
-  jar = "@kotlin-dataframe-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-dataframe-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-dataframe-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-dataframe-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3684,8 +3670,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlinc-kotlin-gradle-statistics",
-  jar = "@kotlin-gradle-statistics-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-gradle-statistics-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-gradle-statistics-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-gradle-statistics-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3698,15 +3684,15 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-ide-dist",
-  jar = "@kotlin-dist-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-dist-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-dist-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-dist-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-jps-common",
-  jar = "@kotlin-jps-common-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-jps-common-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-jps-common-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-jps-common-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3733,8 +3719,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",
-  jar = "@kotlin-jps-plugin-classpath-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-jps-plugin-classpath-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-jps-plugin-classpath-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-jps-plugin-classpath-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3747,15 +3733,15 @@ jvm_import(
 
 jvm_import(
   name = "kotlinc-kotlin-script-runtime",
-  jar = "@kotlin-script-runtime-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-script-runtime-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-script-runtime-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-script-runtime-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-scripting-common",
-  jar = "@kotlin-scripting-common-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-scripting-common-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-scripting-common-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-scripting-common-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3768,8 +3754,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-scripting-compiler-impl",
-  jar = "@kotlin-scripting-compiler-impl-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-scripting-compiler-impl-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-scripting-compiler-impl-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-scripting-compiler-impl-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3782,15 +3768,15 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-scripting-dependencies",
-  jar = "@kotlin-scripting-dependencies-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-scripting-dependencies-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-scripting-dependencies-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-scripting-dependencies-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-kotlin-scripting-jvm",
-  jar = "@kotlin-scripting-jvm-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlin-scripting-jvm-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlin-scripting-jvm-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlin-scripting-jvm-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3803,8 +3789,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlinx-serialization-compiler-plugin",
-  jar = "@kotlinx-serialization-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@kotlinx-serialization-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@kotlinx-serialization-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@kotlinx-serialization-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3817,8 +3803,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-lombok-compiler-plugin",
-  jar = "@lombok-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@lombok-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@lombok-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@lombok-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3831,15 +3817,15 @@ java_library(
 
 jvm_import(
   name = "kotlinc-low-level-api-fir",
-  jar = "@low-level-api-fir-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@low-level-api-fir-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@low-level-api-fir-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@low-level-api-fir-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-noarg-compiler-plugin",
-  jar = "@noarg-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@noarg-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@noarg-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@noarg-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3852,8 +3838,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-parcelize-compiler-plugin",
-  jar = "@parcelize-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@parcelize-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@parcelize-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@parcelize-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3866,22 +3852,22 @@ java_library(
 
 jvm_import(
   name = "kotlinc-sam-with-receiver-compiler-plugin",
-  jar = "@sam-with-receiver-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@sam-with-receiver-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@sam-with-receiver-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@sam-with-receiver-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-scripting-compiler-plugin",
-  jar = "@scripting-compiler-plugin-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@scripting-compiler-plugin-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@scripting-compiler-plugin-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@scripting-compiler-plugin-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinc-symbol-light-classes",
-  jar = "@symbol-light-classes-for-ide-2_2_20-dev-5812_http//file",
-  source_jar = "@symbol-light-classes-for-ide-2_2_20-dev-5812-sources_http//file",
+  jar = "@symbol-light-classes-for-ide-2_2_20-dev-8169_http//file",
+  source_jar = "@symbol-light-classes-for-ide-2_2_20-dev-8169-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4064,191 +4050,195 @@ jvm_import(
 
 jvm_import(
   name = "ktor-client-auth",
-  jar = "@ktor-client-auth-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-auth-jvm-3_0_3-sources_http//file",
+  jar = "@ktor-client-auth-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-auth-jvm-3_1_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-cio",
   exports = [
-    ":ktor-client-cio-jvm-3_0_3_http_import",
-    ":ktor-client-core-jvm-3_0_3_http_import",
-    ":ktor-http-jvm-3_0_3_http_import",
-    ":ktor-events-jvm-3_0_3_http_import",
-    ":ktor-websocket-serialization-jvm-3_0_3_http_import",
-    ":ktor-serialization-jvm-3_0_3_http_import",
-    ":ktor-sse-jvm-3_0_3_http_import",
-    ":ktor-http-cio-jvm-3_0_3_http_import",
-    ":ktor-network-jvm-3_0_3_http_import",
-    ":ktor-io-jvm-3_0_3_http_import",
-    ":ktor-websockets-jvm-3_0_3_http_import",
-    ":ktor-network-tls-jvm-3_0_3_http_import",
-    ":ktor-utils-jvm-3_0_3_http_import",
+    ":ktor-client-cio-jvm-3_1_3_http_import",
+    ":ktor-client-core-jvm-3_1_3_http_import",
+    ":ktor-http-jvm-3_1_3_http_import",
+    ":ktor-events-jvm-3_1_3_http_import",
+    ":ktor-websocket-serialization-jvm-3_1_3_http_import",
+    ":ktor-serialization-jvm-3_1_3_http_import",
+    ":ktor-sse-jvm-3_1_3_http_import",
+    ":ktor-http-cio-jvm-3_1_3_http_import",
+    ":ktor-network-jvm-3_1_3_http_import",
+    ":ktor-io-jvm-3_1_3_http_import",
+    ":ktor-websockets-jvm-3_1_3_http_import",
+    ":ktor-utils-jvm-3_1_3_http_import",
+    ":ktor-network-tls-jvm-3_1_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ktor-client-cio-jvm-3_0_3_http_import",
-  jar = "@ktor-client-cio-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-cio-jvm-3_0_3-sources_http//file"
+  name = "ktor-client-cio-jvm-3_1_3_http_import",
+  jar = "@ktor-client-cio-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-cio-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-client-core-jvm-3_0_3_http_import",
-  jar = "@ktor-client-core-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-core-jvm-3_0_3-sources_http//file"
+  name = "ktor-client-core-jvm-3_1_3_http_import",
+  jar = "@ktor-client-core-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-core-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-http-jvm-3_0_3_http_import",
-  jar = "@ktor-http-jvm-3_0_3_http//file",
-  source_jar = "@ktor-http-jvm-3_0_3-sources_http//file"
+  name = "ktor-http-jvm-3_1_3_http_import",
+  jar = "@ktor-http-jvm-3_1_3_http//file",
+  source_jar = "@ktor-http-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-events-jvm-3_0_3_http_import",
-  jar = "@ktor-events-jvm-3_0_3_http//file",
-  source_jar = "@ktor-events-jvm-3_0_3-sources_http//file"
+  name = "ktor-events-jvm-3_1_3_http_import",
+  jar = "@ktor-events-jvm-3_1_3_http//file",
+  source_jar = "@ktor-events-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-websocket-serialization-jvm-3_0_3_http_import",
-  jar = "@ktor-websocket-serialization-jvm-3_0_3_http//file",
-  source_jar = "@ktor-websocket-serialization-jvm-3_0_3-sources_http//file"
+  name = "ktor-websocket-serialization-jvm-3_1_3_http_import",
+  jar = "@ktor-websocket-serialization-jvm-3_1_3_http//file",
+  source_jar = "@ktor-websocket-serialization-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-serialization-jvm-3_0_3_http_import",
-  jar = "@ktor-serialization-jvm-3_0_3_http//file",
-  source_jar = "@ktor-serialization-jvm-3_0_3-sources_http//file"
+  name = "ktor-serialization-jvm-3_1_3_http_import",
+  jar = "@ktor-serialization-jvm-3_1_3_http//file",
+  source_jar = "@ktor-serialization-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-sse-jvm-3_0_3_http_import",
-  jar = "@ktor-sse-jvm-3_0_3_http//file",
-  source_jar = "@ktor-sse-jvm-3_0_3-sources_http//file"
+  name = "ktor-sse-jvm-3_1_3_http_import",
+  jar = "@ktor-sse-jvm-3_1_3_http//file",
+  source_jar = "@ktor-sse-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-http-cio-jvm-3_0_3_http_import",
-  jar = "@ktor-http-cio-jvm-3_0_3_http//file",
-  source_jar = "@ktor-http-cio-jvm-3_0_3-sources_http//file"
+  name = "ktor-http-cio-jvm-3_1_3_http_import",
+  jar = "@ktor-http-cio-jvm-3_1_3_http//file",
+  source_jar = "@ktor-http-cio-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-network-jvm-3_0_3_http_import",
-  jar = "@ktor-network-jvm-3_0_3_http//file",
-  source_jar = "@ktor-network-jvm-3_0_3-sources_http//file"
+  name = "ktor-network-jvm-3_1_3_http_import",
+  jar = "@ktor-network-jvm-3_1_3_http//file",
+  source_jar = "@ktor-network-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-io-jvm-3_0_3_http_import",
-  jar = "@ktor-io-jvm-3_0_3_http//file",
-  source_jar = "@ktor-io-jvm-3_0_3-sources_http//file"
+  name = "ktor-io-jvm-3_1_3_http_import",
+  jar = "@ktor-io-jvm-3_1_3_http//file",
+  source_jar = "@ktor-io-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-websockets-jvm-3_0_3_http_import",
-  jar = "@ktor-websockets-jvm-3_0_3_http//file",
-  source_jar = "@ktor-websockets-jvm-3_0_3-sources_http//file"
+  name = "ktor-websockets-jvm-3_1_3_http_import",
+  jar = "@ktor-websockets-jvm-3_1_3_http//file",
+  source_jar = "@ktor-websockets-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-network-tls-jvm-3_0_3_http_import",
-  jar = "@ktor-network-tls-jvm-3_0_3_http//file",
-  source_jar = "@ktor-network-tls-jvm-3_0_3-sources_http//file"
+  name = "ktor-utils-jvm-3_1_3_http_import",
+  jar = "@ktor-utils-jvm-3_1_3_http//file",
+  source_jar = "@ktor-utils-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-utils-jvm-3_0_3_http_import",
-  jar = "@ktor-utils-jvm-3_0_3_http//file",
-  source_jar = "@ktor-utils-jvm-3_0_3-sources_http//file"
+  name = "ktor-network-tls-jvm-3_1_3_http_import",
+  jar = "@ktor-network-tls-jvm-3_1_3_http//file",
+  source_jar = "@ktor-network-tls-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
   name = "ktor-client-content-negotiation",
-  jar = "@ktor-client-content-negotiation-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-content-negotiation-jvm-3_0_3-sources_http//file",
+  jar = "@ktor-client-content-negotiation-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-content-negotiation-jvm-3_1_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-core",
   exports = [
-    ":ktor-client-core-jvm-3_0_3_http_import",
-    ":ktor-http-jvm-3_0_3_http_import",
-    ":ktor-utils-jvm-3_0_3_http_import",
-    ":ktor-io-jvm-3_0_3_http_import",
-    ":ktor-events-jvm-3_0_3_http_import",
-    ":ktor-websocket-serialization-jvm-3_0_3_http_import",
-    ":ktor-serialization-jvm-3_0_3_http_import",
-    ":ktor-websockets-jvm-3_0_3_http_import",
-    ":ktor-sse-jvm-3_0_3_http_import",
+    ":ktor-client-core-jvm-3_1_3_http_import",
+    ":ktor-http-jvm-3_1_3_http_import",
+    ":ktor-utils-jvm-3_1_3_http_import",
+    ":ktor-http-cio-jvm-3_1_3_http_import",
+    ":ktor-network-jvm-3_1_3_http_import",
+    ":ktor-io-jvm-3_1_3_http_import",
+    ":ktor-events-jvm-3_1_3_http_import",
+    ":ktor-websocket-serialization-jvm-3_1_3_http_import",
+    ":ktor-serialization-jvm-3_1_3_http_import",
+    ":ktor-websockets-jvm-3_1_3_http_import",
+    ":ktor-sse-jvm-3_1_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "ktor-client-encoding",
-  jar = "@ktor-client-encoding-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-encoding-jvm-3_0_3-sources_http//file",
+  jar = "@ktor-client-encoding-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-encoding-jvm-3_1_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "ktor-client-java",
-  jar = "@ktor-client-java-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-java-jvm-3_0_3-sources_http//file",
+  jar = "@ktor-client-java-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-java-jvm-3_1_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "ktor-client-logging",
-  jar = "@ktor-client-logging-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-logging-jvm-3_0_3-sources_http//file",
+  jar = "@ktor-client-logging-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-logging-jvm-3_1_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-mock",
   exports = [
-    ":ktor-client-mock-jvm-3_0_3_http_import",
-    ":ktor-http-jvm-3_0_3_http_import",
-    ":ktor-utils-jvm-3_0_3_http_import",
-    ":ktor-io-jvm-3_0_3_http_import",
-    ":ktor-client-core-jvm-3_0_3_http_import",
-    ":ktor-events-jvm-3_0_3_http_import",
-    ":ktor-websocket-serialization-jvm-3_0_3_http_import",
-    ":ktor-serialization-jvm-3_0_3_http_import",
-    ":ktor-websockets-jvm-3_0_3_http_import",
-    ":ktor-sse-jvm-3_0_3_http_import",
+    ":ktor-client-mock-jvm-3_1_3_http_import",
+    ":ktor-http-jvm-3_1_3_http_import",
+    ":ktor-utils-jvm-3_1_3_http_import",
+    ":ktor-io-jvm-3_1_3_http_import",
+    ":ktor-client-core-jvm-3_1_3_http_import",
+    ":ktor-http-cio-jvm-3_1_3_http_import",
+    ":ktor-network-jvm-3_1_3_http_import",
+    ":ktor-events-jvm-3_1_3_http_import",
+    ":ktor-websocket-serialization-jvm-3_1_3_http_import",
+    ":ktor-serialization-jvm-3_1_3_http_import",
+    ":ktor-websockets-jvm-3_1_3_http_import",
+    ":ktor-sse-jvm-3_1_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ktor-client-mock-jvm-3_0_3_http_import",
-  jar = "@ktor-client-mock-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-mock-jvm-3_0_3-sources_http//file"
+  name = "ktor-client-mock-jvm-3_1_3_http_import",
+  jar = "@ktor-client-mock-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-mock-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
   name = "ktor-client-okhttp",
-  jar = "@ktor-client-okhttp-jvm-3_0_3_http//file",
-  source_jar = "@ktor-client-okhttp-jvm-3_0_3-sources_http//file",
+  jar = "@ktor-client-okhttp-jvm-3_1_3_http//file",
+  source_jar = "@ktor-client-okhttp-jvm-3_1_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-network-tls",
   exports = [
-    ":ktor-network-tls-jvm-3_0_3_http_import",
-    ":ktor-http-jvm-3_0_3_http_import",
-    ":ktor-network-jvm-3_0_3_http_import",
-    ":ktor-utils-jvm-3_0_3_http_import",
-    ":ktor-io-jvm-3_0_3_http_import",
+    ":ktor-network-tls-jvm-3_1_3_http_import",
+    ":ktor-http-jvm-3_1_3_http_import",
+    ":ktor-network-jvm-3_1_3_http_import",
+    ":ktor-utils-jvm-3_1_3_http_import",
+    ":ktor-io-jvm-3_1_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -4256,53 +4246,53 @@ java_library(
 java_library(
   name = "ktor-serialization-kotlinx-json",
   exports = [
-    ":ktor-serialization-kotlinx-json-jvm-3_0_3_http_import",
-    ":ktor-serialization-kotlinx-jvm-3_0_3_http_import",
-    ":ktor-serialization-jvm-3_0_3_http_import",
+    ":ktor-serialization-kotlinx-json-jvm-3_1_3_http_import",
+    ":ktor-serialization-kotlinx-jvm-3_1_3_http_import",
+    ":ktor-serialization-jvm-3_1_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ktor-serialization-kotlinx-json-jvm-3_0_3_http_import",
-  jar = "@ktor-serialization-kotlinx-json-jvm-3_0_3_http//file",
-  source_jar = "@ktor-serialization-kotlinx-json-jvm-3_0_3-sources_http//file"
+  name = "ktor-serialization-kotlinx-json-jvm-3_1_3_http_import",
+  jar = "@ktor-serialization-kotlinx-json-jvm-3_1_3_http//file",
+  source_jar = "@ktor-serialization-kotlinx-json-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-serialization-kotlinx-jvm-3_0_3_http_import",
-  jar = "@ktor-serialization-kotlinx-jvm-3_0_3_http//file",
-  source_jar = "@ktor-serialization-kotlinx-jvm-3_0_3-sources_http//file"
+  name = "ktor-serialization-kotlinx-jvm-3_1_3_http_import",
+  jar = "@ktor-serialization-kotlinx-jvm-3_1_3_http//file",
+  source_jar = "@ktor-serialization-kotlinx-jvm-3_1_3-sources_http//file"
 )
 
 java_library(
   name = "ktor-server-cio",
   exports = [
-    ":ktor-server-cio-jvm-3_0_3_http_import",
-    ":ktor-server-core-jvm-3_0_3_http_import",
+    ":ktor-server-cio-jvm-3_1_3_http_import",
+    ":ktor-server-core-jvm-3_1_3_http_import",
     ":config-1_4_3_http_import",
-    ":ktor-utils-jvm-3_0_3_http_import",
-    ":ktor-http-jvm-3_0_3_http_import",
-    ":ktor-serialization-jvm-3_0_3_http_import",
-    ":ktor-events-jvm-3_0_3_http_import",
-    ":ktor-http-cio-jvm-3_0_3_http_import",
-    ":ktor-io-jvm-3_0_3_http_import",
-    ":ktor-websockets-jvm-3_0_3_http_import",
-    ":ktor-network-jvm-3_0_3_http_import",
+    ":ktor-utils-jvm-3_1_3_http_import",
+    ":ktor-http-jvm-3_1_3_http_import",
+    ":ktor-serialization-jvm-3_1_3_http_import",
+    ":ktor-events-jvm-3_1_3_http_import",
+    ":ktor-http-cio-jvm-3_1_3_http_import",
+    ":ktor-io-jvm-3_1_3_http_import",
+    ":ktor-websockets-jvm-3_1_3_http_import",
+    ":ktor-network-jvm-3_1_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ktor-server-cio-jvm-3_0_3_http_import",
-  jar = "@ktor-server-cio-jvm-3_0_3_http//file",
-  source_jar = "@ktor-server-cio-jvm-3_0_3-sources_http//file"
+  name = "ktor-server-cio-jvm-3_1_3_http_import",
+  jar = "@ktor-server-cio-jvm-3_1_3_http//file",
+  source_jar = "@ktor-server-cio-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
-  name = "ktor-server-core-jvm-3_0_3_http_import",
-  jar = "@ktor-server-core-jvm-3_0_3_http//file",
-  source_jar = "@ktor-server-core-jvm-3_0_3-sources_http//file"
+  name = "ktor-server-core-jvm-3_1_3_http_import",
+  jar = "@ktor-server-core-jvm-3_1_3_http//file",
+  source_jar = "@ktor-server-core-jvm-3_1_3-sources_http//file"
 )
 
 jvm_import(
@@ -4313,8 +4303,8 @@ jvm_import(
 
 jvm_import(
   name = "ktor-server-sse-jvm",
-  jar = "@ktor-server-sse-jvm-3_0_3_http//file",
-  source_jar = "@ktor-server-sse-jvm-3_0_3-sources_http//file",
+  jar = "@ktor-server-sse-jvm-3_1_3_http//file",
+  source_jar = "@ktor-server-sse-jvm-3_1_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4333,105 +4323,105 @@ jvm_import(
 
 jvm_import(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
-  jar = "@nlp-detect-jvm-0_4_71_http//file",
-  source_jar = "@nlp-detect-jvm-0_4_71-sources_http//file",
+  jar = "@nlp-detect-jvm-0_8_2_http//file",
+  source_jar = "@nlp-detect-jvm-0_8_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
   exports = [
-    ":gec-spell-engine-local-jvm-0_4_71_http_import",
-    ":utils-common-jvm-0_4_71_http_import",
-    ":model-gec-jvm-0_4_71_http_import",
-    ":model-text-jvm-0_4_71_http_import",
-    ":model-common-jvm-0_4_71_http_import",
-    ":nlp-langs-jvm-0_4_71_http_import",
-    ":nlp-common-jvm-0_4_71_http_import",
-    ":nlp-patterns-jvm-0_4_71_http_import",
-    ":nlp-similarity-jvm-0_4_71_http_import",
-    ":nlp-phonetics-jvm-0_4_71_http_import",
-    ":nlp-tokenizer-jvm-0_4_71_http_import",
+    ":gec-spell-engine-local-jvm-0_8_2_http_import",
+    ":utils-common-jvm-0_8_2_http_import",
+    ":model-gec-jvm-0_8_2_http_import",
+    ":model-text-jvm-0_8_2_http_import",
+    ":model-common-jvm-0_8_2_http_import",
+    ":nlp-langs-jvm-0_8_2_http_import",
+    ":nlp-common-jvm-0_8_2_http_import",
+    ":nlp-patterns-jvm-0_8_2_http_import",
+    ":nlp-similarity-jvm-0_8_2_http_import",
+    ":nlp-phonetics-jvm-0_8_2_http_import",
+    ":nlp-tokenizer-jvm-0_8_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "gec-spell-engine-local-jvm-0_4_71_http_import",
-  jar = "@gec-spell-engine-local-jvm-0_4_71_http//file",
-  source_jar = "@gec-spell-engine-local-jvm-0_4_71-sources_http//file"
+  name = "gec-spell-engine-local-jvm-0_8_2_http_import",
+  jar = "@gec-spell-engine-local-jvm-0_8_2_http//file",
+  source_jar = "@gec-spell-engine-local-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "utils-common-jvm-0_4_71_http_import",
-  jar = "@utils-common-jvm-0_4_71_http//file",
-  source_jar = "@utils-common-jvm-0_4_71-sources_http//file"
+  name = "utils-common-jvm-0_8_2_http_import",
+  jar = "@utils-common-jvm-0_8_2_http//file",
+  source_jar = "@utils-common-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "model-gec-jvm-0_4_71_http_import",
-  jar = "@model-gec-jvm-0_4_71_http//file",
-  source_jar = "@model-gec-jvm-0_4_71-sources_http//file"
+  name = "model-gec-jvm-0_8_2_http_import",
+  jar = "@model-gec-jvm-0_8_2_http//file",
+  source_jar = "@model-gec-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "model-text-jvm-0_4_71_http_import",
-  jar = "@model-text-jvm-0_4_71_http//file",
-  source_jar = "@model-text-jvm-0_4_71-sources_http//file"
+  name = "model-text-jvm-0_8_2_http_import",
+  jar = "@model-text-jvm-0_8_2_http//file",
+  source_jar = "@model-text-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "model-common-jvm-0_4_71_http_import",
-  jar = "@model-common-jvm-0_4_71_http//file",
-  source_jar = "@model-common-jvm-0_4_71-sources_http//file"
+  name = "model-common-jvm-0_8_2_http_import",
+  jar = "@model-common-jvm-0_8_2_http//file",
+  source_jar = "@model-common-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "nlp-langs-jvm-0_4_71_http_import",
-  jar = "@nlp-langs-jvm-0_4_71_http//file",
-  source_jar = "@nlp-langs-jvm-0_4_71-sources_http//file"
+  name = "nlp-langs-jvm-0_8_2_http_import",
+  jar = "@nlp-langs-jvm-0_8_2_http//file",
+  source_jar = "@nlp-langs-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "nlp-common-jvm-0_4_71_http_import",
-  jar = "@nlp-common-jvm-0_4_71_http//file",
-  source_jar = "@nlp-common-jvm-0_4_71-sources_http//file"
+  name = "nlp-common-jvm-0_8_2_http_import",
+  jar = "@nlp-common-jvm-0_8_2_http//file",
+  source_jar = "@nlp-common-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "nlp-patterns-jvm-0_4_71_http_import",
-  jar = "@nlp-patterns-jvm-0_4_71_http//file",
-  source_jar = "@nlp-patterns-jvm-0_4_71-sources_http//file"
+  name = "nlp-patterns-jvm-0_8_2_http_import",
+  jar = "@nlp-patterns-jvm-0_8_2_http//file",
+  source_jar = "@nlp-patterns-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "nlp-similarity-jvm-0_4_71_http_import",
-  jar = "@nlp-similarity-jvm-0_4_71_http//file",
-  source_jar = "@nlp-similarity-jvm-0_4_71-sources_http//file"
+  name = "nlp-similarity-jvm-0_8_2_http_import",
+  jar = "@nlp-similarity-jvm-0_8_2_http//file",
+  source_jar = "@nlp-similarity-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "nlp-phonetics-jvm-0_4_71_http_import",
-  jar = "@nlp-phonetics-jvm-0_4_71_http//file",
-  source_jar = "@nlp-phonetics-jvm-0_4_71-sources_http//file"
+  name = "nlp-phonetics-jvm-0_8_2_http_import",
+  jar = "@nlp-phonetics-jvm-0_8_2_http//file",
+  source_jar = "@nlp-phonetics-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "nlp-tokenizer-jvm-0_4_71_http_import",
-  jar = "@nlp-tokenizer-jvm-0_4_71_http//file",
-  source_jar = "@nlp-tokenizer-jvm-0_4_71-sources_http//file"
+  name = "nlp-tokenizer-jvm-0_8_2_http_import",
+  jar = "@nlp-tokenizer-jvm-0_8_2_http//file",
+  source_jar = "@nlp-tokenizer-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
-  jar = "@hunspell-en-jvm-0_2_274_http//file",
-  source_jar = "@hunspell-en-jvm-0_2_274-sources_http//file",
+  jar = "@hunspell-en-jvm-0_2_278_http//file",
+  source_jar = "@hunspell-en-jvm-0_2_278-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-utils-lucene-lt-compatibility",
-  jar = "@utils-lucene-lt-compatibility-0_4_71_http//file",
+  jar = "@utils-lucene-lt-compatibility-0_8_2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4825,9 +4815,9 @@ jvm_import(
 java_library(
   name = "libraries-ktor-client-cio-ktor-client-cio-internal",
   exports = [
-    ":ktor-client-cio-jvm-3_0_3_http_import",
-    ":ktor-http-cio-jvm-3_0_3_http_import",
-    ":ktor-network-tls-jvm-3_0_3_http_import",
+    ":ktor-client-cio-jvm-3_1_3_http_import",
+    ":ktor-http-cio-jvm-3_1_3_http_import",
+    ":ktor-network-tls-jvm-3_1_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -4843,6 +4833,13 @@ jvm_import(
   name = "libraries-skiko-jetbrains-skiko-awt-runtime-all",
   jar = "@skiko-awt-runtime-all-0_9_2_http//file",
   source_jar = "@skiko-awt-runtime-all-0_9_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-xerces-_xerces",
+  jar = "@xercesImpl-2_12_2_http//file",
+  source_jar = "@xercesImpl-2_12_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7500,6 +7497,13 @@ jvm_import(
   source_jar = "@opentelemetry-exporter-common-1_48_0-sources_http//file"
 )
 
+java_library(
+  name = "opentelemetry-exporter-otlp-common-provided",
+  exports = [":opentelemetry-exporter-otlp-common"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "opentelemetry-extension-kotlin",
   jar = "@opentelemetry-extension-kotlin-1_48_0_http//file",
@@ -7764,6 +7768,29 @@ jvm_import(
   jar = "@format-ripper-1_1_1_http//file",
   source_jar = "@format-ripper-1_1_1-sources_http//file",
   visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-build_scripts-jetbrains-intellij-deps-coverage-reporter",
+  exports = [
+    ":intellij-coverage-reporter-1_0_766_http_import",
+    ":coverage-report-1_0_25_http_import",
+    ":freemarker-2_3_32_http_import",
+    ":intellij-coverage-agent-1_0_766_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "intellij-coverage-reporter-1_0_766_http_import",
+  jar = "@intellij-coverage-reporter-1_0_766_http//file",
+  source_jar = "@intellij-coverage-reporter-1_0_766-sources_http//file"
+)
+
+jvm_import(
+  name = "intellij-coverage-agent-1_0_766_http_import",
+  jar = "@intellij-coverage-agent-1_0_766_http//file",
+  source_jar = "@intellij-coverage-agent-1_0_766-sources_http//file"
 )
 
 java_library(
@@ -8168,6 +8195,48 @@ jvm_import(
 )
 
 jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-core-jvm",
+  jar = "@coil-compose-core-jvm-3_1_0_http//file",
+  source_jar = "@coil-compose-core-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-jvm",
+  jar = "@coil-compose-jvm-3_1_0_http//file",
+  source_jar = "@coil-compose-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-core-jvm",
+  jar = "@coil-core-jvm-3_1_0_http//file",
+  source_jar = "@coil-core-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-core-jvm",
+  jar = "@coil-network-core-jvm-3_1_0_http//file",
+  source_jar = "@coil-network-core-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-ktor3-jvm",
+  jar = "@coil-network-ktor3-jvm-3_1_0_http//file",
+  source_jar = "@coil-network-ktor3-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-svg-jvm",
+  jar = "@coil-svg-jvm-3_1_0_http//file",
+  source_jar = "@coil-svg-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
   jar = "@mpfilepicker-3_1_0_http//file",
   source_jar = "@mpfilepicker-3_1_0-sources_http//file",
@@ -8486,8 +8555,8 @@ jvm_import(
 
 jvm_import(
   name = "pty4j",
-  jar = "@pty4j-0_13_8_http//file",
-  source_jar = "@pty4j-0_13_8-sources_http//file",
+  jar = "@pty4j-0_13_9_http//file",
+  source_jar = "@pty4j-0_13_9-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8537,6 +8606,13 @@ jvm_import(
   name = "byte-buddy-agent-1_17_4_http_import",
   jar = "@byte-buddy-agent-1_17_4_http//file",
   source_jar = "@byte-buddy-agent-1_17_4-sources_http//file"
+)
+
+jvm_import(
+  name = "python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
+  jar = "@python-imports-ranking-model-coral-panda-republished-4_http//file",
+  source_jar = "@python-imports-ranking-model-coral-panda-republished-4-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -8611,18 +8687,18 @@ jvm_import(
 java_library(
   name = "search_everywhere_ml-ai-grazie-emb",
   exports = [
-    ":model-emb-jvm-0_4_71_http_import",
-    ":model-text-jvm-0_4_71_http_import",
-    ":model-common-jvm-0_4_71_http_import",
-    ":utils-common-jvm-0_4_71_http_import",
+    ":model-emb-jvm-0_8_2_http_import",
+    ":model-text-jvm-0_8_2_http_import",
+    ":model-common-jvm-0_8_2_http_import",
+    ":utils-common-jvm-0_8_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "model-emb-jvm-0_4_71_http_import",
-  jar = "@model-emb-jvm-0_4_71_http//file",
-  source_jar = "@model-emb-jvm-0_4_71-sources_http//file"
+  name = "model-emb-jvm-0_8_2_http_import",
+  jar = "@model-emb-jvm-0_8_2_http//file",
+  source_jar = "@model-emb-jvm-0_8_2-sources_http//file"
 )
 
 jvm_import(
@@ -8683,8 +8759,8 @@ jvm_import(
 
 jvm_import(
   name = "search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-  jar = "@gec-spell-engine-local-jvm-0_4_71_http//file",
-  source_jar = "@gec-spell-engine-local-jvm-0_4_71-sources_http//file",
+  jar = "@gec-spell-engine-local-jvm-0_8_2_http//file",
+  source_jar = "@gec-spell-engine-local-jvm-0_8_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9090,13 +9166,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "xerces",
-  jar = "@xercesImpl-2_12_2_http//file",
-  source_jar = "@xercesImpl-2_12_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "xml-resolver",
   jar = "@xml-resolver-1_2_http//file",
   source_jar = "@xml-resolver-1_2-sources_http//file",
@@ -9159,8 +9228,8 @@ jvm_import(
 
 jvm_import(
   name = "zip-signer",
-  jar = "@marketplace-zip-signer-0_1_24_http//file",
-  source_jar = "@marketplace-zip-signer-0_1_24-sources_http//file",
+  jar = "@marketplace-zip-signer-0_1_38_http//file",
+  source_jar = "@marketplace-zip-signer-0_1_38-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

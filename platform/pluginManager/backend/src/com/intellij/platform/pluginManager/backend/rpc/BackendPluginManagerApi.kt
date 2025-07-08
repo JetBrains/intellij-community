@@ -9,6 +9,7 @@ import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
@@ -84,8 +85,8 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginInstallationState(pluginId)
   }
 
-  override suspend fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState> {
-    return DefaultUiPluginManagerController.getPluginInstallationStates(pluginIds)
+  override suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
+    return DefaultUiPluginManagerController.getPluginInstallationStates()
   }
 
   override suspend fun getCustomRepoPlugins(): List<PluginDto> {
@@ -208,5 +209,10 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
     return DefaultUiPluginManagerController.loadErrors(sessionId)
+  }
+
+  override suspend fun initSession(sessionId: String): InitSessionResult {
+    val initSessionResult = DefaultUiPluginManagerController.initSession(sessionId)
+    return InitSessionResult(initSessionResult.visiblePlugins.map { PluginDto.fromModel(it) }, initSessionResult.pluginStates)
   }
 }

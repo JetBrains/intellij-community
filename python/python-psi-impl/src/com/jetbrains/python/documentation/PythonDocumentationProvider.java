@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -341,7 +342,12 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * Returns the provided type in PEP 484 compliant format.
    */
   public static @NotNull String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context)).toString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, false)).toString();
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull String getFullyQualifiedTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context, true)).toString();
   }
 
   /**

@@ -41,11 +41,7 @@ class BundledRuntimeImpl(
   private val info: (String) -> Unit,
 ) : BundledRuntime {
   constructor(context: CompilationContext) : this(
-    options = context.options,
-    paths = context.paths,
-    dependenciesProperties = context.dependenciesProperties,
-    productProperties = (context as? BuildContext)?.productProperties,
-    info = context.messages::info,
+    context.options, context.paths, context.dependenciesProperties, (context as? BuildContext)?.productProperties, context.messages::info
   )
 
   override val prefix: String
@@ -123,7 +119,7 @@ class BundledRuntimeImpl(
 
   /**
    * Update this method together with:
-   * - [UploadingAndSigning.getMissingJbrs]
+   * - `UploadingAndSigning.getMissingJbrs`
    * - [org.jetbrains.intellij.build.dependencies.JdkDownloader.getUrl]
    */
   override fun archiveName(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String, forceVersionWithUnderscores: Boolean): String {
@@ -167,65 +163,61 @@ class BundledRuntimeImpl(
       }
     }
   }
-}
-
-private fun getArchSuffix(arch: JvmArchitecture): String {
-  return when (arch) {
+  private fun getArchSuffix(arch: JvmArchitecture): String = when (arch) {
     JvmArchitecture.x64 -> "x64"
     JvmArchitecture.aarch64 -> "aarch64"
   }
-}
 
-private suspend fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
-  spanBuilder("extract JBR")
-    .setAttribute("archive", archive.toString())
-    .setAttribute("os", os.osName)
-    .setAttribute("destination", destinationDir.toString())
-    .use {
-      NioFiles.deleteRecursively(destinationDir)
-      unTar(archive, destinationDir)
-      fixPermissions(destinationDir, os == OsFamily.WINDOWS)
-    }
-}
-
-private fun unTar(archive: Path, destination: Path) {
-  // CompressorStreamFactory requires stream with mark support
-  val rootDir = createTarGzInputStream(archive).use {
-    it.nextEntry?.name
-  }
-  if (rootDir == null) {
-    throw IllegalStateException("Unable to detect root dir of $archive")
+  private suspend fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
+    spanBuilder("extract JBR")
+      .setAttribute("archive", archive.toString())
+      .setAttribute("os", os.osName)
+      .setAttribute("destination", destinationDir.toString())
+      .use {
+        NioFiles.deleteRecursively(destinationDir)
+        unTar(archive, destinationDir)
+        fixPermissions(destinationDir, os == OsFamily.WINDOWS)
+      }
   }
 
-  unTar(archive, destination, if (rootDir.startsWith("jbr")) rootDir else null)
-}
-
-private fun createTarGzInputStream(archive: Path): TarArchiveInputStream {
-  return TarArchiveInputStream(GZIPInputStream(Files.newInputStream(archive), 64 * 1024))
-}
-
-private fun fixPermissions(destinationDir: Path, forWin: Boolean) {
-  val exeOrDir = EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE)
-  val regular = EnumSet.of(OWNER_READ, OWNER_WRITE, GROUP_READ, OTHERS_READ)
-
-  Files.walkFileTree(destinationDir, object : SimpleFileVisitor<Path>() {
-    @Override
-    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-      if (dir != destinationDir && SystemInfoRt.isUnix) {
-        Files.setPosixFilePermissions(dir, exeOrDir)
-      }
-      return FileVisitResult.CONTINUE
+  private fun unTar(archive: Path, destination: Path) {
+    // CompressorStreamFactory requires stream with mark support
+    val rootDir = createTarGzInputStream(archive).use {
+      it.nextEntry?.name
+    }
+    if (rootDir == null) {
+      throw IllegalStateException("Unable to detect root dir of $archive")
     }
 
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      if (SystemInfoRt.isUnix) {
-        val noExec = forWin || OWNER_EXECUTE !in Files.getPosixFilePermissions(file)
-        Files.setPosixFilePermissions(file, if (noExec) regular else exeOrDir)
+    unTar(archive, destination, if (rootDir.startsWith("jbr")) rootDir else null)
+  }
+
+  private fun createTarGzInputStream(archive: Path): TarArchiveInputStream =
+    TarArchiveInputStream(GZIPInputStream(Files.newInputStream(archive), 64 * 1024))
+
+  private fun fixPermissions(destinationDir: Path, forWin: Boolean) {
+    val exeOrDir = EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE)
+    val regular = EnumSet.of(OWNER_READ, OWNER_WRITE, GROUP_READ, OTHERS_READ)
+
+    Files.walkFileTree(destinationDir, object : SimpleFileVisitor<Path>() {
+      @Override
+      override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+        if (dir != destinationDir && SystemInfoRt.isUnix) {
+          Files.setPosixFilePermissions(dir, exeOrDir)
+        }
+        return FileVisitResult.CONTINUE
       }
-      else {
-        Files.getFileAttributeView(file, DosFileAttributeView::class.java).setReadOnly(false)
+
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+        if (SystemInfoRt.isUnix) {
+          val noExec = forWin || OWNER_EXECUTE !in Files.getPosixFilePermissions(file)
+          Files.setPosixFilePermissions(file, if (noExec) regular else exeOrDir)
+        }
+        else {
+          Files.getFileAttributeView(file, DosFileAttributeView::class.java).setReadOnly(false)
+        }
+        return FileVisitResult.CONTINUE
       }
-      return FileVisitResult.CONTINUE
-    }
-  })
+    })
+  }
 }

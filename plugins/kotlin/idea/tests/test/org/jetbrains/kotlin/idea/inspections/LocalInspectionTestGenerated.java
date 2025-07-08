@@ -4503,6 +4503,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/covariantEquals/override.kt");
         }
 
+        @TestMetadata("override1.kt")
+        public void testOverride1() throws Exception {
+            runTest("testData/inspectionsLocal/covariantEquals/override1.kt");
+        }
+
         @TestMetadata("overrideAnyEquals.kt")
         public void testOverrideAnyEquals() throws Exception {
             runTest("testData/inspectionsLocal/covariantEquals/overrideAnyEquals.kt");
@@ -6969,6 +6974,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("returnReturn.kt")
         public void testReturnReturn() throws Exception {
             runTest("testData/inspectionsLocal/kotlinUnreachableCode/returnReturn.kt");
+        }
+
+        @TestMetadata("returnReturnAndStatement.kt")
+        public void testReturnReturnAndStatement() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/returnReturnAndStatement.kt");
         }
 
         @TestMetadata("returnTryReturn.kt")
@@ -11262,19 +11272,9 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantVisibilityModifier/internalInPrivateClass.kt");
         }
 
-        @TestMetadata("onlyPrivateIsOkForSealedConstructor.kt")
-        public void testOnlyPrivateIsOkForSealedConstructor() throws Exception {
-            runTest("testData/inspectionsLocal/redundantVisibilityModifier/onlyPrivateIsOkForSealedConstructor.kt");
-        }
-
         @TestMetadata("overridePropertySetter.kt")
         public void testOverridePropertySetter() throws Exception {
             runTest("testData/inspectionsLocal/redundantVisibilityModifier/overridePropertySetter.kt");
-        }
-
-        @TestMetadata("privateIsDefaultForSealedConstructor.kt")
-        public void testPrivateIsDefaultForSealedConstructor() throws Exception {
-            runTest("testData/inspectionsLocal/redundantVisibilityModifier/privateIsDefaultForSealedConstructor.kt");
         }
 
         @TestMetadata("privateIsOkForSealedConstructor.kt")
@@ -17726,6 +17726,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/functionalLiteral.kt");
             }
 
+            @TestMetadata("implicitExpectFunction.kt")
+            public void testImplicitExpectFunction() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/implicitExpectFunction.kt");
+            }
+
             @TestMetadata("inAnonymous.kt")
             public void testInAnonymous() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/inAnonymous.kt");
@@ -18079,6 +18084,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("unusedPublicMembers.kt")
             public void testUnusedPublicMembers() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/unusedPublicMembers.kt");
+            }
+
+            @TestMetadata("usedEnumEntries.kt")
+            public void testUsedEnumEntries() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/usedEnumEntries.kt");
             }
 
             @TestMetadata("usedEnumFunction.kt")
@@ -18729,6 +18739,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("dontReplaceCallableReferenceGetterIn1dot9.kt")
             public void testDontReplaceCallableReferenceGetterIn1dot9() throws Exception {
                 runTest("testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceCallableReferenceGetterIn1dot9.kt");
+            }
+
+            @TestMetadata("dontReplaceForEnum.kt")
+            public void testDontReplaceForEnum() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions/dontReplaceForEnum.kt");
             }
 
             @TestMetadata("dontReplaceGetterNotBuiltInFunctionType.kt")

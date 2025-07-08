@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.xml.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -9,9 +8,10 @@ jvm_resources(
   strip_prefix = "testResources"
 )
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
@@ -32,7 +32,6 @@ jvm_library(
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//java/testFramework",
-    "@lib//:xerces",
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
     "//platform/editor-ui-ex:editor-ex",
@@ -62,6 +61,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//images/backend.svg",
     "//platform/polySymbols:polySymbols-testFramework",
+    "//libraries/xerces",
   ],
   runtime_deps = [
     ":tests_test_resources",

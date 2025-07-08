@@ -9,6 +9,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.provider.utils.sendWholeText
@@ -18,6 +20,7 @@ import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -67,6 +70,9 @@ class PyVirtualEnvTerminalCustomizerTest {
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
     sdkToDelete?.let { sdk ->
+      if (SystemInfo.isWindows) {
+        deleteCheckLocking(Path.of(sdk.homePath!!))
+      }
       edtWriteAction {
         ProjectJdkTable.getInstance().removeJdk(sdk)
       }
@@ -82,6 +88,7 @@ class PyVirtualEnvTerminalCustomizerTest {
   }
 
 
+  @ThrowsChecked(ExecuteProcessException::class)
   @CartesianTest
   fun shellActivationTest(
     @CartesianTest.Values(booleans = [true, false]) useConda: Boolean,
@@ -135,7 +142,7 @@ class PyVirtualEnvTerminalCustomizerTest {
     val execOptions = localEel.exec.spawnProcess(exe)
       .args(args)
       .env(shellOptions.envVariables + mapOf(Pair("TERM", "dumb")))
-      // Unix shells do not activate with out tty
+      // Unix shells do not activate without tty
       .interactionOptions(if (SystemInfo.isWindows) null else EelExecApi.Pty(100, 100, true))
     val process = execOptions.eelIt()
     try {
@@ -171,6 +178,10 @@ class PyVirtualEnvTerminalCustomizerTest {
       process.exitCode.await()
     }
     finally {
+      if (SystemInfo.isWindows) {
+        deleteCheckLocking(tempDirFixture.get())
+        deleteCheckLocking(venvPath)
+      }
       process.kill()
       process.exitCode.await()
     }

@@ -57,7 +57,7 @@ class IncorrectPceHandlingTests {
   void testDisjunctionTypesWhenPceIsFirst() {
     try {
       // anything
-    } catch (ProcessCanceledException | IllegalStateException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
+    } catch (ProcessCanceledException | IllegalArgumentException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
       <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
     }
   }
@@ -65,7 +65,7 @@ class IncorrectPceHandlingTests {
   void testDisjunctionTypesWhenPceIsSecond() {
     try {
       // anything
-    } catch (IllegalStateException | ProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
+    } catch (IllegalArgumentException | ProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>) {
       <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
     }
   }
@@ -81,7 +81,7 @@ class IncorrectPceHandlingTests {
   void testPceInheritorSwallowedAndLoggerWhenDisjunctionTypeDefined() {
     try {
       // anything
-    } catch (IllegalStateException | SubclassOfProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>) {
+    } catch (IllegalArgumentException | SubclassOfProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>) {
       <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
     }
   }

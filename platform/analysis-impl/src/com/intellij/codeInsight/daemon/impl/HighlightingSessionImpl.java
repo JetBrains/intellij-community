@@ -128,10 +128,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @ApiStatus.Internal
   public static HighlightingSession getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
-                                                    @NotNull CodeInsightContext codeInsightContext,
-                                                    @NotNull DaemonProgressIndicator progressIndicator,
-                                                    @NotNull ProperTextRange visibleRange,
-                                                    @NotNull TextRange compositeDocumentDirtyRange) {
+                                                                   @NotNull CodeInsightContext codeInsightContext,
+                                                                   @NotNull DaemonProgressIndicator progressIndicator,
+                                                                   @NotNull ProperTextRange visibleRange,
+                                                                   @NotNull TextRange compositeDocumentDirtyRange) {
     Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     List<HighlightingSession> sessions = map == null ? null : map.get(psiFile);
     if (sessions == null) {
@@ -339,7 +339,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @Deprecated
-  void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights, int group, boolean cleanOldHighlights, @NotNull HighlighterRecycler recycler) {
+  void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights,
+                                 int group,
+                                 boolean cleanOldHighlights,
+                                 @NotNull HighlighterRecycler recycler) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     PsiFile psiFile = getPsiFile();
@@ -363,7 +366,9 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   // removes the old HighlightInfo and adds the new one atomically, to avoid flicker
-  void replaceFileLevelHighlight(@NotNull HighlightInfo oldFileLevelInfo, @NotNull HighlightInfo newFileLevelInfo, @Nullable RangeHighlighterEx toReuse) {
+  void replaceFileLevelHighlight(@NotNull HighlightInfo oldFileLevelInfo,
+                                 @NotNull HighlightInfo newFileLevelInfo,
+                                 @Nullable RangeHighlighterEx toReuse) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {

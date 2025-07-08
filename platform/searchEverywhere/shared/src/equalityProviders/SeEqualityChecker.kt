@@ -4,12 +4,14 @@ package com.intellij.platform.searchEverywhere.equalityProviders
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Provides a way to check if the element should be added to the list of already found elements.
@@ -28,7 +30,15 @@ class SeEqualityChecker {
     return readAction {
       lock.withLock {
         val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight, item.contributor)
-        val action = equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
+        val action = try {
+          equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
+        }
+        catch (e: Exception) {
+          if (e is ControlFlowException || e is CancellationException) throw e
+
+          SeLog.error(e)
+          SEResultsEqualityProvider.SEEqualElementsActionType.DoNothing
+        }
 
         when (action) {
           is SEResultsEqualityProvider.SEEqualElementsActionType.Replace -> {

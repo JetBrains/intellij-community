@@ -4,11 +4,6 @@
   <id>com.intellij.platform.images</id>
   <description>Adds support for image file type preview, SVG file type contents language</description>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter"
-                    dynamic="true"/>
-  </extensionPoints>
-
   <resource-bundle>messages.ImagesBundle</resource-bundle>
 
   <dependencies>
@@ -18,15 +13,12 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <colorSettingsPage implementation="org.intellij.images.options.impl.ImageEditorColorSchemeSettings"/>
-    <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
 
     <applicationService serviceInterface="org.intellij.images.fileTypes.ImageFileTypeManager"
                         serviceImplementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl"/>
     <applicationService serviceInterface="org.intellij.images.options.OptionsManager"
                         serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
     <applicationService serviceImplementation="org.intellij.images.scientific.utils.BinarizationThresholdConfig"/>
-    <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
-                    serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
     <!-- ImageIO.getReaderFormatNames() -->
     <fileType name="Image" implementationClass="org.intellij.images.fileTypes.impl.ImageFileType" fieldName="INSTANCE"
               extensions="bigtiff;bmp;dcx;gif;icns;ico;jbig2;jpeg;jpg;pam;pbm;pcx;pgm;png;pnm;ppm;psd;rgbe;tga;tif;tiff;wbmp;xbm;xpm"/>
@@ -38,7 +30,6 @@
 
     <filePasteProvider implementation="org.intellij.images.ide.ImagePasteProvider" order="last"/>
 
-    <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
     <registryKey key="ide.images.wheel.zooming" defaultValue="true" description="Enable zoom in/out by mouse wheel"/>
     <registryKey key="ide.images.show.chessboard" defaultValue="false" description="Enable chessboard"/>
     <registryKey key="ide.images.chessboard.cell.size" defaultValue="5" description="Option for default chessboard cell size"/>
@@ -66,9 +57,6 @@
       <action class="org.intellij.images.actions.ConvertSvgToPngAction"
               id="Images.ConvertSvgToPng">
         <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
-      </action>
-      <action class="org.intellij.images.actions.ShowThumbnailsAction"
-              id="Images.ShowThumbnails">
       </action>
 
       <group id="Images.ImageViewActions">
@@ -107,16 +95,6 @@
       <separator/>
 
       <group id="Images.ThumbnailViewActions">
-        <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
-                id="Images.Thumbnails.UpFolder"
-                icon="AllIcons.Nodes.UpFolder">
-          <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default"/>
-        </action>
-        <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
-                id="Images.Thumbnails.ToggleRecursive"
-                icon="AllIcons.ObjectBrowser.FlattenPackages">
-          <keyboard-shortcut first-keystroke="alt MULTIPLY" keymap="$default"/>
-        </action>
         <action class="org.intellij.images.thumbnail.actions.ToggleFileSizeAction"
                 id="Images.Thumbnails.ToggleFileSize"
                 icon="AllIcons.FileTypes.Any_type">
@@ -124,26 +102,6 @@
         <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
                 id="Images.Thumbnails.ToggleFileName"
                 icon="AllIcons.Actions.ShowImportStatements">
-        </action>
-        <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
-                internal="true"
-                id="Images.Thumbnails.FilterByTheme"/>
-        <group class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
-               internal="true"
-               popup="true"
-               id="Images.Thumbnails.FilterByTag"/>
-        <action class="org.intellij.images.thumbnail.actions.ToggleTagsPanelAction"
-                id="Images.Thumbnails.ToggleTagsPanelName"
-                icon="AllIcons.Actions.Preview">
-        </action>
-
-        <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
-                id="Images.Thumbnails.Hide"
-                icon="AllIcons.Actions.Cancel" use-shortcut-of="CloseContent"/>
-
-        <action class="org.intellij.images.thumbnail.actions.EnterAction"
-                id="Images.Thumbnails.EnterAction">
-          <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
         </action>
 
         <action class="org.intellij.images.thumbnail.actions.ShowBorderAction" id="Images.ShowBorder"/>
@@ -205,38 +163,6 @@
       <separator/>
       <reference ref="Images.EditExternally"/>
       <reference ref="Images.EditExternalEditorPath"/>
-      <reference ref="ExternalToolsGroup"/>
-    </group>
-    <group id="Images.ThumbnailsToolbar">
-      <reference ref="Images.Thumbnails.UpFolder"/>
-      <reference ref="Images.Thumbnails.ToggleRecursive"/>
-      <separator/>
-      <reference ref="Images.ToggleTransparencyChessboard"/>
-      <reference ref="Images.Thumbnails.ToggleFileSize"/>
-      <reference ref="Images.Thumbnails.ToggleFileName"/>
-      <separator/>
-
-      <reference ref="Images.Thumbnails.FilterByTheme"/>
-      <reference ref="Images.Thumbnails.FilterByTag"/>
-      <reference ref="Images.Thumbnails.ToggleTagsPanelName"/>
-      <reference ref="Images.Thumbnails.Hide"/>
-    </group>
-    <group id="Images.ThumbnailsPopupMenu">
-      <reference ref="CutCopyPasteGroup"/>
-      <reference ref="EditSource"/>
-      <reference ref="Images.Thumbnails.EnterAction"/>
-      <separator/>
-      <reference ref="Images.ThumbnailsToolbar"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <reference ref="CompareTwoFiles"/>
-      <separator/>
-      <reference ref="Images.EditExternally"/>
       <reference ref="ExternalToolsGroup"/>
     </group>
   </actions>

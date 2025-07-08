@@ -141,7 +141,7 @@ class CancellationPropagationTest {
 
   @Test
   fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking(60.seconds) {
-    installThreadContext(coroutineContext).use {
+    installThreadContext(coroutineContext) {
       val expired = AtomicBoolean(false)
       ApplicationManager.getApplication().withModality {
         val runnable = Runnable {
@@ -934,7 +934,7 @@ class CancellationPropagationTest {
       assertTrue(Cancellation.isInNonCancelableSection())
     }
     Cancellation.executeInNonCancelableSection {
-      installThreadContext(Job(currentThreadContext().job), true).use {
+      installThreadContext(Job(currentThreadContext().job), true) {
         assertFalse(Cancellation.isInNonCancelableSection())
       }
     }

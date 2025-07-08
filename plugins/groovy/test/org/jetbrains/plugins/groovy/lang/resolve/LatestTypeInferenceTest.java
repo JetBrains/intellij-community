@@ -73,7 +73,7 @@ public class LatestTypeInferenceTest extends GroovyLatestTest implements TypingT
     typingTest(
       """
 			Set<String> a = ['a']
-			assert a instanceof Set
+			assert a instanceof Set b
 			<caret>a
 			""",
       "java.util.Set<java.lang.String>"

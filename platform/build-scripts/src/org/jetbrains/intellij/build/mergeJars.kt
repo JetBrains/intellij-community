@@ -1,7 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
@@ -40,15 +38,15 @@ internal interface NativeFileHandler {
 }
 
 suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
-  buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null)
+  buildJar(targetFile, sources, nativeFileHandler = null, addDirEntries = false, compress)
 }
 
 internal suspend fun buildJar(
   targetFile: Path,
   sources: Collection<Source>,
+  nativeFileHandler: NativeFileHandler?,
+  addDirEntries: Boolean,
   compress: Boolean = false,
-  nativeFileHandler: NativeFileHandler? = null,
-  addDirEntries: Boolean = false,
 ) {
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder(if (addDirEntries) AddDirEntriesMode.ALL else AddDirEntriesMode.NONE)
   Files.createDirectories(targetFile.parent)
@@ -61,17 +59,7 @@ internal suspend fun buildJar(
     val filesToMerge = mutableListOf<CharSequence>()
 
     for (source in sources) {
-      writeSource(
-        source = source,
-        zipCreator = zipCreator,
-        uniqueNames = uniqueNames,
-        packageIndexBuilder = packageIndexBuilder,
-        targetFile = targetFile,
-        sources = sources,
-        nativeFileHandler = nativeFileHandler,
-        compress = compress,
-        filesToMerge = filesToMerge,
-      )
+      writeSource(source, zipCreator, uniqueNames, packageIndexBuilder, targetFile, sources, nativeFileHandler, compress, filesToMerge)
     }
 
     if (filesToMerge.isNotEmpty()) {
@@ -91,7 +79,6 @@ private suspend fun writeSource(
   compress: Boolean,
   filesToMerge: MutableList<CharSequence>,
 ) {
-  val indexWriter = packageIndexBuilder?.indexWriter
   when (source) {
     is DirSource -> {
       val includeManifest = sources.size == 1
@@ -110,7 +97,6 @@ private suspend fun writeSource(
       })
       val normalizedDir = source.dir.toAbsolutePath().normalize()
       archiver.setRootDir(normalizedDir, source.prefix)
-      indexWriter
       archiveDir(
         startDir = normalizedDir,
         addFile = { archiver.addFile(it, zipCreator) },
@@ -139,18 +125,7 @@ private suspend fun writeSource(
     is ZipSource -> {
       val sourceFile = source.file
       try {
-        handleZipSource(
-          source = source,
-          sourceFile = sourceFile,
-          nativeFileHandler = nativeFileHandler,
-          uniqueNames = uniqueNames,
-          sources = sources,
-          packageIndexBuilder = packageIndexBuilder,
-          zipCreator = zipCreator,
-          compress = compress,
-          targetFile = targetFile,
-          filesToMerge = filesToMerge,
-        )
+        handleZipSource(source, sourceFile, nativeFileHandler, uniqueNames, sources, packageIndexBuilder, zipCreator, compress, targetFile, filesToMerge)
       }
       catch (e: IOException) {
         if (e.message?.contains("No space left on device") == true) {
@@ -171,17 +146,7 @@ private suspend fun writeSource(
     is LazySource -> {
       for (subSource in source.getSources()) {
         require(subSource !== source)
-        writeSource(
-          source = subSource,
-          zipCreator = zipCreator,
-          uniqueNames = uniqueNames,
-          packageIndexBuilder = packageIndexBuilder,
-          targetFile = targetFile,
-          sources = sources,
-          nativeFileHandler = nativeFileHandler,
-          compress = compress,
-          filesToMerge = filesToMerge,
-        )
+        writeSource(subSource, zipCreator, uniqueNames, packageIndexBuilder, targetFile, sources, nativeFileHandler, compress, filesToMerge)
       }
     }
 
@@ -233,14 +198,14 @@ private suspend fun handleZipSource(
       }
     }
 
-    if (checkCoverageAgentManifest(name = name, sourceFile = sourceFile, targetFile = targetFile, dataSupplier = dataSupplier, writeData = ::writeZipData)) {
+    if (checkCoverageAgentManifest(name, sourceFile, targetFile, dataSupplier, ::writeZipData)) {
       return@suspendAwareReadZipFile
     }
 
     val includeManifest = sources.size == 1
     val isIncluded = source.filter(name) && (includeManifest || name != "META-INF/MANIFEST.MF")
 
-    if (!isIncluded || isDuplicated(uniqueNames = uniqueNames, name = name, sourceFile = sourceFile)) {
+    if (!isIncluded || isDuplicated(uniqueNames, name, sourceFile)) {
       return@suspendAwareReadZipFile
     }
 
@@ -318,6 +283,7 @@ private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, so
 @Suppress("SpellCheckingInspection")
 private fun getIgnoredNames(): Set<String> {
   val set = mutableListOf<String>()
+
   // compilation cache on TC
   set.add(".hash")
   set.add("classpath.index")
@@ -325,6 +291,7 @@ private fun getIgnoredNames(): Set<String> {
   set.add("pom.xml")
   set.add("about.html")
   set.add("module-info.class")
+
   // default is ok (modules not used)
   set.add("META-INF/versions/9/kotlin/reflect/jvm/internal/impl/serialization/deserialization/builtins/BuiltInsResourceLoader.class")
   set.add("META-INF/versions/9/org/apache/xmlbeans/impl/tool/MavenPluginResolver.class")
@@ -344,9 +311,11 @@ private fun getIgnoredNames(): Set<String> {
 
   // duplicates in maven-resolver-transport-http and maven-resolver-transport-file
   set.add("META-INF/sisu/javax.inject.Named")
+
   // duplicates in recommenders-jayes-io-2.5.5 and recommenders-jayes-2.5.5.jar
   set.add("OSGI-INF/l10n/bundle.properties")
-  // groovy
+
+  // Groovy
   set.add("META-INF/groovy-release-info.properties")
 
   set.add("native-image")
@@ -357,6 +326,7 @@ private fun getIgnoredNames(): Set<String> {
   @Suppress("SpellCheckingInspection")
   set.add(".gitkeep")
   set.add(INDEX_FILENAME)
+
   for (originalName in sequenceOf("NOTICE", "README", "LICENSE", "DEPENDENCIES", "CHANGES", "THIRD_PARTY_LICENSES", "COPYING")) {
     for (name in sequenceOf(originalName, originalName.lowercase())) {
       set.add(name)
@@ -367,71 +337,38 @@ private fun getIgnoredNames(): Set<String> {
       set.add("META-INF/$name.md")
     }
   }
+
   set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
   set.add("kotlin/coroutines/jvm/internal/DebugProbesKt.class")
+
   /**
-   * A merging build politic breaks Graal VM Truffle-based plugins in an inconsistant way, so it's better
-   * to provide a correctly merged version in the plugin.
+   * A merging build politic breaks Graal VM Truffle-based plugins in an inconsistant way,
+   * so it's better to provide a correctly merged version in the plugin.
    */
   set.add("META-INF/services/com.oracle.truffle.api.provider.TruffleLanguageProvider")
+
   return java.util.Set.copyOf(set)
 }
 
 private val ignoredNames = getIgnoredNames()
 private val moduleInfoPattern = Regex("META-INF/versions/\\d+/module-info\\.class")
 
-fun defaultLibrarySourcesNamesFilter(name: String): Boolean {
-  @Suppress("SpellCheckingInspection")
-  return !ignoredNames.contains(name) &&
-         !name.matches(moduleInfoPattern) &&
-         !name.endsWith(".kotlin_metadata") &&
-         !name.startsWith("license/") &&
-         !name.startsWith("META-INF/license/") &&
-         !name.startsWith("META-INF/LICENSE-") &&
-         !name.startsWith("native-image/") &&
-
-         //  Class 'jakarta.json.JsonValue' not found while looking for field 'jakarta.json.JsonValue NULL'
-         //!name.startsWith("com/jayway/jsonpath/spi/json/JakartaJsonProvider") &&
-         //!name.startsWith("com/jayway/jsonpath/spi/json/JsonOrgJsonProvider") &&
-         //!name.startsWith("com/jayway/jsonpath/spi/json/TapestryJsonProvider") &&
-         //
-         //!name.startsWith("com/jayway/jsonpath/spi/mapper/JakartaMappingProvider") &&
-         //!name.startsWith("com/jayway/jsonpath/spi/mapper/JsonOrgMappingProvider") &&
-         //!name.startsWith("com/jayway/jsonpath/spi/mapper/TapestryMappingProvider") &&
-
-         //!name.startsWith("io/opentelemetry/exporter/internal/grpc/") &&
-         //!name.startsWith("io/opentelemetry/exporter/internal/okhttp/") &&
-         //// com.thaiopensource.datatype.xsd.regex.xerces2 is used instead
-         //!name.startsWith("com/thaiopensource/datatype/xsd/regex/xerces/RegexEngineImpl") &&
-         //!name.startsWith("com/thaiopensource/relaxng/util/JingTask") &&
-         //!name.startsWith("com/thaiopensource/validate/schematron") &&
-         //!name.startsWith("com/thoughtworks/xstream/core/util/ISO8601JodaTimeConverter") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/BEAStaxDriver") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/AbstractXppDomDriver") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/Xom") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/Dom4") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/JDom2") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/KXml2") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/Wstx") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/Xpp3") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/xppdom") &&
-         //!name.startsWith("com/thoughtworks/xstream/io/xml/XppDom") &&
-         //!name.startsWith("com/michaelbaranov/microba/jgrpah/birdview/Birdview") &&
-
-         // XmlRPC lib
-         !name.startsWith("org/xml/sax/") &&
-
-         !name.startsWith("META-INF/versions/9/org/apache/logging/log4j/") &&
-         !name.startsWith("META-INF/versions/9/org/bouncycastle/") &&
-         !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
-         !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
-
-         !name.startsWith("kotlinx/coroutines/repackaged/") &&
-
-         !name.startsWith("native/") &&
-         !name.startsWith("licenses/") &&
-         !name.startsWith("META-INF/INDEX.LIST") &&
-         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
-         // we replace lib class with our own patched version
-         !name.startsWith("net/sf/cglib/core/AbstractClassGenerator")
-}
+fun defaultLibrarySourcesNamesFilter(name: String): Boolean =
+  !ignoredNames.contains(name) &&
+  !name.matches(moduleInfoPattern) &&
+  !name.endsWith(".kotlin_metadata") &&
+  !name.startsWith("license/") &&
+  !name.startsWith("licenses/") &&
+  !name.startsWith("native/") &&
+  !name.startsWith("META-INF/license/") &&
+  !name.startsWith("META-INF/LICENSE-") &&
+  !name.startsWith("native-image/") &&
+  !name.startsWith("org/xml/sax/") &&  // XmlRPC lib
+  !name.startsWith("META-INF/versions/9/org/apache/logging/log4j/") &&
+  !name.startsWith("META-INF/versions/9/org/bouncycastle/") &&
+  !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
+  !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
+  !name.startsWith("kotlinx/coroutines/repackaged/") &&
+  !name.startsWith("META-INF/INDEX.LIST") &&
+  (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
+  !name.startsWith("net/sf/cglib/core/AbstractClassGenerator")  // we replace the lib class with our own patched version

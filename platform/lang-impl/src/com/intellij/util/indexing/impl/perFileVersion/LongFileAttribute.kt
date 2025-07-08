@@ -15,8 +15,7 @@ sealed interface LongFileAttribute : Closeable {
   companion object {
     @JvmStatic
     fun shouldUseFastAttributes(): Boolean {
-      return Registry.`is`("indexing.over.fast.attributes", true)
-             || Registry.`is`("scanning.trust.indexing.flag", true)
+      return true
     }
 
     @JvmStatic

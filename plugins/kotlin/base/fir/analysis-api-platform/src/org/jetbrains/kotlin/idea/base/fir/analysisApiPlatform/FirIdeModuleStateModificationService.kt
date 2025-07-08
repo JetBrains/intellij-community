@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
@@ -114,7 +115,9 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
         }
 
         override fun before(events: List<VFileEvent>) {
-            if (mayBuiltinsHaveChanged(events) || !project.isInitialized) {
+            if (!project.isInitialized) return
+
+            if (mayBuiltinsHaveChanged(events)) {
                 project.publishGlobalModuleStateModificationEvent()
                 return
             }
@@ -190,6 +193,12 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             runWriteAction {
                 project.publishGlobalModuleStateModificationEvent()
             }
+        }
+    }
+
+    internal class GeneralWorkspaceModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
+        override fun beforeChanged(event: VersionedStorageChange) {
+            getInstance(project).beforeWorkspaceModelChanged(event)
         }
     }
 

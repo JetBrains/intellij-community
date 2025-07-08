@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
@@ -177,10 +176,9 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 allowAnalysisFromWriteAction {
                     analyze(declaration) {
                         ConvertToBlockBodyUtils.createContext(
-                            declaration,
-                            ShortenReferencesFacility.getInstance(),
-                            reformat = false,
-                            isErrorReturnTypeAllowed = true,
+                          declaration,
+                          reformat = false,
+                          isErrorReturnTypeAllowed = true,
                         )
                     }
                 }
@@ -294,7 +292,11 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 OccurrencesChooser.ReplaceChoice.ALL -> allOccurrences
                 else -> listOf(expression)
             }
-            val commonParent = PsiTreeUtil.findCommonParent(allReplaces.map { it.substringContextOrThis }) as KtElement
+            val commonParent = if (allReplaces.isNotEmpty()) {
+                PsiTreeUtil.findCommonParent(allReplaces.map { it.substringContextOrThis }) as KtElement
+            } else {
+                expression.parent as KtElement
+            }
 
             var commonContainer = commonParent as? KtFile
                 ?: commonParent.getContainer()
@@ -330,13 +332,21 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 )
 
                 project.executeCommand(INTRODUCE_VARIABLE, null) {
-                    application.runWriteAction {
+                    val run : () -> Unit = {
                         introduceVariableContext.convertToBlockIfNeededAndRunRefactoring(
                             expression,
                             commonContainer,
                             commonParent,
                             allReplaces
                         )
+                    }
+                    if (application.isWriteAccessAllowed) {
+                        // TODO caused by KT-78904
+                        run()
+                    } else {
+                        application.runWriteAction {
+                            run()
+                        }
                     }
 
                     val property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand

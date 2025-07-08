@@ -74,6 +74,7 @@ import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedNewIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
@@ -226,10 +227,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
         // Prefer elements that are inside body range
         val bodyRange = lambda.bodyExpression!!.textRange
-        elementsOnLine.firstOrNull {it.startOffset in bodyRange } ?.let { return it }
+        elementsOnLine.firstOrNull { it.startOffset in bodyRange }?.let { return it }
 
         // Prefer KtElements
-        elementsOnLine.firstOrNull { it is KtElement } ?.let { return it }
+        elementsOnLine.firstOrNull { it is KtElement }?.let { return it }
 
         return elementsOnLine.firstOrNull()
     }
@@ -240,7 +241,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             .safeAllLineLocations()
             .filter {
                 it.safeSourceName() == sourceFileName &&
-                it.lineNumber() == lineNumber()
+                        it.lineNumber() == lineNumber()
             }
 
         //  The `finally {}` block code is placed in the class file twice.
@@ -299,7 +300,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             val elementAt = file.findElementAt(lineStartOffset)
             elementAt to CodeFragmentContextTuner.getInstance().tuneContextElement(elementAt)
         } ?: return null
-        
+
         if (locationElement == null || contextElement == null) return null
 
         if (contextElement !is KtClass) return null
@@ -322,6 +323,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                         contextElement.primaryConstructor
                     }
                 }
+
                 else -> null
             }
         }
@@ -450,9 +452,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
         val lambdas = location.declaringType().methods()
             .filter {
-              it.name().isGeneratedIrBackendLambdaMethodName() &&
-              !it.isGeneratedErasedLambdaMethod() &&
-              DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
+                it.name().isGeneratedIrBackendLambdaMethodName() &&
+                        !it.isGeneratedErasedLambdaMethod() &&
+                        DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
             }
             // Kotlin indy lambdas can come in wrong order, sort by order and hierarchy
             .sortedBy { IrLambdaDescriptor(it.name()) }
@@ -487,6 +489,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                         ApplicabilityResult.UNKNOWN
                     }
                 }
+
                 else -> ApplicabilityResult.UNKNOWN
             }
         } || hasImplicitReturnOnLine(this, lineNumber)
@@ -705,8 +708,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     ): List<PrepareRequest> {
         val kotlinRequests = getKotlinClassPrepareRequests(requestor, position)
         return if (isInsideProjectWithCompose) {
-            val singletonRequestPattern = getClassPrepareRequestPatternForComposableSingletons(file)
-            kotlinRequests + PrepareRequest(requestor, singletonRequestPattern)
+            val composableSingletonPatterns = getClassPrepareRequestPatternsForComposableSingletons(file)
+            kotlinRequests + composableSingletonPatterns.map { PrepareRequest(requestor, it) }
         } else {
             kotlinRequests
         }
@@ -935,8 +938,19 @@ private class IrLambdaDescriptor(name: String) : Comparable<IrLambdaDescriptor> 
 
     init {
         require(name.isGeneratedIrBackendLambdaMethodName())
-        val parts = name.split("\\\$lambda[$-]".toRegex())
-        lambdaId = if (parts.isEmpty()) emptyList() else parts.drop(1).mapNotNull { it.toIntOrNull() }
+        /**
+         * Before Kotlin 2.2.20 generated lambda names have a repeating 'lambda' prefix, e.g.:
+         * foo$lambda$0$lambda$1$lambda$2
+         *
+         * From Kotlin 2.2.20+ the repetition of 'lambda' prefix is removed, e.g.:
+         * foo$lambda$0$1$2
+         */
+        val parts = if (name.isGeneratedNewIrBackendLambdaMethodName()) {
+            name.substringAfter("\$lambda").split("[$-]".toRegex())
+        } else {
+            name.split("\\\$lambda[$-]".toRegex())
+        }
+        lambdaId = parts.drop(1).mapNotNull { it.toIntOrNull() }
     }
 
     override fun compareTo(other: IrLambdaDescriptor): Int {

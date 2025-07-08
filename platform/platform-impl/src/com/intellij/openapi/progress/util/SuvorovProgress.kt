@@ -26,14 +26,15 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
-import java.awt.Component
 import java.awt.KeyboardFocusManager
-import java.util.concurrent.atomic.AtomicReference
 import java.awt.event.InvocationEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
+import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 /**
@@ -57,6 +58,7 @@ import javax.swing.SwingUtilities
  */
 @ApiStatus.Internal
 object SuvorovProgress {
+  var entered: Boolean = false
 
   @Volatile
   private lateinit var eternalStealer: EternalEventStealer
@@ -107,12 +109,12 @@ object SuvorovProgress {
         processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
       "NiceOverlay" -> {
-        val currentFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-        if (currentFocusOwner == null) {
+        val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
+        if (currentFocusedPane == null) {
           // can happen also in tests
           processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
         } else {
-          showNiceOverlay(awaitedValue, currentFocusOwner)
+          showNiceOverlay(awaitedValue, currentFocusedPane)
         }
       }
       "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, isBar = value == "Bar")
@@ -120,8 +122,8 @@ object SuvorovProgress {
     }
   }
 
-  private fun showNiceOverlay(awaitedValue: Deferred<*>, currentFocusOwner: Component) {
-    val niceOverlay = NiceOverlayUi(currentFocusOwner)
+  private fun showNiceOverlay(awaitedValue: Deferred<*>, rootPane: JRootPane) {
+    val niceOverlay = NiceOverlayUi(rootPane, false)
 
     val disposable = Disposer.newDisposable()
     val stealer = PotemkinProgress.startStealingInputEvents(
@@ -285,8 +287,9 @@ object SuvorovProgress {
 private class EternalEventStealer(disposable: Disposable) {
   @Volatile
   private var enabled = false
+  private var counter = 0
 
-  private val specialEvents = LinkedBlockingQueue<SpecialDispatchEvent>()
+  private val specialEvents = LinkedBlockingQueue<ForcedEvent>()
 
   init {
     IdeEventQueue.getInstance().addPostEventListener(
@@ -308,36 +311,40 @@ private class EternalEventStealer(disposable: Disposable) {
   fun dispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {
     val initialMark = System.nanoTime()
 
+    val id = counter++
     deferred.invokeOnCompletion {
-      synchronized(this@EternalEventStealer) {
-        (this@EternalEventStealer as Object).notifyAll()
-      }
+      specialEvents.add(TerminalEvent(id))
     }
 
-    synchronized(this) {
-      while (true) {
-        val currentMark = System.nanoTime()
-        val elapsedSinceStartNanos = currentMark - initialMark
-        val toSleep = timeoutMillis - (elapsedSinceStartNanos / 1_000_000)
-        if (toSleep <= 0) {
-          return
+    while (true) {
+      val currentMark = System.nanoTime()
+      val elapsedSinceStartNanos = currentMark - initialMark
+      val toSleep = timeoutMillis - (elapsedSinceStartNanos / 1_000_000)
+      if (toSleep <= 0) {
+        return
+      }
+      if (deferred.isCompleted) {
+        return
+      }
+      try {
+        when (val event = specialEvents.poll(toSleep, TimeUnit.MILLISECONDS)) {
+          is TerminalEvent -> {
+            // return only if we get the event for the right id
+            if (event.id == id) {
+              return
+            }
+          }
+          is SpecialDispatchEvent -> getGlobalThreadingSupport().relaxPreventiveLockingActions {
+            event.execute()
+          }
+          null -> Unit
         }
-        if (deferred.isCompleted) {
-          return
-        }
-        try {
-          (this as Object).wait(toSleep)
-        } catch (_ : InterruptedException) {
-          // we still return locking result regardless of interruption
-          Thread.currentThread().interrupt()
-        }
-        while (true) {
-          val event = specialEvents.poll() ?: break
-          event.execute()
-        }
-        if (!deferred.isActive) {
-          return
-        }
+      } catch (_ : InterruptedException) {
+        // we still return locking result regardless of interruption
+        Thread.currentThread().interrupt()
+      }
+      if (!deferred.isActive) {
+        return
       }
     }
   }
@@ -347,7 +354,11 @@ private class EternalEventStealer(disposable: Disposable) {
   }
 }
 
-private class SpecialDispatchEvent private constructor(val reference: AtomicReference<AWTEvent>) : InvocationEvent(Any(), {
+private sealed interface ForcedEvent
+
+private class TerminalEvent(val id: Int) : ForcedEvent
+
+private class SpecialDispatchEvent private constructor(val reference: AtomicReference<AWTEvent>) : ForcedEvent, InvocationEvent(Any(), {
   execute(reference)
 }) {
   companion object {

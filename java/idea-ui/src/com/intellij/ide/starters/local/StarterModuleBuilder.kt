@@ -29,9 +29,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -61,7 +61,6 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.URL
 import javax.swing.Icon
-import kotlin.Throws
 
 abstract class StarterModuleBuilder : ModuleBuilder() {
   companion object {
@@ -169,7 +168,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected val starterContext: StarterContext = StarterContext()
   private val starterSettings: StarterWizardSettings by lazy { createSettings() }
 
-  override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
+  override fun getModuleType(): ModuleType<*> = JavaModuleType.getModuleType()
   override fun getWeight(): Int = JVM_WEIGHT
   open fun getHelpId(): String? = null
 

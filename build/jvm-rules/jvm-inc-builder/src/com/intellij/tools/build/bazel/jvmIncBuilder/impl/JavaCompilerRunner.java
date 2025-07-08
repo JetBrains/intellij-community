@@ -92,8 +92,6 @@ public class JavaCompilerRunner implements CompilerRunner {
     return src.toString().endsWith(".java");
   }
 
-  // todo: implement JavaCompilerToolExtension to listen to javac constants and registering them into outputConsumer
-  // todo: install javac ast listener and consume data like in JpsReferenceDependenciesRegistrar
   @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnosticSink, OutputSink outSink) throws Exception {
     NodeSourcePathMapper pathMapper = myContext.getPathMapper();

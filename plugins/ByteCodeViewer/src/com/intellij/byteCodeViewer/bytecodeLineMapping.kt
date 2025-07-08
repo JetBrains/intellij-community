@@ -1,24 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer
 
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.util.Textifier
 import java.util.*
 
-
 /**
- * This method the following debugging information from `bytecode`:
+ * This method removes the following debug information from `bytecode`:
  *  - `LINENUMBER`
  *  - `LOCALVARIABLE`
  *
  * ### Why is this needed?
  *
- * Ideally, we would use `ClassReader#SKIP_DEBUG` flag, but it has problematic behavior when it comes to labels.
+ * Ideally, to get bytecode without debug information, we would use [ClassReader] from the ASM library, and parse bytecode with the [ClassReader.SKIP_DEBUG] flag.
+ * Unfortunately, this flag doesn't achieve what we want because it removes labels from the bytecode.
  *
- * When parsing bytecode with ASM's `ClassReader`, we want to set `ClassReader#SKIP_DEBUG`, because it's actually not part of bytecode.
- * Unfortunately, `ClassReader#SKIP_DEBUG` also removes labels from the bytecode in most cases.
  * This is bad because labels are often targets of conditional jumps.
  * Also, we do want to display labels.
  * They're useful.
  *
+ * @param bytecodeWithDebugInfo - bytecode returned by ASM [ClassReader] and [Textifier] with [ClassReader.SKIP_FRAMES] flag.
+ * @see BytecodeToolWindowPanel.deserializeBytecode
  */
 internal fun removeDebugInfo(bytecodeWithDebugInfo: String): String = bytecodeWithDebugInfo.lines()
   .filter { line -> !isDebugLine(line.trim()) }
@@ -28,29 +30,29 @@ internal fun removeDebugInfo(bytecodeWithDebugInfo: String): String = bytecodeWi
 /**
  * Maps the line numbers from the provided bytecode to the source code line numbers within a specified range.
  *
- * @param bytecodeWithDebugInfo The Java bytecode in ASM format, with debugging information included (see `ClassReader#SKIP_DEBUG`)
+ * @param bytecodeWithDebugInfo The Java bytecode in ASM format, with debug information included (see [ClassReader.SKIP_DEBUG])
  * @param sourceStartLine The starting line number in the source code to map from.
  * @param sourceEndLine The ending line number in the source code to map to.
  * @return A pair where the first element is the start line number in the bytecode, and the second element is the end line number in the bytecode. Returns (0, 0) if no valid mapping
  *  is found.
  */
-internal fun mapLines(bytecodeWithDebugInfo: String, sourceStartLine: Int, sourceEndLine: Int, stripDebugInfo: Boolean = false): IntRange {
-  var sourceStartLine = sourceStartLine // + 1 // editor selection is 0-indexed
+internal fun mapLines(bytecodeWithDebugInfo: String, sourceStartLine: Int, sourceEndLine: Int, showDebugInfo: Boolean): IntRange {
+  var sourceStartLine = sourceStartLine // editor selection is 0-indexed
   var currentBytecodeLine = 0
   var bytecodeStartLine = -1
   var bytecodeEndLine = -1
 
-  val lines = arrayListOf<Int>()
+  val lineNumbers = arrayListOf<Int>()
   for (line in bytecodeWithDebugInfo.split("\n").dropLastWhile { it.isEmpty() }.map { line -> line.trim { it <= ' ' } }) {
     if (line.startsWith("LINENUMBER")) {
       // `line` is e.g. "LINENUMBER 3 L0" or "LINENUMBER 6 L1", but we are only interested in the 3 or 6, respectively.
-      val ktLineNum = Scanner(line.substring("LINENUMBER".length)).nextInt() - 1
-      lines.add(ktLineNum)
+      val sourceLineNumber = Scanner(line.substring("LINENUMBER".length)).nextInt() - 1
+      lineNumbers.add(sourceLineNumber)
     }
   }
-  lines.sort()
+  lineNumbers.sort()
 
-  for (line in lines) {
+  for (line in lineNumbers) {
     if (line >= sourceStartLine) {
       sourceStartLine = line
       break
@@ -91,16 +93,20 @@ internal fun mapLines(bytecodeWithDebugInfo: String, sourceStartLine: Int, sourc
     currentBytecodeLine++
   }
 
-  if (stripDebugInfo) {
+  if (!showDebugInfo) {
     bytecodeStartLine -= linesToSkipBeforeStartLine
     bytecodeEndLine -= linesToSkipBeforeEndLine
+  }
+  else {
+    bytecodeStartLine -= 1
+    bytecodeEndLine -= 1
   }
 
   return if (bytecodeStartLine == -1 || bytecodeEndLine == -1) IntRange(0, 0) else IntRange(bytecodeStartLine, bytecodeEndLine)
 }
 
 /**
- * Returns true if `line` is considered to be part of debug info, i.e. not actual bytecode.
+ * Returns true if `line` is considered to be part of debug info, i.e., not actual bytecode.
  */
 private fun isDebugLine(line: String): Boolean {
   if (line.startsWith("LINENUMBER")) return true

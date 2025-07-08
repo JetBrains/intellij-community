@@ -4,7 +4,7 @@ package com.intellij.compose.ide.plugin.k1.highlighting
 import androidx.compose.compiler.plugins.kotlin.k1.hasComposableAnnotation
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.compose.ide.plugin.shared.highlighting.COMPOSABLE_CALL_TEXT_TYPE
-import com.intellij.compose.ide.plugin.shared.isComposeEnabledInModule
+import com.intellij.compose.ide.plugin.shared.isComposeEnabledForElementModule
 import com.intellij.compose.ide.plugin.shared.isElementInLibrarySource
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -49,7 +49,7 @@ internal class ComposableHighlightingVisitorExtension : KotlinHighlightingVisito
   ): HighlightInfoType? {
     if (!resolvedCall.isComposableInvocation()) return null
 
-    return if (isComposeEnabledInModule(elementToHighlight) || isElementInLibrarySource(elementToHighlight))
+    return if (isComposeEnabledForElementModule(elementToHighlight) || isElementInLibrarySource(elementToHighlight))
       COMPOSABLE_CALL_TEXT_TYPE
     else null
   }

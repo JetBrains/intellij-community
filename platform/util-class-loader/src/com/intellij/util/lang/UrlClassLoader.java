@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +55,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   @ApiStatus.Internal
   protected final @NotNull ClassPath.ClassDataConsumer classDataConsumer =
     ClassPath.recordLoadingTime ? new ClassPath.MeasuringClassDataConsumer(this) : this;
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static final Long MULTI_ROUTING_FILE_SYSTEM_PACKAGE_HASH = -7145863745123536181L;
 
   /**
    * Called by the VM to support dynamic additions to the class path.
@@ -223,6 +228,19 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     // see XxHash3Test.packages
     if (isSystemClassLoader && packageNameHash == -9217824570049207139L && isNotExcludedLangClasses(fileNameWithoutExtension)) {
       return appClassLoader.loadClass(name);
+    }
+
+    // The same problem as above happens with MultiRoutingFileSystem, which is already loaded in the boot class path.
+    // Without this code there are many ClassCastException.
+    // However, it's not obligatory to include MultiRoutingFileSystem in the boot classpath in case of tests, helper apps, etc.
+    // Therefore, this code falls back to `classPath` if the class isn't loaded.
+    if (isSystemClassLoader && packageNameHash == MULTI_ROUTING_FILE_SYSTEM_PACKAGE_HASH) {
+      try {
+        return Objects.requireNonNull(appClassLoader.loadClass(name));
+      }
+      catch (ClassNotFoundException ignored) {
+        // Nothing.
+      }
     }
 
     Class<?> aClass;

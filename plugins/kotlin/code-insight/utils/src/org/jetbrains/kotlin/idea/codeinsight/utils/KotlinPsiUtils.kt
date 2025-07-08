@@ -7,12 +7,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -60,7 +60,7 @@ fun KtPropertyAccessor.isRedundantGetter(respectComments: Boolean = true): Boole
     return false
 }
 
-fun KtExpression.isBackingFieldReferenceTo(property: KtProperty) =
+fun KtExpression.isBackingFieldReferenceTo(property: KtProperty): Boolean =
     this is KtNameReferenceExpression
             && text == KtTokens.FIELD_KEYWORD.value
             && property.isAncestor(this)
@@ -133,9 +133,9 @@ fun removeRedundantSetter(setter: KtPropertyAccessor) {
     }
 }
 
-fun KtExpression?.isTrueConstant() = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "true"
+fun KtExpression?.isTrueConstant(): Boolean = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "true"
 
-fun KtExpression?.isFalseConstant() = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "false"
+fun KtExpression?.isFalseConstant(): Boolean = this != null && node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT && text == "false"
 
 /**
  * We use [optionalBooleanExpressionCheck] only when checking [KtPrefixExpression] with "!" operation e.g., "!(expr)" has a
@@ -321,6 +321,7 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
 fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
 fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
+@ApiStatus.Internal
 context(KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
@@ -328,8 +329,9 @@ fun KtExpression.isSynthesizedFunction(): Boolean {
     return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
+@ApiStatus.Internal
 context(KaSession)
-fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
+fun KtCallExpression.isCalling(fqNames: Collection<FqName>): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
     if (targetFqNames.none()) return false
@@ -344,14 +346,17 @@ fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     return targetFqNames.any { it == fqName }
 }
 
+@ApiStatus.Internal
 operator fun FqName.plus(name: Name): FqName = child(name)
 
+@ApiStatus.Internal
 operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Sequence<FqName> = sequenceOf(
-    "enumValues",
-    "enumValueOf",
-).map { StandardNames.BUILT_INS_PACKAGE_FQ_NAME + it }
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = setOf(
+    StandardKotlinNames.Enum.enumEntries,
+    StandardKotlinNames.Enum.enumValues,
+    StandardKotlinNames.Enum.enumValueOf
+)
 
 context(KaSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {

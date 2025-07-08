@@ -13,7 +13,7 @@ import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
-import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
+import com.jetbrains.python.sdk.poetry.setupPoetrySdk
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
 import java.nio.file.Path
@@ -33,7 +33,7 @@ internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddIn
       else -> null
     }
 
-    return setupPoetrySdkUnderProgress(moduleOrProject.project, module, ProjectJdkTable.getInstance().allJdks.toList(), null, selectedInterpreter?.homePath, true)
+    return setupPoetrySdk(moduleOrProject.project, module, ProjectJdkTable.getInstance().allJdks.toList(), null, selectedInterpreter?.homePath, true)
   }
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter> {

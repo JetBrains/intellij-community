@@ -12,14 +12,13 @@ import org.jetbrains.plugins.textmate.TestUtil.findScopeByFileName
 import org.jetbrains.plugins.textmate.TestUtil.loadBundle
 import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateCachingSyntaxMatcher
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import org.jetbrains.plugins.textmate.regex.CachingRegexFactory
+import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexFactory
 import org.jetbrains.plugins.textmate.regex.RegexFactory
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory
 import java.io.File
@@ -45,10 +44,10 @@ abstract class TextMateLexerTestCase {
     val sourceData = StringUtil.convertLineSeparators(FileUtil.loadFile(beforeFile, StandardCharsets.UTF_8))
 
       val text = sourceData.replace("$(\\n+)".toRegex(), "")
-      val regexFactory: RegexFactory = CachingRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory()))
+      val regexFactory: RegexFactory = CaffeineCachingRegexFactory(RememberingLastMatchRegexFactory(JoniRegexFactory()))
 
       val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
-      val syntaxMatcher = TextMateCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(regexFactory, weigher))
+      val syntaxMatcher = TextMateSyntaxMatcherImpl(regexFactory, weigher)
       val lexer: Lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(rootScope, syntaxTable.getSyntax(rootScope)),
                                                    syntaxMatcher,
                                                    -1)

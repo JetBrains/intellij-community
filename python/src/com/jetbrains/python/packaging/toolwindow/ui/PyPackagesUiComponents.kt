@@ -21,7 +21,6 @@ import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.MouseAdapter
@@ -44,7 +43,7 @@ object PyPackagesUiComponents {
         return doFinalStep {
           val repository = checkNotNull(selectedPackage.repository)
           val specification = repository.findPackageSpecification(NormalizedPythonPackageName.from(selectedPackage.name).name, selectedValue)
-          PyPackageCoroutine.getIoScope(project).launch(Dispatchers.IO) {
+          PyPackageCoroutine.launch(project, Dispatchers.IO) {
             project.service<PyPackagingToolWindowService>().installPackage(specification!!.toInstallRequest())
           }
         }

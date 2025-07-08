@@ -539,6 +539,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon GearPlain = load("expui/general/settings.svg", "general/gearPlain.svg", -595181203, 2);
     /** 16x16 */ public static final @NotNull Icon GreenCheckmark = load("expui/general/greenCheckmark.svg", "general/greenCheckmark.svg", 1355926933, 2);
     /** 16x16 */ public static final @NotNull Icon Groups = load("expui/general/groups.svg", -2073085413, 2);
+    /** 16x16 */ public static final @NotNull Icon Hashtag = load("expui/general/hashtag.svg", 859350157, 2);
     /** 16x16 */ public static final @NotNull Icon HideToolWindow = load("expui/general/hide.svg", "general/hideToolWindow.svg", -24888126, 2);
     /** 16x16 */ public static final @NotNull Icon History = load("expui/general/history.svg", -1313586434, 2);
     /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("expui/general/showToImplement.svg", "general/implementingMethod.svg", -286814761, 1);

@@ -391,7 +391,6 @@
     <action id="Images.Editor.ZoomIn">
         <keyboard-shortcut first-keystroke="meta add" />
     </action>
-    <action id="Images.ShowThumbnails" />
     <action id="IntroduceConstant" />
     <action id="IntroduceField" />
     <action id="IntroduceProperty" />

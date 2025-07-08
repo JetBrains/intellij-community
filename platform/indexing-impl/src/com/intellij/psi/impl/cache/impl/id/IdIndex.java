@@ -112,7 +112,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
         IdIndexer subIndexerType = indexer.getSubIndexerType();
         try {
           Map<IdIndexEntry, Integer> idsMap = subIndexerType.map(inputData);
-          if (!(idsMap instanceof IdEntryToScopeMapImpl)) {
+          if (!(idsMap instanceof IdEntryToScopeMapImpl) && !idsMap.isEmpty() ) {
             //RC: it is strongly recommended for all the IdIndexer implementations to use IdDataConsumer helper to
             //    collect IDs and occurrence masks. Such a helper class returns IdEntryToScopeMapImpl instance,
             //    which is  optimized for memory consumption and serialization. All the implementations in intellij

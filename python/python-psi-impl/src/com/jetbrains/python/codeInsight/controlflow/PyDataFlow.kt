@@ -2,19 +2,27 @@ package com.jetbrains.python.codeInsight.controlflow
 
 import com.intellij.codeInsight.controlflow.ControlFlow
 import com.intellij.codeInsight.controlflow.Instruction
+import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
+import com.jetbrains.python.psi.impl.stubs.evaluateVersionsForElement
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
-class PyDataFlow(controlFlow: ControlFlow, private val context: TypeEvalContext) : ControlFlow by controlFlow {
+class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, private val context: TypeEvalContext) : ControlFlow by controlFlow {
   private val reachability: BooleanArray = BooleanArray(instructions.size)
+  private val languageVersion = run {
+    val languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(scopeOwner.containingFile)
+    Version(languageLevel.majorVersion, languageLevel.minorVersion, 0)
+  }
+
 
   init {
     buildReachability()
@@ -45,18 +53,24 @@ class PyDataFlow(controlFlow: ControlFlow, private val context: TypeEvalContext)
   private fun getReachableSuccessors(instruction: Instruction): Collection<Instruction> {
     if (instruction is CallInstruction && instruction.isNoReturnCall(context)) return emptyList()
     if (instruction is PyWithContextExitInstruction && !instruction.isSuppressingExceptions(context)) return emptyList()
-    return instruction.allSucc().filter { next: Instruction ->
-      if (next is ReadWriteInstruction && next.access.isAssertTypeAccess) {
-        val type = next.getType(context, null)
-        return@filter !(type != null && type.get() is PyNeverType)
+    return instruction.allSucc()
+      .filter { it.isReachableWithVersionChecks() }
+      .filter { next: Instruction ->
+        if (next is ReadWriteInstruction && next.access.isAssertTypeAccess) {
+          val type = next.getType(context, null)
+          return@filter !(type != null && type.get() is PyNeverType)
+        }
+        return@filter true
       }
-      return@filter true
-    }
   }
 
   fun isUnreachable(instruction: Instruction): Boolean {
     if (instruction.num() >= reachability.size) return false
     return !reachability[instruction.num()]
+  }
+
+  private fun Instruction.isReachableWithVersionChecks(): Boolean {
+    return evaluateVersionsForElement(element ?: return true).contains(languageVersion)
   }
 }
 

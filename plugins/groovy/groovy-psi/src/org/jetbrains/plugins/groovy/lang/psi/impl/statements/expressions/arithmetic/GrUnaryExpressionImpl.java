@@ -4,6 +4,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithm
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +21,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrUnaryOperatorReference;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPatternVariables;
 import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromResult;
 
 public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryExpression {
@@ -72,6 +77,15 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     PsiElement opElement = findChildByType(TokenSets.UNARY_OP_SET);
     assert opElement != null;
     return opElement;
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!shouldProcessLocals(processor) || !shouldProcessPatternVariables(state)) return true;
+    return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
   }
 
   @Override

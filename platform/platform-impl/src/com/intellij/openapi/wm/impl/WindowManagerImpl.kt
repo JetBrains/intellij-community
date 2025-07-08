@@ -9,7 +9,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -36,7 +36,6 @@ import com.sun.jna.platform.WindowUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -247,7 +246,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return getFrameHelper(project)?.frame
   }
 
-  @ApiStatus.Internal
+  @Internal
   override fun getFrameHelper(project: Project?): ProjectFrameHelper? = projectToFrame.get(project)?.frameHelper
 
   override fun findFrameHelper(project: Project?): ProjectFrameHelper? {
@@ -280,11 +279,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   suspend fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
-    assignFrame(frameHelper, project, true)
+    assignFrame(frameHelper = frameHelper, project = project, withListener = true)
   }
 
   internal suspend fun assignFrame(frameHelper: ProjectFrameHelper, project: Project, withListener: Boolean) {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UI) {
       LOG.assertTrue(!projectToFrame.containsKey(project))
 
       if (withListener) {
@@ -394,7 +393,7 @@ private fun calcAlphaModelSupported(): Boolean {
   return try {
     WindowUtils.isWindowAlphaSupported()
   }
-  catch (e: Throwable) {
+  catch (_: Throwable) {
     false
   }
 }
@@ -476,6 +475,7 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
     val extendedState = frame.extendedState
     val bounds = frame.bounds
     checkForNonsenseBounds("FrameStateListener.update.bounds", bounds)
+    frame.ensureSensibleSize()
     var normalBoundsOnCurrentScreen: Rectangle? = null
     if (rootPane != null) {
       val oldScreen = frame.screenBounds

@@ -1,11 +1,11 @@
 ### auto-generated section `build kotlin.project-wizard.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
@@ -82,6 +82,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/scripting.k1",
     "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
   ],
   runtime_deps = ["//plugins/kotlin/plugin/k1"]
 )

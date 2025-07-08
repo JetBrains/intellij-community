@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend
 
 import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
+import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,6 +16,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy
+import com.intellij.openapi.editor.event.MockDocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -116,7 +118,6 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalInput,
-      typeAhead = null,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
       scrollingModel = null,
       fusCursorPaintingListener,
@@ -132,7 +133,6 @@ internal class ReworkedTerminalView(
     scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
-    val typeAhead = TerminalTypeAhead(outputModel)
     configureOutputEditor(
       project,
       editor = outputEditor,
@@ -141,7 +141,6 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalInput,
-      typeAhead,
       coroutineScope.childScope("TerminalOutputModel"),
       scrollingModel,
       fusCursorPaintingListener,
@@ -153,6 +152,8 @@ internal class ReworkedTerminalView(
     terminalSearchController = TerminalSearchController(project)
 
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
+    val typeAhead = TerminalTypeAhead(outputModel, blocksModel)
+    outputEditor.putUserData(TerminalTypeAhead.KEY, typeAhead)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
 
@@ -177,11 +178,12 @@ internal class ReworkedTerminalView(
       terminalAliasesStorage
     )
     outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
-    controller.addShellIntegrationListener(this, typeAhead)
 
     sessionFuture.thenAccept { session ->
       controller.handleEvents(session)
     }
+
+    configureInlineCompletion(outputEditor, outputModel, coroutineScope, parentDisposable = this)
 
     terminalPanel = TerminalPanel(initialContent = outputEditor)
 
@@ -289,7 +291,6 @@ internal class ReworkedTerminalView(
     sessionModel: TerminalSessionModel,
     encodingManager: TerminalKeyEncodingManager,
     terminalInput: TerminalInput,
-    typeAhead: TerminalTypeAhead?,
     coroutineScope: CoroutineScope,
     scrollingModel: TerminalOutputScrollingModel?,
     fusCursorPainterListener: TerminalFusCursorPainterListener?,
@@ -305,7 +306,7 @@ internal class ReworkedTerminalView(
         editor.isTerminalOutputScrollChangingActionInProgress = true
       }
 
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
         editor.isTerminalOutputScrollChangingActionInProgress = false
 
         // Also repaint the changed part of the document to ensure that highlightings are properly painted.
@@ -330,7 +331,7 @@ internal class ReworkedTerminalView(
       addTopAndBottomInsets(editor)
     }
 
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model, typeAhead)
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model)
     setupKeyEventDispatcher(editor, settings, eventsHandler, parentDisposable)
     setupMouseListener(editor, sessionModel, settings, eventsHandler, parentDisposable)
 
@@ -447,6 +448,44 @@ internal class ReworkedTerminalView(
 
   private fun addFocusListener(parentDisposable: Disposable, listener: FocusListener) {
     terminalPanel.addFocusListener(parentDisposable, listener)
+  }
+
+  private fun configureInlineCompletion(editor: EditorEx, model: TerminalOutputModel, coroutineScope: CoroutineScope, parentDisposable: Disposable) {
+    InlineCompletion.install(editor, coroutineScope)
+    // Inline completion handler needs to be manually disposed
+    Disposer.register(parentDisposable) {
+      InlineCompletion.remove(editor)
+    }
+
+    model.addListener(parentDisposable, object : TerminalOutputModelListener {
+      var commandText: String? = null
+      var cursorPosition: Int? = null
+
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+        val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
+        val lastBlock = editor.getUserData(TerminalBlocksModel.KEY)?.blocks?.lastOrNull() ?: return
+        val lastBlockCommandStartIndex = if (lastBlock.commandStartOffset != -1) lastBlock.commandStartOffset else lastBlock.startOffset
+
+        // When resizing the terminal, the blocks model may fall out of sync for a short time.
+        // These updates will never trigger a completion, so we return early to avoid reading out of bounds.
+        if (lastBlockCommandStartIndex >= editor.document.textLength) return
+        val curCommandText = editor.document.text.substring(lastBlockCommandStartIndex, editor.document.textLength).trim()
+
+        if (isTypeAhead) {
+          // Trim because of differing whitespace between terminal and type ahead
+          commandText = curCommandText
+          editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value + 1)
+          inlineCompletionTypingSession?.ignoreDocumentChanges = true
+          inlineCompletionTypingSession?.endTypingSession(editor)
+          cursorPosition = outputModel.cursorOffsetState.value + 1
+        }
+        else if (commandText != null && (curCommandText != commandText || cursorPosition != outputModel.cursorOffsetState.value)) {
+          inlineCompletionTypingSession?.ignoreDocumentChanges = false
+          inlineCompletionTypingSession?.collectTypedCharOrInvalidateSession(MockDocumentEvent(editor.document, 0), editor)
+          commandText = null
+        }
+      }
+    })
   }
 
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {

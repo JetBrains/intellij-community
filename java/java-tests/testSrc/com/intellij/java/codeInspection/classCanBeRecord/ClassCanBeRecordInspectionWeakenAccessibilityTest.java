@@ -19,7 +19,7 @@ public class ClassCanBeRecordInspectionWeakenAccessibilityTest extends LightQuic
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 
   @Override
@@ -32,7 +32,7 @@ public class ClassCanBeRecordInspectionWeakenAccessibilityTest extends LightQuic
     // Run and abort (because of conflicts), and then verify that no content was changed. See IDEA-371645.
     assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, () -> super.runSingle());
     checkResultByFile(getTestName(false) + ".java", getBasePath() + "/before" + getTestName(false), false);
-    
+
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(super::runSingle);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.javadoc.PsiDocTagValue
+import com.intellij.psi.util.MethodSignatureUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -110,14 +111,20 @@ object JavaSuperTypeSearchUtil {
       return null
     }
 
-    val matchedMethod = psiClass.findMethodBySignature(method, false) ?: return null
+    var matchedMethod = psiClass.findMethodBySignature(method, false)
+    // TODO: remove when IDEA-375102 is fixed (findMethodBySignature can fail for methods implemented via default)
+    if (matchedMethod == null) matchedMethod = psiClass
+      .findMethodsByName(method.name, false)
+      .find { m -> MethodSignatureUtil.isSuperMethod(m, method) }
+      ?: return null
+
     val tag: T = loc.find(matchedMethod, JavaDocInfoGenerator.getDocComment(matchedMethod)) ?: return null
 
     val provider = object : JavaDocInfoGenerator.InheritDocProvider<T> {
       override fun getInheritDoc(target: PsiDocTagValue?): InheritDocContext<T>? {
         return JavaDocInfoGenerator.findInheritDocTag(matchedMethod, loc, target)
       }
-      override fun getElement(): PsiClass? = psiClass
+      override fun getElement(): PsiClass = psiClass
     }
 
     return InheritDocContext(tag, provider)

@@ -5,7 +5,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.psi.KtElement
 
-internal interface KotlinBaseChangeSignatureUsage {
+interface KotlinBaseChangeSignatureUsage {
     fun processUsage(changeInfo: KotlinChangeInfoBase, element: KtElement, allUsages: Array<out UsageInfo>): KtElement?
 }
 

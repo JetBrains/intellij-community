@@ -2,8 +2,10 @@ package com.intellij.database.datagrid
 
 import com.intellij.database.DatabaseDataKeys
 import com.intellij.ide.DataManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.Project
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
@@ -65,3 +67,10 @@ private fun preferredRowHeight(table: JTable, row: Int): Int {
   }
   return height
 }
+
+const val COLORED_BY_DEFAULT: String = "datagrid.heatmap.switchedByDefault"
+
+fun setHeatmapColoringEnable(project: Project, value: Boolean) {
+  PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value, true)
+}
+

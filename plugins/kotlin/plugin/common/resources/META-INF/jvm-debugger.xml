@@ -1,11 +1,5 @@
 <idea-plugin>
   <actions>
-    <group id="Kotlin.XDebugger.Actions">
-      <action id="Kotlin.XDebugger.CoroutinesDump"
-              class="org.jetbrains.kotlin.idea.debugger.coroutine.command.CoroutineDumpAction"
-              icon="org.jetbrains.kotlin.idea.KotlinIcons.SMALL_LOGO"/>
-    </group>
-
     <action id="Kotlin.XDebugger.ToggleKotlinVariableView"
             class="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesView">
       <add-to-group group-id="XDebugger.Settings" relative-to-action="XDebugger.Inline" anchor="after"/>

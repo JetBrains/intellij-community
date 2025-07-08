@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.Nullability;
@@ -39,7 +39,7 @@ public final class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocal
   public static final Pattern
     RETURN_LINE_START_TYPE_SINGULAR = Pattern.compile("@return\\s+an? (\\S+) (that |describing |containing |of |with |whose |which )");
   public static final Pattern
-    RETURN_LINE_MIDDLE = Pattern.compile("(?:\n\\s*\\*|;|,)\\s+(\\S+) (iff?\\s|when\\s|otherwise|in case of|in the case of)",
+    RETURN_LINE_MIDDLE = Pattern.compile("(?:\n\\s*\\*|;|,|–|—)\\s+(\\S+) (iff?\\s|when\\s|otherwise|in case of|in the case of)",
                                          Pattern.MULTILINE);
   public static final Pattern DESCRIPTION =
     Pattern.compile("^\\s+Returns (\\S+) (iff?\\s|when\\s|in case of|in the case of)", Pattern.CASE_INSENSITIVE);

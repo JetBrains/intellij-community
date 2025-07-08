@@ -397,6 +397,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionalLiteral.kt");
         }
 
+        @TestMetadata("implicitExpectFunction.kt")
+        public void testImplicitExpectFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/implicitExpectFunction.kt");
+        }
+
         @TestMetadata("inAnonymous.kt")
         public void testInAnonymous() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymous.kt");
@@ -750,6 +755,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
         @TestMetadata("unusedPublicMembers.kt")
         public void testUnusedPublicMembers() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedPublicMembers.kt");
+        }
+
+        @TestMetadata("usedEnumEntries.kt")
+        public void testUsedEnumEntries() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumEntries.kt");
         }
 
         @TestMetadata("usedEnumFunction.kt")

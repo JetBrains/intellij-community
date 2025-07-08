@@ -97,6 +97,8 @@
       implementation="org.jetbrains.plugins.github.DefaultGithubGistContentsCollector"
       id="default"
       order="last"/>
+
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.github.authentication.GHLoginCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

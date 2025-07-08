@@ -3,21 +3,21 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.refactoring.util.MoveRenameUsageInfo
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getImplicitPackagePrefix
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 internal fun checkImplicitPackagePrefixConflict(
     targetDir: PsiDirectory,
@@ -43,22 +43,24 @@ internal fun checkImplicitPackagePrefixConflict(
  */
 private fun PsiDirectory.firstKtFileInSourceRootWithPrefix(prefix: FqName): KtFile? {
     val sourceRoot = sourceRoot ?: return null
-    val project = project
-    val psiManager = PsiManager.getInstance(project)
-    return sourceRoot.firstKtFileInSourceRootWithPrefix(project, psiManager, prefix)
+    val containingModule = ProjectFileIndex.getInstance(project).getModuleForFile(sourceRoot) ?: return null
+
+    var file: KtFile? = null
+    FileTypeIndex.processFiles(KotlinFileType.INSTANCE, Processor { vFile ->
+        val ktFile = vFile.toKtFileIfItsPackageHasPrefix(prefix, project)
+        if (ktFile != null) {
+            file = ktFile
+            false
+        } else {
+            true
+        }
+    }, GlobalSearchScope.moduleScope(containingModule))
+
+    return file
 }
 
-private fun VirtualFile.firstKtFileInSourceRootWithPrefix(project: Project, psiManager: PsiManager, prefix: FqName): KtFile? {
-    if (!isDirectory) return null
-    val candidateFiles = children.filter { it.nameSequence.endsWith(KotlinFileType.EXTENSION) }
-    candidateFiles.forEach { virtualFile ->
-        psiManager.findFile(virtualFile)?.asKtFileWithImplicitPrefix(prefix)?.let { return it }
-    }
-    children.filter { it.isDirectory }.forEach { directory ->
-        directory.firstKtFileInSourceRootWithPrefix(project, psiManager, prefix)?.let { return it }
-    }
-    return null
+private fun VirtualFile.toKtFileIfItsPackageHasPrefix(prefix: FqName, project: Project): KtFile? {
+    if (!nameSequence.endsWith(KotlinFileType.EXTENSION)) return null
+    val ktFile = PsiManager.getInstance(project).findFile(this) as? KtFile ?: return null
+    return ktFile.takeIf { it.packageDirective?.fqName?.startsWith(prefix) == true }
 }
-
-private fun PsiFile.asKtFileWithImplicitPrefix(implicitPrefix: FqName): KtFile? =
-    (this as? KtFile).takeIf { it?.packageDirective?.fqName?.startsWith(implicitPrefix) == true }

@@ -15,6 +15,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object CondaEnvironmentYmlParser {
+  fun readNameFromFile(file: VirtualFile): String? {
+    val text = FileDocumentManager.getInstance().getDocument(file)?.text ?: return null
+    val yaml = Yaml(configuration = YamlConfiguration(strictMode = false))
+    val environment: YamlMap = yaml.parseToYamlNode(text).yamlMap
+
+    return environment.get<YamlScalar>("name")?.yamlScalar?.content
+  }
+
   fun fromFile(file: VirtualFile): List<PyRequirement>? {
     val pyRequirements = runCatching { readDeps(file) }.onFailure {
       thisLogger().info("Cannot parse deps from ${file.readText()}", it)

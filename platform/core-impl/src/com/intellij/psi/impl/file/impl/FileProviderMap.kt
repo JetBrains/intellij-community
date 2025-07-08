@@ -134,7 +134,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
             return defaultValue
           }
           else {
-            // default value was collected by GC, let's clean up map (processQueue()) and try again
+            // GC collected the default value, let's clean up map (processQueue()) and try again
             update {
               it.processQueue()
             }
@@ -234,7 +234,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
   }
 
   /**
-   * we need to store a strong link to FileProviderMap within a FileViewProvider,
+   * we need to store a strong link to FileProviderMap within a FileViewProvider
    * so that FileProviderMap is not collected before FileViewProvider
    */
   private fun storeStrongLinkInProvider(provider: FileViewProvider) {
@@ -252,6 +252,7 @@ private interface ContextMap<V : Any> {
   fun processQueue(): ContextMap<V>
 }
 
+@Suppress("UNCHECKED_CAST")
 private fun <V : Any> emptyContextMap(): ContextMap<V> = EmptyMap as ContextMap<V>
 
 private object EmptyMap: ContextMap<Any> {
@@ -283,8 +284,8 @@ private class OneItemMap<V : Any> private constructor(
         val value1 = this.value.get()
         if (value1 != null) {
           val map = ContainerUtil.createWeakValueMap<CodeInsightContext, V>()
-          map.put(key1, value1)
-          map.put(key, value)
+          map[key1] = value1
+          map[key] = value
           ManyItemMap(map, key1)
         }
         else {
@@ -336,7 +337,7 @@ private class ManyItemMap<V : Any>(
         if (newMap == null) {
           newMap = ContainerUtil.createWeakValueMap<CodeInsightContext, V>()
         }
-        newMap.put(k, v)
+        newMap[k] = v
       }
     }
 
@@ -345,7 +346,7 @@ private class ManyItemMap<V : Any>(
       return OneItemMap(key, value)
     }
 
-    newMap.put(key, value)
+    newMap[key] = value
 
     val newDefaultContext = if (newMap[defaultContext] == null) {
       key // todo IJPL-339 does changing the default context require some more care???
@@ -357,7 +358,7 @@ private class ManyItemMap<V : Any>(
   }
 
   override fun remove(key: CodeInsightContext): ContextMap<V> {
-    if (!map.containsKey(key)) {
+    if (map[key] == null) {
       return this
     }
 
@@ -382,14 +383,14 @@ private class ManyItemMap<V : Any>(
           if (newMap == null) {
             newMap = ContainerUtil.createWeakValueMap<CodeInsightContext, V>()
           }
-          newMap.put(existingKey, existingValue!!)
-          newMap.put(k, value)
+          newMap[existingKey] = existingValue!!
+          newMap[k] = value
         }
       }
     }
 
     if (existingKey == null) {
-      // we don't have even one survived value, all of them were collected by GC
+      // we don't have even one survived value, GC collected all of them
       return emptyContextMap()
     }
 

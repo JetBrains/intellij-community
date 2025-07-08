@@ -12,21 +12,12 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
-import com.intellij.ide.DataManager
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.guessProjectDir
@@ -98,9 +89,9 @@ class BuiltinGeneralToolset : McpToolset {
     @McpTool
     @McpDescription("""
         Returns a list of run configurations for the current project.
-        Use this tool to query the list of available run configurations in current project.
+        Use this tool to query the list of available run configurations in the current project.
         Then you shall to call "run_configuration" tool if you find anything relevant.
-        Returns JSON list of run configuration names. Empty list if no run configurations found.
+        Returns JSON list of run configuration names. Empty list if no run configurations are found.
     """)
     suspend fun get_run_configurations(): String {
         val project = coroutineContext.project
@@ -228,7 +219,7 @@ class BuiltinGeneralToolset : McpToolset {
 
     @McpTool
     @McpDescription("""
-        Get list of all modules in the project with their dependencies. Returns JSON list of module names.
+        Get a list of all modules in the project with their dependencies. Returns JSON list of module names.
     """)
     suspend fun get_project_modules(): String {
         val project = coroutineContext.project
@@ -239,7 +230,7 @@ class BuiltinGeneralToolset : McpToolset {
 
     @McpTool
     @McpDescription("""
-        Get list of all dependencies defined in the project. Returns JSON list of dependency names.
+        Get a list of all dependencies defined in the project. Returns JSON list of dependency names.
     """)
     suspend fun get_project_dependencies(): String {
         val project = coroutineContext.project
@@ -251,73 +242,6 @@ class BuiltinGeneralToolset : McpToolset {
         }.toHashSet()
 
         return dependencies.joinToString(",\n", prefix = "[", postfix = "]")
-    }
-
-    @McpTool
-    @McpDescription("""
-        Lists all available actions in JetBrains IDE editor.
-        Returns a JSON array of objects containing action information:
-        - id: The action ID
-        - text: The action presentation text
-        Use this tool to discover available actions for execution with execute_action_by_id.
-    """)
-    suspend fun list_available_actions(): String {
-        val project = coroutineContext.project
-        val actionManager = ActionManager.getInstance() as ActionManagerEx
-        val dataContext = invokeAndWaitIfNeeded {
-            DataManager.getInstance().getDataContext()
-        }
-
-        val actionIds = actionManager.getActionIdList("")
-        val presentationFactory = com.intellij.openapi.actionSystem.impl.PresentationFactory()
-        val visibleActions = invokeAndWaitIfNeeded {
-            Utils.expandActionGroup(
-                DefaultActionGroup(
-                    actionIds.mapNotNull { actionManager.getAction(it) }
-                ), presentationFactory, dataContext, "", ActionUiKind.NONE)
-        }
-        val availableActions = visibleActions.mapNotNull {
-            val presentation = presentationFactory.getPresentation(it)
-            val actionId = actionManager.getId(it)
-            if (presentation.isEnabledAndVisible && !presentation.text.isNullOrBlank()) {
-                """{"id": "$actionId", "text": "${presentation.text.replace("\"", "\\\"")}"}"""
-            } else null
-        }
-        return availableActions.joinToString(",\n", prefix = "[", postfix = "]")
-    }
-
-    @McpTool
-    @McpDescription("""
-        Executes an action by its ID in JetBrains IDE editor.
-        Requires an actionId parameter containing the ID of the action to execute.
-        Returns one of two possible responses:
-        - "ok" if the action was successfully executed
-        - "action not found" if the action with the specified ID was not found
-        Note: This tool doesn't wait for the action to complete.
-    """)
-    suspend fun execute_action_by_id(
-        @McpDescription("ID of the action to execute")
-        actionId: String
-    ): String {
-        val project = coroutineContext.project
-        val actionManager = ActionManager.getInstance()
-        val action = actionManager.getAction(actionId)
-
-        if (action == null) {
-            return "action not found"
-        }
-
-        ApplicationManager.getApplication().invokeLater({
-            val event = AnActionEvent.createFromAnAction(
-                action,
-                null,
-                "",
-                DataManager.getInstance().getDataContext()
-            )
-            action.actionPerformed(event)
-        }, ModalityState.nonModal())
-
-        return "ok"
     }
 
     @McpTool
@@ -341,28 +265,5 @@ class BuiltinGeneralToolset : McpToolset {
         }
 
         return progressInfos.joinToString(",\n", prefix = "[", postfix = "]")
-    }
-
-    @McpTool
-    @McpDescription("""
-        Waits for a specified number of milliseconds (default: 5000ms = 5 seconds).
-        Optionally accepts a milliseconds parameter to specify the wait duration.
-        Returns "ok" after the wait completes.
-        Use this tool when you need to pause before executing the next command.
-    """)
-    suspend fun wait(
-        @McpDescription("Number of milliseconds to wait (default: 5000)")
-        milliseconds: Long = 5000
-    ): String {
-        val waitTime = if (milliseconds <= 0) 5000 else milliseconds
-
-        try {
-            TimeUnit.MILLISECONDS.sleep(waitTime)
-        } catch (e: InterruptedException) {
-            Thread.currentThread().interrupt()
-            return "Wait interrupted"
-        }
-
-        return "ok"
     }
 }

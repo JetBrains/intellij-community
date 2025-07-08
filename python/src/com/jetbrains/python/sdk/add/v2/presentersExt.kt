@@ -6,9 +6,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.jetbrains.python.PyBundle.message
@@ -83,20 +80,14 @@ suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): PyR
   val existingSdk = ProjectJdkTable.getInstance().findJdk(identity.userReadableName)
   if (existingSdk != null && existingSdk.isConda()) return PyResult.success(existingSdk)
 
-  val sdk = withModalProgress(
-    owner = ModalTaskOwner.guess(),
-    title = message("sdk.create.custom.conda.create.progress"),
-    cancellation = TaskCancellation.nonCancellable()
-  ) {
-    PyCondaCommand(
-      fullCondaPathOnTarget = state.condaExecutable.get(),
-      targetConfig = targetEnvironmentConfiguration
-    ).createCondaSdkFromExistingEnv(
-      condaIdentity = identity,
-      existingSdks = this@selectCondaEnvironment.existingSdks,
-      project = ProjectManager.getInstance().defaultProject
-    )
-  }
+  val sdk = PyCondaCommand(
+    fullCondaPathOnTarget = state.condaExecutable.get(),
+    targetConfig = targetEnvironmentConfiguration
+  ).createCondaSdkFromExistingEnv(
+    condaIdentity = identity,
+    existingSdks = this@selectCondaEnvironment.existingSdks,
+    project = ProjectManager.getInstance().defaultProject
+  )
 
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
   sdk.persist()

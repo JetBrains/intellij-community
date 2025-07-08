@@ -122,7 +122,7 @@ public abstract class ActionGroup extends AnAction {
    * @see #getActionUpdateThread()
    */
   @ApiStatus.OverrideOnly
-  public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
+  public abstract @NotNull AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 
   @ApiStatus.Internal
   public final void setAsPrimary(@NotNull AnAction action, boolean isPrimary) {

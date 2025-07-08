@@ -25,6 +25,7 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.LangBundle;
@@ -37,6 +38,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -334,8 +336,25 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       else {
         Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
         if (pair == null) return false;
-        CommandProcessor.getInstance().executeCommand(project, () ->
-          invokeIntention(action, pair.second, pair.first, fixOffset, source), commandName, null);
+        CommandProcessor.getInstance().executeCommand(
+          project,
+          () -> {
+            int maybeInjectedFixOffset = fixOffset;
+
+            PsiFile psiFile = pair.first;
+            Editor editor = pair.second;
+            if (fixOffset != -1) {
+              Document document = editor.getDocument();
+              if (document instanceof DocumentWindow) {
+                maybeInjectedFixOffset = ((DocumentWindow)document).hostToInjected(fixOffset);
+              }
+            }
+
+            invokeIntention(action, editor, psiFile, maybeInjectedFixOffset, source);
+          },
+          commandName,
+          null
+        );
         checkPsiTextConsistency(hostFile);
       }
     }

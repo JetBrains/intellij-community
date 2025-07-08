@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.markdown.plugin.main` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "plugin-main",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//plugins/markdown/fenceInjection",
     "//plugins/markdown/frontmatter",

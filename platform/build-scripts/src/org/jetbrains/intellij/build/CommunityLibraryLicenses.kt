@@ -233,6 +233,18 @@ object CommunityLibraryLicenses {
     LibraryLicense("CMake For VisualStudio Code", version = "0.0.17", attachedTo = "intellij.textmate", url = "https://github.com/twxs/vs.language.cmake")
       .mit("https://github.com/twxs/vs.language.cmake/blob/master/LICENSE"),
 
+    // For loading images in Compose (used in Markdown preview, for example)
+    LibraryLicense("Coil", libraryName = "io.coil.kt.coil3.core.jvm", url = "https://github.com/coil-kt/coil")
+      .additionalLibraryNames(
+        "io.coil.kt.coil3.svg.jvm",
+        "io.coil.kt.coil3.network.core.jvm",
+        "io.coil.kt.coil3.network.ktor3.jvm",
+        "io.coil.kt.coil3.compose.jvm",
+        "io.coil.kt.coil3.compose.core.jvm",
+      )
+      .apache("https://github.com/coil-kt/coil/blob/main/README.md#license")
+      .copyrightText("Copyright 2025 Coil Contributors"),
+
     LibraryLicense("Command Line Interface Parser for Java", libraryName = "cli-parser", url = "https://github.com/spullara/cli-parser?tab=readme-ov-file")
       .apache("https://github.com/spullara/cli-parser/blob/95edeb2d1a21fb13760b4f96f976a7f3108e0942/README.md?plain=1#L65")
       .copyrightText("Copyright 2012 Sam Pullara"),
@@ -1381,20 +1393,15 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
-    jetbrainsLibrary("jetbrains.fullLine.mlapi.ml.api"),
-    jetbrainsLibrary("jetbrains.fullLine.mlapi.ml.tools"),
     jetbrainsLibrary("jetbrains.fus.reporting.ap.validation"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
     jetbrainsLibrary("jetbrains.kotlin.compose.compiler.plugin"),
-    jetbrainsLibrary("jetbrains.llm.mlapi.catboost.shadow.need.slf4j"),
-    jetbrainsLibrary("jetbrains.llm.mlapi.ml.api"),
-    jetbrainsLibrary("jetbrains.llm.mlapi.ml.tools"),
     jetbrainsLibrary("jetbrains.ml.completion.trigger_model_kotlin_cloud"),
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
     jetbrainsLibrary("jetbrains.ml.models.python.imports.ranking.model"),
+    jetbrainsLibrary("jetbrains.mlapi.catboost.shadow.need.slf4j"),
     jetbrainsLibrary("jetbrains.mlapi.ml.api"),
     jetbrainsLibrary("jetbrains.mlapi.ml.tools"),
-    jetbrainsLibrary("jetbrains.mlapi.ml.tools.suspendable"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),

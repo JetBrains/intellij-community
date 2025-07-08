@@ -91,9 +91,10 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
     @Suppress("HttpUrlsUsage")
     @JvmStatic
-    fun parsePluginList(input: InputStream): List<PluginUiModel> {
+    @JvmOverloads
+    fun parsePluginList(input: InputStream, pluginBuilderFactory: PluginUiModelBuilderFactory = PluginUiModelBuilderFactory.getInstance()): List<PluginUiModel> {
       try {
-        val handler = RepositoryContentHandler(PluginUiModelBuilderFactory.getInstance())
+        val handler = RepositoryContentHandler(pluginBuilderFactory)
 
         val spf = SAXParserFactory.newDefaultInstance()
         spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)

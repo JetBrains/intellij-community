@@ -43,22 +43,22 @@
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-java-jvm</artifactId>
-      <version>3.0.3</version>
+      <version>3.1.3</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-okhttp-jvm</artifactId>
-      <version>3.0.3</version>
+      <version>3.1.3</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-encoding-jvm</artifactId>
-      <version>3.0.3</version>
+      <version>3.1.3</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-auth-jvm</artifactId>
-      <version>3.0.3</version>
+      <version>3.1.3</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
@@ -103,7 +103,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.12.2</version>
+      <version>5.13.3</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -126,10 +126,6 @@
     <repository>
       <id>intellij-dependencies</id>
       <url>https://cache-redirector.jetbrains.com/intellij-dependencies</url>
-    </repository>
-    <repository>
-      <id>kotlin-ide-plugin-dependencies</id>
-      <url>https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies</url>
     </repository>
     <repository>
       <id>teamcity-repository</id>

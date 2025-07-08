@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -93,6 +94,14 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/repository-search/lib/maven-model.jar" to "1.8"
 )
 
+/**
+ * Describes modules to be added to 'testFramework.jar' in the IDE distribution. This JAR was used to compile and run tests in external plugins.
+ * Since [#477](https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/477) is implemented, it's possible to take test framework JARs from Maven repository,
+ * not from the IDE distribution.
+ * So this JAR is kept for compatibility only, **please do not add new modules here**.
+ * To publish a new test framework module, register it in [MavenArtifactsProperties.additionalModules] for the corresponding IDEs instead.
+ */
+@ApiStatus.Obsolete
 val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
   for (name in listOf(
     "intellij.platform.testFramework.common",

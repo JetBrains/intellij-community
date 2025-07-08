@@ -29,6 +29,8 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2",
     "//platform/util",
     "//platform/analysis-impl",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
@@ -41,7 +43,6 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
@@ -58,7 +59,12 @@ jvm_library(
   deps = [
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/refactoring",
     "//platform/core-api:core",
+    "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/plugin",

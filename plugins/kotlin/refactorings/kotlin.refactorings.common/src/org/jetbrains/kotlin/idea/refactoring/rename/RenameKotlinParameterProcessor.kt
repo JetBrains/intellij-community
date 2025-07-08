@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
@@ -20,12 +21,11 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.utils.SmartList
 
 class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
-  override fun canProcessElement(element: PsiElement): Boolean = when {
-    element is KtParameter && (element.ownerFunction is KtFunction || element.ownerFunction is KtPropertyAccessor) && !element.hasValOrVar() -> true
+  override fun canProcessElement(element: PsiElement): Boolean = when (val original = element.originalElement) {
+    is KtParameter if (original.ownerFunction is KtFunction || original.ownerFunction is KtPropertyAccessor) && !original.hasValOrVar() -> true
 
     // rename started from java (for example by automatic renamer)
-    element is KtLightParameter -> true
-
+    is KtLightParameter -> true
     else -> false
   }
 
@@ -33,6 +33,13 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
 
   override fun setToSearchInComments(element: PsiElement, enabled: Boolean) {
     KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER = enabled
+  }
+
+  override fun substituteElementToRename(
+    element: PsiElement,
+    editor: Editor?
+  ): PsiElement? {
+    return element.originalElement
   }
 
   override fun findCollisions(

@@ -6,7 +6,7 @@ import com.intellij.find.FindSettings
 import com.intellij.find.impl.JComboboxAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeScopeChooserActionProvider
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.providers.SeTextFilter
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class SeTextFilterEditor(
   private val project: Project?,
-  private val scopesInfo: SeSearchScopesInfo?,
+  private val scopesInfo: SearchScopesInfo?,
 ) : SeFilterEditorBase<SeTextFilter>(
   SeTextFilter(scopesInfo?.selectedScopeId, null)
 ) {

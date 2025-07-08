@@ -88,14 +88,16 @@ internal fun generateDeps(
     else if (element is JpsLibraryDependency) {
       val untypedLib = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
       val lib = untypedLib.asTyped(JpsRepositoryLibraryType.INSTANCE)
+      // non-repository library, meaning library files are under VCS
       if (lib == null) {
         val files = untypedLib.getPaths(JpsOrderRootType.COMPILED)
         val firstFile = files.first()
         val targetName = camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
-        val isCommunityLib = firstFile.startsWith(context.communityDir)
+        val isCommunityLib = firstFile.startsWith(context.communityRoot)
         val owner = context.getLibOwner(isCommunityLib)
 
-        val libBuildFileDir = firstFile.relativeTo(owner.moduleFile.parent.parent).parent.invariantSeparatorsPathString
+        val communityOrUltimateRoot = owner.moduleFile.parent.parent
+        val libBuildFileDir = firstFile.relativeTo(communityOrUltimateRoot).parent.invariantSeparatorsPathString
         context.addLocalLibrary(
           lib = LocalLibrary(files = files, lib = Library(targetName = targetName, owner = owner)),
           isProvided = isProvided,
@@ -216,6 +218,8 @@ internal fun generateDeps(
       val libName = element.libraryReference.libraryName
       if (libName == "jetbrains-jewel-markdown-laf-bridge-styling" ||
           libName == "jetbrains.kotlin.compose.compiler.plugin" ||
+          libName == "jetbrains.compose.foundation.desktop:toolbox" ||
+          libName == "jetbrains.compose.ui.test.junit4.desktop:toolbox" ||
           libName == "jetbrains-compose-ui-test-junit4-desktop") {
         plugins.add("@lib//:compose-plugin")
       }

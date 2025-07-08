@@ -135,12 +135,6 @@
     <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.moduleConfigurable"
-                    beanClass="com.intellij.openapi.options.ModuleConfigurableEP"
-                    area="IDEA_MODULE"
-                    dynamic="true">
-      <with attribute="instance" implements="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.variableTypeCalculator"
                     interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jreProvider" interface="com.intellij.execution.ui.JreProvider" dynamic="true"/>
@@ -1195,6 +1189,10 @@
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaLangIOStatement"/>
     <liveTemplateContext contextId="JAVA_NORMAL_CLASS_DECLARATION_WITH_INSTANCE_MAIN" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$NormalClassDeclarationAfterShortMainMethod"/>
+    <liveTemplateContext contextId="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_CONSTRUCTORS" baseContextId="JAVA_CODE"
+                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaStructuredConcurrencyConstructors" />
+    <liveTemplateContext contextId="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_STATIC_FACTORY_METHODS" baseContextId="JAVA_CODE"
+                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$JavaStructuredConcurrencyStaticFactoryMethods" />
     <liveTemplateContext contextId="JAVA_COMMENT" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCommentContextType"/>
     <liveTemplateContext contextId="JAVA_STRING" baseContextId="JAVA_CODE"
@@ -1690,17 +1688,29 @@
                      key="inspection.string.template.reverse.migration.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids25" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.ImplicitToExplicitClassBackwardMigrationInspection"
                      bundle="messages.JavaBundle"
                      key="inspection.implicit.to.explicit.class.backward.migration.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids21" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids25" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitToImplicitClassMigrationInspection"
                      bundle="messages.JavaBundle"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.explicit.to.implicit.class.migration.name"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids25" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.MigrateToJavaLangIoInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.migrate.to.java.lang.io.name"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids25" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.MigrateFromJavaLangIoInspection"
+                     bundle="messages.JavaBundle"
+                     key="inspection.migrate.from.java.lang.io.name"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      shortName="TextBlockBackwardMigration"
                      groupBundle="messages.InspectionsBundle"
@@ -2834,8 +2844,8 @@
 
     <action id="ExternalSystem.AttachProject"
             class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction">
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel" anchor="after"
-                    relative-to-action="ExternalSystem.RefreshAllProjects"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.AttachProjectPanel" anchor="before"
+                    relative-to-action="ExternalSystem.DetachProject"/>/>
     </action>
   </actions>
 

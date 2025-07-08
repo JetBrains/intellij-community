@@ -35,6 +35,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
+import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -157,9 +158,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         @Suppress("GraphicsSetClipInspection")
         override fun paintChildren(g: Graphics) {
-          val cornerRadius = JBUI.getInt("Island.arc", 10)
+          val isGradient = isIslandsGradientEnabled
 
-          if (isIslandsGradientEnabled) {
+          if (isGradient) {
             putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, null)
             val gg = IdeBackgroundUtil.withFrameBackground(g, this)
             gg.color = parent.background
@@ -167,22 +168,40 @@ internal class IslandsUICustomization : InternalUICustomization() {
             putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
           }
 
-          val clip = g.clip
-          g.clip = null
-          val cornerRadiusF = cornerRadius.toFloat()
-          g.clip = RoundRectangle2D.Float(x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), cornerRadiusF, cornerRadiusF)
-
           super.paintChildren(g)
 
-          g.clip = null
-          g.clip = clip
+          val config = GraphicsUtil.setupRoundedBorderAntialiasing(g)
 
-          val color = UIManager.get("Island.borderColor")
+          try {
+            val gg: Graphics
 
-          if (color is Color) {
-            val config = GraphicsUtil.setupRoundedBorderAntialiasing(g)
-            g.color = color
-            g.drawRoundRect(0, 0, width - 1, height - 1, cornerRadius, cornerRadius)
+            if (isGradient) {
+              putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, null)
+              gg = IdeBackgroundUtil.withFrameBackground(g, this)
+              gg.color = parent.background
+            }
+            else {
+              gg = g
+              gg.color = background
+            }
+
+            val shape = Area(Rectangle(0, 0, width, height))
+            val cornerRadius = JBUI.getInt("Island.arc", 10)
+            val cornerRadiusF = cornerRadius.toFloat()
+            shape.subtract(Area(RoundRectangle2D.Float(x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), cornerRadiusF, cornerRadiusF)))
+            (gg as Graphics2D).fill(shape)
+
+            val color = UIManager.get("Island.borderColor")
+
+            if (color is Color) {
+              gg.color = color
+              gg.drawRoundRect(0, 0, width - 1, height - 1, cornerRadius, cornerRadius)
+            }
+          }
+          finally {
+            if (isGradient) {
+              putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
+            }
             config.restore()
           }
 

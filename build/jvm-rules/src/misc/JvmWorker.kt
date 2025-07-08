@@ -48,7 +48,7 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
           stripPrefix = p.take(index + stripPrefix.length)
         }
         createZip(
-          outJar = Path.of(output),
+          outJar = baseDir.resolve(output),
           inputs = request.inputPaths,
           baseDir = baseDir,
           addPrefix = addPrefix,

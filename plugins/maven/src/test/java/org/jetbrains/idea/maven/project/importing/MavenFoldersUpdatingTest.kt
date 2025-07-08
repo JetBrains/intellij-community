@@ -21,15 +21,18 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.MavenEventsTestHelper
-import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.tryUpdateTargetFolders
+import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.updateTargetFolders
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 
 class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     @Test
@@ -256,15 +259,30 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     eventsTestHelper.setUp(project)
     try {
       updateTargetFolders()
+
+      awaitConfiguration()
       eventsTestHelper.assertRootsChanged(0)
       eventsTestHelper.assertWorkspaceModelChanges(0)
 
       // let's add some generated folders, what should be picked up on updateTargetFolders
-      File(projectRoot.getPath(), "target/generated-sources/foo/z").mkdirs()
-      File(projectRoot.getPath(), "m1/target/generated-sources/bar/z").mkdirs()
-      File(projectRoot.getPath(), "m2/target/generated-sources/baz/z").mkdirs()
+      val files = listOf(
+        Paths.get(projectRoot.path, "target", "generated-sources", "foo", "z"),
+        Paths.get(projectRoot.path, "m1", "target", "generated-sources", "bar", "z"),
+        Paths.get(projectRoot.path, "m2", "target", "generated-sources", "baz", "z")
+      )
+
+      files.forEach {
+        Files.createDirectories(it)
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it)
+      }
+
+      awaitConfiguration()
+      eventsTestHelper.assertRootsChanged(3)
+      eventsTestHelper.assertWorkspaceModelChanges(0)
+
       updateTargetFolders()
 
+      awaitConfiguration()
       eventsTestHelper.assertRootsChanged(1)
       eventsTestHelper.assertWorkspaceModelChanges(1)
     }
@@ -301,7 +319,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     assertGeneratedSources("project", "target/generated-sources/xxx")
   }
 
-  private fun updateTargetFolders() {
-    tryUpdateTargetFolders(project)
+  private suspend fun updateTargetFolders() {
+    updateTargetFolders(project)
   }
 }

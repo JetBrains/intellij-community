@@ -10,7 +10,7 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.impl.source.resolve.impl.XmlEntityRefUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtilRt;
@@ -163,7 +163,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     @Override
     public @Nullable PsiElement resolve() {
-      XmlEntityDecl xmlEntityDecl = XmlEntityRefImpl.resolveEntity(
+      XmlEntityDecl xmlEntityDecl = XmlEntityRefUtil.resolveEntity(
         (XmlElement)myElement,
         (myElement instanceof  XmlEntityRef ? myElement.getLastChild():myElement).getText(),
         myElement.getContainingFile()

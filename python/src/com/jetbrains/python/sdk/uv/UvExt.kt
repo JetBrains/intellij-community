@@ -2,12 +2,9 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.createSdk
@@ -35,16 +32,6 @@ internal fun suggestedSdkName(basePath: Path): @NlsSafe String {
 
 val UV_ICON: Icon = PythonIcons.UV
 
-suspend fun setupNewUvSdkAndEnvUnderProgress(
-  project: Project,
-  workingDir: Path,
-  existingSdks: List<Sdk>,
-  basePython: Path?,
-): PyResult<Sdk> {
-  return withBackgroundProgress(project, PyBundle.message("python.sdk.dialog.title.setting.up.uv.environment"), true) {
-    setupNewUvSdkAndEnv(workingDir, existingSdks, basePython)
-  }
-}
 
 suspend fun setupNewUvSdkAndEnv(
   workingDir: Path,
@@ -60,12 +47,12 @@ suspend fun setupNewUvSdkAndEnv(
       return it
     }
 
-  return setupExistingEnvAndSdk(envExecutable, null, false, workingDir, existingSdks)
+  return setupExistingEnvAndSdk(envExecutable, workingDir, false, workingDir, existingSdks)
 }
 
 suspend fun setupExistingEnvAndSdk(
   envExecutable: Path,
-  envWorkingDir: Path?,
+  envWorkingDir: Path,
   usePip: Boolean,
   projectDir: Path,
   existingSdks: List<Sdk>,
@@ -74,7 +61,7 @@ suspend fun setupExistingEnvAndSdk(
     envExecutable,
     existingSdks,
     projectDir.toString(),
-    suggestedSdkName(projectDir),
+    suggestedSdkName(envWorkingDir),
     UvSdkAdditionalData(envWorkingDir, usePip))
 
   return sdk

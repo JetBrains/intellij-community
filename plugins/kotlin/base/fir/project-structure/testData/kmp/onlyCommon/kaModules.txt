@@ -74,6 +74,22 @@ KaSourceModule:
     <empty>
 
 KaSourceModule:
+  description: Sources of Common
+  targetPlatform: JS/JVM (1.8)
+  name: Common
+  sourceModuleKind: TEST
+  stableModuleName: <Common>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaSourceModule(Common, production)
+  friendDependencies:
+    KaSourceModule(Common, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
   description: Sources of light_idea_test_case
   targetPlatform: JVM (1.8)
   name: light_idea_test_case
@@ -84,5 +100,20 @@ KaSourceModule:
     KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
   friendDependencies:
     <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of light_idea_test_case
+  targetPlatform: JVM (1.8)
+  name: light_idea_test_case
+  sourceModuleKind: TEST
+  stableModuleName: <light_idea_test_case>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
+    KaSourceModule(light_idea_test_case, production)
+  friendDependencies:
+    KaSourceModule(light_idea_test_case, production)
   dependsOnDependencies:
     <empty>

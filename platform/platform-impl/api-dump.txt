@@ -90,6 +90,8 @@ com.intellij.codeInsight.hint.EditorHintListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - hintShown(com.intellij.openapi.editor.Editor,com.intellij.ui.LightweightHint,I,com.intellij.ui.HintHint):V
 com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
+f:com.intellij.codeInsight.hint.HintUtil
+- s:getWarningHint():com.intellij.ui.HintHint
 com.intellij.codeInsight.hint.LineTooltipRenderer$TooltipReloader
 - a:reload(Z):V
 com.intellij.codeInsight.hint.TooltipRenderer
@@ -214,8 +216,29 @@ com.intellij.ide.navigationToolbar.NavBarModelExtension
 - normalizeChildren():Z
 - processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+f:com.intellij.ide.plugins.DependencyInformation
+- <init>(java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.ide.plugins.DependencyInformation
+- bs:copy$default(com.intellij.ide.plugins.DependencyInformation,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ide.plugins.DependencyInformation
+- equals(java.lang.Object):Z
+- f:getCoordinate():java.lang.String
+- f:getReason():java.lang.String
+- hashCode():I
+f:com.intellij.ide.plugins.InstalledPluginsState
+- getInstalledWithoutRestartPlugins():java.util.Collection
 com.intellij.ide.plugins.PluginEnableStateChangedListener
 - a:stateChanged(java.util.Collection,Z):V
+f:com.intellij.ide.plugins.PluginInstallCallbackData
+- <init>(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z):V
+- f:component2():com.intellij.ide.plugins.IdeaPluginDescriptor
+- f:copy(java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z):com.intellij.ide.plugins.PluginInstallCallbackData
+- bs:copy$default(com.intellij.ide.plugins.PluginInstallCallbackData,java.nio.file.Path,com.intellij.ide.plugins.IdeaPluginDescriptor,Z,I,java.lang.Object):com.intellij.ide.plugins.PluginInstallCallbackData
+- f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
+f:com.intellij.ide.plugins.PluginManagerMain
+- s:suggestToEnableInstalledDependantPlugins(com.intellij.ide.plugins.PluginEnabler,java.util.List,java.lang.Boolean):Z
 com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
 - com.intellij.ide.plugins.PluginEnabler
 - disable(java.util.Collection):Z
@@ -226,6 +249,7 @@ com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
 com.intellij.ide.plugins.PluginStateListener
 - a:install(com.intellij.ide.plugins.IdeaPluginDescriptor):V
 - uninstall(com.intellij.ide.plugins.IdeaPluginDescriptor):V
+f:com.intellij.ide.plugins.RepositoryHelper
 com.intellij.ide.plugins.UIComponentVirtualFile$Content
 - a:createComponent():javax.swing.JComponent
 - getPreferredFocusedComponent(javax.swing.JComponent):javax.swing.JComponent
@@ -625,6 +649,8 @@ com.intellij.openapi.keymap.impl.ui.KeymapListener
 - a:processCurrentKeymapChanged():V
 - a:processCurrentKeymapChanged(com.intellij.openapi.actionSystem.ex.QuickList[]):V
 - a:quickListRenamed(com.intellij.openapi.actionSystem.ex.QuickList,com.intellij.openapi.actionSystem.ex.QuickList):V
+f:com.intellij.openapi.observable.util.BindUtilKt
+- sf:bindSelected(com.intellij.ui.CardLayoutPanel,com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.CardLayoutPanel
 com.intellij.openapi.progress.util.ProgressIndicatorListener
 - cancelled():V
 - installToProgress(com.intellij.openapi.wm.ex.ProgressIndicatorEx):V
@@ -649,10 +675,6 @@ com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider
 - a:init(com.intellij.ui.dsl.builder.Panel):V
 com.intellij.openapi.vcs.impl.FileStatusProvider
 - a:getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
-f:com.intellij.openapi.vfs.impl.eel.EelFileWatcher
-- sf:Companion:com.intellij.openapi.vfs.impl.eel.EelFileWatcher$Companion
-f:com.intellij.openapi.vfs.impl.eel.EelFileWatcher$Companion
-- f:useEelFileWatcher():Z
 com.intellij.openapi.vfs.impl.http.RemoteContentProvider$DownloadingCallback
 - a:errorOccurred(java.lang.String,Z):V
 - a:finished(com.intellij.openapi.fileTypes.FileType):V
@@ -1087,7 +1109,6 @@ com.intellij.ui.dsl.builder.Panel
 - bs:buttonsGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.ButtonsGroup
 - a:collapsibleGroup(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.CollapsibleRow
 - bs:collapsibleGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.CollapsibleRow
-- ba:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.Panel
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.Panel
 - a:customizeSpacingConfiguration(com.intellij.ui.dsl.builder.SpacingConfiguration,kotlin.jvm.functions.Function1):V
 - a:enabled(Z):com.intellij.ui.dsl.builder.Panel
@@ -1115,7 +1136,6 @@ com.intellij.ui.dsl.builder.Panel
 - bs:threeColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
 - a:twoColumnsRow(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Row
 - bs:twoColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
-- ba:verticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.builder.Panel
 - a:visible(Z):com.intellij.ui.dsl.builder.Panel
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Panel
 com.intellij.ui.dsl.builder.Row
@@ -1213,17 +1233,19 @@ com.intellij.ui.dsl.validation.CellValidation
 - a:getEnabled():Z
 - a:setEnabled(Z):V
 com.intellij.ui.layout.CellBuilder
-- a:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
+- ba:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - a:constraints(com.intellij.ui.layout.CCFlags[]):com.intellij.ui.layout.CellBuilder
 - ba:focused():com.intellij.ui.layout.CellBuilder
 - a:getComponent():javax.swing.JComponent
 - a:growPolicy(com.intellij.ui.layout.GrowPolicy):com.intellij.ui.layout.CellBuilder
-- a:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
-- a:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
-- a:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
+- ba:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
+- ba:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
+- ba:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - ba:withValidationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 - ba:withValidationOnInput(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
+f:com.intellij.ui.layout.CellKt
+- sf:createPropertyBinding(kotlin.reflect.KMutableProperty0,java.lang.Class):com.intellij.ui.layout.PropertyBinding
 com.intellij.ui.layout.LayoutBuilderImpl
 - a:build(java.awt.Container,com.intellij.ui.layout.LCFlags[]):V
 - a:getComponentValidateCallbacks():java.util.Map

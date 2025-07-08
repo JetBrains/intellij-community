@@ -17,10 +17,10 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
@@ -377,7 +377,7 @@ class BuildersGeneratorTest {
 
       while (true) {
         val jpsModule = jpsModuleQueue.removeLastOrNull() ?: break
-        val module = projectModel.newModule(Path.of(tempProject.basePath!!).resolve(".idea/${jpsModule.name}.iml"), StdModuleTypes.JAVA.id)
+        val module = projectModel.newModule(Path.of(tempProject.basePath!!).resolve(".idea/${jpsModule.name}.iml"), JavaModuleType.getModuleType().id)
 
         val rootModel = module.rootManager.modifiableModel
 

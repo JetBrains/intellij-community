@@ -21,7 +21,7 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override
@@ -82,7 +82,7 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   }
 
   public void testWithImportConflictDemandsOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
        myFixture.addClass(
          """
            package p;
@@ -94,6 +94,9 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
     );
   }
 
+  public void testWithSeveralIO() { doTest(); }
+  public void testWithSeveralNestedIO() { doTest(); }
+
   private void doNotFind() {
     myFixture.enableInspections(new ExplicitToImplicitClassMigrationInspection());
     myFixture.testHighlighting(true, false, true, "before" + getTestName(false) + ".java");
@@ -103,6 +106,7 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   }
 
   private void doTest() {
+    MigrateToJavaLangIoInspectionTest.addIOClass(myFixture);
     myFixture.enableInspections(new ExplicitToImplicitClassMigrationInspection());
     myFixture.testHighlighting(true, false, true, "before" + getTestName(false) + ".java");
     myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(

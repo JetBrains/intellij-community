@@ -5,6 +5,7 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -49,6 +50,11 @@ sealed interface EelExecApi {
   interface ExecuteProcessOptions {
     @get:ApiStatus.Experimental
     val args: List<String> get() = listOf()
+
+    /**
+     * Scope this process is bound to. Once scope dies -- this process dies as well.
+     */
+    val scope: CoroutineScope? get() = null
 
     /**
      * By default, environment is always inherited, which may be unwanted. [ExecuteProcessOptions.env] allows

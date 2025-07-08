@@ -48,7 +48,6 @@ jvm_library(
     "//platform/backend/workspace",
     "//python/python-parser:parser",
     "//python/python-syntax-core:syntax-core",
-    "//platform/ml-api:ml",
     "//python/impl.helperLocator:community-helpersLocator",
   ],
   exports = ["//python/python-syntax-core:syntax-core"],

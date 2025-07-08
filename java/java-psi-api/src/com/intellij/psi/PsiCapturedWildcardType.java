@@ -14,6 +14,7 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
   private final @NotNull PsiWildcardType myExistential;
   private final @NotNull PsiElement myContext;
   private final @Nullable PsiTypeParameter myParameter;
+  private @Nullable TypeNullability myNullability;
 
   private PsiType myUpperBound;
 
@@ -24,17 +25,19 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
   public static @NotNull PsiCapturedWildcardType create(@NotNull PsiWildcardType existential,
                                                         @NotNull PsiElement context,
                                                         @Nullable PsiTypeParameter parameter) {
-    return new PsiCapturedWildcardType(existential, context, parameter);
+    return new PsiCapturedWildcardType(existential, context, parameter, null);
   }
 
   private PsiCapturedWildcardType(@NotNull PsiWildcardType existential,
                                   @NotNull PsiElement context,
-                                  @Nullable PsiTypeParameter parameter) {
+                                  @Nullable PsiTypeParameter parameter, 
+                                  @Nullable TypeNullability nullability) {
     super(TypeAnnotationProvider.EMPTY);
     myExistential = existential;
     myContext = context;
     myParameter = parameter;
     myUpperBound = getJavaLangObject(myContext.getManager(), getResolveScope());
+    myNullability = nullability;
   }
 
   private static final RecursionGuard<Object> guard = RecursionManager.createGuard("captureGuard");
@@ -88,13 +91,17 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
 
   @Override
   public @NotNull TypeNullability getNullability() {
-    return myExistential.getNullability();
+    if (myNullability == null) {
+      myNullability = myExistential.getNullability();
+    }
+    return myNullability;
   }
 
   @Override
   public @NotNull PsiType withNullability(@NotNull TypeNullability nullability) {
-    PsiWildcardType newExistential = myExistential.withNullability(nullability);
-    return newExistential.equals(myExistential) ? this : new PsiCapturedWildcardType(newExistential, myContext, myParameter);
+    PsiCapturedWildcardType type = new PsiCapturedWildcardType(myExistential, myContext, myParameter, nullability);
+    type.setUpperBound(myUpperBound);
+    return type;
   }
 
   @Override

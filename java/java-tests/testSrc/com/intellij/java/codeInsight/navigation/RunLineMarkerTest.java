@@ -27,8 +27,10 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
@@ -38,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.java.codeInsight.navigation.RunLineMarkerJava22Test.checkMark;
 
 /**
  * @author Dmitry Avdeev
@@ -60,8 +64,9 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     assertEquals(2, gutters.size());
     assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
-  
+
   public void testRunLineMarkerOnInterface() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> {
     myFixture.configureByText("Main.java", """
       public class Ma<caret>in implements I {}
       interface I {    public static void main(String[] args) {}
@@ -72,6 +77,7 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
     List<GutterMark> gutters = myFixture.findAllGutters();
     assertEquals(2, gutters.size());
     assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    });
   }
 
   public void testNoRunLineMarkerAnonymous() {
@@ -302,5 +308,52 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
       }""");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(0, marks.size());
+  }
+
+  public void testNonStaticMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.configureByText("A1.java", """
+      class A1 {
+          public void main<caret>(){
+          }
+      }""");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      checkMark(marks.get(0), "A1");
+    });
+  }
+
+  public void testInheritStaticMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.addClass("""
+                         class A2 {
+                             public static void main(String[] args) {
+                                 System.out.println("1");
+                             }
+                         }""");
+    myFixture.configureByText("A1.java", """
+      class A1<caret> extends A2 {
+      }""");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    checkMark(marks.get(0), "A1");
+    });
+  }
+
+  public void testInheritMethod() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
+      myFixture.addClass("""
+                         class A2 {
+                             public void main(String[] args) {
+                                 System.out.println("1");
+                             }
+                         }""");
+    myFixture.configureByText("A1.java", """
+      class A1<caret> extends A2 {
+      }""");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    checkMark(marks.get(0), "A1");
+    });
   }
 }

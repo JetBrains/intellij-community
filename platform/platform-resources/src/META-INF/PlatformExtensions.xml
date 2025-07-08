@@ -175,22 +175,10 @@
                  restartRequired="false"
                  description="Set initial Linux tty size to 100x100 for WSL processes not attached to Windows PTY (workaround for https://github.com/microsoft/WSL/issues/10701)"
                  defaultValue="true"/>
-    <registryKey key="reworked.plugin.manager.enabled"
-                 restartRequired="false"
-                 description="Enable reworked 'Preferences | Plugins' settings."
-                 defaultValue="false"/>
     <experimentalFeature id="ide.redesigned.inspector" percentOfUsers="0">
       <description>
         Enable new inspection widget experiment
       </description>
-    </experimentalFeature>
-
-    <experimentalFeature id="ide.one.island.theme" percentOfUsers="25">
-      <description>Enable One Island UI theme</description>
-    </experimentalFeature>
-
-    <experimentalFeature id="ide.many.islands.theme" percentOfUsers="25">
-      <description>Enable Many Islands UI theme</description>
     </experimentalFeature>
 
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
@@ -2037,8 +2025,6 @@
     <listener class="com.intellij.ide.ui.laf.LafAndEditorColorSchemeDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
 
-    <listener class="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingListener"
-              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
 

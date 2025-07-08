@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -33,6 +34,20 @@ fun KaSession.areTypeArgumentsRedundant(
     val callExpression = typeArgumentList.parent as? KtCallExpression ?: return false
     val symbol = callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return false
     if (isInlineReifiedFunction(symbol)) return false
+
+    if (symbol.receiverType == null && callExpression.valueArguments.isEmpty()) {
+        // no reasons to check cases like `val list = emptyList<T>()`
+        val parent = callExpression.parent
+        val property =
+            // `val list = emptyList<T>()`
+            parent as? KtProperty
+            // `val list = emptyList<T>().smth{...}`
+            ?: (parent as? KtDotQualifiedExpression)?.parent as? KtProperty
+        if (property != null && property.typeReference == null) {
+            return false
+        }
+    }
+
     val newCallExpression = buildCallExpressionWithoutTypeArgs(callExpression) ?: return false
     return areTypeArgumentsEqual(callExpression, newCallExpression, approximateFlexible)
 }

@@ -10,8 +10,6 @@ import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.getPythonSdk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 internal class InstallRequirementQuickFix(val requirement: PyRequirement) : LocalQuickFix {
   override fun getFamilyName(): String {
@@ -21,7 +19,7 @@ internal class InstallRequirementQuickFix(val requirement: PyRequirement) : Loca
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val pythonSdk = getPythonSdk(descriptor.psiElement.containingFile) ?: return
 
-    PyPackageCoroutine.getScope(project).launch(Dispatchers.Default) {
+    PyPackageCoroutine.launch(project) {
       PyPackageInstallUtils.confirmAndInstall(project, pythonSdk, requirement.name,
                                               requirement.versionSpecs.firstOrNull())
     }

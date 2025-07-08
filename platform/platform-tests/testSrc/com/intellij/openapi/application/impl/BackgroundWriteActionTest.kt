@@ -25,6 +25,7 @@ import kotlin.random.Random
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @TestApplication
@@ -50,7 +51,7 @@ class BackgroundWriteActionTest {
   }
 
   @Test
-  fun exclusion(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+  fun exclusion(): Unit = timeoutRunBlocking(context = Dispatchers.Default, timeout = 30.seconds) {
     val readCounter = AtomicInteger()
     val writeCounter = AtomicInteger()
 
@@ -70,7 +71,7 @@ class BackgroundWriteActionTest {
       }
     }
 
-    repeat(1000) {
+    repeat(2000) {
       launch {
         backgroundWriteAction {
           assertExclusive(read = false)
@@ -710,5 +711,27 @@ class BackgroundWriteActionTest {
     waJob.join()
   }
 
+
+  @Test
+  fun `no thread starvation because of many suspended read action`(): Unit = timeoutRunBlocking {
+    Assumptions.assumeTrue(useTrueSuspensionForWriteAction) {
+      "Without true suspension, thread starvation is difficult to overcome"
+    }
+    val job = Job(coroutineContext.job)
+    launch(Dispatchers.EDT) {
+      job.asCompletableFuture().join()
+    }
+    delay(50)
+    repeat(1000) {
+      launch(Dispatchers.Default) {
+        backgroundWriteAction {}
+      }
+    }
+    delay(100)
+    withContext(Dispatchers.Default) {
+      // pending background write action should not stop this computation from execution
+    }
+    job.complete()
+  }
 
 }

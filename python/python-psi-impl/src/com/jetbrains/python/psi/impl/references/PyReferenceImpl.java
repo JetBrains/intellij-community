@@ -392,17 +392,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     if (myElement instanceof PyTargetExpression) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
-      final Scope scope;
       if (scopeOwner != null) {
-        scope = ControlFlowCache.getScope(scopeOwner);
-        final String name = myElement.getName();
-        if (scope.isNonlocal(name)) {
+        final Scope scope = ControlFlowCache.getScope(scopeOwner);
+        if (scope.isNonlocal(referencedName)) {
           final ScopeOwner nonlocalOwner = ScopeUtil.getDeclarationScopeOwner(myElement, referencedName);
-          if (nonlocalOwner != null && !(nonlocalOwner instanceof PyFile)) {
-            return nonlocalOwner;
+          if (nonlocalOwner != null) {
+            boolean isGlobal = nonlocalOwner instanceof PyFile ||
+                               ControlFlowCache.getScope(nonlocalOwner).getGlobals().contains(referencedName);
+            if (!isGlobal) {
+              return nonlocalOwner;
+            }
           }
         }
-        if (!scope.isGlobal(name)) {
+        if (!scope.getGlobals().contains(referencedName)) {
           return scopeOwner;
         }
       }

@@ -269,10 +269,10 @@ If this behavior is unexpected, please consult the documentation for com.intelli
 }
 
 /**
- * Resets the current thread context to initial value.
- *
- * @return handle to restore the previous thread context
+ * Do not use this function -- it is invisible in stacktraces, and it complicates the debugging of erroneously dropped thread context.
+ * Consider using the overload with an explicit action.
  */
+@Deprecated("Use resetThreadContext", ReplaceWith("resetThreadContext(action)"))
 fun resetThreadContext(): AccessToken {
   return withThreadLocal(tlCoroutineContext) { _ ->
     @OptIn(InternalCoroutinesApi::class)
@@ -282,11 +282,34 @@ fun resetThreadContext(): AccessToken {
 }
 
 /**
+ * Resets [currentThreadContext] context to [EmptyCoroutineContext].
+ *
+ * This may be useful if you are going to run an event loop synchronously.
+ * This function is often used before dispatching the AWT events.
+ */
+fun <T> resetThreadContext(action: () -> T): T {
+  return resetThreadContext().use {
+    action()
+  }
+}
+
+/**
  * Installs [coroutineContext] as the current thread context.
  * If [replace] is `false` (default) and the current thread already has context, then this function logs an error.
  *
+ */
+fun <T> installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false, action: () -> T): T {
+  installThreadContext(coroutineContext, replace = replace).use {
+    return action()
+  }
+}
+
+/**
+ * This function is not visible in stacktraces. Consider using a sibling higher-order function
+ *
  * @return handle to restore the previous thread context
  */
+@Deprecated("Use higher-order function for installation of thread context")
 fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
   return withThreadLocal(tlCoroutineContext) { previousContext ->
     @OptIn(InternalCoroutinesApi::class)

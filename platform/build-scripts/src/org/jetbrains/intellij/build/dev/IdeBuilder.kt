@@ -16,7 +16,6 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
@@ -212,13 +211,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       val platformLayoutAwaited = platformLayout.await()
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").use {
-        layoutPlatform(
-          runDir = runDir,
-          platformLayout = platformLayoutAwaited,
-          searchableOptionSet = searchableOptionSet,
-          context = context,
-          moduleOutputPatcher = moduleOutputPatcher,
-        )
+        layoutPlatform(runDir, platformLayoutAwaited, searchableOptionSet, context, moduleOutputPatcher)
       }
 
       if (request.writeCoreClasspath) {
@@ -244,16 +237,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
-      buildPlugins(
-        request = request,
-        context = context,
-        runDir = runDir,
-        platformLayout = platformLayout,
-        artifactTask = artifactTask,
-        searchableOptionSet = searchableOptionSet,
-        buildPlatformJob = platformDistributionEntriesDeferred,
-        moduleOutputPatcher = moduleOutputPatcher,
-      )
+      buildPlugins(request, context, runDir, platformLayout, artifactTask, searchableOptionSet, platformDistributionEntriesDeferred, moduleOutputPatcher)
     }
 
     launch {
@@ -266,7 +250,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         val out = DataOutputStream(byteOut)
         val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
         platformDistributionEntriesDeferred.join()
-        writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
+        writePluginClassPathHeader(out, isJarOnly = !request.isUnpackedDist, pluginCount, moduleOutputPatcher, context)
         out.write(mainData)
         additionalData?.let { out.write(it) }
         out.close()
@@ -276,7 +260,9 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
     if (context.generateRuntimeModuleRepository) {
       launch {
-        val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() + pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
+        val allDistributionEntries =
+          platformDistributionEntriesDeferred.await().asSequence() +
+          pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
         spanBuilder("generate runtime repository").use(Dispatchers.IO) {
           generateRuntimeModuleRepositoryForDevBuild(allDistributionEntries, runDir, context)
         }
@@ -284,12 +270,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     launch {
-      computeIdeFingerprint(
-        platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
-        pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
-        runDir = runDir,
-        homePath = request.projectDir,
-      )
+      computeIdeFingerprint(platformDistributionEntriesDeferred, pluginDistributionEntriesDeferred, runDir, homePath = request.projectDir)
     }
 
     launch(Dispatchers.IO) {
@@ -301,7 +282,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       spanBuilder("scramble platform").use{
         request.scrambleTool?.scramble(platformLayout.await(), context)
       }
-      copyDistFiles(context = context, newDir = runDir, os = request.os, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(OsFamily.currentOs))
+      copyDistFiles(context, runDir, request.os, JvmArchitecture.currentJvmArch, LibcImpl.current(OsFamily.currentOs))
     }
   }.invokeOnCompletion {
     // close debug logging to prevent locking of the output directory on Windows
@@ -370,7 +351,7 @@ private suspend fun compileIfNeeded(context: BuildContext) {
 private suspend fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
   val result = java.util.LinkedHashSet<String>()
   val productLayout = context.productProperties.productLayout
-  collectIncludedPluginModules(enabledPluginModules = context.getBundledPluginModules(), result = result, context = context)
+  collectIncludedPluginModules(context.getBundledPluginModules(), result, context)
   collectPlatformModules(to = result)
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
@@ -450,8 +431,9 @@ private suspend fun createBuildContext(
 ): BuildContext {
   return coroutineScope {
     val buildOptionsTemplate = request.buildOptionsTemplate
-    val useCompiledClassesFromProjectOutput = buildOptionsTemplate == null ||
-                                              (buildOptionsTemplate.useCompiledClassesFromProjectOutput && buildOptionsTemplate.unpackCompiledClassesArchives)
+    val useCompiledClassesFromProjectOutput =
+      buildOptionsTemplate == null ||
+      (buildOptionsTemplate.useCompiledClassesFromProjectOutput && buildOptionsTemplate.unpackCompiledClassesArchives)
     val classOutDir = if (useCompiledClassesFromProjectOutput) {
       request.productionClassOutput.parent
     }
@@ -543,25 +525,11 @@ private suspend fun createBuildContext(
     }
 
     BuildContextImpl(
-      compilationContext = compilationContext,
-      productProperties = productProperties.await(),
-      windowsDistributionCustomizer = WindowsDistributionCustomizer(),
-      linuxDistributionCustomizer = LinuxDistributionCustomizer(),
-      macDistributionCustomizer = MacDistributionCustomizer(),
+      compilationContext, productProperties.await(), WindowsDistributionCustomizer(), LinuxDistributionCustomizer(), MacDistributionCustomizer(),
+      proprietaryBuildTools = if (request.scrambleTool == null) ProprietaryBuildTools.DUMMY else ProprietaryBuildTools(
+        ProprietaryBuildTools.DUMMY_SIGN_TOOL, request.scrambleTool, featureUsageStatisticsProperties = null, artifactsServer = null, licenseServerHost = null
+      ),
       jarCacheManager = jarCacheManager,
-      proprietaryBuildTools = if (request.scrambleTool == null) {
-        ProprietaryBuildTools.DUMMY
-      }
-      else {
-        ProprietaryBuildTools(
-          scrambleTool = request.scrambleTool,
-          signTool = ProprietaryBuildTools.DUMMY_SIGN_TOOL,
-          macOsCodesignIdentity = null,
-          featureUsageStatisticsProperties = null,
-          artifactsServer = null,
-          licenseServerHost = null,
-        )
-      },
     )
   }
 }
@@ -616,14 +584,7 @@ private suspend fun layoutPlatform(
   context: BuildContext,
   moduleOutputPatcher: ModuleOutputPatcher,
 ): Pair<List<DistributionFileEntry>, Set<Path>> {
-  val entries = layoutPlatformDistribution(
-    moduleOutputPatcher = moduleOutputPatcher,
-    targetDirectory = runDir,
-    platform = platformLayout,
-    searchableOptionSet = searchableOptionSet,
-    copyFiles = true,
-    context = context,
-  )
+  val entries = layoutPlatformDistribution(moduleOutputPatcher, runDir, platformLayout, searchableOptionSet, copyFiles = true, context)
   lateinit var sortedClassPath: Set<Path>
   coroutineScope {
     launch {
@@ -664,6 +625,5 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
   }
 }
 
-private fun getCommunityHomePath(homePath: Path): Path {
-  return if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
-}
+private fun getCommunityHomePath(homePath: Path): Path =
+  if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath

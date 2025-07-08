@@ -762,8 +762,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
     for (Runnable action : actions) {
       //noinspection IncorrectCancellationExceptionHandling
-      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-        action.run();
+      try {
+        ThreadContext.resetThreadContext(() -> {
+          action.run();
+          return null;
+        });
       }
       catch (ProcessCanceledException e) {
         // some actions are crazy enough to use PCE for their own control flow.

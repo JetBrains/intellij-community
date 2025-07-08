@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.impl.views.CompositeDeclarativeHintWithMarginsView
+import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintViewWithMargins
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStamp
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.editor.Editor

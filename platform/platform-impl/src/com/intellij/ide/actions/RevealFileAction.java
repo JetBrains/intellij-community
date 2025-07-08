@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeBundle;
@@ -22,10 +23,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.system.OS;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
@@ -107,12 +108,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   /** Whether a system is able to open a directory in a file manager and highlight a file in it. */
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || Holder.fileManagerApp != null;
+    return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null;
   }
 
   /** Whether a system is able to open a directory in a file manager. */
   public static boolean isDirectoryOpenSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || Holder.fileManagerApp != null;
+    return OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || Holder.fileManagerApp != null;
   }
 
   public static @ActionText @NotNull String getActionName() {
@@ -125,7 +126,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static @ActionText String getActionName(boolean skipDetection) {
-    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName(skipDetection));
+    return OS.CURRENT == OS.macOS ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName(skipDetection));
   }
 
   @Override
@@ -143,8 +144,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   public static @NotNull @ActionText String getFileManagerName(boolean skipDetection) {
-    return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
-           SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
+    return OS.CURRENT == OS.Windows ? IdeBundle.message("action.explorer.text") :
+           OS.CURRENT == OS.macOS ? IdeBundle.message("action.finder.text") :
            skipDetection ? IdeBundle.message("action.file.manager.text") :
            requireNonNullElseGet(Holder.fileManagerName, () -> IdeBundle.message("action.file.manager.text"));
   }
@@ -202,7 +203,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     var toSelect = _toSelect != null ? canonicalize(_toSelect).normalize().toString() : null;
     String fmApp;
 
-    if (SystemInfo.isWindows) {
+    if (OS.CURRENT == OS.Windows) {
       if (JnaLoader.isLoaded()) {
         openViaShellApi(dir, toSelect);
       }
@@ -210,7 +211,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         openViaExplorerCall(dir, toSelect);
       }
     }
-    else if (SystemInfo.isMac) {
+    else if (OS.CURRENT == OS.macOS) {
       if (toSelect != null) {
         spawn("open", "-R", toSelect);
       }
@@ -229,7 +230,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         spawn(fmApp, toSelect != null ? toSelect : dir);
       }
     }
-    else if (toSelect == null && SystemInfo.hasXdgOpen()) {
+    else if (toSelect == null && PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
       spawn("xdg-open", dir);
     }
     else {
@@ -298,7 +299,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       try {
-        var process = SystemInfo.isWindows ? Runtime.getRuntime().exec(command[0]) : new ProcessBuilder(command).start();
+        var process = OS.CURRENT == OS.Windows ? Runtime.getRuntime().exec(command[0]) : new ProcessBuilder(command).start();
         new CapturingProcessHandler.Silent(process, null, command[0])
           .runProcess(10000, false)
           .checkSuccess(LOG);
@@ -315,7 +316,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
     static {
       String fmApp = null, fmName = null;
-      if (SystemInfo.hasXdgMime()) {
+      if (PathEnvironmentVariableUtil.isOnPath("xdg-mime")) {
         try (var reader = new ProcessBuilder("xdg-mime", "query", "default", "inode/directory").start().inputReader()) {
           var desktopEntryName = reader.readLine();
           if (desktopEntryName != null && desktopEntryName.endsWith(".desktop")) {

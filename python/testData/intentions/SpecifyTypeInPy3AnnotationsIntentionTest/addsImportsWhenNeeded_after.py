@@ -1,4 +1,4 @@
-from typing import Any, Coroutine
+from typing import Coroutine, Any
 
 
 async def bar() -> int:

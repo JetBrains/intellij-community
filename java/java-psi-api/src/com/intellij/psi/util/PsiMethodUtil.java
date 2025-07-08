@@ -55,7 +55,7 @@ public final class PsiMethodUtil {
 
   private PsiMethodUtil() { }
 
-  public static @Nullable PsiMethod findMainMethod(final PsiClass aClass) {
+  public static @Nullable PsiMethod findMainMethod(@NotNull final PsiClass aClass) {
     JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(aClass);
     if (mainMethodProvider != null) {
       return mainMethodProvider.findMainInClass(aClass);
@@ -112,13 +112,13 @@ public final class PsiMethodUtil {
           continue;
         }
         if (containingClass.isInterface() &&
-            mainMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            !chooseMainMethodByParametersEnabled) {
+            mainMethod.hasModifierProperty(PsiModifier.STATIC)) {
           continue;
         }
       }
-      if (isMainMethod(mainMethod)) {
-        if (first && !chooseMainMethodByParametersEnabled) {
+      if (isMainMethod(mainMethod, false)) {
+        if (first && !chooseMainMethodByParametersEnabled &&
+            (mainMethod.hasModifierProperty(PsiModifier.STATIC) || hasDefaultNonPrivateConstructor(aClass))) {
           //fast exit
           return mainMethod;
         }
@@ -130,17 +130,32 @@ public final class PsiMethodUtil {
     }
     candidates.sort(mainCandidateComparator);
     PsiMethod method = candidates.get(0);
-    if (chooseMainMethodByParametersEnabled) {
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          return null;
-        }
-        if (!PsiUtil.hasDefaultConstructor(aClass, true, true)) {
-          return null;
-        }
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return null;
+      }
+      if (!hasDefaultNonPrivateConstructor(aClass)) {
+        return null;
       }
     }
     return method;
+  }
+
+  private static boolean hasDefaultNonPrivateConstructor(@NotNull PsiClass clazz) {
+    PsiMethod[] constructors = clazz.getConstructors();
+    if (constructors.length == 0) {
+      return true;
+    }
+
+    for (PsiMethod constr: constructors) {
+      if ((constr.hasModifierProperty(PsiModifier.PUBLIC)
+           || constr.hasModifierProperty(PsiModifier.PROTECTED)
+           || constr.hasModifierProperty(PsiModifier.PACKAGE_LOCAL))
+          && constr.getParameterList().isEmpty()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
@@ -155,27 +170,28 @@ public final class PsiMethodUtil {
    * ATTENTION 1: does not check the method name equals "main"<br>
    * ATTENTION 2: does not use implementations of {@link JavaMainMethodProvider}
    * (unlike {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)})
+   * ATTENTION 3: another "main" method can be launched
    *
-   * @param method the method to check
+   * @param mainMethod the method to check
+   * @param checkNoArgsConstructor true if the method should be considered a main method if its class has a constructor with no parameters, false otherwise.
    * @return true, if the method satisfies a main method signature. false, otherwise
    */
-  @Contract("null -> false")
-  public static boolean isMainMethod(final @Nullable PsiMethod method) {
-    if (method == null || method.getContainingClass() == null) return false;
-    PsiClass containingClass = method.getContainingClass();
+  @Contract("null, _ -> false")
+  private static boolean isMainMethod(final @Nullable PsiMethod mainMethod, boolean checkNoArgsConstructor) {
+    if (mainMethod == null || mainMethod.getContainingClass() == null) return false;
+    PsiClass containingClass = mainMethod.getContainingClass();
     if (containingClass == null) return false;
-    if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (instanceMainMethodsEnabled(method)) {
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC) &&
-          !method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-          !method.hasModifierProperty(PsiModifier.PROTECTED)) return false;
+    if (!PsiTypes.voidType().equals(mainMethod.getReturnType())) return false;
+    final PsiParameter[] parameters = mainMethod.getParameterList().getParameters();
+    if (instanceMainMethodsEnabled(mainMethod)) {
+      if (!mainMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
+          !mainMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+          !mainMethod.hasModifierProperty(PsiModifier.PROTECTED)) return false;
       //can't instantiate this class
       if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
-      PsiMethod[] constructors = containingClass.getConstructors();
-      if (!method.hasModifierProperty(PsiModifier.STATIC) && constructors.length != 0 && !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
+      if (checkNoArgsConstructor && !mainMethod.hasModifierProperty(PsiModifier.STATIC) &&  !hasDefaultNonPrivateConstructor(containingClass)) {
         return false;
       }
       if (parameters.length == 1) {
@@ -183,11 +199,24 @@ public final class PsiMethodUtil {
       }
       return parameters.length == 0;
     } else {
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
+      if (!mainMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
+      if (!mainMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
       if (parameters.length != 1) return false;
       return isJavaLangStringArray(parameters[0]);
     }
+  }
+
+  /**
+   * ATTENTION 1: does not check the method name equals "main"<br>
+   * ATTENTION 2: does not use implementations of {@link JavaMainMethodProvider}
+   * (unlike {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)})
+   * ATTENTION 3: another "main" method can be launched
+   * @param method the method to check
+   * @return true, if the method satisfies a main method signature. false, otherwise
+   */
+  @Contract("null -> false")
+  public static boolean isMainMethod(final @Nullable PsiMethod method) {
+    return isMainMethod(method, true);
   }
 
   private static boolean isJavaLangStringArray(@NotNull PsiParameter parameter) {

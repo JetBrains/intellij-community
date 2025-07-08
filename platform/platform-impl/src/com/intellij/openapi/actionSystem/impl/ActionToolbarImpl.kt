@@ -924,7 +924,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   @RequiresEdt
   protected fun updateActionsWithoutLoadingIcon(includeInvisible: Boolean) {
     // null when called through updateUI from a superclass constructor
-    myUpdater.updateActions(true, false, includeInvisible)
+    myUpdater.updateActions(now = true, forced = false, includeInvisible = includeInvisible)
   }
 
   @OptIn(InternalCoroutinesApi::class)
@@ -961,7 +961,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
     }
     myLastUpdate = job
-    job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { ex ->
+    job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) {
       if (myLastUpdate === job) {
         myLastUpdate = null
       }
@@ -1590,6 +1590,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     myNeedCheckHoverOnLayout = needCheckHoverOnLayout
   }
 
+  @Suppress("RedundantInnerClassModifier")
   private inner class AccessibleActionToolbar : AccessibleJPanel() {
     override fun getAccessibleRole() = AccessibilityUtils.GROUPED_ELEMENTS
   }

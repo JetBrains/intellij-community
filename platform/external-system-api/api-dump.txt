@@ -30,6 +30,7 @@ a:com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 - a:setExternalId(com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 - a:setExternalModuleType(java.lang.String):V
 - a:setExternalOptions(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.model.project.ModuleData,com.intellij.openapi.externalSystem.model.project.ProjectData):V
+- a:setLinkedProjectId(java.lang.String):V
 - a:setLinkedProjectPath(java.lang.String):V
 - a:setMavenized(Z):V
 - a:setRootProjectPath(java.lang.String):V
@@ -208,6 +209,7 @@ f:com.intellij.openapi.externalSystem.dependency.analyzer.DAOmitted
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status$Omitted
 - sf:INSTANCE:com.intellij.openapi.externalSystem.dependency.analyzer.DAOmitted
+- getTitle():java.lang.String
 f:com.intellij.openapi.externalSystem.dependency.analyzer.DAProject
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
@@ -219,20 +221,27 @@ f:com.intellij.openapi.externalSystem.dependency.analyzer.DAProject
 f:com.intellij.openapi.externalSystem.dependency.analyzer.DAScope
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope
+- <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type):V
+- b:<init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component2():java.lang.String
-- f:copy(java.lang.String,java.lang.String):com.intellij.openapi.externalSystem.dependency.analyzer.DAScope
-- bs:copy$default(com.intellij.openapi.externalSystem.dependency.analyzer.DAScope,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.openapi.externalSystem.dependency.analyzer.DAScope
+- f:component3():com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type
+- f:copy(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type):com.intellij.openapi.externalSystem.dependency.analyzer.DAScope
+- bs:copy$default(com.intellij.openapi.externalSystem.dependency.analyzer.DAScope,java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type,I,java.lang.Object):com.intellij.openapi.externalSystem.dependency.analyzer.DAScope
 - equals(java.lang.Object):Z
 - getName():java.lang.String
 - getTitle():java.lang.String
+- getType():com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type
 - hashCode():I
 f:com.intellij.openapi.externalSystem.dependency.analyzer.DAWarning
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status$Warning
 - <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
 - getMessage():java.lang.String
+- getTitle():java.lang.String
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
 - a:getDependencies(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject):java.util.List
 - a:getDependencyScopes(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject):java.util.List
@@ -258,8 +267,17 @@ com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDepend
 - com.intellij.openapi.util.UserDataHolder
 - a:getName():java.lang.String
 - a:getTitle():java.lang.String
+- a:getType():com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type
+e:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type
+- java.lang.Enum
+- sf:CUSTOM:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type
+- sf:STANDARD:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type
+- s:values():com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Scope$Type[]
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status
 - com.intellij.openapi.util.UserDataHolder
+- a:getTitle():java.lang.String
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status$Omitted
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Status$Warning

@@ -6,6 +6,7 @@
     <module name="intellij.json.backend"/>
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
+    <module name="intellij.libraries.xerces"/>
   </dependencies>
 
   <resource-bundle>messages.DevKitBundle</resource-bundle>
@@ -177,12 +178,6 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"
                      key="inspection.inspection.description.not.found.inspection.display.name"/>
-    <localInspection language="JVM" shortName="checkReturnValue"
-                     key="inspections.check.return.value"
-                     groupKey="inspections.group.code"
-                     enabledByDefault="true"
-                     level="ERROR"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.CheckReturnValueInspection"/>
     <localInspection language="UAST" shortName="InspectionUsingGrayColors"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -522,6 +517,14 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.MissingFrontendOrBackendRuntimeDependencyInspection"
                      key="inspection.remote.dev.missing.runtime.dependency.name"/>
 
+    <localInspection isInternal="true"
+                     language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ModuleNotRegisteredAsPluginContentInspection"
+                     key="inspection.module.not.registered.as.plugin.content.name"/>
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
@@ -613,6 +616,8 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.PluginDescriptorDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
+    <codeInsight.lineMarkerProvider language="XML"
+                                    implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleLineMarkerProvider"/>
     <psi.referenceContributor
       language="Properties"
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor"/>
@@ -681,6 +686,8 @@
 
     <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
                  description="Enables commit messages validation for intellij project"/>
+    <registryKey key="aia.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for AI Assistant project"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
 

@@ -38,13 +38,13 @@ class GradleScriptDefinitionsStorage(val project: Project) :
         if (initialized.get()) return
 
         synchronized(this) {
-            if (!initialized.get()) {
-                val state = state
-                if (state.workingDir != null) {
-                    loadDefinitions(state.workingDir, state.gradleHome, state.javaHome, state.gradleVersion)
-                }
-                initialized.set(true)
+            if (initialized.get()) return
+
+            val state = state
+            if (state.workingDir != null) {
+                loadDefinitions(state.workingDir, state.gradleHome, state.javaHome, state.gradleVersion)
             }
+            initialized.set(true)
         }
     }
 

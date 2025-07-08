@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
 
 import com.intellij.execution.Platform;
@@ -48,5 +48,12 @@ public enum OS {
 
   public @NotNull Platform getPlatform() {
     return this == Windows ? Platform.WINDOWS : Platform.UNIX;
+  }
+
+  /**
+   * Returns {@code true} if the current operating system is a generic Unix-like system (not Windows or macOS).
+   */
+  public static boolean isGenericUnix() {
+    return CURRENT != Windows && CURRENT != macOS;
   }
 }

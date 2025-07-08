@@ -1249,7 +1249,7 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
 
   fun runOwnQueueBlockingAndSwitchBackToEDT(job: Job, timeInMillis: Int) {
     try {
-      resetThreadContext().use {
+      resetThreadContext {
         // block EDT for a short and process the explicit EDT queue for update
         while (!job.isCompleted && TimeoutUtil.getDurationMillis(switchedAt) < timeInMillis) {
           val runnable = queue.poll(1, TimeUnit.MILLISECONDS)

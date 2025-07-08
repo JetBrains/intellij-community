@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData;
@@ -64,13 +64,13 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
 
     // Project with default JDK
     Project project = createProjectFromTemplate(JAVA, step -> {
-      getJavaData(step).setSdk(defaultSdk);
+      getJavaData(step).setJdkIntent(ProjectWizardJdkIntent.Companion.fromJdk(defaultSdk));
     });
     assertEquals(ProjectRootManager.getInstance(project).getProjectSdk().getName(), defaultSdk.getName());
 
     // Module with custom JDK
     createModuleFromTemplate(project, JAVA, step -> {
-      getJavaData(step).setSdk(otherSdk);
+      getJavaData(step).setJdkIntent(ProjectWizardJdkIntent.Companion.fromJdk(otherSdk));
       getJavaData(step).setModuleName(moduleName);
     });
 
@@ -144,7 +144,8 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
   public void testSampleCodeInstanceMethodWithoutPackages() throws Exception {
     Project project = createProjectFromTemplate(JAVA, step -> {
       IntelliJJavaNewProjectWizardData data = getJavaData(step);
-      data.setSdk(new JavaSdkImpl().createJdk("java version \"25.0.1\"", SystemProperties.getJavaHome()));
+      final Sdk sdk = new JavaSdkImpl().createJdk("java version \"25.0.1\"", SystemProperties.getJavaHome());
+      data.setJdkIntent(ProjectWizardJdkIntent.Companion.fromJdk(sdk));
       data.setAddSampleCode(true);
     });
     Collection<VirtualFile> mainSearch = FilenameIndex.getVirtualFilesByName("Main.java", GlobalSearchScope.projectScope(project));

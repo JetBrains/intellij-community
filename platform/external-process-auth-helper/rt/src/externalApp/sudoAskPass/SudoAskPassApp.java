@@ -2,6 +2,7 @@
 package externalApp.sudoAskPass;
 
 import externalApp.ExternalApp;
+import externalApp.ExternalAppEntry;
 import externalApp.ExternalAppUtil;
 
 public class SudoAskPassApp implements ExternalApp {
@@ -12,6 +13,6 @@ public class SudoAskPassApp implements ExternalApp {
     ExternalAppUtil.handleAskPassInvocation(SudoExternalAppHandler.IJ_SUDO_ASK_PASS_HANDLER_ENV,
                                             SudoExternalAppHandler.IJ_SUDO_ASK_PASS_PORT_ENV,
                                             SudoExternalAppHandler.ENTRY_POINT_NAME,
-                                            args);
+                                            ExternalAppEntry.fromMain(args));
   }
 }

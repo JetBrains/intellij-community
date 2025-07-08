@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface Scope {
   /*
@@ -47,7 +48,6 @@ public interface Scope {
   boolean hasNonLocals();
   boolean isNonlocal(String name);
 
-  boolean hasNestedScopes();
   boolean containsDeclaration(String name);
 
   @NotNull
@@ -61,4 +61,8 @@ public interface Scope {
 
   @NotNull
   Collection<PyTargetExpression> getTargetExpressions();
+
+  @ApiStatus.Experimental
+  @NotNull
+  Set<String> getGlobals();
 }

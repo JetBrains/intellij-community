@@ -64,6 +64,15 @@ public final class FileManagerImpl implements FileManagerEx {
   public FileManagerImpl(@NotNull PsiManagerImpl manager, @NotNull NotNullLazyValue<? extends FileIndexFacade> fileIndex) {
     myManager = manager;
     myFileIndex = fileIndex;
+
+    myVFileToViewProviderMap = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
+                               ? new MultiverseFileViewProviderCache()
+                               : new ClassicFileViewProviderCache();
+
+    myTempProviders = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
+                      ? new ClassicTemporaryProviderStorage()
+                      : new MultiverseTemporaryProviderStorage();
+
     myConnection = manager.getProject().getMessageBus().connect(manager);
 
     LowMemoryWatcher.register(this::processQueue, manager);
@@ -79,12 +88,6 @@ public final class FileManagerImpl implements FileManagerEx {
         processFileTypesChanged(false);
       }
     });
-    myVFileToViewProviderMap = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
-                               ? new MultiverseFileViewProviderCache()
-                               : new ClassicFileViewProviderCache();
-    myTempProviders = CodeInsightContexts.isSharedSourceSupportEnabled(manager.getProject())
-                      ? new ClassicTemporaryProviderStorage()
-                      : new MultiverseTemporaryProviderStorage();
   }
 
   @Override

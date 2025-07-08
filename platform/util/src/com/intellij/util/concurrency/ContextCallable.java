@@ -80,15 +80,16 @@ final class ContextCallable<V> implements Callable<V> {
     }
     else {
       Supplier<RunResult<V, Exception>> temp = () -> {
-        try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true);
-             AccessToken ignored2 = myChildContext.applyContextActions(false)) {
-          try {
-            return new RunResult<>(myCallable.call());
+        return ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> {
+          try (AccessToken ignored2 = myChildContext.applyContextActions(false)) {
+            try {
+              return new RunResult<>(myCallable.call());
+            }
+            catch (Exception e) {
+              return new RunResult<>(e);
+            }
           }
-          catch (Exception e) {
-            return new RunResult<>(e);
-          }
-        }
+        });
       };
       Continuation<Unit> continuation = myChildContext.getContinuation();
       if (continuation == null) {

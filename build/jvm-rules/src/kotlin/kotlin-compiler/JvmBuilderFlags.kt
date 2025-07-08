@@ -11,14 +11,14 @@ import java.util.regex.Pattern
 
 private val FLAG_FILE_RE: Regex = Pattern.compile("""^--flagfile=((.*)-(\d+).params)$""").toRegex()
 
-fun parseArgs(args: Array<String>): ArgMap<JvmBuilderFlags> {
+fun parseArgs(args: Array<String>, baseDir: Path): ArgMap<JvmBuilderFlags> {
   check(args.isNotEmpty()) {
     "expected at least a single arg got: ${args.joinToString(" ")}"
   }
 
   return createArgMap(
     args = FLAG_FILE_RE.matchEntire(args[0])?.groups?.get(1)?.let {
-      Files.readAllLines(Path.of(it.value))
+      Files.readAllLines(baseDir.resolve(it.value))
     } ?: args.asList(),
     enumClass = JvmBuilderFlags::class.java,
   )
@@ -50,6 +50,7 @@ enum class JvmBuilderFlags {
   JVM_DEFAULT,
   INLINE_CLASSES,
   CONTEXT_RECEIVERS,
+  CONTEXT_PARAMETERS,
 
   WARN,
 
@@ -132,6 +133,9 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
 
   if (args.boolFlag(JvmBuilderFlags.CONTEXT_RECEIVERS)) {
     kotlinArgs.contextReceivers = true
+  }
+  if (args.boolFlag(JvmBuilderFlags.CONTEXT_PARAMETERS)) {
+    kotlinArgs.contextParameters = true
   }
   configHash.putBoolean(kotlinArgs.contextReceivers)
 

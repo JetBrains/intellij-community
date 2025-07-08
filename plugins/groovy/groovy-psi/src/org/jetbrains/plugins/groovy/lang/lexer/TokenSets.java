@@ -90,14 +90,17 @@ public interface TokenSets {
     kDOUBLE
   );
 
-  TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(
-    mIDENT,
-    mREGEX_LITERAL,
-    mDOLLAR_SLASH_REGEX_LITERAL,
+  TokenSet CONTEXTUAL_KEYWORDS = TokenSet.create(
     KW_VAR,
     KW_YIELD,
     KW_RECORD,
     KW_PERMITS
+  );
+
+  TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, CONTEXTUAL_KEYWORDS, TokenSet.create(
+    mIDENT,
+    mREGEX_LITERAL,
+    mDOLLAR_SLASH_REGEX_LITERAL
   ));
 
   TokenSet KEYWORDS = TokenSet.create(

@@ -122,7 +122,12 @@ fun collectReceiverTypesForElement(callElement: KtElement, explicitReceiver: KtE
 
 context(KaSession)
 fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpression): List<KaType> {
-    explicitReceiver.referenceExpression()?.mainReference?.let { receiverReference ->
+    val referenceExpression = when (explicitReceiver) {
+        is KtDotQualifiedExpression -> explicitReceiver.selectorExpression ?: explicitReceiver
+        else -> explicitReceiver
+    }
+
+    referenceExpression.referenceExpression()?.mainReference?.let { receiverReference ->
         val receiverSymbol = receiverReference.resolveToExpandedSymbol()
         if (receiverSymbol == null || receiverSymbol is KaPackageSymbol) return emptyList()
 

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,6 +66,11 @@ public final class TypeNullability {
     return inherited.equals(mySource) ? this : new TypeNullability(myNullability, inherited);
   }
 
+  /**
+   * @param nullability instantiation nullability
+   * @return the nullability of the instantiated type parameter,
+   * assuming that this object is the declared nullability of the type parameter.
+   */
   public @NotNull TypeNullability instantiatedWith(@NotNull TypeNullability nullability) {
     if (this.nullability() == nullability.nullability()) {
       return intersect(Arrays.asList(this, nullability));
@@ -110,6 +116,10 @@ public final class TypeNullability {
   }
   
   public static @NotNull TypeNullability ofTypeParameter(@NotNull PsiTypeParameter parameter) {
+    TypeNullability nullability = intersect(ContainerUtil.map(parameter.getSuperTypes(), PsiType::getNullability)).inherited();
+    if (!nullability.equals(UNKNOWN)) {
+      return nullability;
+    }
     NullableNotNullManager manager = NullableNotNullManager.getInstance(parameter.getProject());
     if (manager != null) {
       NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(parameter);
@@ -117,7 +127,7 @@ public final class TypeNullability {
         return typeUseNullability.toTypeNullability();
       }
     }
-    return intersect(ContainerUtil.map(parameter.getSuperTypes(), PsiType::getNullability)).inherited();
+    return UNKNOWN;
   }
 
   /**
@@ -131,7 +141,6 @@ public final class TypeNullability {
       TypeNullability::nullability, Collectors.mapping(TypeNullability::source, Collectors.toSet())));
     Set<NullabilitySource> sources = map.get(Nullability.NOT_NULL);
     if (sources != null) {
-      //todo?
       return new TypeNullability(Nullability.NOT_NULL, NullabilitySource.multiSource(sources));
     }
     sources = map.get(Nullability.NULLABLE);
@@ -163,5 +172,25 @@ public final class TypeNullability {
   @Override
   public String toString() {
     return myNullability + " (" + mySource + ")";
+  }
+
+  /**
+   * @return this object in the form of {@link NullabilityAnnotationInfo} if conversion is possible, null otherwise.
+   */
+  public @Nullable NullabilityAnnotationInfo toNullabilityAnnotationInfo() {
+    NullabilitySource source = source();
+    if (source instanceof NullabilitySource.ExtendsBound) {
+      source = ((NullabilitySource.ExtendsBound)source).boundSource();
+    }
+    if (source instanceof NullabilitySource.MultiSource) {
+      source = ((NullabilitySource.MultiSource)source).sources().iterator().next();
+    }
+    if (source instanceof NullabilitySource.ExplicitAnnotation) {
+      return new NullabilityAnnotationInfo(((NullabilitySource.ExplicitAnnotation)source).annotation(), nullability(), false);
+    }
+    if (source instanceof NullabilitySource.ContainerAnnotation) {
+      return new NullabilityAnnotationInfo(((NullabilitySource.ContainerAnnotation)source).annotation(), nullability(), true);
+    }
+    return null;
   }
 }

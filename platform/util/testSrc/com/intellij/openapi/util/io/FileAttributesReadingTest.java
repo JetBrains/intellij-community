@@ -98,7 +98,8 @@ public class FileAttributesReadingTest {
     assertFalse(attributes.isSymLink());
     assertFalse(attributes.isHidden());
     assertTrue(attributes.isWritable());
-    assertEquals(file.length(), attributes.length);
+    assertEquals("directory.length() is defined to be 0",
+                 0, attributes.length);
     assertEquals(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
 
@@ -234,7 +235,8 @@ public class FileAttributesReadingTest {
     assertTrue(attributes.isSymLink());
     assertFalse(attributes.isHidden());
     assertTrue(attributes.isWritable());
-    assertEquals(dir.length(), attributes.length);
+    assertEquals("directory.length() is defined to be 0",
+                 0, attributes.length);
     assertEquals(dir.lastModified(), attributes.lastModified);
 
     String target = resolveSymLink(link);

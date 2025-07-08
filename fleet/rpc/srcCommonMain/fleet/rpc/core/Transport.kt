@@ -63,7 +63,7 @@ fun FleetTransportFactory.debugDisconnect(control: StateFlow<DebugConnectionStat
     underlying.connect(transportStats) { transport ->
       val bodyJob = launch { body(transport) }
       val disconnectCommand = async { control.first { it == DebugConnectionState.Disconnect } }
-      select<Unit> {
+      select {
         bodyJob.onJoin {
           disconnectCommand.cancel()
         }

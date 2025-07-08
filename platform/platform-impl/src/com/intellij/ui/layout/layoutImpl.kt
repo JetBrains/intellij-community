@@ -79,7 +79,6 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val horizontalGap = JBUI.scale(6)
     override val componentVerticalGap = JBUI.scale(6)
     override val labelColumnHorizontalGap = JBUI.scale(6)
-    override val largeHorizontalGap = JBUI.scale(16)
     override val largeVerticalGap = JBUI.scale(20)
 
     override val shortTextWidth = JBUI.scale(250)

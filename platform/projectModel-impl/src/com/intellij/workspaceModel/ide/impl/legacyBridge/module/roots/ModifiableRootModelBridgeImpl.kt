@@ -83,8 +83,6 @@ internal class ModifiableRootModelBridgeImpl(
   @OptIn(EntityStorageInstrumentationApi::class)
   override fun getModificationCount(): Long = (diff as MutableEntityStorageInstrumentation).modificationCount
 
-  private val extensionsDisposable = Disposer.newDisposable()
-
   private val virtualFileManager: VirtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
   private val extensionsDelegate = lazy {

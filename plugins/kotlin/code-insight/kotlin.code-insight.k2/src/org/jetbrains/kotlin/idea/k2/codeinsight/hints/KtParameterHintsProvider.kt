@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.ExcludeListDialog
+import com.intellij.codeInsight.hints.InlayInfo
+import com.intellij.codeInsight.hints.ParameterNameHintsSuppressor
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.parameters.AbstractDeclarativeParameterHintsCustomSettingsProvider
 import com.intellij.codeInsight.hints.parameters.ParameterHintsExcludeListConfigProvider
@@ -165,6 +167,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
                 val element = arg.getParentOfType<KtValueArgument>(true, KtValueArgumentList::class.java) ?: arg
+                if (ParameterNameHintsSuppressor.isSuppressedFor(element.containingKtFile, InlayInfo("", element.startOffset))) continue
                 sink.addPresentation(
                     InlineInlayPosition(element.startOffset, true),
                     payloads = contextMenuPayloads,

@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
@@ -112,6 +113,9 @@ public final class ShelvedChangeList implements ExternalizableScheme {
         }
       }
       myChanges = changes;
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch (Throwable e) {
       LOG.warn("Failed to parse the file patch: [" + myPath + "]", e);

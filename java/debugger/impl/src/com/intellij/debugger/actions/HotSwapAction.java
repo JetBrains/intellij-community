@@ -6,6 +6,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.HotSwapUI;
 import com.intellij.debugger.ui.HotSwapUIImpl;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,6 +41,13 @@ public class HotSwapAction extends AnAction {
     DebuggerSession session = debuggerManager.getContext().getDebuggerSession();
 
     e.getPresentation().setEnabled(session != null && HotSwapUIImpl.canHotSwap(session));
+    boolean compile = DebuggerSettings.getInstance().COMPILE_BEFORE_HOTSWAP;
+    String text = compile ? ActionsBundle.message("action.Hotswap.and.compile.text")
+                          : ActionsBundle.message("action.Hotswap.text");
+    String description = compile ? ActionsBundle.message("action.Hotswap.and.compile.description")
+                                 : ActionsBundle.message("action.Hotswap.description");
+    e.getPresentation().setText(text);
+    e.getPresentation().setDescription(description);
   }
 
   @Override

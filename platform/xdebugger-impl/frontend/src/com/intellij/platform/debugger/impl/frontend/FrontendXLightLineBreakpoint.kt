@@ -55,9 +55,9 @@ internal class FrontendXLightLineBreakpoint(
     return installationInfo.position.line
   }
 
-  // TODO IJPL-185322: should we support highlighting range to partially highlight the line?
-  override fun getHighlightRange(): TextRange? {
-    return null
+  override fun getHighlightRange(): XLineBreakpointHighlighterRange {
+    // only full line breakpoints can be light breakpoints
+    return XLineBreakpointHighlighterRange.Available(null)
   }
 
   override fun isEnabled(): Boolean {

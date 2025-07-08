@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -49,10 +50,8 @@ import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
-import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -199,7 +198,14 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
           // We cannot show multiple breakpoints of the same type at the same position.
           // Note that highlightRange might be null, so we still have to add line as an identity element.
           SlowOperations.knownIssue("IJPL-162343").use {
-            Triple(b.type, b.getLine(), b.getHighlightRange()?.startOffset)
+            val startOffset = when (val range = b.getHighlightRange()) {
+              is XLineBreakpointHighlighterRange.Available -> range.range?.startOffset
+              is XLineBreakpointHighlighterRange.Unavailable -> {
+                scheduleDocumentUpdate(document)
+                return
+              }
+            }
+            Triple(b.type, b.getLine(), startOffset)
           }
         }
         else {
@@ -298,17 +304,21 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       val document = e.document
       val breakpoints = getDocumentBreakpointProxies(document)
       if (!breakpoints.isEmpty()) {
-        breakpointUpdateQueue.queue(object : Update(document) {
-          override fun run() {
-            ApplicationManager.getApplication().invokeLater {
-              updateBreakpoints(document)
-            }
-          }
-        })
+        scheduleDocumentUpdate(document)
 
-        getInstance(project).redrawDocument(e)
+        InlineBreakpointInlayManager.getInstance(project).redrawDocument(e)
       }
     }
+  }
+
+  private fun scheduleDocumentUpdate(document: Document) {
+    breakpointUpdateQueue.queue(object : Update(document) {
+      override fun run() {
+        ApplicationManager.getApplication().invokeLater {
+          updateBreakpoints(document)
+        }
+      }
+    })
   }
 
   private inner class MyEditorMouseMotionListener : EditorMouseMotionListener {

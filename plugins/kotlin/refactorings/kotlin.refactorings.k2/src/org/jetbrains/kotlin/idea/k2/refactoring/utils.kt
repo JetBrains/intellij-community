@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.showYesNoCancelDialog
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
@@ -29,10 +31,12 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
+import org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
  * Computes [block] and removes any possible redundant imports that would be added during this operation, not touching any existing
@@ -217,4 +221,14 @@ fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
         is KaSmartCastedReceiverValue -> original.getThisReceiverOwner()
     }
     return symbol?.containingSymbol
+}
+
+/**
+ * Rename a value or context [KtParameter] in place.
+ * The parameter should belong to a file open in the editor.
+ */
+fun renameParameterInPlace(ktParameter: KtParameter, editor: Editor) {
+    editor.caretModel.moveToOffset(ktParameter.startOffset)
+    PsiDocumentManager.getInstance(ktParameter.project).doPostponedOperationsAndUnblockDocument(editor.document)
+    KotlinMemberInplaceRenameHandler().doRename(ktParameter, editor, null)
 }

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaRunner.Larva
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaRunner.Pupa
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -16,6 +17,7 @@ import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
@@ -50,7 +52,8 @@ private suspend fun hatch(proxy: StackFrameProxyEx, pointer: SmartPsiElementPoin
   }
 
 
-  val (anchor, flow, factory, body, modificationStamp, offset, dfaVariableValues) =
+  val (anchor, flow, factory, body, 
+    modificationStamp, offset, descriptors, qualifiers) =
     constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
       val element = pointer.element ?: return@constrainedReadAction null
       if (!element.isValid) return@constrainedReadAction null
@@ -64,36 +67,48 @@ private suspend fun hatch(proxy: StackFrameProxyEx, pointer: SmartPsiElementPoin
       val descriptors = flow.instructions
         .flatMap { it.getRequiredDescriptors(factory) }
         .toSet()
-      val dfaVariableValues = factory.values.toList().asSequence().flatMap { dfaValue ->
-        descriptors.asSequence().map { it.createValue(factory, dfaValue) }.plus(dfaValue)
-      }.filterIsInstance<DfaVariableValue>().distinct().toList()
+      val qualifiers = factory.values.filterIsInstance<DfaVariableValue>()
 
-      LarvaData(anchor, flow, factory, body, modificationStamp, offset, dfaVariableValues)
+      LarvaData(anchor, flow, factory, body, modificationStamp, offset, descriptors, qualifiers)
     } ?: return null
-  val valueToVariableMapping = HashMap<Value, MutableList<DfaVariableValue>>()
-  for (dfaVar in dfaVariableValues) {
-    val jdiValue = resolveJdiValue(provider, anchor, proxy, dfaVar) ?: continue
-    valueToVariableMapping.computeIfAbsent(jdiValue) { v -> ArrayList() }.add(dfaVar)
+  if (isDumb(project)) return null
+  val possiblyQualifiedDescriptors = arrayListOf<VariableDescriptor>()
+  val varToValueMap = hashMapOf<DfaVariableValue, Value>()
+  for (descriptor in descriptors) {
+    if (descriptor is AssertionDisabledDescriptor) {
+      val location = proxy.location()
+      val status = DebuggerUtilsEx.getEffectiveAssertionStatus(location)
+      // Assume that assertions are enabled if we cannot fetch the status
+      val jdiValue = location.virtualMachine().mirrorOf(status == ThreeState.NO)
+      val dfaVar = readAction { factory.varFactory.createVariableValue(descriptor) }
+      varToValueMap[dfaVar] = jdiValue
+      continue
+    }
+    val unqualifiedValue = provider.getJdiValueForDfaVariable(proxy, descriptor, anchor)
+    if (unqualifiedValue != null) {
+      val dfaVar = readAction { factory.varFactory.createVariableValue(descriptor) }
+      varToValueMap[dfaVar] = unqualifiedValue
+      continue
+    }
+    possiblyQualifiedDescriptors.add(descriptor)
   }
-  val jdiToDfa = valueToVariableMapping
-  if (jdiToDfa.isEmpty()) return null
-  return Larva(project, anchor, body, flow, factory, modificationStamp, provider, jdiToDfa, proxy, offset)
-}
-
-@Throws(EvaluateException::class)
-private suspend fun resolveJdiValue(
-  provider: DfaAssistProvider,
-  anchor: PsiElement,
-  proxy: StackFrameProxyEx,
-  variableValue: DfaVariableValue,
-): Value? {
-  if (variableValue.descriptor is AssertionDisabledDescriptor) {
-    val location = proxy.location()
-    val status = DebuggerUtilsEx.getEffectiveAssertionStatus(location)
-    // Assume that assertions are enabled if we cannot fetch the status
-    return location.virtualMachine().mirrorOf(status == ThreeState.NO)
+  if (possiblyQualifiedDescriptors.isNotEmpty() && varToValueMap.isNotEmpty()) {
+    // Sort qualifiers by depth to ensure that previous qualifiers are already processed
+    for (qualifier in qualifiers.sortedBy { it.depth }) {
+      val jdiQualifier = varToValueMap[qualifier] ?: continue
+      val map = provider.getJdiValuesForQualifier(proxy, jdiQualifier, possiblyQualifiedDescriptors, anchor)
+      for ((descriptor, jdiValue) in map) {
+        val dfaVar = readAction { descriptor.createValue(factory, qualifier) as? DfaVariableValue } ?: continue
+        varToValueMap[dfaVar] = jdiValue
+      }
+    }
   }
-  return provider.getJdiValueForDfaVariable(proxy, variableValue, anchor)
+  if (varToValueMap.isEmpty()) return null
+  val valueToVariableMapping = varToValueMap.entries
+    .asSequence()
+    .filter { it.value !is DfaAssistProvider.InlinedValue }
+    .groupBy({ it.value }, { it.key })
+  return Larva(project, anchor, body, flow, factory, modificationStamp, provider, valueToVariableMapping, proxy, offset)
 }
 
 private suspend fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementPointer<PsiElement?>): Pupa? {
@@ -190,5 +205,6 @@ private data class LarvaData(
   val body: PsiElement,
   val modificationStamp: Long,
   val offset: Int,
-  val dfaVariableValues: List<DfaVariableValue>,
+  val descriptors: Collection<VariableDescriptor>,
+  val qualifiers: List<DfaVariableValue>,
 )

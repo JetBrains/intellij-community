@@ -123,7 +123,7 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
       import java.util.stream.Stream;
 
       public class MyTest {
-          public static void main(String[] args){
+          public static void main(){
             new MyTest();
           }
           public static Stream<Arguments> <warning descr="Method 'allJdks()' is never used">allJdks</warning>() {

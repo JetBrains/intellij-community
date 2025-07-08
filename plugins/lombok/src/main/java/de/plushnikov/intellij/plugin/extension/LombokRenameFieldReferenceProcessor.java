@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -25,8 +26,9 @@ public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariabl
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
-    if (element instanceof PsiField && !(element instanceof LombokLightFieldBuilder)) {
-      final PsiClass containingClass = ((PsiField)element).getContainingClass();
+    if ((element instanceof PsiField || element instanceof PsiRecordComponent) && !(element instanceof LombokLightFieldBuilder)
+        && !(element instanceof LightRecordField)) {
+      final PsiClass containingClass = ((PsiMember)element).getContainingClass();
       if (null != containingClass) {
         return ContainerUtil.exists(containingClass.getMethods(), LombokLightMethodBuilder.class::isInstance) ||
                ContainerUtil.exists(containingClass.getInnerClasses(), LombokLightClassBuilder.class::isInstance);
@@ -37,48 +39,57 @@ public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariabl
 
   @Override
   public void prepareRenaming(@NotNull PsiElement element, @NotNull String newFieldName, @NotNull Map<PsiElement, String> allRenames) {
-    final PsiField psiField = (PsiField)element;
-    final PsiClass containingClass = psiField.getContainingClass();
-    final String currentFieldName = psiField.getName();
+    // element is a PsiField or PsiRecordComponent
+    final PsiMember psiElementAsMember = (PsiMember)element;
+    final PsiVariable psiElementAsVariable = (PsiVariable)element;
+
+    final PsiClass containingClass = psiElementAsMember.getContainingClass();
+    final String currentFieldName = psiElementAsMember.getName();
     if (null != containingClass) {
-      final boolean isBoolean = PsiTypes.booleanType().equals(psiField.getType());
+      final boolean isBoolean = PsiTypes.booleanType().equals(psiElementAsVariable.getType());
 
-      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+      final AccessorsInfo accessorsInfo;
+      if (element instanceof PsiField psiField) {
+        accessorsInfo = AccessorsInfo.buildFor(psiField);
 
-      final String getterName = LombokUtils.toGetterName(accessorsInfo, currentFieldName, isBoolean);
-      final String newGetterName = LombokUtils.toGetterName(accessorsInfo, newFieldName, isBoolean);
-      if (StringUtil.isNotEmpty(getterName) && StringUtil.isNotEmpty(newGetterName)) {
-        final PsiMethod[] psiGetterMethods = containingClass.findMethodsByName(getterName, false);
-        for (PsiMethod psiMethod : psiGetterMethods) {
-          allRenames.put(psiMethod, newGetterName);
-        }
-      }
-
-      final String setterName = LombokUtils.toSetterName(accessorsInfo, currentFieldName, isBoolean);
-      final String newSetterName = LombokUtils.toSetterName(accessorsInfo, newFieldName, isBoolean);
-      if (StringUtil.isNotEmpty(setterName) && StringUtil.isNotEmpty(newSetterName)) {
-        final PsiMethod[] psiSetterMethods = containingClass.findMethodsByName(setterName, false);
-        for (PsiMethod psiMethod : psiSetterMethods) {
-          allRenames.put(psiMethod, newSetterName);
-        }
-      }
-
-      if (!accessorsInfo.isFluent()) {
-        final String witherName = LombokUtils.toWitherName(accessorsInfo, currentFieldName, isBoolean);
-        final String newWitherName = LombokUtils.toWitherName(accessorsInfo, newFieldName, isBoolean);
-        if (StringUtil.isNotEmpty(witherName) && StringUtil.isNotEmpty(newWitherName)) {
-          final PsiMethod[] psiWitherMethods = containingClass.findMethodsByName(witherName, false);
-          for (PsiMethod psiMethod : psiWitherMethods) {
-            allRenames.put(psiMethod, newWitherName);
+        final String getterName = LombokUtils.toGetterName(accessorsInfo, currentFieldName, isBoolean);
+        final String newGetterName = LombokUtils.toGetterName(accessorsInfo, newFieldName, isBoolean);
+        if (StringUtil.isNotEmpty(getterName) && StringUtil.isNotEmpty(newGetterName)) {
+          final PsiMethod[] psiGetterMethods = containingClass.findMethodsByName(getterName, false);
+          for (PsiMethod psiMethod : psiGetterMethods) {
+            allRenames.put(psiMethod, newGetterName);
           }
         }
+
+        final String setterName = LombokUtils.toSetterName(accessorsInfo, currentFieldName, isBoolean);
+        final String newSetterName = LombokUtils.toSetterName(accessorsInfo, newFieldName, isBoolean);
+        if (StringUtil.isNotEmpty(setterName) && StringUtil.isNotEmpty(newSetterName)) {
+          final PsiMethod[] psiSetterMethods = containingClass.findMethodsByName(setterName, false);
+          for (PsiMethod psiMethod : psiSetterMethods) {
+            allRenames.put(psiMethod, newSetterName);
+          }
+        }
+
+        if (!accessorsInfo.isFluent()) {
+          final String witherName = LombokUtils.toWitherName(accessorsInfo, currentFieldName, isBoolean);
+          final String newWitherName = LombokUtils.toWitherName(accessorsInfo, newFieldName, isBoolean);
+          if (StringUtil.isNotEmpty(witherName) && StringUtil.isNotEmpty(newWitherName)) {
+            final PsiMethod[] psiWitherMethods = containingClass.findMethodsByName(witherName, false);
+            for (PsiMethod psiMethod : psiWitherMethods) {
+              allRenames.put(psiMethod, newWitherName);
+            }
+          }
+        }
+      }
+      else {
+        accessorsInfo = AccessorsInfo.buildFor(containingClass);
       }
 
       final PsiAnnotation builderAnnotation =
         PsiAnnotationSearchUtil.findAnnotation(containingClass, LombokClassNames.BUILDER, LombokClassNames.SUPER_BUILDER);
       if (null != builderAnnotation) {
-        final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
-        final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiField, null != singularAnnotation);
+        final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiElementAsMember, LombokClassNames.SINGULAR);
+        final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiElementAsVariable, null != singularAnnotation);
 
         final String setterPrefix =
           PsiAnnotationUtil.getStringAnnotationValue(builderAnnotation, BuilderHandler.ANNOTATION_SETTER_PREFIX, "");
@@ -100,7 +111,7 @@ public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariabl
             .map(PsiClass::getMethods)
             .flatMap(Arrays::stream)
             .filter(LombokLightMethodBuilder.class::isInstance)
-            .filter(psiMethod -> psiMethod.getNavigationElement() == psiField)
+            .filter(psiMethod -> psiMethod.getNavigationElement() == element)
             .forEach(psiMethod -> {
               final int methodIndex = currentBuilderMethodNames.indexOf(psiMethod.getName());
               if (methodIndex >= 0) {
@@ -117,8 +128,24 @@ public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariabl
           .map(PsiClass::getFields)
           .flatMap(Arrays::stream)
           .filter(LombokLightFieldBuilder.class::isInstance)
-          .filter(myField -> myField.getNavigationElement() == psiField)
+          .filter(myField -> myField.getNavigationElement() == element)
           .forEach(myField -> allRenames.put(myField, newFieldName));
+      }
+
+      final boolean hasWithAnnotationOnClass =
+        PsiAnnotationSearchUtil.isAnnotatedWith(containingClass, LombokClassNames.WITH, LombokClassNames.WITHER);
+      final boolean hasWithAnnotationOnElement =
+        PsiAnnotationSearchUtil.isAnnotatedWith(psiElementAsVariable, LombokClassNames.WITH, LombokClassNames.WITHER);
+      if (hasWithAnnotationOnClass || hasWithAnnotationOnElement) {
+
+        final String witherName = LombokUtils.getWitherName(psiElementAsVariable, newFieldName, accessorsInfo);
+
+        Arrays.stream(containingClass.getMethods())
+          .filter(LombokLightMethodBuilder.class::isInstance)
+          .filter(psiMethod -> psiMethod.getNavigationElement() == element)
+          .forEach(psiMethod -> {
+            allRenames.put(psiMethod, witherName);
+          });
       }
     }
   }

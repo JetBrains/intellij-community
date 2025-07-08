@@ -64,7 +64,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
     myTable = new TableView<>(myModel);
-    addToCenter(ScrollPaneFactory.createScrollPane(myTable));
+    addToCenter(ScrollPaneFactory.createScrollPane(myTable, true));
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
 
     myUpdateQueue = new MergingUpdateQueue("OverheadView", 500, true, null, this);

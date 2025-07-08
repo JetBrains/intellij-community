@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -47,6 +48,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
     return awaitForResult { PluginManagerApi.getInstance().getVisiblePlugins(showImplementationDetails).withSource() }
+  }
+
+  override fun initSession(sessionId: String): InitSessionResult {
+    return awaitForResult { PluginManagerApi.getInstance().initSession(sessionId) }
   }
 
   override fun getInstalledPlugins(): List<PluginUiModel> {
@@ -111,8 +116,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getPluginInstallationState(pluginId) }
   }
 
-  override fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState> {
-    return awaitForResult { PluginManagerApi.getInstance().getPluginInstallationStates(pluginIds) }
+  override fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState> {
+    return awaitForResult { PluginManagerApi.getInstance().getPluginInstallationStates() }
   }
 
   override fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
@@ -184,6 +189,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     awaitForResult { PluginManagerApi.getInstance().setEnabledState(sessionId, pluginIds, enable) }
   }
 
+  override fun getApplyError(sessionId: String): String? {
+    return awaitForResult { PluginInstallerApi.getInstance().getApplySessionError(sessionId) }
+  }
+
   override fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
     return awaitForResult { PluginInstallerApi.getInstance().applyPluginSession(sessionId, project?.projectId()) }
   }
@@ -231,7 +240,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   override fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().uninstallDynamicPlugin(sessionId,pluginId, isUpdate) }
+    return awaitForResult { PluginInstallerApi.getInstance().uninstallDynamicPlugin(sessionId, pluginId, isUpdate) }
   }
 
   override fun deletePluginFiles(pluginId: PluginId) {

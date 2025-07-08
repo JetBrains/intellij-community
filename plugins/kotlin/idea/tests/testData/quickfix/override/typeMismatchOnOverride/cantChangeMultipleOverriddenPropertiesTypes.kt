@@ -5,7 +5,7 @@
 // ACTION: Go To Super Property
 // ACTION: Introduce import alias
 // ERROR: Type of 'x' is not a subtype of the overridden property 'public abstract val x: (String) -> Int defined in A'
-// K2_AFTER_ERROR: Type of 'x' is not a subtype of overridden property 'val x: (String) -> Int' defined in '/A'.
+// K2_AFTER_ERROR: Type of 'x' is not a subtype of overridden property 'val x: (String) -> Int' defined in 'A'.
 interface A {
     val x: (String) -> Int
 }

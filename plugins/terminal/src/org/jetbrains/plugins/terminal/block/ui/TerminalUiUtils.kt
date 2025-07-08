@@ -110,6 +110,11 @@ object TerminalUiUtils {
     editor.gutterComponentEx.isPaintBackground = false
     editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.HIDE)
 
+    // Editor installs its own drop target during `javax.swing.JComponent.setTransferHandler` call.
+    // But it blocks the DnD installed in the terminal tool window: `org.jetbrains.plugins.terminal.TerminalToolWindowPanel.installDnD`.
+    // So, let's remove it to enable the terminal DnD implementation.
+    editor.contentComponent.dropTarget = null
+
     val terminalColorScheme = TerminalColorScheme()
     editor.colorsScheme = terminalColorScheme
     editor.putUserData(TerminalColorScheme.KEY, terminalColorScheme)

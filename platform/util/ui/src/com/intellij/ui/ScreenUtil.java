@@ -1,19 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
-import java.util.Map;
-import java.util.Objects;
-import java.util.WeakHashMap;
+import java.util.*;
+import java.util.List;
 
 public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
@@ -554,5 +556,28 @@ public final class ScreenUtil {
     // keep the ID in sync with com.intellij.platform.impl.toolkit.HeadlessDummyGraphicsEnvironment, can't be referenced here
     if (Objects.equals(configuration.getDevice().getIDstring(), "DummyHeadless")) return true;
     return configuration.getBounds().intersects(window.getBounds());
+  }
+
+  /**
+   * Logs the current monitor configuration.
+   *
+   * @param ideFrame if not null, then the monitor containing this window will be marked "IDE frame" in the message
+   */
+  @ApiStatus.Internal
+  public static @NotNull List<@NotNull String> loggableMonitorConfiguration(@Nullable JFrame ideFrame) {
+    var result = new ArrayList<@NotNull String>();
+    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    for (GraphicsDevice device : ge.getScreenDevices()) {
+      DisplayMode displayMode = device.getDisplayMode();
+      GraphicsConfiguration gc = device.getDefaultConfiguration();
+      float scale = JBUIScale.sysScale(gc);
+      Rectangle bounds = getScreenRectangle(gc);
+      result.add(String.format("%s (%dx%d scaled at %.02f with insets %s)%s%s",
+                              bounds, displayMode.getWidth(), displayMode.getHeight(), scale, getScreenInsets(gc),
+                              (device == ge.getDefaultScreenDevice() ? ", default" : ""),
+                              (ideFrame != null && device == ideFrame.getGraphicsConfiguration().getDevice() ? ", IDE frame" : "")
+      ));
+    }
+    return result;
   }
 }

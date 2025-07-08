@@ -2,6 +2,7 @@ package com.intellij.tools.ide.metrics.collector.telemetry
 
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
+import com.intellij.tools.ide.metrics.collector.metrics.median
 import com.intellij.tools.ide.metrics.collector.metrics.standardDeviation
 
 interface MetricsPostProcessor {
@@ -56,10 +57,12 @@ class CombinedMetricsPostProcessor : MetricsPostProcessor {
         val sum = entry.value.sumOf { it.metric.value }
         val count = entry.value.size
         val mean = sum / count
+        val median = entry.value.map { it.metric.value }.median()
         val standardDeviation = entry.value.map { it.metric.value }.standardDeviation()
         result.add(Metric.newDuration(entry.key, sum))
         result.add(Metric.newCounter(entry.key + "#count", count))
         result.add(Metric.newDuration(entry.key + "#mean_value", mean))
+        result.add(Metric.newDuration(entry.key + "#median_value", median))
         result.add(Metric.newDuration(entry.key + "#standard_deviation", standardDeviation))
       }
     }

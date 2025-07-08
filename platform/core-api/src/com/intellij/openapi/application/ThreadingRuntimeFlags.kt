@@ -10,6 +10,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
 
+/**
+ * - `false` means that [backgroundWriteAction] will block the thread during lock acquisition
+ * - `true` means that [backgroundWriteAction] will suspend during lock acquisition
+ */
+@ApiStatus.Internal
+val useTrueSuspensionForWriteAction: Boolean = System.getProperty("idea.true.suspension.for.write.action", "false").toBoolean()
 
 /**
  * - `false` means wrong action chains are ignored and not reported

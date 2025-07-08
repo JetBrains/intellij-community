@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
+import org.jetbrains.plugins.github.authentication.GHLoginSource;
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
@@ -121,7 +122,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     new Task.Backgroundable(project, GithubBundle.message("create.gist.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        String token = GHCompatibilityUtil.getOrRequestToken(account, project);
+        String token = GHCompatibilityUtil.getOrRequestToken(account, project, GHLoginSource.GIST);
         if (token == null) return;
         GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.getServer(), token);
 

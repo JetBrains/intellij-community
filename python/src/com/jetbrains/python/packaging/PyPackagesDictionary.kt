@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 class PyPackagesDictionary : Dictionary {
   override fun getName(): String = message("python.packages.dictionary.name")
 
-  override fun contains(word: String): Boolean = service<PypiPackageCache>().contains(word)
+  override fun contains(word: String): Boolean? = service<PypiPackageCache>().contains(word)
 
   override fun getWords(): MutableSet<String> = throw UnsupportedOperationException()
 

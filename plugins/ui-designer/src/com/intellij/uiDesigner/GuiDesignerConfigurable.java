@@ -10,7 +10,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.DispatchThreadProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -18,10 +17,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
-import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +27,7 @@ import javax.swing.*;
 public final class GuiDesignerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(GuiDesignerConfigurable.class);
   private final Project myProject;
-  private MyGeneralUI myGeneralUI;
+  private GuiDesignerUI myGuiDesignerUI;
 
   /**
    * Invoked by reflection
@@ -51,62 +48,22 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
 
   @Override
   public JComponent createComponent() {
-    if (myGeneralUI == null) {
-      myGeneralUI = new MyGeneralUI();
+    if (myGuiDesignerUI == null) {
+      myGuiDesignerUI = new GuiDesignerUI(myProject);
     }
 
-    return myGeneralUI.myPanel;
+    return myGuiDesignerUI.content;
   }
 
   @Override
   public boolean isModified() {
-    final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
-
-    if (myGeneralUI == null) {
-      return false;
-    }
-
-    if (myGeneralUI.myChkCopyFormsRuntime.isSelected() != configuration.COPY_FORMS_RUNTIME_TO_OUTPUT) {
-      return true;
-    }
-    
-    if (myGeneralUI.myChkUseDynamicBundles.isSelected() != configuration.USE_DYNAMIC_BUNDLES) {
-      return true;
-    }
-
-    if (!Comparing.equal(configuration.DEFAULT_LAYOUT_MANAGER, myGeneralUI.myLayoutManagerCombo.getSelectedItem())) {
-      return true;
-    }
-
-    if (!Comparing.equal(configuration.DEFAULT_FIELD_ACCESSIBILITY, myGeneralUI.myDefaultFieldAccessibilityCombo.getSelectedItem())) {
-      return true;
-    }
-
-    if (configuration.INSTRUMENT_CLASSES != myGeneralUI.myRbInstrumentClasses.isSelected()) {
-      return true;
-    }
-
-    if (configuration.GENERATE_SOURCES_ON_SAVE != myGeneralUI.myRbInstrumentSourcesOnSave.isSelected()) {
-      return true;
-    }
-
-    if (configuration.RESIZE_HEADERS != myGeneralUI.myResizeHeaders.isSelected()) {
-      return true;
-    }
-
-    return false;
+    return myGuiDesignerUI != null && myGuiDesignerUI.content.isModified();
   }
 
   @Override
   public void apply() {
+    myGuiDesignerUI.content.apply();
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
-    configuration.COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
-    configuration.DEFAULT_LAYOUT_MANAGER = (String)myGeneralUI.myLayoutManagerCombo.getSelectedItem();
-    configuration.INSTRUMENT_CLASSES = myGeneralUI.myRbInstrumentClasses.isSelected();
-    configuration.DEFAULT_FIELD_ACCESSIBILITY = (String)myGeneralUI .myDefaultFieldAccessibilityCombo.getSelectedItem();
-    configuration.RESIZE_HEADERS = myGeneralUI.myResizeHeaders.isSelected();
-    configuration.USE_DYNAMIC_BUNDLES = myGeneralUI.myChkUseDynamicBundles.isSelected();
-    configuration.GENERATE_SOURCES_ON_SAVE = myGeneralUI.myRbInstrumentSourcesOnSave.isSelected();
 
     if (configuration.INSTRUMENT_CLASSES && !myProject.isDefault()) {
       final DispatchThreadProgressWindow progressWindow = new DispatchThreadProgressWindow(false, myProject);
@@ -118,46 +75,13 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
 
   @Override
   public void reset() {
-    final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
-
-    /*general*/
-    if (configuration.INSTRUMENT_CLASSES) {
-      myGeneralUI.myRbInstrumentClasses.setSelected(true);
-    }
-    else if (configuration.GENERATE_SOURCES_ON_SAVE) {
-      myGeneralUI.myRbInstrumentSourcesOnSave.setSelected(true);
-    }
-    else {
-      myGeneralUI.myRbInstrumentSourcesOnCompilation.setSelected(true);
-    }
-    myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
-    myGeneralUI.myChkUseDynamicBundles.setSelected(configuration.USE_DYNAMIC_BUNDLES);
-
-    myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel<>(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
-    myGeneralUI.myLayoutManagerCombo.setRenderer(SimpleListCellRenderer.create("", LayoutManagerRegistry::getLayoutManagerDisplayName));
-    myGeneralUI.myLayoutManagerCombo.setSelectedItem(configuration.DEFAULT_LAYOUT_MANAGER);
-
-    myGeneralUI.myDefaultFieldAccessibilityCombo.setSelectedItem(configuration.DEFAULT_FIELD_ACCESSIBILITY);
-
-    myGeneralUI.myResizeHeaders.setSelected(configuration.RESIZE_HEADERS);
+    myGuiDesignerUI.content.reset();
   }
 
   @Override
   public void disposeUIResources() {
-    myGeneralUI = null;
+    myGuiDesignerUI = null;
   } /*UI for "General" tab*/
-
-  private static final class MyGeneralUI {
-    public JPanel myPanel;
-    public JRadioButton myRbInstrumentClasses;
-    public JRadioButton myRbInstrumentSourcesOnCompilation;
-    public JRadioButton myRbInstrumentSourcesOnSave;
-    public JCheckBox myChkCopyFormsRuntime;
-    public JCheckBox myChkUseDynamicBundles;
-    private JComboBox<String> myLayoutManagerCombo;
-    private JComboBox<String> myDefaultFieldAccessibilityCombo;
-    private JCheckBox myResizeHeaders;
-  }
 
   private final class MyApplyRunnable implements Runnable {
     private final DispatchThreadProgressWindow myProgressWindow;

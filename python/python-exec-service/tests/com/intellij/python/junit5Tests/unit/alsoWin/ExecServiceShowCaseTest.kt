@@ -13,18 +13,23 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplication
 import com.intellij.python.community.execService.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.Exe
+import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.getOrThrow
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedTest
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * How to use [ExecService].
@@ -33,6 +38,21 @@ import kotlin.time.Duration.Companion.minutes
 @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
 class ExecServiceShowCaseTest {
   enum class SimpleApiExecType { IN_SHELL, RELATIVE, FULL_PATH }
+
+  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  @CartesianTest
+  fun testProcessKilled(
+    @EelSource eelHolder: EelHolder,
+  ): Unit = timeoutRunBlocking(5.minutes) {
+    val (shell, _) = eelHolder.eel.exec.getShell()
+    val job = launch(start = CoroutineStart.UNDISPATCHED) {
+      ExecService().execGetStdout(shell.asNioPath())
+    }
+    delay(500.milliseconds)
+    withTimeout(10.seconds) {
+      job.cancelAndJoin()
+    }
+  }
 
   @CartesianTest
   fun testExecSimpleApi(
@@ -176,7 +196,7 @@ class ExecServiceShowCaseTest {
       is Result.Failure -> {
         assertFalse(sunny, "Unexpected failure ${result.error}")
         assertThat("Wrong message to user", result.error.message, CoreMatchers.containsString(messageToUser))
-        assertEquals(shell, result.error.exe.asNioPath(), "Wrong exe")
+        assertEquals(shell, (result.error.exe as Exe.OnEel).eelPath.asNioPath(), "Wrong exe")
       }
       is Result.Success -> {
         assertTrue(sunny, "Unexpected success")
@@ -193,8 +213,8 @@ class ExecServiceShowCaseTest {
     when (val output = ExecService().execGetStdout(binary, listOf(arg))) {
       is Result.Success -> fail("Execution of bad command should lead to an error")
       is Result.Failure -> {
-        val err = output.error
-        assertEquals(binary, err.exe.asNioPath(), "Wrong command reported")
+        val err = (output.error as ExecError)
+        assertEquals(binary, (err.exe as Exe.OnEel).eelPath.asNioPath(), "Wrong command reported")
         assertEquals("foo", err.args[0], "Wrong args reported")
       }
     }

@@ -9,7 +9,39 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XmlBuilder {
-  void doctype(final @Nullable CharSequence publicId, final @Nullable CharSequence systemId, final int startOffset, final int endOffset);
+  void doctype(@Nullable CharSequence publicId,
+               @Nullable CharSequence systemId,
+               int startOffset,
+               int endOffset);
+
+  @NotNull ProcessingOrder startTag(@NotNull CharSequence localName,
+                                    @NotNull String namespace,
+                                    int startOffset,
+                                    int endOffset,
+                                    int headerEndOffset);
+
+  void endTag(@NotNull CharSequence localName,
+              @NotNull String namespace,
+              int startOffset,
+              int endOffset);
+
+  void attribute(@NotNull CharSequence name,
+                 @NotNull CharSequence value,
+                 int startOffset,
+                 int endOffset);
+
+  void textElement(@NotNull CharSequence display,
+                   @NotNull CharSequence physical,
+                   int startOffset,
+                   int endOffset);
+
+  void entityRef(@NotNull CharSequence ref,
+                 int startOffset,
+                 int endOffset);
+
+  void error(@NotNull String message,
+             int startOffset,
+             int endOffset);
 
   enum ProcessingOrder {
     TAGS,
@@ -17,16 +49,4 @@ public interface XmlBuilder {
     TAGS_AND_ATTRIBUTES,
     TAGS_AND_ATTRIBUTES_AND_TEXTS
   }
-
-  ProcessingOrder startTag(CharSequence localName, String namespace, int startoffset, int endoffset, final int headerEndOffset);
-
-  void endTag(CharSequence localName, String namespace, int startoffset, int endoffset);
-
-  void attribute(CharSequence name, CharSequence value, int startoffset, int endoffset);
-
-  void textElement(CharSequence display, CharSequence physical, int startoffset, int endoffset);
-
-  void entityRef(CharSequence ref, int startOffset, int endOffset);
-
-  void error(@NotNull String message, int startOffset, int endOffset);
 }

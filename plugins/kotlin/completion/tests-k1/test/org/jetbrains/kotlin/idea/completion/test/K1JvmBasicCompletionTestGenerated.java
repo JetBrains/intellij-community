@@ -655,6 +655,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/callableReference/JavaSyntheticPropertyReferenceTrueNegative3.kt");
             }
 
+            @TestMetadata("NestedClass.kt")
+            public void testNestedClass() throws Exception {
+                runTest("../testData/basic/common/callableReference/NestedClass.kt");
+            }
+
             @TestMetadata("NonEmptyQualifier.kt")
             public void testNonEmptyQualifier() throws Exception {
                 runTest("../testData/basic/common/callableReference/NonEmptyQualifier.kt");
@@ -737,6 +742,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("SingleConstructor.kt")
             public void testSingleConstructor() throws Exception {
                 runTest("../testData/basic/common/constructor/SingleConstructor.kt");
+            }
+
+            @TestMetadata("SubclassConstructor.kt")
+            public void testSubclassConstructor() throws Exception {
+                runTest("../testData/basic/common/constructor/SubclassConstructor.kt");
             }
         }
 
@@ -1533,6 +1543,35 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("SuspendFunction.kt")
             public void testSuspendFunction() throws Exception {
                 runTest("../testData/basic/common/highOrderFunctions/SuspendFunction.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/importAliases")
+        public static class ImportAliases extends AbstractK1JvmBasicCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ImportAliasClass.kt")
+            public void testImportAliasClass() throws Exception {
+                runTest("../testData/basic/common/importAliases/ImportAliasClass.kt");
+            }
+
+            @TestMetadata("ImportAliasExtension.kt")
+            public void testImportAliasExtension() throws Exception {
+                runTest("../testData/basic/common/importAliases/ImportAliasExtension.kt");
+            }
+
+            @TestMetadata("ImportAliasMethod.kt")
+            public void testImportAliasMethod() throws Exception {
+                runTest("../testData/basic/common/importAliases/ImportAliasMethod.kt");
             }
         }
 
@@ -2679,6 +2718,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             public void testPreferSealedHierarchyNested() throws Exception {
                 runTest("../testData/basic/common/sealedHierarchy/PreferSealedHierarchyNested.kt");
             }
+
+            @TestMetadata("SealedExpectedType.kt")
+            public void testSealedExpectedType() throws Exception {
+                runTest("../testData/basic/common/sealedHierarchy/SealedExpectedType.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -3267,6 +3311,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/DoWhile.kt");
             }
 
+            @TestMetadata("DontIncreaseInvocationCountIfSomethingFound.kt")
+            public void testDontIncreaseInvocationCountIfSomethingFound() throws Exception {
+                runTest("../testData/basic/common/DontIncreaseInvocationCountIfSomethingFound.kt");
+            }
+
             @TestMetadata("DontPreferNothingType.kt")
             public void testDontPreferNothingType() throws Exception {
                 runTest("../testData/basic/common/DontPreferNothingType.kt");
@@ -3572,6 +3621,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/InTypeAnnotation.kt");
             }
 
+            @TestMetadata("IncreaseInvocationCountIfNothingFound.kt")
+            public void testIncreaseInvocationCountIfNothingFound() throws Exception {
+                runTest("../testData/basic/common/IncreaseInvocationCountIfNothingFound.kt");
+            }
+
             @TestMetadata("InfixCall.kt")
             public void testInfixCall() throws Exception {
                 runTest("../testData/basic/common/InfixCall.kt");
@@ -3785,6 +3839,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("NestedClassesOnDefaultObjectLiteral.kt")
             public void testNestedClassesOnDefaultObjectLiteral() throws Exception {
                 runTest("../testData/basic/common/NestedClassesOnDefaultObjectLiteral.kt");
+            }
+
+            @TestMetadata("NoClassMembersHighInvocationCount.kt")
+            public void testNoClassMembersHighInvocationCount() throws Exception {
+                runTest("../testData/basic/common/NoClassMembersHighInvocationCount.kt");
             }
 
             @TestMetadata("NoClassNameDuplication.kt")

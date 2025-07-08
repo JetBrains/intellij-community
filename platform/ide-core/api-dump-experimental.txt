@@ -81,7 +81,8 @@ f:com.intellij.platform.ide.core.permissions.PermissionsKt
 *:com.intellij.platform.ide.core.permissions.RequiresPermissions
 - a:getRequiredPermissions():java.util.Collection
 c:com.intellij.projectImport.ProjectAttachProcessor
-- *:attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.coroutines.Continuation):java.lang.Object
+- *:attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:attachToProjectAsync$default(com.intellij.projectImport.ProjectAttachProcessor,com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 c:com.intellij.ui.AnimatedIcon
 - javax.swing.Icon
 - *sf:REFRESH_DELEGATE:com.intellij.openapi.util.Key

@@ -47,6 +47,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.*;
@@ -128,6 +129,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project, scope);
     builder.setViewer(true);
     myConsole = builder.getConsole();
+    // remove the left border from console view
+    UIUtil.removeScrollBorder(myConsole.getComponent());
     myConsole.attachToProcess(myProcessHandler);
     myDisposed = false;
     myModel.addFilterListener(this);

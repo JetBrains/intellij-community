@@ -15,8 +15,11 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MavenModel extends MavenModelBase {
   private MavenId myMavenId;
@@ -24,13 +27,12 @@ public class MavenModel extends MavenModelBase {
   private String myPackaging;
   private String myName;
 
-  private ArrayList<MavenProfile> myProfiles;
+  private @NotNull List<@NotNull MavenProfile> myProfiles = new CopyOnWriteArrayList<>();
 
   private final MavenBuild myBuild;
 
   public MavenModel() {
     myMavenId = new MavenId(MavenId.UNKNOWN_VALUE, MavenId.UNKNOWN_VALUE, MavenId.UNKNOWN_VALUE);
-    myProfiles = new ArrayList<>();
     myBuild = new MavenBuild();
   }
 
@@ -67,11 +69,11 @@ public class MavenModel extends MavenModelBase {
   }
 
   public List<MavenProfile> getProfiles() {
-    return myProfiles;
+    return Collections.unmodifiableList(myProfiles);
   }
 
   public void setProfiles(List<MavenProfile> profiles) {
-    myProfiles = new ArrayList<>(profiles);
+    myProfiles = new CopyOnWriteArrayList<>(profiles);
   }
 
   public MavenBuild getBuild() {

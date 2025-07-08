@@ -189,6 +189,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - <init>():V
 - f:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - a:findTargetToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getAdditionalInfo():java.lang.String
 - f:getPresentableName():java.lang.String
 - getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - f:getSynonyms():java.util.List
@@ -469,6 +470,7 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - mouseMoved(java.awt.event.MouseEvent,java.awt.Point):V
 *:com.intellij.codeInsight.intention.EventTrackingIntentionAction
 - a:suggestionShown(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+- s:unwrap(com.intellij.codeInsight.intention.IntentionAction):com.intellij.codeInsight.intention.EventTrackingIntentionAction
 *e:com.intellij.codeInsight.intention.IntentionSource
 - java.lang.Enum
 - sf:CONTEXT_ACTIONS:com.intellij.codeInsight.intention.IntentionSource
@@ -800,6 +802,7 @@ f:com.intellij.platform.ide.documentation.ActionsKt
 *f:com.intellij.psi.codeStyle.DetectableIndentSettingsModifier
 - com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 - <init>():V
+- acceptsFileIndentOptionsProviders():Z
 - getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
 - getName():java.lang.String
 - getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor

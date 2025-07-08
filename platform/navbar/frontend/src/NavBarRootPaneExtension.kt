@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
@@ -441,7 +442,7 @@ private object TopNavBarMode : NavBarMode {
 
 private object BottomNavBarMode : NavBarMode {
   override suspend fun configure(project: Project, statusBar: StatusBar, uiSettings: UISettings): MyNavBarWrapperPanel? {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UI) {
       setStatusBarCentralWidget(statusBar, MyNavBarWrapperPanel(project, useAsComponent = false).getNavBarPanel())
     }
     return null

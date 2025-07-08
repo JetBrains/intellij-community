@@ -49,7 +49,7 @@ class DebuggerConnection(
     init {
         if (params is JavaParameters && shouldAttachCoroutineAgent) {
             // gradle related logic in KotlinGradleCoroutineDebugProjectResolver
-            coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, params)
+            coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, configuration, params)
         } else {
             coroutineAgentAttached = false
             log.debug("Coroutine debugger disabled.")
@@ -61,7 +61,7 @@ class DebuggerConnection(
 
     override fun processStarted(debugProcess: XDebugProcess) {
         if (XDebugSessionProxy.useFeProxy()) return // TODO IDEA-368739
-        DebuggerInvocationUtil.swingInvokeLater(project) {
+        DebuggerInvocationUtil.invokeLaterAnyModality(project) {
             val session = debugProcess.session
             if (debugProcess is JavaDebugProcess &&
                 !isDisposed &&

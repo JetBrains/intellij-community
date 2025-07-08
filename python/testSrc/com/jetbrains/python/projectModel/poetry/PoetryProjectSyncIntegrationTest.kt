@@ -10,7 +10,7 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyA
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.MODULE_SOURCE
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.SourceRootAssertions
-import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -34,7 +34,7 @@ class PoetryProjectSyncIntegrationTest {
 
   @Test
   fun `src directory is mapped to module source root`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
       dependencies = [
@@ -55,7 +55,7 @@ class PoetryProjectSyncIntegrationTest {
 
   @Test
   fun `project with new-style PEP-621 path dependencies`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "main"
       dependencies = [
@@ -93,7 +93,8 @@ class PoetryProjectSyncIntegrationTest {
   // https://python-poetry.org/history/#added-2
   @Test
   fun `project with old-style path dependencies`() = timeoutRunBlocking {
-    testRoot.createFile("pyproject.toml").writeText("""
+    testRoot.createFile(
+      PY_PROJECT_TOML).writeText("""
       [tool.poetry]
       name = "main"
       

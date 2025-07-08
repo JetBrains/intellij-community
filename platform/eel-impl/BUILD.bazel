@@ -27,6 +27,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/eel-provider",
     "//platform/core-nio-fs",
+    "//platform/core-impl",
   ],
   runtime_deps = [":eel-impl_resources"]
 )

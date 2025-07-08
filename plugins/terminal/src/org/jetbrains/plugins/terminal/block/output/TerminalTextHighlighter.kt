@@ -55,7 +55,7 @@ internal class TextStyleAdapter(private val style: TextStyle,
   }
 
   override fun toString(): String {
-    return "TextStyleAdapter(style=$style)"
+    return "TextStyleAdapter(style=TextStyle(fg=${style.foreground}, bg=${style.background}, op=${TextStyle.Option.entries.filter { style.hasOption(it) }}))"
   }
 }
 

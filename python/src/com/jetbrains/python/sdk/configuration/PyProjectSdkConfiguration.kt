@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
@@ -29,6 +30,8 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.uv.isUv
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object PyProjectSdkConfiguration {
 
@@ -42,7 +45,12 @@ object PyProjectSdkConfiguration {
       withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), false) {
         lifetime.use {
           setSdkUsingExtension(module, extension) {
-            extension.createAndAddSdkForInspection(module)
+            reportRawProgress {
+              it.text(extension.getIntention(module) ?: "")
+              withContext(Dispatchers.Default) {
+                extension.createAndAddSdkForInspection(module)
+              }
+            }
           }
         }
       }

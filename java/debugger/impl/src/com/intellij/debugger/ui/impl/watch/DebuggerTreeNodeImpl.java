@@ -6,6 +6,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -184,7 +185,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
       r.run();
     }
     else {
-      SwingUtilities.invokeLater(r);
+      DebuggerInvocationUtil.invokeLaterAnyModality(r);
     }
   }
 

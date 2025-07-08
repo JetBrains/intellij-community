@@ -2,10 +2,9 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
-import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -17,6 +16,8 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.library.KotlinLibrary
 import com.intellij.openapi.module.Module as OpenapiModule
+import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
+import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 
 @ApiStatus.Internal
 abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase() {
@@ -27,15 +28,19 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
      */
     abstract val self: IDEProjectStructureProvider
 
-    abstract fun getKaSourceModule(moduleId: ModuleId, type: KaSourceModuleKind): KaSourceModule?
+    abstract fun getKaSourceModule(moduleId: ModuleId, kind: KaSourceModuleKind): KaSourceModule?
+
+    abstract fun getKaSourceModules(moduleId: ModuleId): List<KaSourceModule>
 
     abstract fun getKaSourceModule(moduleEntity: ModuleEntity, kind: KaSourceModuleKind): KaSourceModule?
 
-    abstract fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind
+    abstract fun getKaSourceModules(moduleEntity: ModuleEntity): List<KaSourceModule>
 
     abstract fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId
 
     abstract fun getKaSourceModule(openapiModule: OpenapiModule, type: KaSourceModuleKind): KaSourceModule?
+
+    abstract fun getKaSourceModules(openapiModule: OpenapiModule): List<KaSourceModule>
 
     abstract fun getOpenapiModule(module: KaSourceModule): OpenapiModule
 
@@ -56,6 +61,11 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
     abstract fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary>
 
     abstract fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule>
+
+    /**
+     * Return tracker which will be incremented when any `KaModule` is invalidated.
+     */
+    abstract fun getCacheDependenciesTracker(): ModificationTracker
 }
 
 

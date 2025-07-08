@@ -29,7 +29,7 @@ internal class IntelliJPrePushHandler : IssueIDPrePushHandler() {
   override fun getPresentableName(): @Nls String = DevKitGitBundle.message("push.commit.handler.idea.name")
 }
 
-internal class KotlinBuildToolsPrePushHandler: AbstractIntelliJProjectPrePushHandler() {
+internal class KotlinBuildToolsPrePushHandler : AbstractIntelliJProjectPrePushHandler() {
 
   override val pathsToIgnore: List<String> =
     listOf("community/plugins/kotlin/gradle/gradle-java/k1/test/org/jetbrains/kotlin/idea/scripting/")
@@ -78,4 +78,39 @@ internal class KotlinBuildToolsPrePushHandler: AbstractIntelliJProjectPrePushHan
 
     return true
   }
+}
+
+internal class AiAssistantPluginPrePushHandler : IssueIDPrePushHandler() {
+  override val paths: List<String> = listOf("plugins/llm/", "plugins/llm-installer/", "plugins/full-line/")
+  override val commitMessageRegex = Regex(".*\\b[A-Z]{2,}-\\d+\\b.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
+  private val protectedBranches = listOf("ij-ai/", "ij-aia/", "ide-next/")
+
+  override fun isTargetBranchProtected(project: Project, pushInfo: PushInfo): Boolean {
+    return super.isTargetBranchProtected(project, pushInfo) || protectedBranches.any { pushInfo.pushSpec.target.presentation.startsWith(it) }
+  }
+
+  override fun isAvailable(): Boolean = Registry.`is`("aia.commit.message.validation.enabled", true)
+  override fun doCommitsViolateRule(project: Project, commitsToWarnAbout: List<Pair<String, String>>, modalityState: ModalityState): Boolean {
+
+    val commitsInfo = commitsToWarnAbout.joinToString("<br/>") { hashAndSubject ->
+      "${hashAndSubject.first}: ${hashAndSubject.second}"
+    }
+
+    val commitAsIs = invokeAndWait(modalityState) {
+      @Suppress("DialogTitleCapitalization")
+      MessageDialogBuilder.yesNo(
+        DevKitGitBundle.message("aia.push.commit.message.lacks.issue.reference.title"),
+        DevKitGitBundle.message("aia.push.commit.message.lacks.issue.reference.body", commitsInfo)
+      )
+        .yesText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.commit"))
+        .noText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.edit"))
+        .asWarning()
+        .ask(project = null)
+    }
+
+    return !commitAsIs
+
+  }
+
+  override fun getPresentableName(): String = DevKitGitBundle.message("aia.commit.handler.name")
 }

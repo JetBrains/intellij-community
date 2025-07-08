@@ -17,6 +17,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
@@ -26,7 +27,6 @@ import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.sdk.poetry.ui.PyAddNewPoetryFromFilePanel
 import com.jetbrains.python.sdk.setAssociationToModule
@@ -47,7 +47,7 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
   @NlsSafe
   override suspend fun getIntention(module: Module): String? = reportRawProgress {
     it.text(PyBundle.message("python.sdk.validating.environment"))
-    val toml = findAmongRoots(module, PY_PROJECT_TOML)
+    val toml = PyProjectToml.findFile(module)
     if (toml == null) {
       return@reportRawProgress null
     }
@@ -105,19 +105,19 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val basePath = module.basePath?.let { Path.of(it) }
       if (basePath == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find module base path")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",module.basePath))
       }
-
-      val poetry = setupPoetry(basePath, null, true, findAmongRoots(module, PY_PROJECT_TOML) == null).getOr { return@withBackgroundProgress it }
+      val tomlFile = PyProjectToml.findFile(module)
+      val poetry = setupPoetry(basePath, null, true, tomlFile == null).getOr { return@withBackgroundProgress it }
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(poetry)) }
       if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find python executable in $poetry")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", poetry))
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.pathString)
       if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError("Can't find python executable in $poetry")
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", path))
       }
 
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")

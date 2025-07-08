@@ -6,6 +6,7 @@ import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -438,7 +439,11 @@ public final class LombokUtils {
   }
 
   public static String getWitherName(@NotNull PsiVariable psiVariable, @NotNull AccessorsInfo accessorsInfo) {
-    return toWitherName(accessorsInfo.withFluent(false), psiVariable.getName(), PsiTypes.booleanType().equals(psiVariable.getType()));
+    return getWitherName(psiVariable, psiVariable.getName(), accessorsInfo);
+  }
+
+  public static String getWitherName(@NotNull PsiVariable psiVariable, @Nullable String variableName, @NotNull AccessorsInfo accessorsInfo) {
+    return toWitherName(accessorsInfo.withFluent(false), variableName, PsiTypes.booleanType().equals(psiVariable.getType()));
   }
 
   /**

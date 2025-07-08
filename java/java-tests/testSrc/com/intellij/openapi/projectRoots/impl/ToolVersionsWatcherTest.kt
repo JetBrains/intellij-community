@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.platform.util.coroutines.childScope
@@ -60,15 +60,17 @@ class ToolVersionsWatcherLightTests : BasePlatformTestCase() {
     for ((candidate, version) in mapOf(
       //"corretto-8.342.07.3" to "Amazon Corretto 1.8.0_342",
       //"liberica-8u292+10" to "BellSoft Liberica 1.8.0_292",
+      //"zulu-8.66.0.15" to "Azul Zulu 8.0.352",
+      "corretto-17.0.10.7.1" to "Amazon Corretto 17.0.10",
+      "jetbrains-17.0.5b469.71" to "JetBrains Runtime 17.0.5",
       "liberica-17.0.3+7" to "BellSoft Liberica 17.0.3",
       "openjdk-17.0.1" to "Oracle OpenJDK 17.0.1",
       "sapmachine-17.0.1" to "SAP SapMachine 17.0.1",
       "semeru-openj9-17.0.4+8_openj9-0.33.0" to "IBM Semeru 17.0.4",
       "temurin-17.0.7+7" to "Eclipse Temurin 17.0.7",
-      //"zulu-8.66.0.15" to "Azul Zulu 8.0.352",
+      "adoptopenjdk-21.0.2+13.0.LTS" to "AdoptOpenJDK (HotSpot) 21.0.2",
 
       "graalvm-community-21.0.2" to "GraalVM CE 23.1.2 - Java 21.0.2",
-      "corretto-17.0.10.7.1" to "GraalVM 23.0.3 - Java 17.0.10",
     )) {
       assert(
         AsdfReleaseData.parse(candidate)?.matchVersionString(version) == true

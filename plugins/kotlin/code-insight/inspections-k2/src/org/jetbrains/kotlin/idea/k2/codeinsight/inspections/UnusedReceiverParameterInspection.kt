@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.getThisLabelName
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.getThisWithLabel
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
@@ -163,32 +165,6 @@ fun isReceiverUsedInside(
     return used
 }
 
-/**
- * Returns the label that can be used to refer to this declaration symbol.
- * In named functions it is the name of the function.
- * For an anonymous lambda argument it is the name of the function it is passed to.
- */
-private fun KaDeclarationSymbol.getThisLabelName(): String {
-    val name = name ?: return ""
-    if (!name.isSpecial) return name.asString()
-    if (this is KaAnonymousFunctionSymbol) {
-        val function = psi as? KtFunction
-        val argument = function?.parent as? KtValueArgument
-            ?: (function?.parent as? KtLambdaExpression)?.parent as? KtValueArgument
-        val callElement = argument?.getStrictParentOfType<KtCallElement>()
-        val callee = callElement?.calleeExpression as? KtSimpleNameExpression
-        if (callee != null) return callee.text
-    }
-    return ""
-}
-
-/**
- * Returns the `this` expression that can be used to refer to the given declaration symbol.
- */
-private fun KaDeclarationSymbol.getThisWithLabel(): String {
-    val labelName = getThisLabelName()
-    return if (labelName.isEmpty()) "this" else "this@$labelName"
-}
 
 /**
  * Returns all type parameters that are being referenced by the [typeReference].

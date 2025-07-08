@@ -3,21 +3,14 @@ package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
 import com.intellij.ide.projectView.PresentationData
-import com.intellij.ide.structureView.StructureViewClickEvent
-import com.intellij.ide.structureView.StructureViewEventsCollector
-import com.intellij.ide.structureView.StructureViewModel
-import com.intellij.ide.structureView.StructureViewModelBase
-import com.intellij.ide.structureView.StructureViewTreeElement
+import com.intellij.ide.structureView.*
+import com.intellij.ide.structureView.StructureViewBundle
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.structureView.logical.ContainerElementsProvider
 import com.intellij.ide.structureView.logical.ExternalElementsProvider
 import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 import com.intellij.ide.structureView.logical.PropertyElementProvider
-import com.intellij.ide.structureView.logical.model.LogicalContainerPresentationProvider
-import com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
-import com.intellij.ide.structureView.logical.model.LogicalContainer
-import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
-import com.intellij.ide.structureView.logical.model.ProvidedLogicalContainer
+import com.intellij.ide.structureView.logical.model.*
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
@@ -25,13 +18,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.tree.TreeVisitor
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 @ApiStatus.Internal
-class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
+class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, val assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
   : StructureViewModelBase(psiFile, editor, elementBuilder.createViewTreeElement(assembledModel)),
     StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider, StructureViewModel.ClickHandler {
 
@@ -44,7 +38,7 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
   }
 
   override fun isAlwaysLeaf(element: StructureViewTreeElement?): Boolean {
-    return element is ElementsBuilder.PropertyStructureElement
+    return element is ElementsBuilder.PropertyStructureElement || element is ElementsBuilder.EmptyChildrenElement<*>
   }
 
   override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
@@ -66,6 +60,42 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
       }
       handled
     }
+  }
+
+  override fun findAcceptableElement(element: PsiElement?): Any? {
+    var elementTmp = element ?: return null
+    val psiDescriptions = assembledModel.getLogicalPsiDescriptions()
+    while (elementTmp !is PsiFile) {
+      for (description in psiDescriptions) {
+        val suitableElement = description.getSuitableElement(elementTmp)
+        if (suitableElement != null) return suitableElement
+      }
+      elementTmp = elementTmp.getParent() ?: return null
+    }
+    return null
+  }
+
+  fun visitPathForLogicalElementSelection(treeElement: StructureViewTreeElement, element: Any?, psiDescriptions: Set<LogicalPsiDescription>): TreeVisitor.Action {
+    if (element !is PsiElement) return TreeVisitor.Action.SKIP_CHILDREN
+    if (treeElement is ElementsBuilder.LogicalGroupStructureElement<*>) {
+      if (treeElement.grouper is ExternalElementsProvider<*, *>) {
+        return TreeVisitor.Action.SKIP_CHILDREN
+      }
+      return TreeVisitor.Action.CONTINUE
+    }
+    val targetElement = psiDescriptions.firstNotNullOfOrNull {
+      it.getSuitableElement(element)
+    } ?: return TreeVisitor.Action.SKIP_CHILDREN
+    if (treeElement is ElementsBuilder.PsiElementStructureElement<*>) {
+      if (treeElement.element == targetElement) {
+        return TreeVisitor.Action.INTERRUPT
+      }
+      else if (treeElement.element?.containingFile != targetElement.containingFile) {
+        return TreeVisitor.Action.SKIP_CHILDREN
+      }
+      return TreeVisitor.Action.CONTINUE
+    }
+    return TreeVisitor.Action.SKIP_CHILDREN
   }
 
   private fun getModel(element: StructureViewTreeElement): Any? {
@@ -184,6 +214,7 @@ private class ElementsBuilder {
       presentationData.addText(item)
     }
     presentationData.setIcon(presentationProvider.getIcon(model))
+    presentationData.tooltip = presentationProvider.getTooltipText(model)
     return presentationData
   }
 
@@ -260,7 +291,9 @@ private class ElementsBuilder {
   ) : LogicalStructureViewTreeElement<T> {
 
     private val cashedChildren: Array<TreeElement> by lazy {
-      calculateChildren()
+      val result = calculateChildren()
+      if (result.isEmpty()) return@lazy arrayOf(EmptyChildrenElement(parentAssembledModel))
+      result
     }
 
     override fun getValue(): Any = grouper
@@ -358,5 +391,20 @@ private class ElementsBuilder {
     override fun hashCode(): Int {
       return assembledModel.hashCode()
     }
+  }
+
+  class EmptyChildrenElement<T>(
+    val parentAssembledModel: LogicalStructureAssembledModel<T>,
+  ): LogicalStructureViewTreeElement<T> {
+    override fun getPresentation(): ItemPresentation {
+      return PresentationData(null, null, null, null).apply {
+        this.addText(StructureViewBundle.message("node.structureview.empty"), SimpleTextAttributes.GRAY_SMALL_ATTRIBUTES)
+      }
+    }
+
+    override fun getChildren(): Array<out TreeElement?> = emptyArray()
+    override fun getValue(): Any? = Any()
+    override fun getLogicalAssembledModel() = parentAssembledModel
+    override fun isHasNoOwnLogicalModel(): Boolean = true
   }
 }

@@ -4,7 +4,6 @@ from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_current_thread_id, IS_IRONPYTHON, NO_FTRACE, IS_WINDOWS
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
-from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from pydevd_tracing import SetTrace
 # IFDEF CYTHON
@@ -392,14 +391,8 @@ class ThreadTracer:
         is_stepping = pydev_step_cmd != -1
 
         try:
-            if py_db._finish_debugging_session:
+            if py_db.pydb_disposed:
                 if not py_db._termination_event_set:
-                    # that was not working very well because jython gave some socket errors
-                    try:
-                        if py_db.output_checker_thread is None:
-                            kill_all_pydev_threads()
-                    except:
-                        traceback.print_exc()
                     py_db._termination_event_set = True
                 if event != 'call': frame.f_trace = NO_FTRACE
                 return None
@@ -484,7 +477,7 @@ class ThreadTracer:
             return None
 
         except Exception:
-            if py_db._finish_debugging_session:
+            if py_db.pydb_disposed:
                 if event != 'call': frame.f_trace = NO_FTRACE
                 return None  # Don't log errors when we're shutting down.
             # Log it

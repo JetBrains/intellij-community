@@ -47,6 +47,10 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
     doTest()
   }
 
+  fun testEntityWithSelfReference() {
+    doTest()
+  }
+
   fun testRefsFromAnotherModule() {
     doTest()
   }

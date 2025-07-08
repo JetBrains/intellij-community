@@ -1,8 +1,9 @@
 package com.intellij.searchEverywhereMl
 
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.VisibleForTesting
 
-internal object SearchEverywhereMlRegistry {
+object SearchEverywhereMlRegistry {
   private const val EXPERIMENT_GROUP_KEY = "search.everywhere.ml.experiment.group"
   val experimentGroupNumber: Int
     get() = Registry.intValue(EXPERIMENT_GROUP_KEY, -1, -1, SearchEverywhereMlExperiment.NUMBER_OF_GROUPS - 1)
@@ -45,4 +46,14 @@ internal object SearchEverywhereMlRegistry {
   private const val DISABLE_ESSENTIAL_CONTRIBUTORS_EXPERIMENT_KEY = "search.everywhere.force.disable.experiment.essential.contributors.ml"
   val disableEssentialContributorsExperiment: Boolean
     get() = Registry.`is`(DISABLE_ESSENTIAL_CONTRIBUTORS_EXPERIMENT_KEY, false)
+
+  @VisibleForTesting
+  val ALL_DISABLE_EXPERIMENT_KEYS: List<String> = listOf(
+    DISABLE_ALL_EXPERIMENT_KEY,
+    DISABLE_ACTION_EXPERIMENT_KEY,
+    DISABLE_FILES_EXPERIMENT_KEY,
+    DISABLE_CLASSES_EXPERIMENT_KEY,
+    DISABLE_SYMBOLS_EXPERIMENT_KEY,
+    DISABLE_ESSENTIAL_CONTRIBUTORS_EXPERIMENT_KEY
+  )
 }

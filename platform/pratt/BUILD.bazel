@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.pratt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "pratt_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "pratt",
+  module_name = "intellij.platform.pratt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+  ],
+  runtime_deps = [":pratt_resources"]
+)
+### auto-generated section `build intellij.platform.pratt` end

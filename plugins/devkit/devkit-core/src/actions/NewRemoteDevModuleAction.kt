@@ -4,15 +4,15 @@ package org.jetbrains.idea.devkit.actions
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.onceWhenFocusGained
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -162,7 +162,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
     val moduleManager = ModuleManager.getInstance(project)
     val modifiableModel = moduleManager.getModifiableModel()
     // TODO: handle exception on `toNioPath`
-    val module = modifiableModel.newModule(moduleDirectories.moduleRoot.virtualFile.toNioPath().resolve(moduleName), StdModuleTypes.JAVA.id)
+    val module = modifiableModel.newModule(moduleDirectories.moduleRoot.virtualFile.toNioPath().resolve(moduleName), JavaModuleType.getModuleType().id)
     modifiableModel.commit()
 
     ModuleRootModificationUtil.updateModel(module) {

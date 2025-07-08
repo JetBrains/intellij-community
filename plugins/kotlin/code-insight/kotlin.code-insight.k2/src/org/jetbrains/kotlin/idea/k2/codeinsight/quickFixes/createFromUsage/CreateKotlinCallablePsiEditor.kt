@@ -49,7 +49,7 @@ internal class CreateKotlinCallablePsiEditor(
     private val project: Project,
     private val callableInfo: NewCallableInfo,
 ) {
-    fun showEditor(declaration: KtNamedDeclaration, anchor: PsiElement, isExtension: Boolean, targetClass: PsiElement?, insertContainer: PsiElement) {
+    fun showEditor(declaration: KtNamedDeclaration, anchor: PsiElement, isExtension: Boolean, targetClass: PsiElement?, insertContainer: PsiElement, elementToReplace: PsiElement? = null) {
         val containerMaybeCompanion = if (callableInfo.isForCompanion) {
             if (insertContainer is KtClass) {
                 insertContainer.getOrCreateCompanionObject()
@@ -72,7 +72,11 @@ internal class CreateKotlinCallablePsiEditor(
             added = TransformToJavaUtil.convertToJava(declaration, fqName, targetClass) ?: return
         }
         else {
-            added = CreateFromUsageUtil.placeDeclarationInContainer(declaration, containerMaybeCompanion, anchor)
+            added = if (elementToReplace != null && elementToReplace.isValid) {
+                elementToReplace.replace(declaration) as PsiElement
+            } else {
+                CreateFromUsageUtil.placeDeclarationInContainer(declaration, containerMaybeCompanion, anchor)
+            }
         }
 
         val psiProcessed = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(added) ?: return
@@ -88,7 +92,7 @@ internal class CreateKotlinCallablePsiEditor(
 
     private fun runTemplate(function: PsiElement) {
         val file = function.containingFile
-        val editor = EditorHelper.openInEditor(file)
+        val editor = EditorHelper.openInMaybeInjectedEditor(file) ?: return
         val functionMarker = editor.document.createRangeMarker(function.textRange)
         moveCaretToCallable(editor, function)
         val template = setupTemplate(function)

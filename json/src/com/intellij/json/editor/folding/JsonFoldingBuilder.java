@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.folding;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
 import com.intellij.json.psi.impl.JsonCollectionPsiPresentationUtils;
@@ -18,11 +19,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev
  */
 public final class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
+  private static final Set<String> PRIORITIZED_KEYS = Set.of("id", "name");
+
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     final List<FoldingDescriptor> descriptors = new ArrayList<>();
@@ -58,28 +63,7 @@ public final class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
   public @Nullable String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == JsonElementTypes.OBJECT) {
-      final JsonObject object = node.getPsi(JsonObject.class);
-      final List<JsonProperty> properties = object.getPropertyList();
-      JsonProperty candidate = null;
-      for (JsonProperty property : properties) {
-        final String name = property.getName();
-        final JsonValue value = property.getValue();
-        if (value instanceof JsonLiteral) {
-          if ("id".equals(name) || "name".equals(name)) {
-            candidate = property;
-            break;
-          }
-          if (candidate == null) {
-            candidate = property;
-          }
-        }
-      }
-      if (candidate != null) {
-        return "{\"" + candidate.getName() + "\": " + candidate.getValue().getText() + "...}";
-      }
-      else {
-        return JsonCollectionPsiPresentationUtils.getCollectionPsiPresentationText(properties.size());
-      }
+      return buildObjectPlaceholder(node.getPsi(JsonObject.class));
     }
     else if (type == JsonElementTypes.ARRAY && node.getPsi() instanceof JsonArray arrayNode) {
       return JsonCollectionPsiPresentationUtils.getCollectionPsiPresentationText(arrayNode);
@@ -91,6 +75,32 @@ public final class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
       return "/*...*/";
     }
     return "...";
+  }
+
+  private static String buildObjectPlaceholder(JsonObject object) {
+    List<JsonProperty> properties = object.getPropertyList();
+    JsonFoldingSettings settings = JsonFoldingSettings.getInstance();
+    if (settings.showKeyCount) {
+      return JsonBundle.message("folding.collapsed.object.text", properties.size());
+    }
+    JsonProperty candidate = chooseCandidateProperty(properties, settings);
+    return candidate != null
+           ? "{\"" + candidate.getName() + "\": " + Objects.requireNonNull(candidate.getValue()).getText() + "...}"
+           : JsonCollectionPsiPresentationUtils.getCollectionPsiPresentationText(properties.size());
+  }
+
+  private static @Nullable JsonProperty chooseCandidateProperty(List<JsonProperty> properties, JsonFoldingSettings settings) {
+    JsonProperty candidate = null;
+    for (JsonProperty property : properties) {
+      if (!(property.getValue() instanceof JsonLiteral)) continue;
+      if (!settings.showFirstKey && PRIORITIZED_KEYS.contains(property.getName())) {
+        return property;
+      }
+      if (candidate == null) {
+        candidate = property;
+      }
+    }
+    return candidate;
   }
 
   @Override

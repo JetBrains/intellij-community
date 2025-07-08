@@ -37,6 +37,8 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl/ui",
     "//platform/feedback",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/inline-completion/shared:inline-completion",
   ],
   runtime_deps = [":frontend_resources"]
 )
@@ -74,6 +76,8 @@ jvm_library(
     "//platform/feedback",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/inline-completion/shared:inline-completion",
   ],
   runtime_deps = [":frontend_resources"]
 )

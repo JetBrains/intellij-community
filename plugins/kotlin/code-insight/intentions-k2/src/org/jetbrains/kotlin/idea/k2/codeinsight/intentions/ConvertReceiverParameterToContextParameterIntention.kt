@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -15,12 +14,11 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParam
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.getContextParameters
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
-import org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.renameParameterInPlace
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class ConvertReceiverParameterToContextParameterIntention : SelfTargetingIntention<KtTypeReference>(
     KtTypeReference::class.java,
@@ -59,8 +57,6 @@ class ConvertReceiverParameterToContextParameterIntention : SelfTargetingIntenti
     private fun renameLastContextParameter(ktCallable: KtCallableDeclaration, editor: Editor?) {
         if (!ktCallable.isValid || editor == null || editor.isDisposed) return
         val lastContextParameter = ktCallable.getContextParameters()?.lastOrNull() ?: return
-        editor.caretModel.moveToOffset(lastContextParameter.startOffset)
-        PsiDocumentManager.getInstance(ktCallable.project).doPostponedOperationsAndUnblockDocument(editor.document)
-        KotlinMemberInplaceRenameHandler().doRename(lastContextParameter, editor, null)
+        renameParameterInPlace(lastContextParameter, editor)
     }
 }

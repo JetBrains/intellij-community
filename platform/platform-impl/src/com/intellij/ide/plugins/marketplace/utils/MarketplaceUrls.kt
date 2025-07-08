@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.marketplace.utils
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
@@ -90,7 +91,7 @@ object MarketplaceUrls {
 
   @JvmStatic
   fun getPluginDownloadUrl(
-    descriptor: IdeaPluginDescriptor,
+    descriptor: PluginUiModel,
     uuid: String,
     buildNumber: BuildNumber?,
     currentVersion: IdeaPluginDescriptor?,
@@ -102,7 +103,7 @@ object MarketplaceUrls {
       "uuid" to uuid,
       "updatedFrom" to updatedFrom
     )
-    (descriptor as? PluginNode)?.channel?.let {
+   descriptor.channel?.let {
       parameters["channel"] = it
     }
 

@@ -74,7 +74,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
   }
 
   protected static void update(final DebuggerContextImpl context) {
-    DebuggerInvocationUtil.swingInvokeLater(context.getProject(), () -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(context.getProject(), () -> {
       final DebuggerSession session = context.getDebuggerSession();
       if (session != null) {
         session.refresh(false);

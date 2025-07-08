@@ -3,6 +3,7 @@ package com.jetbrains.python.requirements
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.requirements.inspections.tools.NotInstalledRequirementInspection
 import com.jetbrains.python.sdk.pythonSdk
@@ -15,10 +16,10 @@ class UnsatisfiedRequirementInspectionTest : PythonDependencyTestCase() {
   }
 
   fun testPyProjectTomlUnsatisfiedRequirement() {
-    doMultiFileTest("pyproject.toml")
+    doMultiFileTest(PY_PROJECT_TOML)
     val warnings = myFixture.doHighlighting(HighlightSeverity.WARNING)
-
-    listOf("mypy", "poetry-core").forEach { unsatisfiedPackage ->
+    assertTrue("[build-system] should not have unsatisfied inspection", warnings.none { it.text == "poetry-core" })
+    listOf("mypy").forEach { unsatisfiedPackage ->
       val warning = warnings.single { it.text == unsatisfiedPackage }
       assertEquals("Package $unsatisfiedPackage is not installed", warning.description)
     }

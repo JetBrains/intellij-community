@@ -5,6 +5,7 @@ import com.intellij.ide.actions.SETextShortener
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
@@ -26,7 +27,13 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     presentation.icon?.let { icon(it) }
 
     text(presentation.presentableText) {
-      presentation.presentableTextFgColor?.let { foreground = it }
+      if (presentation.presentableTextErrorHighlight) {
+        attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED,
+                                          presentation.presentableTextFgColor,
+                                          JBColor.RED)
+      } else {
+        presentation.presentableTextFgColor?.let { foreground = it }
+      }
       if (selected) {
         speedSearch {
           ranges = presentation.presentableTextMatchedRanges?.map { it.textRange }

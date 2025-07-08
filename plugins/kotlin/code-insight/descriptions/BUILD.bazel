@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.code-insight.descriptions` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "descriptions_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources-en"
 )
 
-java_library(
+jvm_library(
   name = "descriptions",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":descriptions_resources",
     "//plugins/kotlin/base/frontend-agnostic",

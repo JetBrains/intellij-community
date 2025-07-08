@@ -54,7 +54,9 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.Future
+import java.util.concurrent.locks.ReentrantLock
 import java.util.function.BiPredicate
+import kotlin.concurrent.withLock
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
@@ -80,7 +82,7 @@ class ScanningIterators(
 }
 
 @ApiStatus.Internal
-class UnindexedFilesScanner (
+class UnindexedFilesScanner(
   private val myProject: Project,
   private val myOnProjectOpen: Boolean,
   isIndexingFilesFilterUpToDate: Boolean,
@@ -438,7 +440,7 @@ class UnindexedFilesScanner (
     ) {
       runBlockingCancellable {
         tracer.spanBuilder("runBlocking in scanning").useWithScope(context = SCANNING_DISPATCHER) {
-          providers.forEachConcurrent(SCANNING_PARALLELISM)  { provider ->
+          providers.forEachConcurrent(SCANNING_PARALLELISM) { provider ->
             try {
               tracer.spanBuilder("Scanning of ${provider.debugName}").use {
                 scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
@@ -481,7 +483,7 @@ class UnindexedFilesScanner (
           }
           PushedFilePropertiesUpdaterImpl.finishVisitors(fileScannerVisitors)
           tracer.spanBuilder("Scanning gathered files").use { span ->
-            scanFiles(provider, scanningStatistics, sharedExplanationLogger, files, span)
+            scanFiles(scanningStatistics, sharedExplanationLogger, files, span)
           }
         }
       }
@@ -508,7 +510,6 @@ class UnindexedFilesScanner (
     }
 
     private suspend fun scanFiles(
-      provider: IndexableFilesIterator,
       scanningStatistics: ScanningStatistics,
       sharedExplanationLogger: IndexingReasonExplanationLogger,
       files: ArrayDeque<VirtualFile>,
@@ -517,45 +518,48 @@ class UnindexedFilesScanner (
       val indexingQueue = project.getService(PerProjectIndexingQueue::class.java)
       scanningStatistics.startFileChecking()
       try {
-        var counter = 0
-        readAction {
-          val currentCounter = counter++
-          if (currentCounter != 0) {
-            // report only restarts of scanning read action
-            span.addEvent("Read action restart #${currentCounter} (${files.size} files remain to scan)")
-          }
-          val finder =
-            if (ourTestMode == TestMode.PUSHING) null
-            else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
-          val pushingUtil = PushingUtil(project, provider)
-          if (!pushingUtil.mayBeUsed()) {
-            LOG.warn("Iterator based on $provider can't be used.")
-            return@readAction
-          }
-          while (files.isNotEmpty()) {
-            val file = files.removeFirst()
-            try {
-              if (file.isValid) {
-                if (file is VirtualFileWithId) {
-                  filterHandler.addFileId(project, file.id)
+        val mutex = ReentrantLock()
+        coroutineScope {
+          repeat(SCANNING_PARALLELISM) {
+            launch {
+              var counter = 0
+              readAction {
+                val currentCounter = counter++
+                if (currentCounter != 0) {
+                  // report only restarts of scanning read action
+                  val size = mutex.withLock { files.size }
+                  span.addEvent("Read action restart #${currentCounter} (${size} files remain to scan)")
                 }
-                pushingUtil.applyPushers(file)
-                val status = finder?.getFileStatus(file)
-                if (status != null) {
-                  if (status.shouldIndex && ourTestMode == null) {
-                    indexingQueue.addFile(file, scanningHistory.scanningSessionId)
+                val finder =
+                  if (ourTestMode == TestMode.PUSHING) null
+                  else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
+                var file = mutex.withLock { files.removeFirstOrNull() }
+                while (file != null) {
+                  try {
+                    if (file.isValid) {
+                      if (file is VirtualFileWithId) {
+                        filterHandler.addFileId(project, file.id)
+                      }
+                      val status = finder?.getFileStatus(file)
+                      if (status != null) {
+                        if (status.shouldIndex && ourTestMode == null) {
+                          indexingQueue.addFile(file, scanningHistory.scanningSessionId)
+                        }
+                        scanningStatistics.addStatus(file, status, project)
+                      }
+                    }
                   }
-                  scanningStatistics.addStatus(file, status, project)
+                  catch (e: ProcessCanceledException) {
+                    mutex.withLock { files.addFirst(file) }
+                    throw e
+                  }
+                  catch (e: Exception) {
+                    LOG.error("Error while scanning ${file.presentableUrl}\n" +
+                              "To reindex this file IDE has to be restarted", e)
+                  }
+                  file = mutex.withLock { files.removeFirstOrNull() }
                 }
               }
-            }
-            catch (e: ProcessCanceledException) {
-              files.addFirst(file)
-              throw e
-            }
-            catch (e: Exception) {
-              LOG.error("Error while scanning ${file.presentableUrl}\n" +
-                        "To reindex this file IDE has to be restarted", e);
             }
           }
         }
@@ -572,10 +576,20 @@ class UnindexedFilesScanner (
       thisProviderDeduplicateFilter: IndexableFilesDeduplicateFilter,
     ): ArrayDeque<VirtualFile> {
       val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
+      // We want to apply FilePropertyPusher sequentially, otherwise we might encounter incorrect behavior.
+      // FilePropertyPusher can be applied to a directory, and all its members must inherit the applied property.
+      // This means that we have to apply pusher first to a directory and then to all its child files,
+      // which is not guaranteed when scanning files in parallel.
+      val pushingUtil = PushingUtil(project, provider)
       val singleProviderIteratorFactory = ContentIterator { fileOrDir: VirtualFile ->
         // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
         // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
         PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
+        if (!pushingUtil.mayBeUsed()) {
+          LOG.warn("Iterator based on $provider can't be used.")
+          return@ContentIterator false
+        }
+        pushingUtil.applyPushers(fileOrDir)
         files.add(fileOrDir)
       }
 

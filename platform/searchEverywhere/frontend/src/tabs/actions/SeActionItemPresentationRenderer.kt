@@ -93,6 +93,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
         if (UISettings.getInstance().showInplaceCommentsInternal && actionId != null) {
           text(actionId) {
+            accessibleName = null
             attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
           }
         }
@@ -100,13 +101,14 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
         presentation.shortcut?.let { shortcutText ->
           @Suppress("HardCodedStringLiteral")
           text(shortcutText) {
+            accessibleName = null
             attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER or SimpleTextAttributes.STYLE_BOLD, groupForeground)
           }
         }
       }
 
       is SeOptionActionItemPresentation -> {
-        if (!selected && !presentation.isBooleanOption) {
+        if (!presentation.isBooleanOption && switcherState == null) {
           val descriptorBg = if (isUnderDarcula) {
             ColorUtil.brighter(UIUtil.getListBackground(), 1)
           }
@@ -143,10 +145,12 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
     else presentation.commonData.location?.let { location ->
       val groupLabel = JLabel(location)
       groupLabel.border = eastBorder
-      groupLabel.foreground = groupForeground
 
       text(location) {
+        accessibleName = null
         align = LcrInitParams.Align.RIGHT
+        foreground = if (selected) NamedColorUtil.getListSelectionForeground(true)
+        else NamedColorUtil.getInactiveTextColor()
       }
     }
   }

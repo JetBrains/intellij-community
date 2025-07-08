@@ -28,6 +28,8 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
   suspend fun removeHint(hintId: RemoteValueHintId, force: Boolean)
 
+  suspend fun getManagerEventsFlow(projectId: ProjectId): Flow<ValueHintEvent>
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerValueLookupHintsRemoteApi {
@@ -38,4 +40,14 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
 @ApiStatus.Internal
 @Serializable
-data class RemoteValueHintId(override val uid: UID): Id
+data class RemoteValueHintId(override val uid: UID) : Id
+
+@ApiStatus.Internal
+@Serializable
+sealed interface ValueHintEvent {
+  @Serializable
+  object StartListening : ValueHintEvent
+
+  @Serializable
+  object HideHint : ValueHintEvent
+}

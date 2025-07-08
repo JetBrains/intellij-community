@@ -47,7 +47,6 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
@@ -70,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @SuppressWarnings("LoggerInitializedWithForeignClass")
@@ -432,7 +432,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @SuppressWarnings("deprecation") boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
     Project project = myProject;
 
-    AccessToken lockContextCleanup;
+    Consumer<Runnable> lockContextWrapper;
     Function0<Unit> lockCleanup;
 
     if (changeModalityState) {
@@ -442,11 +442,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
                  ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
                  : IntelliJLockingUtil.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
-      lockContextCleanup = ThreadContext.installThreadContext(pair.getFirst(), true);
+      lockContextWrapper = (r) -> {
+        ThreadContext.installThreadContext(pair.getFirst(), true, () -> {
+          r.run();
+          return Unit.INSTANCE;
+        });
+      };
       lockCleanup = pair.getSecond();
     }
     else {
-      lockContextCleanup = ThreadContext.resetThreadContext();
+      lockContextWrapper = (r) -> ThreadContext.resetThreadContext(() -> {
+        r.run();
+        return null;
+      });
       lockCleanup = emptyFunction;
     }
 
@@ -471,16 +479,18 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try (
-      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
-      AccessToken ignore3 = lockContextCleanup
+      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)
     ) {
-      if (!isProgressDialog() && !ApplicationManager.getApplication().isReadAccessAllowed()) {
-        WriteIntentReadAction.run((Runnable) () -> {
+      lockContextWrapper.accept(() -> {
+        if (!isProgressDialog() && !ApplicationManager.getApplication().isReadAccessAllowed()) {
+          WriteIntentReadAction.run((Runnable)() -> {
+            myDialog.show();
+          });
+        }
+        else {
           myDialog.show();
-        });
-      } else {
-        myDialog.show();
-      }
+        }
+      });
     }
     finally {
       lockCleanup.invoke();
@@ -900,17 +910,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     private void logMonitorConfiguration() {
       var ideFrame = WindowManager.getInstance().getFrame(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this)));
-      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      for (GraphicsDevice device : ge.getScreenDevices()) {
-        DisplayMode displayMode = device.getDisplayMode();
-        GraphicsConfiguration gc = device.getDefaultConfiguration();
-        float scale = JBUIScale.sysScale(gc);
-        Rectangle bounds = ScreenUtil.getScreenRectangle(gc);
-        LOG.debug(String.format("%s (%dx%d scaled at %.02f with insets %s)%s%s",
-                                bounds, displayMode.getWidth(), displayMode.getHeight(), scale, ScreenUtil.getScreenInsets(gc),
-                                (device == ge.getDefaultScreenDevice() ? ", default" : ""),
-                                (ideFrame != null && device == ideFrame.getGraphicsConfiguration().getDevice() ? ", IDE frame" : "")
-        ));
+      for (String message : ScreenUtil.loggableMonitorConfiguration(ideFrame)) {
+        LOG.debug(message);
       }
     }
 
@@ -959,9 +960,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     @SuppressWarnings("deprecation")
     public void hide() {
-      try (@NotNull AccessToken ignored = ThreadContext.resetThreadContext()) {
+      ThreadContext.resetThreadContext(() -> {
         super.hide();
-      }
+        return null;
+      });
     }
 
     @Override

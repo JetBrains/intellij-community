@@ -270,7 +270,9 @@
     <action id="Gradle.ToggleOfflineAction" class="org.jetbrains.plugins.gradle.action.ToggleOfflineAction"
             icon="AllIcons.Actions.OfflineMode"/>
     <action id="Gradle.DownloadSources" class="org.jetbrains.plugins.gradle.action.GradleDownloadSourcesAction"
-            icon="AllIcons.Actions.Download"/>
+            icon="AllIcons.Actions.Download">
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.SyncPanel" anchor="last"/>
+    </action>
     <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"/>
 
     <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"/>
@@ -291,24 +293,19 @@
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
     </action>
 
-    <group id="Gradle.View.ActionsToolbar.LeftPanel">
+    <group id="Gradle.View.ActionsToolbar.RunPanel">
       <separator/>
-      <reference ref="Gradle.DownloadSources"/>
       <reference ref="Gradle.ExecuteTask"/>
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel"/>
-    </group>
-
-    <group id="Gradle.View.ActionsToolbar.RightPanel">
       <reference ref="Gradle.ToggleOfflineAction"/>
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.RunPanel"/>
     </group>
 
-    <group id="Gradle.View.ActionsToolbar.CenterPanel">
+    <group id="Gradle.View.ActionsToolbar.OtherActionsPanel">>
       <separator/>
       <reference ref="Gradle.OpenProjectCompositeConfiguration"/>
       <reference ref="Gradle.ToolbarDependencyAnalyzer"/>
       <separator/>
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="last"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.OtherActionsPanel" anchor="last"/>
     </group>
 
     <group id="Gradle.View.ProjectMenu">

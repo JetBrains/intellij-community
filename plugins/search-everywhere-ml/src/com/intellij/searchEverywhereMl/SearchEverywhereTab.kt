@@ -141,14 +141,15 @@ sealed interface SearchEverywhereTab {
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.EssentialContributorPrediction,
-      2 to ExperimentType.ExperimentalModel,
+      2 to ExperimentType.CombinedExperiment,
     )
 
 
     override val currentExperimentType: ExperimentType
       get() {
         val experimentType = super.currentExperimentType
-        if (experimentType == ExperimentType.EssentialContributorPrediction) {
+        if (experimentType == ExperimentType.EssentialContributorPrediction ||
+            experimentType == ExperimentType.CombinedExperiment) {
           if (SearchEverywhereMlRegistry.disableEssentialContributorsExperiment) {
             return ExperimentType.NoExperiment
           }
@@ -325,13 +326,16 @@ val SearchEverywhereTab.TabWithExperiments.isSemanticSearchExperiment: Boolean
  *
  * This property checks the current experimental type associated with the tab. If the experiment
  * type corresponds to [ExperimentType.EssentialContributorPrediction], it returns `true`.
+ * It also returns `true` for [ExperimentType.CombinedExperiment], which combines both
+ * EssentialContributorPrediction and ExperimentalModel functionality.
  * Otherwise, it returns `false`.
  *
  * The "Essential Contributor Prediction" experiment is designed to improve search result rankings
  * by prioritizing essential contributors during retrieval.
  */
 val SearchEverywhereTab.All.isEssentialContributorPredictionExperiment: Boolean
-  get() = this.currentExperimentType == ExperimentType.EssentialContributorPrediction
+  get() = this.currentExperimentType == ExperimentType.EssentialContributorPrediction || 
+          this.currentExperimentType == ExperimentType.CombinedExperiment
 
 /**
  * Indicates whether the current tab's active experiment is configured to handle typo-related scenarios.

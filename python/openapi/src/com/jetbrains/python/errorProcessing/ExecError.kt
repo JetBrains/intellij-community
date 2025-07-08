@@ -4,18 +4,45 @@ package com.jetbrains.python.errorProcessing
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.jetbrains.python.PyCommunityBundle
 import org.jetbrains.annotations.Nls
+import kotlin.io.path.Path
+
+/**
+ * Exe might sit on eel (new one) or on target (legacy)
+ */
+interface Exe {
+  companion object {
+    fun fromString(path: String): Exe {
+      try {
+        return OnEel(Path(path).asEelPath())
+      }
+      catch (_: EelPathException) {
+        return OnTarget(path)
+      }
+    }
+  }
+
+  data class OnEel(val eelPath: EelPath) : Exe {
+    override fun toString(): String = eelPath.toString()
+  }
+
+  data class OnTarget(val path: String) : Exe {
+    override fun toString(): String = path
+  }
+}
 
 /**
  * External process error.
  */
 class ExecError(
-  val exe: EelPath,
+  val exe: Exe,
   /**
    * I.e ['-v']
    */

@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslIjentAvailabilityService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,22 +44,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 @ApiStatus.Internal
 public final class FileTreeModel extends AbstractTreeModel implements InvokerSupplier {
 
   private static final Logger LOG = Logger.getInstance(FileTreeModel.class);
 
-  private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
+  private final Invoker invoker;
   private final State state;
   private volatile List<Root> roots;
 
   public FileTreeModel(@NotNull FileChooserDescriptor descriptor, FileRefresher refresher) {
-    this(descriptor, refresher, true, false);
+    this(descriptor, refresher, true, false, true);
   }
 
-  public FileTreeModel(@NotNull FileChooserDescriptor descriptor, FileRefresher refresher, boolean sortDirectories, boolean sortArchives) {
+  public FileTreeModel(@NotNull FileChooserDescriptor descriptor, FileRefresher refresher, boolean sortDirectories, boolean sortArchives, boolean useReadAction) {
     if (refresher != null) Disposer.register(this, refresher);
+    invoker = useReadAction ? Invoker.forBackgroundThreadWithReadAction(this) : Invoker.forBackgroundThreadWithoutReadAction(this);
     state = new State(descriptor, refresher, sortDirectories, sortArchives, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -314,6 +317,15 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private @NotNull List<VirtualFile> getSystemRoots() {
+      if (WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
+        return toVirtualFiles(FileSystems.getDefault().getRootDirectories());
+      }
+      else {
+        return getSystemsRootLegacy();
+      }
+    }
+
+    private @NotNull List<VirtualFile> getSystemsRootLegacy() {
       List<WSLDistribution> distributions = List.of();
       if (WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
         WslDistributionManager distributionManager = WslDistributionManager.getInstance();
@@ -392,9 +404,11 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return newIndices.toIntArray();
     }
 
-    private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull List<? extends Path> paths) {
-      return paths.stream().map(root -> LocalFileSystem.getInstance().findFileByNioFile(root)).filter(State::isValid).collect(
-        Collectors.toList());
+    private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull Iterable<? extends Path> paths) {
+      return StreamSupport.stream(paths.spliterator(), false)
+        .map(root -> LocalFileSystem.getInstance().findFileByNioFile(root))
+        .filter(State::isValid)
+        .collect(Collectors.toList());
     }
 
     @Override

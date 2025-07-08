@@ -2901,6 +2901,13 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testConcatenateNotReportedAsIllegalFirstParam() {
+    doTestByText("""
+                   from typing import Callable, Concatenate
+                   x: Callable[Concatenate[int, ...], str]
+                   """);
+  }
+
 
   @NotNull
   @Override

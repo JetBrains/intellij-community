@@ -56,6 +56,8 @@ class PyRequirementVisitor(
     val sdk = module.pythonSdk ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
     val requirementsManager = manager.getDependencyManager() ?: return
+    if (requirementsManager.getDependenciesFile() == null)
+      return
     val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, manager)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
 

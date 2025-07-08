@@ -22,6 +22,13 @@ object GitBranchesPopupActions {
   @Language("devkit-action-id")
   const val TOP_LEVEL_ACTIONS_ACTION_GROUP: @NonNls String = "Git.Branches.List"
 
+  /**
+   * Actions from this data group are wrapped in [GitBranchesPopupBase] to pass the text field in a data context
+   * even when it isn't focused
+   */
+  @Language("devkit-action-id")
+  const val SPEED_SEARCH_ACTION_GROUP: @NonNls String = "Git.Branches.Popup.SpeedSearch"
+
   val MAIN_POPUP_ACTION_PLACE: @NonNls String = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
 
   val NESTED_POPUP_ACTION_PLACE: @NonNls String = ActionPlaces.getPopupPlace("GitBranchesPopup.SingleRepo.Branch.Actions")

@@ -42,7 +42,8 @@ public interface FileSystemInterface {
     return Collections.emptyList();
   }
 
-  @NotNull VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
+  @NotNull VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir)
+    throws IOException;
 
   @NotNull VirtualFile createChildFile(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
 
@@ -69,5 +70,6 @@ public interface FileSystemInterface {
   /** Does NOT add the BOM to the beginning of the stream, unlike the {@link VirtualFile#getOutputStream(Object)} */
   @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException;
 
+  /** @return length of the given file, in bytes, or 0 if the file is not a regular file */
   long getLength(@NotNull VirtualFile file);
 }

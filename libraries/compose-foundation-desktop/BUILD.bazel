@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "compose-foundation-desktop_resources",
@@ -8,9 +7,10 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "compose-foundation-desktop",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   exports = ["@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop"],
   runtime_deps = [
     ":compose-foundation-desktop_resources",

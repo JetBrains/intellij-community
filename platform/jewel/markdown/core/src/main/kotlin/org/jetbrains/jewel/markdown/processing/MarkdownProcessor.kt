@@ -302,8 +302,21 @@ public class MarkdownProcessor(
     private fun CMListBlock.processListItems() = buildList {
         forEachChild { child ->
             if (child !is ListItem) return@forEachChild
-            add(MarkdownBlock.ListItem(processChildren(child)))
+            val listItem = MarkdownBlock.ListItem(children = processChildren(child), level = calculateLevel(child))
+            add(listItem)
         }
+    }
+
+    private fun calculateLevel(startNode: Node): Int {
+        var currentNode: Node? = startNode
+        var level = 0
+        while (currentNode != null && currentNode !is Document) {
+            if (currentNode is ListItem) {
+                level++
+            }
+            currentNode = currentNode.parent
+        }
+        return level - 1
     }
 
     /**

@@ -785,9 +785,7 @@ object K2SemanticMatcher {
             .sortedWith(compareBy({ (_, parameterIndex) -> parameterIndex }, { (argument, _) -> argument.startOffset }))
             .map { (argument, _) -> argument }
 
-        // `mappedArguments` obtained from `argumentMapping` differ from argument expressions from `KtValueArgumentList` in case of
-        // parenthesized expressions; TODO: check if it should be fixed from Analysis API side;
-        return sortedMappedArguments + allArguments.filterNot { it?.safeDeparenthesize() in mappedArguments }
+        return sortedMappedArguments + allArguments.filterNot { it in mappedArguments }
     }
 
     context(KaSession)

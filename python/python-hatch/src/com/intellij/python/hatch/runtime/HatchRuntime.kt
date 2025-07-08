@@ -8,12 +8,12 @@ import com.intellij.python.hatch.cli.HatchCli
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
+import kotlin.time.Duration.Companion.minutes
 
 class HatchRuntime(
   val hatchBinary: Path,
@@ -54,18 +54,21 @@ class HatchRuntime(
    * Pure execution of [hatchBinary] with command line [arguments] and [execOptions] by [execService]
    * Doesn't make any validation of stdout/stderr content.
    */
-  internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): PyExecResult<T> {
+  internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): PyResult<T> {
     return execService.execute(hatchBinary, arguments.toList(), execOptions, processOutputTransformer = processOutputTransformer)
   }
 
-  internal suspend fun <T> executeInteractive(vararg arguments: String, processSemiInteractiveFun: ProcessSemiInteractiveFun<T>): PyExecResult<T> {
+  internal suspend fun <T> executeInteractive(vararg arguments: String, processSemiInteractiveFun: ProcessSemiInteractiveFun<T>): PyResult<T> {
     return execService.executeAdvanced(hatchBinary, { addArgs(*arguments) }, execOptions, processSemiInteractiveHandler(code = processSemiInteractiveFun))
   }
 
   internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {
     val pythonVersion = pythonHomePath.takeIf { it.isDirectory() }?.resolvePythonBinary()?.let { pythonBinaryPath ->
-      execService.execGetStdout(pythonBinaryPath, listOf("--version")).getOr { return it }.trim()
+      execService.execGetStdout(pythonBinaryPath, listOf("--version"),
+                                ExecOptions(timeout = 20.minutes),
+                                procListener = null).getOr { return it }.trim()
     }
+
     val pythonVirtualEnvironment = when {
       pythonVersion == null -> PythonVirtualEnvironment.NotExisting(pythonHomePath)
       else -> PythonVirtualEnvironment.Existing(pythonHomePath, pythonVersion)

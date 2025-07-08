@@ -7,17 +7,23 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.relativizeToClosestAncestor
+import com.intellij.openapi.util.io.toNioPathOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getWorkspaceModelManager
+import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -52,6 +58,15 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
                 findScriptDefinition(project, KtFileScriptSource(it))
             }
 
+        scriptingDebugLog {
+            val baseDirPath = project.basePath?.toNioPathOrNull()
+
+            definitionByFile.entries.joinToString(prefix = "processing scripts:\n", separator = "\n") { (script, definition) ->
+                val path = baseDirPath?.relativizeToClosestAncestor(script.alwaysVirtualFile.path)?.second ?: script.alwaysVirtualFile.path
+                "$path -> ${definition.name}(${definition.definitionId})"
+            }
+        }
+
         if (definitionByFile.isEmpty()) return Job()
 
         return coroutineScope.launch {
@@ -77,16 +92,23 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
 
         edtWriteAction {
             project.publishGlobalModuleStateModificationEvent()
+            project.publishGlobalScriptModuleStateModificationEvent()
         }
 
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
         HighlightingSettingsPerFile.getInstance(project).incModificationCount()
 
+        val filesInEditors = readAction {
+            FileEditorManager.getInstance(project).allEditors.mapTo(hashSetOf(), FileEditor::getFile)
+        }
+
         if (project.isOpen && !project.isDisposed) {
-            val focusedFile = readAction { FileEditorManager.getInstance(project).focusedEditor?.file }
-            definitionByFile.keys.firstOrNull { it.alwaysVirtualFile == focusedFile }?.let {
-                readAction {
-                    DaemonCodeAnalyzer.getInstance(project).restart(it)
+            for (ktFile in definitionByFile.keys) {
+                if (ktFile.alwaysVirtualFile !in filesInEditors) continue
+                if (project.isOpen && !project.isDisposed) {
+                    readAction {
+                        DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                    }
                 }
             }
         }
@@ -95,5 +117,8 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
     companion object {
         @JvmStatic
         fun getInstance(project: Project): DefaultScriptResolutionStrategy = project.service()
+
+        private val logger: Logger
+            get() = Logger.getInstance(DefaultScriptResolutionStrategy::class.java)
     }
 }

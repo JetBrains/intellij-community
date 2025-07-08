@@ -14,6 +14,12 @@ import kotlinx.serialization.json.JsonObject
 /** This number should be increased when [BlockBasedFeedbackDialogWithEmail] fields changing */
 const val BLOCK_BASED_FEEDBACK_WITH_EMAIL_VERSION = 1
 
+/**
+ * The base class for building feedback dialogs with e-mail.
+ *
+ * If your dialog doesn't need to provide any system data in addition to [CommonFeedbackSystemData],
+ * consider using [CommonBlockBasedFeedbackDialogWithEmail] instead.
+ */
 abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>(
   myProject: Project?, forTest: Boolean) : BlockBasedFeedbackDialog<T>(myProject, forTest) {
 
@@ -21,7 +27,9 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
   abstract val zendeskTicketTitle: String
   abstract val zendeskFeedbackType: String
 
-  protected val emailBlockWithAgreement = EmailBlock(myProject) { myShowFeedbackSystemInfoDialog() }
+  protected val emailBlockWithAgreement = EmailBlock(myProject) {
+    showFeedbackSystemInfoDialog(mySystemInfoDataComputation.getComputationResult())
+  }
 
   /**
    * A Zendesk ticket will only be created if the user specifies an email.
@@ -81,7 +89,7 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
 
     stringBuilder.appendLine()
     stringBuilder.appendLine()
-    stringBuilder.appendLine(mySystemInfoData.toString())
+    stringBuilder.appendLine(mySystemInfoDataComputation.getComputationResult().toString())
     return stringBuilder.toString()
   }
 }

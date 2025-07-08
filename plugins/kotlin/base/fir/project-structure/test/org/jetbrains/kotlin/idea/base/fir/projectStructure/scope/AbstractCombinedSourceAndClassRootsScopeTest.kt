@@ -88,12 +88,6 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
     internal val includedTestModules: List<TestProjectModule>
         get() = testModules.filterNot { it.name in testProjectStructure.excludedModules }
 
-    internal val includedTestModulesWithProductionRoots: List<TestProjectModule>
-        get() = includedTestModules.filterByContentRootKind(TestContentRootKind.PRODUCTION)
-
-    internal val includedTestModulesWithTestRoots: List<TestProjectModule>
-        get() = includedTestModules.filterByContentRootKind(TestContentRootKind.TESTS)
-
     internal val excludedTestModules: List<TestProjectModule>
         get() = testModules.filter { it.name in testProjectStructure.excludedModules }
 

@@ -11,8 +11,10 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.KeyboardAwareFocusOwner
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.IS_FILE_INDEXABLE
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -36,6 +38,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar.Info.set
 import com.intellij.openapi.wm.impl.FloatingDecorator
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -93,7 +96,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   private val keyGestureProcessor = KeyboardGestureProcessor(this)
 
   var state: KeyState
-    @ApiStatus.Internal 
+    @ApiStatus.Internal
     get() = keyState
     @ApiStatus.Internal
     set(state) {
@@ -537,10 +540,13 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     fireBeforeShortcutTriggered(shortcut, actions, context)
 
+    var isFileIndexable = true
     val chosen = Utils.runUpdateSessionForInputEvent(
       actions, e, wrappedContext, place, processor, presentationFactory
     ) { rearranged, updater, events ->
-      doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+      doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb).also {
+        if (events.keys.any { it.getClientProperty(IS_FILE_INDEXABLE) == false }) isFileIndexable = false
+      }
     }
     val doPerform = chosen != null && !this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)
 
@@ -560,7 +566,8 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
       val actionManager = ActionManager.getInstance()
       showDumbModeBalloonLater(project = project,
-                               message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb),
+                               isFileIndexable = isFileIndexable,
+                               message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb, project, wrappedContext[VIRTUAL_FILE]),
                                expired = { e.isConsumed },
                                actionIds = actions.mapNotNull { action -> actionManager.getId(action) }) {
         // invokeLater to make sure correct dataContext is taken from focus
@@ -793,7 +800,9 @@ private suspend fun doUpdateActionsInner(actions: List<AnAction>,
   for (action in actions) {
     val startedAt = System.currentTimeMillis()
     val presentation = updater(action)
-    if (dumb && !action.isDumbAware) {
+    val isFileIndexable = presentation.getClientProperty(IS_FILE_INDEXABLE)
+
+    if ((dumb || (isFileIndexable == false)) && !action.isDumbAware) {
       if (presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) != false) {
         wouldBeEnabledIfNotDumb.add(action)
       }
@@ -826,11 +835,14 @@ private fun doPerformActionInner(e: InputEvent,
   }
 }
 
-private fun showDumbModeBalloonLater(project: Project?,
-                                     message: @Nls String,
-                                     expired: Condition<Any?>,
-                                     actionIds: List<String>,
-                                     retryRunnable: Runnable) {
+private fun showDumbModeBalloonLater(
+  project: Project?,
+  isFileIndexable: Boolean,
+  message: @Nls String,
+  expired: Condition<Any?>,
+  actionIds: List<String>,
+  retryRunnable: Runnable,
+) {
   if (project == null || expired.value(null)) {
     return
   }
@@ -839,23 +851,28 @@ private fun showDumbModeBalloonLater(project: Project?,
                                                     if (expired.value(null)) {
                                                       return@invokeLater
                                                     }
-                                                    DumbService.getInstance(project).showDumbModeActionBalloon(message, retryRunnable,
-                                                                                                               actionIds)
+                                                    val dumbService = DumbService.getInstance(project)
+                                                    if (isFileIndexable) dumbService.showDumbModeActionBalloon(message, retryRunnable, actionIds)
+                                                    else dumbService.showNonIndexableFileActionBalloon(message, retryRunnable, actionIds)
                                                   }, Conditions.or(expired, project.disposed))
 }
 
-private fun getActionUnavailableMessage(actions: List<AnAction>): @Nls String {
+private fun getActionUnavailableMessage(actions: List<AnAction>, project: Project?, file: VirtualFile?): @Nls String {
   val actionNames = actions.asSequence().mapNotNull { action -> action.templateText?.takeIf { it.isNotEmpty() } }.distinct().toList()
+  val isDumb = project != null && DumbService.getInstance(project).isDumb
   return when {
     actionNames.isEmpty() -> {
-      IdeBundle.message("dumb.balloon.this.action.is.not.available.during.indexing")
+      if (isDumb) IdeBundle.message("dumb.balloon.this.action.is.not.available.during.indexing")
+      else IdeBundle.message("dumb.balloon.this.action.is.not.available.inside.non.indexable.file", file?.name ?: "")
     }
     actionNames.size == 1 -> {
-      IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", actionNames[0])
+      if (isDumb) IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", actionNames[0])
+      else IdeBundle.message("dumb.balloon.0.is.not.available.inside.non.indexable.file", actionNames[0], file?.name ?: "")
     }
     else -> {
       val join: @NlsSafe String = actionNames.joinToString(separator = ", ")
-      IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0", join)
+      if (isDumb) IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0", join)
+      else IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.inside.non.indexable.file.0", file?.name ?: "", join)
     }
   }
 }

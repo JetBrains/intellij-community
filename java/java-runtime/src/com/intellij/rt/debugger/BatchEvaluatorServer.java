@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -8,7 +8,6 @@ package com.intellij.rt.debugger;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("unused")
 public final class BatchEvaluatorServer {
@@ -34,11 +33,7 @@ public final class BatchEvaluatorServer {
       }
 
       dos.writeBoolean(error);
-      // do not use writeUTF as it supports only 65535 symbols
-      // dos.writeUTF(res);
-      byte[] stringBytes = res.getBytes(StandardCharsets.UTF_8);
-      dos.writeInt(stringBytes.length);
-      dos.write(stringBytes);
+      dos.writeUTF(res);
     }
     return bas.toString("ISO-8859-1");
   }

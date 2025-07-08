@@ -6,6 +6,8 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
+import com.intellij.platform.runtime.product.serialization.RawProductModules
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
@@ -63,6 +65,17 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       createCheckers(context).forEach {
         it().use { checker ->
           checker.checkProductModules(productModulesModule, softly)
+        }
+      }
+    }
+
+    /**
+     * Verifies that the bundled plugins specified in product-modules.xml file in [productModulesModule] are present in the distribution.
+     */
+    suspend fun checkBundledPluginsArePresent(productModulesModule: String, context: BuildContext, isEmbeddedVariant: Boolean, softly: SoftAssertions) {
+      createCheckers(context).forEach {
+        it().use { checker ->
+          checker.checkBundledPluginsArePresent(productModulesModule, softly, isEmbeddedVariant)
         }
       }
     }
@@ -222,7 +235,44 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       }
     }
   }
-  
+
+  private suspend fun checkBundledPluginsArePresent(productModulesModule: String, softly: SoftAssertions, isEmbeddedVariant: Boolean) {
+    val rawProductModules = loadRawProductModules(productModulesModule)
+    val productName = context.applicationInfo.productNameWithEdition
+    val currentDistributionName = if (isEmbeddedVariant) productName else "'$productName Frontend'"
+    for (mainModuleId in rawProductModules.bundledPluginMainModules) {
+      val mainModule = repository.resolveModule(mainModuleId)
+      if (mainModule.resolvedModule == null) {
+        if (mainModuleId.stringId == "intellij.microservices.ui") {
+          //todo remove this after IJPL-194897 is fixed: currently 'Microservices Endpoints' plugin cannot be loaded because its main module depends on the backend 
+          continue
+        }
+        val problematicModule = if (mainModule.failedDependencyPath.size == 1) "it" else "its dependency ${mainModule.failedDependencyPath.reversed().joinToString(" <- ") { it.stringId }}"
+        softly.collectAssertionErrorIfNotRegisteredYet(
+          AssertionError(
+            buildString { 
+              append("Module '${mainModuleId.stringId}' is specified as the main module of a bundled plugin in product-modules.xml in '$productModulesModule',\n")
+              append("but $problematicModule cannot be found in the runtime module repository in the distribution of $currentDistributionName.\n")
+              if (isEmbeddedVariant) {
+                append("It means that the corresponding plugin won't be loaded when '$productName Frontend' is started from the full\n")
+                append("installation of $productName\n")
+              }
+              append("If '${mainModuleId.stringId}' shouldn't be available in the frontend variant of $productName, remove it from product-modules.xml file\n")
+              append("(or use 'without-module' tag if it comes via 'include' tag).\n")
+              if (isEmbeddedVariant) {
+                append("If it should, add all necessary modules to the plugin layout of the main variant of '${mainModuleId.stringId}' plugin.\n")
+                append("Modules used by the frontend variant only should be put in JAR files in 'frontend-split' subdirectory so they won't be loaded in the regular IDE.\n")
+              }
+              else {
+                append("If it should, make sure that all necessary modules are included in the distribution of $currentDistributionName.\n")
+              }
+            }
+          )
+        )
+      }
+    }
+  }
+
   private fun SoftAssertions.collectAssertionErrorIfNotRegisteredYet(e: AssertionError) {
     if (errorsCollected().none {
         val message = it.message
@@ -239,6 +289,19 @@ internal class RuntimeModuleRepositoryChecker private constructor(
                   ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
     try {
       return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, ProductMode.FRONTEND, repository)
+    }
+    catch (e: IOException) {
+      throw MalformedRepositoryException("Failed to load module group from $debugName", e)
+    }
+  }
+  
+  private suspend fun loadRawProductModules(productModulesModule: String): RawProductModules {
+    val relativePath = "META-INF/$productModulesModule/product-modules.xml"
+    val debugName = "($relativePath file in $productModulesModule)"
+    val content = context.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
+                  ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
+    try {
+      return ProductModulesSerialization.readProductModulesAndMergeIncluded(content.inputStream(), debugName, ResourceFileResolver.createDefault(repository))
     }
     catch (e: IOException) {
       throw MalformedRepositoryException("Failed to load module group from $debugName", e)

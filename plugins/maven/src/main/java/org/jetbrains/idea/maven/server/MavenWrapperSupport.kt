@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.math.BigInteger
 import java.nio.file.Files
-import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
@@ -127,7 +126,7 @@ internal class MavenWrapperSupport {
   private fun unzip(zip: Path, indicator: ProgressIndicator?) {
     indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.unpacking") }
     val unpackDir = zip.parent
-    val destinationCanonicalPath = unpackDir.toRealPath(LinkOption.NOFOLLOW_LINKS)
+    val destinationCanonicalPath = unpackDir.toAbsolutePath().normalize()
     var errorUnpacking = true
     try {
       JBZipFile(zip.toFile()).use { zipFile ->

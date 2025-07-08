@@ -7364,6 +7364,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertPropertyGetterToInitializer/hasComment3.kt");
         }
 
+        @TestMetadata("hasContext.kt")
+        public void testHasContext() throws Exception {
+            runTest("testData/intentions/convertPropertyGetterToInitializer/hasContext.kt");
+        }
+
         @TestMetadata("hasInitializer.kt")
         public void testHasInitializer() throws Exception {
             runTest("testData/intentions/convertPropertyGetterToInitializer/hasInitializer.kt");
@@ -16111,6 +16116,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiver.kt");
         }
 
+        @TestMetadata("valueDeclarationWithReceiverInClasses.kt")
+        public void testValueDeclarationWithReceiverInClasses() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiverInClasses.kt");
+        }
+
         @TestMetadata("variableString.kt")
         public void testVariableString() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/variableString.kt");
@@ -18356,6 +18366,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("conflict2.kt")
         public void testConflict2() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/conflict2.kt");
+        }
+
+        @TestMetadata("dontReplaceForEnum.kt")
+        public void testDontReplaceForEnum() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/dontReplaceForEnum.kt");
         }
 
         @TestMetadata("genericClassMethod.kt")

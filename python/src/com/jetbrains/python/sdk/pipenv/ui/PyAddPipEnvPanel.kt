@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.pipenv.ui
 
 import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -22,26 +21,17 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.getOrNull
+import com.jetbrains.python.*
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.onSuccess
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
-import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
-import com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable
-import com.jetbrains.python.sdk.pipenv.isPipEnv
-import com.jetbrains.python.sdk.pipenv.pipEnvPath
-import com.jetbrains.python.sdk.pipenv.pipFile
-import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkUnderProgress
+import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -80,7 +70,7 @@ class PyAddPipEnvPanel(
   }
 
   private val pipEnvPathField = TextFieldWithBrowseButton().apply {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project) {
       addBrowseFolderListener(project, withContext(Dispatchers.IO) { FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor() }
         .withTitle(PyBundle.message("python.sdk.pipenv.select.executable.title")))
 
@@ -141,8 +131,8 @@ class PyAddPipEnvPanel(
     val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, selectedModule, existingSdks, context).getOrLogException(LOGGER)?.homePath
 
     return runWithModalProgressBlocking(ModalTaskOwner.guess(), PyBundle.message("python.sdk.setting.up.pipenv.title")) {
-      setupPipEnvSdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
-                                  baseSdk, installPackagesCheckBox.isSelected).onSuccess {
+      setupPipEnvSdkWithProgressReport(project, selectedModule, existingSdks, newProjectPath,
+                                       baseSdk, installPackagesCheckBox.isSelected).onSuccess {
         PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdk
       }
     }.getOrNull()
@@ -172,7 +162,7 @@ class PyAddPipEnvPanel(
    * Updates the view according to the current state of UI controls.
    */
   private fun update() {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project) {
       selectedModule?.let {
         installPackagesCheckBox.isEnabled = pipFile(it) != null
       }

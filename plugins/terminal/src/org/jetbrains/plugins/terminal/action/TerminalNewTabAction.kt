@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
@@ -32,7 +33,11 @@ open class TerminalNewTabAction : TerminalPromotedDumbAwareAction(), ActionRemot
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.OPEN_NEW_TAB)
-    TerminalToolWindowManager.getInstance(project).createNewSession(startupFusInfo)
+    TerminalToolWindowManager.getInstance(project).createNewTab(
+      TerminalOptionsProvider.instance.terminalEngine,
+      startupFusInfo,
+      null
+    )
   }
 
   companion object {

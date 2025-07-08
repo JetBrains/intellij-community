@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -33,6 +34,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
@@ -41,6 +43,7 @@ import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
@@ -57,6 +60,8 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.BulletCharStyles
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
@@ -147,6 +152,7 @@ public open class DefaultMarkdownBlockRenderer(
                     .clickable(interactionSource = interactionSource, indication = null, onClick = onTextClick),
             text = renderedContent,
             style = mergedStyle,
+            inlineContent = renderedImages(block),
         )
     }
 
@@ -287,8 +293,11 @@ public open class DefaultMarkdownBlockRenderer(
             for ((index, item) in block.children.withIndex()) {
                 Row {
                     val number = block.startFrom + index
+                    val numberFormat = styling.numberFormatStyles.formatFor(item.level)
+                    val formattedNumber = numberFormat.formatNumber(number)
+
                     Text(
-                        text = "$number${block.delimiter}",
+                        text = "$formattedNumber${block.delimiter}",
                         style = styling.numberStyle,
                         color = styling.numberStyle.color.takeOrElse { LocalContentColor.current },
                         modifier =
@@ -305,6 +314,13 @@ public open class DefaultMarkdownBlockRenderer(
             }
         }
     }
+
+    private fun NumberFormatStyles.formatFor(level: Int) =
+        when (level) {
+            0 -> firstLevel
+            1 -> secondLevel
+            else -> thirdLevel
+        }
 
     @Composable
     override fun render(
@@ -325,13 +341,17 @@ public open class DefaultMarkdownBlockRenderer(
         Column(modifier = modifier.padding(styling.padding), verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
             for (item in block.children) {
                 Row {
+                    val charMarkerStyle = styling.bulletCharStyles?.formatFor(item.level) ?: styling.bullet
+
                     Text(
-                        text = styling.bullet.toString(),
+                        text = charMarkerStyle.toString(),
                         style = styling.bulletStyle,
                         color = styling.bulletStyle.color.takeOrElse { LocalContentColor.current },
                         modifier =
                             Modifier.focusProperties { canFocus = false }
+                                .widthIn(min = styling.markerMinWidth)
                                 .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                        textAlign = TextAlign.Center,
                     )
 
                     Spacer(Modifier.width(styling.bulletContentGap))
@@ -342,6 +362,13 @@ public open class DefaultMarkdownBlockRenderer(
         }
     }
 
+    private fun BulletCharStyles.formatFor(level: Int) =
+        when (level) {
+            0 -> firstLevel
+            1 -> secondLevel
+            else -> thirdLevel
+        }
+
     @Composable
     override fun render(
         block: ListItem,
@@ -350,8 +377,10 @@ public open class DefaultMarkdownBlockRenderer(
         onTextClick: () -> Unit,
         modifier: Modifier,
     ) {
-        Column(modifier, verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
-            render(block.children, enabled, onUrlClick, onTextClick, Modifier)
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            for (childBlock in block.children) {
+                render(childBlock, enabled, onUrlClick, onTextClick, Modifier)
+            }
         }
     }
 
@@ -498,6 +527,17 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
+    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
+        return rendererExtensions
+            .firstNotNullOfOrNull { it.imageRendererExtension }
+            ?.let { imagesRenderer ->
+                getImages(blockInlineContent).associate { image ->
+                    image.source to imagesRenderer.renderImagesContent(image)
+                }
+            } ?: emptyMap()
+    }
+
+    @Composable
     protected fun MaybeScrollingContainer(
         isScrollable: Boolean,
         modifier: Modifier = Modifier,
@@ -524,4 +564,22 @@ public open class DefaultMarkdownBlockRenderer(
     @ExperimentalJewelApi
     override operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer =
         DefaultMarkdownBlockRenderer(rootStyling, rendererExtensions = rendererExtensions + extension, inlineRenderer)
+}
+
+private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = buildList {
+    fun collectImagesRecursively(items: List<InlineMarkdown>) {
+        for (item in items) {
+            when (item) {
+                is InlineMarkdown.Image -> {
+                    if (item.source.isNotBlank()) add(item)
+                }
+                is WithInlineMarkdown -> {
+                    collectImagesRecursively(item.inlineContent)
+                }
+
+                else -> {}
+            }
+        }
+    }
+    collectImagesRecursively(input.inlineContent)
 }

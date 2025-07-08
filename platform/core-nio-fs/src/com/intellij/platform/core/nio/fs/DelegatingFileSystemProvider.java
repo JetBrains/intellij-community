@@ -4,6 +4,7 @@ package com.intellij.platform.core.nio.fs;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +39,7 @@ public abstract class DelegatingFileSystemProvider<
   /**
    * @return A delegating file system which is bound to this provider.
    */
-  protected abstract @NotNull F wrapDelegateFileSystem(@NotNull FileSystem delegateFs);
+  public abstract @NotNull F wrapDelegateFileSystem(@NotNull FileSystem delegateFs);
 
   /**
    * @param path1 A path passed to some method of {@link FileSystemProvider}.
@@ -261,7 +262,7 @@ public abstract class DelegatingFileSystemProvider<
       path1 = ((CorePath)path1).getDelegate();
     }
     else if (path1 instanceof MultiRoutingFsPath) {
-      path1 = ((MultiRoutingFsPath)path1).getDelegate();
+      path1 = ((MultiRoutingFsPath)path1).getInitialDelegate();
     }
     try {
       Method method = provider.getClass().getMethod("getSunPathForSocketFile", Path.class);

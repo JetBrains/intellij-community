@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -45,6 +44,8 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableSharedFlow;
@@ -143,6 +144,18 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return position.createNavigatable(getProject());
   }
 
+  protected <T> void updateStateIfNeededAndNotify(long requestId, T newValue, Supplier<? extends T> getter, Consumer<T> setter) {
+    T currentValue = getter.get();
+    boolean updateNeeded = !Objects.equals(currentValue, newValue);
+    if (updateNeeded) {
+      setter.accept(newValue);
+    }
+    boolean requestCompleted = myBreakpointManager.getRequestCounter().setRequestCompleted(requestId);
+    if (updateNeeded || requestCompleted) {
+      fireBreakpointChanged();
+    }
+  }
+
   @Override
   public boolean isEnabled() {
     return myState.isEnabled();
@@ -150,10 +163,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setEnabled(final boolean enabled) {
-    if (enabled != isEnabled()) {
-      myState.setEnabled(enabled);
-      fireBreakpointChanged();
-    }
+    setEnabled(-1, enabled);
+  }
+
+  public void setEnabled(long requestId, boolean enabled) {
+    updateStateIfNeededAndNotify(requestId, enabled, myState::isEnabled, myState::setEnabled);
   }
 
   @Override
@@ -163,13 +177,16 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setSuspendPolicy(@NotNull SuspendPolicy policy) {
-    if (myState.getSuspendPolicy() != policy) {
-      myState.setSuspendPolicy(policy);
-      if (policy == SuspendPolicy.NONE) {
+    setSuspendPolicy(-1, policy);
+  }
+
+  public void setSuspendPolicy(long requestId, @NotNull SuspendPolicy policy) {
+    updateStateIfNeededAndNotify(requestId, policy, myState::getSuspendPolicy, (p) -> {
+      myState.setSuspendPolicy(p);
+      if (p == SuspendPolicy.NONE) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("debugger.breakpoint.non.suspending");
       }
-      fireBreakpointChanged();
-    }
+    });
   }
 
   @Override
@@ -179,10 +196,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogMessage(final boolean logMessage) {
-    if (logMessage != isLogMessage()) {
-      myState.setLogMessage(logMessage);
-      fireBreakpointChanged();
-    }
+    setLogMessage(-1, logMessage);
+  }
+
+  public void setLogMessage(long requestId, boolean logMessage) {
+    updateStateIfNeededAndNotify(requestId, logMessage, myState::isLogMessage, myState::setLogMessage);
   }
 
   @Override
@@ -192,10 +210,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogStack(final boolean logStack) {
-    if (logStack != isLogStack()) {
-      myState.setLogStack(logStack);
-      fireBreakpointChanged();
-    }
+    setLogStack(-1, logStack);
+  }
+
+  public void setLogStack(long requestId, boolean logStack) {
+    updateStateIfNeededAndNotify(requestId, logStack, myState::isLogStack, myState::setLogStack);
   }
 
   public boolean isConditionEnabled() {
@@ -203,10 +222,13 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setConditionEnabled(boolean conditionEnabled) {
-    if (myConditionEnabled != conditionEnabled) {
-      myConditionEnabled = conditionEnabled;
-      fireBreakpointChanged();
-    }
+    setConditionEnabled(-1, conditionEnabled);
+  }
+
+  public void setConditionEnabled(long requestId, boolean conditionEnabled) {
+    updateStateIfNeededAndNotify(requestId, conditionEnabled, this::isConditionEnabled, (s) -> {
+      myConditionEnabled = s;
+    });
   }
 
   public boolean isLogExpressionEnabled() {
@@ -214,10 +236,13 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setLogExpressionEnabled(boolean logExpressionEnabled) {
-    if (myLogExpressionEnabled != logExpressionEnabled) {
-      myLogExpressionEnabled = logExpressionEnabled;
-      fireBreakpointChanged();
-    }
+    setLogExpressionEnabled(-1, logExpressionEnabled);
+  }
+
+  public void setLogExpressionEnabled(long requestId, boolean logExpressionEnabled) {
+    updateStateIfNeededAndNotify(requestId, logExpressionEnabled, this::isLogExpressionEnabled, (s) -> {
+      myLogExpressionEnabled = s;
+    });
   }
 
   public String getLogExpression() {
@@ -227,10 +252,13 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogExpression(final @Nullable String expression) {
-    if (!Objects.equals(getLogExpression(), expression)) {
-      myLogExpression = XExpressionImpl.fromText(expression);
-      fireBreakpointChanged();
-    }
+    setLogExpression(-1, expression);
+  }
+
+  public void setLogExpression(long requestId, final @Nullable String expression) {
+    updateStateIfNeededAndNotify(requestId, expression, this::getLogExpression, (e) -> {
+      myLogExpression = XExpressionImpl.fromText(e);
+    });
   }
 
   public XExpression getLogExpressionObjectInt() {
@@ -244,10 +272,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogExpressionObject(@Nullable XExpression expression) {
-    if (!Comparing.equal(myLogExpression, expression)) {
-      myLogExpression = expression;
-      fireBreakpointChanged();
-    }
+    setLogExpressionObject(-1, expression);
+  }
+
+  public void setLogExpressionObject(long requestId, @Nullable XExpression expression) {
+    updateStateIfNeededAndNotify(requestId, expression, this::getLogExpressionObjectInt, (e) -> myLogExpression = e);
   }
 
   public String getCondition() {
@@ -257,10 +286,13 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setCondition(final @Nullable String condition) {
-    if (!Objects.equals(condition, getCondition())) {
-      myCondition = XExpressionImpl.fromText(condition);
-      fireBreakpointChanged();
-    }
+    setCondition(-1, condition);
+  }
+
+  public void setCondition(long requestId, final @Nullable String condition) {
+    updateStateIfNeededAndNotify(requestId, condition, this::getCondition, (c) -> {
+      myCondition = XExpressionImpl.fromText(c);
+    });
   }
 
   public XExpression getConditionExpressionInt() {
@@ -274,10 +306,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setConditionExpression(@Nullable XExpression condition) {
-    if (!Comparing.equal(condition, myCondition)) {
-      myCondition = condition;
-      fireBreakpointChanged();
-    }
+    setConditionExpression(-1, condition);
+  }
+
+  public void setConditionExpression(long requestId, @Nullable XExpression condition) {
+    updateStateIfNeededAndNotify(requestId, condition, this::getConditionExpressionInt, (c) -> myCondition = c);
   }
 
   @Override
@@ -329,11 +362,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setGroup(String group) {
+    setGroup(-1, group);
+  }
+
+  public void setGroup(long requestId, String group) {
     String newGroup = StringUtil.nullize(group);
-    if (!Objects.equals(newGroup, myState.getGroup())) {
-      myState.setGroup(newGroup);
-      fireBreakpointChanged();
-    }
+    updateStateIfNeededAndNotify(requestId, newGroup, myState::getGroup, myState::setGroup);
   }
 
   public @NlsSafe String getUserDescription() {
@@ -341,11 +375,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setUserDescription(String description) {
+    setUserDescription(-1, description);
+  }
+
+  public void setUserDescription(long requestId, String description) {
     String newDescription = StringUtil.nullize(description);
-    if (!Objects.equals(newDescription, myState.getDescription())) {
-      myState.setDescription(newDescription);
-      fireBreakpointChanged();
-    }
+    updateStateIfNeededAndNotify(requestId, newDescription, myState::getDescription, myState::setDescription);
   }
 
   public final void dispose() {

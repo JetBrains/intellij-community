@@ -23,7 +23,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.*
-  import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
+import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -420,7 +421,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
           .filter { it !in packageService.additionalRepositories }
           .forEach { packageService.addRepository(it) }
 
-        reloadPackages()
+        // LAME: pip based repository manager handles all added repositories via cache...
+        service<PythonSimpleRepositoryCache>().refresh()
+        refreshInstalledPackages()
       }
     }
   }

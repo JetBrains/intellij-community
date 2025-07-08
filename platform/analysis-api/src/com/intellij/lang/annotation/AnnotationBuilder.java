@@ -134,18 +134,16 @@ public interface AnnotationBuilder {
 
   /**
    * @deprecated Does nothing
-   * @return this builder for chaining convenience
    */
   @Contract(pure = true)
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull AnnotationBuilder needsUpdateOnTyping();
 
   /**
    * @deprecated Does nothing
-   * @return this builder for chaining convenience
    */
   @Contract(pure = true)
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull AnnotationBuilder needsUpdateOnTyping(boolean value);
 
   /**

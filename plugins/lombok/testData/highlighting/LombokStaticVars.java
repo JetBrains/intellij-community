@@ -10,7 +10,7 @@ public class LombokStaticVars {
         log.info("This should not produce error: Variable 'log' might not have been initialized");
     };
 
-  public static void main(String[] args) {
+  public static void main() {
     LAMDA.run();
   }
 }

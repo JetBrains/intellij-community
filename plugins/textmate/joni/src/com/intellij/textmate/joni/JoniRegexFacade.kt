@@ -57,15 +57,18 @@ class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
     }
   }
 
+  override fun close() {
+  }
+
 
   companion object {
     private val MATCHING_TIMEOUT = 300.milliseconds.inWholeNanoseconds
     private val LOGGER: Logger = LoggerFactory.getLogger(JoniRegexFacade::class.java)
 
     private fun checkMatched(match: MatchData, string: TextMateString) {
-      check(!(match.matched && match.byteOffset().end > string.bytes.size)) {
-        "Match data out of bounds: " + match.byteOffset().start + " > " + string.bytes.size + "\n" + String(string.bytes,
-                                                                                                            Charsets.UTF_8)
+      check(!(match.matched && match.byteRange().end > string.bytes.size)) {
+        "Match data out of bounds: " + match.byteRange().start + " > " + string.bytes.size + "\n" + String(string.bytes,
+                                                                                                           Charsets.UTF_8)
       }
     }
 

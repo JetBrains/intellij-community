@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.PluginInstalledFromDiskResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.platform.project.ProjectId
@@ -27,12 +28,14 @@ interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun allowLoadUnloadWithoutRestart(pluginId: String): Boolean
   suspend fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean
   suspend fun applyPluginSession(sessionId: String, projectId: ProjectId?): ApplyPluginsStateResult
+  suspend fun getApplySessionError(sessionId: String): String?
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId>
   suspend fun isModified(sessionId: String): Boolean
   suspend fun resetSession(sessionId: String, removeSession: Boolean): Map<PluginId, Boolean>
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   suspend fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean, ): SetEnabledStateResult
+  suspend fun installPluginFromDisk(projectId: ProjectId?): PluginInstalledFromDiskResult
 
   companion object {
     suspend fun getInstance(): PluginInstallerApi {

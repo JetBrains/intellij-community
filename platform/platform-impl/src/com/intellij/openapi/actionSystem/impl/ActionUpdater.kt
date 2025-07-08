@@ -347,7 +347,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         ActionUpdaterInterceptor.getGroupChildren(group, event) {
           callAction(opElement, group.actionUpdateThread) {
             group.getChildren(event).apply {
-              ensureNotNullChildren(opElement, this)
+              ensureNotNullChildren(opElement, this as Array<AnAction?>)
             }.asList()
           }
         }

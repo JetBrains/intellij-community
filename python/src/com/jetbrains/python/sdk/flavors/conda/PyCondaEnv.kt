@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
@@ -21,10 +21,9 @@ import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name
-import kotlin.io.path.pathString
 
 /**
- * TODO: Once we get rid of [TargetCommandExecutor] and have access to [com.intellij.execution.target.TargetEnvironmentConfiguration] use it validate conda binary in [getEnvs]
+ * TODO: Once we get rid of [TargetCommandExecutor] and have access to [TargetEnvironmentConfiguration] use it validate conda binary in [getEnvs]
  * @see `PyCondaTest`
  */
 @ApiStatus.Internal
@@ -37,16 +36,6 @@ data class PyCondaEnv(
     get() = Path(fullCondaPathOnTarget)
 
   companion object {
-    /**
-     * @return list of conda's envs_dirs directories
-     */
-    @ApiStatus.Internal
-    suspend fun getEnvsDirs(
-      fullCondaPathOnTarget: FullPathOnTarget,
-    ): PyResult<Collection<String>> {
-      val info = CondaExecutor.listEnvs(Path(fullCondaPathOnTarget)).getOr { return it }
-      return PyResult.success(info.envsDirs)
-    }
 
     /**
      * @return list of conda environments
@@ -115,7 +104,6 @@ data class PyCondaEnv(
 
 /**
  * Request to create new conda environment.
- * Conda binary must be run with [createEnvArguments]
  */
 sealed class NewCondaEnvRequest {
   abstract val envName: @NonNls String
@@ -157,14 +145,16 @@ sealed class NewCondaEnvRequest {
       assert(environmentYaml.exists()) { "$environmentYaml doesn't exist" }
     }
 
-    private val lazyName = lazy {
-      ObjectMapper(YAMLFactory()).readValue(environmentYaml.pathString, ObjectNode::class.java).get("name").asText()
-    }
-    override val envName: String get() = lazyName.value
+    override val envName: String = readEnvName()
 
     @ApiStatus.Internal
     override suspend fun create(condaPath: Path): PyResult<Unit> {
       return CondaExecutor.createFileEnv(condaPath, environmentYaml)
+    }
+
+    private fun readEnvName(): String = runReadAction {
+      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(environmentYaml) ?: return@runReadAction "default"
+      CondaEnvironmentYmlParser.readNameFromFile(virtualFile) ?: "default"
     }
   }
 }

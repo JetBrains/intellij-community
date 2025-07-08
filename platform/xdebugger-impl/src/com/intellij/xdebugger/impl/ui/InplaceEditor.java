@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -176,7 +177,7 @@ public abstract class InplaceEditor implements AWTEventListener {
     getProject().getMessageBus().connect(myDisposable).subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
       @Override
       public void currentSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
-        cancelEditing();
+        AppUIUtil.invokeOnEdt(() -> cancelEditing());
       }
     });
 

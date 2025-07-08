@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,6 +55,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
 
   public final ThreadLocal<@Nullable UntrustedCertificateStrategy> myUntrustedCertificateStrategy = ThreadLocal.withInitial(() -> null);
+  private final Set<X509Certificate> myRejectedCertificates = ConcurrentCollectionFactory.createConcurrentSet();
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
     return new ConfirmingTrustManager(getSystemTrustManagers(), new MutableTrustManager(path, password));
@@ -299,14 +301,22 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         acceptLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
       LOG.info(acceptLogMessage);
-      CertificateWarningDialogProvider dialogProvider = CertificateWarningDialogProvider.Companion.getInstance();
-      if (dialogProvider == null) {
-        LOG.warn("Accepting dialog wasn't shown, because DialogProvider in unavailable now");
+      if (myRejectedCertificates.contains(endPoint)) {
+        LOG.info("Certificate was already rejected");
       } else {
-        accepted = CertificateManager.Companion.showAcceptDialog(() -> {
-          // TODO may be another kind of warning, if default trust store is missing
-          return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, certificateProvider);
-        });
+        CertificateWarningDialogProvider dialogProvider = CertificateWarningDialogProvider.Companion.getInstance();
+        if (dialogProvider == null) {
+          LOG.warn("Accepting dialog wasn't shown, because DialogProvider in unavailable now");
+        } else {
+          @Nullable Boolean dialogResult = CertificateManager.Companion.showAcceptDialog(() -> {
+            // TODO may be another kind of warning, if default trust store is missing
+            return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, certificateProvider);
+          });
+          if (Boolean.FALSE.equals(dialogResult)) {
+            myRejectedCertificates.add(endPoint);
+          }
+          accepted = dialogResult != null && dialogResult.booleanValue();
+        }
       }
     }
     else {

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -18,4 +19,14 @@ public interface EventTrackingIntentionAction {
    * This method can be invoked from any thread.
    */
   void suggestionShown(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile);
+
+  static EventTrackingIntentionAction unwrap(@NotNull IntentionAction action) {
+    if (action instanceof EventTrackingIntentionAction intentionAction) {
+      return intentionAction;
+    }
+    if (QuickFixWrapper.unwrap(action) instanceof EventTrackingIntentionAction intentionAction) {
+      return intentionAction;
+    }
+    return null;
+  }
 }

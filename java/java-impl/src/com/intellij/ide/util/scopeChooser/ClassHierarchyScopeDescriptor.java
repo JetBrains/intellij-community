@@ -86,4 +86,9 @@ final class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
 
     return myCachedScope;
   }
+
+  @Override
+  public boolean needsUserInputForScope() {
+    return true;
+  }
 }

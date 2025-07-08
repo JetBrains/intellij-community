@@ -49,7 +49,7 @@ public final class ThreadsPanel extends DebuggerTreePanel {
         }
       }
     });
-    add(ScrollPaneFactory.createScrollPane(getThreadsTree()), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(getThreadsTree(), true), BorderLayout.CENTER);
     stateManager.addListener(new DebuggerContextListener() {
       @Override
       public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {

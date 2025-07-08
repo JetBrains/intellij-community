@@ -5,11 +5,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -34,24 +30,21 @@ internal fun PythonAddInterpreterModel.createCondaCommand(): PyCondaCommand =
 
 internal suspend fun PythonAddInterpreterModel.createCondaEnvironment(moduleOrProject: ModuleOrProject, request: NewCondaEnvRequest): PyResult<Sdk> {
 
-  val result = withModalProgress(ModalTaskOwner.guess(),
-                                 PyBundle.message("sdk.create.custom.conda.create.progress"),
-                                 TaskCancellation.nonCancellable()) {
-    createCondaCommand().createCondaSdkAlongWithNewEnv(
-      newCondaEnvInfo = request,
-      uiContext = Dispatchers.EDT,
-      existingSdks = existingSdks,
-      project = moduleOrProject.project
-    )
-  }.onSuccess { sdk ->
-    (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
+  val result = createCondaCommand().createCondaSdkAlongWithNewEnv(
+    newCondaEnvInfo = request,
+    uiContext = Dispatchers.EDT,
+    existingSdks = existingSdks,
+    project = moduleOrProject.project
+  )
+    .onSuccess { sdk ->
+      (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
 
-    val module = PyProjectCreateHelpers.getModule(moduleOrProject, null)
-    if (module != null) {
-      sdk.setAssociationToModule(module)
+      val module = PyProjectCreateHelpers.getModule(moduleOrProject, null)
+      if (module != null) {
+        sdk.setAssociationToModule(module)
+      }
+      sdk.persist()
     }
-    sdk.persist()
-  }
 
   return result
 }

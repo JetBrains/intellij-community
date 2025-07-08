@@ -205,7 +205,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     });
 
     initComponents();
-    FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel());
+    FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel(), myScopeUI.getScopeTypeByModel(myHelper.getModel()));
   }
 
   @Override
@@ -949,6 +949,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           } else {
             removeRow(p);
             insertRow(p, v);
+            if (p == 0) {
+              myResultsPreviewTable.getSelectionModel().setSelectionInterval(0, 0);
+            }
           }
         }
       }
@@ -1192,7 +1195,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
         Set<String> filePaths = ConcurrentHashMap.newKeySet();
 
-        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages, !myResultsPreviewTable.isEmpty(), (usage)-> {
+        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages,
+                                   !myResultsPreviewTable.isEmpty(), myDisposable, (usageInfos) -> {
+          myUsagePreviewPanel.updateLayout(project, usageInfos);
+          return null;
+        }, (usage) -> {
           if (isCancelled()) {
             onStop(hash);
             return false;
@@ -1628,6 +1635,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     model.setModuleName(null);
     model.setCustomScopeName(null);
     model.setCustomScope(null);
+    model.setCustomScopeId(null);
     model.setCustomScope(false);
     myScopeUI.applyTo(model, mySelectedScope);
 
@@ -1964,6 +1972,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
+        FindUsagesCollector.triggerScopeSelected(myScope);
         mySelectedScope = myScope;
         myScopeSelectionToolbar.updateActionsImmediately();
         updateScopeDetailsPanel();

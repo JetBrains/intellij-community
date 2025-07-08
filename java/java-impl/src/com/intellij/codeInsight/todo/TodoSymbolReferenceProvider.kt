@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.PsiHighlightedReference
 import com.intellij.find.usages.api.*
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.ide.todo.TodoView
+import com.intellij.java.JavaBundle
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
@@ -113,7 +114,7 @@ private class TodoNavigationTarget(
 
   override fun computePresentation(): TargetPresentation {
     // todo
-    return TargetPresentation.builder("todo item").presentation()
+    return TargetPresentation.builder(JavaBundle.message("todo.item")).presentation()
   }
 
   override fun navigationRequest(): NavigationRequest? =
@@ -150,7 +151,7 @@ private data class TodoSearchTarget(val wordToHighlight: String) : SearchTarget,
 
   override fun presentation(): TargetPresentation {
     // todo
-    return TargetPresentation.builder("todo \"$wordToHighlight\"").presentation()
+    return TargetPresentation.builder(JavaBundle.message("todo.0", wordToHighlight)).presentation()
   }
 
   override val usageHandler: UsageHandler

@@ -236,6 +236,22 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  public void testAnnotationCallableTypeWithEmptyParameterList() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeWithPositionalOnlyParameters() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeInferredFromTypeHint() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCallableTypeInferredFromFunctionWithIllegalSignature() {
+    doAnnotationTest();
+  }
+
   public void testAnnotationTypingNamedTupleInOtherFile() {
     doMultiFileAnnotationTest();
   }

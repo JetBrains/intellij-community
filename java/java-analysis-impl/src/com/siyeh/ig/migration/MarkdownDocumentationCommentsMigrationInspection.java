@@ -308,6 +308,9 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
                 result.append(valueChild.getText());
               }
             }
+            else {
+              result.append(refChild.getText());
+            }
           }
         }
         else if (!(dataElement instanceof PsiDocToken) && !(dataElement instanceof PsiWhiteSpace)) {

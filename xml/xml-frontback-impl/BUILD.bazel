@@ -22,12 +22,10 @@ jvm_library(
     "//platform/util",
     "//platform/util:util-ui",
     "//xml/xml-parser:parser",
-    "//platform/code-style-impl:codeStyle-impl",
     "//platform/code-style-api:codeStyle",
     "@lib//:fastutil-min",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/core-ui",
     "//xml/xml-psi-api:psi",
   ],
   runtime_deps = [":frontback-impl_resources"]

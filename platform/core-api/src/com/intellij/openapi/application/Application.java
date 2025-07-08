@@ -103,9 +103,9 @@ public interface Application extends ComponentManager {
   }
 
   /**
-   * Runs the specified computation in a read action. Can be called from any thread.
-   * The action is executed immediately if no write action is currently running or the write action
-   * is running on the current thread.
+   * Runs the specified computation in a blocking read action (as opposed to {@link com.intellij.openapi.application.NonBlockingReadAction}).
+   * Can be called from any thread.
+   * The action is executed immediately if no write action is currently running or the write action is running on the current thread.
    * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#run} for a more lambda-friendly version.
@@ -118,9 +118,9 @@ public interface Application extends ComponentManager {
   void runReadAction(@NotNull Runnable action);
 
   /**
-   * Runs the specified computation in a read action. Can be called from any thread.
-   * The computation is executed immediately if no write action is currently running or the write action
-   * is running on the current thread.
+   * Runs the specified computation in a blocking read action (as opposed to {@link com.intellij.openapi.application.NonBlockingReadAction}).
+   * Can be called from any thread.
+   * The computation is executed immediately if no write action is currently running or the write action is running on the current thread.
    * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
@@ -135,9 +135,9 @@ public interface Application extends ComponentManager {
   <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
-   * Runs the specified computation in a read action. Can be called from any thread.
-   * The computation is executed immediately if no write action is currently running or the write action
-   * is running on the current thread.
+   * Runs the specified computation in a blocking read action (as opposed to {@link com.intellij.openapi.application.NonBlockingReadAction}).
+   * Can be called from any thread.
+   * The computation is executed immediately if no write action is currently running or the write action is running on the current thread.
    * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
@@ -711,6 +711,11 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Internal
   default @NonNls @Nullable String isLockingProhibited() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  default @Nullable ThreadingSupport getThreadingSupport() {
     return null;
   }
 }

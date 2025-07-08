@@ -7,6 +7,10 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
+/**
+ * Stack of [PolySymbolScope]s, which is used for by [PolySymbolQueryExecutor]
+ * when executing queries.
+ */
 class PolySymbolQueryStack() {
 
   private val stack = SmartList<PolySymbolScope>()

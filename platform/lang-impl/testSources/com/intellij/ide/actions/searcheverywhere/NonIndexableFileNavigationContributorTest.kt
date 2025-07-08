@@ -39,6 +39,7 @@ import java.nio.file.Files
 
 
 @TestApplication
+@RegistryKey("search.in.non.indexable", "true")
 class NonIndexableFileNavigationContributorTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
@@ -105,6 +106,23 @@ class NonIndexableFileNavigationContributorTest {
 
     val names = processNames()
     assertThat(names).containsExactlyInAnyOrder("u1", "u2", "f")
+  }
+
+  @Test
+  fun `2 non-indexable roots on one directory`(): Unit = runBlocking {
+    val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
+    val unindexed2 = unindexed
+    baseDir.newVirtualFile("u1/d1/f1")
+    baseDir.newVirtualFile("u1/d1/f2")
+
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(unindexed, NonPersistentEntitySource))
+      storage.addEntity(NonIndexableTestEntity(unindexed2, NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+
+    val names = processNames()
+    assertThat(names).containsExactlyInAnyOrder("u1", "d1", "f1", "f2")
   }
 
   @Test

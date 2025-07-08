@@ -3,19 +3,17 @@ package com.intellij.platform.externalSystem.impl.dependencySubstitution
 
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-interface DependencySubstitutionEntity : WorkspaceEntityWithSymbolicId {
+interface DependencySubstitutionEntity : WorkspaceEntity {
 
-  val owner: ModuleId
+  @Parent
+  val owner: ModuleEntity
 
   val library: LibraryId
 
@@ -23,14 +21,11 @@ interface DependencySubstitutionEntity : WorkspaceEntityWithSymbolicId {
 
   val scope: DependencyScope
 
-  override val symbolicId: DependencySubstitutionId
-    get() = DependencySubstitutionId(owner, module, scope)
-
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<DependencySubstitutionEntity> {
     override var entitySource: EntitySource
-    var owner: ModuleId
+    var owner: ModuleEntity.Builder
     var library: LibraryId
     var module: ModuleId
     var scope: DependencyScope
@@ -41,7 +36,6 @@ interface DependencySubstitutionEntity : WorkspaceEntityWithSymbolicId {
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
-      owner: ModuleId,
       library: LibraryId,
       module: ModuleId,
       scope: DependencyScope,
@@ -49,7 +43,6 @@ interface DependencySubstitutionEntity : WorkspaceEntityWithSymbolicId {
       init: (Builder.() -> Unit)? = null,
     ): Builder {
       val builder = builder()
-      builder.owner = owner
       builder.library = library
       builder.module = module
       builder.scope = scope
@@ -69,4 +62,13 @@ fun MutableEntityStorage.modifyDependencySubstitutionEntity(
 ): DependencySubstitutionEntity {
   return modifyEntity(DependencySubstitutionEntity.Builder::class.java, entity, modification)
 }
+
+@get:Internal
+@set:Internal
+var ModuleEntity.Builder.substitutions: List<DependencySubstitutionEntity.Builder>
+  by WorkspaceEntity.extensionBuilder(DependencySubstitutionEntity::class.java)
 //endregion
+
+@get:Internal
+val ModuleEntity.substitutions: List<DependencySubstitutionEntity>
+  by WorkspaceEntity.extension()

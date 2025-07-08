@@ -67,13 +67,14 @@ public final class JavaPsiMethodUtil {
   }
 
   /**
-   * @param aClass a class to analyze
+   * @param aClass                         a class to analyze
    * @param overrideEquivalentSuperMethods collection of override-equivalent super methods
+   * @param skipSelf                       whether to ignore methods defined directly in aClass
    * @return an abstract method from the supplied collection that must be implemented, because an override-equivalent
    * default method is present, and the ambiguity must be resolved.
    */
   public static @Nullable PsiMethod getAbstractMethodToImplementWhenDefaultPresent(
-    @NotNull PsiClass aClass, @NotNull Collection<? extends PsiMethod> overrideEquivalentSuperMethods) {
+    @NotNull PsiClass aClass, @NotNull Collection<? extends PsiMethod> overrideEquivalentSuperMethods, boolean skipSelf) {
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass instanceof PsiTypeParameter) return null;
     if (overrideEquivalentSuperMethods.size() <= 1) return null;
     PsiMethod abstractMethod = null;
@@ -90,6 +91,7 @@ public final class JavaPsiMethodUtil {
       }
     }
     if (abstractMethod == null || defaultMethod == null) return null;
+    if (!skipSelf && MethodSignatureUtil.findMethodBySuperMethod(aClass, defaultMethod, false) != null) return null;
     PsiClass abstractMethodContainingClass = abstractMethod.getContainingClass();
     if (abstractMethodContainingClass == null || !abstractMethodContainingClass.isInterface()) return null;
     PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();

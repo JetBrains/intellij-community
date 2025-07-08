@@ -61,6 +61,8 @@ f:org.jetbrains.jps.javac.ExternalRefCollectorCompilerToolExtension
 - org.jetbrains.jps.javac.AbstractRefCollectorCompilerToolExtension
 - sf:ENABLED_PARAM:java.lang.String
 - <init>():V
+- s:disable():V
+- s:enable():V
 a:org.jetbrains.jps.javac.JavaCompilerToolExtension
 - <init>():V
 - beforeCompileTaskExecution(org.jetbrains.jps.builders.java.JavaCompilingTool,javax.tools.JavaCompiler$CompilationTask,java.lang.Iterable,org.jetbrains.jps.javac.DiagnosticOutputConsumer):V

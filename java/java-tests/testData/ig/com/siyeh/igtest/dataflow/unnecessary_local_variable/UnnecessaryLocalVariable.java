@@ -101,7 +101,11 @@ class UnnecessaryLocalVariable {
   }
 
   void parenthesized3(int i) {
-    int <warning descr="Local variable 'j' is redundant">j</warning> = (i);
+    int j = (i);
+  }
+
+  void unusedString() {
+    String str = "i";
   }
 
   void parenthesized4(int k) {
@@ -228,4 +232,15 @@ abstract class RedundantLocalInFor {
   }
 
   protected abstract RedundantLocalInFor getParent();
+
+  void incompleteLambda() {
+    <error descr="Cannot infer type: lambda expression requires an explicit target type">var</error> z = s -> {
+      final Object s1  = s;
+      return x(s1) ;
+    };
+  }
+
+  boolean x(Object o) {
+    return false;
+  }
 }

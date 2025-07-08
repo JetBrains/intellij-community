@@ -151,6 +151,7 @@ f:com.intellij.execution.configurations.PathEnvironmentVariableUtil
 - s:getPathDirs(java.lang.String):java.util.List
 - s:getPathVariableValue():java.lang.String
 - s:getWindowsExecutableFileExtensions():java.util.List
+- s:isOnPath(java.lang.String):Z
 c:com.intellij.execution.configurations.PtyCommandLine
 - com.intellij.execution.configurations.GeneralCommandLine
 - com.intellij.execution.configurations.CommandLineWithSuspendedProcessCallback

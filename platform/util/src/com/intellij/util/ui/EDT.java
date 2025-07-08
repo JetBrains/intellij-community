@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -101,9 +100,10 @@ public final class EDT {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    ThreadContext.resetThreadContext(() -> {
       dispatchAllInvocationEventsImpl();
-    }
+      return null;
+    });
   }
 
   private static void dispatchAllInvocationEventsImpl() {

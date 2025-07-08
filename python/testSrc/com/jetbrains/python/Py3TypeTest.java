@@ -952,6 +952,15 @@ public class Py3TypeTest extends PyTestCase {
              expr = f()""");
   }
 
+  // PY-81606
+  public void testCallable() {
+    doTest("(x: int, /, s: str, *, k: bytes) -> None",
+           """
+             def func(x: int, /, s: str, *, k: bytes) -> None:
+                 pass
+             expr = func""");
+  }
+
   // PY-24445
   public void testIsSubclassInsideListComprehension() {
     doTest("list[type[A]]",
@@ -3795,6 +3804,93 @@ public class Py3TypeTest extends PyTestCase {
         expr: T
       """);
     });
+  }
+
+  // PY-37755
+  public void testNonLocalType() {
+    doTest("bool",
+           """
+             def fun():
+                 expr = True
+
+                 def nuf():
+                     nonlocal expr
+                     expr""");
+
+    doTest("bool",
+           """
+             a = []
+
+             def fun():
+                 a = True
+
+                 def nuf():
+                     nonlocal a
+                     expr = a""");
+
+    doTest("bool | int",
+           """
+             a = []
+
+             def fun():
+                 if True:
+                     a = True
+                 else:
+                     a = 5
+
+                 def nuf():
+                     nonlocal a
+                     expr = a""");
+
+    // PY-82115
+    doTest("str",
+           """
+             def outer1():
+                 s = "aba"
+             
+                 def outer2():
+                     def inner1():
+                         nonlocal s
+                         expr = s
+             
+                     def inner2():
+                         global s
+                         s = 1
+             """);
+  }
+
+  // PY-75679
+  public void testSelfSubstitutedWithGenericQualifierType() {
+    doTest("Derived[int]", """
+      from typing import Self, Generic, TypeVar
+      T = TypeVar('T')
+      class Base1(Generic[T]):
+          def foo(self) -> Self:
+              return self
+      
+      class Base2:
+          def bar(self) -> Self:
+              return self
+      
+      class Derived(Base1[T], Base2): ...
+
+      d = Derived[int]()
+      expr = d.bar().foo().bar().foo()
+      """);
+  }
+
+  // PY-75679
+  public void testSelfSubstitutedWithQualifierType() {
+    doTest("B", """
+      from typing import Self
+      
+      class A[T]:
+          def f(self) -> Self: ...
+      
+      class B(A[int]): ...
+      
+      expr = B().f()
+      """);
   }
 
   private void doTest(final String expectedType, final String text) {

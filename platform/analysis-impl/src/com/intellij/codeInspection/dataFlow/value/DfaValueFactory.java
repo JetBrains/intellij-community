@@ -17,6 +17,7 @@ import java.util.*;
 
 public class DfaValueFactory {
   private final @NotNull List<DfaValue> myValues = new ArrayList<>();
+  private final @NotNull List<Synthetic> mySynthetics = new ArrayList<>();
   private final @NotNull Project myProject;
   private @Nullable PsiElement myContext;
 
@@ -62,6 +63,40 @@ public class DfaValueFactory {
 
   public DfaValue getValue(int id) {
     return myValues.get(id);
+  }
+
+  /**
+   * @param offset offset to search temporary variables from
+   * @return temporary variables created at or after the given offset
+   */
+  public @NotNull List<VariableDescriptor> getTempVariableDescriptorsFrom(int offset) {
+    List<VariableDescriptor> result = new ArrayList<>();
+    for (Synthetic synthetic : mySynthetics) {
+      if (synthetic.myLocation >= offset) {
+        result.add(synthetic);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Creates temporary variable
+   * @param offset offset to create a temporary variable at
+   * @param type type of the a temporary variable
+   * @return created temporary variable
+   */
+  public @NotNull DfaVariableValue createTempVariable(int offset, @NotNull DfType type) {
+    Synthetic descriptor = new Synthetic(offset, type);
+    mySynthetics.add(descriptor);
+    return myVarFactory.createVariableValue(descriptor);
+  }
+
+  /**
+   * @param var variable to check
+   * @return true if it's a temp variable
+   */
+  public static boolean isTempVariable(DfaVariableValue var) {
+    return var.getDescriptor() instanceof Synthetic;
   }
 
   public @NotNull DfaTypeValue getUnknown() {
@@ -124,4 +159,28 @@ public class DfaValueFactory {
     return myBinOpFactory;
   }
 
+  private static final class Synthetic implements VariableDescriptor {
+    private final int myLocation;
+    private final DfType myType;
+
+    private Synthetic(int location, DfType type) {
+      myLocation = location;
+      myType = type;
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "tmp$" + myLocation;
+    }
+
+    @Override
+    public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
+      return myType;
+    }
+
+    @Override
+    public boolean isStable() {
+      return true;
+    }
+  }
 }

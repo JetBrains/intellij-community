@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
@@ -68,7 +67,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private int myLastChangedPathIndex;
 
   @Override
-  public void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink) {
+  public void initialize(@NotNull FileWatcherNotificationSink notificationSink) {
     myNotificationSink = notificationSink;
 
     boolean disabled = isDisabled();

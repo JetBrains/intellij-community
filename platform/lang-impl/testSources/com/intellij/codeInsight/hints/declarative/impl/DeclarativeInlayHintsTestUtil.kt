@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationEntry
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import java.awt.event.MouseEvent

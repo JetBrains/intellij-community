@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.ContainerUtil;
@@ -12,8 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NotNullLazyValue.lazy;
 
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
@@ -68,18 +70,16 @@ public final class SystemInfo {
   public static final boolean isWin11OrNewer = isWindows && isOsVersionAtLeast("11.0");
 
   /**
-   * Set to true if we are running in a Wayland environment, either through
-   * XWayland or using Wayland directly.
+   * Set to true if we are running in a Wayland environment, either through XWayland or using Wayland directly.
    */
   public static final boolean isWayland;
-  public static final boolean isXWindow = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
   public static final boolean isGNOME, isKDE, isXfce, isI3;
   static {
     // http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669
     // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
-    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
+    if (!isWindows && !isMac) {
       isWayland = System.getenv("WAYLAND_DISPLAY") != null;
-      @SuppressWarnings("SpellCheckingInspection") String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
+      @SuppressWarnings({"SpellCheckingInspection", "RedundantSuppression"}) String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
       isGNOME = desktop != null && desktop.contains("GNOME") || gdmSession != null && gdmSession.contains("gnome");
       isKDE = !isGNOME && (desktop != null && desktop.contains("KDE") || System.getenv("KDE_FULL_SESSION") != null);
       isXfce = !isGNOME && !isKDE && (desktop != null && desktop.contains("XFCE"));
@@ -94,14 +94,16 @@ public final class SystemInfo {
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
-  private static final Supplier<Boolean> ourHasXdgOpen = SystemInfoRt.isUnix && !SystemInfoRt.isMac
-                                                         ? PathExecLazyValue.create("xdg-open") : () -> false;
+  /** @deprecated use {@link com.intellij.execution.configurations.PathEnvironmentVariableUtil#isOnPath} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean hasXdgOpen() {
     return ourHasXdgOpen.get();
   }
 
-  private static final Supplier<Boolean> ourHasXdgMime = SystemInfoRt.isUnix && !SystemInfoRt.isMac
-                                                         ? PathExecLazyValue.create("xdg-mime") : () -> false;
+  /** @deprecated use {@link com.intellij.execution.configurations.PathEnvironmentVariableUtil#isOnPath} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean hasXdgMime() {
     return ourHasXdgMime.get();
   }
@@ -203,5 +205,25 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
+
+  /** @deprecated misleading; consider using {@link com.intellij.util.system.OS#isGenericUnix} instead, if appropriate */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isXWindow = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
+
+  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = isUnix && !isMac ? lazy(() -> isOnPath("xdg-open")) : NotNullLazyValue.createConstantValue(false);
+  private static final NotNullLazyValue<Boolean> ourHasXdgMime = isUnix && !isMac ? lazy(() -> isOnPath("xdg-mime")) : NotNullLazyValue.createConstantValue(false);
+
+  private static boolean isOnPath(String name) {
+    String path = System.getenv("PATH");
+    if (path != null) {
+      for (String dir : StringUtil.tokenize(path, ":")) {
+        if (Files.isExecutable(Paths.get(dir, name))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
   //</editor-fold>
 }

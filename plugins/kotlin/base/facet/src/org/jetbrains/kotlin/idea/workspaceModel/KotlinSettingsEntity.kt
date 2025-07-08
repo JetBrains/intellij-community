@@ -130,6 +130,35 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
       init?.invoke(builder)
       return builder
     }
+
+    @Deprecated(
+      message = "This method is deprecated and will be removed in next major release",
+      replaceWith = ReplaceWith("invoke(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init)"),
+    )
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    fun create(
+      name: String,
+      moduleId: ModuleId,
+      sourceRoots: List<String>,
+      configFileItems: List<ConfigFileItem>,
+      useProjectSettings: Boolean,
+      implementedModuleNames: List<String>,
+      dependsOnModuleNames: List<String>,
+      additionalVisibleModuleNames: Set<String>,
+      sourceSetNames: List<String>,
+      isTestModule: Boolean,
+      externalProjectId: String,
+      isHmppEnabled: Boolean,
+      pureKotlinSourceFolders: List<String>,
+      kind: KotlinModuleKind,
+      externalSystemRunTasks: List<String>,
+      version: Int,
+      flushNeeded: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder = invoke(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init)
   }
   //endregion
 }

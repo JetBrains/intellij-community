@@ -1,16 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
-import com.intellij.testFramework.TestModeFlags
 import com.intellij.util.application
 import com.intellij.util.indexing.dependencies.*
 import com.intellij.util.indexing.impl.perFileVersion.LongFileAttribute
@@ -23,34 +18,6 @@ import kotlin.concurrent.Volatile
  */
 @ApiStatus.Internal
 object IndexingFlag {
-
-  @JvmStatic
-  fun isIndexedFlagDisabled(): Boolean = isIndexedFlagDisabled(ApplicationManager.getApplication())
-
-  @TestOnly
-  @JvmStatic
-  private val ENABLE_IS_INDEXED_FLAG_KEY: Key<Boolean> = Key("is_indexed_flag_enabled")
-
-  @Volatile
-  @JvmStatic
-  private var indexedFlagDisabled: Boolean? = null
-
-  @JvmStatic
-  private fun isIndexedFlagDisabled(app: Application): Boolean {
-    if (indexedFlagDisabled == null) {
-      if (app.isUnitTestMode) {
-        @Suppress("TestOnlyProblems")
-        val enableByTestModeFlags = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)
-        if (enableByTestModeFlags != null) {
-          indexedFlagDisabled = !enableByTestModeFlags
-          return !enableByTestModeFlags
-        }
-      }
-      indexedFlagDisabled = Registry.`is`("indexing.disable.virtual.file.system.entry.is.file.indexed", false)
-    }
-    return indexedFlagDisabled!!
-  }
-
   private val attribute = FileAttribute("indexing.flag", 1, true)
 
   @Volatile
@@ -66,12 +33,7 @@ object IndexingFlag {
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileWithId? {
-    if (this is VirtualFileWithId && !isIndexedFlagDisabled()) {
-      return this
-    }
-    else {
-      return null
-    }
+    return this as? VirtualFileWithId
   }
 
   @JvmStatic
@@ -103,7 +65,6 @@ object IndexingFlag {
   }
 
   private fun setFileIndexed(fileId: Int, stamp: FileIndexingStamp) {
-    if (isIndexedFlagDisabled()) return
     stamp.store { s ->
       persistence.writeLong(fileId, s)
     }

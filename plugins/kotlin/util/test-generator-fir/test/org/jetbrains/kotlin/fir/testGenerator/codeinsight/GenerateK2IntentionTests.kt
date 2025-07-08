@@ -76,7 +76,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/evaluateCompileTimeExpression", pattern = pattern)
             model("${idea}intentions/simplifyBooleanWithConstants", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceUnderscoreWithParameterName", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertFunctionToProperty", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertFunctionToProperty", pattern = pattern)
             model("${idea}intentions/convertTryFinallyToUseCall", pattern = pattern, isIgnored = true)
             model(
                 "${idea}intentions/conventionNameCalls",

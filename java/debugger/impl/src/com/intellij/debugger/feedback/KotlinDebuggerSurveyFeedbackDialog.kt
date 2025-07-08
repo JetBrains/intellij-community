@@ -80,12 +80,12 @@ internal class KotlinDebuggerSurveyFeedbackDialog(project: Project?,
     )
   }
 
-  override val mySystemInfoData: KotlinDebuggerSystemData by lazy {
-    KotlinDebuggerSystemData(UsageTracker.kotlinDebuggedTimes(), CommonFeedbackSystemData.getCurrentData())
+  override suspend fun computeSystemInfoData(): KotlinDebuggerSystemData {
+    return KotlinDebuggerSystemData(UsageTracker.kotlinDebuggedTimes(), CommonFeedbackSystemData.getCurrentData())
   }
 
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showNewUIFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+  override fun showFeedbackSystemInfoDialog(systemInfoData: KotlinDebuggerSystemData) {
+    showNewUIFeedbackSystemInfoDialog(myProject, systemInfoData)
   }
 
   init {

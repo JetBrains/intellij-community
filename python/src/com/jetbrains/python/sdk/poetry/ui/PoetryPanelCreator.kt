@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.util.PlatformUtils
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.isAssociatedWithModule
@@ -31,12 +32,18 @@ fun createPoetryPanel(
   val existingSdkPaths = sdkHomes(existingSdks)
   val defaultPanel = when {
     pyModalBlocking {
-      detectPoetryEnvs(module, existingSdkPaths, project?.basePath ?: newProjectPath)
+      detectPoetryEnvs(module, existingSdkPaths, project.basePath ?: newProjectPath)
     }.any { it.isAssociatedWithModule(module) } -> existingPoetryPanel
     newPoetryPanel != null -> newPoetryPanel
     else -> existingPoetryPanel
   }
-  return PyAddSdkGroupPanel(Supplier { "Poetry environment" }, POETRY_ICON, panels, defaultPanel)
+
+  return PyAddSdkGroupPanel(
+    nameGetter = Supplier { PyBundle.message("python.add.sdk.panel.name.poetry.environment") },
+    panelIcon = POETRY_ICON,
+    panels = panels,
+    defaultPanel = defaultPanel
+  )
 }
 
 private fun allowCreatingNewEnvironments(project: Project?) =

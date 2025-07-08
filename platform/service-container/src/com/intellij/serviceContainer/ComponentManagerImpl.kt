@@ -64,7 +64,6 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.streams.asSequence
 
 internal val LOG by lazy(LazyThreadSafetyMode.PUBLICATION) {
   logger<ComponentManagerImpl>()
@@ -875,7 +874,7 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
-    return resetThreadContext().use {
+    return resetThreadContext {
       doInstantiateClass(aClass, pluginId)
     }
   }
@@ -905,7 +904,7 @@ abstract class ComponentManagerImpl(
   }
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
-    return resetThreadContext().use {
+    return resetThreadContext {
       instantiateUsingPicoContainer(aClass = aClass, requestorKey = key, pluginId = pluginId, componentManager = this)
     }
   }
@@ -1545,7 +1544,7 @@ private fun InstanceHolder.doGetOrCreateInstanceBlocking(keyClass: Class<*>?): A
  * @return `true` if called outside a class initializer, `false` if called inside a class initializer
  */
 private fun checkOutsideClassInitializer(debugString: String): Boolean {
-  val className = isInsideClassInitializer() ?: return true
+  val className = isInsideClassInitializer(debugString) ?: return true
   if (logAccessInsideClinit.get()) {
     dontLogAccessInClinit().use {
       val message = "$className <clinit> requests $debugString instance. " +
@@ -1563,16 +1562,23 @@ private fun checkOutsideClassInitializer(debugString: String): Boolean {
   return false
 }
 
-private fun isInsideClassInitializer(): String? {
+private val expectedComponentsUsedByEelNio = setOf(
+  "com.intellij.execution.wsl.WslIjentAvailabilityService",
+)
+
+private fun isInsideClassInitializer(debugString: String): String? {
   return StackWalker.getInstance().walk { frames ->
-    frames.asSequence().firstNotNullOfOrNull { frame ->
+    var isInFileSystem = false
+    for (frame in frames) {
+      isInFileSystem = isInFileSystem || frame.className == "com.intellij.platform.eel.impl.fs.GlobalEelMrfsBackendProvider"
       if (frame.methodName == "<clinit>") {
-        frame.className
-      }
-      else {
-        null
+        if (!isInFileSystem || debugString !in expectedComponentsUsedByEelNio) {
+          return@walk frame.className
+        }
+        break
       }
     }
+    null
   }
 }
 

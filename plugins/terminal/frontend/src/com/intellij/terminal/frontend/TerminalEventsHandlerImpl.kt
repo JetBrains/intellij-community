@@ -2,6 +2,7 @@
 package com.intellij.terminal.frontend
 
 import com.google.common.base.Ascii
+import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.BackspaceHandler
 import com.intellij.codeInsight.lookup.impl.LookupActionHandler
@@ -42,13 +43,15 @@ internal open class TerminalEventsHandlerImpl(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
-  private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
 
   private val terminalState: TerminalState
     get() = sessionModel.terminalState.value
+  
+  private val typeAhead: TerminalTypeAhead?
+    get() = editor.getUserData(TerminalTypeAhead.KEY)
 
   override fun keyTyped(e: TimedKeyEvent) {
     updateLookupOnTyping(e.original.keyChar)
@@ -83,6 +86,11 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun processTerminalKeyPressed(e: TimedKeyEvent): Boolean {
     try {
+      val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
+      inlineCompletionTypingSession?.endTypingSession(editor)
+      // To invalidate inline completion in case of inputs like backspace, CTRL + C, etc.
+      inlineCompletionTypingSession?.ignoreDocumentChanges = false
+
       val keyCode = e.original.keyCode
       val keyChar = e.original.keyChar
       updateLookupOnAction(keyCode)
@@ -141,6 +149,10 @@ internal open class TerminalEventsHandlerImpl(
     }
     val typedString = keyChar.toString()
     if (e.original.id == KeyEvent.KEY_TYPED) {
+      val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
+      editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value)
+      inlineCompletionTypingSession?.startTypingSession(editor)
+
       typeAhead?.stringTyped(typedString)
       terminalInput.sendTrackedString(typedString, eventTime = e.initTime)
     }

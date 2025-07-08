@@ -31,10 +31,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class SpellCheckerSettingsPane implements Disposable {
@@ -217,14 +215,14 @@ public final class SpellCheckerSettingsPane implements Disposable {
     @Override
     protected void customizeDecorator(ToolbarDecorator decorator) {
       decorator.setRemoveAction((button) -> {
-        SpellcheckerActionStatistics.REMOVE_FROM_ACCEPTED_WORDS.log(manager.getProject());
+        SpellcheckerActionStatistics.removeWordFromAcceptedWords(manager.getProject());
         ListUtil.removeSelectedItems(myList);
       });
     }
 
     @Override
     protected String findItemToAdd() {
-      SpellcheckerActionStatistics.ADD_TO_ACCEPTED_WORDS.log(manager.getProject());
+      SpellcheckerActionStatistics.addWordToAcceptedWords(manager.getProject());
       String word = Messages.showInputDialog(SpellCheckerBundle.message("enter.simple.word"),
                                              SpellCheckerBundle.message("add.new.word"), null);
       if (word == null) {
@@ -271,7 +269,8 @@ public final class SpellCheckerSettingsPane implements Disposable {
       if (newWords.size() != words.size()) {
         return true;
       }
-      return !(words.containsAll(newWords) && newWords.containsAll(words));
+      Set<String> newHashWords = new HashSet<>(newWords);
+      return !newHashWords.equals(words);
     }
   }
 }

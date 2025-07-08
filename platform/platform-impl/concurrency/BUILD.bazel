@@ -1,5 +1,6 @@
 ### auto-generated section `build intellij.platform.ide.concurrency` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "concurrency_resources",
@@ -24,7 +25,38 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/indexing-api:indexing",
     "@lib//:guava",
+    "@lib//:caffeine",
   ],
   runtime_deps = [":concurrency_resources"]
+)
+
+jvm_library(
+  name = "concurrency_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":concurrency"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/util/coroutines",
+    "//platform/indexing-api:indexing",
+    "@lib//:guava",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "@lib//:caffeine",
+  ],
+  runtime_deps = [":concurrency_resources"]
+)
+
+jps_test(
+  name = "concurrency_test",
+  runtime_deps = [":concurrency_test_lib"]
 )
 ### auto-generated section `build intellij.platform.ide.concurrency` end

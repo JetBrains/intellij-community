@@ -8,6 +8,8 @@ import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -17,12 +19,12 @@ import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 
-internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<ReworkedTerminalUsageData>(project, forTest) {
+internal class ReworkedTerminalFeedbackDialog(private val project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<ReworkedTerminalUsageData>(project, forTest) {
   override val myFeedbackReportId: String = "reworked_terminal"
 
   override val myTitle: String = TerminalBundle.message("feedback.dialog.title")
 
-  override val mySystemInfoData: ReworkedTerminalUsageData by lazy {
+  override suspend fun computeSystemInfoData(): ReworkedTerminalUsageData = withContext(Dispatchers.IO) { // for shellPath
     ReworkedTerminalUsageData(
       selectedShell = TerminalShellInfoStatistics.getShellNameForStat(TerminalProjectOptionsProvider.getInstance(project).shellPath),
       feedbackMoment = getFeedbackMoment(project),
@@ -31,13 +33,13 @@ internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean
   }
 
   @Suppress("HardCodedStringLiteral")
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData.systemInfo) {
+  override fun showFeedbackSystemInfoDialog(systemInfoData: ReworkedTerminalUsageData) {
+    showFeedbackSystemInfoDialog(myProject, systemInfoData.systemInfo) {
       row(TerminalBundle.message("feedback.system.info.shell")) {
-        label(mySystemInfoData.selectedShell)
+        label(systemInfoData.selectedShell)
       }
       row(TerminalBundle.message("feedback.system.info.moment")) {
-        label(mySystemInfoData.feedbackMoment.toString())
+        label(systemInfoData.feedbackMoment.toString())
       }
     }
   }

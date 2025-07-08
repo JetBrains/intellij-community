@@ -12,13 +12,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
-import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
-import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
-import com.intellij.platform.searchEverywhere.providers.SeTextFilter
-import com.intellij.platform.searchEverywhere.providers.getExtendedDescription
+import com.intellij.platform.searchEverywhere.providers.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -97,7 +94,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     scopeProviderDelegate.applyScope(scopeId)
   }
 
-  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
+  override suspend fun getSearchScopesInfo(): SearchScopesInfo? {
     return scopeProviderDelegate.searchScopesInfo.getValue()
   }
 }

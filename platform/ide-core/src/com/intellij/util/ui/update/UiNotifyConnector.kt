@@ -78,13 +78,13 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     private val childContext = createChildContextIgnoreStructuredConcurrency(ContextActivatable::class.java.name)
 
     override fun showNotify() {
-      resetThreadContext().use {
+      resetThreadContext {
         childContext.runInChildContext { target.showNotify() }
       }
     }
 
     override fun hideNotify() {
-      resetThreadContext().use {
+      resetThreadContext {
         childContext.runInChildContext { target.hideNotify() }
       }
     }

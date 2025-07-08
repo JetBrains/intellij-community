@@ -6,6 +6,9 @@ a:com.intellij.xdebugger.XDebugProcess
 - *:dependsOnPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - *:getAlternativeSourceHandler():com.intellij.xdebugger.XAlternativeSourceHandler
 - *:getDropFrameHandler():com.intellij.xdebugger.frame.XDropFrameHandler
+com.intellij.xdebugger.XDebugSessionListener
+- java.util.EventListener
+- *:stackFrameChanged(Z):V
 *:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler
 - *sf:Companion:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
 - a:areInlineBreakpointsDisabled(com.intellij.openapi.vfs.VirtualFile):Z

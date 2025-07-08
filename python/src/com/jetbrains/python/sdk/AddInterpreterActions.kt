@@ -14,6 +14,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsActions
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -26,17 +28,29 @@ import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
+import java.util.function.Supplier
+import javax.swing.Icon
 
 @ApiStatus.Internal
-fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<AnAction> {
+abstract class DialogAction(
+  dynamicText: Supplier<@NlsActions.ActionText String>,
+  val icon: Icon,
+  val target: @Nls String,
+) : AnAction(dynamicText, icon) {
+  abstract fun createDialog(): DialogWrapper?
+}
+
+@ApiStatus.Internal
+fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<DialogAction> {
   // If module resides on this target, we can't use any target except same target and target types that explicitly allow that
   // example: on ``\\wsl$`` you can only use wsl target and dockers
   val targetModuleSitsOn = when (moduleOrProject) {
     is ModuleAndProject -> PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(moduleOrProject.module)
     is ProjectOnly -> null
   }
-  return mutableListOf<AnAction>().apply {
+  return mutableListOf<DialogAction>().apply {
     if (targetModuleSitsOn == null) {
       add(AddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept))
     }
@@ -48,7 +62,7 @@ private fun collectNewInterpreterOnTargetActions(
   project: Project,
   targetTypeModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
   onSdkCreated: Consumer<Sdk>,
-): List<AnAction> =
+): List<DialogAction> =
   PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList
     .filter { it.getTargetType().isSystemCompatible() }
     .filter { targetTypeModuleSitsOn == null || targetTypeModuleSitsOn.allowCreationTargetOfThisType(it.getTargetType()) }
@@ -59,29 +73,40 @@ private fun collectNewInterpreterOnTargetActions(
 private class AddLocalInterpreterAction(
   private val moduleOrProject: ModuleOrProject,
   private val onSdkCreated: Consumer<Sdk>,
-) : AnAction(PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"), AllIcons.Nodes.HomeFolder), DumbAware {
+) : DialogAction(
+  dynamicText = PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"),
+  icon = AllIcons.Nodes.HomeFolder,
+  target = PyBundle.message("sdk.create.targets.local"),
+), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    addLocalInterpreter(moduleOrProject, onSdkCreated)
+    createDialog().show()
+  }
+
+  override fun createDialog(): PythonAddLocalInterpreterDialog {
+    val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject, errorSink = ShowingMessageErrorSync).apply {
+      // Model provides flow, but we need to call Consumer
+      sdkCreatedFlow.oneShotConsumer(onSdkCreated)
+    }
+    return PythonAddLocalInterpreterDialog(dialogPresenter)
   }
 }
 
 @ApiStatus.Internal
 fun addLocalInterpreter(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>) {
-  val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject, errorSink = ShowingMessageErrorSync).apply {
-    // Model provides flow, but we need to call Consumer
-    sdkCreatedFlow.oneShotConsumer(onSdkCreated)
-  }
-  PythonAddLocalInterpreterDialog(dialogPresenter).show()
+  AddLocalInterpreterAction(moduleOrProject, onSdkCreated).createDialog().show()
 }
 
 private class AddInterpreterOnTargetAction(
   private val project: Project,
   private val targetType: TargetEnvironmentType<*>,
   private val onSdkCreated: Consumer<Sdk>,
-) : AnAction(PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName), targetType.icon),
-    DumbAware {
+) : DialogAction(
+  dynamicText = PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName),
+  icon = targetType.icon,
+  target = targetType.displayName,
+), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
+    val wizard = createDialog()
     if (wizard != null && wizard.showAndGet()) {
       val model = PyConfigurableInterpreterList.getInstance(project).model
       val sdk = (wizard.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk
@@ -94,6 +119,10 @@ private class AddInterpreterOnTargetAction(
         }
       }
     }
+  }
+
+  override fun createDialog(): TargetEnvironmentWizard? {
+    return TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.getInstance())
   }
 }
 

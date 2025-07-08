@@ -1,5 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -134,6 +132,7 @@ public interface GroovyElementTypes {
   GrParameterElementType PARAMETER = new GrParameterElementType("PARAMETER");
   GrParameterListElementType PARAMETER_LIST = new GrParameterListElementType("PARAMETER_LIST");
   GroovyElementType PARENTHESIZED_EXPRESSION = new GroovyElementType("PARENTHESIZED_EXPRESSION");
+  GroovyElementType PATTERN_VARIABLE = new GroovyElementType("PATTERN_VARIABLE");
   GrPermitsClauseElementType PERMITS_CLAUSE = new GrPermitsClauseElementType("PERMITS_CLAUSE");
   GroovyElementType POWER_EXPRESSION = new GroovyElementType("POWER_EXPRESSION");
   GroovyElementType PRIMITIVE_TYPE_ELEMENT = new GroovyElementType("PRIMITIVE_TYPE_ELEMENT");

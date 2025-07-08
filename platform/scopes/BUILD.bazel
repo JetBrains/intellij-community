@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.scopes` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "scopes_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scopes",
+  module_name = "intellij.platform.scopes",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/ide-core",
+    "//platform/platform-impl/rpc",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/lang-impl",
+    "//platform/util:util-ui",
+    "//platform/project/shared:project",
+    "//platform/kernel/shared:kernel",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":scopes_resources"]
+)
+### auto-generated section `build intellij.platform.scopes` end

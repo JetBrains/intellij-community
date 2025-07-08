@@ -95,6 +95,8 @@ public final class PluginManagerConfigurable
 
   public static final String ID = "preferences.pluginManager";
   public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
+  public static final DataKey<Consumer<PluginInstallCallbackData>> PLUGIN_INSTALL_CALLBACK_DATA_KEY =
+    DataKey.create("PLUGIN_INSTALL_CALLBACK_DATA_KEY");
 
   @SuppressWarnings("UseJBColor") public static final Color MAIN_BG_COLOR =
     JBColor.namedColor("Plugins.background", JBColor.lazy(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
@@ -204,7 +206,12 @@ public final class PluginManagerConfigurable
 
       String query = (index == MARKETPLACE_TAB ? myInstalledTab : myMarketplaceTab).getSearchQuery();
       (index == MARKETPLACE_TAB ? myMarketplaceTab : myInstalledTab).setSearchQuery(query);
-    });
+    }) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        sink.set(PLUGIN_INSTALL_CALLBACK_DATA_KEY, PluginManagerConfigurable.this::onPluginInstalledFromDisk);
+      }
+    };
     createGearGotIt();
 
     myUpdateAll.setVisible(false);
@@ -281,7 +288,9 @@ public final class PluginManagerConfigurable
     }
 
     getPluginsViewCustomizer().processConfigurable(this);
-
+    if (myPluginManagerCustomizer != null) {
+      myPluginManagerCustomizer.initCustomizer(myCardPanel);
+    }
     return myCardPanel;
   }
 
@@ -352,9 +361,19 @@ public final class PluginManagerConfigurable
       @Override
       protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
                                                @Nullable Project project) {
+        if (myPluginManagerCustomizer != null) {
+          myPluginManagerCustomizer.updateAfterModification(() -> {
+            PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
+            return null;
+          });
+          return;
+        }
         PluginManagerConfigurable.this.onPluginInstalledFromDisk(callbackData);
       }
     });
+    if (myPluginManagerCustomizer != null) {
+      actions.addAll(myPluginManagerCustomizer.getExtraPluginsActions());
+    }
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
@@ -491,7 +510,7 @@ public final class PluginManagerConfigurable
       }
 
       private void doCreateMarketplaceTab(@NotNull Consumer<? super PluginsGroupComponent> selectionListener, Project project) {
-        PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, myPluginModelFacade.getModel(), project,  model -> {
+        PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, myPluginModelFacade.getModel(), project, model -> {
           List<PluginsGroup> groups = new ArrayList<>();
           try {
             Map<String, List<PluginUiModel>> customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap();
@@ -1035,7 +1054,6 @@ public final class PluginManagerConfigurable
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
         myInstalledPanel.startLoading();
-        PluginLogo.startBatchMode();
         PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
           try {
             PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
@@ -1129,7 +1147,6 @@ public final class PluginManagerConfigurable
             });
           }
           finally {
-            PluginLogo.endBatchMode();
             myInstalledPanel.stopLoading();
           }
           return null;
@@ -2001,6 +2018,7 @@ public final class PluginManagerConfigurable
     pluginsState.resetChangesAppliedWithoutRestart();
 
     if (myDisposer != null) {
+      Disposer.dispose(myDisposer);
       CoroutineScopeKt.cancel(myCoroutineScope, null);
       myDisposer = null;
     }

@@ -84,8 +84,8 @@ class CodeInsightContextManagerImpl(
 
   override fun <Result> performCodeInsightSession(context: CodeInsightContext, block: CodeInsightSession.() -> Result): Result {
     val session = CodeInsightSessionImpl(context)
-    installThreadContext(currentThreadContext() + CodeInsightSessionElement(session)).use {
-      return block(session)
+    return installThreadContext(currentThreadContext() + CodeInsightSessionElement(session)) {
+      block(session)
     }
   }
 

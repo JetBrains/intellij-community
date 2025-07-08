@@ -15,15 +15,56 @@
  */
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildIssueEvent
+import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
 class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
+
+
+  @Test
+  fun testSubprojectsWithOldModel() = runBlocking {
+    runWithoutStaticSync()
+    assumeMaven4()
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """.trimIndent())
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <subprojects>
+                           <subproject>m1</subproject>
+                       </subprojects>
+                       """.trimIndent())
+    val events = ArrayList<BuildEvent>()
+    val myTestSyncViewManager = object : SyncViewManager(project) {
+      override fun onEvent(buildId: Any, event: BuildEvent) {
+        events.add(event)
+      }
+    }
+
+    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
+    importProjectAsync()
+
+    val issues = events.filterIsInstance<BuildIssueEvent>().filter { it.kind == MessageEvent.Kind.WARNING }
+    assertSize(1, issues)
+    assertEquals(SyncBundle.message("maven.sync.incorrect.model.version"), issues[0].issue.title)
+
+  }
 
   @Test
   fun testSystemDependencyWithoutPath() = runBlocking {
@@ -60,7 +101,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResetDependenciesWhenProjectContainsErrors() = runBlocking {
-    //Registry.get("maven.server.debug").setValue(true);
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

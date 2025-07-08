@@ -45,6 +45,11 @@ public class K1MultiModuleMoveTestGenerated extends AbstractK1MultiModuleMoveTes
         runTest("testData/refactoring/moveMultiModule/moveDeclarationActual/moveDeclarationActual.test");
     }
 
+    @TestMetadata("moveDeclarationBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test")
+    public void testMoveDeclarationBreakImplicitPrefix_MoveDeclarationBreakImplicitPrefix() throws Exception {
+        runTest("testData/refactoring/moveMultiModule/moveDeclarationBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test");
+    }
+
     @TestMetadata("moveDeclarationExpectedToPlatform/moveDeclarationActual.test")
     public void testMoveDeclarationExpectedToPlatform_MoveDeclarationActual() throws Exception {
         runTest("testData/refactoring/moveMultiModule/moveDeclarationExpectedToPlatform/moveDeclarationActual.test");
@@ -78,6 +83,16 @@ public class K1MultiModuleMoveTestGenerated extends AbstractK1MultiModuleMoveTes
     @TestMetadata("moveFileWithDeclarationsToUnrelatedModuleConflict/moveFileWithDeclarationsToUnrelatedModuleConflict.test")
     public void testMoveFileWithDeclarationsToUnrelatedModuleConflict_MoveFileWithDeclarationsToUnrelatedModuleConflict() throws Exception {
         runTest("testData/refactoring/moveMultiModule/moveFileWithDeclarationsToUnrelatedModuleConflict/moveFileWithDeclarationsToUnrelatedModuleConflict.test");
+    }
+
+    @TestMetadata("moveFilesBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test")
+    public void testMoveFilesBreakImplicitPrefix_MoveDeclarationBreakImplicitPrefix() throws Exception {
+        runTest("testData/refactoring/moveMultiModule/moveFilesBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test");
+    }
+
+    @TestMetadata("moveFilesPreserveImplicitPrefix/moveFilesPreserveImplicitPrefix.test")
+    public void testMoveFilesPreserveImplicitPrefix_MoveFilesPreserveImplicitPrefix() throws Exception {
+        runTest("testData/refactoring/moveMultiModule/moveFilesPreserveImplicitPrefix/moveFilesPreserveImplicitPrefix.test");
     }
 
     @TestMetadata("moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test")

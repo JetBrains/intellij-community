@@ -13,8 +13,8 @@ import com.intellij.testFramework.registerServiceInstance
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
-import com.jetbrains.python.sdk.PythonSdkAdditionalDataUtils
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import org.easymock.EasyMock
 
 class PyRequirementsGenerationTest : PyTestCase() {
@@ -57,7 +57,7 @@ class PyRequirementsGenerationTest : PyTestCase() {
   ) {
     val module = myFixture.getModule()
     val sdk = PythonSdkUtil.findPythonSdk(module)
-    PythonSdkAdditionalDataUtils.associateSdkWithModulePath(sdk!!, module)
+    sdk!!.setAssociationToModuleAsync(module)
     val settings = PyPackageRequirementsSettings.getInstance(myFixture.module)
 
     val oldVersionSpecifier = settings.versionSpecifier

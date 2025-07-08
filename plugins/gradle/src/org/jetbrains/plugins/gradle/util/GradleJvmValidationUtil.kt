@@ -16,6 +16,8 @@ import com.intellij.openapi.projectRoots.impl.SdkVersionUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.psi.PsiManager
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
@@ -31,6 +33,13 @@ import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
 fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion: GradleVersion) {
+  /**
+   * At the moment it is impossible to validate `JAVA_HOME` for a remote execution.
+   * See IDEA-375312 for more details.
+   */
+  if (project.getEelDescriptor() != LocalEelDescriptor) {
+    return
+  }
   // Projects using Daemon JVM criteria with a compatible Gradle version
   // will ignore Java Home from environment variables or Gradle Properties
   if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(externalProjectPath, gradleVersion)) return
@@ -39,7 +48,7 @@ fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion:
   val javaHomeProperty = gradleProperties.javaHomeProperty
   if (javaHomeProperty != null) {
     val javaHome = javaHomeProperty.value
-    when (val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)) {
+    when (val validationStatus = validateGradleJavaHome(project, gradleVersion, javaHome)) {
       JavaHomeValidationStatus.Invalid -> notifyInvalidGradleJavaHomeInfo(project, javaHomeProperty, validationStatus)
       is JavaHomeValidationStatus.Unsupported -> notifyInvalidGradleJavaHomeInfo(project, javaHomeProperty, validationStatus)
       else -> {}
@@ -47,7 +56,7 @@ fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion:
   }
   else {
     val javaHome = ExternalSystemJdkUtil.getJavaHome()
-    when (val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)) {
+    when (val validationStatus = validateGradleJavaHome(project, gradleVersion, javaHome)) {
       JavaHomeValidationStatus.Invalid -> notifyInvalidJavaHomeInfo(project, validationStatus)
       is JavaHomeValidationStatus.Unsupported -> notifyInvalidJavaHomeInfo(project, validationStatus)
       else -> {}
@@ -55,8 +64,9 @@ fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion:
   }
 }
 
-fun validateGradleJavaHome(gradleVersion: GradleVersion, javaHome: String?): JavaHomeValidationStatus {
+fun validateGradleJavaHome(project: Project, gradleVersion: GradleVersion, javaHome: String?): JavaHomeValidationStatus {
   if (javaHome == null) return JavaHomeValidationStatus.Undefined
+  if (Path.of(javaHome).getEelDescriptor() != project.getEelDescriptor()) return JavaHomeValidationStatus.Invalid
   if (!ExternalSystemJdkUtil.isValidJdk(javaHome)) return JavaHomeValidationStatus.Invalid
   val versionInfo = SdkVersionUtil.getJdkVersionInfo(javaHome) ?: return JavaHomeValidationStatus.Invalid
   if (!GradleJvmSupportMatrix.isSupported(gradleVersion, versionInfo.version)) {

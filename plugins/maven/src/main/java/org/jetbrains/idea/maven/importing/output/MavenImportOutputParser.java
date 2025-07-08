@@ -7,6 +7,7 @@ import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser;
 
 import java.util.function.Consumer;
@@ -21,7 +22,7 @@ public class MavenImportOutputParser implements BuildOutputParser {
 
   @Override
   public boolean parse(@NotNull String line,
-                       @NotNull BuildOutputInstantReader reader,
+                       @Nullable BuildOutputInstantReader reader,
                        @NotNull Consumer<? super BuildEvent> messageConsumer) {
     if (StringUtil.isEmptyOrSpaces(line)) {
       return false;

@@ -40,7 +40,7 @@ class ArchivedCompilationContext(
 
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
     generateRuntimeModuleRepository(this)
-    return OriginalModuleRepositoryImpl(this)
+    return OriginalModuleRepositoryImpl(this, this@ArchivedCompilationContext.storage.getMappingMap().entries.associate { it.key.toString() to it.value.toString() })
   }
 
   override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {

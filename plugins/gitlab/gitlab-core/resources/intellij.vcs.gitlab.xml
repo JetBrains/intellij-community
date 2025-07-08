@@ -76,6 +76,7 @@
     <notificationIdsHolder implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
     <actionCustomPlaceAllowlist id="GitLabActionCustomPlaceAllowlist"
                                 places="GitLabMergeRequestListPopup;GitLabMergeRequestChangesTreePopup;GitLabMergeRequestDetailsPopup"/>
+    <counterUsagesCollector implementationClass="org.jetbrains.plugins.gitlab.authentication.GitLabLoginCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

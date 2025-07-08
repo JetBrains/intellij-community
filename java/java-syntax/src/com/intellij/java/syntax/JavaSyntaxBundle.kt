@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.jvm.JvmStatic
 
 @ApiStatus.Internal
@@ -31,4 +32,11 @@ object JavaSyntaxBundle {
   fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): () -> @Nls String {
     return resourceBundle.messagePointer(key, *params)
   }
+}
+
+@VisibleForTesting
+@ApiStatus.Internal
+object DefaultJavaSyntaxResourcesTestAccessor {
+  val mappings: Map<String, String> get() = DefaultJavaSyntaxResources.mappings
+  val defaultJavaSyntaxResourcesName: String get() = DefaultJavaSyntaxResources::class.qualifiedName!!
 }
