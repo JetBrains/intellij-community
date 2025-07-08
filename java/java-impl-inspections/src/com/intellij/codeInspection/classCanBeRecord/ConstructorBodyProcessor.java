@@ -253,6 +253,12 @@ final class ConstructorBodyProcessor {
     Ref<Boolean> hasReferenceToClassUnderConstruction = new Ref<>(false);
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
+      public void visitThisExpression(PsiThisExpression expression) {
+        super.visitThisExpression(expression);
+        hasReferenceToClassUnderConstruction.set(true);
+      }
+
+      @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();
