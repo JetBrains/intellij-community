@@ -241,6 +241,8 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
     # print('PY_START (should enable line events check) %s %s %s %s' % (line_number, code.co_name, filename, info.pydev_step_cmd))
 
     py_db = GlobalDebuggerHolder.global_dbg
+    if py_db is None:
+        return monitoring.DISABLE
 
     plugin_manager = py_db.plugin
 
@@ -438,8 +440,6 @@ def call_callback(code, instruction_offset, callable, arg0):
     frame = _getframe(1)
     # print('ENTER: CALL ', code.co_filename, frame.f_lineno, code.co_name)
 
-
-
     try:
         if py_db._finish_debugging_session:
             return monitoring.DISABLE
@@ -460,6 +460,9 @@ def call_callback(code, instruction_offset, callable, arg0):
         frame_cache_key = _make_frame_cache_key(code)
 
         info = thread_info.additional_info
+        if info is None:
+            return
+
         pydev_step_cmd = info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
 
@@ -526,6 +529,9 @@ def py_start_callback(code, instruction_offset):
         frame_cache_key = _make_frame_cache_key(code)
 
         info = thread_info.additional_info
+        if info is None:
+            return
+
         pydev_step_cmd = info.pydev_step_cmd
         is_stepping = pydev_step_cmd != -1
 
@@ -650,6 +656,8 @@ def py_line_callback(code, line_number):
         return
 
     info = thread_info.additional_info
+    if info is None:
+        return
 
     # print('LINE %s %s %s %s' % (frame.f_lineno, code.co_name, code.co_filename, info.pydev_step_cmd))
 
@@ -660,6 +668,9 @@ def py_line_callback(code, line_number):
         info.is_tracing = True
 
         py_db = GlobalDebuggerHolder.global_dbg
+
+        if py_db is None:
+            return monitoring.DISABLE
 
         if py_db._finish_debugging_session:
             return monitoring.DISABLE
@@ -921,6 +932,9 @@ def py_return_callback(code, instruction_offset, retval):
         return
 
     info = thread_info.additional_info
+    if info is None:
+        return
+
     stop_frame = info.pydev_step_stop
     filename = _get_abs_path_real_path_and_base_from_frame(frame)[1]
     plugin_stop = False
