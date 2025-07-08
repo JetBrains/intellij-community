@@ -76,14 +76,9 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
       }.bottomGap(BottomGap.SMALL)
 
       row {
-        comment(McpServerBundle.message("settings.explanation.when.server.disabled"))
+        comment(McpServerBundle.message("settings.explanation.when.server.disabled",
+                                        McpClientDetector.detectGlobalMcpClients().joinToString("<br/>") { " • " + it.name.displayName }))
       }.bottomGap(BottomGap.NONE).visibleIf(enabledCheckboxState!!.not())
-      McpClientDetector.detectGlobalMcpClients().forEach {
-        row {
-          comment(" • " + it.name.displayName)
-        }.topGap(TopGap.NONE).bottomGap(BottomGap.NONE).visibleIf(enabledCheckboxState!!.not())
-      }
-
 
       group(McpServerBundle.message("settings.client.group"), indent = false) {
         row {
