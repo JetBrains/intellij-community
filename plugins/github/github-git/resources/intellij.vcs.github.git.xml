@@ -8,7 +8,7 @@
 
   <actions>
     <action id="Github.Share" class="com.intellij.vcs.github.git.share.GithubShareAction" icon="AllIcons.Vcs.Vendors.Github">
-      <add-to-group group-id="GitHub.MainMenu"/>
+      <add-to-group group-id="GitHub.MainMenu" anchor="before" relative-to-action="Github.Clone"/>
       <add-to-group group-id="Vcs.Import"/>
       <add-to-group group-id="Vcs.ToolbarWidget.ShareProject" anchor="first"/>
       <override-text place="Vcs.Toolbar.Widget"/>
