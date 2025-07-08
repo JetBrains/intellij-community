@@ -74,7 +74,7 @@ public final class FileBasedIndexScanUtil {
                                               @NotNull GlobalSearchScope scope,
                                               @Nullable IdFilter idFilter) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
-      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
+      // This is to update the project indexable files filter (idFilter), not VFS name index, which is always up-to date
       ensureUpToDate(indexId);
       //noinspection unchecked
       return FSRecords.processAllNames((Processor<CharSequence>)processor);
@@ -114,7 +114,7 @@ public final class FileBasedIndexScanUtil {
                                                        @Nullable IdFilter idFilter,
                                                        @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
-      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
+      // This is to update the project indexable files filter (idFilter), not VFS name index, which is always up-to date
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
@@ -239,7 +239,7 @@ public final class FileBasedIndexScanUtil {
                                                             @Nullable Condition<? super V> valueChecker,
                                                             @NotNull Processor<? super VirtualFile> processor) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
-      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
+      // This is to update the project indexable files filter (idFilter), not VFS name index, which is always up-to date
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked
