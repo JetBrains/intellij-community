@@ -12,7 +12,6 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.indexing.IdFilter
-import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.*
 import org.jetbrains.kotlin.psi.KtElement
@@ -115,7 +114,7 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
             if (allKeys.isNotEmpty()) {
                 checkCollectionSize(indexKey, "processAllElements", logger, allKeys)
                 val values = HashSet<Key>(allKeys.size)
-                val collectProcessor = ProcessorWithThrottledCancellationCheck(CommonProcessors.CollectProcessor(values))
+                val collectProcessor = cancelableCollectFilterProcessor(values)
                 allKeys.forEach { s ->
                     val processElements = processElementsAndMeasure(indexKey, logger) {
                         stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)
