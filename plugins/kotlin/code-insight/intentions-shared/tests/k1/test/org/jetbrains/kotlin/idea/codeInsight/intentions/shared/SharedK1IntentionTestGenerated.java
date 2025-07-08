@@ -3036,6 +3036,55 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment")
+    public static class SpecifyTypeExplicitlyInDestructuringAssignment extends AbstractSharedK1IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("in.kt")
+        public void testIn() throws Exception {
+            runTest("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment/in.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment/lambda.kt");
+        }
+
+        @TestMetadata("lambdaHasSignature.kt")
+        public void testLambdaHasSignature() throws Exception {
+            runTest("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment/lambdaHasSignature.kt");
+        }
+
+        @TestMetadata("variableHasAllTypes.kt")
+        public void testVariableHasAllTypes() throws Exception {
+            runTest("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment/variableHasAllTypes.kt");
+        }
+
+        @TestMetadata("variableHasNoTypes.kt")
+        public void testVariableHasNoTypes() throws Exception {
+            runTest("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment/variableHasNoTypes.kt");
+        }
+
+        @TestMetadata("variableHasTypes.kt")
+        public void testVariableHasTypes() throws Exception {
+            runTest("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment/variableHasTypes.kt");
+        }
+
+        @TestMetadata("variableHasUnderscore.kt")
+        public void testVariableHasUnderscore() throws Exception {
+            runTest("../testData/intentions/specifyTypeExplicitlyInDestructuringAssignment/variableHasUnderscore.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/splitIf")
     public abstract static class SplitIf extends AbstractSharedK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
