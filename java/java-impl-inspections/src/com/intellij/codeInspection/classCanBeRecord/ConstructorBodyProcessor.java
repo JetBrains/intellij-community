@@ -252,27 +252,42 @@ final class ConstructorBodyProcessor {
     if (expression == null) return false;
     Ref<Boolean> hasReferenceToClassUnderConstruction = new Ref<>(false);
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
+      void markInvalid() {
+        hasReferenceToClassUnderConstruction.set(true);
+        stopWalking();
+      }
+
       @Override
       public void visitThisExpression(PsiThisExpression expression) {
         super.visitThisExpression(expression);
-        hasReferenceToClassUnderConstruction.set(true);
+        markInvalid();
       }
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();
+        if (resolved == null) {
+          markInvalid();
+          return;
+        }
+
         if (resolved instanceof PsiField field && !field.hasModifierProperty(STATIC) && field.getContainingClass() == containingClass) {
-          hasReferenceToClassUnderConstruction.set(true);
+          if (expression.getQualifier() == null) {
+            markInvalid();
+          }
+          else {
+            // There is a qualifier, and it is not "this".
+          }
         }
         else if (resolved instanceof PsiMethod method) {
           if (method.hasModifierProperty(STATIC)) return;
           if (method.getContainingClass() == containingClass) {
-            hasReferenceToClassUnderConstruction.set(true);
+            markInvalid();
             return;
           }
           if (containingClass.findMethodBySignature(method, true) != null) {
-            hasReferenceToClassUnderConstruction.set(true);
+            markInvalid();
           }
         }
       }
