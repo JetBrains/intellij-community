@@ -8,4 +8,3 @@ fun foo(o: Any) {
     }
 }
 
-//Text: (<highlight>p: Int</highlight>), Disabled: false, Strikeout: false, Green: true

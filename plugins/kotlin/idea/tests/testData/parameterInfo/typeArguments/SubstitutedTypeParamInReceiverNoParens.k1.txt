@@ -1,0 +1,1 @@
+Text: (<highlight>T</highlight>, K), Disabled: false, Strikeout: false, Green: false

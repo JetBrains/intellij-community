@@ -6,4 +6,3 @@ fun foo() {
 
 // TYPE: "1, "
 
-//Text: (p: String, <highlight>c: Char</highlight>), Disabled: true, Strikeout: false, Green: true

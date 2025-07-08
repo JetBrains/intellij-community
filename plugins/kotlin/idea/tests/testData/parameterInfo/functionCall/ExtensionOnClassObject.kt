@@ -10,6 +10,3 @@ fun test() {
     B.foo(<caret>)
 }
 
-/*
-Text: (<highlight>i: Int</highlight>), Disabled: false, Strikeout: false, Green: true
-*/

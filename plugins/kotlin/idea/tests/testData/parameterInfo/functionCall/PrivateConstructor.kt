@@ -6,4 +6,3 @@ fun test() {
     val a = A(<caret>)
 }
 
-//Text: (<no parameters>), Disabled: false, Strikeout: false, Green: true

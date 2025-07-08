@@ -3,4 +3,3 @@ fun test() {
 }
 
 fun foo(f: (String) -> Int) {}
-//Text: (<highlight>f: (String) -> Int</highlight>), Disabled: false, Strikeout: false, Green: true

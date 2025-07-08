@@ -1,4 +1,5 @@
-// IGNORE_K2
+
+
 fun A.some(s: String) {
 
 }
@@ -15,4 +16,3 @@ class A {
 }
 
 
-//Text: (<highlight>s: String</highlight>), Disabled: false, Strikeout: false, Green: true

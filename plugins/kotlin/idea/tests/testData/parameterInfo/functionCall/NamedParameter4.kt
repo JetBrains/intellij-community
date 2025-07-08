@@ -5,6 +5,3 @@ open class A(x: Int) {
         m(b = "x", d = "x", <caret>)
     }
 }
-/*
-Text: (<disabled>[b: String = "b"], [d: String = "d"],</disabled><highlight></highlight> [a: String = "a"], [c: String = "c"]), Disabled: false, Strikeout: false, Green: true
-*/

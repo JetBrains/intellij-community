@@ -3,6 +3,3 @@ fun f(pickMe: @ParameterName("notMe") String) {
     f(<caret>)
 }
 
-/*
-Text: (<highlight>pickMe: String</highlight>), Disabled: false, Strikeout: false, Green: true
-*/
