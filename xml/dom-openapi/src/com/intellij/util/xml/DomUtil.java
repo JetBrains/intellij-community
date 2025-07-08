@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,7 +23,10 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -126,8 +131,14 @@ public final class DomUtil {
     return aClass == DUMMY ? null : aClass;
   }
 
-  @ApiStatus.Internal
-  public static void clearCaches() {
+  static final class XmlDomCacheCleaner implements DynamicPluginListener {
+    @Override
+    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      clearCaches();
+    }
+  }
+
+  private static void clearCaches() {
     ourTypeParameters.clear();
     ourVariableSubstitutions.clear();
   }

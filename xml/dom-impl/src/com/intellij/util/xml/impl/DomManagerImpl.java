@@ -3,8 +3,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -60,7 +58,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.*;
 
-public final class DomManagerImpl extends DomManager implements Disposable {
+public final class DomManagerImpl extends DomManager {
   private static final Key<Object> MOCK = Key.create("MockElement");
 
   static final Key<WeakReference<DomFileElementImpl<?>>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
@@ -136,17 +134,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
         return event instanceof VFileMoveEvent || event instanceof VFileDeleteEvent;
       }
     }, parent);
-
-    project.getMessageBus().connect(parent).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        DomUtil.clearCaches();
-      }
-    });
   }
-
-  @Override
-  public void dispose() { }
 
   public long getPsiModificationCount() {
     return PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
@@ -185,7 +173,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     return isBulkChange;
   }
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static DomManagerImpl getDomManager(Project project) {
     return (DomManagerImpl)DomManager.getDomManager(project);
   }
@@ -268,6 +256,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     return project;
   }
 
+  @SuppressWarnings("removal")
   @Override
   public @NotNull <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
