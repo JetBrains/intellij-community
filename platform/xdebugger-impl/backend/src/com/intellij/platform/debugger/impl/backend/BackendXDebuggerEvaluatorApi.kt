@@ -9,29 +9,19 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
-import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
-import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
-import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.pinned.items.PinToTopValue
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.models.*
-import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin
-import fleet.rpc.core.RpcFlow
-import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asDeferred
 
@@ -111,36 +101,6 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 }
 
-internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
-  val xValueModel = this
-  val xValue = this.xValue
-  val valueMarkupFlow: RpcFlow<XValueMarkerDto?> = xValueModel.marker.toRpc()
-
-  val textProvider = (xValue as? XValueTextProvider)
-    ?.let {
-      xValueModel.presentation.map {
-        XValueTextProviderDto(
-          xValue.shouldShowTextValue(),
-          xValue.valueText,
-        )
-      }.distinctUntilChanged()
-    }
-
-  return XValueDto(
-    xValueModel.id,
-    xValue.xValueDescriptorAsync?.asDeferred(),
-    canNavigateToSource = xValue.canNavigateToSource(),
-    canNavigateToTypeSource = xValue.canNavigateToTypeSourceAsync().asDeferred(),
-    canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
-    valueMarkupFlow,
-    xValueModel.presentation.toRpc(),
-    xValueModel.getEvaluatorDtoFlow().toRpc(),
-    (xValue as? XNamedValue)?.name,
-    textProvider?.toRpc(),
-    (xValue as? PinToTopValue)?.pinToTopDataFuture?.asDeferred(),
-  )
-}
-
 internal fun BackendXValueGroupModel.toXValueGroupDto(): XValueGroupDto {
   return XValueGroupDto(
     id,
@@ -151,22 +111,6 @@ internal fun BackendXValueGroupModel.toXValueGroupDto(): XValueGroupDto {
     xValueGroup.separator,
     xValueGroup.comment
   )
-}
-
-private fun BackendXValueModel.getEvaluatorDtoFlow(): Flow<XFullValueEvaluatorDto?> {
-  return fullValueEvaluator.map {
-    if (it == null) {
-      return@map null
-    }
-    XFullValueEvaluatorDto(
-      it.linkText,
-      it.isEnabled,
-      it.isShowValuePopup,
-      it.linkAttributes?.let { attributes ->
-        FullValueEvaluatorLinkAttributes(attributes.linkIcon?.rpcId(), attributes.linkTooltipText, attributes.shortcutSupplier?.get())
-      }
-    )
-  }
 }
 
 internal fun newXValueModel(

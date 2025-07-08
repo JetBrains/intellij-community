@@ -59,7 +59,6 @@
     <module name="intellij.java.langInjection"/>
     <module name="intellij.java.langInjection.jps"/>
 
-    <module name="intellij.debugger.collections.visualizer.jvm"/>
     <module name="intellij.profiler.ultimate"/>
     <module name="intellij.jvm.dfa.analysis.ui"/>
   </content>

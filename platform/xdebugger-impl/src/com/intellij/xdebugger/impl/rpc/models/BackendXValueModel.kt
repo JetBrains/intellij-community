@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc.models
 
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
+import com.intellij.platform.debugger.impl.rpc.XValueDto
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
+import com.intellij.platform.debugger.impl.rpc.XValueTextProviderDto
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.deleteValueById
 import com.intellij.platform.kernel.ids.findValueById
@@ -13,16 +18,24 @@ import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XFullValueEvaluator
+import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.pinned.items.PinToTopValue
 import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
+import fleet.rpc.core.RpcFlow
+import fleet.rpc.core.toRpc
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.asDeferred
 
 /**
  * Model which holds reference to the [XValue].
@@ -112,6 +125,57 @@ class BackendXValueModel internal constructor(
   }
 }
 
+@ApiStatus.Internal
+suspend fun BackendXValueModel.toXValueDto(): XValueDto {
+  val xValueModel = this
+  val xValue = this.xValue
+  val valueMarkupFlow: RpcFlow<XValueMarkerDto?> = xValueModel.marker.toRpc()
+
+  val textProvider = getTextProviderFlow(xValue, xValueModel)
+
+  return XValueDto(
+    xValueModel.id,
+    xValue.xValueDescriptorAsync?.asDeferred(),
+    canNavigateToSource = xValue.canNavigateToSource(),
+    canNavigateToTypeSource = xValue.canNavigateToTypeSourceAsync().asDeferred(),
+    canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
+    valueMarkupFlow,
+    xValueModel.presentation.toRpc(),
+    xValueModel.getEvaluatorDtoFlow().toRpc(),
+    (xValue as? XNamedValue)?.name,
+    textProvider?.toRpc(),
+    (xValue as? PinToTopValue)?.pinToTopDataFuture?.asDeferred(),
+  )
+}
+
+private fun BackendXValueModel.getEvaluatorDtoFlow(): Flow<XFullValueEvaluatorDto?> {
+  return fullValueEvaluator.map {
+    if (it == null) {
+      return@map null
+    }
+    XFullValueEvaluatorDto(
+      it.linkText,
+      it.isEnabled,
+      it.isShowValuePopup,
+      it.linkAttributes?.let { attributes ->
+        FullValueEvaluatorLinkAttributes(attributes.linkIcon?.rpcId(), attributes.linkTooltipText, attributes.shortcutSupplier?.get())
+      }
+    )
+  }
+}
+
+private fun getTextProviderFlow(
+  xValue: XValue,
+  xValueModel: BackendXValueModel,
+): Flow<XValueTextProviderDto>? = (xValue as? XValueTextProvider)
+  ?.let {
+    xValueModel.presentation.map {
+      XValueTextProviderDto(
+        xValue.shouldShowTextValue(),
+        xValue.valueText,
+      )
+    }.distinctUntilChanged()
+  }
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
