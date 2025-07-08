@@ -54,7 +54,6 @@ import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
 
@@ -954,6 +953,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (selfType != null) {
         return selfType;
       }
+      final Ref<PyType> noneType = getNoneType(typeHint, resolved);
+      if (noneType != null) {
+        return noneType;
+      }
       final Ref<PyType> classType = getClassType(typeHint, resolved, context);
       if (classType != null) {
         return classType;
@@ -965,6 +968,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         context.getTypeAliasStack().remove(alias);
       }
     }
+  }
+
+  private static @Nullable Ref<PyType> getNoneType(@NotNull PyExpression typeHint, @NotNull PsiElement resolved) {
+    if (typeHint instanceof PyNoneLiteralExpression ||
+        typeHint instanceof PyReferenceExpression && PyNames.NONE.equals(typeHint.getText())) {
+      return Ref.create(PyBuiltinCache.getInstance(resolved).getNoneType());
+    }
+    return null;
   }
 
   private static @Nullable PyType getCallableParameterListType(@NotNull PsiElement resolved, @NotNull Context context) {
@@ -1092,8 +1103,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   private static @Nullable Ref<PyType> getClassType(@NotNull PyExpression typeHint, @NotNull PsiElement element, @NotNull Context context) {
-    if (!(typeHint instanceof PyReferenceExpression || typeHint instanceof PyNoneLiteralExpression)) return null;
-    if (element instanceof PyTypedElement) {
+    if (typeHint instanceof PyReferenceExpression && element instanceof PyTypedElement) {
       TypeEvalContext typeContext = context.getTypeContext();
       final PyType type = typeContext.getType((PyTypedElement)element);
       if (type instanceof PyClassLikeType classLikeType) {
@@ -1110,10 +1120,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
               return Ref.create(parameterized.toInstance());
             }
           }
-          final PyType instanceType = classLikeType.toInstance();
-          return Ref.create(instanceType);
-        }
-        else if (isNoneType(classLikeType)) {
           final PyType instanceType = classLikeType.toInstance();
           return Ref.create(instanceType);
         }
