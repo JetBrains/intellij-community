@@ -885,6 +885,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (unionType != null) {
         return Ref.create(unionType);
       }
+      final Ref<PyType> unionTypeFromBinaryOr = getTypeFromBinaryExpression(resolved, context);
+      if (unionTypeFromBinaryOr != null) {
+        return unionTypeFromBinaryOr;
+      }
       final PyType concatenateType = getConcatenateType(resolved, context);
       if (concatenateType != null) {
         return Ref.create(concatenateType);
@@ -972,10 +976,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       final Ref<PyType> classType = getClassType(typeHint, resolved, context);
       if (classType != null) {
         return classType;
-      }
-      final Ref<PyType> unionTypeFromBinaryOr = getTypeFromBinaryExpression(resolved, context);
-      if (unionTypeFromBinaryOr != null) {
-        return unionTypeFromBinaryOr;
       }
       final Ref<PyType> selfType = getSelfType(resolved, typeHint, context);
       if (selfType != null) {
@@ -1711,7 +1711,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
 
-    // type aliases
+    // old-style type aliases of form `ListOf = list[T]` or `ListOf: TypeAlias = list[T]`
     PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(typeHintContext, PyAssignmentStatement.class, false, PyStatement.class);
     if (assignment != null) {
       PyExpression assignedValue = PyPsiUtils.flattenParens(assignment.getAssignedValue());

@@ -6601,6 +6601,24 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-82486
+  public void testBogusAncestorTypeVarScopeOwnerInference() {
+    doTest("T | str", """
+      from typing import Generic, TypeVar
+      
+      T = TypeVar("T")
+      
+      class Box(Generic[T]): ...
+      class Box2(Box[T]): ...
+      
+      def unbox(x: Box[T]) -> T: ...
+      
+      def f(x: Box2[T] | None, y: T):
+          b: Box2[str]
+          expr = y or unbox(b)
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
