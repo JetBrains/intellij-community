@@ -794,24 +794,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
-  private static @Nullable Ref<PyType> getTypeFromBitwiseOrOperator(@NotNull PyBinaryExpression expression, @NotNull Context context) {
-    if (expression.getOperator() != PyTokenTypes.OR) return null;
-
-    PyExpression left = expression.getLeftExpression();
-    PyExpression right = expression.getRightExpression();
-    if (left == null || right == null) return null;
-
-    Ref<PyType> leftTypeRef = getType(left, context);
-    Ref<PyType> rightTypeRef = getType(right, context);
-    if (leftTypeRef == null || rightTypeRef == null) return null;
-
-    PyType leftType = leftTypeRef.get();
-    if (leftType != null && typeHasOverloadedBitwiseOr(leftType, left, context)) return null;
-
-    PyType union = PyUnionType.union(leftType, rightTypeRef.get());
-    return union != null ? Ref.create(union) : null;
-  }
-
   private static boolean typeHasOverloadedBitwiseOr(@NotNull PyType type, @NotNull PyExpression expression,
                                                     @NotNull Context context) {
     if (type instanceof PyUnionType) return false;
@@ -881,13 +863,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (neverType != null) {
         return Ref.create(neverType);
       }
-      final PyType unionType = getUnionType(resolved, context);
+      final Ref<PyType> unionType = getUnionType(resolved, context);
       if (unionType != null) {
-        return Ref.create(unionType);
-      }
-      final Ref<PyType> unionTypeFromBinaryOr = getTypeFromBinaryExpression(resolved, context);
-      if (unionTypeFromBinaryOr != null) {
-        return unionTypeFromBinaryOr;
+        return unionType;
       }
       final PyType concatenateType = getConcatenateType(resolved, context);
       if (concatenateType != null) {
@@ -1030,13 +1008,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (scopeClassType == null) return null;
 
       return Ref.create(new PySelfType(scopeClassType));
-    }
-    return null;
-  }
-
-  private static @Nullable Ref<PyType> getTypeFromBinaryExpression(@NotNull PsiElement resolved, @NotNull Context context) {
-    if (resolved instanceof PyBinaryExpression) {
-      return getTypeFromBitwiseOrOperator((PyBinaryExpression)resolved, context);
     }
     return null;
   }
@@ -1497,13 +1468,27 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
-  private static @Nullable PyType getUnionType(@NotNull PsiElement element, @NotNull Context context) {
+  private static @Nullable Ref<PyType> getUnionType(@NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PySubscriptionExpression subscriptionExpr) {
-      final PyExpression operand = subscriptionExpr.getOperand();
-      final Collection<String> operandNames = resolveToQualifiedNames(operand, context.getTypeContext());
-      if (operandNames.contains(UNION)) {
-        return PyUnionType.union(getIndexTypes(subscriptionExpr, context));
+      if (resolvesToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext(), UNION)) {
+        PyType union = PyUnionType.union(getIndexTypes(subscriptionExpr, context));
+        return union != null ? Ref.create(union) : null;
       }
+    }
+    else if (element instanceof PyBinaryExpression expression && expression.getOperator() == PyTokenTypes.OR) {
+      PyExpression left = expression.getLeftExpression();
+      PyExpression right = expression.getRightExpression();
+      if (left == null || right == null) return null;
+
+      Ref<PyType> leftTypeRef = getType(left, context);
+      Ref<PyType> rightTypeRef = getType(right, context);
+      if (leftTypeRef == null || rightTypeRef == null) return null;
+
+      PyType leftType = leftTypeRef.get();
+      if (leftType != null && typeHasOverloadedBitwiseOr(leftType, left, context)) return null;
+
+      PyType union = PyUnionType.union(leftType, rightTypeRef.get());
+      return union != null ? Ref.create(union) : null;
     }
     return null;
   }
