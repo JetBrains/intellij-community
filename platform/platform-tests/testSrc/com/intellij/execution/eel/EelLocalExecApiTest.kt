@@ -149,11 +149,12 @@ class EelLocalExecApiTest {
         logger.warn("Waiting for $HELLO")
         while (helloStream.receive(dirtyBuffer) != ReadResult.EOF) {
           val line = decoder.decode(dirtyBuffer.flip()).toString()
-          logger.warn("Line read: $line")
           cleanBuffer.add(line)
           dirtyBuffer.clear()
           if (HELLO in cleanBuffer.getString()) {
             break
+          }else {
+            logger.warn("No $HELLO in $line")
           }
         }
       }
@@ -167,7 +168,7 @@ class EelLocalExecApiTest {
     cleanBuffer.setPosEnd(HELLO)
     while (true) {
 
-      ttyState = TTYState.deserializeIfValid(cleanBuffer.getString())
+      ttyState = TTYState.deserializeIfValid(cleanBuffer.getString(), logger::warn)
       if (ttyState != null) {
         break
       }
@@ -199,7 +200,7 @@ class EelLocalExecApiTest {
       }
 
       if (ptyManagement == PTYManagement.PTY_RESIZE_LATER && (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) && process.isWinConPtyProcess) {
-        delay(15.seconds) // workaround: wait a bit to let ConPTY apply the resize
+        delay(10.seconds) // workaround: wait a bit to let ConPTY apply the resize
       }
 
       // Test kill api
@@ -276,6 +277,47 @@ class EelLocalExecApiTest {
     finally {
       unmockkStatic(PathEnvironmentVariableUtil::class)
     }
+  }
+
+  @Test
+  fun testAnsiRemover() {
+    val c = 27.toChar()
+    val j = """
+      
+   $c[H
+ J $c[8;1H
+  $c[?25l
+ he   $c[?25h
+  $c[?25l
+ ll   $c[?25h
+  $c[H
+ J $c[8;5H
+  $c[?25l
+ o   $c[?25h
+  $c[?25l
+  $c[HJ $c[9;1H $c[?25h
+  $c[?25l
+ {"   $c[?25h
+  $c[?25l
+ $c[H
+ J $c[8;1H
+  $c[?25l
+ he   $c[?25h
+  $c[?25l
+ ll   $c[?25h
+  $c[H
+ J $c[8;5H
+  $c[?25l
+ o   $c[?25h
+  $c[?25l
+  $c[HJ $c[9;1H $c[?25h
+  $c[?25l
+ {"   $c[?25h
+  $c[?25l
+    """.trimIndent()
+  val b =   CleanBuffer()
+    b.add(j)
+    println(b.getString())
   }
 
   /**

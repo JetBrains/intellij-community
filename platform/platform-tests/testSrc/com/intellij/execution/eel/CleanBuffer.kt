@@ -4,13 +4,15 @@ package com.intellij.execution.eel
 // Removes ESC chars
 internal class CleanBuffer {
   private companion object {
-    val NEW_LINES = Regex("\r?\n")
+    val NEW_LINES_EMPTY_CHARS = Regex("(\r?\n| |\t|\\s)")
     val OS_COMMAND_SET_TITLE = Regex("\\x1b]0;[^\\x1b]+(:?\\x9C|\\x07|\\x1b\\x5c)")
     val CSI_CURSOR = Regex("\\x1b\\[\\?[0-9]+[a-zA-Z]")
+    val HJ = Regex("\\x1b\\[HJ")
     fun removeEsc(string: String): String {
-      var string = OS_COMMAND_SET_TITLE.replace(string, "")
-      string = CSI_CURSOR.replace(string, "")
-      return NEW_LINES.replace(string, "")
+      var string = NEW_LINES_EMPTY_CHARS.replace(string, "")
+      string = HJ.replace(string, "")
+      string = OS_COMMAND_SET_TITLE.replace(string, "")
+      return CSI_CURSOR.replace(string, "")
     }
   }
 

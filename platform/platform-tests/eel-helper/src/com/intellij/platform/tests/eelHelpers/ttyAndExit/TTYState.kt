@@ -12,20 +12,18 @@ data class TTYState(val size: Size?, val termName: String?) {
   companion object {
     private val mapper = ObjectMapper().registerKotlinModule()
 
-    // Remove spaces, tabs, ANSI ESC another tty junk
-    private val cleaner = Regex("([\\t\\n \\r\\s]|\\[[0-9;]*[a-zA-Z])")
+    @TestOnly
+    private fun deserialize(str: String): TTYState = mapper.readValue(str, TTYState::class.java)
 
     @TestOnly
-    fun deserialize(str: String): TTYState = mapper.readValue(str, TTYState::class.java)
-
-    @TestOnly
-    fun deserializeIfValid(str: String): TTYState? = try {
-      deserialize(cleaner.replace(str.trim(), ""))
+    fun deserializeIfValid(str: String, onError:(message:String)-> Unit): TTYState? = try {
+      deserialize(str.trim())
     }
     catch (_: JsonProcessingException) {
       null
     }
-    catch (_: JsonParseException) {
+    catch (e: JsonParseException) {
+      onError("Can't parse due to ${e.message}")
       null
     }
   }
