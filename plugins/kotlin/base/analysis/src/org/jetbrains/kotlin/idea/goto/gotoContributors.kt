@@ -73,9 +73,22 @@ abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
 
 
 @ApiStatus.Internal
-class KotlinGotoClassContributor : AbstractKotlinGotoSymbolContributor<KtClassOrObject>(KotlinClassShortNameIndex) {
+abstract class KotlinAbstractGotoClassContributor(private val acceptEnums: Boolean) : AbstractKotlinGotoSymbolContributor<KtClassOrObject>(KotlinClassShortNameIndex) {
     override fun getQualifiedName(item: NavigationItem): String? = (item as? KtClassOrObject)?.fqName?.asString()
+
+    override fun processOriginalElement(
+        processor: Processor<in NavigationItem>,
+        element: KtClassOrObject
+    ): Boolean {
+        if (!acceptEnums && element is KtEnumEntry) return true
+        return super.processOriginalElement(processor, element)
+    }
 }
+@ApiStatus.Internal
+class KotlinGotoClassContributor: KotlinAbstractGotoClassContributor(acceptEnums = false)
+
+@ApiStatus.Internal
+class KotlinGotoClassSymbolContributor: KotlinAbstractGotoClassContributor(acceptEnums = true)
 
 @ApiStatus.Internal
 class KotlinGotoTypeAliasContributor : AbstractKotlinGotoSymbolContributor<KtTypeAlias>(KotlinTypeAliasShortNameIndex) {
