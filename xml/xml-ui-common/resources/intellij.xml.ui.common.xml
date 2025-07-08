@@ -20,6 +20,10 @@
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.XMLColorsPage"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.HTMLColorsPage"/>
 
+    <additionalTextAttributes scheme="IntelliJ Light" file="colorSchemes/XmlIntelliJLight.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/XmlDarcula.xml"/>
+    <additionalTextAttributes scheme="High contrast" file="colorSchemes/XmlHighContrast.xml"/>
+
     <langCodeStyleSettingsProvider implementation="com.intellij.application.options.HtmlLanguageCodeStyleSettingsProvider"/>
 
     <langCodeStyleSettingsProvider implementation="com.intellij.application.options.XmlLanguageCodeStyleSettingsProvider"/>

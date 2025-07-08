@@ -107,9 +107,6 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory"/>
     <bidiRegionsSeparator language="XML" implementationClass="com.intellij.openapi.editor.bidi.XmlBidiRegionsSeparator"/>
 
-    <additionalTextAttributes scheme="IntelliJ Light" file="colorSchemes/XmlIntelliJLight.xml"/>
-    <additionalTextAttributes scheme="Darcula" file="colorSchemes/XmlDarcula.xml"/>
-    <additionalTextAttributes scheme="High contrast" file="colorSchemes/XmlHighContrast.xml"/>
     <applicationService serviceImplementation="com.intellij.application.options.HtmlSettings"/>
 
     <gotoTargetRendererProvider implementation="com.intellij.xml.impl.schema.GotoXmlSchemaTypeRendererProvider"/>
