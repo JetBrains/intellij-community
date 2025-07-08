@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_IO;
+
 public final class MigrateToJavaLangIoInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public boolean processImplicitClasses = true;
@@ -125,7 +127,21 @@ public final class MigrateToJavaLangIoInspection extends AbstractBaseJavaLocalIn
 
   static boolean isSystemOutPrintln(@NotNull PsiMethodCallExpression expression) {
     if (!PRINT_STREAM_PRINT.test(expression)) return false;
+    if (!isSystemOutCall(expression)) return false;
     return callIOAndSystemIdentical(expression.getArgumentList());
+  }
+
+  private static boolean isSystemOutCall(@NotNull PsiMethodCallExpression expression) {
+    PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    PsiExpression qualifier = methodExpression.getQualifierExpression();
+    if (!(qualifier instanceof PsiReferenceExpression ref)) return false;
+    PsiElement resolved = ref.resolve();
+    if (!(resolved instanceof PsiField field)) return false;
+    if (!field.getName().equals("out")) return false;
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) return false;
+    if (!CommonClassNames.JAVA_LANG_SYSTEM.equals(containingClass.getQualifiedName())) return false;
+    return true;
   }
 
   static boolean callIOAndSystemIdentical(@NotNull PsiExpressionList list) {
