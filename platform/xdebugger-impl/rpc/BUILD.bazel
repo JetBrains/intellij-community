@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/core-ui",
     "//platform/execution-impl",
+    "//platform/remote-topics/shared:rpc-topics",
   ],
   runtime_deps = [":rpc_resources"]
 )

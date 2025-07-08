@@ -21,7 +21,7 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>
-    <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
+    <platform.rpc.remoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerEventsListener"/>
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>

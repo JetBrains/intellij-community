@@ -6,6 +6,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.topics.RemoteTopic
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import fleet.rpc.RemoteApi
@@ -28,8 +29,6 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
   suspend fun removeHint(hintId: RemoteValueHintId, force: Boolean)
 
-  suspend fun getManagerEventsFlow(projectId: ProjectId): Flow<ValueHintEvent>
-
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerValueLookupHintsRemoteApi {
@@ -43,11 +42,14 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 data class RemoteValueHintId(override val uid: UID) : Id
 
 @ApiStatus.Internal
+val LOOKUP_HINTS_EVENTS_REMOTE_TOPIC: RemoteTopic<ValueHintEvent> = RemoteTopic("xdebugger.lookup.hints.events", ValueHintEvent.serializer())
+
+@ApiStatus.Internal
 @Serializable
 sealed interface ValueHintEvent {
   @Serializable
-  object StartListening : ValueHintEvent
+  data class StartListening(val project: ProjectId) : ValueHintEvent
 
   @Serializable
-  object HideHint : ValueHintEvent
+  data class HideHint(val project: ProjectId) : ValueHintEvent
 }

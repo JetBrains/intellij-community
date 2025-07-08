@@ -8,46 +8,31 @@ import com.intellij.openapi.editor.EditorMouseHoverPopupManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.platform.debugger.impl.rpc.LOOKUP_HINTS_EVENTS_REMOTE_TOPIC
 import com.intellij.platform.debugger.impl.rpc.ValueHintEvent
+import com.intellij.platform.project.projectId
+import com.intellij.platform.rpc.topics.broadcast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class ValueLookupManagerController(private val cs: CoroutineScope) {
-  private val events = MutableSharedFlow<ValueHintEvent>()
-  private val channel = Channel<ValueHintEvent>(Channel.UNLIMITED)
-
-  init {
-    cs.launch {
-      channel.consumeEach {
-        events.emit(it)
-      }
-    }
-  }
-
-  fun getEventsFlow(): Flow<ValueHintEvent> = events.asSharedFlow()
-
+class ValueLookupManagerController(private val project: Project, private val cs: CoroutineScope) {
   /**
    * Starts [ValueLookupManager] listening for events (e.g. mouse movement) to trigger evaluation popups
    */
   fun startListening() {
-    channel.trySend(ValueHintEvent.StartListening)
+    LOOKUP_HINTS_EVENTS_REMOTE_TOPIC.broadcast(ValueHintEvent.StartListening(project.projectId()))
   }
 
   /**
    * Requests [ValueLookupManager] to hide current evaluation hints
    */
   fun hideHint() {
-    channel.trySend(ValueHintEvent.HideHint)
+    LOOKUP_HINTS_EVENTS_REMOTE_TOPIC.broadcast(ValueHintEvent.HideHint(project.projectId()))
   }
 
   fun showEditorInfoTooltip(event: EditorMouseEvent?) {
