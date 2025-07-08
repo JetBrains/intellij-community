@@ -159,9 +159,13 @@
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreatePullRequestAction"
             icon="AllIcons.General.Add">
       <add-to-group group-id="Git.Menu"/>
+      <synonym key="action.Github.Create.Pull.Request.synonym1"/>
+      <synonym key="action.Github.Create.Pull.Request.synonym2"/>
+      <synonym key="action.Github.Create.Pull.Request.synonym3"/>
     </action>
     <action id="Github.View.Pull.Request" class="org.jetbrains.plugins.github.GithubViewPullRequestsAction">
       <add-to-group group-id="Git.Menu"/>
+      <synonym key="action.Github.View.Pull.Request.synonym1"/>
     </action>
     <action id="Github.PullRequest.Details.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction"

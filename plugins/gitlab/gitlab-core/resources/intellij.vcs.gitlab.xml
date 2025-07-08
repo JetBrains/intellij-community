@@ -93,7 +93,9 @@
   <actions>
     <action id="GitLab.Merge.Request.Show.List"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestsAction"
-            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
+      <synonym key="action.GitLab.View.Merge.Request.synonym1"/>
+    </action>
 
     <action id="GitLab.Merge.Request.List.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
@@ -114,6 +116,9 @@
     <action id="GitLab.Merge.Request.Create"
             class="org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabAction"
             icon="AllIcons.General.Add">
+      <synonym key="action.GitLab.Create.Merge.Request.synonym1"/>
+      <synonym key="action.GitLab.Create.Merge.Request.synonym2"/>
+      <synonym key="action.GitLab.Create.Merge.Request.synonym3"/>
       <add-to-group group-id="Git.Menu"/>
     </action>
     <action id="GitLab.Clone"
