@@ -363,6 +363,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       );
 
       Map<String, ChildInfo> justCreated = new HashMap<>();
+      boolean caseSensitive = dir.isCaseSensitive();
       //TODO RC: there are few places in this class .update() is used to update a hierarchy, but there is no consistency
       //         in how those updates are organised: in some cases real FS queries and makeChildRecord() calls are made
       //         _inside_ the .update(), i.e. inside the .update()'s lock -- as it is done here. But in other cases FS
@@ -377,36 +378,46 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         // preserve current children which match fsNames (to have stable id)
         // (on case-insensitive systems, replace those from current with case-changes ones from fsNames preserving the id)
         // add those from fsNames which are absent from current
-        //TODO RC: this could be done outside the lock:
-        boolean caseSensitive = dir.isCaseSensitive();
         Set<String> toAddNames = CollectionFactory.createFilePathSet(fsNames, caseSensitive);
         for (ChildInfo currentChild : currentChildren) {
           toAddNames.remove(currentChild.getName().toString());
         }
 
+        //MAYBE RC: this update could be re-implemented as read-modify-write, to reduce lock duration.
+        //          1. request current directory content in first read-only .update()
+        //          2. calculate the difference, request information about new children from FSes (IO) -- outside the lock
+        //          3. second .update() modifies directory content speculatively, checking !current.childrenWereChangedSinceLast(vfs)
+        //          4. retry if check in (3) fails
         List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
-        if (fs instanceof BatchingFileSystem) {
-          Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(dir, toAddNames);
-          for (Map.Entry<String, FileAttributes> entry : map.entrySet()) {
-            String newName = entry.getKey();
-            FileAttributes attrs = entry.getValue();
-            String target = attrs.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(dir, newName)) : null;
-            Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, attrs, target);
-            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, dirId, name, childData, fs, null));
+        if (fs instanceof BatchingFileSystem batchingFileSystem) {
+          Map<String, FileAttributes> childrenAttributes = batchingFileSystem.listWithAttributes(dir, toAddNames);
+          for (Map.Entry<String, FileAttributes> e : childrenAttributes.entrySet()) {
+            String newChildName = e.getKey();
+            FileAttributes childAttrs = e.getValue();
+            String symLinkTarget = childAttrs.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(dir, newChildName)) : null;
+            Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newChildName, childAttrs, symLinkTarget);
+            ChildInfo newChild = justCreated.computeIfAbsent(
+              newChildName,
+              _newChildName -> makeChildRecord(dir, dirId, _newChildName, childData, fs, null)
+            );
             toAddChildren.add(newChild);
           }
         }
         else {
-          for (String newName : toAddNames) {
-            Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, null, null);
+          for (String newChildName : toAddNames) {
+            Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newChildName, null, null);
             if (childData != null) {
-              ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, dirId, name, childData, fs, null));
+              ChildInfo newChild = justCreated.computeIfAbsent(
+                newChildName,
+                _newChildName -> makeChildRecord(dir, dirId, _newChildName, childData, fs, null)
+              );
               toAddChildren.add(newChild);
             }
           }
         }
 
-        // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays
+        // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays, so we must
+        // provide a stable order:
         toAddChildren.sort(ChildInfo.BY_ID);
         return current.merge(vfsPeer, toAddChildren, caseSensitive);
       });
@@ -2315,7 +2326,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     vfsPeer.moveChildren(fromParentId, toParentId);
   }
 
-  /** @return <File attributes, symlink target> cortege, or null when the file not found */
+  /** @return [File attributes, symlink target] tuple, or null when the file not found */
   private static @Nullable Pair<@NotNull FileAttributes, String> getChildData(@NotNull NewVirtualFileSystem fs,
                                                                               @NotNull VirtualFile parent,
                                                                               @NotNull String name,

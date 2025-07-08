@@ -1328,6 +1328,7 @@ public final class FSRecordsImpl implements Closeable {
     long length = attributes.isDirectory() ? -1L : attributes.length;
     int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
+    InvertedNameIndex filenameIndex = invertedNameIndexLazy.get();
     updateRecordFields(fileId, record -> {
       record.setParent(parentId);
       record.setNameId(nameId);
@@ -1338,11 +1339,11 @@ public final class FSRecordsImpl implements Closeable {
       record.setTimestamp(timestamp);
       record.setLength(length);
 
-      invertedNameIndexLazy.get().updateFileName(fileId, nameId, NULL_NAME_ID);
-      invertedNameIndexModCount.incrementAndGet();
-
+      filenameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
       return true;
     });
+
+    invertedNameIndexModCount.incrementAndGet();
 
     return nameId;
   }
