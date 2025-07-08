@@ -19,14 +19,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
@@ -38,8 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-
-import static com.jetbrains.python.psi.LanguageLevel.getDefault;
 
 
 public final class PyPsiFacadeImpl extends PyPsiFacade {
@@ -105,15 +100,6 @@ public final class PyPsiFacadeImpl extends PyPsiFacade {
 
   @Override
   public @NotNull LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
-    if (element instanceof PsiDirectory directory) {
-      return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
-    }
-
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof PyFile) {
-      return ((PyFile)containingFile).getLanguageLevel();
-    }
-
-    return getDefault();
+    return LanguageLevel.forElement(element);
   }
 }
