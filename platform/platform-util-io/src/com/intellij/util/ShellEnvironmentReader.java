@@ -3,8 +3,6 @@ package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -24,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 /**
  * A utility class for reading shell environment.
@@ -71,6 +70,7 @@ public final class ShellEnvironmentReader {
       command.add("-i");
     }
 
+    // macOS now supports the `-0` option, too (supposedly, from 12.3); we can drop `printenv` in ~3 years
     var reader = OS.CURRENT == OS.macOS ? "'" + PathManager.findBinFileWithException("printenv") + "'" : "/usr/bin/env -0";
     if (shFile != null) {
       if ("nu".equals(name) || "pwsh".equals(name) || "xonsh".equals(name))
@@ -254,26 +254,24 @@ public final class ShellEnvironmentReader {
   private static int waitAndTerminateAfter(Process process, long timeoutMillis) {
     var exitCode = waitFor(process, timeoutMillis);
     if (exitCode != null) return exitCode;
+
     LOG.warn("shell env loader is timed out");
+    var handles = Stream.concat(Stream.of(process.toHandle()), process.descendants()).toList();
 
-    // first, try to interrupt 'softly' (we know how to do it only on Unix)
-    if (OS.CURRENT != OS.Windows) {
-      UnixProcessManager.sendSigIntToProcessTree(process);
-      exitCode = waitFor(process, 1000L);
-      if (exitCode != null) return exitCode;
-      LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
-    }
-
-    if (OS.CURRENT == OS.Windows) {
-      WinProcessManager.kill(process, true);
-    }
-    else {
-      UnixProcessManager.sendSigKillToProcessTree(process);
+    for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
+      iterator.previous().destroy();
     }
     exitCode = waitFor(process, 1000L);
     if (exitCode != null) return exitCode;
+    LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
 
+    for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
+      iterator.previous().destroyForcibly();
+    }
+    exitCode = waitFor(process, 1000L);
+    if (exitCode != null) return exitCode;
     LOG.warn("failed to kill shell env loader");
+
     return -1;
   }
 
