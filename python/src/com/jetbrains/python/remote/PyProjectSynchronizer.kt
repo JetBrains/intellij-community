@@ -9,7 +9,6 @@ import com.intellij.remote.CredentialsType
 import com.intellij.util.PathMappingSettings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.io.File
 import java.util.function.Consumer
 
 typealias PathMappings = List<PathMappingSettings.PathMapping>
@@ -121,7 +120,7 @@ sealed interface PySyncCheckStrategy
  *
  * No remote project creation would be allowed if this strategy returns "false".
  */
-class PySyncCheckOnly(val projectBaseDir: File) : PySyncCheckStrategy
+class PySyncCheckOnly() : PySyncCheckStrategy
 
 /**
  * Checks if project with specific module could be synced with remote server.

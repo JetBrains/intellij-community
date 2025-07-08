@@ -178,7 +178,4 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     scope.cancel()
   }
 
-  companion object {
-    var runningUnderOldUI: Boolean = false
-  }
 }

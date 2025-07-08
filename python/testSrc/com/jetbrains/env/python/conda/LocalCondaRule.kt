@@ -2,10 +2,7 @@
 package com.jetbrains.env.python.conda
 
 import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.python.community.testFramework.testEnv.conda.TypeConda
-import com.jetbrains.python.sdk.conda.TargetCommandExecutor
-import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import kotlinx.coroutines.runBlocking
 import org.junit.AssumptionViolatedException
@@ -26,8 +23,6 @@ class LocalCondaRule : ExternalResource() {
   private lateinit var autoCloseable: AutoCloseable
 
   val condaPathOnTarget: FullPathOnTarget get() = condaPath.toString()
-
-  val commandExecutor: TargetCommandExecutor get() = TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest())
 
   val condaCommand: PyCondaCommand get() = PyCondaCommand(condaPathOnTarget, null)
 

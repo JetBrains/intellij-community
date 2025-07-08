@@ -83,15 +83,3 @@ suspend fun PythonPackageManagerUI.installPackageBackground(
 ): List<PythonPackage>? = installPyRequirementsBackground(listOf(pyRequirement(pyPackage, versionSpec)),
                                                           options = options)
 
-/**
- * @return List of all installed packages or null if the operation was failed.
- */
-@ApiStatus.Internal
-suspend fun PythonPackageManagerUI.installPackagesByNamesBackground(
-  vararg packages: String,
-  options: List<String> = emptyList(),
-): List<PythonPackage>? {
-  val pyRequirements = packages.map { pyRequirement(it) }
-  return installPyRequirementsBackground(pyRequirements,
-                                         options = options)
-}

@@ -75,10 +75,6 @@ internal class PyPackagingTreeGroup(
     })
   }
 
-  fun setItems(value: List<DisplayablePackage>) {
-    tree.items = value
-  }
-
   fun updatePreferredSize() {
     val totalHeight = tree.tree.rowCount * tree.tree.rowHeight
     val width = container.width

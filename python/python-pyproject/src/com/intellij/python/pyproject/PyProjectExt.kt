@@ -11,7 +11,6 @@ import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.reflect.KClass
 import org.toml.lang.psi.TomlKeyValue as PsiTomlKeyValue
-import org.toml.lang.psi.TomlLiteral as PsiTomlLiteral
 import org.toml.lang.psi.TomlTable as PsiTomlTable
 
 /**
@@ -195,18 +194,3 @@ fun PsiElement.findTomlValueByKey(key: String): PsiElement? =
     (element as? PsiTomlKeyValue)?.key?.text == key
   } as? PsiTomlKeyValue)?.value
 
-/**
- * Attempts to find all [PsiTomlLiteral]s found within the children of [PsiElement] that have the text containing [text].
- *
- * Example:
- *
- * ```kotlin
- * val dependencies = psiFile.findTomlHeader("project").findTomlValueByKey("dependencies")
- * val requests = dependencies.findTomlLiteralsContaining("requests")
- * ```
- */
-@Internal
-fun PsiElement.findTomlLiteralsContaining(text: String): List<PsiElement> =
-  children.filter { element ->
-    (element as? PsiTomlLiteral)?.text?.contains(text) ?: false
-  }

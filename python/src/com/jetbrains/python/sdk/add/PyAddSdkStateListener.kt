@@ -2,7 +2,5 @@
 package com.jetbrains.python.sdk.add
 
 interface PyAddSdkStateListener {
-  fun onComponentChanged()
 
-  fun onActionsStateChanged()
 }

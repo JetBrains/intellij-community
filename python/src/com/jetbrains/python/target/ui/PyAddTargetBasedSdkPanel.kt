@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.target.ui
 
-import com.intellij.CommonBundle
 import com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -10,7 +9,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
@@ -21,11 +19,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkView
@@ -33,14 +29,12 @@ import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.pipenv.ui.PyAddPipEnvPanel
 import com.jetbrains.python.sdk.poetry.ui.createPoetryPanel
 import com.jetbrains.python.sdk.sdkSeemsValid
-import com.jetbrains.python.showErrorDialog
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.CardLayout
 import java.awt.Component
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * The panel that is supposed to be used both for local and non-local target-based versions of "New Interpreter" dialog.
@@ -161,30 +155,6 @@ internal class PyAddTargetBasedSdkPanel(
     PyAddCondaPanelView(PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!, introspectable = introspectable))
 
   private fun createPipEnvPanel(newProjectPath: String?) = PyAddPipEnvPanel(project, module, existingSdks, newProjectPath, context)
-
-  /**
-   * Tries to create the SDK and closes the dialog if the creation succeeded.
-   *
-   * @see [doOKAction]
-   */
-  fun doOKAction() {
-    try {
-      selectedPanel?.complete()
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Exception) {
-      val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
-      if (cause == null) {
-        Messages.showErrorDialog(e.localizedMessage, CommonBundle.message("title.error"))
-      }
-      else {
-        showErrorDialog(project, cause.pyError)
-      }
-      return
-    }
-  }
 
   override fun dispose() = Unit
 

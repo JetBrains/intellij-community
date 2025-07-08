@@ -353,13 +353,6 @@ internal fun ComboBox<*>.displayLoaderWhen(
   }
 }
 
-internal fun <T : TextFieldWithBrowseButton> Cell<T>.displayLoaderWhen(
-  loading: StateFlow<Boolean>,
-  scope: CoroutineScope,
-  uiContext: CoroutineContext,
-): Cell<T> =
-  applyToComponent { displayLoaderWhen(loading, scope, uiContext) }
-
 internal fun <T, C : ComboBox<T>> Cell<C>.withExtendableTextFieldEditor(): Cell<C> =
   applyToComponent {
     if (editor.editorComponent !is ExtendableTextField) {

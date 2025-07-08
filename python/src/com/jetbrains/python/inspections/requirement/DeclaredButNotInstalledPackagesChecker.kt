@@ -52,12 +52,6 @@ class DeclaredButNotInstalledPackagesChecker(
   }
 
 
-  private fun PyRequirement.match(packages: Collection<PythonPackage>) = packages.any { pkg ->
-    name == pkg.name && versionSpecs.all {
-      it.matches(pkg.version)
-    }
-  }
-
   companion object {
     private val METADATA_EXTENSIONS = setOf("egg-info", "dist-info")
 

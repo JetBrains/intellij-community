@@ -234,22 +234,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     })
   }
 
-  /**
-   * Information about a Python package and its state in the package management system.
-   *
-   * @property packageData Information about the currently installed package
-   * @property repository The package repository where this package is hosted
-   * @property nextVersion The next available version of the package in its repository.
-   *                      Null if the package is already at its latest version
-   * @property dependencies List of packages that this package depends on
-   */
-  data class PackageInfo(
-    val packageData: InstalledPackage,
-    val repository: PyPackageRepository,
-    val nextVersion: String?,
-    val dependencies: List<RequirementPackage>
-  )
-
   suspend fun refreshInstalledPackages() {
     val sdk = currentSdk ?: return
     val targetModule = findTargetModule(sdk) ?: return

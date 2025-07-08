@@ -100,17 +100,6 @@ internal object SetupPyHelpers {
   }
 
 
-  private fun mergeSetupPyRequirements(
-    requirementsFromRequires: List<PyRequirement>,
-    requirementsFromLinks: List<PyRequirement>,
-  ): List<PyRequirement> {
-    val united =
-      requirementsFromRequires.associateBy { it.name } +
-      requirementsFromLinks.associateBy { it.name }
-    return united.values.toList()
-  }
-
-
   private fun getSetupPyRequiresFromArguments(setupCall: PyCallExpression, vararg argumentNames: String): List<PyRequirement> {
     val requirements = argumentNames.mapNotNull {
       val keywordArgument = setupCall.getKeywordArgument(it) ?: return@mapNotNull null

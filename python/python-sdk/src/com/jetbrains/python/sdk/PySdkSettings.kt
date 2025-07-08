@@ -28,18 +28,6 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
 
   private val state: State = State()
 
-  var useNewEnvironmentForNewProject: Boolean
-    get() = state.USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT
-    set(value) {
-      state.USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT = value
-    }
-
-  var preferredEnvironmentType: String?
-    get() = state.PREFERRED_ENVIRONMENT_TYPE
-    set(value) {
-      state.PREFERRED_ENVIRONMENT_TYPE = value
-    }
-
   var preferredVirtualEnvBaseSdk: String?
     get() = state.PREFERRED_VIRTUALENV_BASE_SDK
     set(value) {
@@ -96,11 +84,6 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
 
   @Suppress("PropertyName")
   class State {
-    @JvmField
-    var USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT: Boolean = true
-
-    @JvmField
-    var PREFERRED_ENVIRONMENT_TYPE: String? = null
 
     @JvmField
     var PREFERRED_VIRTUALENV_BASE_PATH: String? = null

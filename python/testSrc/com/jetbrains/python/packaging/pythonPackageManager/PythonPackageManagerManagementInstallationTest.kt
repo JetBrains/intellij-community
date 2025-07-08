@@ -86,7 +86,4 @@ open class PythonPackageManagerManagementInstallationTask(private val pkgToInsta
     manager.installPackage(spec.toInstallRequest(), emptyList())
   }
 
-  companion object {
-    private const val EMPTY_STRING = ""
-  }
 }
