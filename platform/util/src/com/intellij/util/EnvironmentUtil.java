@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
@@ -22,8 +21,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class EnvironmentUtil {
-  private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
-
   private static final String DESKTOP_STARTUP_ID = "DESKTOP_STARTUP_ID";
   private static final String MAC_OS_LOCALE_PATH = "/usr/share/locale";
 
@@ -190,7 +187,6 @@ public final class EnvironmentUtil {
       }
     }
 
-    LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
     return newEnv;
   }
 
