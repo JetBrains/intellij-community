@@ -161,7 +161,7 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
-    <group id="GitHub.MainMenu" popup="true">
+    <group id="GitHub.MainMenu" popup="true" icon="AllIcons.Vcs.Vendors.Github">
       <reference ref="Github.Create.Pull.Request"/>
       <reference ref="Github.View.Pull.Request"/>
       <reference ref="Github.Sync.Fork"/>
