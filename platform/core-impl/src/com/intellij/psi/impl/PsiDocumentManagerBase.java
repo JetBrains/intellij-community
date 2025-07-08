@@ -174,7 +174,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
-  public final @NotNull List<FileViewProvider> getCachedViewProviders(@NotNull Document document) {
+  public final @NotNull @Unmodifiable List<FileViewProvider> getCachedViewProviders(@NotNull Document document) {
     VirtualFile virtualFile = getVirtualFile(document);
     if (virtualFile == null) return Collections.emptyList();
     return getFileManager().findCachedViewProviders(virtualFile);
@@ -371,12 +371,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     actions.add(ThreadContext.captureThreadContext(action));
   }
 
-  private @NotNull List<Runnable> getAndClearDocumentCommitActions(@NotNull Document document) {
+  private @NotNull @Unmodifiable List<Runnable> getAndClearDocumentCommitActions(@NotNull Document document) {
     List<Runnable> list = documentCommitActions.remove(document);
     return list == null ? Collections.emptyList() : list;
   }
 
-  private @NotNull List<Runnable> getAndClearAllDocumentCommitActions() {
+  private @NotNull @Unmodifiable List<Runnable> getAndClearAllDocumentCommitActions() {
     ThreadingAssertions.assertEventDispatchThread();
 
     List<Runnable> actions = new ArrayList<>();
@@ -410,8 +410,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @ApiStatus.Internal
   public boolean finishCommit(@NotNull Document document,
-                              @NotNull List<? extends BooleanRunnable> finishProcessors,
-                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
+                              @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
+                              @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
                               boolean synchronously,
                               @NotNull Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
@@ -439,8 +439,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   protected boolean finishCommitInWriteAction(@NotNull Document document,
-                                              @NotNull List<? extends BooleanRunnable> finishProcessors,
-                                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
+                                              @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
+                                              @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               boolean synchronously) {
     if (isEventSystemEnabled(document)) {
       ThreadingAssertions.assertEventDispatchThread();
@@ -485,8 +485,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean commitToExistingPsi(@NotNull Document document,
-                                      @NotNull List<? extends BooleanRunnable> finishProcessors,
-                                      @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
+                                      @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
+                                      @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
                                       boolean synchronously,
                                       @Nullable VirtualFile virtualFile) {
     for (BooleanRunnable finishRunnable : finishProcessors) {
@@ -513,7 +513,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
-  public void forceReload(@Nullable VirtualFile virtualFile, @NotNull List<? extends FileViewProvider> viewProviders) {
+  public void forceReload(@Nullable VirtualFile virtualFile, @NotNull @Unmodifiable List<? extends FileViewProvider> viewProviders) {
     if (!viewProviders.isEmpty()) {
       DebugUtil.performPsiModification("psi.forceReload", () -> {
         for (FileViewProvider viewProvider : viewProviders) {
@@ -758,7 +758,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private static void runActions(@NotNull List<? extends Runnable> actions) {
+  private static void runActions(@NotNull @Unmodifiable List<? extends Runnable> actions) {
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
     for (Runnable action : actions) {
       //noinspection IncorrectCancellationExceptionHandling
@@ -889,7 +889,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     throw new UnsupportedOperationException();
   }
 
-  public @NotNull List<DocumentEvent> getEventsSinceCommit(@NotNull Document document) {
+  public @NotNull @Unmodifiable List<DocumentEvent> getEventsSinceCommit(@NotNull Document document) {
     assert document instanceof DocumentImpl : document;
     UncommittedInfo info = getUncommittedInfo(document);
     if (info != null) {
@@ -1251,12 +1251,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @NotNull
   @ApiStatus.Internal
-  public List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
-                                                               @NotNull PsiFile hostPsiFile,
-                                                               @NotNull TextRange range,
-                                                               @NotNull ProgressIndicator indicator,
-                                                               @NotNull ASTNode oldRoot,
-                                                               @NotNull ASTNode newRoot) {
+  public @Unmodifiable List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
+                                                                             @NotNull PsiFile hostPsiFile,
+                                                                             @NotNull TextRange range,
+                                                                             @NotNull ProgressIndicator indicator,
+                                                                             @NotNull ASTNode oldRoot,
+                                                                             @NotNull ASTNode newRoot) {
     return Collections.emptyList();
   }
 
