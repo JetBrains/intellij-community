@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.KOTLIN_LET_FQ_NAME
-import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.isLetCallRedundant
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantLetCall
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -34,7 +34,7 @@ internal sealed class RedundantLetInspection :
         ApplicabilityRanges.calleeExpression(element)
 
     override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
-        if (!element.isCalling(KOTLIN_LET_FQ_NAME)) return null
+        if (!element.isCallingAnyOf(StandardKotlinNames.let)) return null
         val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return null
         val parameterName = lambdaExpression.getParameterName() ?: return null
         val bodyExpression = lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return null

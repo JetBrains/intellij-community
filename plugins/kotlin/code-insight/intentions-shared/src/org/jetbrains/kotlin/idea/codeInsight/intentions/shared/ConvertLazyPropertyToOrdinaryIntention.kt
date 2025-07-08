@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
-import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 
@@ -27,7 +27,7 @@ internal class ConvertLazyPropertyToOrdinaryIntention :
 
     override fun KaSession.prepareContext(element: KtProperty): Unit? {
         val delegateExpression = element.delegateExpression() ?: return null
-        if (!delegateExpression.isCalling(KOTLIN_LAZY)) return null
+        if (!delegateExpression.isCallingAnyOf(StandardKotlinNames.lazy)) return null
         return Unit
     }
 
@@ -45,8 +45,6 @@ internal class ConvertLazyPropertyToOrdinaryIntention :
         delegate.delete()
     }
 }
-
-private val KOTLIN_LAZY = listOf(StandardKotlinNames.lazy)
 
 private fun KtProperty.delegateExpression(): KtCallExpression? = this.delegate?.expression as? KtCallExpression
 

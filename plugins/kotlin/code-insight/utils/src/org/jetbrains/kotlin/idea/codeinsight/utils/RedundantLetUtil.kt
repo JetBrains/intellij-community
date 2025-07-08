@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -25,14 +24,10 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
-
-@ApiStatus.Internal
-val KOTLIN_LET_FQ_NAME: List<FqName> = listOf(StandardKotlinNames.let)
-
 @ApiStatus.Internal
 context(KaSession)
 fun isLetCallRedundant(element: KtCallExpression): Boolean {
-    if (!element.isCalling(KOTLIN_LET_FQ_NAME)) return false
+    if (!element.isCallingAnyOf(StandardKotlinNames.let)) return false
     val lambdaExpression = element.lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return false
     val parameterName = lambdaExpression.getParameterName() ?: return false
     val bodyExpression = lambdaExpression.bodyExpression?.children?.singleOrNull() ?: return false

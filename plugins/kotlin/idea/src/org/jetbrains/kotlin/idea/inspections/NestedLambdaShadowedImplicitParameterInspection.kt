@@ -11,15 +11,18 @@ import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.codeInsight.intentions.fake.ReplaceItWithExplicitFunctionLiteralParamIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.addExplicitItParameter
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.codeinsight.utils.scopeFunctionsList
+import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.lambdaExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -43,7 +46,7 @@ internal class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinI
         val qualifiedExpression = lambda.getStrictParentOfType<KtQualifiedExpression>()
         if (qualifiedExpression != null
             && qualifiedExpression.receiverExpression.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
-            && qualifiedExpression.callExpression?.isCalling(scopeFunctionsList, context) == true
+            && qualifiedExpression.callExpression?.isCalling(scopeFunctionsList.toList(), context) == true
         ) return@lambdaExpressionVisitor
 
         lambda.forEachDescendantOfType<KtNameReferenceExpression> { expression ->

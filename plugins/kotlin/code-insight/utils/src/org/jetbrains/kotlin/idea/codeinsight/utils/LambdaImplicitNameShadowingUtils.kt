@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 
 @ApiStatus.Internal
-val scopeFunctionsList: List<FqName> = listOf(
+val scopeFunctionsList: Array<FqName> = arrayOf(
     StandardKotlinNames.also,
     StandardKotlinNames.let,
     StandardKotlinNames.takeIf,

@@ -331,7 +331,7 @@ fun KtExpression.isSynthesizedFunction(): Boolean {
 
 @ApiStatus.Internal
 context(KaSession)
-fun KtCallExpression.isCalling(fqNames: Collection<FqName>): Boolean {
+fun KtCallExpression.isCallingAnyOf(vararg fqNames: FqName): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
     if (targetFqNames.none()) return false
@@ -352,7 +352,7 @@ operator fun FqName.plus(name: Name): FqName = child(name)
 @ApiStatus.Internal
 operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = setOf(
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = arrayOf(
     StandardKotlinNames.Enum.enumEntries,
     StandardKotlinNames.Enum.enumValues,
     StandardKotlinNames.Enum.enumValueOf
@@ -363,10 +363,10 @@ fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
         .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
     return when (target) {
-        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
+        is KtCallExpression -> target.isCallingAnyOf(*KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
         is KtCallableDeclaration -> {
             target.anyDescendantOfType<KtCallExpression> {
-                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression
+                it.isCallingAnyOf(*KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression
             }
         }
 

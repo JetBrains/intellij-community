@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
-import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -77,7 +77,7 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
             if (!body.isEmptyBodyOrNull()) return
 
             val isCallingControlFlowFunctions = analyze(expression) {
-                expression.isCalling(KOTLIN_ALSO_FQ_NAME)
+                expression.isCallingAnyOf(StandardKotlinNames.also)
             }
             if (!isCallingControlFlowFunctions) return
 
@@ -100,5 +100,3 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
         )
     }
 }
-
-private val KOTLIN_ALSO_FQ_NAME = listOf(StandardKotlinNames.also)
