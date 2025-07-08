@@ -7,7 +7,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import java.awt.event.MouseEvent
 
 public fun Modifier.onHover(onHover: (Boolean) -> Unit): Modifier =
-    pointerInput(Unit) {
+    pointerInput(onHover) {
         awaitPointerEventScope {
             while (true) {
                 val event = awaitPointerEvent()
@@ -20,7 +20,7 @@ public fun Modifier.onHover(onHover: (Boolean) -> Unit): Modifier =
     }
 
 public fun Modifier.onMove(onMove: (MouseEvent?) -> Unit): Modifier =
-    pointerInput(Unit) {
+    pointerInput(onMove) {
         awaitPointerEventScope {
             while (true) {
                 val event = awaitPointerEvent()
