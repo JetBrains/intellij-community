@@ -32,7 +32,7 @@ import java.util.regex.Pattern
 internal class CorpusBuilder(coroutineScope: CoroutineScope) {
   companion object {
     /**
-     * Returns null if the application is not in an internal mode
+     * Returns null if typo-tolerant search is disabled in the Advanced Settings
      */
     fun getInstance(): CorpusBuilder? {
       if (!isTypoFixingEnabled) {

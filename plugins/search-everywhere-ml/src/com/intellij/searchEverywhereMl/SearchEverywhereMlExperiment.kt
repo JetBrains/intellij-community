@@ -104,11 +104,6 @@ object SearchEverywhereMlExperiment {
     object ExperimentalModel : ActiveExperiment(true)
 
     /**
-     * An experiment group in the Actions tab, that enables typo-tolerant search
-     */
-    object Typos : ActiveExperiment(true)
-
-    /**
      * An experiment group that enables semantic search
      */
     object SemanticSearch: ActiveExperiment(true)
