@@ -17,7 +17,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -230,7 +229,7 @@ final class RefreshWorker {
     }
     else {
       dirList = new HashMap<>();
-      for (String name : fs instanceof LocalFileSystemImpl ? computeListWithCaching((LocalFileSystemImpl)fs, dir, null) : fs.list(dir)) {
+      for (String name : fs.list(dir)) {
         dirList.put(name, null);
       }
     }
@@ -306,9 +305,9 @@ final class RefreshWorker {
     for (VirtualFile file : cached) names.add(file.getName());
 
     Map<String, FileAttributes> dirList = null;
-    if (fs instanceof BatchingFileSystem) {
+    if (fs instanceof BatchingFileSystem batchingFileSystem) {
       t = System.nanoTime();
-      Map<String, FileAttributes> rawDirList = ((BatchingFileSystem)fs).listWithAttributes(dir, names);
+      Map<String, FileAttributes> rawDirList = computeAllChildrenAttributes(batchingFileSystem, dir, names);
       myIoTime.addAndGet(System.nanoTime() - t);
       dirList = adjustCaseSensitivity(rawDirList, dir.isCaseSensitive());
     }
@@ -322,7 +321,7 @@ final class RefreshWorker {
     }
     else {
       t = System.nanoTime();
-      String[] rawList = fs instanceof LocalFileSystemImpl ? computeListWithCaching((LocalFileSystemImpl)fs, dir, names) : fs.list(dir);
+      String[] rawList = fs.list(dir);
       actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(rawList, false);
       myIoTime.addAndGet(System.nanoTime() - t);
     }
@@ -367,8 +366,11 @@ final class RefreshWorker {
     return changed;
   }
 
-  private static Map<String, FileAttributes> adjustCaseSensitivity(Map<String, FileAttributes> rawDirList, boolean cs) {
-    if (cs) {
+  /** converts a case-sensitive rawDirList map into case-insensitive, if toCaseSensitive=false,
+   *  leaves map as-is otherwise*/
+  private static @NotNull Map<String, FileAttributes> adjustCaseSensitivity(@NotNull Map<String, FileAttributes> rawDirList,
+                                                                            boolean toCaseSensitive) {
+    if (toCaseSensitive) {
       return rawDirList;
     }
     else {
@@ -378,7 +380,8 @@ final class RefreshWorker {
     }
   }
 
-  private @Nullable FileAttributes getAttributes(NewVirtualFileSystem fs, @Nullable Map<String, FileAttributes> dirList, VirtualFile child) {
+  private @Nullable FileAttributes getAttributes(NewVirtualFileSystem fs,
+                                                 @Nullable Map<String, FileAttributes> dirList, VirtualFile child) {
     FileAttributes attributes = null;
     if (dirList != null) {
       attributes = dirList.get(child.getName());
@@ -393,7 +396,7 @@ final class RefreshWorker {
 
   /**
    * If attributes are computed in a cancellable context, then single-thread refresh gets a performance degradation.
-   * The reason is com.intellij.openapi.vfs.DiskQueryRelay#accessDiskWithCheckCanceled(java.lang.Object),
+   * The reason is {@link com.intellij.openapi.vfs.DiskQueryRelay#accessDiskWithCheckCanceled(java.lang.Object)},
    * which starts constant exchanging messages with an IO thread.
    * The non-cancellable section here is merely a reification of the existing implicit assumption on cancellability,
    * so it does not make anything worse.
@@ -403,11 +406,9 @@ final class RefreshWorker {
     return Cancellation.computeInNonCancelableSection(() -> fs.getAttributes(file));
   }
 
-  /**
-   * See documentation for {@link RefreshWorker#computeAttributesForFile(NewVirtualFileSystem, VirtualFile)}
-   */
-  private static String @NotNull [] computeListWithCaching(LocalFileSystemImpl fs, VirtualFile dir, Set<String> filter) {
-    return Cancellation.computeInNonCancelableSection(() -> fs.listWithCaching(dir, filter));
+  /** See {@link RefreshWorker#computeAttributesForFile(NewVirtualFileSystem, VirtualFile)} docs about cancellability */
+  private static Map<String, FileAttributes> computeAllChildrenAttributes(BatchingFileSystem fs, VirtualFile dir, Set<String> filter) {
+    return Cancellation.computeInNonCancelableSection(() -> fs.listWithAttributes(dir, filter));
   }
 
   private ChildInfo childRecord(NewVirtualFileSystem fs, FakeVirtualFile child, FileAttributes attributes, boolean canonicalize) {
@@ -463,9 +464,6 @@ final class RefreshWorker {
   }
 
   private static void clearFsCache(NewVirtualFileSystem fs) {
-    if (fs instanceof LocalFileSystemImpl) {
-      ((LocalFileSystemImpl)fs).clearListCache();
-    }
   }
 
   private static final class RefreshCancelledException extends RuntimeException {

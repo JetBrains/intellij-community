@@ -346,87 +346,68 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private @NotNull List<? extends ChildInfo> persistAllChildren(@NotNull VirtualFile dir, int dirId) {
     NewVirtualFileSystem fs = getFileSystem(dir);
     boolean caseSensitive = dir.isCaseSensitive();
-    try {
-      String[] childrenNames;
-      Map<String, FileAttributes> childrenWithAttributes;
-      if (fs instanceof BatchingFileSystem batchingFileSystem) {
-        childrenWithAttributes = batchingFileSystem.listWithAttributes(dir);
-        childrenNames = VfsUtil.filterNames(ArrayUtil.toStringArray(childrenWithAttributes.keySet()));
-      }
-      else {
-        //MAYBE RC: .listWithCaching()/.list() use DiskQueryRelay offloading under the hood -- which seems useless here,
-        //          because it seems there is no cancellability anyway, and only makes it slower
-        //TODO RC: LocalFileSystemImpl.listWithCaching() actually serves the same function as batchingFileSystem.listWithAttributes()
-        //         both methods query children with attributes in batch, in a single request. Batching provides benefits on a
-        //         different levels:
-        //         1. For a LocalFileSystem on Windows there is a platform-specific method to get all the children together with their
-        //            attributes, see PlatformNioHelper.visitDirectory()
-        //         2. For most FS the actual IO is wrapped in DiskQueryRelay for cancellability, which has it's own overhead so query
-        //            more data at once is a way to amortise that overhead.
-        //         But historically LocalFileSystem uses it's own unique listWithCaching() approach, while BatchingFileSystem was invented
-        //         later, to solve very similar issue. Hence, it seems natural to use a single unified approach for both cases, which seems
-        //         to be BatchingFileSystem approach. I.e. drop LocalFileSystem.listWithCaching(), and make LocalFileSystem implements
-        //         BatchingFileSystem instead
-        childrenWithAttributes = null;
-        childrenNames = VfsUtil.filterNames(
-          fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir)
-        );
-      }
-
-      //MAYBE RC: the .update() below could be re-implemented as read-modify-write, to reduce lock duration.
-      //          1. request current directory content in first read-only .update()
-      //          2. calculate the difference, request information about new children from FSes (IO) -- outside the lock
-      //          3. second .update() modifies directory content speculatively, checking !current.childrenWereChangedSinceLast(vfs)
-      //          4. retry if check in (3) fails
-      //          ...but with wider adoption of BatchingFileSystem it become less beneficial, since for BatchingFS most IO
-      //          (and DiskQueryRelay waiting) is done before the locked region anyway?
-
-      //TODO RC: there are few places in this class .update() is used to update a hierarchy, but there is no consistency
-      //         in how those updates are organised: in some cases real FS queries and makeChildRecord() calls are made
-      //         _inside_ the .update(), i.e. inside the .update()'s lock -- as it is done here. But in other cases FS
-      //         requests and corresponding makeChildRecord() calls are done outside the .update() and it's lock. This
-      //         is quite misleading, it makes unclear that is the consistency model of that hierarchy update.
-      //         (See also an overall VFS thread-safety rant in FSRecordsImpl)
-
-
-      ListResult saved = vfsPeer.update(
-        dir,
-        dirId,
-        current -> {
-          List<? extends ChildInfo> currentChildren = current.children;
-          if (childrenNames.length == 0 && !currentChildren.isEmpty()) {
-            return current;
-          }
-          // preserve current children which match childrenNames (to have stable id)
-          // (on case-insensitive systems, replace those from current with case-changes ones from childrenNames preserving the id)
-          // add those from childrenNames which are absent from current
-          Set<String> childrenNamesToAdd = createFilePathSet(childrenNames, caseSensitive);
-          for (ChildInfo currentChild : currentChildren) {
-            childrenNamesToAdd.remove(currentChild.getName().toString());
-          }
-          if (childrenNamesToAdd.isEmpty()) {
-            return current;
-          }
-
-          List<ChildInfo> childrenToAdd = childrenWithAttributes != null ? //i.e. (fs is BatchingFileSystem)
-                                          createNewChildrenRecords(dir, childrenNamesToAdd, childrenWithAttributes, fs) :
-                                          createNewChildrenRecords(dir, childrenNamesToAdd, fs);
-
-          // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays, so we must
-          // provide a stable order:
-          childrenToAdd.sort(ChildInfo.BY_ID);
-          return current.merge(vfsPeer, childrenToAdd, caseSensitive);
-        },
-        /*setAllChildrenCached: */ true
-      );
-
-      return saved.children;
+    //MAYBE RC: .list()/.listWithAttributes() use DiskQueryRelay offloading under the hood -- which seems useless
+    //          here, because it seems there is no cancellability deep in VFS anyway, and DiskQueryRelay offloading
+    //          only occurs an overhead
+    String[] childrenNames;
+    Map<String, FileAttributes> childrenWithAttributes;
+    if (fs instanceof BatchingFileSystem batchingFileSystem) {
+      childrenWithAttributes = batchingFileSystem.listWithAttributes(dir);
+      childrenNames = VfsUtil.filterNames(ArrayUtil.toStringArray(childrenWithAttributes.keySet()));
     }
-    finally {
-      if (fs instanceof LocalFileSystemImpl) {
-        ((LocalFileSystemImpl)fs).clearListCache();
-      }
+    else {
+      childrenWithAttributes = null;
+      childrenNames = VfsUtil.filterNames(fs.list(dir));
     }
+
+    //MAYBE RC: the .update() below could be re-implemented as read-modify-write, to reduce lock duration.
+    //          1. request current directory content in first read-only .update()
+    //          2. calculate the difference, request information about new children from FSes (IO) -- outside the lock
+    //          3. second .update() modifies directory content speculatively, checking !current.childrenWereChangedSinceLast(vfs)
+    //          4. retry if check in (3) fails
+    //          ...but with wider adoption of BatchingFileSystem it become less beneficial, since for BatchingFS most IO
+    //          (and DiskQueryRelay waiting) is done before the locked region anyway?
+
+    //TODO RC: there are few places in this class .update() is used to update a hierarchy, but there is no consistency
+    //         in how those updates are organised: in some cases real FS queries and makeChildRecord() calls are made
+    //         _inside_ the .update(), i.e. inside the .update()'s lock -- as it is done here. But in other cases FS
+    //         requests and corresponding makeChildRecord() calls are done outside the .update() and it's lock. This
+    //         is quite misleading, it makes unclear that is the consistency model of that hierarchy update.
+    //         (See also an overall VFS thread-safety rant in FSRecordsImpl)
+
+
+    ListResult saved = vfsPeer.update(
+      dir,
+      dirId,
+      current -> {
+        List<? extends ChildInfo> currentChildren = current.children;
+        if (childrenNames.length == 0 && !currentChildren.isEmpty()) {
+          return current;
+        }
+        // preserve current children which match childrenNames (to have stable id)
+        // (on case-insensitive systems, replace those from current with case-changes ones from childrenNames preserving the id)
+        // add those from childrenNames which are absent from current
+        Set<String> childrenNamesToAdd = createFilePathSet(childrenNames, caseSensitive);
+        for (ChildInfo currentChild : currentChildren) {
+          childrenNamesToAdd.remove(currentChild.getName().toString());
+        }
+        if (childrenNamesToAdd.isEmpty()) {
+          return current;
+        }
+
+        List<ChildInfo> childrenToAdd = childrenWithAttributes != null ? //i.e. (fs is BatchingFileSystem)
+                                        createNewChildrenRecords(dir, childrenNamesToAdd, childrenWithAttributes, fs) :
+                                        createNewChildrenRecords(dir, childrenNamesToAdd, fs);
+
+        // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays, so we must
+        // provide a stable order:
+        childrenToAdd.sort(ChildInfo.BY_ID);
+        return current.merge(vfsPeer, childrenToAdd, caseSensitive);
+      },
+      /*setAllChildrenCached: */ true
+    );
+
+    return saved.children;
   }
 
   private @NotNull List<ChildInfo> createNewChildrenRecords(@NotNull VirtualFile dir,

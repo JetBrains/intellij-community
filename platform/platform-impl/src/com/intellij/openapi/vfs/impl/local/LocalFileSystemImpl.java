@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
@@ -16,9 +16,9 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PlatformNioHelper;
 import org.jetbrains.annotations.*;
@@ -30,11 +30,14 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
+import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static java.util.Objects.requireNonNullElse;
 
 @ApiStatus.Internal
 @SuppressWarnings("removal")
-public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
+public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable,
+                                                                        BatchingFileSystem,
+                                                                        VirtualFilePointerCapableFileSystem {
   @SuppressWarnings("SSBasedInspection")
   private static final Logger WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.WatchRoots");
   private static final int STATUS_UPDATE_PERIOD = 1000;
@@ -52,18 +55,20 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(file -> readContent(file));
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(file -> readAttributes(file));
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
-    new DiskQueryRelay<>(pair -> listWithAttributes(pair.first, pair.second));
+    new DiskQueryRelay<>(pair -> listWithAttributesImpl(pair.first, pair.second));
 
   protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS, () -> {
-      AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-        var application = ApplicationManager.getApplication();
-        if (application != null && !application.isDisposed()) {
-          storeRefreshStatusToFiles();
-        }
-      },
-      STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+      AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
+        () -> {
+          var application = ApplicationManager.getApplication();
+          if (application != null && !application.isDisposed()) {
+            storeRefreshStatusToFiles();
+          }
+        },
+        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS
+      );
     });
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
@@ -269,6 +274,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
+    if (!file.isDirectory()) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
     return myChildrenGetter.accessDiskWithCheckCanceled(file);
   }
 
@@ -282,13 +290,24 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return (byte[])result;
   }
 
+  /**
+   * @deprecated prefer to use {@link #listWithAttributes(VirtualFile, Set)} instead -- it is stateless, hence its
+   * behavior is more predictable
+   */
   @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
     return listWithCaching(dir, null);
   }
 
+  /**
+   * @deprecated prefer to use {@link #listWithAttributes(VirtualFile, Set)} instead -- it is stateless, hence its
+   * behavior is more predictable
+   */
   @ApiStatus.Internal
-  public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir, @Nullable Set<String> filter) {
+  @Deprecated(forRemoval = true)
+  public final String @NotNull [] listWithCaching(@NotNull VirtualFile dir,
+                                                  @Nullable Set<String> filter) {
     var cache = myFileAttributesCache.get();
     if (cache != null) {
       LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
@@ -298,7 +317,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return ArrayUtil.toStringArray(result.keySet());
   }
 
+  /** @deprecated see {@link #listWithCaching(VirtualFile)} docs for reasoning */
   @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public void clearListCache() {
     myFileAttributesCache.remove();
   }
@@ -323,6 +344,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   private static String[] listChildren(VirtualFile dir) {
+    if (!dir.isDirectory()) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
     try (var dirStream = Files.newDirectoryStream(Path.of(toIoPath(dir)))) {
       return StreamSupport.stream(dirStream.spliterator(), false)
         .map(it -> it.getFileName().toString())
@@ -333,20 +357,33 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir, @Nullable Set<String> filter) {
-    try {
-      var list = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
+  @Override
+  public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir,
+                                                                                   @Nullable Set<String> childrenNames) {
+    if (!dir.isDirectory()) {
+      return Collections.emptyMap();
+    }
+    return myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames));
+  }
 
-      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), filter, (file, result) -> {
+  private static Map<String, FileAttributes> listWithAttributesImpl(@NotNull VirtualFile dir,
+                                                                    @Nullable Set<String> filter) {
+    if (!dir.isDirectory()) {
+      return Collections.emptyMap();
+    }
+    try {
+      Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(10, dir.isCaseSensitive());
+
+      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), filter, (file, ioAttributesHolder) -> {
         try {
-          var attributes = amendAttributes(file, FileAttributes.fromNio(file, result.get()));
-          list.put(file.getFileName().toString(), attributes);
+          var attributes = amendAttributes(file, FileAttributes.fromNio(file, ioAttributesHolder.get()));
+          childrenWithAttributes.put(file.getFileName().toString(), attributes);
         }
         catch (Exception e) { LOG.debug(e); }
         return true;
       });
 
-      return list;
+      return childrenWithAttributes;
     }
     catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
