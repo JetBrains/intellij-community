@@ -143,6 +143,7 @@
            class="com.intellij.ide.actions.NonTrivialActionGroup"
            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
       <reference ref="GitLab.Merge.Request.Show.List"/>
+      <reference ref="GitLab.Create.Snippet"/>
       <separator/>
       <reference ref="GitLab.Clone"/>
       <separator/>
