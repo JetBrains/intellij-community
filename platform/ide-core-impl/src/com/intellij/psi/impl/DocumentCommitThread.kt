@@ -76,16 +76,9 @@ class DocumentCommitThread(coroutineScope: CoroutineScope) : DocumentCommitProce
     }
     TransactionGuard.getInstance().assertWriteSafeContext(modality)
 
-    val task = CommitTask(
-      project = project,
-      document = document,
-      reason = reason,
-      myCreationModality = modality,
-      myLastCommittedText = documentManager.getLastCommittedText(document),
-      cachedViewProviders = cachedViewProviders,
-    )
+    val task = CommitTask(project, document, reason, modality, documentManager.getLastCommittedText(document), cachedViewProviders)
     ReadAction
-      .nonBlocking(Callable { commitUnderProgress(task = task, synchronously = false, documentManager = documentManager) })
+      .nonBlocking(Callable { commitUnderProgress(task, synchronously = false, documentManager) })
       .expireWhen { isDisposed || project.isDisposed() || !documentManager.isInUncommittedSet(document) || !task.isStillValid() }
       .coalesceBy(task)
       .finishOnUiThread(modality) { it() }
@@ -104,16 +97,9 @@ class DocumentCommitThread(coroutineScope: CoroutineScope) : DocumentCommitProce
     }
 
     val documentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
-    val task = CommitTask(
-      project = project,
-      document = document,
-      reason = "Sync commit",
-      myCreationModality = ModalityState.defaultModalityState(),
-      myLastCommittedText = documentManager.getLastCommittedText(document),
-      cachedViewProviders = listOf(psiFile.getViewProvider()),
-    )
+    val task = CommitTask(project, document, "Sync commit", ModalityState.defaultModalityState(), documentManager.getLastCommittedText(document), listOf(psiFile.getViewProvider()))
 
-    commitUnderProgress(task = task, synchronously = true, documentManager = documentManager)()
+    commitUnderProgress(task, synchronously = true, documentManager)()
   }
 
   // returns finish commit Runnable (to be invoked later in EDT) or null on failure
@@ -150,14 +136,7 @@ class DocumentCommitThread(coroutineScope: CoroutineScope) : DocumentCommitProce
             document.getImmutableCharSequence(),
           )
           if (changedPsiRange != null) {
-            val finishProcessor = doCommit(
-              task = task,
-              file = file,
-              oldFileNode = oldFileNode,
-              changedPsiRange = changedPsiRange,
-              outReparseInjectedProcessors = reparseInjectedProcessors,
-              documentManager = documentManager,
-            )
+            val finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors, documentManager)
             finishProcessors.add(finishProcessor)
           }
         }
@@ -178,14 +157,7 @@ class DocumentCommitThread(coroutineScope: CoroutineScope) : DocumentCommitProce
       }
       if (!success && viewProviders.isEventSystemEnabled()) {
         // add a document back to the queue
-        commitAsynchronously(
-          project = project,
-          documentManager = documentManager,
-          document = document,
-          reason = "Re-added back",
-          modality = task.myCreationModality,
-          cachedViewProviders = viewProviders,
-        )
+        commitAsynchronously(project, documentManager, document, "Re-added back", task.myCreationModality, viewProviders)
       }
     }
   }
@@ -197,7 +169,7 @@ class DocumentCommitThread(coroutineScope: CoroutineScope) : DocumentCommitProce
   fun waitForAllCommits(timeout: Long, timeUnit: TimeUnit) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       while (childScope.coroutineContext.job.children.any()) {
-        waitAllTasksExecuted(coroutineScope = childScope, timeout = timeout, timeUnit = timeUnit)
+        waitAllTasksExecuted(childScope, timeout, timeUnit)
       }
       return
     }
@@ -206,20 +178,20 @@ class DocumentCommitThread(coroutineScope: CoroutineScope) : DocumentCommitProce
 
     EDT.dispatchAllInvocationEvents()
     while (childScope.coroutineContext.job.children.any()) {
-      waitAllTasksExecuted(coroutineScope = childScope, timeout = timeout, timeUnit = timeUnit)
+      waitAllTasksExecuted(childScope, timeout, timeUnit)
       EDT.dispatchAllInvocationEvents()
     }
   }
 }
 
 private class CommitTask(
-  @JvmField val project: Project,
-  @JvmField val document: Document,
-  @JvmField val reason: @NonNls Any,
-  @JvmField val myCreationModality: ModalityState,
-  @JvmField val myLastCommittedText: CharSequence,
+  val project: Project,
+  val document: Document,
+  val reason: @NonNls Any,
+  val myCreationModality: ModalityState,
+  val myLastCommittedText: CharSequence,
   // to retain viewProvider to avoid surprising getCachedProvider() == null half-way through commit
-  @JvmField @field:Volatile var cachedViewProviders: List<FileViewProvider>,
+  @field:Volatile var cachedViewProviders: List<FileViewProvider>,
 ) {
   // store initial document modification sequence here to check if it changed later before commit in EDT
   private val modificationSequence = (document as DocumentEx).modificationSequence
