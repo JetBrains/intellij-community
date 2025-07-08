@@ -89,7 +89,7 @@ def _normalize_runtime_dep(dep):
         return "@community//platform/util:util-tests_test_lib"
     return dep
 
-def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], **kwargs):
+def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], **kwargs):
     # Merge user-provided args with our default ones
     all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + jvm_flags
     all_args = JAVA_TEST_ARGS + args
@@ -114,7 +114,7 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], **kwargs):
             "@community//:intellij.idea.community.main.iml",
             # required for com.intellij.openapi.projectRoots.impl.JavaSdkImpl.internalJdkAnnotationsPath
             "@community//java:mockJDK",
-        ],
+        ] + data,
         use_testrunner = False,
         **kwargs
     )
