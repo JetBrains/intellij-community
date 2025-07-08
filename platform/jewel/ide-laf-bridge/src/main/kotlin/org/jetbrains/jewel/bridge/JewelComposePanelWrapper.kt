@@ -21,11 +21,6 @@ import org.jetbrains.jewel.foundation.util.JewelLogger
 public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(config, content)
 
-@ExperimentalJewelApi
-@Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
-public fun JBPanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
-    JewelComposePanel(config, content)
-
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     createJewelComposePanel { jewelPanel ->
