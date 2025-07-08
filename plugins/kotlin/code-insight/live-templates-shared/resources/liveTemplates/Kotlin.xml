@@ -25,20 +25,20 @@
         </context>
     </template>
 
-    <template resource-bundle="messages.JavaBundle" key="livetemplate.description.sout"
+    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.sout"
               name="sout" toReformat="true"
               toShortenFQNames="true" value="println($END$)">
         <context>
             <option name="KOTLIN_STATEMENT" value="true" />
         </context>
     </template>
-    <template resource-bundle="messages.JavaBundle" key="livetemplate.description.serr"
+    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.serr"
               name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println($END$)">
         <context>
             <option name="KOTLIN_STATEMENT" value="true" />
         </context>
     </template>
-    <template resource-bundle="messages.JavaBundle" key="livetemplate.description.soutv"
+    <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.soutv"
               name="soutv" toReformat="true" toShortenFQNames="true"
               value="println(&quot;$EXPR_COPY$ = $DOLLAR${$EXPR$}&quot;)">
         <variable alwaysStopAt="false" defaultValue="&quot;$&quot;" expression="" name="DOLLAR" />
