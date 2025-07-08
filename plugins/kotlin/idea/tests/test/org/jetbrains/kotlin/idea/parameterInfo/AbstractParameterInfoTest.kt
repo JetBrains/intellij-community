@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.util.registryFlag
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
@@ -25,6 +26,8 @@ import java.nio.file.Paths
 abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase() {
     private var mockLibraryFacility: MockLibraryFacility? = null
     override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
+
+    protected var isMultiline by registryFlag("kotlin.multiline.function.parameters.info")
 
     override fun setUp() {
         super.setUp()
@@ -121,7 +124,8 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
             val expectedFile = run {
                 val extension = when {
-                    isFirPlugin -> "k2.txt"
+                    isFirPlugin && !isMultiline -> "k2.txt"
+                    isFirPlugin && isMultiline -> "k2_multiline.txt"
                     else -> "k1.txt"
                 }
                 mainFile.toPath().resolveSibling("${mainFile.nameWithoutExtension}.${extension}")

@@ -439,12 +439,15 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val text = buildString {
             signature.parts.forEach { piece -> append(piece.text) }
             val useMultilineParameters = Registry.`is`("kotlin.multiline.function.parameters.info", false)
-            if (useMultilineParameters && signature.parts.size > SINGLE_LINE_PARAMETERS_COUNT) {
+            if (signature.parts.isNotEmpty() && useMultilineParameters && signature.parts.size > SINGLE_LINE_PARAMETERS_COUNT) {
+                var isFirstParameter = true
                 signature.parts.forEachIndexed { i, piece ->
-                    if (piece is SignaturePart.Parameter) {
+                    if (piece !is SignaturePart.Parameter) return@forEachIndexed
+                    if (!isFirstParameter) {
                         val offset = signature.getRange(i).first
                         replace(offset - 1, offset, "\n")
                     }
+                    isFirstParameter = false
                 }
             }
         }

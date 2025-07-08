@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.kmp.AbstractK2KmpLightFixtureHighlightingTest
 import org.jetbrains.kotlin.idea.fir.navigation.*
+import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirMultilineParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
@@ -209,12 +210,21 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
         }
 
-        testClass<AbstractFirParameterInfoTest> {
-            model(
-                "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|java)$"), isRecursive = true,
-                excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib", "withLib4/sharedLib")
-            )
+        run {
+            fun MutableTSuite.parameterInfoModel() {
+                model(
+                    "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|java)$"), isRecursive = true,
+                    excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib", "withLib4/sharedLib")
+                )
+            }
+            testClass<AbstractFirParameterInfoTest> {
+                parameterInfoModel()
+            }
+            testClass<AbstractFirMultilineParameterInfoTest> {
+                parameterInfoModel()
+            }
         }
+
 
         testClass<AbstractK2AutoImportTest> {
             model(
