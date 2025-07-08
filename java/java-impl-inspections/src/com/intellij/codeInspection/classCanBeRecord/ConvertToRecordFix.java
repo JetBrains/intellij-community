@@ -131,7 +131,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
    * @see com.siyeh.ig.memory.InnerClassMayBeStaticInspection
    */
   private static boolean containsOuterNonStaticReferences(PsiClass psiClass) {
-    InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(psiClass, false);
+    InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(psiClass);
     psiClass.accept(visitor);
     return !visitor.canInnerClassBeStatic();
   }
