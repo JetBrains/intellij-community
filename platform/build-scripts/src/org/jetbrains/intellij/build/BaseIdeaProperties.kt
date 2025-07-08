@@ -22,7 +22,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.terminal",
   "intellij.textmate",
   "intellij.editorconfig.plugin",
-  "intellij.settingsSync",
   "intellij.configurationScript",
   "intellij.json",
   "intellij.yaml",
