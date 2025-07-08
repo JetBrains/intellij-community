@@ -17,12 +17,14 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
+import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.TextTransferable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
@@ -131,7 +133,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
               icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(autoconfiguredPressed)
               text(McpServerBundle.message("mcp.server.client.restart.info.settings")).visibleIf(autoconfiguredPressed)
 
-              icon(McpserverIcons.Expui.StatusDisabled).gap(RightGap.SMALL).visibleIf(isConfigured.not())
+              icon(ColorizeProxyIcon.Simple(McpserverIcons.Expui.StatusDisabled, JBColor.GRAY)).gap(RightGap.SMALL).visibleIf(isConfigured.not())
               comment(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
 
               icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect.not()))
