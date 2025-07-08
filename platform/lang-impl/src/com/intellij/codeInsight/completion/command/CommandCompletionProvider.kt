@@ -419,7 +419,7 @@ internal fun findCommandCompletionType(
   }
   val indexOf = findActualIndex(suffix, text, offset)
   if (offset - indexOf < 0) return null
-  if (indexOf == 1) {
+  if (indexOf == 1 && text[offset - indexOf] == factory.suffix()) {
     //one point
     return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset),
                                                text.substring(offset - indexOf, offset - indexOf + 1))
@@ -429,7 +429,7 @@ internal fun findCommandCompletionType(
     return InvocationCommandType.FullSuffix(text.substring(offset - indexOf + 2, offset),
                                             text.substring(offset - indexOf, offset - indexOf + 2))
   }
-  if (indexOf > 0 && text.substring(offset - indexOf, offset - indexOf + 2).contains(factory.suffix())) {
+  if (indexOf > 0 && text.substring(offset - indexOf, offset - indexOf + 2).startsWith(factory.suffix())) {
     //force call with one point
     return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset),
                                                text.substring(offset - indexOf, offset - indexOf + 1))
@@ -445,7 +445,8 @@ private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : Cam
   override fun prefixMatches(element: LookupElement): Boolean {
     if (!super.prefixMatches(element)) return false
     for (lookupString in element.allLookupStrings) {
-      if (lookupString.contains(prefix, ignoreCase = true)) return true
+      val indexOf = lookupString.indexOf(prefix, ignoreCase = true)
+      if (indexOf != -1 && indexOf < 3) return true
       val fragments = matchingFragments(lookupString) ?: continue
       for (range in fragments) {
         if (prefix.length != range.length) continue

@@ -70,6 +70,17 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
+  fun testEmptyMatchers() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        m<caret> 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertFalse(elements.any { element -> element.lookupString.contains("Generate", ignoreCase = true) })
+  }
+
 
   fun testUndo() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
