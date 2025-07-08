@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -50,9 +51,9 @@ abstract class LicenseRelatedStatusBarWidgetFactory : StatusBarWidgetFactory {
 abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelatedStatusBarWidgetFactory) : CustomStatusBarWidget {
   final override fun ID(): String = factory.id
 
-  private val myComponent: JLabel by lazy { createComponent() }
+  private val lazyLabel: Lazy<JLabel> = lazy { createLabel() }
 
-  final override fun getComponent(): JComponent = myComponent
+  final override fun getComponent(): JComponent = lazyLabel.value
 
   override fun install(statusBar: StatusBar) {
     val project = statusBar.project ?: return
@@ -79,7 +80,24 @@ abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelated
 
   protected abstract fun createClickListener(): ClickListener
 
-  private fun createComponent(): JLabel {
+  @RequiresEdt
+  fun updateWidget() {
+    if (!lazyLabel.isInitialized()) return
+
+    val label = lazyLabel.value
+    val text = text
+    val icon = label.icon as? TextIcon
+    icon?.text = text
+    icon?.foreground = foreground
+    icon?.borderColor = borderColor
+    label.toolTipText = tooltip
+    label.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, text)
+
+    label.revalidate()
+    label.repaint()
+  }
+
+  private fun createLabel(): JLabel {
     val uiSettings = UISettings.getInstance()
     val text = text
     val icon = TextIcon(text, foreground, null, borderColor, 0, true)
