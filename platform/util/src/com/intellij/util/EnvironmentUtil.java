@@ -98,7 +98,7 @@ public final class EnvironmentUtil {
       }
     }
     try {
-      Map<String, String> result = FutureKt.asCompletableFuture(getter).join();
+      Map<String, String> result = getter.isCompleted() ? getter.getCompleted() : FutureKt.asCompletableFuture(getter).join();
       if (result.isEmpty()) {
         ourEnvGetter.set(CompletableDeferredKt.CompletableDeferred(result = getSystemEnv()));  // loading failed
       }
