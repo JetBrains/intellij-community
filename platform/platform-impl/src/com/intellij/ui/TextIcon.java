@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +39,20 @@ public final class TextIcon implements Icon {
   private List<String> myTextsForMinimumBounds;
   private Rectangle myMinimumTextBounds;
   private Rectangle myCurrentTextBounds;
+  private int myFontSize;
+  private @MagicConstant(intValues = {Font.PLAIN, Font.BOLD, Font.ITALIC}) int myFontStyle;
 
   private Rectangle getTextBounds() {
+    if (myStabilizedTextBounds != null && myFont != null) {
+      if (myFontSize != myFont.getSize() || myFontStyle != myFont.getStyle()) {
+        myMinimumTextBounds = null;
+        myCurrentTextBounds = null;
+        myStabilizedTextBounds = null;
+      }
+    }
     if (myStabilizedTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
+      myFontSize = myFont.getSize();
+      myFontStyle = myFont.getStyle();
       myContext = createContext();
       Font fnt = myFontTransform == null ? myFont : myFont.deriveFont(myFontTransform);
       myCurrentTextBounds = getPixelBounds(fnt, myText, myContext);
