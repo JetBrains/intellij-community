@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LightResolveTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -257,6 +259,13 @@ public class ResolveMethodTest extends LightResolveTestCase {
     assertInstanceOf(target, PsiMethod.class);
     PsiMethod method = (PsiMethod) target;
     assertEquals("PublicCloneable", method.getContainingClass().getName());
+  }
+
+  public void testSwitchExpressionType() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+      PsiMethod target = (PsiMethod)resolve();
+      assertEquals(PsiTypes.intType(), target.getParameterList().getParameters()[0].getType());
+    });
   }
 
   public void testMultipleJavadocReference() {
