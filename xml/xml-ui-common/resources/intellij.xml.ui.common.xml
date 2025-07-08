@@ -25,5 +25,10 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.application.options.XmlLanguageCodeStyleSettingsProvider"/>
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
+
+    <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
+    <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>
+    <lang.formatter language="HTML" implementationClass="com.intellij.lang.html.HtmlFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="XML" implementationClass="com.intellij.lang.xml.XmlWhiteSpaceFormattingStrategy"/>
   </extensions>
 </idea-plugin>

@@ -188,13 +188,8 @@
     <editorTypedHandler implementationClass="com.intellij.codeInsight.template.emmet.EmmetPreviewTypedHandler" id="emmetPreview"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
 
-    <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
-    <lang.whiteSpaceFormattingStrategy language="XML"
-                                       implementationClass="com.intellij.lang.xml.XmlWhiteSpaceFormattingStrategy"/>
-    <lang.formatter language="HTML" implementationClass="com.intellij.lang.html.HtmlFormattingModelBuilder"/>
     <fileIndentOptionsProvider id="html" implementation="com.intellij.psi.formatter.xml.HtmlFileIndentOptionsProvider"/>
     <preFormatProcessor implementation="com.intellij.lang.html.HtmlQuotesFormatPreprocessor"/>
-    <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>
     <lang.lineWrapStrategy language="XML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
     <lang.lineWrapStrategy language="HTML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
     <lang.lineWrapStrategy language="XHTML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
