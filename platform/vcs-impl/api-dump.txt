@@ -4447,6 +4447,12 @@ f:com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList$Renderer
 f:com.intellij.util.ui.cloneDialog.VcsCloneDialogPopupMenuKt
 - sf:browseAction(java.lang.String,java.lang.String,Z):com.intellij.util.ui.cloneDialog.AccountMenuItem$Action
 - bs:browseAction$default(java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.util.ui.cloneDialog.AccountMenuItem$Action
+a:com.intellij.util.ui.cloneDialog.VcsCloneWithExtensionAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- f:getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- a:getExtension():java.lang.Class
 f:com.intellij.util.ui.dialog.DialogUtils
 - s:invokeLaterAfterDialogShown(com.intellij.openapi.ui.DialogWrapper,java.lang.Runnable):V
 com.intellij.vcs.AnnotationProviderEx
