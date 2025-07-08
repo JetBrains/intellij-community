@@ -5,7 +5,6 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClas
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.FieldNode;
-import org.jetbrains.org.objectweb.asm.tree.FrameNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnNode;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 
@@ -112,7 +111,6 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   private static final class AbiMethod extends MethodNode {
     private static final InsnNode NOP_INSTRUCTION = new InsnNode(Opcodes.NOP);
-    private static final FrameNode FRAME_NODE = new FrameNode(Opcodes.F_SAME, 0, null, 0, null);
 
     AbiMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
       super(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions);
@@ -120,13 +118,6 @@ public class JavaAbiClassFilter extends ClassVisitor {
       if ((access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
         // in a valid bytecode, non-abstract and non-native methods must have a code attribute
         instructions.add(NOP_INSTRUCTION);
-      }
-    }
-
-    @Override
-    public void visitEnd() {
-      if (instructions.iterator().hasNext()) {
-        instructions.add(FRAME_NODE);
       }
     }
   }
