@@ -127,6 +127,7 @@
             icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
       <override-text place="MainMenu"/>
       <override-text place="popup@GoToAction"/>
+      <synonym key="action.GitLab.Add.Account.synonym"/>
     </action>
 
     <action id="GitLab.Create.Snippet"
