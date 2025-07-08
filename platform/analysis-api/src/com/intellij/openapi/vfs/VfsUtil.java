@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -284,6 +284,7 @@ public final class VfsUtil extends VfsUtilCore {
     return dir.createChildData(requestor, getNextAvailableName(dir, prefix, extension));
   }
 
+  /** @return only 'good' ({@code !isBadName(name)}) file names from the array */
   public static String @NotNull [] filterNames(String @NotNull [] names) {
     var filteredCount = 0;
     for (var string : names) {

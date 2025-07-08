@@ -22,4 +22,8 @@ public interface BatchingFileSystem {
    * When the {@code childrenNames} set is {@code null}, all files should be returned.
    */
   @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames);
+
+  default @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir) {
+    return listWithAttributes(dir, null);
+  }
 }
