@@ -107,6 +107,7 @@ interface FileEditor
 interface FileEditorManager {
   fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor>
   fun getSelectedTextEditor(): Editor?
+  fun setSelectedEditor(editor: FileEditor)
 }
 
 @Remote("com.intellij.openapi.editor.colors.EditorColorsScheme")
