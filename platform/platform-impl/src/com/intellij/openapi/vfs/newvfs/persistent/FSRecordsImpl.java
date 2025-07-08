@@ -319,9 +319,9 @@ public final class FSRecordsImpl implements Closeable {
    *   </li>
    * </ul>
    * Why dedicated 'hierarchyUpdateLock' was introduced: because read-modify-write updates on children could be quite long, and sometimes
-   * even involve IO (see {@link #update(VirtualFile, int, Function)} method, and it's usages), while per-record accesses are mostly short,
-   * so StampedLock could be used quite effectively. Protecting children read-modify-write ops with regular write lock prevents concurrent
-   * reads, which is undesirable -- hence the trick.
+   * even involve IO (see {@link #update(VirtualFile, int, Function, boolean)} method, and it's usages), while per-record accesses are
+   * mostly short, so StampedLock could be used quite effectively. Protecting children read-modify-write ops with regular write lock
+   * prevents concurrent reads, which is undesirable -- hence the trick.
    */
   private final FileRecordLock fileRecordLock = new FileRecordLock();
 
@@ -751,12 +751,17 @@ public final class FSRecordsImpl implements Closeable {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
-  /** Perform operation on children and save the list atomically */
+  /**
+   * Performs the operation on children and save the modified children list atomically.
+   * If setAllChildrenCached=true: sets {@link com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags#CHILDREN_CACHED}
+   * flag on a parent record, if setAllChildrenCached=false does nothing additional (i.e. does NOT update CHILDREN_CACHED flag at all)
+   */
   @NotNull
   @VisibleForTesting
   public ListResult update(@NotNull VirtualFile parent,
-                    int parentId,
-                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+                           int parentId,
+                           @NotNull Function<? super ListResult, ListResult> childrenConvertor,
+                           boolean setAllChildrenCached) {
     SlowOperations.assertSlowOperationsAreAllowed();
     PersistentFSConnection.ensureIdIsValid(parentId);
 
@@ -774,12 +779,25 @@ public final class FSRecordsImpl implements Closeable {
         //TODO RC: why we update symlinks here, under the lock?
         updateSymlinksForNewChildren(parent, children, modifiedChildren);
 
-        saveChildrenUnderRecordLock(parentId, modifiedChildren);
+        saveChildrenUnderRecordLock(parentId, modifiedChildren, setAllChildrenCached);
+      }
+      else if (setAllChildrenCached) {
+        StampedLock recordLock = fileRecordLock.lockFor(parentId);
+        long stamp = recordLock.writeLock();
+        try {
+          connection.records().updateRecord(
+            parentId,
+            record -> record.addFlags(PersistentFS.Flags.CHILDREN_CACHED)
+          );
+        }
+        finally {
+          recordLock.unlockWrite(stamp);
+        }
       }
       return modifiedChildren;
     }
     catch (CancellationException e) {
-      // NewVirtualFileSystem.list methods can be interrupted now
+      // NewVirtualFileSystem.list methods CAN be interrupted now
       throw e;
     }
     catch (Throwable e) {
@@ -819,9 +837,16 @@ public final class FSRecordsImpl implements Closeable {
             connection.records().setParent(fileId, toParentId);
           }
 
-          saveChildrenUnderRecordLock(toParentId, childrenToMove);
+          saveChildrenUnderRecordLock(
+            toParentId, childrenToMove,
+            /*setAllChildrenCached: */ false
+          );
 
-          saveChildrenUnderRecordLock(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));
+          saveChildrenUnderRecordLock(
+            fromParentId,
+            new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId),
+            /*setAllChildrenCached: */ false
+          );
         }
         catch (CancellationException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
@@ -900,8 +925,8 @@ public final class FSRecordsImpl implements Closeable {
           );
 
           connection.records().setParent(childToMoveId, toParentId);
-          saveChildrenUnderRecordLock(fromParentId, fromParentChildrenWithoutChildMoved);
-          saveChildrenUnderRecordLock(toParentId, toParentChildrenUpdated);
+          saveChildrenUnderRecordLock(fromParentId, fromParentChildrenWithoutChildMoved, /*setAllChildrenCached: */ false);
+          saveChildrenUnderRecordLock(toParentId, toParentChildrenUpdated, /*setAllChildrenCached: */ false);
         }
         catch (CancellationException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
@@ -935,13 +960,25 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  /** Saves children for parentId, under record-level write lock (not a hierarchy lock!) */
+  /**
+   * Saves children for parentId, under record-level write lock (not a hierarchy lock!).
+   * If setAllChildrenCached=true, then sets CHILDREN_CACHED=true flag on a parent record,
+   * if setAllChildrenCached=true does NOT change CHILDREN_CACHED flag in any way.
+   */
   private void saveChildrenUnderRecordLock(int parentId,
-                                           @NotNull ListResult modifiedChildren) throws IOException {
+                                           @NotNull ListResult modifiedChildren,
+                                           boolean setAllChildrenCached) throws IOException {
     StampedLock recordLock = fileRecordLock.lockFor(parentId);
     long stamp = recordLock.writeLock();
     try {
       treeAccessor.doSaveChildren(parentId, modifiedChildren);
+
+      if (setAllChildrenCached) {
+        connection.records().updateRecord(
+          parentId,
+          record -> record.addFlags(PersistentFS.Flags.CHILDREN_CACHED)
+        );
+      }
     }
     finally {
       recordLock.unlockWrite(stamp);
@@ -986,8 +1023,8 @@ public final class FSRecordsImpl implements Closeable {
 
   @VisibleForTesting
   public void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
-                                    @NotNull ListResult oldChildren,
-                                    @NotNull ListResult newChildren) {
+                                           @NotNull ListResult oldChildren,
+                                           @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
     ContainerUtil.processSortedListsInOrder(
       oldChildren.children, newChildren.children,

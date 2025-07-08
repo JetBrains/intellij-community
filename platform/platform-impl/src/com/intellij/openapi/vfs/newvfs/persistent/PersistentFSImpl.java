@@ -389,32 +389,36 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       //         (See also an overall VFS thread-safety rant in FSRecordsImpl)
 
 
-      ListResult saved = vfsPeer.update(dir, dirId, current -> {
-        List<? extends ChildInfo> currentChildren = current.children;
-        if (childrenNames.length == 0 && !currentChildren.isEmpty()) {
-          return current;
-        }
-        // preserve current children which match childrenNames (to have stable id)
-        // (on case-insensitive systems, replace those from current with case-changes ones from childrenNames preserving the id)
-        // add those from childrenNames which are absent from current
-        Set<String> childrenNamesToAdd = createFilePathSet(childrenNames, caseSensitive);
-        for (ChildInfo currentChild : currentChildren) {
-          childrenNamesToAdd.remove(currentChild.getName().toString());
-        }
+      ListResult saved = vfsPeer.update(
+        dir,
+        dirId,
+        current -> {
+          List<? extends ChildInfo> currentChildren = current.children;
+          if (childrenNames.length == 0 && !currentChildren.isEmpty()) {
+            return current;
+          }
+          // preserve current children which match childrenNames (to have stable id)
+          // (on case-insensitive systems, replace those from current with case-changes ones from childrenNames preserving the id)
+          // add those from childrenNames which are absent from current
+          Set<String> childrenNamesToAdd = createFilePathSet(childrenNames, caseSensitive);
+          for (ChildInfo currentChild : currentChildren) {
+            childrenNamesToAdd.remove(currentChild.getName().toString());
+          }
+          if (childrenNamesToAdd.isEmpty()) {
+            return current;
+          }
 
-        List<ChildInfo> childrenToAdd = childrenWithAttributes != null ? //i.e. (fs is BatchingFileSystem)
-                                        createNewChildrenRecords(dir, childrenNamesToAdd, childrenWithAttributes, fs) :
-                                        createNewChildrenRecords(dir, childrenNamesToAdd, fs);
+          List<ChildInfo> childrenToAdd = childrenWithAttributes != null ? //i.e. (fs is BatchingFileSystem)
+                                          createNewChildrenRecords(dir, childrenNamesToAdd, childrenWithAttributes, fs) :
+                                          createNewChildrenRecords(dir, childrenNamesToAdd, fs);
 
-        // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays, so we must
-        // provide a stable order:
-        childrenToAdd.sort(ChildInfo.BY_ID);
-        return current.merge(vfsPeer, childrenToAdd, caseSensitive);
-      });
-
-      //TODO RC: why it is not done under the lock above? Maybe even better to embed .setChildrenCached() inside
-      //         vfs.update(), since it is the natural place to ensure children are cached
-      setChildrenCached(dirId);
+          // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays, so we must
+          // provide a stable order:
+          childrenToAdd.sort(ChildInfo.BY_ID);
+          return current.merge(vfsPeer, childrenToAdd, caseSensitive);
+        },
+        /*setAllChildrenCached: */ true
+      );
 
       return saved.children;
     }
@@ -434,6 +438,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     for (String newChildName : childrenNamesToAdd) {
       Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newChildName, null, null);
       if (childData != null) {
+        //TODO RC: we use a map here to prevent duplicates -- but we still add those duplicates to childrenToAdd
+        //         -- what's the point?
         ChildInfo newChild = justCreated.computeIfAbsent(
           newChildName,
           _newChildName -> makeChildRecord(dir, dirId, _newChildName, childData, fs, null)
@@ -470,13 +476,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     return childrenToAdd;
-  }
-
-  private void setChildrenCached(int dirId) {
-    vfsPeer.updateRecordFields(
-      dirId,
-      record -> record.addFlags(Flags.CHILDREN_CACHED)
-    );
   }
 
   private boolean areChildrenCached(int dirId) {
@@ -688,7 +687,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     };
 
-    vfsPeer.update(parent, parentId, convertor);
+    vfsPeer.update(parent, parentId, convertor, /*setAllChildrenCached: */ false);
     return foundChildRef.get();
   }
 
@@ -1605,7 +1604,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         deleted.add(new ChildInfoImpl(id, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null));
       }
       deleted.sort(ChildInfo.BY_ID);
-      vfsPeer.update(parent, parentId, oldChildren -> oldChildren.subtract(deleted));
+      vfsPeer.update(parent, parentId, oldChildren -> oldChildren.subtract(deleted), /*setAllChildrenCached: */ false);
       parent.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
     }
   }
@@ -1643,7 +1642,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     childrenAdded.sort(ChildInfo.BY_ID);
     boolean caseSensitive = parent.isCaseSensitive();
-    vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive));
+    vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive), /*setAllChildrenCached: */
+                   false);
     parent.createAndAddChildren(childrenAdded, false, (__, ___) -> {
     });
 
@@ -1677,9 +1677,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
           added.sort(ChildInfo.BY_ID);
-          vfsPeer.update(directory, directoryId, oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive));
-          //TODO RC: why it is not done under the lock above?
-          setChildrenCached(directoryId);
+          vfsPeer.update(directory, directoryId,
+                         oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive), /*setAllChildrenCached: */ true);
           // set "all children loaded" because the first "fileCreated" listener (looking at you, local history)
           // will call getChildren() anyway, beyond a shadow of a doubt
           directory.createAndAddChildren(added, true, (childCreated, childInfo) -> {
@@ -2306,26 +2305,35 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (childData == null) {
       return;
     }
-    ChildInfo childInfo = makeChildRecord(parent, parentId, name, childData, fs, null);
-    vfsPeer.update(parent, parentId, children -> {
-      // check that names are not duplicated
-      ChildInfo duplicate = findExistingChildInfo(parent, name, children.children);
-      if (duplicate != null) return children;
 
-      return children.insert(childInfo);
-    });
-    int childId = childInfo.getId();
+    class ChildInserter implements Function<ListResult, ListResult> {
+      ChildInfo childInfo = null;
+
+      @Override
+      public @NotNull ListResult apply(@NotNull ListResult children) {
+        // check that names are not duplicated:
+        ChildInfo duplicate = findExistingChildInfo(parent, name, children.children);
+        if (duplicate != null) return children;
+
+        childInfo = makeChildRecord(parent, parentId, name, childData, fs, null);
+        return children.insert(childInfo);
+      }
+    }
+    ChildInserter inserter = new ChildInserter();
+
+    // When creating an empty directory, we need to make sure every file created inside will fire a "file-created"
+    // event, for `VirtualFilePointerManager` to get those events to update its pointers properly (because currently
+    // it ignores empty directory creation events for performance reasons):
+    vfsPeer.update(parent, parentId, inserter, /*setAllChildrenCached: */ isEmptyDirectory);
+    if (inserter.childInfo == null) {
+      return; //nothing has been inserted
+    }
+
+    int childId = inserter.childInfo.getId();
     assert parent instanceof VirtualDirectoryImpl : parent;
     VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
     int nameId = vfsPeer.getNameId(name);
     VirtualFileSystemEntry child = dir.createChild(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
-    if (isEmptyDirectory) {
-      // When creating an empty directory, we need to make sure every file created inside will fire a "file-created" event,
-      // in order to `VirtualFilePointerManager` get those events to update its pointers properly
-      // (because currently it ignores empty directory creation events for performance reasons).
-      //TODO RC: why it is not done under the lock above?
-      setChildrenCached(childId);
-    }
     dir.addChild(child);
     incStructuralModificationCount();
   }
@@ -2409,7 +2417,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     else {
-      vfsPeer.update(parent, parentId, list -> list.remove(fileIdToDelete));
+      vfsPeer.update(parent, parentId, list -> list.remove(fileIdToDelete), /*setAllChildrenCached: */ false);
 
       VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file.getParent();
       assert directory != null : file;

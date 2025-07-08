@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.mock.MockVirtualFile;
@@ -135,7 +135,7 @@ public class VFSChildrenUpdateBenchmark {
     public ListResult updateChildren_ReturnSame(FSRecordsContext vfsContext) throws IOException {
       int folderId = tossFolderId();
       FSRecordsImpl vfs = vfsContext.vfs();
-      return vfs.update(FAKE_PARENT_FILE, folderId, children -> children);
+      return vfs.update(FAKE_PARENT_FILE, folderId, children -> children, true);
     }
 
     @Benchmark
@@ -144,7 +144,7 @@ public class VFSChildrenUpdateBenchmark {
       FSRecordsImpl vfs = vfsContext.vfs();
       return vfs.update(FAKE_PARENT_FILE, folderId, children -> {
         return new ListResult(1, children.children, folderId);
-      });
+      }, true);
     }
   }
 
