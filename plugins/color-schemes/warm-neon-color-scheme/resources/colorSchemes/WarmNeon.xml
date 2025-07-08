@@ -1328,9 +1328,10 @@
         <option name="BACKGROUND" value="404040" />
       </value>
     </option>
-    <option name="OC.CONDITIONALLY_NOT_COMPILED">
+    <option name="OC.CONDITIONALLY_NOT_COMPILED_V2">
       <value>
-        <option name="FOREGROUND" value="686A4E" />
+        <option name="EFFECT_TYPE" value="6"/>
+        <option name="EFFECT_COLOR" value="616161"/>
       </value>
     </option>
     <option name="OC.MACRONAME">
