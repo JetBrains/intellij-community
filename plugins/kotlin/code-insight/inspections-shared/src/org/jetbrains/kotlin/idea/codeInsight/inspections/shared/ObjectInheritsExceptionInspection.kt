@@ -72,7 +72,13 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                     val expression = it.element
 
                     if (expression.parent is KtUserType ||
-                        PsiTreeUtil.getParentOfType(expression, KtImportDirective::class.java, false, KtBlockExpression::class.java) != null
+                        PsiTreeUtil.getParentOfType(
+                            /* element = */ expression,
+                            /* aClass = */ KtImportDirective::class.java,
+                            /* strict = */ false,
+                            /* ...stopAt = */ KtBlockExpression::class.java
+                        )
+                        != null
                     ) {
                         return@mapNotNull null
                     }
