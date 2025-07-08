@@ -24,6 +24,13 @@ internal class GHPRViewedStateDataProviderImpl(
 
   override suspend fun updateViewedState(paths: Iterable<String>, isViewed: Boolean) {
     try {
+      loader.updateLoaded {
+        it.toMutableMap().apply {
+          val newState = if (isViewed) GHPullRequestFileViewedState.VIEWED else GHPullRequestFileViewedState.UNVIEWED
+          paths.forEach { path -> put(path, newState) }
+        }.toMap()
+      }
+
       coroutineScope {
         paths.map { path ->
           async {
@@ -36,15 +43,8 @@ internal class GHPRViewedStateDataProviderImpl(
       currentCoroutineContext().ensureActive()
       throw ce
     }
-    catch (e: Exception) {
+    catch (_: Exception) {
       signalViewedStateNeedsReload()
-    }
-
-    loader.updateLoaded {
-      it.toMutableMap().apply {
-        val newState = if (isViewed) GHPullRequestFileViewedState.VIEWED else GHPullRequestFileViewedState.UNVIEWED
-        paths.forEach { path -> put(path, newState) }
-      }.toMap()
     }
   }
 
