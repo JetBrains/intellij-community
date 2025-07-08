@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class BytecodeLineMappingTest : BasePlatformTestCase() {
+internal class BytecodeLineMappingTest : BasePlatformTestCase() {
   private fun getSelectionFromSource(text: String): Pair<Int, Int> {
     myFixture.configureByText(getTestName(false) + ".java", text)
     val sourceDocument = myFixture.editor.document

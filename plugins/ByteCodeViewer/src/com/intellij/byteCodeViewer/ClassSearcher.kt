@@ -4,6 +4,6 @@ package com.intellij.byteCodeViewer
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 
-interface ClassSearcher {
-  fun findClass(place: PsiElement): PsiClass?
+public interface ClassSearcher {
+  public fun findClass(place: PsiElement): PsiClass?
 }

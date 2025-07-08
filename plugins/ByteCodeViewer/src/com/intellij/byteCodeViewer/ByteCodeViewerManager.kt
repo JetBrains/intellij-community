@@ -19,7 +19,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentsOfType
 import java.util.*
 
-object ByteCodeViewerManager {
+public object ByteCodeViewerManager {
   private val CLASS_SEARCHER_EP = ExtensionPointName<ClassSearcher>("ByteCodeViewer.classSearcher")
 
   private fun PsiClass.containingClassFileClass(): PsiClass {
@@ -28,7 +28,7 @@ object ByteCodeViewerManager {
       .first()
   }
 
-  internal fun findClassFile(aClass: PsiClass): VirtualFile? {
+  public fun findClassFile(aClass: PsiClass): VirtualFile? {
     val fileClass = aClass.containingClassFileClass()
     val file = fileClass.originalElement.containingFile.virtualFile ?: return null
     val fileIndex = ProjectFileIndex.getInstance(aClass.project)
@@ -49,12 +49,12 @@ object ByteCodeViewerManager {
 
   @Deprecated(message = "Use findClassFile instead")
   @JvmStatic
-  fun loadClassFileBytes(aClass: PsiClass): ByteArray? {
+  public fun loadClassFileBytes(aClass: PsiClass): ByteArray? {
     return findClassFile(aClass)?.contentsToByteArray(false)
   }
 
   @JvmStatic
-  fun getContainingClass(psiElement: PsiElement): PsiClass? {
+  public fun getContainingClass(psiElement: PsiElement): PsiClass? {
     for (searcher in CLASS_SEARCHER_EP.extensionList) {
       val aClass = searcher.findClass(psiElement)
       if (aClass != null) return aClass
