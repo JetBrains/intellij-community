@@ -44,7 +44,7 @@ internal fun DecoratedWindowScope.TitleBarOnWindows(
 }
 
 internal fun Modifier.customTitleBarMouseEventHandler(titleBar: CustomTitleBar): Modifier =
-    pointerInput(Unit) {
+    pointerInput(titleBar) {
         val currentContext = currentCoroutineContext()
         awaitPointerEventScope {
             var inUserControl = false
