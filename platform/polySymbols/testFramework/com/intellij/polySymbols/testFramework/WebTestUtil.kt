@@ -31,6 +31,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.declarations.PolySymbolDeclaration
+import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
+import com.intellij.polySymbols.impl.canUnwrapSymbols
+import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -53,13 +60,6 @@ import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.declarations.PolySymbolDeclaration
-import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
-import com.intellij.polySymbols.impl.canUnwrapSymbols
-import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
@@ -104,6 +104,7 @@ fun CodeInsightTestFixture.checkLookupItems(
   checkDocumentation: Boolean = false,
   containsCheck: Boolean = false,
   locations: List<String> = emptyList(),
+  namedLocations: List<Pair<String, String>> = emptyList(),
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
   expectedDataLocation: String = "",
   lookupItemFilter: (item: LookupElementInfo) -> Boolean = { true },
@@ -117,9 +118,14 @@ fun CodeInsightTestFixture.checkLookupItems(
     for (lookupString in lookupsToCheck) {
       val lookupElement = lookupElements[lookupString]
       assertNotNull("Missing lookup string: $lookupString", lookupElement)
-      val targets = PlatformTestUtil.callOnBgtSynchronously({ ProgressManager.getInstance().runProcess(Computable { runReadAction {
-        IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, lookupElement!!)
-      } }, EmptyProgressIndicator()) }, 10)!!
+      val targets = PlatformTestUtil.callOnBgtSynchronously(
+        {
+          ProgressManager.getInstance().runProcess(Computable {
+            runReadAction {
+              IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, lookupElement!!)
+            }
+          }, EmptyProgressIndicator())
+        }, 10)!!
       val doc = targets.firstOrNull()?.let { computeDocumentationBlocking(it.createPointer()) }?.html?.trim()
 
       val sanitizedLookupString = lookupString.replace(Regex("[*\"?<>/\\[\\]:;|,#]"), "_")
@@ -128,7 +134,7 @@ fun CodeInsightTestFixture.checkLookupItems(
   }
 
   noAutoComplete {
-    if (locations.isEmpty()) {
+    if (locations.isEmpty() && namedLocations.isEmpty()) {
       completeBasic()
       checkListByFile(
         renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
@@ -139,24 +145,27 @@ fun CodeInsightTestFixture.checkLookupItems(
       checkLookupDocumentation()
     }
     else {
-      locations.forEachIndexed { index, location ->
-        moveToOffsetBySignature(location)
-        completeBasic()
-        try {
-          checkListByFile(
-            renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
-                              lookupItemFilter),
-            expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".${index + 1}.txt",
-            containsCheck
-          )
+      locations.withIndex()
+        .map { (index, value) -> (index + 1).toString() to value }
+        .plus(namedLocations)
+        .forEach { (index, location) ->
+          moveToOffsetBySignature(location)
+          completeBasic()
+          try {
+            checkListByFile(
+              renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
+                                lookupItemFilter),
+              expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
+              containsCheck
+            )
+          }
+          catch (e: FileComparisonFailedError) {
+            throw FileComparisonFailedError(e.message + "\nFor location: $location",
+                                            e.expectedStringPresentation, e.actualStringPresentation,
+                                            e.filePath, e.actualFilePath)
+          }
+          checkLookupDocumentation(".$index")
         }
-        catch (e: FileComparisonFailedError) {
-          throw FileComparisonFailedError(e.message + "\nFor location: $location",
-                                          e.expectedStringPresentation, e.actualStringPresentation,
-                                          e.filePath, e.actualFilePath)
-        }
-        checkLookupDocumentation(".${index + 1}")
-      }
     }
   }
 }
@@ -260,9 +269,14 @@ private fun CodeInsightTestFixture.checkDocumentation(
 }
 
 private fun CodeInsightTestFixture.renderDocAtCaret(): String? {
-  val targets = PlatformTestUtil.callOnBgtSynchronously({ ProgressManager.getInstance().runProcess(Computable { runReadAction {
-    IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, caretOffset)
-  } }, EmptyProgressIndicator()) }, 10)!!
+  val targets = PlatformTestUtil.callOnBgtSynchronously(
+    {
+      ProgressManager.getInstance().runProcess(Computable {
+        runReadAction {
+          IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, caretOffset)
+        }
+      }, EmptyProgressIndicator())
+    }, 10)!!
 
   return targets.mapNotNull { computeDocumentationBlocking(it.createPointer())?.html }
     .also { assertTrue("More then one documentation rendered:\n\n${it.joinToString("\n\n")}", it.size <= 1) }
