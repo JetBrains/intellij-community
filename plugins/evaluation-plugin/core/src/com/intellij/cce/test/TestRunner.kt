@@ -26,5 +26,5 @@ interface TestRunner {
 
   fun isApplicable(params: TestRunnerParams): Boolean
 
-  fun runTests(request: TestRunRequest): TestRunResult
+  suspend fun runTests(request: TestRunRequest): TestRunResult
 }

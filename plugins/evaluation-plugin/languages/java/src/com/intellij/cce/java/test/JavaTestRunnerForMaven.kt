@@ -1,38 +1,16 @@
 package com.intellij.cce.java.test
 
 
-import com.intellij.cce.core.Language
-import com.intellij.cce.test.TestRunRequest
 import com.intellij.cce.test.TestRunResult
-import com.intellij.cce.test.TestRunner
-import com.intellij.cce.test.TestRunnerParams
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.runners.ProgramRunner
-import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.util.Key
-import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 
-private val LOG = fileLogger()
+internal object JavaTestRunnerForMaven {
 
-internal class JavaTestRunnerForMaven : TestRunner {
-  override fun isApplicable(params: TestRunnerParams): Boolean {
-    return params.language == Language.JAVA
-           || params.language == Language.KOTLIN // TODO temporary solution for docker testing
-  }
-
-  override fun runTests(request: TestRunRequest): TestRunResult {
-    LOG.info("Running tests: ${request.tests.joinToString()}")
-    if (request.tests.isEmpty()) {
-      return TestRunResult(0, emptyList(), emptyList(), true, true, "")
-    }
-
-    val project = request.project
+  suspend fun run(project: Project, moduleTests: List<ModuleTests>): TestRunResult {
 
     val projectDir = project.guessProjectDir()!!
 
@@ -41,33 +19,10 @@ internal class JavaTestRunnerForMaven : TestRunner {
                                        /* pomFileName = */ "",
                                        /* goals = */ listOf("test"),
                                        /* explicitEnabledProfiles = */ emptyList<String>())
-    val deferred = CompletableDeferred<Int>()
-
-    val sb = StringBuilder()
-
-    val callback = ProgramRunner.Callback { descriptor ->
-      LOG.info("processStarted $descriptor")
-      val processHandler = descriptor.processHandler ?: error("processHandler is null")
-      processHandler.addProcessListener(object : ProcessListener {
-        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          sb.append(event.text)
-        }
-
-        override fun processTerminated(event: ProcessEvent) {
-          LOG.info("processTerminated. exitCode=${event.exitCode}")
-          deferred.complete(event.exitCode)
-        }
-
-        override fun processNotStarted() {
-          LOG.error("processNotStarted")
-          deferred.complete(-1)
-        }
-      })
-    }
 
     // in multi-module projects tests will be prefixed with module:test
-    request.tests.map { it.substringBeforeLast(":", "") }
-      .filter { it.isNotBlank() }
+    moduleTests
+      .mapNotNull { it.module }
       .also {
         if (it.isNotEmpty()) {
           params.projectsCmdOptionValues = it
@@ -75,28 +30,19 @@ internal class JavaTestRunnerForMaven : TestRunner {
       }
 
     val runnerSettings = MavenRunnerSettings().also {
-      if (request.tests.any()) {
-        //todo check
-        it.setVmOptions("-Dtest=${request.tests.joinToString(separator = ",") { it.substringAfterLast(":") }}")
-      }
+      //todo check
+      it.setVmOptions("-Dtest=${moduleTests.flatMap { it.tests }.joinToString(separator = ",")}")
     }
 
-    MavenRunConfigurationType.runConfiguration(project,
-                                               params,
-                                               null,
-                                               runnerSettings,
-                                               callback)
-
-    LOG.info("await for process termination")
-    val exitCode = runBlockingCancellable {
-      deferred.await()
+    val results = RunConfigurationResults.compute { callback ->
+      MavenRunConfigurationType.runConfiguration(project, params, null, runnerSettings, callback)
     }
 
-    val output = sb.toString()
+    val output = results.output
     val compilationSuccessful = MavenOutputParser.compilationSuccessful(output)
     val projectIsResolvable = MavenOutputParser.checkIfProjectIsResolvable(output)
     val (passed, failed) = MavenOutputParser.parse(output)
-    return TestRunResult(exitCode, passed, failed, compilationSuccessful, projectIsResolvable, output)
+    return TestRunResult(results.exitCode, passed, failed, compilationSuccessful, projectIsResolvable, output)
   }
 }
 

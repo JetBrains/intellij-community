@@ -30,6 +30,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
+    "//platform/smRunner",
   ],
   runtime_deps = [":java_resources"]
 )
@@ -60,6 +61,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinx-coroutines-test",
     "//java/testFramework",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
   ],
   runtime_deps = [":java_resources"]
 )
