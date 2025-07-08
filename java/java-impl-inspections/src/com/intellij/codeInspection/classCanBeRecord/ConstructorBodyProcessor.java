@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -248,7 +247,7 @@ final class ConstructorBodyProcessor {
     return resolved instanceof PsiField psiField && !psiField.hasModifierProperty(STATIC);
   }
 
-  private static boolean hasReferenceToContainingClass(@NotNull PsiClass containingClass, @Nullable PsiExpression expression) {
+  private static boolean hasReferenceToContainingClass(PsiClass containingClass, @Nullable PsiExpression expression) {
     if (expression == null) return false;
     Ref<Boolean> hasReferenceToClassUnderConstruction = new Ref<>(false);
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
