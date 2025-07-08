@@ -26,8 +26,9 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     var editor = context.editor
     val originalEditor = editor.getUserData(ORIGINAL_EDITOR)
-    var startOffset: Int
+    var startOffset: Int = -1
     var psiFile = context.file
+    val commandProcessor = CommandProcessor.getInstance()
     if (completionCommand.customPrefixMatcher("") == null) {
       if (originalEditor != null) {
         startOffset = originalEditor.second
@@ -37,14 +38,17 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
         Disposer.dispose(installedEditor)
       }
       else {
-        // Remove the dots and command text from the document
-        startOffset = removeCommandText(context)
+        commandProcessor.executeCommand(context.project, {
+          // Remove the dots and command text from the document
+          startOffset = removeCommandText(context)
+        }, commandProcessor.currentCommandName, commandProcessor.currentCommandGroupId)
       }
     }
     else {
       startOffset = context.tailOffset
     }
 
+    if (startOffset == -1) return
     // Execute the command
     val injectedLanguageManager = InjectedLanguageManager.getInstance(context.project)
 
@@ -55,9 +59,9 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     }
 
     ApplicationManager.getApplication().invokeLater {
-      CommandProcessor.getInstance().executeCommand(context.project, {
+      commandProcessor.runUndoTransparentAction( {
         completionCommand.execute(startOffset, psiFile, editor)
-      }, completionCommand.presentableName, completionCommand)
+      })
     }
   }
 

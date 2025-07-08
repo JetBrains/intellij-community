@@ -11,7 +11,9 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.AsyncDocumentation
 import com.intellij.platform.backend.documentation.DocumentationData
@@ -68,6 +70,38 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
+
+  fun testUndo() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          int y = 10;
+          int x =                           y.format<caret>;
+        } 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("format", ignoreCase = true) })
+    myFixture.checkResult("""
+      class A { 
+        void foo() {
+          int y = 10;
+            int x = y;
+        } 
+      }
+    """.trimIndent())
+    val editors = FileEditorManager.getInstance(project).getEditors(myFixture.file.virtualFile)
+    UndoManager.getInstance(project).undo(editors[0])
+    myFixture.checkResult("""
+      class A { 
+        void foo() {
+          int y = 10;
+          int x =                           y.format;
+        } 
+      }
+    """.trimIndent())
+  }
   fun testFormatOutside() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
