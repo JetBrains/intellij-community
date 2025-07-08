@@ -97,7 +97,10 @@ fun <T : WorkRequest> processRequests(
   var onClose = {}
   var exitCode: Int
   try {
-    runBlocking(Dispatchers.Default + OpenTelemetryContextElement(Context.root())) {
+    val parallelism = Runtime.getRuntime().availableProcessors()
+      .coerceAtLeast(2)  // Note(k15tfu): as per https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html, and
+      .coerceAtMost(14)  // as per https://youtrack.jetbrains.com/issue/IJI-2888
+    runBlocking(Dispatchers.Default.limitedParallelism(parallelism) + OpenTelemetryContextElement(Context.root())) {
       val tracer = if (serviceName == null) {
         System.err.println("worker started (no OpenTelemetry)")
         noopTracer
