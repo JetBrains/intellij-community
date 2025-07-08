@@ -24,7 +24,12 @@ class DebugMetadata private constructor(context: DefaultExecutionContext) :
         val coroutineStack = mutableListOf<MirrorOfStackFrame>()
         var loopContinuation: ObjectReference? = continuation
         while (loopContinuation != null) {
-            val continuationMirror = baseContinuationImpl.mirror(loopContinuation, context) ?: break
+            val continuationMirror = try {
+                baseContinuationImpl.mirror(loopContinuation, context)
+            } catch (e: Throwable) {
+                log.error("Could not fetch stack frame for $loopContinuation", e)
+                continue
+            } ?: break
             coroutineStack.add(MirrorOfStackFrame(continuationMirror))
             loopContinuation = continuationMirror.nextContinuation
         }
