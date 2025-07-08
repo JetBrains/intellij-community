@@ -997,6 +997,7 @@ com.intellij.psi.CommonClassNames
 - sf:JAVA_LANG_FUNCTIONAL_INTERFACE:java.lang.String
 - sf:JAVA_LANG_INTEGER:java.lang.String
 - sf:JAVA_LANG_INVOKE_MH_POLYMORPHIC:java.lang.String
+- sf:JAVA_LANG_IO:java.lang.String
 - sf:JAVA_LANG_ITERABLE:java.lang.String
 - sf:JAVA_LANG_LONG:java.lang.String
 - sf:JAVA_LANG_MATH:java.lang.String

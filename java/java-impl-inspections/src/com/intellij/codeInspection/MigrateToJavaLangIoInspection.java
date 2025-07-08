@@ -119,7 +119,7 @@ public final class MigrateToJavaLangIoInspection extends AbstractBaseJavaLocalIn
     PsiReferenceExpression methodExpr = methodCall.getMethodExpression();
     String methodName = methodExpr.getReferenceName();
     if (methodName == null) return;
-    PsiElement replaced = new CommentTracker().replaceAndRestoreComments(methodExpr, "java.lang.IO." + methodName);
+    PsiElement replaced = new CommentTracker().replaceAndRestoreComments(methodExpr, JAVA_LANG_IO + "." + methodName);
     if (replaced instanceof PsiReferenceExpression replacedReferenceExpression) {
       JavaCodeStyleManager.getInstance(replacedReferenceExpression.getProject()).shortenClassReferences(replacedReferenceExpression);
     }

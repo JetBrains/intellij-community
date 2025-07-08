@@ -23,6 +23,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 /**
  * This interface represents a condition upon method call
  *
@@ -342,11 +345,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
           if (method != null) return false;
           PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
           if (!(qualifierExpression instanceof PsiReferenceExpression qualifierRefExpression)) return false;
-          if (qualifierRefExpression.getQualifierExpression() != null) return false;
           String referenceName = qualifierRefExpression.getReferenceName();
           if (referenceName == null && myClassName.isEmpty()) return true;
           if (referenceName == null) return false;
-          if (!myClassName.endsWith(referenceName)) return false;
+          if (!(myClassName.endsWith("." + referenceName) ||
+                myClassName.equals(referenceName))) {
+            return false;
+          }
           PsiElement resolvedQualifier = qualifierRefExpression.resolve();
           if (resolvedQualifier != null) return false;
           return true;
@@ -413,9 +418,16 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
     private static boolean expressionTypeMatches(@Nullable String type, @NotNull PsiExpression argument) {
       if (type == null) return true;
+      if (type.endsWith("...")) {
+        type = type.substring(0, type.length() - 3);
+      }
       PsiType psiType = argument.getType();
       if (psiType == null) return false;
-      return psiType.equalsToText(type) || PsiTypesUtil.classNameEquals(psiType, type);
+      return psiType.equalsToText(type) ||
+             PsiTypesUtil.classNameEquals(psiType, type) ||
+             JAVA_LANG_OBJECT.equals(type) ||
+             //small optimization, because it can be slow and String is popular
+             (!JAVA_LANG_STRING.equals(type) && InheritanceUtil.isInheritor(psiType, type));
     }
 
     @Contract(pure = true)
@@ -458,12 +470,25 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     private boolean unresolvedArgumentListMatch(@NotNull PsiExpressionList expressionList) {
       if (myParameters == null) return true;
       PsiExpression[] args = expressionList.getExpressions();
+      if (myParameters.length == 0 && args.length != 0) return false;
       if (myParameters.length > 0) {
-        if (args.length < myParameters.length - 1) return false;
+        String lastParameter = myParameters[myParameters.length - 1];
+        if (lastParameter != null && lastParameter.endsWith("...")) {
+          if (args.length < myParameters.length - 1) return false;
+        }
+        else {
+          if (args.length != myParameters.length) return false;
+        }
       }
-      for (int i = 0; i < Math.min(myParameters.length, args.length); i++) {
+      for (int i = 0; i < args.length; i++) {
         PsiExpression arg = args[i];
-        String parameter = myParameters[i];
+        String parameter;
+        if (i < myParameters.length) {
+          parameter = myParameters[i];
+        }
+        else {
+          parameter = myParameters[myParameters.length - 1];
+        }
         if (!expressionTypeMatches(parameter, arg)) return false;
       }
       return true;

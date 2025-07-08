@@ -1483,7 +1483,7 @@ public final class ExpressionUtils {
           yield (!hasCharArrayParameter(method) && (JAVA_UTIL_FORMATTER.equals(className) ||
                                                     InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_STREAM) ||
                                                     InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_WRITER))) ||
-                "java.lang.IO".equals(className);
+                JAVA_LANG_IO.equals(className);
         }
         case "printf", "format" -> {
           if (arguments.length < 1) yield false;
