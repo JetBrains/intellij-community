@@ -108,11 +108,14 @@ internal class SearchEverywhereMLSearchSession(
         }
       }
 
+      val sessionEndTime = System.currentTimeMillis()
+      val sessionDuration = (sessionEndTime - sessionStartTime).toInt()
+
       logger.onItemSelected(
         project, sessionId, itemIdProvider,
         state, featureCache, indexes, selectedItems, closePopup,
         performanceTracker.timeElapsed, mixedListInfo,
-        elementsProvider
+        elementsProvider, sessionDuration
       )
     }
 
@@ -126,11 +129,15 @@ internal class SearchEverywhereMLSearchSession(
     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
   ) {
     val state = getCurrentSearchState()
+
+    val sessionEndTime = System.currentTimeMillis()
+    val sessionDuration = (sessionEndTime - sessionStartTime).toInt()
+
     if (state != null && state.tab.isLoggingEnabled()) {
       logger.onSearchFinished(
         project, sessionId, itemIdProvider,
         state, featureCache, performanceTracker.timeElapsed, mixedListInfo,
-        elementsProvider
+        elementsProvider, sessionDuration
       )
     }
 

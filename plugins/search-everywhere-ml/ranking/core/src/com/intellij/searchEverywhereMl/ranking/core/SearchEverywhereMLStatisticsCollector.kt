@@ -40,12 +40,13 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                               closePopup: Boolean,
                               timeToFirstResult: Int,
                               mixedListInfo: SearchEverywhereMixedListInfo,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+                              elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+                              sessionDurationMs: Int) {
     if (!isLoggingEnabled) return
     val elements = elementsProvider.invoke()
     val additionalEvents = buildList {
       addAll(getSelectedElementsEvents(selectedIndices, elements, elementIdProvider, selectedItems))
-      addAll(getOnFinishEvents(closePopup))
+      addAll(getOnFinishEvents(closePopup, sessionDurationMs))
     }
     reportElements(
       project = project,
@@ -68,10 +69,11 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                 featureCache: SearchEverywhereMlFeaturesCache,
                                 timeToFirstResult: Int,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
-                                elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+                                elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+                                sessionDurationMs: Int) {
     if (!isLoggingEnabled) return
     val elements = elementsProvider.invoke()
-    val additionalEvents = getOnFinishEvents(closePopup = true)
+    val additionalEvents = getOnFinishEvents(closePopup = true, sessionDurationMs)
     reportElements(
       project = project,
       eventId = SESSION_FINISHED,
@@ -153,12 +155,17 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  private fun getOnFinishEvents(closePopup: Boolean): List<EventPair<Boolean>> {
+  private fun getOnFinishEvents(closePopup: Boolean, sessionDurationMs: Int): List<EventPair<*>> {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
-    return listOf(
-      CLOSE_POPUP_KEY.with(closePopup),
-      FORCE_EXPERIMENT_GROUP.with(experimentFromRegistry)
-    )
+    return buildList {
+      add(CLOSE_POPUP_KEY.with(closePopup))
+      add(FORCE_EXPERIMENT_GROUP.with(experimentFromRegistry))
+
+      if (closePopup) {
+        // The following fields will be reported only when the Search Everywhere session has finished
+        add(SESSION_DURATION.with(sessionDurationMs))
+      }
+    }
   }
 
   private fun getElementsEvents(project: Project?,
@@ -278,13 +285,15 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 119, MLSE_RECORDER_ID)
+  private val GROUP = EventLogGroup("mlse.log", 120, MLSE_RECORDER_ID)
 
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
   private val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
   private val EXPERIMENT_VERSION = EventFields.Int("experimentVersion")
   private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
+  @VisibleForTesting
+  internal val SESSION_DURATION = EventFields.Int("sessionDuration", "Duration of the Search Everywhere session in ms")
   private val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("timeToFirstResult")
 
   // context fields
@@ -334,7 +343,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   // events
   @VisibleForTesting
-  val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
+  val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP, SESSION_DURATION)
   val SEARCH_RESTARTED = registerEvent("searchRestarted")
 
   private val CLASSES_WITHOUT_KEY_PROVIDERS_FIELD = ClassListEventField("unsupported_classes")
