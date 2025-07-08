@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
@@ -63,13 +64,19 @@ interface CodeReviewChangeListViewModel {
     fun setGrouping(grouping: Collection<String>)
   }
 
+  @ApiStatus.Experimental
+  interface WithViewedState : WithDetails {
+    @RequiresEdt
+    fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
+  }
+
   sealed interface SelectionRequest {
     data object All : SelectionRequest
     data class OneChange(val change: RefComparisonChange) : SelectionRequest
   }
 
   companion object {
-    val DATA_KEY = DataKey.create<CodeReviewChangeListViewModel>("Code.Review.Changes.List.ViewModel")
+    val DATA_KEY: DataKey<CodeReviewChangeListViewModel> = DataKey.create<CodeReviewChangeListViewModel>("Code.Review.Changes.List.ViewModel")
   }
 }
 

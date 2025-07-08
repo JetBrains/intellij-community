@@ -24,14 +24,15 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputation
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 
 @ApiStatus.Experimental
-interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails, CodeReviewChangeListViewModel.WithGrouping {
+interface GHPRChangeListViewModel :
+  CodeReviewChangeListViewModel.WithDetails,
+  CodeReviewChangeListViewModel.WithGrouping,
+  CodeReviewChangeListViewModel.WithViewedState {
+
   val isOnLatest: Boolean
 
-  @RequiresEdt
-  fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
-
   companion object {
-    val DATA_KEY = DataKey.create<GHPRChangeListViewModel>("GitHub.PullRequest.Details.Changes.List.ViewModel")
+    val DATA_KEY: DataKey<GHPRChangeListViewModel> = DataKey.create<GHPRChangeListViewModel>("GitHub.PullRequest.Details.Changes.List.ViewModel")
   }
 }
 

@@ -823,6 +823,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 - a:getGrouping():kotlinx.coroutines.flow.StateFlow
 - a:setGrouping(java.util.Collection):V
+*:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$WithViewedState
+- com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$WithDetails
+- a:setViewedState(java.lang.Iterable,Z):V
 *f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelKt
 - sf:isViewedStateForAllChanges(com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$WithDetails,java.lang.Iterable,Z):Z
 *c:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
