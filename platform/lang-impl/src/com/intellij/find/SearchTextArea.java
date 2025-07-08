@@ -33,6 +33,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
@@ -45,11 +46,14 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
@@ -65,6 +69,8 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
 
   private final JTextArea myTextArea;
   private final boolean mySearchMode;
+  private final Consumer<Boolean> onShowSearchHistory;
+  private final Consumer<Boolean> onSelectSearchHistoryItem;
   private final JPanel myIconsPanel = new NonOpaquePanel();
   private final ActionButton myNewLineButton;
   private final ActionButton myClearButton;
@@ -79,12 +85,19 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
    */
   @Deprecated(forRemoval = true)
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, @SuppressWarnings("unused") boolean infoMode) {
-    this (textArea, searchMode);
+    this (textArea, searchMode, null, null);
   }
 
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode) {
+    this (textArea, searchMode, null, null);
+  }
+
+  @ApiStatus.Internal
+  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, Consumer<Boolean> onShowSearchHistory, Consumer<Boolean> onSelectSearchHistoryItem) {
     myTextArea = textArea;
     mySearchMode = searchMode;
+    this.onShowSearchHistory = onShowSearchHistory;
+    this.onSelectSearchHistoryItem = onSelectSearchHistoryItem;
     updateFont();
 
     myTextArea.addPropertyChangeListener("background", this);
@@ -359,7 +372,10 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       historyList.setPreferredSize(size);
       historyList.getAccessibleContext()
         .setAccessibleName(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"));
-      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
+      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null, () -> {
+        if (onSelectSearchHistoryItem != null) onSelectSearchHistoryItem.accept(mySearchMode);
+      });
+      if (onShowSearchHistory != null) onShowSearchHistory.accept(mySearchMode);
     }
   }
 

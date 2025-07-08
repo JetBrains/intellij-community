@@ -107,6 +107,8 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -484,6 +486,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       CommandProcessor.getInstance().executeCommand(myProject, () -> {
         for (Map.Entry<Integer, Usage> entry : usages.entrySet()) {
           try {
+            FindUsagesCollector.replaceOneInvoked();
             boolean success = ReplaceInProjectManager.getInstance(myProject)
               .replaceSingleUsage(entry.getValue(), myHelper.getModel(), Collections.emptySet());
             if (!success) return;
@@ -569,8 +572,14 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     myReplaceComponent.setColumns(25);
     myReplaceComponent.setRows(1);
     myReplaceComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.replace.accessible.name"));
-    mySearchTextArea = new SearchTextArea(mySearchComponent, true);
-    myReplaceTextArea = new SearchTextArea(myReplaceComponent, false);
+    Consumer<Boolean> onShow = (Boolean isFind) -> {
+      FindUsagesCollector.searchHistoryShown(isFind);
+    };
+    Consumer<Boolean> onSelect = (Boolean isFind) -> {
+      FindUsagesCollector.searchHistoryItemSelected(isFind);
+    };
+    mySearchTextArea = new SearchTextArea(mySearchComponent, true, onShow, onSelect);
+    myReplaceTextArea = new SearchTextArea(myReplaceComponent, false, onShow, onSelect);
     myCaseSensitiveAction =
       new MySwitchStateToggleAction("find.popup.case.sensitive", ToggleOptionName.CaseSensitive,
                                     AllIcons.Actions.MatchCase, AllIcons.Actions.MatchCaseHovered, AllIcons.Actions.MatchCaseSelected,
@@ -1180,6 +1189,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
 
     AtomicInteger resultsCount = new AtomicInteger();
+    AtomicLong startTime = new AtomicLong();
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
 
     Project project = myProject;
@@ -1187,6 +1197,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       project, FindBundle.message("find.usages.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        startTime.set(System.currentTimeMillis());
+        AtomicLong timeToFirstResult = new AtomicLong(-1);
         GlobalSearchScope scope = ReadAction.nonBlocking(
           () -> FindInProjectUtil.getGlobalSearchScope(project, myHelper.myPreviousModel)
         ).wrapProgress(indicator).executeSynchronously();
@@ -1232,6 +1244,12 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             newItem = recentItem.withPresentation(recentUsagePresentation);
           }
           recentItemRef.set(new WeakReference<>(newItem));
+
+          if (timeToFirstResult.get() == -1) {
+            long firstResultTime = System.currentTimeMillis() - startTime.get();
+            timeToFirstResult.set(firstResultTime);
+            FindUsagesCollector.recordFirstResultTime(firstResultTime);
+          }
 
           ApplicationManager.getApplication().invokeLater(() -> {
             if (isCancelled()) {
@@ -1295,11 +1313,12 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       }
 
       public void onFinish() {
+        FindUsagesCollector.recordSearchFinished(System.currentTimeMillis() - startTime.get(), resultsCount.get(), ShowUsagesAction.getUsagesPageSize());
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!isCancelled()) {
             boolean isEmpty = resultsCount.get() == 0;
             if (isEmpty) {
-              showEmptyText(FindBundle.message("message.nothingFound"));
+              showEmptyText(FindBundle.message("message.nothingFound"), true);
             }
           }
           onStop(hash);
@@ -1357,7 +1376,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     header.infoLabel.setText(null);
   }
 
-  private void showEmptyText(@NlsContexts.StatusText @NotNull String message) {
+  private void showEmptyText(@NlsContexts.StatusText @NotNull String message, boolean isFinish) {
     StatusText emptyText = myResultsPreviewTable.getEmptyText();
     emptyText.clear();
     FindModel model = myHelper.getModel();
@@ -1450,6 +1469,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
                              __ -> resetAllFilters()).appendText(" " + getOptionText(myResetFiltersAction, true));
       }
     }
+    if (isFinish && message.startsWith(FindBundle.message("message.nothingFound"))) {
+      FindUsagesCollector.recordNothingFoundShown(!usedOptions.isEmpty());
+    }
   }
 
   private void resetAllFilters() {
@@ -1521,7 +1543,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       myLoadingHash = 0;
 
       //noinspection HardCodedStringLiteral
-      showEmptyText(message);
+      showEmptyText(message, false);
       if(backendValidator.isFinished) {
         header.loadingIcon.setIcon(EmptyIcon.ICON_16);
       }
