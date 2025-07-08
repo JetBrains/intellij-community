@@ -1,0 +1,30 @@
+{
+  "language": "Java",
+  "projectPath": "../ml-eval/ultimate",
+  "outputDir": "bin/ml-eval-insight-java-output",
+  "strategy": {
+    "collectContextOnly": false,
+    "insightsFilePath": "../mockInsights/insights dataset.csv"
+  },
+  "actions": {
+    "evaluationRoots": [
+      "community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java"
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 10,
+    "filesLimit": 5,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Java_FLCC_-_INSIGHTS",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}
