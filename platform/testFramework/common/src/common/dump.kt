@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common
 
+import com.intellij.testFramework.TeamCityLogger
 import com.intellij.util.MemoryDumpHelper
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.UUID
+import java.util.*
 
 internal const val HEAP_DUMP_IS_PUBLISHED: String = "Heap dump is published to "
 
@@ -36,7 +37,6 @@ fun publishArtifact(fileName: String, block: (Path) -> Unit): Path {
     e.printStackTrace()
   }
 
-  val dumpPath = dumpFile.toAbsolutePath().toString()
-  println("##teamcity[publishArtifacts '$dumpPath']")
+  TeamCityLogger.publishArtifact(dumpFile.toAbsolutePath(), null)
   return dumpFile
 }
