@@ -295,11 +295,6 @@ com.intellij.modcommand.ModPsiUpdater
 - getTimestamp():I
 - setState(com.intellij.openapi.command.undo.ImmutableActionChangeRange):V
 - toImmutable(Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
-a:com.intellij.openapi.command.undo.UndoManager
-- *a:getNextRedoNanoTime(com.intellij.openapi.fileEditor.FileEditor):J
-- *a:getNextUndoNanoTime(com.intellij.openapi.fileEditor.FileEditor):J
-- *a:isNextRedoAskConfirmation(com.intellij.openapi.fileEditor.FileEditor):Z
-- *a:isNextUndoAskConfirmation(com.intellij.openapi.fileEditor.FileEditor):Z
 a:com.intellij.openapi.fileEditor.FileEditorManager
 - *a:canOpenFile(com.intellij.openapi.vfs.VirtualFile):Z
 - *a:getCurrentFile():com.intellij.openapi.vfs.VirtualFile
