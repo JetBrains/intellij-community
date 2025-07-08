@@ -95,7 +95,10 @@ class KotlinClassRenderer : ClassRenderer() {
     ): List<Method>? {
         val gettersToShow = calculateGettersToShowUsingMetadata(methods, context) ?: return null
         return methods
-            .filter { method -> gettersToShow.any { it.name == method.name() && it.descriptor == method.signature() } }
+            .filter { method ->
+                method.argumentTypeNames().isEmpty() && // only getter methods without arguments for now
+                gettersToShow.any { it.name == method.name() && it.descriptor == method.signature() }
+            }
             .distinctBy { it.name() }
     }
 
