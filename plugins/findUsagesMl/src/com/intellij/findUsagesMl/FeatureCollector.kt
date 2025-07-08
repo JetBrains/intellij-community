@@ -11,7 +11,7 @@ internal object FindUsagesFileRankerFeatureCollector : CounterUsagesCollector() 
   const val eventGroupId: String = "findUsages.fileRanking"
   const val fusEventName: String = "find_usages_file_ranking"
 
-  private val GROUP = EventLogGroup(eventGroupId, 1, recorderId)
+  private val GROUP = EventLogGroup(eventGroupId, 2, recorderId)
 
   val mlLogger = withOneEvent(
     fusEventName = fusEventName,

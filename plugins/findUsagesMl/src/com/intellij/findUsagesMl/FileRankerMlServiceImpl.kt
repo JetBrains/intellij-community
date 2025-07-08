@@ -16,6 +16,9 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
+const val MAX_LOG_USAGES: Int = 75
+const val MAX_LOG_NO_USAGES: Int = MAX_LOG_USAGES
+
 @Service(Service.Level.APP)
 class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : FileRankerMlService {
   companion object {
@@ -45,6 +48,9 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
                                  callSource: FileRankerMlService.CallSource) {
     val finishedSessionData = sessionData.get()
     clear()
+    val timeStamp = System.currentTimeMillis()
+    val recentFilesList = getRecentFilesList(project)
+
     coroutineScope.launch {
       val sessionId = finishedSessionCounter.incrementAndGet()
 
@@ -57,18 +63,57 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
         finishedSessionCounter.set(sessionFixVal)
       } else {
         // VALID SESSION
-        val timeStamp = System.currentTimeMillis()
-        val recentFilesList = getRecentFilesList(project)
-
         val queryFiles = finishedSessionData.queryFiles()
-        finishedSessionData.candidateFiles().forEach { logFeatures(file = it,
-                                                                   queryNames = finishedSessionData.queryNames,
-                                                                   queryFiles = queryFiles,
-                                                                   isUsage = foundUsageFiles.contains(it),
-                                                                   recentFilesList = recentFilesList,
-                                                                   timeStamp = timeStamp,
-                                                                   sessionId = sessionId,
-                                                                   isSearchValid = true) }
+
+        var candidatesWithUsage = finishedSessionData.candidateFiles().filter { foundUsageFiles.contains(it) }
+        var candidatesNoUsage = finishedSessionData.candidateFiles().filter { !foundUsageFiles.contains(it) }
+
+        val usageFilesCount = candidatesWithUsage.size
+
+        if (candidatesWithUsage.size > MAX_LOG_USAGES) {
+          // log a random sample from usage files (if too many)
+          candidatesWithUsage = candidatesWithUsage.shuffled().take(MAX_LOG_USAGES)
+        }
+        if (candidatesNoUsage.size > MAX_LOG_NO_USAGES) {
+          // log a random sample from non-usage files (if too many)
+          candidatesNoUsage = candidatesNoUsage.shuffled().take(MAX_LOG_NO_USAGES)
+        }
+
+        // log features from all candidates that contain a usage
+        candidatesWithUsage.forEach {
+          logFeatures(file = it,
+                      queryNames = finishedSessionData.queryNames,
+                      queryFiles = queryFiles,
+                      isUsage = true,
+                      recentFilesList = recentFilesList,
+                      timeStamp = timeStamp,
+                      sessionId = sessionId,
+                      isSearchValid = true,
+                      numberOfUsageFiles = usageFilesCount,
+                      numberOfCandidates = finishedSessionData.candidateFiles().size)
+        }
+        // log features from all candidates that do not contain a usage
+        candidatesNoUsage.forEach {
+          logFeatures(file = it,
+                      queryNames = finishedSessionData.queryNames,
+                      queryFiles = queryFiles,
+                      isUsage = false,
+                      recentFilesList = recentFilesList,
+                      timeStamp = timeStamp,
+                      sessionId = sessionId,
+                      isSearchValid = true,
+                      numberOfUsageFiles = usageFilesCount,
+                      numberOfCandidates = finishedSessionData.candidateFiles().size)
+        }
+
+        //finishedSessionData.candidateFiles().forEach { logFeatures(file = it,
+        //                                                           queryNames = finishedSessionData.queryNames,
+        //                                                           queryFiles = queryFiles,
+        //                                                           isUsage = foundUsageFiles.contains(it),
+        //                                                           recentFilesList = recentFilesList,
+        //                                                           timeStamp = timeStamp,
+        //                                                           sessionId = sessionId,
+        //                                                           isSearchValid = true) }
       }
     }
   }
@@ -81,12 +126,16 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
                           timeStamp: Long,
                           sessionId: Long,
                           isSearchValid: Boolean,
-                          activeSessionId: Long? = null) {
+                          activeSessionId: Long? = null,
+                          numberOfUsageFiles: Int? = null,
+                          numberOfCandidates: Int? = null) {
     val tree = MLLogsTree(
       analysis = analysisProvider.provideAnalysisTargets(
         info = FindUsagesFileRankingAnalysisInfo(isUsage = isUsage,
                                                  timestamp = timeStamp,
                                                  isSearchValid = isSearchValid,
+                                                 numberOfUsageFiles = numberOfUsageFiles,
+                                                 numberOfCandidates = numberOfCandidates,
                                                  activeSessionId = activeSessionId,
                                                  finishSessionId = sessionId)),
       features = featureProvider.provideFeatures(
