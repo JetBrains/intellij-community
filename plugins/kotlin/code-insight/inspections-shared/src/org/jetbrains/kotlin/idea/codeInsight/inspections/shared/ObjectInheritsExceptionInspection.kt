@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -20,10 +21,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtUserType
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 
 internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -72,7 +70,13 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                 .mapNotNull {
                     if (it !is KtSimpleNameReference) return@mapNotNull null
                     val expression = it.element
-                    if (expression.parent is KtUserType) return@mapNotNull null
+
+                    if (expression.parent is KtUserType ||
+                        PsiTreeUtil.getParentOfType(expression, KtImportDirective::class.java, false, KtBlockExpression::class.java) != null
+                    ) {
+                        return@mapNotNull null
+                    }
+
                     updater.getWritable(expression)
                 }.forEach {
                     val referencedName = it.getReferencedName()
