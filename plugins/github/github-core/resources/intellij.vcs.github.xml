@@ -132,8 +132,10 @@
     </action>
     <action id="Github.Clone"
             class="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneRepositoryAction"
-            icon="AllIcons.Vcs.Vendors.Github"
-    />
+            icon="AllIcons.Vcs.Vendors.Github">
+      <override-text place="MainMenu"/>
+      <override-text place="popup@GoToAction"/>
+    </action>
     <group id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
       <override-text place="EditorTabPopup"/>
       <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>

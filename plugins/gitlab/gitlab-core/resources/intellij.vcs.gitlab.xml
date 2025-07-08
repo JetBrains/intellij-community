@@ -118,7 +118,10 @@
     </action>
     <action id="GitLab.Clone"
             class="org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneAction"
-            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
+      <override-text place="MainMenu"/>
+      <override-text place="popup@GoToAction"/>
+    </action>
 
     <action id="GitLab.Create.Snippet"
             class="org.jetbrains.plugins.gitlab.snippets.GitLabCreateSnippetAction"
