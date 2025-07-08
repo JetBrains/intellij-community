@@ -43,7 +43,6 @@ class KtSymbolFromIndexProvider(
 
     context(KaSession)
     private fun <T : PsiElement> T.isAcceptable(psiFilter: (T) -> Boolean): Boolean {
-        ProgressManager.checkCanceled()
         if (!psiFilter(this)) return false
 
         if (kotlinFqName?.isExcludedFromAutoImport(project, file) == true) return false
