@@ -72,18 +72,18 @@ interface EditorCustomElementRenderer {
   fun getText(): String?
 }
 
-@Remote("com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer")
+@Remote("com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer")
 interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
 }
 
-@Remote("com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList")
+@Remote("com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList")
 interface InlayPresentationList {
   fun getEntries(): Array<TextInlayPresentationEntry>
 }
 
 
-@Remote("com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry")
+@Remote("com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry")
 interface TextInlayPresentationEntry {
   fun getText(): String
 }
