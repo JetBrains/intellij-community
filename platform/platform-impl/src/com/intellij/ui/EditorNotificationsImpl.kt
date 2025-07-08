@@ -219,9 +219,15 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
       return
     }
 
+    // we use ugly `project.isDisposed` because a light project is not disposed in tests
     val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
       // delay for debouncing
       delay(100)
+
+      // light project is not disposed in tests
+      if (project.isDisposed) {
+        return@launch
+      }
 
       // Please don't remove this readAction {} here, it's necessary for checking of validity of injected files,
       // and many unpleasant exceptions appear in case if the validity check is not wrapped.
@@ -229,15 +235,13 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
         return@launch
       }
 
-      // light project is not disposed in tests
-      if (project.isDisposed) {
-        return@launch
-      }
-
       coroutineContext.ensureActive()
       val point = EditorNotificationProvider.EP_NAME.getPoint(project) as ExtensionPointImpl<EditorNotificationProvider>
       for (adapter in point.sortedAdapters.toTypedArray()) {
         coroutineContext.ensureActive()
+        if (project.isDisposed) {
+          return@launch
+        }
 
         try {
           val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
@@ -255,7 +259,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
 
           val componentProvider = result.orElse(null)
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            if (!file.isValid) {
+            if (!file.isValid || project.isDisposed) {
               return@withContext
             }
             for (fileEditor in fileEditors) {
@@ -266,7 +270,15 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
         catch (_: IndexNotReadyException) {
         }
         catch (e: CancellationException) {
-          throw e
+          if (coroutineContext.isActive) {
+            // light project where scope is not canceled for a temporarily disposed project
+            @Suppress("IncorrectCancellationExceptionHandling")
+            logger<EditorNotificationsImpl>().debug("Ignore cancellation exception (error=${e}, project=$project)")
+            break
+          }
+          else {
+            throw e
+          }
         }
         catch (e: Exception) {
           val pluginException = if (e is PluginException) e else PluginException(e, adapter.pluginDescriptor.pluginId)
