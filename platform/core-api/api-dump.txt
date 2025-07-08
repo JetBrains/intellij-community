@@ -397,6 +397,7 @@ com.intellij.openapi.application.Application
 - exit(Z,Z,Z,I):V
 - a:getDefaultModalityState():com.intellij.openapi.application.ModalityState
 - a:getIdleTime():J
+- a:getMessageBus():com.intellij.util.messages.MessageBus
 - a:getModalityStateForComponent(java.awt.Component):com.intellij.openapi.application.ModalityState
 - a:getStartTime():J
 - a:hasWriteAction(java.lang.Class):Z
@@ -808,6 +809,7 @@ com.intellij.openapi.project.Project
 - a:getBaseDir():com.intellij.openapi.vfs.VirtualFile
 - a:getBasePath():java.lang.String
 - a:getLocationHash():java.lang.String
+- a:getMessageBus():com.intellij.util.messages.MessageBus
 - a:getName():java.lang.String
 - getPresentableUrl():java.lang.String
 - a:getProjectFile():com.intellij.openapi.vfs.VirtualFile

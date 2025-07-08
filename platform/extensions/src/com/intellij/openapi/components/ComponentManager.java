@@ -58,6 +58,12 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @ApiStatus.Internal
   boolean isInjectionForExtensionSupported();
 
+  /**
+   * @deprecated not all implementations support this functionality; 
+   * call {@link com.intellij.openapi.application.Application#getMessageBus()} or {@link com.intellij.openapi.project.Project#getMessageBus()} 
+   * instead.
+   */
+  @Deprecated
   @NotNull MessageBus getMessageBus();
 
   /**

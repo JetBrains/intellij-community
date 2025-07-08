@@ -10,6 +10,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
+import com.intellij.util.messages.MessageBus;
 import kotlin.Pair;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -638,6 +639,12 @@ public interface Application extends ComponentManager {
   boolean isInternal();
 
   boolean isEAP();
+
+  /**
+   * Provides access to the application-level {@link MessageBus} instance to send or receive events.
+   */
+  @Override
+  @NotNull MessageBus getMessageBus();
 
   @ApiStatus.Internal
   default boolean isExitInProgress() {
