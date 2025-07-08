@@ -61,7 +61,7 @@ object Execution {
     DataPlacement.AdditionalText(AIA_USER_PROMPT),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.Text()
+      DataRenderer.Text(wrapping = true),
     )
   )
 
