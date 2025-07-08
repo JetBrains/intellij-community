@@ -36,6 +36,10 @@ public class MigrateToJavaLangIoInspectionTest extends LightJavaCodeInsightFixtu
     doNotFind(InspectionsBundle.message("fix.all.inspection.problems.in.file", JavaBundle.message("inspection.migrate.to.java.lang.io.name")));
   }
 
+  public void testPrintStream() {
+    doNotFind(InspectionsBundle.message("fix.all.inspection.problems.in.file", JavaBundle.message("inspection.migrate.to.java.lang.io.name")));
+  }
+
   private void doNotFind(String message) {
     addIOClass(myFixture);
     MigrateToJavaLangIoInspection inspection = new MigrateToJavaLangIoInspection();

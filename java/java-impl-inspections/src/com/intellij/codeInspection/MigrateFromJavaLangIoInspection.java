@@ -11,14 +11,16 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_IO;
+
 public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final CallMatcher IO_PRINT =
     CallMatcher.anyOf(
-      CallMatcher.staticCall("java.lang.IO", "println")
+      CallMatcher.staticCall(JAVA_LANG_IO, "println")
         .parameterCount(0)
         .allowUnresolved(),
-      CallMatcher.staticCall("java.lang.IO", "println", "print")
+      CallMatcher.staticCall(JAVA_LANG_IO, "println", "print")
         .parameterCount(1)
         .allowUnresolved()
     );

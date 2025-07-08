@@ -8,6 +8,7 @@ import com.intellij.codeInspection.MigrateFromJavaLangIoInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class MigrateFromJavaLangIoInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -31,8 +32,17 @@ public class MigrateFromJavaLangIoInspectionTest extends LightJavaCodeInsightFix
   public void testPrintUnresolved() { doTest("Replace with 'System.out.print()'"); }
 
   public void testPrintArrayChar() {
+    doNotFind(getFixAllMessage());
+  }
+
+  private static @Nls @NotNull String getFixAllMessage() {
+    return InspectionsBundle.message("fix.all.inspection.problems.in.file",
+                                     JavaBundle.message("inspection.migrate.from.java.lang.io.name"));
+  }
+
+  public void testPartialQualifier() {
     doNotFind(
-      InspectionsBundle.message("fix.all.inspection.problems.in.file", JavaBundle.message("inspection.migrate.to.java.lang.io.name")));
+      getFixAllMessage());
   }
 
   private void doNotFind(String message) {
