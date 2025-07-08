@@ -104,7 +104,7 @@ class GradleScriptRefinedConfigurationProvider(
     ) {
         val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
         val virtualFileCache = ScriptVirtualFileCache()
-        val dependencyFactory = ScriptDependencyFactory(this, configurations, virtualFileCache)
+        val dependencyFactory = ScriptDependencyFactory(this, configurations)
 
         for ((scriptFile, configurationWithSdk) in configurations) {
             val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
@@ -193,60 +193,31 @@ class GradleScriptRefinedConfigurationProvider(
 
     inner class ScriptDependencyFactory(
         private val entityStorage: MutableEntityStorage,
-        scripts: Map<VirtualFile, ScriptConfigurationWithSdk>,
-        virtualFileCache: ScriptVirtualFileCache,
+        scripts: Map<VirtualFile, ScriptConfigurationWithSdk>
     ) {
-        private val nameCache = HashMap<String, Set<VirtualFile>>()
-
-        init {
-            val classes = scripts.mapNotNull { it.value.scriptConfiguration.valueOrNull() }.flatMap {
-                it.dependenciesClassPath
-            }.toSet()
-
-            classes.mapNotNull { virtualFileCache.findVirtualFile(it.path) }.forEach {
-                nameCache.compute(it.name) { _, list ->
-                    (list ?: emptySet()) + it
-                }
-            }
-        }
+        private val nameCache: Map<String, Int> = scripts.asSequence()
+            .mapNotNull { it.value.scriptConfiguration.valueOrNull() }
+            .flatMap { it.dependenciesClassPath }
+            .distinct()
+            .groupingBy { it.name }
+            .eachCount()
 
         fun get(file: VirtualFile, source: KotlinScriptEntitySource): LibraryDependency {
-            val filesWithSameName = nameCache[file.name]
-            val root = listOf(file.compiledLibraryRoot(project))
-
-            return if (filesWithSameName == null || filesWithSameName.size == 1) {
-                entityStorage.getOrCreateLibrary(file.name, root, source)
-            } else {
-                val commonAncestor = findCommonAncestor(filesWithSameName.map { it.path })
-                if (commonAncestor == null) {
-                    entityStorage.getOrCreateLibrary(file.name, root, source)
-                } else {
-                    val libraryName = file.path.replace("$commonAncestor/", "")
-                    entityStorage.getOrCreateLibrary(libraryName, root, source)
-                }
-            }
+            val libraryName = resolveLibraryName(file)
+            val roots = listOf(file.compiledLibraryRoot(project))
+            return entityStorage.getOrCreateLibrary(libraryName, roots, source)
         }
 
-        private fun findCommonAncestor(paths: Collection<String>): String? {
-            if (paths.isEmpty()) return null
+        private fun resolveLibraryName(file: VirtualFile): String {
+            val filesWithSameName = nameCache[file.name] ?: return file.name
+            if (filesWithSameName == 1) return file.name
+            val path = file.path.substringAfterLastOrNull(GradleConstants.GRADLE_CACHE_DIR_NAME) ?: return file.path
+            return GradleConstants.GRADLE_CACHE_DIR_NAME + path
+        }
 
-            val splitPaths = paths.map { it.split("/") }
-            val shortestSize = splitPaths.minOf { it.size }
-
-            val commonParts = mutableListOf<String>()
-            for (i in 0 until shortestSize) {
-                val segment = splitPaths[0][i]
-                if (splitPaths.all { it[i] == segment }) {
-                    commonParts.add(segment)
-                } else {
-                    break
-                }
-            }
-
-            val commonPath = commonParts.joinToString("/")
-            if (commonPath.isBlank()) return null
-
-            return commonPath
+        private fun String.substringAfterLastOrNull(delimiter: String): String? {
+            val index = lastIndexOf(delimiter)
+            return if (index == -1) null else substring(index + delimiter.length, length)
         }
     }
 
