@@ -417,9 +417,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       List<PsiModifierList> modifiers = new ArrayList<>();
       for(PsiDirectory directory: getDirectories()) {
         PsiFile file = directory.findFile(PACKAGE_INFO_FILE);
-        PsiPackageStatement stmt = file == null ? null : PsiTreeUtil.getChildOfType(file, PsiPackageStatement.class);
-        PsiModifierList modifierList = stmt == null ? null : stmt.getAnnotationList();
-        ContainerUtil.addIfNotNull(modifiers, modifierList);
+        if (file instanceof PsiJavaFile) {
+          PsiPackageStatement stmt = ((PsiJavaFile)file).getPackageStatement();
+          if (stmt != null) {
+            ContainerUtil.addIfNotNull(modifiers, stmt.getAnnotationList());
+          }
+        }
       }
 
       for (PsiClass aClass : getFacade().findClasses(getQualifiedName() + ".package-info", allScope())) {

@@ -2,29 +2,20 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 
-class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatement {
-  static ClsPackageStatementImpl NULL_PACKAGE = new ClsPackageStatementImpl();
+public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
 
-  private final ClsFileImpl myFile;
   private final String myPackageName;
 
-  private ClsPackageStatementImpl() {
-    myFile = null;
-    myPackageName = null;
-  }
-
-  ClsPackageStatementImpl(@NotNull ClsFileImpl file, String packageName) {
-    myFile = file;
-    myPackageName = packageName;
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return myFile;
+  public ClsPackageStatementImpl(@NotNull PsiPackageStatementStub stub) {
+    super(stub);
+    myPackageName = stub.getPackageName();
   }
 
   @Override
@@ -34,18 +25,15 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
 
   @Override
   public PsiModifierList getAnnotationList() {
-    if (myFile != null && myFile.getName().equals("package-info.class")) {
-      PsiClass[] classes = myFile.getClasses();
-      if (classes.length == 1) {
-        return classes[0].getModifierList();
-      }
-    }
-    throw new UnsupportedOperationException("Method not implemented");
+    @SuppressWarnings("unchecked") final StubElement<PsiModifierList> child =
+      (StubElement<PsiModifierList>)getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST);
+    return child == null ? null : child.getPsi();
   }
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    throw new UnsupportedOperationException("Method not implemented");
+    PsiModifierList list = getAnnotationList();
+    return list == null ? EMPTY_ARRAY : new PsiElement[]{list}; 
   }
 
   @Override
@@ -56,6 +44,13 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   @Override
   public void appendMirrorText(final int indentLevel, final @NotNull StringBuilder buffer) {
     if (myPackageName != null) {
+      PsiModifierList list = getAnnotationList();
+      if (list != null) {
+        for (PsiAnnotation annotation : list.getAnnotations()) {
+          appendText(annotation, indentLevel, buffer);
+          buffer.append("\n");
+        }
+      }
       buffer.append("package ").append(getPackageName()).append(';');
     }
   }

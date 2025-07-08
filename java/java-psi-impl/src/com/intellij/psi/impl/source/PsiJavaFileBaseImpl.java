@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor.ResultWith
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.*;
 import com.intellij.psi.scope.processor.MethodsProcessor;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -89,8 +90,13 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @Override
   public PsiPackageStatement getPackageStatement() {
-    ASTNode node = calcTreeElement().findChildByType(JavaElementType.PACKAGE_STATEMENT);
-    return node != null ? (PsiPackageStatement)node.getPsi() : null;
+    return withGreenStubOrAst(stub -> {
+      StubElement<?> element = stub.findChildStubByElementType(JavaElementType.PACKAGE_STATEMENT);
+      return element == null ? null : (PsiPackageStatement)element.getPsi();
+    }, file -> {
+      ASTNode childNode = file.findChildByType(JavaElementType.PACKAGE_STATEMENT);
+      return childNode == null ? null : (PsiPackageStatement)childNode.getPsi();
+    });
   }
 
   @Override

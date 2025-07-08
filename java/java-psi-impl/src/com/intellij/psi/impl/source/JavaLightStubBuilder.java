@@ -36,7 +36,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
         refText = JavaSourceUtil.getReferenceText(tree, ref);
       }
     }
-    return new PsiJavaFileStubImpl((PsiJavaFile)file, refText, null, false);
+    return new PsiJavaFileStubImpl((PsiJavaFile)file, null, false);
   }
 
   @Override

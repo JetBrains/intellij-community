@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.*;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
@@ -15,18 +16,24 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
-  private final String myPackageName;
   private final LanguageLevel myLanguageLevel;
   private final boolean myCompiled;
   private StubPsiFactory myFactory;
 
-  public PsiJavaFileStubImpl(String packageName, boolean compiled) {
-    this(null, packageName, null, compiled);
+  public PsiJavaFileStubImpl(boolean compiled) {
+    this(null, null, compiled);
   }
 
-  public PsiJavaFileStubImpl(PsiJavaFile file, String packageName, LanguageLevel languageLevel, boolean compiled) {
+  /**
+   * @deprecated kept for Kotlin plugin compatibility
+   */
+  @Deprecated
+  public PsiJavaFileStubImpl(String ignoredPackageName, boolean compiled) {
+    this(null, null, compiled);
+  }
+
+  public PsiJavaFileStubImpl(PsiJavaFile file, LanguageLevel languageLevel, boolean compiled) {
     super(file);
-    myPackageName = packageName;
     myLanguageLevel = languageLevel;
     myCompiled = compiled;
     myFactory = compiled ? ClsStubPsiFactory.INSTANCE : SourceStubPsiFactory.INSTANCE;
@@ -60,7 +67,8 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
 
   @Override
   public String getPackageName() {
-    return myPackageName;
+    PsiPackageStatementStub stub = (PsiPackageStatementStub)(StubElement<?>)findChildStubByElementType(JavaElementType.PACKAGE_STATEMENT);
+    return stub == null ? "" : stub.getPackageName();
   }
 
   @Override
@@ -91,7 +99,6 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     PsiJavaFileStubImpl stub = (PsiJavaFileStubImpl)o;
 
     if (myCompiled != stub.myCompiled) return false;
-    if (myPackageName != null ? !myPackageName.equals(stub.myPackageName) : stub.myPackageName != null) return false;
     if (myLanguageLevel != stub.myLanguageLevel) return false;
 
     return true;
@@ -99,7 +106,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
 
   @Override
   public int hashCode() {
-    int result = myPackageName != null ? myPackageName.hashCode() : 0;
+    int result = 0;
     result = 31 * result + (myLanguageLevel != null ? myLanguageLevel.hashCode() : 0);
     result = 31 * result + (myCompiled ? 1 : 0);
     return result;
@@ -107,6 +114,6 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
 
   @Override
   public String toString() {
-    return "PsiJavaFileStub [" + myPackageName + "]";
+    return "PsiJavaFileStub [" + getPackageName() + "]";
   }
 }

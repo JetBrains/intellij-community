@@ -72,6 +72,9 @@ public class JavaStubRegistryExtension implements StubRegistryExtension {
     registry.registerStubSerializer(JavaStubElementTypes.RECORD_HEADER, new JavaRecordHeaderStubSerializer(JavaStubElementTypes.RECORD_HEADER));
     registry.registerLightStubFactory(JavaStubElementTypes.RECORD_HEADER, new JavaRecordHeaderStubFactory());
 
+    registry.registerStubSerializer(JavaStubElementTypes.PACKAGE_STATEMENT, new JavaPackageStatementStubSerializer(JavaStubElementTypes.PACKAGE_STATEMENT));
+    registry.registerLightStubFactory(JavaStubElementTypes.PACKAGE_STATEMENT, new JavaPackageStatementStubFactory());
+
     registry.registerStubSerializer(JavaStubElementTypes.EXPORTS_STATEMENT, new JavaPackageAccessibilityStatementStubSerializer(JavaStubElementTypes.EXPORTS_STATEMENT));
     registry.registerLightStubFactory(JavaStubElementTypes.EXPORTS_STATEMENT, new JavaPackageAccessibilityStatementStubFactory());
 

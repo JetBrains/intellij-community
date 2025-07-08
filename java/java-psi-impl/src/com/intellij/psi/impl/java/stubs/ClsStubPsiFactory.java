@@ -100,6 +100,11 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   }
 
   @Override
+  public PsiPackageStatement createPackageStatement(PsiPackageStatementStub stub) {
+    return new ClsPackageStatementImpl(stub);
+  }
+  
+  @Override
   public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
     return new ClsUsesStatementImpl(stub);
   }

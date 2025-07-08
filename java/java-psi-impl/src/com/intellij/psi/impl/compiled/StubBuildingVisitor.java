@@ -4,6 +4,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.SignatureParsing.TypeInfoProvider;
@@ -94,15 +95,25 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     short stubFlags = PsiClassStubImpl.packFlags(
       isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false,
       isRecord, false, false/*asm doesn't know about value classes yet*/);
-    myResult =
-      new PsiClassStubImpl<>(JavaStubElementTypes.CLASS, myParent, fqn == null ? TypeInfo.SimpleTypeInfo.NULL : fqn, shortName, null,
-                             stubFlags);
 
     int classFlags = packClassFlags(flags);
     if (myFirstPassData.isSealed()) {
       classFlags |= ModifierFlags.SEALED_MASK;
     }
+    String packageName = !(myParent instanceof PsiFileStub) || name.lastIndexOf('/') == -1 ? "" : 
+                         name.substring(0, name.lastIndexOf('/')).replace('/', '.');
+    PsiPackageStatementStub packageStatement = null;
+    if (!packageName.isEmpty()) {
+      packageStatement = new PsiPackageStatementStubImpl(myParent, packageName);
+    }
+    myResult =
+      new PsiClassStubImpl<>(JavaStubElementTypes.CLASS, myParent, fqn == null ? TypeInfo.SimpleTypeInfo.NULL : fqn, shortName, null,
+                             stubFlags);
     myModList = new PsiModifierListStubImpl(myResult, classFlags);
+    if (shortName.equals(PsiPackage.PACKAGE_INFO_CLASS)) {
+      // Attach annotations to the package statement
+      myModList = new PsiModifierListStubImpl(packageStatement, 0);
+    }
     if (isRecord) {
       myHeaderStub = new PsiRecordHeaderStubImpl(myResult);
     }
@@ -270,7 +281,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (myAnnoBuilders != null) {
       myAnnoBuilders.values().forEach(ClsTypeAnnotationCollector::install);
     }
-    myClassInfo.typeParameters.fillInTypeParameterList(myResult);
+    if (myClassInfo != null) {
+      myClassInfo.typeParameters.fillInTypeParameterList(myResult);
+    }
     if (myPermittedSubclasses != null) {
       List<TypeInfo> permittedTypes = myFirstPassData.createTypes(ArrayUtil.toStringArray(myPermittedSubclasses));
       newReferenceList(JavaStubElementTypes.PERMITS_LIST, myResult, permittedTypes);

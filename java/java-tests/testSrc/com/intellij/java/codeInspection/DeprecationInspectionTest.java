@@ -16,6 +16,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class DeprecationInspectionTest extends JavaInspectionTestCase {
@@ -120,6 +121,25 @@ public class DeprecationInspectionTest extends JavaInspectionTestCase {
           A(int i) {}
       }""");
     assertEmpty(myFixture.doHighlighting(HighlightSeverity.WARNING));
+  }
+  
+  public void testDeprecatedPackage() {
+    DeprecationInspection inspection = new DeprecationInspection();
+    inspection.IGNORE_IMPORT_STATEMENTS = false;
+    myFixture.enableInspections(inspection);
+    myFixture.addFileToProject("pkg/package-info.java", "@Deprecated package pkg;");
+    myFixture.addFileToProject("pkg/A.java", "package pkg; public class A {public static void b() {}}");
+    myFixture.configureByText("Test.java", """
+      import <warning descr="'pkg' is deprecated">pkg</warning>.A;
+
+      public class Test {
+        void foo() {
+          A.b();
+        }
+      }""");
+    ((JavaCodeInsightTestFixtureImpl)myFixture)
+      .setVirtualFileFilter(file -> !file.getName().equals("Test.java"));
+    myFixture.testHighlighting();
   }
 
   @NotNull

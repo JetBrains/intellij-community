@@ -16,76 +16,47 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.JavaSourceUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiPackageStatementImpl extends CompositePsiElement implements PsiPackageStatement {
-  private static final Logger LOG = Logger.getInstance(PsiPackageStatementImpl.class);
+public class PsiPackageStatementImpl extends JavaStubPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
+  public PsiPackageStatementImpl(PsiPackageStatementStub stub) {
+    super(stub, JavaStubElementTypes.PACKAGE_STATEMENT);
+  }
 
-  public PsiPackageStatementImpl() {
-    super(JavaElementType.PACKAGE_STATEMENT);
+  public PsiPackageStatementImpl(ASTNode node) {
+    super(node);
+  }
+
+  @Override
+  public @NotNull CompositeElement getNode() {
+    return (CompositeElement)super.getNode();
   }
 
   @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
-    return (PsiJavaCodeReferenceElement)findChildByRoleAsPsiElement(ChildRole.PACKAGE_REFERENCE);
+    return (PsiJavaCodeReferenceElement)getNode().findChildByRoleAsPsiElement(ChildRole.PACKAGE_REFERENCE);
   }
 
   @Override
   public String getPackageName() {
+    PsiPackageStatementStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getPackageName();
+    }
     PsiJavaCodeReferenceElement ref = getPackageReference();
     return ref == null ? null : JavaSourceUtil.getReferenceText(ref);
   }
 
   @Override
   public PsiModifierList getAnnotationList() {
-    return (PsiModifierList)findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
-  }
-
-  @Override
-  public ASTNode findChildByRole(int role) {
-    LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
-      case ChildRole.PACKAGE_KEYWORD:
-        return findChildByType(JavaTokenType.PACKAGE_KEYWORD);
-
-      case ChildRole.PACKAGE_REFERENCE:
-        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
-
-      case ChildRole.CLOSING_SEMICOLON:
-        return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
-
-      case ChildRole.MODIFIER_LIST:
-        return findChildByType(JavaElementType.MODIFIER_LIST);
-
-      default:
-        return null;
-    }
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == JavaTokenType.PACKAGE_KEYWORD) {
-      return ChildRole.PACKAGE_KEYWORD;
-    }
-    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
-      return ChildRole.PACKAGE_REFERENCE;
-    }
-    else if (i == JavaTokenType.SEMICOLON) {
-      return ChildRole.CLOSING_SEMICOLON;
-    }
-    else if (i == JavaElementType.MODIFIER_LIST) {
-      return ChildRole.MODIFIER_LIST;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override
