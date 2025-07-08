@@ -49,6 +49,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
 import java.io.IOException
+import java.net.SocketException
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -222,6 +223,15 @@ suspend fun downloadFileToCacheLocation(
   return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, token = null, credentialsProvider = credentialsProvider)
 }
 
+private fun downloadFileIsRetryAllowed(e: Exception): Boolean =
+  when (e) {
+    is SocketException if e.message?.contains("Operation not permitted") == true -> {
+      // Most likely, in a Bazel sandbox where network access was disabled, retry is useless
+      false
+    }
+    else -> true
+  }
+
 private suspend fun downloadFileToCacheLocation(
   url: String,
   communityRoot: BuildDependenciesCommunityRoot,
@@ -253,7 +263,7 @@ private suspend fun downloadFileToCacheLocation(
     println(" * Downloading $url")
 
     return spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope {
-      retryWithExponentialBackOff {
+      retryWithExponentialBackOff(isRetryAllowed = { e -> downloadFileIsRetryAllowed(e) }) {
         // save to the same disk to ensure that move will be atomic and not as a copy
         val tempFile = target.parent
           .resolve("${target.fileName}-${(Instant.now().epochSecond - 1634886185).toString(36)}-${Instant.now().nano.toString(36)}".take(255))
