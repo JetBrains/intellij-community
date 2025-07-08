@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class FacetEditorImpl extends UnnamedConfigurableGroup implements UnnamedConfigurable, FacetEditor {
   private final FacetEditorTab[] myEditorTabs;
   private final FacetErrorPanel myErrorPanel;

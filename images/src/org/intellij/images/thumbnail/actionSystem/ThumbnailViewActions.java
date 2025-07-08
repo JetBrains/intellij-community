@@ -15,6 +15,7 @@
  */
 package org.intellij.images.thumbnail.actionSystem;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.NonNls;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public interface ThumbnailViewActions {
   @NonNls String ACTION_PLACE = "Images.Thumbnails";
 }

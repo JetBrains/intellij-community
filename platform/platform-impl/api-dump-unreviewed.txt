@@ -8482,7 +8482,6 @@ a:com.intellij.openapi.options.BeanConfigurable
 - p:<init>(java.lang.Object,java.lang.String):V
 - apply():V
 - pf:checkBox(java.lang.String,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter):V
-- pf:checkBox(java.lang.String,java.lang.String):V
 - pf:checkBox(java.lang.String,kotlin.reflect.KMutableProperty0):V
 - createComponent():javax.swing.JComponent
 - createContent(com.intellij.ui.dsl.builder.Panel):V
@@ -8517,10 +8516,7 @@ a:com.intellij.openapi.options.ConfigurableBuilder
 - com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 - com.intellij.openapi.options.UiDslUnnamedConfigurable
 - p:<init>():V
-- p:<init>(java.lang.String):V
 - p:checkBox(java.lang.String,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter):V
-- p:checkBox(java.lang.String,kotlin.reflect.KMutableProperty0):V
-- p:component(javax.swing.JComponent,java.util.function.Supplier,com.intellij.openapi.util.Setter,java.util.function.Supplier,com.intellij.openapi.util.Setter):V
 - createContent(com.intellij.ui.dsl.builder.Panel):V
 - getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
 c:com.intellij.openapi.options.SchemeConvertorEPBase
@@ -13289,17 +13285,9 @@ f:com.intellij.ui.components.ComponentsKt
 - sf:DialogPanel(java.lang.String,java.awt.LayoutManager2):com.intellij.openapi.ui.DialogPanel
 - bs:DialogPanel$default(java.lang.String,java.awt.LayoutManager2,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
 - sf:Label(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,com.intellij.util.ui.UIUtil$FontColor,Z):javax.swing.JLabel
-- sf:Label(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,com.intellij.util.ui.UIUtil$FontColor,Z,java.awt.Font):javax.swing.JLabel
 - bs:Label$default(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,com.intellij.util.ui.UIUtil$FontColor,Z,I,java.lang.Object):javax.swing.JLabel
-- bs:Label$default(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,com.intellij.util.ui.UIUtil$FontColor,Z,java.awt.Font,I,java.lang.Object):javax.swing.JLabel
 - sf:Link(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0):javax.swing.JComponent
 - bs:Link$default(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
-- sf:Panel():javax.swing.JPanel
-- sf:Panel(java.lang.String):javax.swing.JPanel
-- sf:Panel(java.lang.String,java.awt.LayoutManager2):javax.swing.JPanel
-- sf:Panel(java.lang.String,Z,java.awt.LayoutManager2):javax.swing.JPanel
-- bs:Panel$default(java.lang.String,java.awt.LayoutManager2,I,java.lang.Object):javax.swing.JPanel
-- bs:Panel$default(java.lang.String,Z,java.awt.LayoutManager2,I,java.lang.Object):javax.swing.JPanel
 - sf:RadioButton(java.lang.String):javax.swing.JRadioButton
 - sf:dialog(java.lang.String,javax.swing.JComponent):com.intellij.openapi.ui.DialogWrapper
 - sf:dialog(java.lang.String,javax.swing.JComponent,Z):com.intellij.openapi.ui.DialogWrapper

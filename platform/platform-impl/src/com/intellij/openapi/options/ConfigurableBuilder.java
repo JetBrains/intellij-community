@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Setter;
 import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +27,6 @@ import java.util.function.Supplier;
 @Deprecated(forRemoval = true)
 public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simple
   implements UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
-
-  private @Nullable @NlsContexts.BorderTitle String myTitle;
 
   private interface PropertyAccessor<T> {
     T getValue();
@@ -57,25 +54,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
     }
   }
 
-  private static final class KPropertyAccessor<T> implements PropertyAccessor<T> {
-
-    private final @NotNull KMutableProperty0<T> myProperty;
-
-    private KPropertyAccessor(@NotNull KMutableProperty0<T> property) {
-      myProperty = property;
-    }
-
-    @Override
-    public T getValue() {
-      return myProperty.get();
-    }
-
-    @Override
-    public void setValue(@NotNull T value) {
-      myProperty.set(value);
-    }
-  }
-
+  @ApiStatus.Internal
   abstract static class BeanField<C extends JComponent, T> {
 
     @ApiStatus.Internal
@@ -157,13 +136,9 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   protected ConfigurableBuilder() {
   }
 
-  protected ConfigurableBuilder(@Nullable @NlsContexts.BorderTitle String title) {
-    myTitle = title;
-  }
-
   @ApiStatus.Internal
   public @Nullable String getTitle() {
-    return myTitle;
+    return null;
   }
 
   /**
@@ -173,41 +148,6 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
    */
   protected void checkBox(@NotNull @NlsContexts.Checkbox String title, @NotNull Getter<@NotNull Boolean> getter, @NotNull Setter<? super Boolean> setter) {
     myFields.add(new CheckboxField(new CallbackAccessor<>(getter, setter), title));
-  }
-
-  protected void checkBox(@NotNull @NlsContexts.Checkbox String title, @NotNull KMutableProperty0<@NotNull Boolean> prop) {
-    myFields.add(new CheckboxField(new KPropertyAccessor<>(prop), title));
-  }
-
-  /**
-   * Adds custom component (e.g. edit box).
-   * Initial value is obtained from {@code beanGetter} and applied to the component via {@code componentSetter}.
-   * E.g. text is read from the model and set to the edit box.
-   * After the apply, the value from the component is queried via {@code componentGetter} and written back to model via {@code beanSetter}.
-   * E.g. text from the edit box is queried and saved back to model bean.
-   */
-  protected <V> void component(@NotNull JComponent component,
-                               @NotNull Supplier<? extends V> beanGetter,
-                               @NotNull Setter<? super V> beanSetter,
-                               @NotNull Supplier<? extends V> componentGetter,
-                               @NotNull Setter<? super V> componentSetter) {
-    BeanField<JComponent, V> field = new BeanField<>(new CallbackAccessor<>(beanGetter, beanSetter)) {
-      @Override
-      protected @NotNull JComponent createComponent() {
-        return component;
-      }
-
-      @Override
-      protected V getComponentValue() {
-        return componentGetter.get();
-      }
-
-      @Override
-      protected void setComponentValue(V value) {
-        componentSetter.set(value);
-      }
-    };
-    myFields.add(field);
   }
 
   @Override
@@ -229,7 +169,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
 
   @Override
   public void createContent(@NotNull Panel builder) {
-    ConfigurableBuilderHelper.buildFieldsPanel(builder, myTitle, myFields);
+    ConfigurableBuilderHelper.buildFieldsPanel(builder, null, myFields);
   }
 
   @ApiStatus.Internal
