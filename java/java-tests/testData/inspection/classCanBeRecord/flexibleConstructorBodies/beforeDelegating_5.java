@@ -1,7 +1,7 @@
 // "Convert to record class" "false"
 class Person<caret> {
     final String name;
-    int age = 0;
+    final int age;
 
     Person(String name, int age) {
         this.name = name;
