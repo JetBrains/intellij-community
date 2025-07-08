@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IdFilter
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicLong
 
 internal abstract class ProjectIndexableFilesFilterFactory {
   abstract fun create(project: Project, currentVfsCreationTimestamp: Long): ProjectIndexableFilesFilter
@@ -62,14 +62,36 @@ internal enum class FilterActionCancellationReason {
 }
 
 private class AtomicVersionedCounter {
-  private val counterAndVersion = AtomicReference(0 to 0)
+  /** [ counter:int32 << 32 | version:int32 ] */
+  private val counterAndVersion: AtomicLong = AtomicLong(0L)
+
 
   fun update(counterUpdate: Int) {
-    var pair = counterAndVersion.get()
-    while (!counterAndVersion.compareAndSet(pair, pair.first + counterUpdate to pair.second + 1)) {
-      pair = counterAndVersion.get()
+    while (true) {
+      val pair: Long = counterAndVersion.get()
+      var counter: Long = (pair shr 32)
+      var version: Long = (pair and 0xFFFF_FFFF)
+
+      counter += counterUpdate
+      if (counter > Integer.MAX_VALUE) {
+        counter = 0
+      }
+      version++
+      if (version > Integer.MAX_VALUE) {
+        version = 0
+      }
+
+      val newPair = (counter shl 32) or version
+      if (counterAndVersion.compareAndSet(pair, newPair)) {
+        break
+      }
     }
   }
 
-  fun getCounterAndVersion(): Pair<Int, Int> = counterAndVersion.get()
+  fun getCounterAndVersion(): Pair<Int, Int> {
+    val pair: Long = counterAndVersion.get()
+    val counter: Long = (pair shr 32)
+    val version: Long = (pair and 0xFFFF_FFFF)
+    return Pair(counter.toInt(), version.toInt())
+  }
 }
