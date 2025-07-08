@@ -26,7 +26,6 @@ import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
@@ -34,12 +33,10 @@ import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -291,16 +288,8 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
   @ApiStatus.Experimental
   public static @NotNull LanguageLevel getLanguageLevelForFile(@NotNull PsiFile file) {
-    PsiFile originalPythonFile = file.getOriginalFile();
-    if (originalPythonFile != file) {
-      // myOriginalFile could be an instance of base language
-      // see PostfixLiveTemplate#copyFile
-      if (originalPythonFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-        originalPythonFile = originalPythonFile.getViewProvider().getPsi(PythonLanguage.getInstance());
-      }
-      if (originalPythonFile instanceof PyFile) {
-        return ((PyFile)originalPythonFile).getLanguageLevel();
-      }
+    while (file != file.getOriginalFile()) {
+      file = file.getOriginalFile();
     }
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
