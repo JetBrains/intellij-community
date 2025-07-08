@@ -142,6 +142,7 @@
     <group id="GitLab.Main.Group" popup="true"
            class="com.intellij.ide.actions.NonTrivialActionGroup"
            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
+      <reference ref="GitLab.Merge.Request.Create"/>
       <reference ref="GitLab.Merge.Request.Show.List"/>
       <reference ref="GitLab.Create.Snippet"/>
       <separator/>
