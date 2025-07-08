@@ -26,18 +26,17 @@ class WriteLockMeasurerImpl(scope: CoroutineScope) : WriteLockMeasurer {
   }
 }
 
-private class WriteLockMeasurementListener : LockAcquisitionListener {
+private class WriteLockMeasurementListener : LockAcquisitionListener<WriteLockMeasurementListener.LockAcquisitionResult> {
 
   // defer reading isUnitTest flag until it's initialized
   private object Holder {
     val ourDumpThreadsOnLongWriteActionWaiting: Int = if (ApplicationManager.getApplication().isUnitTestMode()) 0 else Integer.getInteger("dump.threads.on.long.write.action.waiting", 0)
   }
 
-  private data class LockAcquisitionResult(val acquisitionMoment: /* milliseconds */ Long, val reportingFuture: Future<*>?)
+  data class LockAcquisitionResult(val acquisitionMoment: /* milliseconds */ Long, val reportingFuture: Future<*>?)
 
-  private val diagnosticState: ThreadLocal<LockAcquisitionResult> = ThreadLocal.withInitial { null }
 
-  override fun beforeWriteLockAcquired() {
+  override fun beforeWriteLockAcquired(): LockAcquisitionResult {
     val delay = Holder.ourDumpThreadsOnLongWriteActionWaiting
     val reportSlowWrite: Future<*>? = if (delay <= 0 || PerformanceWatcher.getInstanceIfCreated() == null) null
     else AppExecutorUtil.getAppScheduledExecutorService()
@@ -50,12 +49,11 @@ private class WriteLockMeasurementListener : LockAcquisitionListener {
                               },
                               delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)
     val t = System.currentTimeMillis()
-    diagnosticState.set(LockAcquisitionResult(t, reportSlowWrite))
+    return LockAcquisitionResult(t, reportSlowWrite)
   }
 
-  override fun afterWriteLockAcquired() {
-    val (acquisitionMoment, reportSlowWrite) = requireNotNull(diagnosticState.get()) { "afterWriteLockAcquired called without beforeWriteLockAcquired" }
-    diagnosticState.remove()
+  override fun afterWriteLockAcquired(beforeResult: LockAcquisitionResult) {
+    val (acquisitionMoment, reportSlowWrite) = beforeResult
     val elapsed = System.currentTimeMillis() - acquisitionMoment
     try {
       WriteDelayDiagnostics.registerWrite(elapsed)

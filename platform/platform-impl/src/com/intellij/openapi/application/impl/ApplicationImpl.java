@@ -1453,7 +1453,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     Disposer.register(parentDisposable, () -> lock.removeWriteIntentReadActionListener(listener));
   }
 
-  public void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) {
+  public void addLockAcquisitionListener(@NotNull LockAcquisitionListener<?> listener, @NotNull Disposable parentDisposable) {
     lock.setLockAcquisitionListener(listener);
     Disposer.register(parentDisposable, () -> lock.removeLockAcquisitionListener(listener));
   }

@@ -202,7 +202,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private val readActionListeners: CopyOnWriteArrayList<ReadActionListener> = CopyOnWriteArrayList()
   private val myWriteActionListeners: CopyOnWriteArrayList<WriteActionListener> = CopyOnWriteArrayList()
   private val myWriteIntentActionListeners: CopyOnWriteArrayList<WriteIntentReadActionListener> = CopyOnWriteArrayList()
-  private var myLockAcquisitionListener: LockAcquisitionListener? = null
+  private var myLockAcquisitionListener: LockAcquisitionListener<*>? = null
   private var myWriteLockReacquisitionListener: WriteLockReacquisitionListener? = null
   private var myLegacyProgressIndicatorProvider: LegacyProgressIndicatorProvider? = null
 
@@ -885,7 +885,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  fun setLockAcquisitionListener(listener: LockAcquisitionListener) {
+  fun setLockAcquisitionListener(listener: LockAcquisitionListener<*>) {
     if (myLockAcquisitionListener != null)
       error("LockAcquisitionListener already registered")
     myLockAcquisitionListener = listener
@@ -924,7 +924,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     myLegacyProgressIndicatorProvider = null
   }
 
-  fun removeLockAcquisitionListener(listener: LockAcquisitionListener) {
+  fun removeLockAcquisitionListener(listener: LockAcquisitionListener<*>) {
     if (myLockAcquisitionListener != listener)
       error("LockAcquisitionListener is not registered")
     myLockAcquisitionListener = null
@@ -1329,22 +1329,24 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   private fun <T> processWriteLockAcquisition(acquisitor: () -> T): T {
-    myLockAcquisitionListener?.beforeWriteLockAcquired()
+    val prevResult = myLockAcquisitionListener?.beforeWriteLockAcquired()
     try {
       return acquisitor()
     }
     finally {
-      myLockAcquisitionListener?.afterWriteLockAcquired()
+      @Suppress("MEMBER_PROJECTED_OUT")
+      myLockAcquisitionListener?.afterWriteLockAcquired(prevResult)
     }
   }
 
   private suspend fun <T> processWriteLockAcquisitionSuspending(acquisitor: suspend () -> T): T {
-    myLockAcquisitionListener?.beforeWriteLockAcquired()
+    val prevResult = myLockAcquisitionListener?.beforeWriteLockAcquired()
     try {
       return acquisitor()
     }
     finally {
-      myLockAcquisitionListener?.afterWriteLockAcquired()
+      @Suppress("MEMBER_PROJECTED_OUT")
+      myLockAcquisitionListener?.afterWriteLockAcquired(prevResult)
     }
   }
 
