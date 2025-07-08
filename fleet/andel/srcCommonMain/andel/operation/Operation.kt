@@ -189,6 +189,10 @@ class Operation(internal val rope: OpsRope) {
     return ops.toList().hashCode()
   }
 
+  override fun toString(): String {
+    return ops.joinToString(prefix = "Operation(", postfix = ")")
+  }
+
   fun copy(): Operation = Operation(ops.toList())
 
   companion object {
