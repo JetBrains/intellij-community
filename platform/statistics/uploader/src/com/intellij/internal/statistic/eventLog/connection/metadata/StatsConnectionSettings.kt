@@ -6,7 +6,6 @@ import javax.net.ssl.SSLContext
 
 private val NO_PROXY: StatsProxyInfo = StatsProxyInfo(Proxy.NO_PROXY, null)
 
-@Deprecated("Should be replaced with HttpClientBuilder/HttpRequestBuilder from fus-client")
 interface StatsConnectionSettings {
   fun provideUserAgent(): String
   fun provideProxy(url: String): StatsProxyInfo
@@ -14,7 +13,6 @@ interface StatsConnectionSettings {
   fun provideExtraHeaders(): Map<String, String>
 }
 
-@Deprecated("Should be replaced with HttpClientBuilder/HttpRequestBuilder from fus-client")
 class StatsBasicConnectionSettings(
   private val userAgent: String,
   private val extraHeaders: Map<String, String> = emptyMap(),
@@ -27,9 +25,8 @@ class StatsBasicConnectionSettings(
   override fun provideProxy(url: String): StatsProxyInfo = proxy
 }
 
-@Deprecated("Should be replaced with HttpClientBuilder/HttpRequestBuilder from fus-client")
 class StatsProxyInfo(val proxy: Proxy, val proxyAuth: StatsProxyAuthProvider? = null) {
-  val isNoProxy = proxy === Proxy.NO_PROXY
+  val isNoProxy: Boolean = proxy === Proxy.NO_PROXY
 
   interface StatsProxyAuthProvider {
     val proxyLogin: String?
