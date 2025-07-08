@@ -6619,6 +6619,33 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-82500
+  public void testFunctionCallCannotBeUsedAsTypeHint() {
+    doTest("Any", """
+      def func() -> type[str]: ...
+      expr: func()
+      """);
+  }
+
+  // PY-82500
+  public void testOrdinarySubscriptionExpressionCannotBeUsedAsTypeHint() {
+    doTest("Any", """
+      xs: list[type[str]]
+      expr: xs[0]
+      """);
+  }
+
+  // PY-82500
+  public void testOrdinaryBinaryExpressionCannotBeUsedAsTypeHint() {
+    doTest("Any", """
+      class B:
+          def __add__(self, item: int) -> type[str]:
+              ...
+      x: B
+      expr: x + 1
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

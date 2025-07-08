@@ -950,13 +950,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (typedDictType != null) {
         return Ref.create(typedDictType);
       }
-      final Ref<PyType> classType = getClassType(typeHint, resolved, context);
-      if (classType != null) {
-        return classType;
-      }
       final Ref<PyType> selfType = getSelfType(resolved, typeHint, context);
       if (selfType != null) {
         return selfType;
+      }
+      final Ref<PyType> classType = getClassType(typeHint, resolved, context);
+      if (classType != null) {
+        return classType;
       }
       return null;
     }
@@ -1092,6 +1092,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   private static @Nullable Ref<PyType> getClassType(@NotNull PyExpression typeHint, @NotNull PsiElement element, @NotNull Context context) {
+    if (!(typeHint instanceof PyReferenceExpression || typeHint instanceof PyNoneLiteralExpression)) return null;
     if (element instanceof PyTypedElement) {
       TypeEvalContext typeContext = context.getTypeContext();
       final PyType type = typeContext.getType((PyTypedElement)element);
