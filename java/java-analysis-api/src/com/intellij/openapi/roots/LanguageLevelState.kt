@@ -5,7 +5,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.xmlb.annotations.Attribute
 
-class LanguageLevelState : BaseState() {
+public class LanguageLevelState : BaseState() {
   @get:Attribute("LANGUAGE_LEVEL")
-  var languageLevel: LanguageLevel? by enum<LanguageLevel>()
+  public var languageLevel: LanguageLevel? by enum<LanguageLevel>()
 }

@@ -8,39 +8,39 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameValuePair
 
 
-sealed class AnnotationAttributeValueRequest {
-  data class PrimitiveValue(val value: Any) : AnnotationAttributeValueRequest()
-  data class StringValue(val value: String) : AnnotationAttributeValueRequest()
-  data class ClassValue(val classFqn: String) : AnnotationAttributeValueRequest()
-  data class ConstantValue(val reference: JvmField?, val text: String) : AnnotationAttributeValueRequest()
-  data class NestedAnnotation(val annotationRequest: AnnotationRequest) : AnnotationAttributeValueRequest()
-  data class ArrayValue(val members: List<AnnotationAttributeValueRequest>) : AnnotationAttributeValueRequest()
+public sealed class AnnotationAttributeValueRequest {
+  public data class PrimitiveValue(val value: Any) : AnnotationAttributeValueRequest()
+  public data class StringValue(val value: String) : AnnotationAttributeValueRequest()
+  public data class ClassValue(val classFqn: String) : AnnotationAttributeValueRequest()
+  public data class ConstantValue(val reference: JvmField?, val text: String) : AnnotationAttributeValueRequest()
+  public data class NestedAnnotation(val annotationRequest: AnnotationRequest) : AnnotationAttributeValueRequest()
+  public data class ArrayValue(val members: List<AnnotationAttributeValueRequest>) : AnnotationAttributeValueRequest()
 }
 
-data class AnnotationAttributeRequest(val name: String, val value: AnnotationAttributeValueRequest)
+public data class AnnotationAttributeRequest(val name: String, val value: AnnotationAttributeValueRequest)
 
-fun stringAttribute(name: String, value: String): AnnotationAttributeRequest =
+public fun stringAttribute(name: String, value: String): AnnotationAttributeRequest =
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.StringValue(value))
 
-fun intAttribute(name: String, value: Int): AnnotationAttributeRequest =
+public fun intAttribute(name: String, value: Int): AnnotationAttributeRequest =
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.PrimitiveValue(value))
 
-fun classAttribute(name: String, classFqn: String): AnnotationAttributeRequest =
+public fun classAttribute(name: String, classFqn: String): AnnotationAttributeRequest =
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.ClassValue(classFqn))
 
-fun constantAttribute(name: String, reference: JvmField): AnnotationAttributeRequest =
+public fun constantAttribute(name: String, reference: JvmField): AnnotationAttributeRequest =
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.ConstantValue(reference, (reference as PsiElement).text))
 
-fun constantAttribute(name: String, refText: String): AnnotationAttributeRequest =
+public fun constantAttribute(name: String, refText: String): AnnotationAttributeRequest =
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.ConstantValue(null, refText))
 
-fun nestedAttribute(name: String, annotation: AnnotationRequest): AnnotationAttributeRequest =
+public fun nestedAttribute(name: String, annotation: AnnotationRequest): AnnotationAttributeRequest =
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.NestedAnnotation(annotation))
 
-fun arrayAttribute(name: String, members: List<AnnotationAttributeValueRequest>): AnnotationAttributeRequest =
+public fun arrayAttribute(name: String, members: List<AnnotationAttributeValueRequest>): AnnotationAttributeRequest =
   AnnotationAttributeRequest(name, AnnotationAttributeValueRequest.ArrayValue(members))
 
-fun attributeValueRequest(attribValue: JvmAnnotationAttributeValue,
+public fun attributeValueRequest(attribValue: JvmAnnotationAttributeValue,
                           attribute: JvmAnnotationAttribute? = null): AnnotationAttributeValueRequest? = when (attribValue) {
   is JvmAnnotationArrayValue -> AnnotationAttributeValueRequest.ArrayValue(
     attribValue.values.mapNotNull { attributeValueRequest(it, attribute) })
@@ -59,11 +59,11 @@ fun attributeValueRequest(attribValue: JvmAnnotationAttributeValue,
   else -> null
 }
 
-fun attributeRequest(attribute: JvmAnnotationAttribute): AnnotationAttributeRequest? {
+public fun attributeRequest(attribute: JvmAnnotationAttribute): AnnotationAttributeRequest? {
   val attribValue = attribute.attributeValue ?: return null
   val valueRequest = attributeValueRequest(attribValue, attribute) ?: return null
   return AnnotationAttributeRequest(attribute.attributeName, valueRequest)
 }
 
-fun attributeRequests(annotation: JvmAnnotation): List<AnnotationAttributeRequest> =
+public fun attributeRequests(annotation: JvmAnnotation): List<AnnotationAttributeRequest> =
   annotation.attributes.mapNotNull(::attributeRequest)

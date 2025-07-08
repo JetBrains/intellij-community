@@ -2,17 +2,17 @@
 package com.intellij.java.analysis.bytecode
 
 /**
- * Pass an instance of this interface to [JvmBytecodeAnalysis.createReferenceAnalyzer] or 
+ * Pass an instance of this interface to [JvmBytecodeAnalysis.createReferenceAnalyzer] or
  * [JvmBytecodeAnalysis.createDeclarationAndReferencesAnalyzer] to process references in *.class files.
  */
-interface JvmBytecodeReferenceProcessor {
+public interface JvmBytecodeReferenceProcessor {
   /**
    * Called for each reference to another class from the class being processed.
-   * 
+   *
    * @param targetClass the referenced class
    * @param sourceClass the class code from which refers to [targetClass].
    */
-  fun processClassReference(targetClass: JvmClassBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
+  public fun processClassReference(targetClass: JvmClassBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
   }
 
   /**
@@ -21,7 +21,7 @@ interface JvmBytecodeReferenceProcessor {
    * @param targetMethod the referenced method
    * @param sourceClass the class code from which refers to [targetMethod].
    */
-  fun processMethodReference(targetMethod: JvmMethodBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
+  public fun processMethodReference(targetMethod: JvmMethodBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
   }
 
   /**
@@ -30,6 +30,6 @@ interface JvmBytecodeReferenceProcessor {
    * @param targetField the referenced field
    * @param sourceClass the class code from which refers to [targetField].
    */
-  fun processFieldReference(targetField: JvmFieldBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
+  public fun processFieldReference(targetField: JvmFieldBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
   }
 }

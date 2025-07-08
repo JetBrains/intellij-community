@@ -12,7 +12,7 @@ internal fun getUastMetaLanguages(): Set<Language> {
   return EP.computeIfAbsent(UastMetaLanguage::class.java) { EP.lazySequence().mapTo(HashSet()) { it.language } }
 }
 
-class UastMetaLanguage private constructor() : MetaLanguage("UAST") {
+public class UastMetaLanguage private constructor() : MetaLanguage("UAST") {
   override fun matchesLanguage(language: Language): Boolean = getUastMetaLanguages().contains(language)
 
   override fun getMatchingLanguages(): Collection<Language> = getUastMetaLanguages()

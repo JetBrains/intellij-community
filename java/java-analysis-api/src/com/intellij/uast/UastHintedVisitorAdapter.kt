@@ -9,7 +9,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
+public class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
                                private val visitor: AbstractUastNonRecursiveVisitor,
                                private val directOnly: Boolean,
                                private val uElementTypesHint: Array<Class<out UElement>>
@@ -28,10 +28,10 @@ class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
     uElement.accept(visitor)
   }
 
-  companion object {
+  public companion object {
     @JvmStatic
     @JvmOverloads
-    fun create(language: Language,
+    public fun create(language: Language,
                visitor: AbstractUastNonRecursiveVisitor,
                uElementTypesHint: Array<Class<out UElement>>,
                directOnly: Boolean = true): PsiElementVisitor {

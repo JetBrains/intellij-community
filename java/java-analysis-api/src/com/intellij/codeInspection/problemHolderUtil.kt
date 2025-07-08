@@ -5,7 +5,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import org.jetbrains.uast.*
 
 @JvmOverloads
-fun ProblemsHolder.registerUProblem(
+public fun ProblemsHolder.registerUProblem(
   element: UCallExpression,
   descriptionTemplate: @InspectionMessage String,
   vararg fixes: LocalQuickFix,
@@ -20,7 +20,7 @@ fun ProblemsHolder.registerUProblem(
 }
 
 @JvmOverloads
-fun ProblemsHolder.registerUProblem(
+public fun ProblemsHolder.registerUProblem(
   element: UAnchorOwner,
   descriptionTemplate: @InspectionMessage String,
   vararg fixes: LocalQuickFix,
@@ -31,7 +31,7 @@ fun ProblemsHolder.registerUProblem(
 }
 
 @JvmOverloads
-fun ProblemsHolder.registerUProblem(
+public fun ProblemsHolder.registerUProblem(
   element: UDeclaration,
   descriptionTemplate: @InspectionMessage String,
   vararg fixes: LocalQuickFix,
@@ -42,7 +42,7 @@ fun ProblemsHolder.registerUProblem(
 }
 
 @JvmOverloads
-fun ProblemsHolder.registerUProblem(
+public fun ProblemsHolder.registerUProblem(
   element: UReferenceExpression,
   descriptionTemplate: @InspectionMessage String,
   vararg fixes: LocalQuickFix,
@@ -53,7 +53,7 @@ fun ProblemsHolder.registerUProblem(
 }
 
 @JvmOverloads
-fun ProblemsHolder.registerUProblem(
+public fun ProblemsHolder.registerUProblem(
   element: UExpression,
   descriptionTemplate: @InspectionMessage String,
   vararg fixes: LocalQuickFix,

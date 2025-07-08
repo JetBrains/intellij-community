@@ -4,30 +4,30 @@ package com.intellij.java.analysis.bytecode
 /**
  * Represents a JVM class declaration in a *.class file
  */
-interface JvmClassBytecodeDeclaration {
+public interface JvmClassBytecodeDeclaration {
   /**
    * Qualified name of the class in binary JVM format, with `/` as a separator
    */
-  val binaryClassName: String
+  public val binaryClassName: String
 
   /**
    * Qualified name of the top-level class containing this class, in source format, with `.` as a separator
    */
-  val topLevelSourceClassName: String
+  public val topLevelSourceClassName: String
 }
 
 /**
  * Represents a JVM method or field declaration in a *.class file
  */
-interface JvmMemberBytecodeDeclaration {
-  val containingClass: JvmClassBytecodeDeclaration
-  val name: String
+public interface JvmMemberBytecodeDeclaration {
+  public val containingClass: JvmClassBytecodeDeclaration
+  public val name: String
 
   /**
    * Descriptor of the method or field in JVM bytecode format.
    */
-  val descriptor: String
+  public val descriptor: String
 }
 
-interface JvmMethodBytecodeDeclaration : JvmMemberBytecodeDeclaration
-interface JvmFieldBytecodeDeclaration : JvmMemberBytecodeDeclaration
+public interface JvmMethodBytecodeDeclaration : JvmMemberBytecodeDeclaration
+public interface JvmFieldBytecodeDeclaration : JvmMemberBytecodeDeclaration
