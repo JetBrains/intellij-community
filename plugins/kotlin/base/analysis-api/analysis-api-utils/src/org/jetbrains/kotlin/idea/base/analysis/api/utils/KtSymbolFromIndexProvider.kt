@@ -185,8 +185,10 @@ class KtSymbolFromIndexProvider(
 
         return getNonKotlinNamesCaches(useSiteModule.project).flatMap { cache ->
             cache.getClassesByName(nameString, scope).asSequence()
-        }.filter { it.isAcceptable(psiFilter) }
-            .mapNotNull { it.namedClassSymbol }
+        }.filter {
+            ProgressManager.checkCanceled()
+            it.isAcceptable(psiFilter)
+        }.mapNotNull { it.namedClassSymbol }
     }
 
     context(KaSession)
@@ -264,8 +266,10 @@ class KtSymbolFromIndexProvider(
         psiFilter: (PsiMethod) -> Boolean = { true },
     ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
         it.getMethodsByName(name.asString(), scope).asSequence()
-    }.filter { it.isAcceptable(psiFilter) }
-        .mapNotNull { it.callableSymbol }
+    }.filter {
+        ProgressManager.checkCanceled()
+        it.isAcceptable(psiFilter)
+    }.mapNotNull { it.callableSymbol }
 
     context(KaSession)
     fun getJavaFieldsByName(
@@ -274,8 +278,10 @@ class KtSymbolFromIndexProvider(
         psiFilter: (PsiField) -> Boolean = { true },
     ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
         it.getFieldsByName(name.asString(), scope).asSequence()
-    }.filter { it.isAcceptable(psiFilter) }
-        .mapNotNull { it.callableSymbol }
+    }.filter {
+        ProgressManager.checkCanceled()
+        it.isAcceptable(psiFilter)
+    }.mapNotNull { it.callableSymbol }
 
     /**
      *  Returns top-level callables, excluding extensions. To obtain extensions use [getExtensionCallableSymbolsByNameFilter].
