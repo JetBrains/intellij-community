@@ -42,20 +42,20 @@ open class McpClient(
   companion object {
     private val SSE_URL_REGEX = Regex("""http://localhost:(\d+)/sse""")
     protected const val JETBRAINS_SERVER_KEY = "jetbrains"
+
+    val json by lazy {
+      Json {
+        allowComments = true
+        allowTrailingComma = true
+        prettyPrint = true
+        prettyPrintIndent = "  "
+        classDiscriminatorMode = ClassDiscriminatorMode.NONE
+      }
+    }
   }
 
   override fun toString(): String {
     return name.displayName
-  }
-
-  val json by lazy {
-    Json {
-      allowComments = true
-      allowTrailingComma = true
-      prettyPrint = true
-      prettyPrintIndent = "  "
-      classDiscriminatorMode = ClassDiscriminatorMode.NONE
-    }
   }
 
   protected val sseUrl by lazy { "http://localhost:${McpServerService.getInstance().port}/sse" }

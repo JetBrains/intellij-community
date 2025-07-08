@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.addIfNotNull
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -70,6 +71,7 @@ object McpClientDetector {
     return false
   }
 
+  @OptIn(ExperimentalSerializationApi::class)
   private fun detectVSCode(): McpClient? {
     val configPath = when {
       SystemInfo.isMac -> "~/Library/Application Support/Code/User/settings.json"
@@ -81,7 +83,7 @@ object McpClientDetector {
     val path = Paths.get(FileUtil.expandUserHome(configPath))
     if (path.exists() && path.isRegularFile()) {
       runCatching {
-        if (VSCodeClient(path).json.decodeFromStream<VSCodeConfig>(path.inputStream()).mcp?.servers?.isNotEmpty() == true) return null
+        if (McpClient.json.decodeFromStream<VSCodeConfig>(path.inputStream()).mcp?.servers?.isNotEmpty() == true) return null
       }
       return VSCodeClient(path)
     }
