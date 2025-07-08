@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.*
-import com.intellij.collaboration.util.ComputedResult
-import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.collaboration.util.computeEmitting
-import com.intellij.collaboration.util.onFailure
+import com.intellij.collaboration.util.*
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -15,16 +12,21 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.diff.impl.patch.withoutContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
@@ -33,6 +35,7 @@ import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 interface GHPRReviewFileEditorViewModel {
   val change: RefComparisonChange
+  val isUpdateRequired: StateFlow<Boolean>
 
   val iconProvider: GHAvatarIconsProvider
   val currentUser: GHUser
@@ -62,6 +65,13 @@ interface GHPRReviewFileEditorViewModel {
   fun cancelNewComment(lineIdx: Int)
 
   fun showDiff(lineIdx: Int?)
+
+  val isViewedState: StateFlow<ComputedResult<Boolean>>
+  fun setViewedState(isViewed: Boolean)
+
+  companion object {
+    val KEY: Key<GHPRReviewFileEditorViewModel> = Key.create(GHPRReviewFileEditorViewModel::class.java.name)
+  }
 }
 
 private val LOG = logger<GHPRReviewFileEditorViewModelImpl>()
@@ -69,8 +79,9 @@ private val LOG = logger<GHPRReviewFileEditorViewModelImpl>()
 internal class GHPRReviewFileEditorViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
-  dataContext: GHPRDataContext,
-  dataProvider: GHPRDataProvider,
+  private val dataContext: GHPRDataContext,
+  private val dataProvider: GHPRDataProvider,
+  reviewInEditorVm: GHPRReviewInEditorViewModel,
   override val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
   private val threadsVm: GHPRThreadsViewModels,
@@ -79,8 +90,13 @@ internal class GHPRReviewFileEditorViewModelImpl(
 ) : GHPRReviewFileEditorViewModel {
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
+  private val repository get() = dataContext.repositoryDataService.remoteCoordinates.repository
+  private val path get() = VcsFileUtil.relativePath(repository.root, change.filePath)
+
   override val iconProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
   override val currentUser: GHUser = dataContext.securityService.currentUser
+
+  override val isUpdateRequired: StateFlow<Boolean> = reviewInEditorVm.updateRequired
 
   override val originalContent: StateFlow<ComputedResult<CharSequence>?> =
     flow {
@@ -183,6 +199,23 @@ internal class GHPRReviewFileEditorViewModelImpl(
 
   override fun showDiff(lineIdx: Int?) {
     showDiff(change, lineIdx)
+  }
+
+  override val isViewedState: StateFlow<ComputedResult<Boolean>> =
+    dataProvider.viewedStateData.viewedStateComputationState
+      .map { viewedStateByPath ->
+        when (val isViewed = viewedStateByPath.getOrNull()?.get(path)?.isViewed()) {
+          null -> ComputedResult.loading()
+          else -> ComputedResult.success(isViewed)
+        }
+      }
+      .stateInNow(cs, ComputedResult.loading())
+
+  override fun setViewedState(isViewed: Boolean) {
+    if (!diffData.isCumulative) return
+    cs.launch {
+      dataProvider.viewedStateData.updateViewedState(listOf(path), isViewed)
+    }
   }
 }
 

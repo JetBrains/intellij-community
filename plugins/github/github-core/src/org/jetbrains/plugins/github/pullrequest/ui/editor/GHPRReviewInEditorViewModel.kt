@@ -139,6 +139,7 @@ internal class GHPRReviewInEditorViewModelImpl(
     : GHPRReviewFileEditorViewModelImpl =
     GHPRReviewFileEditorViewModelImpl(
       project, this, dataContext, dataProvider,
+      this@GHPRReviewInEditorViewModelImpl,
       change, diffData,
       threadsVm, mappedThreads,
       ::showDiff

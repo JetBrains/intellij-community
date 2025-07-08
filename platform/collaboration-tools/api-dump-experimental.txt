@@ -450,15 +450,19 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - a:asLeaf(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):java.lang.Object
 - pf:fireModelChanged():V
 - a:getUnresolvedDiscussionsCount(java.lang.Object):I
+- a:isLoading():kotlinx.coroutines.flow.StateFlow
+- a:isLoading(java.lang.Object):Z
 - a:isRead(java.lang.Object):Z
 *f:com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModelFromDetails
 - com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel
 - <init>(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel$WithDetails):V
 - asLeaf(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.collaboration.util.RefComparisonChange
 - getUnresolvedDiscussionsCount(com.intellij.collaboration.util.RefComparisonChange):I
+- isLoading():kotlinx.coroutines.flow.StateFlow
+- isLoading(com.intellij.collaboration.util.RefComparisonChange):Z
 - isRead(com.intellij.collaboration.util.RefComparisonChange):Z
 *f:com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModelKt
-- sf:setupCodeReviewProgressModel(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel):V
+- sf:setupCodeReviewProgressModel(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel):V
 *f:com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 - sf:HEADER_VERT_PADDING:I
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil

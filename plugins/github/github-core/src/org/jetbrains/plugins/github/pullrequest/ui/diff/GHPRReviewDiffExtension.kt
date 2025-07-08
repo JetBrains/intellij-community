@@ -63,12 +63,13 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
       cs.launchNow {
         withContext(Dispatchers.Main) {
           reviewVm.getViewModelFor(change).collectScoped { changeVm ->
+            viewer.context.putUserData(GHPRDiffReviewViewModel.KEY, changeVm)
             if (changeVm == null) return@collectScoped
 
             val userIcon = reviewVm.iconProvider.getIcon(reviewVm.currentUser.url, 16)
 
             if (settings.isAutomaticallyMarkAsViewed) {
-              changeVm.markViewed()
+              changeVm.setViewedState(isViewed = true)
             }
 
             viewer.showCodeReview({ locationToLine, lineToLocation, lineToUnified ->

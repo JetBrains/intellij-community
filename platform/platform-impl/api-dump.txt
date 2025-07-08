@@ -1348,6 +1348,9 @@ com.intellij.ui.tree.ui.Control$Painter
 - a:getControlOffset(com.intellij.ui.tree.ui.Control,I,Z):I
 - a:getRendererOffset(com.intellij.ui.tree.ui.Control,I,Z):I
 - a:paint(java.awt.Component,java.awt.Graphics,I,I,I,I,com.intellij.ui.tree.ui.Control,I,Z,Z,Z):V
+c:com.intellij.ui.tree.ui.DefaultTreeUI
+- com.intellij.ui.tree.ui.CustomBoundsTreeUI
+- getActualPathBounds(javax.swing.JTree,javax.swing.tree.TreePath):java.awt.Rectangle
 com.intellij.ui.tree.ui.PlainSelectionTree
 com.intellij.util.textCompletion.TextCompletionCache
 - a:getItems(java.lang.String,com.intellij.codeInsight.completion.CompletionParameters):java.util.Collection

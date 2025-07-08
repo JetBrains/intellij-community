@@ -145,6 +145,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control H",          "ChangesView.ShelveSilently", "MethodHierarchy"},
       {"shift control M",          "EditorMatchBrace", "RInsertPipeAction"},
       {"shift control MINUS",      "CollapseAllRegions", "NotebookSplitCellAction"},
+      {"shift control S",          "Github.PullRequest.Changed.MarkViewed.Toggle", "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"},
       {"shift control T",          "GotoTest", "ServiceView.ShowServices", "Terminal.NewTab"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase", "Markdown.Styling.CreateLink"},

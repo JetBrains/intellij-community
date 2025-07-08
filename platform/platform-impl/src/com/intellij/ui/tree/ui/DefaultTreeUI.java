@@ -56,7 +56,7 @@ import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
-public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollapseSupport {
+public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollapseSupport, CustomBoundsTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
@@ -252,6 +252,42 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     if (pane != null) pane.removeAll();
   }
 
+  @Override
+  public @Nullable Rectangle getActualPathBounds(@NotNull JTree tree, @NotNull TreePath path) {
+    RenderingHelper helper = new RenderingHelper(tree);
+    Control.Painter painter = getPainter(tree);
+
+    return getActualPathBounds(tree, path, helper, painter);
+  }
+
+  private Rectangle getActualPathBounds(
+    @NotNull JTree tree, @NotNull TreePath path,
+    RenderingHelper helper, Control.Painter painter
+  ) {
+    AbstractLayoutCache cache = treeState;
+
+    Insets insets = tree.getInsets();
+
+    Rectangle bounds = new Rectangle();
+    cache.getBounds(path, bounds);
+    bounds.y += insets.top;
+
+    Object value = path.getLastPathComponent();
+    int depth = TreeUtil.getNodeDepth(tree, path);
+    boolean leaf = isLeaf(value);
+    Control control = getControl(tree, path);
+    int offset = painter.getRendererOffset(control, depth, leaf);
+
+    int width = helper.getX() + helper.getWidth() - insets.left - offset;
+    int row = cache.getRowForPath(path);
+
+    width -= helper.getRightMargin(); // shrink a long node according to the right margin
+    if (width < bounds.width && helper.isRendererShrinkingDisabled(row)) {
+      width = bounds.width; // disable shrinking a long nodes
+    }
+    return new Rectangle(insets.left + offset, bounds.y, width, bounds.height);
+  }
+
   // ComponentUI
 
   @Override
@@ -367,13 +403,10 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
                 }
               }
               else if (component != null) {
-                width -= helper.getRightMargin(); // shrink a long node according to the right margin
-                if (width < bounds.width && helper.isRendererShrinkingDisabled(row)) {
-                  width = bounds.width; // disable shrinking a long nodes
-                }
-                if (width > 0) {
+                Rectangle compBounds = getActualPathBounds(tree, path, helper, painter);
+                if (compBounds.width > 0) {
                   setBackground(tree, component, background, false);
-                  rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
+                  rendererPane.paintComponent(g, component, tree, compBounds.x, compBounds.y, compBounds.width, compBounds.height, true);
                 }
               }
             }

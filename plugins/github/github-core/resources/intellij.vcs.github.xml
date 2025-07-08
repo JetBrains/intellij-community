@@ -229,10 +229,21 @@
       <reference ref="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
       <reference ref="EditSource"/>
-      <action id="Github.PullRequest.Changes.MarkViewed"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesViewedAction"/>
-      <action id="Github.PullRequest.Changes.MarkNotViewed"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesNotViewedAction"/>
+      <action id="Github.PullRequest.Changed.MarkViewed.Toggle"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRViewedStateToggleAction">
+        <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="control shift S" keymap="NetBeans 6.5" remove="true"/>
+        <keyboard-shortcut first-keystroke="control shift S" keymap="Visual Studio" remove="true"/>
+        <keyboard-shortcut first-keystroke="control shift S" keymap="QtCreator" remove="true"/>
+        <keyboard-shortcut first-keystroke="shift meta S" keymap="Visual Studio OSX" remove="true"/>
+        <keyboard-shortcut first-keystroke="shift meta S" keymap="QtCreator (Mac OS X)" remove="true"/>
+
+        <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
+
+        <override-text place="EditorPopupMenu"/>
+        <override-text place="Diff.EditorPopupMenu" use-text-of-place="EditorPopupMenu"/>
+      </action>
       <separator/>
       <group id="Github.PullRequest.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
         <reference ref="ChangesView.GroupBy"/>

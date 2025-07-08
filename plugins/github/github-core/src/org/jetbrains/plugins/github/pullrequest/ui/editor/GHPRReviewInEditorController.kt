@@ -68,8 +68,19 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
                 )
               }
 
+              launchNow {
+                try {
+                  editor.putUserData(GHPRReviewFileEditorViewModel.KEY, fileVm)
+                  awaitCancellation()
+                }
+                finally {
+                  editor.putUserData(GHPRReviewFileEditorViewModel.KEY, null)
+                }
+              }
+
               val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
               val syncedFlow = reviewVm.updateRequired.map { !it }
+
               combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.distinctUntilChanged().collectLatest { enabled ->
                 if (enabled) showReview(project, settings, fileVm, editor)
               }

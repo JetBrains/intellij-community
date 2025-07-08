@@ -76,7 +76,7 @@ interface CodeReviewChangeListViewModel {
   }
 
   companion object {
-    val DATA_KEY: DataKey<CodeReviewChangeListViewModel> = DataKey.create<CodeReviewChangeListViewModel>("Code.Review.Changes.List.ViewModel")
+    val DATA_KEY: DataKey<CodeReviewChangeListViewModel> = DataKey.create("Code.Review.Changes.List.ViewModel")
   }
 }
 
