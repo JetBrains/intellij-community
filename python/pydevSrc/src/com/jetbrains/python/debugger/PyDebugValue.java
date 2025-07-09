@@ -566,7 +566,7 @@ public class PyDebugValue extends XNamedValue {
 
   private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
     try {
-      return Registry.get("actions.show.as.image.visibility").asBoolean()
+      return Registry.is("actions.show.as.image.visibility", false)
              && !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
              && checkAndEnableViewAsImageVisibility(debugValue);
     } catch (MissingResourceException e) {
