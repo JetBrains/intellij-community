@@ -500,14 +500,17 @@ public final class PlatformTestUtil {
     assertDispatchThreadWithoutWriteAccess();
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     ThreadContext.resetThreadContext(() -> {
-      while (true) {
-        AWTEvent event = eventQueue.peekEvent();
-        if (event == null) break;
-        event = eventQueue.getNextEvent();
-        if (event instanceof InvocationEvent) {
-          eventQueue.dispatchEvent(event);
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        while (true) {
+          AWTEvent event = eventQueue.peekEvent();
+          if (event == null) break;
+          event = eventQueue.getNextEvent();
+          if (event instanceof InvocationEvent) {
+            eventQueue.dispatchEvent(event);
+          }
         }
-      }
+        return Unit.INSTANCE;
+      });
       return null;
     });
   }
