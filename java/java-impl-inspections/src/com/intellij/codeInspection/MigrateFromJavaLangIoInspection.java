@@ -19,10 +19,10 @@ public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocal
     CallMatcher.anyOf(
       CallMatcher.staticCall(JAVA_LANG_IO, "println")
         .parameterCount(0)
-        .allowUnresolved(),
+        .allowStaticUnresolved(),
       CallMatcher.staticCall(JAVA_LANG_IO, "println", "print")
         .parameterCount(1)
-        .allowUnresolved()
+        .allowStaticUnresolved()
     );
 
   @Override
