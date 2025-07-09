@@ -438,9 +438,6 @@ public final class JavaErrorKinds {
     error(PsiClass.class, "class.sealed.permits.on.non.sealed")
       .withAnchor(cls -> requireNonNull(cls.getPermitsList()).getFirstChild())
       .withDescription(cls -> message("class.sealed.permits.on.non.sealed", cls.getName()));
-  public static final Parameterized<PsiElement, LocalClassInstantiationErrorContext> LOCAL_CLASS_INSTANTIATED_FROM_DIFFERENT_STATIC_CONTEXT =
-    parameterized(PsiElement.class, LocalClassInstantiationErrorContext.class, "local.class.cannot.be.instantiated.from.different.static.context")
-      .withDescription((psi, ctx) -> message("local.class.cannot.be.instantiated.from.different.static.context", ctx.localClass().getName()));
   public static final Parameterized<PsiElement, ClassStaticReferenceErrorContext> CLASS_NOT_ENCLOSING =
     parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.not.enclosing")
       .withDescription((psi, ctx) -> message("class.not.enclosing", formatClass(ctx.outerClass())));
@@ -496,6 +493,9 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiExpression, PsiClass> INSTANTIATION_ABSTRACT = 
     parameterized(PsiExpression.class, PsiClass.class, "instantiation.abstract")
       .withDescription((expr, aClass) -> message("instantiation.abstract", aClass.getName()));
+  public static final Parameterized<PsiElement, PsiClass> INSTANTIATION_LOCAL_CLASS_WRONG_STATIC_CONTEXT =
+    parameterized(PsiElement.class, PsiClass.class, "instantiation.local.class.wrong.static.context")
+      .withDescription((psi, ctx) -> message("instantiation.local.class.wrong.static.context", ctx.getName()));
   
   public static final Simple<PsiClass> RECORD_NO_HEADER = error(PsiClass.class, "record.no.header")
     .withAnchor(PsiClass::getNameIdentifier);
@@ -1697,8 +1697,6 @@ public final class JavaErrorKinds {
       return PsiUtil.getEnclosingStaticElement(place, outerClass);
     }
   }
-
-  public record LocalClassInstantiationErrorContext(@NotNull PsiClass localClass, @NotNull PsiModifierListOwner enclosingStaticElement) {}
 
   /**
    * A context for {@link #CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL} error kind
