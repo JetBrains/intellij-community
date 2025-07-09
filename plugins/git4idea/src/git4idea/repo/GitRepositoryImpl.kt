@@ -234,19 +234,6 @@ class GitRepositoryImpl private constructor(
       return repository ?: createInstance(root, project, GitDisposable.getInstance(project))
     }
 
-
-    @JvmStatic
-    @ApiStatus.Internal
-    @Deprecated("Use {@link #createInstance(VirtualFile, Project, Disposable)}")
-    fun createInstance(
-      root: VirtualFile,
-      project: Project,
-      parentDisposable: Disposable,
-      listenToRepoChanges: Boolean,
-    ): GitRepository {
-      return createInstance(root, project, parentDisposable)
-    }
-
     /**
      * Creates a new instance of the GitRepository for the given Git root directory. <br></br>
      * Use [GitRepositoryManager.getRepositoryForRoot] if you need to obtain an instance
