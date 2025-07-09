@@ -40,7 +40,7 @@ class CreateClassActionTest: LightJavaCodeInsightFixtureTestCase() {
     val clazz = JavaDirectoryService.getInstance().createClass(psiDirectory!!, expectedFileName, JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE)
     assertEquals("""
       void main() {
-
+          
       }
     """.trimIndent(), clazz.text)
     val fileName = clazz.containingFile.name
