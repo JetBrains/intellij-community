@@ -54,6 +54,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.TrackerConte
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileSetFactory
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -90,7 +91,7 @@ class LineStatusTrackerManager(
   private val forcedDocuments = HashMap<Document, Multiset<Any>>()
 
   private var partialChangeListsEnabled: Boolean = false
-  private val documentsInDefaultChangeList = HashSet<Document>()
+  private val documentsInDefaultChangeList: MutableSet<VirtualFile> = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet()
   private var clmFreezeCounter: Int = 0
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
@@ -819,10 +820,11 @@ class LineStatusTrackerManager(
       if (!partialChangeListsEnabled || project.isDisposed) return
 
       val document = event.document
-      if (documentsInDefaultChangeList.contains(document)) return
 
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
       if (!virtualFile.isInLocalFileSystem) return
+      if (documentsInDefaultChangeList.contains(virtualFile)) return
+
       if (getLineStatusTracker(document) != null) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
@@ -841,7 +843,7 @@ class LineStatusTrackerManager(
         }
       }
       else {
-        documentsInDefaultChangeList.add(document)
+        documentsInDefaultChangeList.add(virtualFile)
       }
     }
   }
