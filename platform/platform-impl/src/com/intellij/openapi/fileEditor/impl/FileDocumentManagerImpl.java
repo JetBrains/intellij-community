@@ -105,18 +105,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     public void documentChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
       markDocumentUnsaved(document, false);
-      Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
-      Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
-      VirtualFile virtualFile = getFile(document);
-      if (project == null) {
-        project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
-      }
-      CodeStyleSettings settings = project != null && virtualFile != null
-                                   ? CodeStyle.getSettings(project, virtualFile)
-                                   : CodeStyle.getProjectOrDefaultSettings(project);
-      String lineSeparator = settings.getLineSeparator();
-      document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
-
       // avoid documents piling up during batch processing
       if (areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
         saveAllDocumentsLater();
@@ -496,10 +484,20 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
   }
 
-  public static @NotNull String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
-    String lineSeparator = file.getDetectedLineSeparator();
+  public static @NotNull String getLineSeparator(@NotNull Document document, @NotNull VirtualFile virtualFile) {
+    String lineSeparator = virtualFile.getDetectedLineSeparator();
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
+      if (lineSeparator == null) {
+        Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
+        Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
+        if (project == null) {
+          project = ProjectUtil.guessProjectForFile(virtualFile);
+        }
+        CodeStyleSettings settings = project == null ? CodeStyle.getDefaultSettings() : CodeStyle.getSettings(project, virtualFile);
+        lineSeparator = settings.getLineSeparator();
+        document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+      }
       assert lineSeparator != null : document;
     }
     return lineSeparator;
