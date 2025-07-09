@@ -120,11 +120,25 @@ inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? = getOr
 @Internal
 inline fun <T> Result<T>.getOrHandleException(handler: (Throwable) -> Unit): T? {
   return onFailure { e ->
-    if (e is CancellationException || e is ControlFlowException) {
-      throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
-    }
-    else {
-      handler(e)
-    }
+    rethrowControlFlowException(e)
+    handler(e)
   }.getOrNull()
+}
+
+/**
+ * Rethrows the given exception if it's a control flow exception.
+ *
+ * The control flow exceptions are currently defined as [CancellationException]
+ * (including [com.intellij.openapi.progress.ProcessCanceledException])
+ * and anything marked [ControlFlowException].
+ *
+ * The current stack trace is added to the rethrown exception as a suppressed exception.
+ *
+ * @param e the exception (`null` means do nothing)
+ */
+@Internal
+fun rethrowControlFlowException(e: Throwable?) {
+  if (e is CancellationException || e is ControlFlowException) {
+    throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
+  }
 }
