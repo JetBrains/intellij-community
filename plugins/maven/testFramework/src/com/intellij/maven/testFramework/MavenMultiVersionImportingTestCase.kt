@@ -174,10 +174,13 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       getActualVersion(myMavenVersion!!), "4.0") >= 0
 
   protected fun withModel410Only(value: String?): String? {
-    return if (this.isMaven4 && this.myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0) value else null
+    val isRc3 = getActualVersion(myMavenVersion!!).equals("4.0.0-rc-3", true)
+    return if (isRc3 || this.myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0) value else null
   }
 
   protected fun isModel410(): Boolean {
+    val isRc3 = getActualVersion(myMavenVersion!!).equals("4.0.0-rc-3", true)
+    if (isRc3) return true
     return this.isMaven4 && this.myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0
   }
 
