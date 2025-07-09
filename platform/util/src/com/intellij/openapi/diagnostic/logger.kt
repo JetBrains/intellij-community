@@ -77,7 +77,7 @@ inline fun Logger.traceThrowable(lazyThrowable: () -> Throwable) {
   }
 }
 
-/** Consider using [Result.getOrLogException] for more straight-forward API instead. */
+/** Consider using [Result.getOrHandleException] for more straight-forward API instead. */
 @Internal
 inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   return runCatching {
@@ -87,19 +87,26 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
 
 @Internal
 fun <T> Result<T>.getOrLogException(logger: Logger): T? {
-  return getOrLogException {
+  return getOrHandleException {
     logger.error(it)
   }
 }
 
 @Internal
-inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? {
+@Deprecated(
+  "The name is misleading, as the handler can do anything, not just log",
+  replaceWith = ReplaceWith("getOrHandleException")
+)
+inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? = getOrHandleException(log)
+
+@Internal
+inline fun <T> Result<T>.getOrHandleException(handler: (Throwable) -> Unit): T? {
   return onFailure { e ->
     if (e is ProcessCanceledException || e is CancellationException) {
       throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
     }
     else {
-      log(e)
+      handler(e)
     }
   }.getOrNull()
 }

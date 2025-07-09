@@ -3,7 +3,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -435,7 +435,7 @@ private class EditorDecorationApplierImpl(private val editor: EditorEx, parentDi
             SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
               action(event)
             }
-          }.getOrLogException { e ->
+          }.getOrHandleException { e ->
             LOG.error("The hyperlink handler threw an exception, hyperlink = $hyperlink", e)
           }
           effectSupport.linkFollowed(hyperlink.highlighter)

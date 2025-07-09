@@ -11,7 +11,7 @@ import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdate
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
@@ -98,8 +98,8 @@ object PluginAutoUpdateRepository {
     val (readResult, clearResult) = synchronized(this) {
       runCatching { readUpdates() } to runCatching { clearState() }
     }
-    val updates = readResult.getOrLogException { logDeferred.await().warn("Failed to read updates", it) } ?: emptyMap()
-    clearResult.getOrLogException { logDeferred.await().warn("Failed to clear plugin auto update state", it) }
+    val updates = readResult.getOrHandleException { logDeferred.await().warn("Failed to read updates", it) } ?: emptyMap()
+    clearResult.getOrHandleException { logDeferred.await().warn("Failed to clear plugin auto update state", it) }
     return updates
   }
 

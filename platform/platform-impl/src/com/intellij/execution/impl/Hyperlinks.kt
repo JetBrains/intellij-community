@@ -3,7 +3,7 @@ package com.intellij.execution.impl
 
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.editor.impl.FrozenDocument
 import org.jetbrains.annotations.ApiStatus
 
@@ -47,7 +47,7 @@ private fun Filter.applyToLine(lineText: String, lineEnd: Int): Filter.Result? {
     applyFilter(lineText, lineEnd)?.let {
       AsyncFilterRunner.checkRange(this, lineEnd, it)
     }
-  }.getOrLogException { exception ->
+  }.getOrHandleException { exception ->
     LOG.error("Filter threw an exception, filter = $this", exception)
   }
 }

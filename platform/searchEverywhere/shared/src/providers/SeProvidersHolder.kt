@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
@@ -141,7 +141,7 @@ class SeProvidersHolder(
             .filterIsInstance<SearchEverywhereContributor<Any>>()
             .associateBy { SeProviderId(it.searchProviderId) }
         }
-      }.getOrLogException { t ->
+      }.getOrHandleException { t ->
         Logger.getInstance(SearchEverywhereHeader::class.java).error(t)
       } ?: allContributors.filter { it.value.isShownInSeparateTab }).forEach {
         separateTabContributors[it.key] = it.value

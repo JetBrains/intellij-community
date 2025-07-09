@@ -2,7 +2,7 @@
 package com.intellij.util
 
 import com.intellij.ide.IconProvider
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Iconable.IconFlags
@@ -16,7 +16,7 @@ object PsiIconUtil {
     for (provider in IconProvider.EXTENSION_POINT_NAME.extensionList) {
       val icon = kotlin.runCatching {
         provider.getIcon(element, flags)
-      }.getOrLogException {
+      }.getOrHandleException {
         if (it !is IndexNotReadyException) {
           LOG.warn("IconProvider $provider threw an exception", it)
         }

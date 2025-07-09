@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager.Companion.getInstance
@@ -222,7 +222,7 @@ class StructureViewWrapperImpl(
             runCatching {
               rebuildImpl()
               LOG.debug("finished rebuild request processing successfully")
-            }.getOrLogException { e ->
+            }.getOrHandleException { e ->
               // catch and hope the next request will succeed, instead of just crashing the whole thing
               LOG.error("failed rebuild request processing", e)
             }
