@@ -1,33 +1,45 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class ToOrdinaryStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
-    KtStringTemplateExpression::class.java,
-    KotlinBundle.lazyMessage("convert.to.ordinary.string.literal")
-), LowPriorityAction {
+internal class ToOrdinaryStringLiteralIntention :
+    KotlinApplicableModCommandAction<KtStringTemplateExpression, Unit>(KtStringTemplateExpression::class) {
 
-    override fun isApplicableTo(element: KtStringTemplateExpression): Boolean {
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("convert.to.ordinary.string.literal")
+
+    override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
         return element.text.startsWith("\"\"\"")
     }
 
-    override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {
-        val startOffset = element.startOffset
-        val endOffset = element.endOffset
-        val currentOffset = editor?.caretModel?.currentCaret?.offset ?: startOffset
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Unit = Unit
+
+    override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
+
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtStringTemplateExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
+        val startOffset = element.textRange.startOffset
+        val endOffset = element.textRange.endOffset
+        val currentOffset = actionContext.offset
 
         val entries = element.entries
         val trimIndentCall = getTrimIndentCall(element, entries)
@@ -44,13 +56,14 @@ class ToOrdinaryStringLiteralIntention : SelfTargetingOffsetIndependentIntention
             append("\"")
         }
 
-        val replaced = (trimIndentCall?.qualifiedExpression ?: element).replaced(KtPsiFactory(element.project).createExpression(text))
+        val psiFactory = KtPsiFactory(element.project)
+        val replaced = (trimIndentCall?.qualifiedExpression ?: element).replace(psiFactory.createExpression(text))
         val offset = when {
             currentOffset - startOffset < 2 -> startOffset
-            endOffset - currentOffset < 2 -> replaced.endOffset
-            else -> maxOf(currentOffset - 2, replaced.startOffset)
+            endOffset - currentOffset < 2 -> replaced.textRange.endOffset
+            else -> maxOf(currentOffset - 2, replaced.textRange.startOffset)
         }
-        editor?.caretModel?.moveToOffset(offset)
+        updater.moveCaretTo(offset)
     }
 
     private fun String.escape(escapeLineSeparators: Boolean = true): String {
@@ -96,9 +109,18 @@ class ToOrdinaryStringLiteralIntention : SelfTargetingOffsetIndependentIntention
         val qualifiedExpression: KtQualifiedExpression,
         val stringTemplateText: String
     )
+
+    private val KtQualifiedExpression.calleeName: String?
+        get() = callExpression?.calleeExpression?.text
+
+    private fun KtCallExpression.isCalling(fqNames: List<FqName>): Boolean {
+        val calleeText = calleeExpression?.text ?: return false
+        return fqNames.any { it.shortName().asString() == calleeText }
+    }
 }
 
 private val TRIM_INDENT_FUNCTIONS: List<FqName> = listOf(
     FqName("kotlin.text.trimIndent"),
     FqName("kotlin.text.trimMargin")
 )
+

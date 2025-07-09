@@ -3491,6 +3491,160 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/toOrdinaryStringLiteral")
+    public static class ToOrdinaryStringLiteral extends AbstractSharedK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("caret1.kt")
+        public void testCaret1() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret1.kt");
+        }
+
+        @TestMetadata("caret2.kt")
+        public void testCaret2() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret2.kt");
+        }
+
+        @TestMetadata("caret3.kt")
+        public void testCaret3() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret3.kt");
+        }
+
+        @TestMetadata("caret4.kt")
+        public void testCaret4() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret4.kt");
+        }
+
+        @TestMetadata("caret5.kt")
+        public void testCaret5() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret5.kt");
+        }
+
+        @TestMetadata("caret6.kt")
+        public void testCaret6() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret6.kt");
+        }
+
+        @TestMetadata("caret7.kt")
+        public void testCaret7() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret7.kt");
+        }
+
+        @TestMetadata("caret8.kt")
+        public void testCaret8() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret8.kt");
+        }
+
+        @TestMetadata("caret9.kt")
+        public void testCaret9() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/caret9.kt");
+        }
+
+        @TestMetadata("lineBreakInExpression.kt")
+        public void testLineBreakInExpression() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/lineBreakInExpression.kt");
+        }
+
+        @TestMetadata("quotesAndSlashes.kt")
+        public void testQuotesAndSlashes() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/quotesAndSlashes.kt");
+        }
+
+        @TestMetadata("quotesInExpression.kt")
+        public void testQuotesInExpression() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/quotesInExpression.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/simple.kt");
+        }
+
+        @TestMetadata("trimIndent1.kt")
+        public void testTrimIndent1() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent1.kt");
+        }
+
+        @TestMetadata("trimIndent10.kt")
+        public void testTrimIndent10() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent10.kt");
+        }
+
+        @TestMetadata("trimIndent11.kt")
+        public void testTrimIndent11() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent11.kt");
+        }
+
+        @TestMetadata("trimIndent2.kt")
+        public void testTrimIndent2() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent2.kt");
+        }
+
+        @TestMetadata("trimIndent3.kt")
+        public void testTrimIndent3() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent3.kt");
+        }
+
+        @TestMetadata("trimIndent4.kt")
+        public void testTrimIndent4() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent4.kt");
+        }
+
+        @TestMetadata("trimIndent5.kt")
+        public void testTrimIndent5() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent5.kt");
+        }
+
+        @TestMetadata("trimIndent6.kt")
+        public void testTrimIndent6() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent6.kt");
+        }
+
+        @TestMetadata("trimIndent7.kt")
+        public void testTrimIndent7() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent7.kt");
+        }
+
+        @TestMetadata("trimIndent8.kt")
+        public void testTrimIndent8() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent8.kt");
+        }
+
+        @TestMetadata("trimIndent9.kt")
+        public void testTrimIndent9() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimIndent9.kt");
+        }
+
+        @TestMetadata("trimMargin1.kt")
+        public void testTrimMargin1() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimMargin1.kt");
+        }
+
+        @TestMetadata("trimMargin2.kt")
+        public void testTrimMargin2() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimMargin2.kt");
+        }
+
+        @TestMetadata("trimMargin3.kt")
+        public void testTrimMargin3() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimMargin3.kt");
+        }
+
+        @TestMetadata("trimMargin4.kt")
+        public void testTrimMargin4() throws Exception {
+            runTest("../testData/intentions/toOrdinaryStringLiteral/trimMargin4.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/underscoresInNumericLiteral")
     public abstract static class UnderscoresInNumericLiteral extends AbstractSharedK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
