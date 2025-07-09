@@ -136,11 +136,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     }
 
     String getClassName() {
-      return myIsImplicitClassConfiguration ? myImplicitClassField.getText() : myClassEditorField.getClassName();
-    }
-
-    boolean isReadyForApply() {
-      return myIsImplicitClassConfiguration || myClassEditorField.isReadyForApply();
+      return myIsImplicitClassConfiguration ? myImplicitClassField.getText() : myClassEditorField.getText();
     }
 
     void setImplicitClassConfiguration(boolean isImplicitClassConfiguration) {
@@ -194,10 +190,6 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                      configuration.setMainClassName(classNameInEditor);
                                    },
                                    Predicates.alwaysTrue()) {
-        @Override
-        public boolean isReadyForApply() {
-          return myComponent.isReadyForApply();
-        }
       };
     myMainClassFragment.setRemovable(false);
     myMainClassFragment.setEditorGetter(field -> field.getEditorComponent());

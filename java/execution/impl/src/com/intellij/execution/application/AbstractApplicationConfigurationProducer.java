@@ -62,7 +62,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     if (aClass instanceof PsiImplicitClass) {
       configuration.setImplicitClassConfiguration(true);
     }
-    configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
+    configuration.setMainClassName(aClass.getQualifiedName());
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
   }
@@ -77,7 +77,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     Location<?> singleClassLocation = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiClass aClass = PsiTreeUtil.getParentOfType(singleClassLocation.getPsiElement(), PsiClass.class, false);
     if (aClass != null) {
-      final String className = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
+      final String className = aClass.getQualifiedName();
       if (!Objects.equals(className, appConfiguration.getMainClassName())) return false;
 
       final PsiMethod method = PsiTreeUtil.getParentOfType(context.getPsiLocation(), PsiMethod.class, false);

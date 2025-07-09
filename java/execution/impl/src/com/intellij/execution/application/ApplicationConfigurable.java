@@ -69,7 +69,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     String className = getMainClassField().getText();
     if (!className.equals(getInitialMainClassName(configuration))) {
       PsiClass aClass = myModuleSelector.findClass(className);
-      configuration.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
+      configuration.setMainClassName(aClass != null ? aClass.getQualifiedName() : className);
     }
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
