@@ -27,6 +27,22 @@ class X {
     };
   }
 
+  boolean method(Long l) {
+    return switch (l) {
+      case null -> false;
+      case <error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">long ll</error> when (ll & 1) > 0 -> true;
+      default -> false;
+    };
+  }
+
+  boolean method(int l) {
+    return switch (l) {
+      case <error descr="'null' cannot be converted to 'int'">null</error> -> false;
+      case <error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">long ll</error> when (ll & 1) > 0 -> true;
+      default -> false;
+    };
+  }
+
   void switchTest3(<error descr="Cannot resolve symbol 'Point'">Point</error><? extends String> point1, <error descr="Cannot resolve symbol 'Point'">Point</error><? super String> point2) {
     switch (point1) {
       case <error descr="Cannot resolve symbol 'Point'">Point</error><?>() -> {}
