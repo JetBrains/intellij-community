@@ -359,6 +359,13 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
   }
 
+  @Internal
+  fun selectFirstItem() {
+    vm.coroutineScope.launch(Dispatchers.EDT) {
+     elementsSelected(intArrayOf(0), 0)
+    }
+  }
+
   private suspend fun elementsSelected(indexes: IntArray, modifiers: Int) {
     var nonItemDataCount = 0
 
