@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.diagnostic.UILatencyLogger
@@ -33,6 +33,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBMenu
 import com.intellij.ui.icons.getMenuBarIcon
+import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.plaf.beg.BegMenuItemUI
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.FontUtil
@@ -162,7 +163,7 @@ class ActionMenu constructor(
   }
 
   private fun init() {
-    subElementSelector?.stubItem = if (SystemInfo.isMacSystemMenu && isMainMenuPlace) null else StubItem()
+    subElementSelector?.stubItem = if (MacMenuSettings.isSystemMenu && isMainMenuPlace) null else StubItem()
     addStubItem()
     setBorderPainted(false)
     val menuListener = MenuListenerImpl()
@@ -208,7 +209,7 @@ class ActionMenu constructor(
       return
     }
 
-    if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place) {
+    if (MacMenuSettings.isSystemMenu && ActionPlaces.MAIN_MENU == place) {
       // JDK can't correctly paint our HiDPI icons at the system menu bar
       icon = getMenuBarIcon(icon, useDarkIcons)
     }
@@ -302,7 +303,7 @@ class ActionMenu constructor(
         addStubItem()
       }
 
-      if (SystemInfo.isMacSystemMenu && isMainMenuPlace) {
+      if (MacMenuSettings.isSystemMenu && isMainMenuPlace) {
         // Menu items may contain mnemonic, and they can affect key-event dispatching (when Alt pressed)
         // To avoid the influence of mnemonic it's necessary to clear items when a menu was hidden.
         // When a user selects item of a system menu (under macOS), AppKit generates such sequence: CloseParentMenu -> PerformItemAction
@@ -332,7 +333,7 @@ class ActionMenu constructor(
         delayedClear = null
         clearItems()
       }
-      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place) {
+      if (MacMenuSettings.isSystemMenu && ActionPlaces.MAIN_MENU == place) {
         fillMenu()
         // NOTE: FUS for OSX system menu is implemented in MacNativeActionMenu
       } else {
@@ -343,14 +344,14 @@ class ActionMenu constructor(
 
   override fun setPopupMenuVisible(value: Boolean) {
     isTryingToShowPopupMenu = value
-    if (value && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place)) {
+    if (value && !(MacMenuSettings.isSystemMenu && ActionPlaces.MAIN_MENU == place)) {
       fillMenu()
       if (!isSelected) {
         return
       }
     }
 
-    if (!SystemInfo.isMacSystemMenu && parent is JMenuBar) {
+    if (!MacMenuSettings.isSystemMenu && parent is JMenuBar) {
       // Workaround for a problem in `javax.swing.JMenu.getPopupMenuOrigin` method:
       // 1. Show some menu above the correspondent main menu item
       // 2. Change its content (see video in IJPL-54336) or move the main frame to lower position
@@ -367,7 +368,7 @@ class ActionMenu constructor(
   }
 
   fun clearItems() {
-    if (SystemInfo.isMacSystemMenu && isMainMenuPlace) {
+    if (MacMenuSettings.isSystemMenu && isMainMenuPlace) {
       for (menuComponent in getMenuComponents()) {
         if (menuComponent is ActionMenu) {
           menuComponent.clearItems()
@@ -522,7 +523,7 @@ private const val MOVING_AWAY_THRESHOLD = 16
 
 private class SubElementSelector(private val owner: ActionMenu) {
   companion object {
-    val isForceDisabled: Boolean = SystemInfo.isMacSystemMenu ||
+    val isForceDisabled: Boolean = MacMenuSettings.isSystemMenu ||
                                    !Registry.`is`("ide.popup.menu.navigation.keyboard.selectFirstEnabledSubItem", false)
   }
 

@@ -93,8 +93,6 @@ public final class SystemInfo {
     }
   }
 
-  public static final boolean isMacSystemMenu = isMac && (SystemInfoRt.isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
-
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
   /** @deprecated use {@link com.intellij.execution.configurations.PathEnvironmentVariableUtil#isOnPath} instead */

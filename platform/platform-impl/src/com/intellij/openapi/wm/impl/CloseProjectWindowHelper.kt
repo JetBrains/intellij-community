@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.MergeAllWindowsAction
 import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.util.PlatformUtils
@@ -29,7 +30,7 @@ open class CloseProjectWindowHelper {
   }
 
   protected open val isMacSystemMenu: Boolean
-    get() = SystemProperties.getBooleanProperty("idea.test.isMacSystemMenu", SystemInfo.isMacSystemMenu)
+    get() = SystemProperties.getBooleanProperty("idea.test.isMacSystemMenu", MacMenuSettings.isSystemMenu)
 
   private val isShowWelcomeScreen: Boolean
     get() = isMacSystemMenu && isShowWelcomeScreenFromSettings

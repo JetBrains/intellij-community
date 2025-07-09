@@ -33,6 +33,7 @@ import com.intellij.platform.ide.menu.createMacMenuBar
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
@@ -172,7 +173,7 @@ internal class ProjectFrameCustomHeaderHelper(
 
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       // don't show the Swing menu when a global (system) menu is presented
-      val visible = if (SystemInfo.isMacSystemMenu || isInFullScreen) {
+      val visible = if (MacMenuSettings.isSystemMenu || isInFullScreen) {
         true
       }
       else {

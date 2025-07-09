@@ -811,7 +811,6 @@ f:com.intellij.openapi.util.SystemInfo
 - sf:isMacOSSequoia:Z
 - sf:isMacOSSonoma:Z
 - sf:isMacOSVentura:Z
-- sf:isMacSystemMenu:Z
 - sf:isOracleJvm:Z
 - sf:isSolaris:Z
 - sf:isUnix:Z

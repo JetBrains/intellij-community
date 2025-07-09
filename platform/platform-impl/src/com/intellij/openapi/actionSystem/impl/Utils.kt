@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class, ExperimentalStdlibApi::class)
 
 package com.intellij.openapi.actionSystem.impl
@@ -49,6 +49,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.SlowOperations
@@ -543,7 +544,7 @@ object Utils {
                             context: DataContext,
                             place: String,
                             uiKind: ActionUiKind.Popup) {
-    val useDarkIcons = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
+    val useDarkIcons = MacMenuSettings.isSystemMenu && NSDefaults.isDarkMenuBar()
     val isWindowMenu = (uiKind as? ActualActionUiKind.Menu)?.menu is JMenu
     component.removeAll()
     val filtered = filterInvisible(list, presentationFactory, place)
@@ -570,7 +571,7 @@ object Utils {
       component.add(each)
       children.add(each)
     }
-    if (SystemInfo.isMacSystemMenu && isWindowMenu) {
+    if (MacMenuSettings.isSystemMenu && isWindowMenu) {
       if (isAligned) {
         val icon = if (hasIcons(children)) EMPTY_MENU_ACTION_ICON else null
         children.forEach { child -> replaceIconIn(child, icon) }
@@ -605,7 +606,7 @@ object Utils {
                                      presentationFactory: PresentationFactory,
                                      context: DataContext,
                                      place: String) {
-    val useDarkIcons = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
+    val useDarkIcons = MacMenuSettings.isSystemMenu && NSDefaults.isDarkMenuBar()
     val filtered = filterInvisible(list, presentationFactory, place)
     for (action in filtered) {
       val presentation = presentationFactory.getPresentation(action)

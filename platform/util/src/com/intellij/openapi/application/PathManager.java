@@ -750,8 +750,8 @@ public final class PathManager {
       }
     }
 
-    // check and fix conflicting properties
-    if (SystemInfoRt.isJBSystemMenu) {
+    // check and fix conflicting properties (see also `com.intellij.ui.mac.MenuSettings.isJbSystemMenu`)
+    if (Boolean.parseBoolean(System.getProperty("jbScreenMenuBar.enabled", "true"))) {
       sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
     }
   }
