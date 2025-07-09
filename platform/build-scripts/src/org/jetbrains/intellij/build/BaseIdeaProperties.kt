@@ -47,9 +47,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.eclipse",
   "intellij.platform.langInjection.plugin",
   "intellij.java.debugger.streams",
-  "intellij.completionMlRanking",
-  "intellij.completionMlRankingModels",
-  "intellij.statsCollector",
   "intellij.sh",
   "intellij.markdown",
   "intellij.mcpserver",
@@ -63,7 +60,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.keymap.visualStudio",
   "intellij.keymap.netbeans",
   "intellij.performanceTesting",
-  "intellij.turboComplete",
   "intellij.compose.ide.plugin",
   "intellij.findUsagesMl",
 )
