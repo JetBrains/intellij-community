@@ -638,6 +638,7 @@ jvm_library(
     "//python/python-syntax-core:syntax-core",
     "//platform/core-ui",
     "//platform/ide-core-impl",
+    "//platform/core-impl",
   ],
   runtime_deps = [":python-pydev_resources"]
 )
