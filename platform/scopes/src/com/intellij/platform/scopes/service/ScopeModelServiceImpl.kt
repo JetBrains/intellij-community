@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.util.coroutines.childScope
+import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -26,7 +27,14 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
   override fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType, onScopesUpdate: suspend (Map<String, ScopeDescriptor>?) -> Unit) {
     itemsLoadingJob = coroutineScope.childScope("ScopesStateService.subscribeToScopeStates").launch {
       LOG.performRpcWithRetries {
-        val scopesFlow = ScopeModelApi.getInstance().createModelAndSubscribe(project.projectId(), modelId, filterConditionType)
+        val scopesFlow = try {
+          ScopeModelApi.getInstance().createModelAndSubscribe(project.projectId(), modelId, filterConditionType)
+        }
+        catch (e: RpcTimeoutException) {
+          LOG.error("Failed to subscribe to model updates for modelId: $modelId", e)
+          onScopesUpdate(null)
+          return@performRpcWithRetries
+        }
         if (scopesFlow == null) {
           LOG.error("Failed to subscribe to model updates for modelId: $modelId")
           onScopesUpdate(null)
