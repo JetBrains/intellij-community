@@ -27,6 +27,7 @@ import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -38,7 +39,7 @@ class SeTabVm(
   private val tab: SeTab,
   private val searchPattern: StateFlow<String>,
 ) {
-  val searchResults: StateFlow<Flow<ThrottledItems<SeResultEvent>>?> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<SeSearchContext?> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val tabId: String get() = tab.id
@@ -55,7 +56,13 @@ class SeTabVm(
       shouldLoadMoreFlow.value = value
     }
 
-  private val _searchResults: MutableStateFlow<Flow<ThrottledItems<SeResultEvent>>?> = MutableStateFlow(null)
+  private val _resultsHitBackPressureFlow: MutableSharedFlow<Pair<String, Boolean>> = MutableSharedFlow()
+  val resultsHitBackPressureFlow: Flow<Pair<String, Boolean>> = _resultsHitBackPressureFlow.asSharedFlow().mapLatest {
+    if (it.second) delay(300)
+    it
+  }.filter { it.second }
+
+  private val _searchResults: MutableStateFlow<SeSearchContext?> = MutableStateFlow(null)
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
   private val dumbModeStateFlow =
@@ -96,6 +103,7 @@ class SeTabVm(
           Pair(searchPattern, filterData ?: SeFilterState.Empty)
         }.mapLatest { (searchPattern, filterData) ->
           val params = SeParams(searchPattern, filterData)
+          val searchId = UUID.randomUUID().toString()
 
           val resultsFlow = tab.getItems(params).let {
             val essential = tab.essentialProviderIds()
@@ -104,14 +112,15 @@ class SeTabVm(
               else it.map { event -> ThrottledOneItem(event) }
             }
             else it.throttleUntilEssentialsArrive(essential)
-
           }.map { item ->
+            if (!shouldLoadMoreFlow.value) _resultsHitBackPressureFlow.emit(searchId to true)
             shouldLoadMoreFlow.first { it }
+            _resultsHitBackPressureFlow.emit(searchId to false)
             item
           }
 
           shouldThrottle.store(true)
-          resultsFlow
+          SeSearchContext(searchId, tabId, searchPattern, resultsFlow)
         }.collect {
           if (!isActiveFlow.value) return@collect
           _searchResults.value = it
@@ -200,3 +209,6 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
     return@throttledWithAccumulation if (nonArrivedEssentialProviders.isEmpty()) ESSENTIALS_THROTTLE_DELAY else null
   }
 }
+
+@ApiStatus.Internal
+class SeSearchContext(val searchId: String, val tabId: String, val searchPattern: String, val resultsFlow: Flow<ThrottledItems<SeResultEvent>>)

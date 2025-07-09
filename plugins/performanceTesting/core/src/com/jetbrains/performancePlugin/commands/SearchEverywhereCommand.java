@@ -36,6 +36,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
@@ -283,11 +284,11 @@ public class SearchEverywhereCommand extends AbstractCommand {
     assert popupInstance != null;
     Span insertSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan();
     Span firstBatchAddedSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan();
-    popupInstance.addSearchListener(new SearchAdapter() {
+    popupInstance.addSplitSearchListener(new SplitSearchAdapter() {
       @Override
-      public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-        super.elementsAdded(list);
-        firstBatchAddedSpan.setAttribute("number", list.size());
+      public void elementsAdded(@NotNull Map<@NotNull String, ?> uuidToElement) {
+        super.elementsAdded(uuidToElement);
+        firstBatchAddedSpan.setAttribute("number", uuidToElement.size());
         firstBatchAddedSpan.end();
       }
     });
@@ -313,19 +314,21 @@ public class SearchEverywhereCommand extends AbstractCommand {
     Ref<Boolean> isTypingFinished = new Ref<>(false);
     Ref<Span> oneLetterSpan = new Ref<>();
     Ref<Span> firstBatchAddedSpan = new Ref<>();
-    popupInstance.addSearchListener(new SearchAdapter() {
+    popupInstance.addSplitSearchListener(new SplitSearchAdapter() {
       @Override
-      public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-        firstBatchAddedSpan.get().setAttribute("number", list.size());
+      public void elementsAdded(@NotNull Map<@NotNull String, ?> uuidToElement) {
+        firstBatchAddedSpan.get().setAttribute("number", uuidToElement.size());
         firstBatchAddedSpan.get().end();
       }
 
       @Override
-      public void searchFinished(@NotNull List<Object> items) {
-        super.searchFinished(items);
+      public void searchFinished(int count) {
+        super.searchFinished(count);
+        if (count < 0) return;
+
         oneLetterLock.release();
         if (!oneLetterSpan.isNull()) {
-          oneLetterSpan.get().setAttribute("number", items.size());
+          oneLetterSpan.get().setAttribute("number", count);
           oneLetterSpan.get().end();
         }
         if (isTypingFinished.get()) {

@@ -461,8 +461,6 @@ f:com.intellij.ui.render.RenderersKt
 *f:com.intellij.ui.split.SplitComponentProvider$Companion
 f:com.intellij.util.SwingBindingsKt
 - *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
-- *sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
-- *sf:bindTextOnShow(javax.swing.text.JTextComponent,kotlinx.coroutines.flow.MutableStateFlow,java.lang.String):V
 *f:com.intellij.util.ui.RestartDialogImpl
 - *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V

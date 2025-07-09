@@ -25,6 +25,7 @@ import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
+import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
@@ -67,6 +68,7 @@ import kotlin.math.roundToInt
 @Internal
 class SePopupContentPane(private val project: Project?, private val vm: SePopupVm,
                          private val resizePopupHandler: (Dimension) -> Unit,
+                         private val searchStatePublisher: SeSearchStatePublisher,
                          initPopupExtendedSize: Dimension?,
                          onShowFindToolWindow: () -> Unit) : JPanel(), Disposable, UiDataProvider {
   val preferableFocusedComponent: JComponent get() = textField
@@ -91,7 +93,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private val hintHelper = HintHelper(textField)
   private val minWidth = Registry.intValue("search.everywhere.new.minimum.width", 700)
 
-  private val resultListModel = SeResultListModel { resultList.selectionModel }
+  private val resultListModel = SeResultListModel(searchStatePublisher) { resultList.selectionModel }
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
   private val resultsScrollPane = createListPane(resultList)
 
@@ -159,11 +161,15 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
           resultListModel.reset()
         }
         it.searchResults.filterNotNull()
-      }.collectLatest { throttledResultEventFlow ->
+      }.collectLatest { searchContext ->
+        val searchId = searchContext.searchId
+        val throttledResultEventFlow = searchContext.resultsFlow
+
         coroutineScope {
           withContext(Dispatchers.EDT) {
             isSearchCompleted.store(false)
             resultListModel.invalidate()
+            searchStatePublisher.searchStarted(searchId, textField.text, vm.currentTab.tabId)
 
             if (vm.searchPattern.value.isNotEmpty()) {
               hintHelper.setSearchInProgress(true)
@@ -182,6 +188,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               isSearchCompleted.store(true)
               resultListModel.removeLoadingItem()
+              searchStatePublisher.searchStoppedProducingResults(searchId, resultListModel.size, true)
 
               if (!resultListModel.isValid || resultListModel.isEmpty) {
                 if (!textField.text.isEmpty() &&
@@ -205,7 +212,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               hintHelper.setSearchInProgress(false)
               val wasFrozen = resultListModel.freezer.isEnabled
 
-              resultListModel.addFromThrottledEvent(event)
+              resultListModel.addFromThrottledEvent(searchId, event)
 
               // Freeze back if it was frozen before
               if (wasFrozen) resultListModel.freezer.enable()
@@ -264,6 +271,16 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
           }.collect { (isScrolledAlmostToAnEnd, isValidList) ->
             tabVm.shouldLoadMore = isScrolledAlmostToAnEnd || !isValidList
           }
+        }
+      }
+    }
+
+    vm.coroutineScope.launch {
+      vm.currentTabFlow.flatMapLatest {
+        it.resultsHitBackPressureFlow
+      }.collect { (searchId, stabilized) ->
+        withContext(Dispatchers.EDT) {
+          searchStatePublisher.searchStoppedProducingResults(searchId, resultListModel.size, false)
         }
       }
     }

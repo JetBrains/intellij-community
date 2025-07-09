@@ -263,6 +263,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     myExternalSearchListeners.add(listener);
   }
 
+  @Override
+  @ApiStatus.Experimental
+  public void addSplitSearchListener(@NotNull SplitSearchListener listener) {
+    addSearchListener(listener.toSearchListener());
+  }
+
   public void removeSearchListener(SearchListener listener) {
     myExternalSearchListeners.remove(listener);
   }

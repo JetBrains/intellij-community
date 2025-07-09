@@ -15,6 +15,7 @@ enum class SeLog {
   FROZEN_COUNT,
   THROTTLING,
   WARNING,
+  LISTENERS,
   EQUALITY;
 
   companion object {
@@ -26,6 +27,7 @@ enum class SeLog {
       FROZEN_COUNT,
       THROTTLING,
       WARNING,
+      LISTENERS,
       EQUALITY
     )
 

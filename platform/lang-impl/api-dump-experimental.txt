@@ -621,6 +621,7 @@ com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 - *a:getCurrentlyShownPopupInstance():com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 *:com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 - a:addSearchListener(com.intellij.ide.actions.searcheverywhere.SearchListener):V
+- a:addSplitSearchListener(com.intellij.ide.actions.searcheverywhere.SplitSearchListener):V
 - a:closePopup():V
 - a:getSearchFieldDocument():javax.swing.text.Document
 - a:getSearchText():java.lang.String
@@ -630,9 +631,23 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
 - com.intellij.openapi.actionSystem.UiDataProvider
+- *:addSplitSearchListener(com.intellij.ide.actions.searcheverywhere.SplitSearchListener):V
 - *:selectFirstItem():V
 com.intellij.ide.actions.searcheverywhere.SearchListener
 - *:standardSearchFoundNoResults(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):V
+*a:com.intellij.ide.actions.searcheverywhere.SplitSearchAdapter
+- com.intellij.ide.actions.searcheverywhere.SplitSearchListener
+- <init>():V
+- elementsAdded(java.util.Map):V
+- elementsRemoved(I):V
+- searchFinished(I):V
+- searchStarted(java.lang.String,java.lang.String):V
+*:com.intellij.ide.actions.searcheverywhere.SplitSearchListener
+- a:elementsAdded(java.util.Map):V
+- elementsRemoved(I):V
+- a:searchFinished(I):V
+- a:searchStarted(java.lang.String,java.lang.String):V
+- toSearchListener():com.intellij.ide.actions.searcheverywhere.SearchListener
 *a:com.intellij.ide.fileTemplates.actions.CustomCreateFromTemplateAction
 - com.intellij.ide.actions.CreateFileFromTemplateAction
 - p:<init>(java.lang.String):V
