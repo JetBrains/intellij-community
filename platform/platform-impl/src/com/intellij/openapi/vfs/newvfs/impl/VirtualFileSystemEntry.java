@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -162,7 +161,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NotNull CharSequence getNameSequence() {
-    PersistentFSImpl pfs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
+    PersistentFSImpl pfs = owningPersistentFS();
     if (pfs == null) {
       return "<FS-is-disposed>";//shutdown-safe
     }
