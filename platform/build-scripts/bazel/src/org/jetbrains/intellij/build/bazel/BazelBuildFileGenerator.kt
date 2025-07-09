@@ -468,6 +468,16 @@ internal class BazelBuildFileGenerator(
         else if (module.name == "fleet.rpc") {
           option("exported_compiler_plugins", arrayOf("@lib//:rpc-plugin"))
         }
+        else if (module.name == "fleet.noria.cells" ||
+                 module.name == "fleet.noria.html" ||
+                 module.name == "fleet.noria.ui" ||
+                 module.name == "fleet.noria.ui.examples" ||
+                 module.name == "fleet.noria.windowManagement.api" ||
+                 module.name == "fleet.noria.windowManagement.extensions" ||
+                 module.name == "fleet.noria.windowManagement.impl" ||
+                 module.name == "fleet.noria.windowManagement.implDesktopMacOS") {
+          option("exported_compiler_plugins", arrayOf("@lib//:noria-plugin"))
+        }
 
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
