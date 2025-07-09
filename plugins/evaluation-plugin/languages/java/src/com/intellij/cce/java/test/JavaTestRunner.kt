@@ -21,15 +21,17 @@ class JavaTestRunner : TestRunner {
   override suspend fun runTests(request: TestRunRequest): TestRunResult {
     LOG.info("Running tests. total ${request.tests.size}. tests: ${request.tests.joinToString()}")
     if (request.tests.isEmpty()) {
-      return TestRunResult(0, emptyList(), emptyList(), true, true, "")
+      return TestRunResult(0, emptyList(), emptyList(), emptyList(), true, true, "")
     }
 
     val moduleTests = request.tests
-      .map {
-        val parts = it.split(":")
+      .map { test ->
+        val parts = test
+          .takeWhile { it != '[' } // test format in swe-polybench for one guava instance
+          .split(":")
         if (parts.size == 1) null to parts[0]
         else if (parts.size == 2) parts[0] to parts[1]
-        else throw IllegalArgumentException("Test name has invalid format: $it")
+        else throw IllegalArgumentException("Test name has invalid format: $test")
       }
       .groupBy { it.first }
       .map { ModuleTests(it.key, it.value.map { it.second }) }

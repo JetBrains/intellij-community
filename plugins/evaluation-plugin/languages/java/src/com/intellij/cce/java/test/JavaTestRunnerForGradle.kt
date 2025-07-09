@@ -65,7 +65,8 @@ internal object JavaTestRunnerForGradle {
       else line
     }
 
-    return TestRunResult(results.exitCode, (allTests - failedTests).toList(), failedTests.toList(), true, true, output)
+    val successfulTests = (allTests - failedTests).toList()
+    return TestRunResult(results.exitCode, successfulTests, failedTests.toList(), allTests.toList(), true, true, output)
   }
 
   private fun configSettings(project: Project, moduleTests: List<ModuleTests>): RunnerAndConfigurationSettings {
