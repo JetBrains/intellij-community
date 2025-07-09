@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -258,6 +259,11 @@ final class ConstructorBodyProcessor {
       }
 
       @Override
+      public void visitClass(PsiClass aClass) {
+        // Empty on purpose.
+      }
+
+      @Override
       public void visitThisExpression(PsiThisExpression expression) {
         super.visitThisExpression(expression);
         markInvalid();
@@ -266,6 +272,11 @@ final class ConstructorBodyProcessor {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
+
+        if (expression.getQualifier() != null) {
+          return;
+        }
+
         PsiElement resolved = expression.resolve();
         if (resolved == null) {
           markInvalid();
@@ -273,20 +284,10 @@ final class ConstructorBodyProcessor {
         }
 
         if (resolved instanceof PsiField field && !field.hasModifierProperty(STATIC) && field.getContainingClass() == containingClass) {
-          if (expression.getQualifier() == null) {
-            markInvalid();
-          }
-          else {
-            // There is a qualifier, and it is not "this".
-          }
+          markInvalid();
         }
-        else if (resolved instanceof PsiMethod method) {
-          if (method.hasModifierProperty(STATIC)) return;
-          if (method.getContainingClass() == containingClass) {
-            markInvalid();
-            return;
-          }
-          if (containingClass.findMethodBySignature(method, true) != null) {
+        else if (resolved instanceof PsiMethod method && !method.hasModifierProperty(STATIC)) {
+          if (InheritanceUtil.isInheritorOrSelf(containingClass, method.getContainingClass(), true)) {
             markInvalid();
           }
         }
