@@ -93,7 +93,7 @@ class MutableGitLabMergeRequestNote(
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabNoteDTO::body)
   override val resolved: StateFlow<Boolean> = data.mapState(cs, GitLabNoteDTO::resolved)
-  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = data.mapState(cs, GitLabNoteDTO::emojis)
+  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = data.mapState(cs) { it.emojis.filterNotNull() }
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) {
     it.position?.let(GitLabNotePosition::from)
   }
