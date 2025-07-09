@@ -32,6 +32,13 @@ class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
 
         if (linebreak.text.count { it == '\n' } > 1) return CANNOT_JOIN
 
+        if (element1 !is KtPropertyAccessor) {
+            val parentOfElement1 = element1.parent
+            if (parentOfElement1 is KtProperty && parentOfElement1.initializer == null && element2 is KtPropertyAccessor) {
+                return CANNOT_JOIN
+            }
+        }
+
         if (
             (element1 !is KtPropertyAccessor && element2 !is KtPropertyAccessor) &&
             // `val x=1 fun f(){}` is error; while `fun f(){} val x=1` is OK
