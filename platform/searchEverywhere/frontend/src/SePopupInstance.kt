@@ -48,7 +48,7 @@ class SePopupInstance(private val popupVm: SePopupVm,
 
   @ApiStatus.Internal
   override fun selectFirstItem() {
-    TODO("Not yet implemented")
+    popupContentPane.selectFirstItem()
   }
 
   @ApiStatus.Internal
