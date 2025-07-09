@@ -83,6 +83,13 @@ public final class org/jetbrains/jewel/foundation/GlobalMetricsKt {
 public abstract interface annotation class org/jetbrains/jewel/foundation/InternalJewelApi : java/lang/annotation/Annotation {
 }
 
+public final class org/jetbrains/jewel/foundation/JewelFlags {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/foundation/JewelFlags;
+	public final fun getUseCustomPopupRenderer ()Z
+	public final fun setUseCustomPopupRenderer (Z)V
+}
+
 public final class org/jetbrains/jewel/foundation/OutlineColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/foundation/OutlineColors$Companion;
