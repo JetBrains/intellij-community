@@ -22,6 +22,7 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 // tests various ContainerUtil.create*, ContainerUtil.new*, CollectionFactory.create*, ConcurrentCollectionFactory.create* collections for being really weak/soft/concurrent
 @RunFirst
@@ -104,6 +105,26 @@ public class ContainerUtilCollectionsTest extends Assert {
   public void testSoftMapTossedEvenWithIdentityStrategy() {
     Map<Object, Object> map = CollectionFactory.createSoftMap(HashingStrategy.identity());
     checkKeyTossedEventually(map);
+  }
+  @Test(timeout = TIMEOUT)
+  public void testSoftMapSizeIsConstant() {
+    Map<Object, Boolean> map = CollectionFactory.createSoftMap();
+    checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(Collections.newSetFromMap(map));
+  }
+  @Test(timeout = TIMEOUT)
+  public void testSoftMapIdentitySizeIsConstant() {
+    Map<Object, Boolean> map = CollectionFactory.createSoftMap(HashingStrategy.identity());
+    checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(Collections.newSetFromMap(map));
+  }
+  @Test(timeout = TIMEOUT)
+  public void testWeakMapSizeIsConstant() {
+    Map<Object, Boolean> map = CollectionFactory.createWeakMap();
+    checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(Collections.newSetFromMap(map));
+  }
+  @Test(timeout = TIMEOUT)
+  public void testWeakMapIdentitySizeIsConstant() {
+    Map<Object, Boolean> map = CollectionFactory.createWeakMap(100, 0.5f, HashingStrategy.identity());
+    checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(Collections.newSetFromMap(map));
   }
   @Test(timeout = TIMEOUT)
   public void testSoftMapTossedEvenWithCustomStrategy() {
@@ -697,28 +718,32 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
 
-  @Test
+  @Test(timeout = TIMEOUT)
   public void weakSetTossed() {
     Set<Object> set = ContainerUtil.createWeakSet();
     checkStandardSetOperations(set);
+    checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(set);
     checkClearsEventuallyAfterGCPressure(set);
   }
-  @Test
+  @Test(timeout = TIMEOUT)
   public void concurrentWeakSetCreatedUsingSetFromMapTrickDoesWork() {
     Set<Object> set = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
     checkStandardSetOperations(set);
+    checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(set);
     checkClearsEventuallyAfterGCPressure(set);
   }
-  @Test
+  @Test(timeout = TIMEOUT)
   public void concurrentSet() {
     Set<Object> set = ConcurrentCollectionFactory.createConcurrentSet();
     checkStandardSetOperations(set);
+    checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(set);
   }
 
-  @Test
+  @Test(timeout = TIMEOUT)
   public void testWeakSet() {
     Set<Object> set = ContainerUtil.createWeakSet();
     checkStandardSetOperations(set);
+    checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(set);
   }
 
   private static void checkStandardSetOperations(Set<Object> set) {
@@ -730,6 +755,20 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertTrue(set.remove(""));
     assertEquals(0, set.size());
     assertTrue(set.isEmpty());
+  }
+
+  private void checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(Set<Object> set) {
+    set.clear();
+    //noinspection ConstantValue
+    assertEquals(0, set.size());
+    int N = 1_000_000;
+    List<?> hardRetained = IntStream.range(0, N).boxed().toList();
+    set.addAll(hardRetained);
+    for (int i = 0; i < N; i++) {
+      assertEquals(N, set.size());
+    }
+    set.clear();
+    Reference.reachabilityFence(hardRetained);
   }
 
   private void checkClearsEventuallyAfterGCPressure(Set<Object> set) {

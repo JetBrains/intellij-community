@@ -68,21 +68,11 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     }
     return processed;
   }
-  private static final HashingStrategy<?> THIS = new HashingStrategy<Object>() {
-    @Override
-    public int hashCode(Object object) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean equals(Object o1, Object o2) {
-      throw new UnsupportedOperationException();
-    }
-  };
 
   @Override
   public int size() {
-    return entrySet().size();
+    // approx value, this method is unreliable anyway because some key could gc any moment
+    return myMap.size();
   }
 
   @Override

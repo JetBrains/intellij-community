@@ -173,7 +173,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
 
   @Override
   public int size() {
-    return entrySet().size();
+    return myMap.size();
   }
 
   @Override
