@@ -32,6 +32,9 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
 
   private static final String jbEnvPrintSortedClasspath = "JB_TEST_PRINT_SORTED_CLASSPATH";
   private static final String jbEnvPrintTestSrcDirContent = "JB_TEST_PRINT_TEST_SRCDIR_CONTENT";
+  private static final String jbEnvPrintEnv = "JB_TEST_PRINT_ENV";
+  private static final String jbEnvPrintSystemProperties = "JB_TEST_PRINT_SYSTEM_PROPERTIES";
+  // true by default. try as much as possible to run tests in sandbox
   private static final String jbEnvSandbox = "JB_TEST_SANDBOX";
 
   public static void main(String[] args) throws IOException {
@@ -56,6 +59,18 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
           .sorted()
           .toList()
           .forEach(x -> System.err.println("CLASSPATH " + x));
+      }
+
+      if (Boolean.parseBoolean(System.getenv(jbEnvPrintEnv))) {
+        System.getenv().entrySet().stream()
+          .sorted(Map.Entry.comparingByKey())
+          .forEach(entry -> System.err.println("ENV " + entry.getKey() + "=" + entry.getValue()));
+      }
+
+      if (Boolean.parseBoolean(System.getenv(jbEnvPrintSystemProperties))) {
+        System.getProperties().entrySet().stream()
+          .sorted(Comparator.comparing(o -> o.getKey().toString()))
+          .forEach(entry -> System.err.println("PROPERTY " + entry.getKey() + "=" + entry.getValue()));
       }
 
       String testSrcDir = System.getenv(bazelEnvTestSrcDir);
