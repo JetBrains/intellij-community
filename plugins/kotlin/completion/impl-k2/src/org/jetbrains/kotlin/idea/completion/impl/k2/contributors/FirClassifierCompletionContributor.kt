@@ -304,9 +304,8 @@ private class ClassifierLookupElementRenderer(
             /* s = */ fqName.render(),
         )
 
-        val documentManager = PsiDocumentManager.getInstance(position.project)
-        documentManager.commitDocument(document)
-        documentManager.doPostponedOperationsAndUnblockDocument(document)
+        PsiDocumentManager.getInstance(position.project)
+            .commitDocument(document)
 
         return analyze(file) {
             collectPossibleReferenceShortenings(file, selection = rangeMarker.textRange)
