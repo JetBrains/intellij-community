@@ -201,6 +201,11 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     myGrid.getAutoscrollLocker().runWithLock(() -> setRowSelectionInterval(myTable.getRowCount() - 1, 0));
   }
 
+  @Override
+  public void clearSelection() {
+    myTable.clearSelection();
+  }
+
   private void setSelection(boolean columns, int[] array) {
     if (myTable.isTransposed() && columns || !myTable.isTransposed() && !columns) {
       setSelection(myTable.getSelectionModel(), false, myTable.getRowCount() - 1, array);

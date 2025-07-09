@@ -183,6 +183,11 @@ class TreeTableSelectionModel implements SelectionModel<GridRow, GridColumn>, Se
   }
 
   @Override
+  public void clearSelection() {
+    myView.getComponent().getTree().clearSelection();
+  }
+
+  @Override
   public @NotNull ModelIndex<GridRow> getSelectedRow() {
     TreePath path = myView.getComponent().getTree().getSelectionPath();
     RowNode rowNode = findNode(path, RowNode.class);
