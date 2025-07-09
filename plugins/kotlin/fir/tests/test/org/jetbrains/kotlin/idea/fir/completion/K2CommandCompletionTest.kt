@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -56,6 +57,27 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.type(".")
         val elements = myFixture.completeBasic()
         assertNotNull(elements.firstOrNull() { element -> element.lookupString.contains("Change Sign", ignoreCase = true) })
+    }
+
+    fun testRenameParameter() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt",
+            """
+            class A { 
+                fun foo(a<caret>: String){
+                } 
+            }
+            """.trimIndent()
+        )
+        myFixture.doHighlighting()
+        myFixture.type(".")
+        val elements = myFixture.completeBasic()
+        val element = elements
+            .firstOrNull { element -> element.lookupString.contains("Rename", ignoreCase = true) }
+            ?.`as`(CommandCompletionLookupElement::class.java)
+        assertNotNull(element)
+        assertEquals(TextRange(23, 24), element?.highlighting?.range)
     }
 
     fun testRenameMethod() {
