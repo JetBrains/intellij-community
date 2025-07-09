@@ -149,7 +149,7 @@ internal class GitDefaultBranchesPopup private constructor(
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
 
     fun create(project: Project, preferredSelection: GitRepositoryModel?): GitDefaultBranchesPopup {
-      val repositories = GitRepositoriesHolder.getInstance(project).getAll().sorted()
+      val repositories = GitRepositoriesHolder.getInstance(project).getAll()
       return GitDefaultBranchesPopup(project, GitDefaultBranchesPopupStep.create(project, preferredSelection, repositories)).also {
         it.setIsMovable(true)
       }

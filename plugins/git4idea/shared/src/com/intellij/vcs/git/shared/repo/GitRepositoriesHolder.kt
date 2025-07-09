@@ -49,7 +49,7 @@ class GitRepositoriesHolder(
 
   fun getAll(): List<GitRepositoryModel> {
     logErrorIfNotInitialized()
-    return repositories.values.toList()
+    return repositories.values.sorted().toList()
   }
 
   fun get(repositoryId: RepositoryId): GitRepositoryModel? {
