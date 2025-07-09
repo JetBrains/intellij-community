@@ -58,8 +58,7 @@ fun <C : Component> C.launchOnceOnShow(
   ThreadingAssertions.assertEventDispatchThread()
   val component = this
 
-  @OptIn(DelicateCoroutinesApi::class)
-  return GlobalScope.launch(Dispatchers.Unconfined + CoroutineName(debugName)) {
+  return launchUnconfined(debugName) {
     var started = false
     showingAsChannel(component) { channel ->
       while (!started) {
@@ -128,8 +127,7 @@ fun <C : Component> C.launchOnShow(
   ThreadingAssertions.assertEventDispatchThread()
   val component = this
 
-  @OptIn(DelicateCoroutinesApi::class)
-  return GlobalScope.launch(Dispatchers.Unconfined + CoroutineName(debugName)) {
+  return launchUnconfined(debugName) {
     showingAsChannel(component) { channel ->
       supervisorScope {
         // Poor man's [distinctUntilChanged] + [collectLatest]
@@ -151,6 +149,17 @@ fun <C : Component> C.launchOnShow(
       }
     }
   }
+}
+
+/**
+ * Launches the given task in the global scope without dispatching.
+ */
+private fun launchUnconfined(debugName: String, block: suspend CoroutineScope.() -> Unit): Job {
+  @OptIn(DelicateCoroutinesApi::class)
+  return GlobalScope.launch(
+    context = Dispatchers.Unconfined + CoroutineName(debugName),
+    block = block,
+  )
 }
 
 private suspend fun showingAsChannel(component: Component, block: suspend (ReceiveChannel<Boolean>) -> Unit) {
