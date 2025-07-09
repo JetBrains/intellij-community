@@ -424,7 +424,22 @@ com.intellij.util.keyFMap.KeyFMap
 - a:plus(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.util.keyFMap.KeyFMap
 - a:size():I
 e:com.intellij.util.system.OS
+- f:getOsInfo():com.intellij.util.system.OS$OsInfo
 - s:isGenericUnix():Z
+f:com.intellij.util.system.OS$LinuxInfo
+- com.intellij.util.system.OS$UnixInfo
+- isUnderWsl():Z
+f:com.intellij.util.system.OS$MacOsInfo
+- com.intellij.util.system.OS$OsInfo
+com.intellij.util.system.OS$OsInfo
+c:com.intellij.util.system.OS$UnixInfo
+- com.intellij.util.system.OS$OsInfo
+- getDistro():java.lang.String
+- getPrettyName():java.lang.String
+- getRelease():java.lang.String
+f:com.intellij.util.system.OS$WindowsInfo
+- com.intellij.util.system.OS$OsInfo
+- getBuildNumber():java.lang.Long
 com.intellij.util.xmlb.Accessor
 - a:getAnnotation(java.lang.Class):java.lang.annotation.Annotation
 - a:getGenericType():java.lang.reflect.Type

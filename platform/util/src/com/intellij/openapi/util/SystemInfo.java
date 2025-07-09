@@ -115,10 +115,8 @@ public final class SystemInfo {
   public static final boolean isMacOSSonoma = isMac && isOsVersionAtLeast("14.0");
   public static final boolean isMacOSSequoia = isMac && isOsVersionAtLeast("15.0");
 
-  /**
-   * Build number is the only more or less stable approach to get comparable Windows versions.
-   * See <a href="https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions">list of builds</a>.
-   */
+  /** Use {@link com.intellij.util.system.OS.WindowsInfo#getBuildNumber} instead */
+  @ApiStatus.Obsolete
   public static @Nullable Long getWinBuildNumber() {
     return isWindows ? WinBuildNumber.getWinBuildNumber() : null;
   }
