@@ -383,8 +383,10 @@ public final class AsyncStacksUtils {
         "https://cache-redirector.jetbrains.com/intellij-dependencies",
         new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
 
-      // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
-      Files.copy(downloadedAgent, agentArtifactPath);
+      // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside.
+      // The copy operation is used as the rename operation.
+      // toRealPath is required because EEL does not support copying of symbolic links
+      Files.copy(downloadedAgent.toRealPath(), agentArtifactPath);
 
       return asEelPath(agentArtifactPath).toString();
     }
@@ -413,10 +415,16 @@ public final class AsyncStacksUtils {
       );
     }
     Path temporaryAgentPath = createTemporaryAgentPath(project, disposable);
-    EelPathUtils.transferLocalContentToRemote(
-      bundledAgentPath,
-      new EelPathUtils.TransferTarget.Explicit(temporaryAgentPath)
-    );
+    try {
+      // toRealPath is required because EEL does not support copying of symbolic links
+      EelPathUtils.transferLocalContentToRemote(
+        bundledAgentPath.toRealPath(),
+        new EelPathUtils.TransferTarget.Explicit(temporaryAgentPath)
+      );
+    } catch (IOException e) {
+      LOG.error(String.format("Unable to copy the java-debugger agent file from %s to %s", bundledAgentPath, temporaryAgentPath), e);
+      return null;
+    }
     return asEelPath(temporaryAgentPath).toString();
   }
 
