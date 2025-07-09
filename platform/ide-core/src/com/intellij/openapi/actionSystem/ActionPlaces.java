@@ -75,6 +75,8 @@ public abstract class ActionPlaces {
 
   public static final String STATUS_BAR_PLACE = "StatusBarPlace";
 
+  public static final String FIND_IN_FILES_POPUP = "FindInFilesPopup";
+
   public static final String SCOPE_VIEW_POPUP = "ScopeViewPopup";
   public static final String ACTION_SEARCH = "GoToAction";
 
@@ -273,7 +275,7 @@ public abstract class ActionPlaces {
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
     PROJECT_WIDGET_POPUP,
     JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP,
-    REVEAL_IN_POPUP
+    REVEAL_IN_POPUP, FIND_IN_FILES_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
