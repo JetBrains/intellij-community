@@ -307,11 +307,14 @@
     </action>
 
     <group id="NewJavaSpecialFile">
-      <action id="NewCompactSourceFile" class="com.intellij.ide.actions.CreateCompactSourceFileAction"/>
       <action id="NewPackageInfo" class="com.intellij.ide.actions.CreatePackageInfoAction"/>
       <action id="NewModuleInfo" class="com.intellij.ide.actions.CreateModuleInfoAction"/>
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </group>
+
+    <action id="CompactSourceFile" class="com.intellij.ide.actions.CreateCompactSourceFileAction">
+      <add-to-group group-id="NewGroup1" anchor="after" relative-to-action="NewClass"/>
+    </action>
 
     <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction">
       <add-to-group group-id="AnalyzeActions" anchor="after" relative-to-action="ViewOfflineInspection"/>
