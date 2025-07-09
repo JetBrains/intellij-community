@@ -130,6 +130,6 @@ class MemoryUsageConfigurable : BoundSearchableConfigurable(
 
   companion object {
     private const val MEMORY_USAGE_SETTINGS_ID = "pycharm.memory.usage.settings"
-    private const val MEMORY_USAGE_SETTINGS_HELP_TOPIC = "Increasing_Memory_Heap"
+    private const val MEMORY_USAGE_SETTINGS_HELP_TOPIC = "increase.memory.heap"
   }
 }
