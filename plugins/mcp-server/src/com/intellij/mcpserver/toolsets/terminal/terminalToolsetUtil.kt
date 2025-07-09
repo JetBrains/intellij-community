@@ -9,6 +9,8 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.toolsets.terminal.TerminalToolset.CommandExecutionResult
+import com.intellij.mcpserver.util.TruncateMode
+import com.intellij.mcpserver.util.truncateText
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -28,7 +30,16 @@ import kotlin.time.Duration
 class CommandSession(val sessionId: String, val console: TerminalExecutionConsole)
 val MCP_TERMINAL_KEY: Key<CommandSession> = Key.create("MCP_TERMINAL_KEY")
 
-suspend fun executeShellCommand(window: ToolWindow?, project: Project, command: String, executeInShell: Boolean, sessionId: String?, timeout: Duration): CommandExecutionResult {
+suspend fun executeShellCommand(
+  window: ToolWindow?,
+  project: Project,
+  command: String,
+  executeInShell: Boolean,
+  sessionId: String?,
+  timeout: Duration,
+  maxLinesCount: Int,
+  truncateMode: TruncateMode = TruncateMode.START,
+): CommandExecutionResult {
   val defaultShell = ShConfigurationType.getDefaultShell(project)
 
   val commandLine = if (executeInShell) {
@@ -95,8 +106,9 @@ suspend fun executeShellCommand(window: ToolWindow?, project: Project, command: 
   val exitCodeValue = withTimeoutOrNull(timeout) {
     exitCode.await()
   }
+  val truncateText = truncateText(text = output.toString(), maxLinesCount = maxLinesCount, truncateMode = truncateMode)
   if (exitCodeValue == null) {
-    return CommandExecutionResult(is_timed_out = true, command_output = output.toString())
+    return CommandExecutionResult(is_timed_out = true, command_output = truncateText)
   }
-  return CommandExecutionResult(command_exit_code = exitCodeValue, command_output = output.toString())
+  return CommandExecutionResult(command_exit_code = exitCodeValue, command_output = truncateText)
 }

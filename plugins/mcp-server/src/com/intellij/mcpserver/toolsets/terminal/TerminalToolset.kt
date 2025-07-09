@@ -8,6 +8,7 @@ import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.ToolWindowManager
@@ -16,14 +17,11 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = logger<TerminalToolset>()
 
 class TerminalToolset : McpToolset {
-  private val maxLineCount = 2000
-  private val timeout = 2.minutes
-
   @McpTool
   @McpDescription("""
         Executes a specified shell command in the IDE's integrated terminal.
@@ -42,17 +40,18 @@ class TerminalToolset : McpToolset {
   suspend fun execute_terminal_command(
     @McpDescription("Shell command to execute")
     command: String,
-
     @McpDescription("""Whether to execute the command in a default user's shell (bash, zsh, etc.). 
       |Useful if the command is not a commandline but a shell script, or if it's important to preserve real environment of the user's terminal. 
       |In the case of 'false' value the command will be started as a process""")
-    execute_in_shell: Boolean = false,
-
+    executeInShell: Boolean = false,
     @McpDescription("Whether to reuse an existing terminal window. Allows to avoid creating multiple terminals")
-    reuse_existing_terminal_window: Boolean = true,
-
+    reuseExistingTerminalWindow: Boolean = true,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
-    timeout_milliseconds: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
+    timeout: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
+    @McpDescription(Constants.MAX_LINES_COUNT_DESCRIPTION)
+    maxLinesCount: Int = Constants.MAX_LINES_COUNT_VALUE,
+    @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
+    truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
   ): CommandExecutionResult {
     val project = currentCoroutineContext().project
     checkUserConfirmationIfNeeded(McpServerBundle.message("label.do.you.want.to.execute.command.in.terminal"), command, project)
@@ -60,7 +59,15 @@ class TerminalToolset : McpToolset {
     // TODO pass from http request later (MCP Client name or something else)
     val id = "mcp_session"
     val window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
-    return executeShellCommand(window = window, project = project, command = command, executeInShell = execute_in_shell, sessionId = if (reuse_existing_terminal_window) id else null, timeout = timeout)
+    return executeShellCommand(window = window,
+                               project = project,
+                               command = command,
+                               executeInShell = executeInShell,
+                               sessionId = if (reuseExistingTerminalWindow) id else null,
+                               timeout = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE.milliseconds,
+                               maxLinesCount = maxLinesCount,
+                               truncateMode = truncateMode
+    )
   }
 
   @OptIn(ExperimentalSerializationApi::class)

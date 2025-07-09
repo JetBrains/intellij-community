@@ -19,7 +19,9 @@ import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
+import com.intellij.mcpserver.util.truncateText
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Key
@@ -71,6 +73,10 @@ class ExecutionToolset : McpToolset {
     configurationName: String,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
+    @McpDescription(Constants.MAX_LINES_COUNT_DESCRIPTION)
+    maxLinesCount: Int = Constants.MAX_LINES_COUNT_VALUE,
+    @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
+    truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
     ): RunConfigurationResult {
     val project = currentCoroutineContext().project
     val runManager = RunManager.getInstance(project)
@@ -128,10 +134,11 @@ class ExecutionToolset : McpToolset {
     val exitCode = withTimeoutOrNull(timeout.milliseconds) {
       exitCodeDeferred.await()
     }
+    val output = truncateText(outputBuilder.toString(), maxLinesCount = maxLinesCount, truncateMode = truncateMode)
     return RunConfigurationResult(
       exitCode = exitCode,
       timedOut = exitCode == null,
-      output = outputBuilder.toString()
+      output = output
     )
   }
 
