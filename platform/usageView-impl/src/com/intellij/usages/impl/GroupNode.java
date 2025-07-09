@@ -150,41 +150,50 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
 
-  int removeUsagesBulk(@NotNull Set<? extends UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
+  int removeUsagesBulk(@NotNull Set<UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
     ThreadingAssertions.assertEventDispatchThread();
     int removed = 0;
+    List<MutableTreeNode> removedNodes = new SmartList<>();
     synchronized (this) {
-      List<MutableTreeNode> removedNodes = new SmartList<>();
-      for (UsageNode usage : usages) {
-        if (myChildren.remove(usage)) {
-          removedNodes.add(usage);
+      int o = 0;
+      List<Node> children = myChildren;
+      for (int i = 0; i < children.size(); i++) {
+        Node child = children.get(i);
+        if (usages.remove(child)) {
+          removedNodes.add(child);
           removed++;
         }
-      }
-
-      if (removed == 0) {
-        for (GroupNode groupNode : getSubGroups()) {
+        else if (child instanceof GroupNode groupNode) {
           int delta = groupNode.removeUsagesBulk(usages, treeModel);
           if (delta > 0) {
             if (groupNode.getRecursiveUsageCount() == 0) {
-              myChildren.remove(groupNode);
               removedNodes.add(groupNode);
+              if (i != o) {
+                children.set(o, child);
+              }
+              o++;
             }
             removed += delta;
-            if (removed == usages.size()) break;
+            if (removed == usages.size()) {
+              break;
+            }
           }
         }
+        else {
+          if (i != o) {
+            children.set(o, child);
+          }
+          o++;
+        }
       }
-      if (!myChildren.isEmpty()) {
+      children.subList(o, children.size()).clear();
+      if (!children.isEmpty()) {
         removeNodesFromParent(treeModel, this, removedNodes);
       }
     }
 
-    if (removed > 0) {
-      myRecursiveUsageCount -= removed;
-      if (myRecursiveUsageCount != 0) {
-        treeModel.nodeChanged(this);
-      }
+    if (removed > 0 && (myRecursiveUsageCount -= removed) != 0) {
+      treeModel.nodeChanged(this);
     }
 
     return removed;
@@ -199,8 +208,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
    * @param nodes     must all be children of parent
    */
   @Contract(mutates = "param3")
-  private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
-                                            @NotNull List<? extends MutableTreeNode> nodes) {
+  private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel,
+                                            @NotNull GroupNode parent,
+                                            @NotNull List<MutableTreeNode> nodes) {
     int count = nodes.size();
     if (count == 0) {
       return;
@@ -210,7 +220,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     for (MutableTreeNode node : nodes) {
       ordering.put(node, parent.getIndex(node));
     }
-    nodes.sort(Comparator.comparingInt(ordering::getInt)); // need ascending order
+    nodes.sort(Comparator.comparingInt(key -> ordering.getInt(key))); // need ascending order
     int[] indices = ordering.values().toIntArray();
     Arrays.sort(indices);
     for (int i = count - 1; i >= 0; i--) {
