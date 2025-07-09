@@ -303,24 +303,29 @@ public final class AsyncStacksUtils {
                                       @Nullable Project project,
                                       boolean checkJdkVersion,
                                       @Nullable Disposable disposable) {
-    if (!isAgentEnabled()) {
-      return;
-    }
-    String prefix = "-javaagent:";
-    ParametersList parametersList = parameters.getVMParametersList();
-    if (ContainerUtil.exists(parametersList.getParameters(), p -> p.startsWith(prefix) && p.contains(AGENT_JAR_NAME))) {
-      return;
-    }
-    Sdk jdk = parameters.getJdk();
-    if (checkJdkVersion && jdk == null) {
-      return;
-    }
-    JavaSdkVersion sdkVersion = jdk != null ? JavaSdk.getInstance().getVersion(jdk) : null;
-    if (checkJdkVersion && (sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7))) {
-      LOG.warn("Capture agent is not supported for JRE " + sdkVersion);
-      return;
-    }
+    if (isAgentEnabled()) {
+      String prefix = "-javaagent:";
+      ParametersList parametersList = parameters.getVMParametersList();
+      if (!ContainerUtil.exists(parametersList.getParameters(), p -> p.startsWith(prefix) && p.contains(AGENT_JAR_NAME))) {
+        Sdk jdk = parameters.getJdk();
+        if (checkJdkVersion && jdk == null) {
+          return;
+        }
+        JavaSdkVersion sdkVersion = jdk != null ? JavaSdk.getInstance().getVersion(jdk) : null;
+        if (checkJdkVersion && (sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7))) {
+          LOG.warn("Capture agent is not supported for JRE " + sdkVersion);
+          return;
+        }
 
+        extendParametersForAgent(project, disposable, parametersList, prefix);
+      }
+    }
+  }
+
+  private static void extendParametersForAgent(@Nullable Project project,
+                                               @Nullable Disposable disposable,
+                                               @NotNull ParametersList parametersList,
+                                               @NotNull String prefix) {
     String agentPath = getAgentArtifactPath(project, disposable);
     if (agentPath != null) {
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
@@ -364,9 +369,9 @@ public final class AsyncStacksUtils {
     }
   }
 
-  // Code runs from IDEA run configuration (code from .class file in out/ directory)
   @NativePath
   private static @NotNull String getArtifactPathForDownloadedAgent(@Nullable Project project, @Nullable Disposable disposable) {
+    // Code runs from IDEA run configuration (code from .class file in out/ directory)
     try {
       Path agentArtifactPath = createTemporaryAgentPath(project, disposable);
 
