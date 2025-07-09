@@ -16,7 +16,11 @@ import java.util.List;
 
 /**
  * This class presents an abstraction of user interface transactional editor provider of some abstract data type.
+ * <p>
  * {@link #getComponent()} should be called before {@link #resetFrom(Object)}
+ * 
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configurations.html#settingseditor">SettingsEditor (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configurations.html#simplifying-settings-editors">Simplifying Settings Editors (IntelliJ Platform Docs)</a>
  */
 public abstract class SettingsEditor<Settings> implements Disposable {
   private final List<SettingsEditorListener<Settings>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -35,8 +39,14 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     return myMaximizeEditorHeight;
   }
 
+  /**
+   * Resets the current editor UI state to the initial settings state.
+   */
   protected abstract void resetEditorFrom(@NotNull Settings s);
 
+  /**
+   * Copies the current editor UI state into the target settings object {@code s}.
+   */
   protected abstract void applyEditorTo(@NotNull Settings s) throws ConfigurationException;
 
   protected abstract @NotNull JComponent createEditor();

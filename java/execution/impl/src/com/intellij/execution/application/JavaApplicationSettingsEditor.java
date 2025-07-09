@@ -47,15 +47,19 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
   protected void customizeFragments(List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments,
                                     SettingsEditorFragment<ApplicationConfiguration, ModuleClasspathCombo> moduleClasspath,
                                     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments) {
+    // Create an additional entry under "Modify options", under the "Java" section
     fragments.add(SettingsEditorFragment.createTag("include.provided",
                                                    ExecutionBundle.message("application.configuration.include.provided.scope"),
                                                    ExecutionBundle.message("group.java.options"),
-                                     configuration -> configuration.getOptions().isIncludeProvidedScope(),
-                                     (configuration, value) -> configuration.getOptions().setIncludeProvidedScope(value)));
+                                                   configuration -> configuration.getOptions().isIncludeProvidedScope(),
+                                                   (configuration, value) -> configuration.getOptions().setIncludeProvidedScope(value)));
+
+    // Create an additional entry under "Modify options", under the "Java" section
     fragments.add(SettingsEditorFragment.createTag("unnamed.class",
                                                    ExecutionBundle.message("application.configuration.is.implicit.class"),
                                                    ExecutionBundle.message("group.java.options"),
                                                    configuration -> {
+                                                     // Called only on the initial display of the dialog. Controls whether to display this TagButton or not.
                                                      return configuration.isImplicitClassConfiguration();
                                                    },
                                                    (configuration, value) -> {

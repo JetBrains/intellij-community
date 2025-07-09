@@ -38,13 +38,22 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * A single setting fragment that the user can enable and configure.
+ * <p>
+ * Fragments whose {@link #getGroup()} returns an identical string are grouped together in the UI.
+ * <p>
+ * Can be nested with other related fragments in a {@link NestedGroupFragment}.
+ * 
+ * @see FragmentedSettingsEditor
+ */
 public class SettingsEditorFragment<Settings, C extends JComponent> extends SettingsEditor<Settings> {
   private final String myId;
   private final @Nls String myName;
   private final @Nls String myGroup;
   protected C myComponent;
-  private final BiConsumer<? super Settings, ? super C> myReset;
-  private final BiConsumer<? super Settings, ? super C> myApply;
+  private final BiConsumer<? super Settings, ? super C> onResetEditorFromSettings;
+  private final BiConsumer<? super Settings, ? super C> onApplyEditorToSettings;
   private final List<Function<? super Settings, List<ValidationInfo>>> myValidation = new ArrayList<>();
   private final @NotNull SettingsEditorFragmentType myType;
   private final int myPriority;
@@ -66,15 +75,15 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 C component,
                                 int priority,
                                 @NotNull SettingsEditorFragmentType type,
-                                BiConsumer<? super Settings, ? super C> reset,
-                                BiConsumer<? super Settings, ? super C> apply,
+                                BiConsumer<? super Settings, ? super C> resetEditorFromSettings,
+                                BiConsumer<? super Settings, ? super C> applyEditorToSettings,
                                 Predicate<? super Settings> initialSelection) {
     myId = id;
     myName = name;
     myGroup = group;
     myComponent = component;
-    myReset = reset;
-    myApply = apply;
+    onResetEditorFromSettings = resetEditorFromSettings;
+    onApplyEditorToSettings = applyEditorToSettings;
     myPriority = priority;
     myType = type;
     myInitialSelection = initialSelection;
@@ -85,10 +94,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
                                 @NotNull SettingsEditorFragmentType type,
-                                BiConsumer<? super Settings, ? super C> reset,
-                                BiConsumer<? super Settings, ? super C> apply,
+                                BiConsumer<? super Settings, ? super C> resetEditorFromSettings,
+                                BiConsumer<? super Settings, ? super C> applyEditorToSettings,
                                 Predicate<? super Settings> initialSelection) {
-    this(id, name, group, component, 0, type, reset, apply, initialSelection);
+    this(id, name, group, component, 0, type, resetEditorFromSettings, applyEditorToSettings, initialSelection);
   }
 
   public SettingsEditorFragment(String id,
@@ -96,10 +105,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
                                 int commandLinePosition,
-                                BiConsumer<? super Settings, ? super C> reset,
-                                BiConsumer<? super Settings, ? super C> apply,
+                                BiConsumer<? super Settings, ? super C> resetEditorFromSettings,
+                                BiConsumer<? super Settings, ? super C> applyEditorToSettings,
                                 Predicate<? super Settings> initialSelection) {
-    this(id, name, group, component, commandLinePosition, getType(component, commandLinePosition), reset, apply, initialSelection);
+    this(id, name, group, component, commandLinePosition, getType(component, commandLinePosition), resetEditorFromSettings, applyEditorToSettings, initialSelection);
   }
 
   private static @NotNull SettingsEditorFragmentType getType(JComponent component, int commandLinePosition) {
@@ -114,10 +123,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
-                                BiConsumer<? super Settings, ? super C> reset,
-                                BiConsumer<? super Settings, ? super C> apply,
+                                BiConsumer<? super Settings, ? super C> resetEditorFromSettings,
+                                BiConsumer<? super Settings, ? super C> applyEditorToSettings,
                                 Predicate<? super Settings> initialSelection) {
-    this(id, name, group, component, 0, SettingsEditorFragmentType.EDITOR, reset, apply, initialSelection);
+    this(id, name, group, component, 0, SettingsEditorFragmentType.EDITOR, resetEditorFromSettings, applyEditorToSettings, initialSelection);
   }
 
   public static <S> SettingsEditorFragment<S, ?> createWrapper(String id,
@@ -141,6 +150,11 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return fragment;
   }
 
+  /**
+   * Creates a new tag button with {@code name} as its text.
+   * <p>
+   * A tag button is a gray-ish, rounded button that usually signifies that some option from under the "Modify options" dropdown is enabled.
+   */
   public static <Settings> SettingsEditorFragment<Settings, TagButton> createTag(String id, @Nls String name, @Nls String group,
                                                                          Predicate<? super Settings> getter,
                                                                          BiConsumer<? super Settings, ? super Boolean> setter) {
@@ -276,7 +290,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   /**
-   * Can be hidden by user even if {@link #isInitiallyVisible(Object)} returns true
+   * Can be hidden by user even if {@link #isInitiallyVisible isInitiallyVisible()} returns true
    */
   public boolean isCanBeHidden() {
     return myCanBeHidden;
@@ -356,12 +370,12 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   @Override
   protected void resetEditorFrom(@NotNull Settings s) {
-    myReset.accept(s, myComponent);
+    onResetEditorFromSettings.accept(s, myComponent);
   }
 
   @Override
   protected void applyEditorTo(@NotNull Settings s) {
-    myApply.accept(s, myComponent);
+    onApplyEditorToSettings.accept(s, myComponent);
   }
   
   @ApiStatus.Internal
