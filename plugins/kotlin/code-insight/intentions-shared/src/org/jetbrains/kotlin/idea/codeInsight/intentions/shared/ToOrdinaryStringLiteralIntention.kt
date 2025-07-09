@@ -9,12 +9,23 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+
+// Difference in length between the raw strings marker (""") and the ordinary strings marker (")
+private const val QUOTE_LENGTH_DIFFERENCE = 2
+
+// Symbols with escaping:
+private const val QUOTE = "\""
+private const val ESCAPED_QUOTE = "\\\""
+private const val ONE_SLASH = "\\"
+private const val TWO_SLASHES = "\\\\"
+private const val TRIPLE_QUOTE = "\"\"\""
 
 internal class ToOrdinaryStringLiteralIntention :
     KotlinApplicableModCommandAction<KtStringTemplateExpression, Unit>(KtStringTemplateExpression::class) {
@@ -23,7 +34,7 @@ internal class ToOrdinaryStringLiteralIntention :
         KotlinBundle.message("convert.to.ordinary.string.literal")
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
-        return element.text.startsWith("\"\"\"")
+        return element.text.startsWith(TRIPLE_QUOTE)
     }
 
     override fun KaSession.prepareContext(element: KtStringTemplateExpression): Unit = Unit
@@ -39,42 +50,78 @@ internal class ToOrdinaryStringLiteralIntention :
     ) {
         val startOffset = element.textRange.startOffset
         val endOffset = element.textRange.endOffset
-        val currentOffset = actionContext.offset
 
         val entries = element.entries
         val trimIndentCall = getTrimIndentCall(element, entries)
-        val text = buildString {
-            append("\"")
-            if (trimIndentCall != null) {
-                append(trimIndentCall.stringTemplateText)
-            } else {
-                entries.joinTo(buffer = this, separator = "") {
-                    if (it is KtLiteralStringTemplateEntry) it.text.escape() else it.text
-                }
-            }
-
-            append("\"")
-        }
-
+        val newText = getNewText(trimIndentCall, entries)
         val psiFactory = KtPsiFactory(element.project)
-        val replaced = (trimIndentCall?.qualifiedExpression ?: element).replace(psiFactory.createExpression(text))
-        val offset = when {
-            currentOffset - startOffset < 2 -> startOffset
-            endOffset - currentOffset < 2 -> replaced.textRange.endOffset
-            else -> maxOf(currentOffset - 2, replaced.textRange.startOffset)
+        val newElement = psiFactory.createExpression(newText)
+
+        val replaced = (trimIndentCall?.qualifiedExpression ?: element).replaced(newElement)
+        moveCaret(actionContext, startOffset, updater, endOffset, replaced)
+    }
+
+    private class TrimIndentCall(
+        val qualifiedExpression: KtQualifiedExpression,
+        val stringTemplateText: String
+    )
+
+    /**
+     * When the cursor points at a quote, it will point at the replaced version afterward.
+     * In the rest of the cases it will keep pointing at the same character inside the string.
+     */
+    private fun moveCaret(
+        actionContext: ActionContext,
+        startOffset: Int,
+        updater: ModPsiUpdater,
+        endOffset: Int,
+        replacedElement: KtExpression
+    ) {
+        val currentOffset = actionContext.offset
+        val targetOffset = when {
+            currentOffset - startOffset < QUOTE_LENGTH_DIFFERENCE -> startOffset
+            endOffset - currentOffset < QUOTE_LENGTH_DIFFERENCE -> replacedElement.textRange.endOffset
+            else -> currentOffset - QUOTE_LENGTH_DIFFERENCE
         }
-        updater.moveCaretTo(offset)
+        updater.moveCaretTo(targetOffset)
+    }
+
+    private fun getNewText(
+        trimIndentCall: TrimIndentCall?,
+        entries: Array<KtStringTemplateEntry>
+    ): String = buildString {
+        append(QUOTE)
+        if (trimIndentCall != null) {
+            append(trimIndentCall.stringTemplateText)
+        } else {
+            entries.joinTo(buffer = this, separator = "") {
+                getTextFromStringTemplateEntry(it)
+            }
+        }
+        append(QUOTE)
+    }
+
+    private fun getTextFromStringTemplateEntry(entry: KtStringTemplateEntry, escapeLineSeparators: Boolean = true): String {
+        return if (entry is KtLiteralStringTemplateEntry) {
+            entry.text.escape(escapeLineSeparators)
+        } else {
+            entry.text
+        }
     }
 
     private fun String.escape(escapeLineSeparators: Boolean = true): String {
         var text = this
-        text = text.replace("\\", "\\\\")
-        text = text.replace("\"", "\\\"")
-        return if (escapeLineSeparators) text.escapeLineSeparators() else text
+        text = text.replace(oldValue = ONE_SLASH, newValue = TWO_SLASHES)
+        text = text.replace(oldValue = QUOTE, newValue = ESCAPED_QUOTE)
+        return if (escapeLineSeparators) {
+            text.escapeLineSeparators()
+        } else {
+            text
+        }
     }
 
     private fun String.escapeLineSeparators(): String {
-        return StringUtil.convertLineSeparators(this, "\\n")
+        return StringUtil.convertLineSeparators(/*text = */this, /*newSeparator = */"\\n")
     }
 
     private fun getTrimIndentCall(
@@ -86,37 +133,50 @@ internal class ToOrdinaryStringLiteralIntention :
         } ?: return null
 
         val marginPrefix = if (qualifiedExpression.calleeName == "trimMargin") {
-            when (val arg = qualifiedExpression.callExpression?.valueArguments?.singleOrNull()?.getArgumentExpression()) {
-                null -> "|"
-                is KtStringTemplateExpression -> arg.entries.singleOrNull()?.takeIf { it is KtLiteralStringTemplateEntry }?.text
-                else -> null
-            } ?: return null
+            getMarginPrefix(qualifiedExpression) ?: return null
         } else {
             null
         }
-
-        val stringTemplateText = entries
-            .joinToString(separator = "") {
-                if (it is KtLiteralStringTemplateEntry) it.text.escape(escapeLineSeparators = false) else it.text
-            }
-            .let { if (marginPrefix != null) it.trimMargin(marginPrefix) else it.trimIndent() }
-            .escapeLineSeparators()
-
+        val stringTemplateText = getStringTemplateText(entries, marginPrefix)
         return TrimIndentCall(qualifiedExpression, stringTemplateText)
     }
 
-    private data class TrimIndentCall(
-        val qualifiedExpression: KtQualifiedExpression,
-        val stringTemplateText: String
-    )
+    private fun getMarginPrefix(qualifiedExpression: KtQualifiedExpression): String? {
+        val valueArguments = qualifiedExpression.callExpression?.valueArguments
+        return when (val arg = valueArguments?.singleOrNull()?.getArgumentExpression()) {
+            null -> "|"
 
-    private val KtQualifiedExpression.calleeName: String?
-        get() = callExpression?.calleeExpression?.text
+            is KtStringTemplateExpression -> {
+                val entry = arg.entries.singleOrNull()
+                entry?.takeIf { it is KtLiteralStringTemplateEntry }?.text
+            }
 
-    private fun KtCallExpression.isCalling(fqNames: List<FqName>): Boolean {
-        val calleeText = calleeExpression?.text ?: return false
-        return fqNames.any { it.shortName().asString() == calleeText }
+            else -> null
+        }
     }
+
+    private fun getStringTemplateText(entries: Array<KtStringTemplateEntry>, marginPrefix: String?): String {
+        return entries
+            .joinToString(separator = "") {
+                getTextFromStringTemplateEntry(entry = it, escapeLineSeparators = false)
+            }
+            .let {
+                if (marginPrefix != null) {
+                    it.trimMargin(marginPrefix)
+                } else {
+                    it.trimIndent()
+                }
+            }
+            .escapeLineSeparators()
+    }
+}
+
+private val KtQualifiedExpression.calleeName: String?
+    get() = callExpression?.calleeExpression?.text
+
+private fun KtCallExpression.isCalling(fqNames: List<FqName>): Boolean {
+    val calleeText = calleeExpression?.text ?: return false
+    return fqNames.any { it.shortName().asString() == calleeText }
 }
 
 private val TRIM_INDENT_FUNCTIONS: List<FqName> = listOf(
