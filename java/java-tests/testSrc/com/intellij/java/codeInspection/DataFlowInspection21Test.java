@@ -73,6 +73,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testInstanceof() {
     doTest();
   }
+  
+  public void testTakeWhileUpdate() { doTest(); }
 
   public void testNewStringWrongEquals() { doTest(); }
 
