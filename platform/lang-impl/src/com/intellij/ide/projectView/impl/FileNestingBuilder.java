@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -74,13 +74,15 @@ public final class FileNestingBuilder {
 
   public boolean isNestedFile(Project project, VirtualFile file) {
     if (!ProjectViewState.getInstance(project).getUseFileNestingRules()) return false;
+
+    VirtualFile parentDir = file.getParent();
+    if (parentDir == null || !parentDir.isDirectory()) return false;
+
     String fileName = file.getName();
     for (ProjectViewFileNestingService.NestingRule rule : getNestingRules()) {
       if (!StringUtil.endsWithIgnoreCase(fileName, rule.getChildFileSuffix())) continue;
-      VirtualFile directory = file.getParent();
-      if (directory == null || !directory.isDirectory()) return false;
       String parentName = StringUtil.trimEnd(fileName, rule.getChildFileSuffix()) + rule.getParentFileSuffix();
-      if (directory.findChild(parentName) != null) return true;
+      if (parentDir.findChild(parentName) != null) return true;
     }
     return false;
   }
