@@ -84,6 +84,14 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   }.getOrLogException(this)
 }
 
+/**
+ * Returns the result value if it's a success, or logs the exception returns null if it's a failure.
+ *
+ * Control flow exceptions are rethrown, not logged. See [Result.getOrHandleException] for details.
+ *
+ * Consider using [Result.getOrHandleException] to have more control over how the exception is handled.
+ * Especially consider passing a custom message to the logger, not just the exception.
+ */
 @Internal
 fun <T> Result<T>.getOrLogException(logger: Logger): T? {
   return getOrHandleException {
@@ -91,6 +99,17 @@ fun <T> Result<T>.getOrLogException(logger: Logger): T? {
   }
 }
 
+/**
+ * Returns the result value if it's a success, or calls the given handler and returns null if it's a failure.
+ *
+ * If the result is a success, its value is returned and the handler is not called.
+ *
+ * If the result is a failure, and the exception is a control flow exception (`CancellationException` or `ControlFlowException`),
+ * then the exception is rethrown and the current stack trace is added to it as a suppressed exception.
+ *
+ * If the result is a failure, and the exception is not a control flow exception,
+ * then the given [handler] is called and `null` is returned.
+ */
 @Internal
 @Deprecated(
   "The name is misleading, as the handler can do anything, not just log",
