@@ -23,6 +23,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSetFactory
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -159,13 +161,18 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
   /**
    * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but not yet performed.
    */
-  private val documentsToProcess = HashSet<Document>()
+  private val filesToProcess:MutableSet<VirtualFile> = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet()
 
   internal var runningSaveDocumentAction = false
 
   internal fun scheduleDocumentsProcessing(documents: Array<Document>) {
-    val processingAlreadyScheduled = !documentsToProcess.isEmpty()
-    documentsToProcess.addAll(documents)
+    val processingAlreadyScheduled = !filesToProcess.isEmpty()
+    for (document in documents) {
+      val virtualFile = FileDocumentManager.getInstance().getFile(document)
+      if (virtualFile != null) {
+        filesToProcess.add(virtualFile)
+      }
+    }
     if (!processingAlreadyScheduled) {
       coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement() + ClientId.coroutineContext()) {
         processSavedDocuments()
@@ -175,8 +182,11 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
 
   @RequiresEdt
   private suspend fun processSavedDocuments() {
-    val documentsAndModStamps = documentsToProcess.associateWith { it.modificationStamp }
-    documentsToProcess.clear()
+    val documentsAndModStamps = filesToProcess.associate { file ->
+      val document = FileDocumentManager.getInstance().getCachedDocument(file)
+      document to (document?.modificationStamp ?: -1)
+    }
+    filesToProcess.clear()
 
     val index = ProjectFileIndex.getInstance(project)
     val projectDocuments = withContext(Dispatchers.Default) {
@@ -184,9 +194,12 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
         documentsAndModStamps.mapNotNull {
           val document = it.key
           val modStamp = it.value
-          if (document.modificationStamp != modStamp) return@mapNotNull null // already edited after save
-          val file = FileDocumentManager.getInstance().getFile(document) ?: return@mapNotNull null
-          if (index.isInContent(file)) document else null
+          if (document == null) null
+          else if (document.modificationStamp != modStamp) null // already edited after save
+          else {
+            val file = FileDocumentManager.getInstance().getFile(document)
+            if (file != null && index.isInContent(file)) document else null
+          }
         }.toMutableList()
       }
     }
