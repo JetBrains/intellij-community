@@ -15,6 +15,17 @@
     <fileType name="DTD" implementationClass="com.intellij.ide.highlighter.DTDFileType" fieldName="INSTANCE" language="DTD" extensions="dtd;elt;ent;mod"/>
     <fileType name="XML" implementationClass="com.intellij.ide.highlighter.XmlFileType" fieldName="INSTANCE" language="XML" extensions="ant;fxml;jhm;jnlp;jrxml;rng;tld;wsdl;xml;xsd;xsl;xslt;xul"/>
 
+    <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+    <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+    <syntaxHighlighter key="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+
+    <lang.syntaxHighlighterFactory language="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="HTML" implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
+
+    <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
+
     <lang.parserDefinition language="DTD" implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
     <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
     <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>

@@ -5,15 +5,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
-    <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
-    <syntaxHighlighter key="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
-
-    <lang.syntaxHighlighterFactory language="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
-    <lang.syntaxHighlighterFactory language="HTML" implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
-    <lang.syntaxHighlighterFactory language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory"/>
-    <lang.syntaxHighlighterFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
-
     <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
     <lang.rearranger language="HTML" implementationClass="com.intellij.xml.arrangement.HtmlRearranger"/>
 
@@ -27,8 +18,6 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.application.options.HtmlLanguageCodeStyleSettingsProvider"/>
 
     <langCodeStyleSettingsProvider implementation="com.intellij.application.options.XmlLanguageCodeStyleSettingsProvider"/>
-
-    <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
 
     <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
     <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>

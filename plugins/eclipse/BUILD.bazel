@@ -41,7 +41,6 @@ jvm_library(
     "//platform/statistics",
     "@lib//:kotlin-reflect",
     "//platform/backend/workspace",
-    "//xml/xml-ui-common:ui-common",
   ],
   runtime_deps = [":eclipse_resources"]
 )
@@ -90,7 +89,6 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",
-    "//xml/xml-ui-common:ui-common",
   ],
   runtime_deps = [":eclipse_resources"]
 )
