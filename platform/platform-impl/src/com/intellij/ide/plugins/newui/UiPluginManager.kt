@@ -223,7 +223,7 @@ class UiPluginManager {
 
   fun getController(): UiPluginManagerController {
     if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
-      return UiPluginManagerController.EP_NAME.extensionList.firstOrNull() ?: DefaultUiPluginManagerController
+      return UiPluginManagerController.EP_NAME.extensionList.firstOrNull { it.isEnabled() } ?: DefaultUiPluginManagerController
     }
     return DefaultUiPluginManagerController
   }

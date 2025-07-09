@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.UiPluginManagerController
+import com.intellij.ide.ui.search.TraverseUIMode
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -40,6 +41,10 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 class BackendUiPluginManagerController() : UiPluginManagerController {
+  override fun isEnabled(): Boolean {
+    return !TraverseUIMode.getInstance().isActive()
+  }
+
   override fun getTarget(): PluginSource = PluginSource.REMOTE
 
   override fun getPlugins(): List<PluginUiModel> {

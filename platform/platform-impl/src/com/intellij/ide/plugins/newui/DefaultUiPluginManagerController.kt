@@ -45,6 +45,8 @@ import javax.swing.JComponent
 object DefaultUiPluginManagerController : UiPluginManagerController {
   private val LOG = Logger.getInstance(DefaultUiPluginManagerController::class.java)
 
+  override fun isEnabled(): Boolean = true
+
   override fun getTarget(): PluginSource = PluginSource.LOCAL
 
   override fun getPlugins(): List<PluginUiModel> {
