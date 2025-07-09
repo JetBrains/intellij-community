@@ -15,7 +15,7 @@ val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.writ
  * - `true` means that [backgroundWriteAction] will suspend during lock acquisition
  */
 @ApiStatus.Internal
-val useTrueSuspensionForWriteAction: Boolean = System.getProperty("idea.true.suspension.for.write.action", "false").toBoolean()
+val useTrueSuspensionForWriteAction: Boolean = System.getProperty("idea.true.suspension.for.write.action", "true").toBoolean()
 
 /**
  * - `false` means wrong action chains are ignored and not reported
