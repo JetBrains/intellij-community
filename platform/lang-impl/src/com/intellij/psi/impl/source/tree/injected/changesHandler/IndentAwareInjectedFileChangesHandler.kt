@@ -35,7 +35,7 @@ internal class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor
     myHostDocument.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (UndoManager.getInstance(myProject).isUndoInProgress) {
-          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerBase).addRunOnCommit(myHostDocument) {
+          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerBase).addRunOnCommit(myHostDocument) { thisDoc ->
             rebuildMarkers(markersWholeRange(markers) ?: failAndReport("can't get marker range in undo", event))
           }
         }

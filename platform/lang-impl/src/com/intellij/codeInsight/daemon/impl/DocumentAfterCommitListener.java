@@ -45,10 +45,10 @@ public final class DocumentAfterCommitListener {
 
         if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) == null) {
           document.putUserData(UPDATE_ON_COMMIT_ENGAGED, Boolean.TRUE);
-          documentManager.addRunOnCommit(document, () -> {
-            if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) != null) {
-              updateChangesForDocument(document, documentCommittedListener);
-              document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
+          documentManager.addRunOnCommit(document, d -> {
+            if (d.getUserData(UPDATE_ON_COMMIT_ENGAGED) != null) {
+              updateChangesForDocument(d, documentCommittedListener);
+              d.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
             }
           });
         }
