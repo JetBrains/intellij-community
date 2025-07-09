@@ -32,10 +32,10 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
 
   init {
     isPopup = true
-    setActions(DEFAULT_PAGE_SIZES, false)
+    setActions(DEFAULT_PAGE_SIZES, false, GridPagingModel.UNLIMITED_PAGE_SIZE)
   }
 
-  private fun setActions(sizes: MutableList<Int>, isSinglePage: Boolean) {
+  private fun setActions(sizes: MutableList<Int>, isSinglePage: Boolean, defaultPageSize: Int) {
     removeAll()
 
     if (isSinglePage) {
@@ -43,11 +43,10 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     }
 
     addSeparator(DataGridBundle.message("separator.page.size"))
-
     for (pageSize in sizes) {
-      add(ChangePageSizeAction(pageSize))
+      add(ChangePageSizeActionNew(pageSize, pageSize == defaultPageSize))
     }
-    add(ChangePageSizeAction(GridPagingModel.UNLIMITED_PAGE_SIZE))
+    add(ChangePageSizeActionNew(GridPagingModel.UNLIMITED_PAGE_SIZE, GridPagingModel.UNLIMITED_PAGE_SIZE == defaultPageSize))
     add(SetCustomPageSizeAction())
     add(Separator())
     add(SetDefaultPageSizeAction())
@@ -109,18 +108,18 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
       component.repaint()
     }
 
-
     val pageSizes: MutableList<Int> = ArrayList<Int>(DEFAULT_PAGE_SIZES)
     pageSizes.add(GridUtilCore.getPageSize(settings))
     if (state.pageSize > 0) {
       pageSizes.add(state.pageSize * 2)
       val halfSize = state.pageSize / 2
       if (halfSize > 0) pageSizes.add(halfSize)
-      ContainerUtil.removeAll(pageSizes, state.pageSize)
+      pageSizes.add(state.pageSize)
     }
     ContainerUtil.removeDuplicates(pageSizes)
     ContainerUtil.sort(pageSizes)
-    setActions(pageSizes, state.showCountAllAction)
+
+    setActions(pageSizes, state.showCountAllAction, state.defaultPageSize)
   }
 
 }
@@ -178,7 +177,7 @@ private fun getActionState(grid: DataGrid): ChangePageSizeActionState {
   }
 
   val showCountRowsAction = isSinglePage && pageModel.isTotalRowCountUpdateable() && !querying && grid.isReady()
-  return ChangePageSizeActionState(text, description, tooltip, enabled, pageModel.getPageSize(), showCountRowsAction)
+  return ChangePageSizeActionState(text, description, tooltip, enabled, pageModel.getPageSize(), showCountRowsAction, GridHelper.get(grid).getDefaultPageSize())
 }
 
 private fun updateIsTotalRowCountUpdateable(grid: DataGrid) {
@@ -192,6 +191,7 @@ private class ChangePageSizeActionState(
   val enabled: Boolean,
   val pageSize: Int,
   val showCountAllAction: Boolean,
+  val defaultPageSize: Int = GridPagingModel.UNLIMITED_PAGE_SIZE,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
