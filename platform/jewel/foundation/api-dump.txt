@@ -10,6 +10,11 @@ f:org.jetbrains.jewel.foundation.DisabledAppearanceValues
 f:org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion
 f:org.jetbrains.jewel.foundation.DisabledAppearanceValuesKt
 - sf:getLocalDisabledAppearanceValues():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.foundation.JewelFlags
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.JewelFlags
+- f:getUseCustomPopupRenderer():Z
+- f:setUseCustomPopupRenderer(Z):V
 org.jetbrains.jewel.foundation.actionSystem.DataProviderContext
 - a:lazy(java.lang.String,kotlin.jvm.functions.Function0):V
 - a:set(java.lang.String,java.lang.Object):V

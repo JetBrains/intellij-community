@@ -88,7 +88,7 @@ public fun EditableComboBox(
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
     onEnterPress: () -> Unit = {},
-    popupManager: PopupManager = PopupManager(),
+    popupManager: PopupManager = remember { PopupManager() },
     popupContent: @Composable () -> Unit,
 ) {
     var chevronHovered by remember { mutableStateOf(false) }
