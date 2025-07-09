@@ -63,6 +63,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.await
+import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.InputEvent
@@ -137,6 +138,15 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
           .mapNotNull { it.virtualFile }
           .takeIf { it.isNotEmpty() }
           ?.toTypedArray()
+    }
+
+    private fun setupBottomPanel(): JComponent {
+      return RecentFilesAdvertisementProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getBanner(project) }?.let { banner ->
+        JPanel(BorderLayout()).apply {
+          add(pathLabel, BorderLayout.NORTH)
+          add(banner, BorderLayout.SOUTH)
+        }
+      } ?: pathLabel
     }
 
     init {
@@ -357,7 +367,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       ListHoverListener.DEFAULT.addTo(files)
       clickListener.installOn(files)
       addToTop(header)
-      addToBottom(pathLabel)
+      addToBottom(setupBottomPanel())
       addToCenter(SwitcherScrollPane(files, true))
       if (!windows.isEmpty()) {
         addToLeft(SwitcherScrollPane(toolWindows, false))

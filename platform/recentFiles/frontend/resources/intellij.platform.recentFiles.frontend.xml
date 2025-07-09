@@ -5,6 +5,9 @@
   </dependencies>
 
   <extensionPoints>
+    <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesAdvertisementProvider"
+                    name="recentFiles.advertisementProvider"
+                    dynamic="true"/>
     <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
                     name="recentFiles.navigator"
                     dynamic="true"/>
