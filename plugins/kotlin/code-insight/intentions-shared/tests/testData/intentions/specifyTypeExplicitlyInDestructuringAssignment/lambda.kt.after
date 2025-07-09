@@ -3,6 +3,6 @@
 // AFTER-WARNING: Destructured parameter 's' is never used
 fun test() {
     val list = emptyList<Pair<Int, String>>()
-    list.forEach { (i: Int, s: String)<caret> ->
+    list.forEach { (i: Int, s: String<caret>) ->
     }
 }
