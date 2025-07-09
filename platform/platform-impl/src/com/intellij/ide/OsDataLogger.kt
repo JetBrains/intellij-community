@@ -5,48 +5,51 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.UnixUtil
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Service(Service.Level.APP)
 private class OsDataLogger(val coroutineScope: CoroutineScope) {
-  internal var osInfoAboutString: String? = null
+  @Volatile
+  var osInfoAboutString: String? = null
 
   fun reportLinuxDistro() {
     coroutineScope.launch {
-      if (SystemInfo.isLinux || SystemInfo.isFreeBSD) {
-        val osInfo = UnixUtil.getOsInfo()
+      val osInfo = OS.CURRENT.osInfo as OS.UnixInfo
 
-        val name = osInfo.prettyName
-                   ?: (osInfo.distro ?: "Unknown Distro").appendNotBlank(" ", osInfo.release)
-        val info = name
-          .appendNotBlank(" ", if (osInfo.isUnderWsl) "(in WSL)" else null)
-          .appendNotBlank("; glibc: ", osInfo.glibcVersion?.toString())
-        logger<OsDataLogger>().info(info)
-
-        osInfoAboutString = info
+      var info = ""
+      if (osInfo.prettyName != null) {
+        info += osInfo.prettyName
+      } else {
+        info += osInfo.distro ?: "Unknown Distro"
+        if (osInfo.release != null) {
+          info += " " + osInfo.release
+        }
       }
-    }
-  }
+      if (osInfo is OS.LinuxInfo) {
+        if (osInfo.isUnderWsl) info += " (in WSL)"
+        if (osInfo.glibcVersion != null) info += "; glibc: " + osInfo.glibcVersion
+      }
 
-  private fun String.appendNotBlank(delimiter: String?, value: String?): String {
-    if (value.isNullOrBlank()) return this
-    return this + delimiter + value
+      logger<OsDataLogger>().info(info)
+
+      osInfoAboutString = info
+    }
   }
 }
 
 internal class OsDataLoggerApplicationInitializedListener : AppLifecycleListener {
   override fun appStarted() {
-    service<OsDataLogger>().reportLinuxDistro()
+    if (OS.isGenericUnix()) {
+      service<OsDataLogger>().reportLinuxDistro()
+    }
   }
 }
 
 internal class OsDataLoggerAboutPopupDescriptionProvider : AboutPopupDescriptionProvider {
   override fun getDescription(): @DetailedDescription String? = null
 
-  override fun getExtendedDescription(): @DetailedDescription String? {
-    return service<OsDataLogger>().osInfoAboutString
-  }
+  override fun getExtendedDescription(): @DetailedDescription String? =
+    if (OS.isGenericUnix()) service<OsDataLogger>().osInfoAboutString else null
 }
