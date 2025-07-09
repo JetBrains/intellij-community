@@ -35,8 +35,6 @@ public final class SystemInfo {
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
 
-  public static final boolean isAarch64 = OS_ARCH.equals("aarch64");
-
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
     return rtVersion != null && Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
@@ -46,10 +44,6 @@ public final class SystemInfo {
   public static final boolean isMac = SystemInfoRt.isMac;
   public static final boolean isLinux = SystemInfoRt.isLinux;
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
-  /** @deprecated press 'F' */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isSolaris = false;
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
   public static final boolean isChromeOS = isLinux && isCrostini();
@@ -205,10 +199,20 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
 
+  /** @deprecated use {@link CpuArch#isArm64()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isAarch64 = CpuArch.isArm64();
+
+  /** @deprecated press 'F' */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isSolaris = false;
+
   /** @deprecated misleading; consider using {@link com.intellij.util.system.OS#isGenericUnix} instead, if appropriate */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public static final boolean isXWindow = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
+  public static final boolean isXWindow = isUnix && !isMac;
 
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = isUnix && !isMac ? lazy(() -> isOnPath("xdg-open")) : NotNullLazyValue.createConstantValue(false);
   private static final NotNullLazyValue<Boolean> ourHasXdgMime = isUnix && !isMac ? lazy(() -> isOnPath("xdg-mime")) : NotNullLazyValue.createConstantValue(false);
