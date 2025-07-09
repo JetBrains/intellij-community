@@ -105,7 +105,6 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestSourceRootEditHandler"/>
 
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleDependencyEntitiesIndexableEntityProvider"/>
-    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleCustomImlDataFilesIndexableEntityProvider"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ModuleRootsIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SdkIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.LibraryIndexableIteratorHandler"/>
