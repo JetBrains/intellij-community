@@ -294,13 +294,10 @@ final class SwitchChecker {
       if (labelElementList == null) continue;
       for (PsiCaseLabelElement label : labelElementList.getElements()) {
         if (!(label instanceof PsiParenthesizedExpression) && ExpressionUtil.isNullLiteral(label)) {
-          if (selectorType instanceof PsiPrimitiveType) {
-            if (!PsiTypes.nullType().equals(selectorType)) {
-              myVisitor.report(JavaErrorKinds.SWITCH_NULL_TYPE_INCOMPATIBLE.create(label, selectorType));
-              return;
-            }
+          if (selectorType instanceof PsiPrimitiveType && !PsiTypes.nullType().equals(selectorType)) {
+            myVisitor.report(JavaErrorKinds.SWITCH_NULL_TYPE_INCOMPATIBLE.create(label, selectorType));
           }
-          return;
+          continue;
         }
         if (label instanceof PsiExpression expr) {
           if (selectorType.equals(PsiTypes.nullType())) {
