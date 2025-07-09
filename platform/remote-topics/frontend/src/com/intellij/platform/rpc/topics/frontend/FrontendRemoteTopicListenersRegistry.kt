@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.platform.rpc.topics.RemoteTopicListener
 import com.intellij.platform.rpc.topics.impl.RemoteTopicApi
 import com.intellij.platform.rpc.topics.impl.RemoteTopicEventDto
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
@@ -18,15 +19,17 @@ internal class FrontendRemoteTopicListenersRegistry(cs: CoroutineScope) {
 
   init {
     cs.launch {
-      RemoteTopicApi.getInstance().subscribe().collect { eventDto ->
-        runCatching {
-          val topicListeners = topicsListeners[eventDto.topicId] ?: return@collect
+      durable {
+        RemoteTopicApi.getInstance().subscribe().collect { eventDto ->
+          runCatching {
+            val topicListeners = topicsListeners[eventDto.topicId] ?: return@collect
 
-          for (listener in topicListeners) {
-            listener.handleEvent(eventDto)
+            for (listener in topicListeners) {
+              listener.handleEvent(eventDto)
+            }
+          }.onFailure { e ->
+            LOG.warn("Error during remote topic event handling. Event dto: $eventDto", e)
           }
-        }.onFailure { e ->
-          LOG.warn("Error during remote topic event handling. Event dto: $eventDto", e)
         }
       }
     }
