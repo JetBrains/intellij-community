@@ -69,24 +69,22 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
   private val parallelizationCache = ConcurrentHashMap<ModalityState, Pair<Semaphore, Int>>()
 
   fun execute(session: RefreshSessionImpl) {
-    val app: ApplicationEx?
     if (session.isAsynchronous) {
       if (isVfsRefreshInBackgroundWriteActionAllowed() && session.modality == ModalityState.nonModal()) {
         queueAsyncSessionWithCoroutines(session)
       }
       else {
+        // An asynchronous refresh launched under old modal progress (`runProcessWithProgressSynchronously`) can outlive its modality state
+        // This violates the structured concurrency principles that are behind coroutine-based refresh, hence we fall back to old NBRA-based refresh.
         queueSession(session, session.modality)
       }
     }
-    else if ((ApplicationManagerEx.getApplicationEx().also { app = it }).isWriteIntentLockAcquired() && EDT.isCurrentThreadEdt()) {
+    else if (EDT.isCurrentThreadEdt()) {
       (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
       val events = runRefreshSession(session, -1L)
       fireEvents(events, session)
     }
-    else if (EDT.isCurrentThreadEdt()) {
-      LOG.error("Do not perform a synchronous refresh on naked EDT (without WIL) (causes deadlocks if there are events to fire)")
-    }
-    else if (app!!.holdsReadLock()) {
+    else if (ApplicationManager.getApplication().holdsReadLock()) {
       LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)")
     }
     else {
