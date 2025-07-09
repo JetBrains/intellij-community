@@ -31,27 +31,27 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(0)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "print", "println")
                       .parameterCount(0)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "print")
                       .parameterCount(0)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(1)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "print")
                       .parameterCount(0)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.NIO", "println")
                       .parameterCount(0)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
 
 
     @Language("JAVA") String textWithFullyQualifiedName = """
@@ -64,13 +64,33 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(0)
-                      .allowUnresolved(), textWithFullyQualifiedName));
+                      .allowStaticUnresolved(), textWithFullyQualifiedName));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("java.lang2.IO", "println")
+                      .parameterCount(0)
+                      .allowStaticUnresolved(), textWithFullyQualifiedName));
 
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.NIO", "println")
                       .parameterCount(0)
-                      .allowUnresolved(), textWithFullyQualifiedName));
+                      .allowStaticUnresolved(), textWithFullyQualifiedName));
 
+
+    @Language("JAVA") String textWithEmptyFullyQualifiedName = """
+      class Main{
+        void m() {
+          <caret>println();
+        }
+      }
+      """;
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("", "println")
+                      .parameterCount(0)
+                      .allowStaticUnresolved(), textWithEmptyFullyQualifiedName));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
+                      .parameterCount(0)
+                      .allowStaticUnresolved(), textWithEmptyFullyQualifiedName));
   }
 
 
@@ -85,27 +105,27 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(0)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(1)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(2)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterTypes(JAVA_LANG_STRING)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterTypes(JAVA_LANG_INTEGER)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
 
     @Language("JAVA") String textParameters2 = """
       class Main{
@@ -118,19 +138,19 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(0)
-                      .allowUnresolved(), textParameters2));
+                      .allowStaticUnresolved(), textParameters2));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(1)
-                      .allowUnresolved(), textParameters2));
+                      .allowStaticUnresolved(), textParameters2));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(2)
-                      .allowUnresolved(), textParameters2));
+                      .allowStaticUnresolved(), textParameters2));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO", "println")
                       .parameterCount(3)
-                      .allowUnresolved(), textParameters2));
+                      .allowStaticUnresolved(), textParameters2));
   }
 
 
@@ -146,19 +166,19 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterCount(1)
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING + "...")
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_OBJECT + "...")
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_OBJECT + "...")
-                      .allowUnresolved(), text));
+                      .allowStaticUnresolved(), text));
 
 
     @Language("JAVA") String textWithVarArgs2 = """
@@ -172,35 +192,156 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_OBJECT + "...")
-                      .allowUnresolved(), textWithVarArgs2));
+                      .allowStaticUnresolved(), textWithVarArgs2));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING + "...")
-                      .allowUnresolved(), textWithVarArgs2));
+                      .allowStaticUnresolved(), textWithVarArgs2));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_STRING + "...")
-                      .allowUnresolved(), textWithVarArgs2));
+                      .allowStaticUnresolved(), textWithVarArgs2));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_STRING + "...")
-                      .allowUnresolved(), textWithVarArgs2));
+                      .allowStaticUnresolved(), textWithVarArgs2));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_OBJECT + "...")
-                      .allowUnresolved(), textWithVarArgs2));
+                      .allowStaticUnresolved(), textWithVarArgs2));
     assertTrue(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_INTEGER + "...")
-                      .allowUnresolved(), textWithVarArgs2));
+                      .allowStaticUnresolved(), textWithVarArgs2));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_INTEGER + "...")
-                      .allowUnresolved(), textWithVarArgs2));
+                      .allowStaticUnresolved(), textWithVarArgs2));
     assertFalse(
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_STRING + "...")
-                      .allowUnresolved(), textWithVarArgs2));
+                      .allowStaticUnresolved(), textWithVarArgs2));
+  }
+
+  public void testUnresolvedSamePackage() {
+    @Language("JAVA") String text = """
+      package foo.bar;
+      class Main{
+        void m() {
+          IO2.<caret>printf("test");
+        }
+      }
+      """;
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar2.IO2", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+
+  }
+
+  public void testUnresolvedOnDemandImports() {
+    @Language("JAVA") String text = """
+      import static foo.bar.IO2.*;
+      package foo.bar;
+      class Main{
+        void m() {
+          <caret>printf("test");
+        }
+      }
+      """;
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar2.IO2", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+
+    @Language("JAVA") String textNested = """
+      import static foo.bar.IO2.*;
+      package foo.bar;
+      class Main{
+        void m() {
+          IO.<caret>printf("test");
+        }
+      }
+      """;
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2.IO", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), textNested));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2.ION", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), textNested));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), textNested));
+  }
+
+  public void testUnresolvedImports() {
+    @Language("JAVA") String text = """
+      import static foo.bar.IO2;
+      package foo.bar;
+      class Main{
+        void m() {
+          IO2.<caret>printf("test");
+        }
+      }
+      """;
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar2.IO2", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), text));
+
+
+    @Language("JAVA") String textNested = """
+      import static foo.bar.IO2;
+      package foo.bar;
+      class Main{
+        void m() {
+          IO2.IO.<caret>printf("test");
+        }
+      }
+      """;
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2.IO", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), textNested));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), textNested));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), textNested));
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2.IO.I", "printf")
+                      .parameterCount(1)
+                      .allowStaticUnresolved(), textNested));
   }
 
   private boolean isMatchedCall(@NotNull CallMatcher matcher, @Language("JAVA") @NotNull String text) {
