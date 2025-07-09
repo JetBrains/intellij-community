@@ -40,7 +40,8 @@ open class PresentableDifference(private val scope: ActivityScope,
   override fun hashCode() = Objects.hash(scope, selection, difference)
 }
 
-internal class PresentableFileDifference(private val gateway: IdeaGateway,
+@ApiStatus.Internal
+class PresentableFileDifference(private val gateway: IdeaGateway,
                                          private val scope: ActivityScope,
                                          private val selection: ChangeSetSelection,
                                          difference: Difference,

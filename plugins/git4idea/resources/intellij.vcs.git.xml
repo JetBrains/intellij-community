@@ -503,9 +503,6 @@
 
     <action id="Git.Branches.Popup.Fetch"
             class="git4idea.ui.branch.GitBranchPopupFetchAction"/>
-
-    <action class="git4idea.history.recap.ExtractChangesFromCommits" internal="true"/>
-    <action class="git4idea.history.recap.lvcs.ExtractChangesFromProjectLocalHistoryAction" internal="true"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
