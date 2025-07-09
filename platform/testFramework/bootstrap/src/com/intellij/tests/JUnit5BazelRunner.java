@@ -181,9 +181,7 @@ public final class JUnit5BazelRunner {
   }
 
   public Filter<?>[] getTestFilters() {
-    ArrayList<Filter<?>> filters = new ArrayList<>(0);
-    filters.add(ClassNameFilter.includeClassNamePatterns(".*Test"));
-    return filters.toArray(new Filter[0]);
+    return new Filter[0];
   }
 
   public List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) throws Throwable {
