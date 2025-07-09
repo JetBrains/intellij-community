@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,9 +135,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
 
   private static void registerDocument(@NotNull Document document, @NotNull VirtualFile virtualFile, boolean fireBindingChangedEvent) {
     if (!(virtualFile instanceof LightVirtualFile) &&
-        !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) &&
-        // TODO[khb]: Add check for ThinClientVirtualFileSystem
-        !PlatformUtils.isJetBrainsClient()) {
+        !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem)) {
       throw new IllegalArgumentException(
         "Hard-coding file<->document association is permitted for non-physical files only (see FileViewProvider.isPhysical())" +
         " to avoid memory leaks. virtualFile=" + virtualFile);
