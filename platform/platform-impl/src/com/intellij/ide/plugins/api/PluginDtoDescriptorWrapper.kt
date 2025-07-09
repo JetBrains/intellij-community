@@ -2,14 +2,15 @@
 package com.intellij.ide.plugins.api
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginDependencyImpl
 import com.intellij.ide.plugins.PluginDependency
+import com.intellij.ide.plugins.PluginDependencyImpl
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
-import java.util.Date
+import java.util.*
 
 @ApiStatus.Internal
 class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginDescriptor {
@@ -51,15 +52,18 @@ class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginD
   override fun getVendor(): String? = pluginDto.vendor
 
   override fun getVendorEmail(): String? {
-    throw UnsupportedOperationException("No direct mapping for vendorEmail in PluginDto")
+    LOG.error("No direct mapping for vendorEmail in PluginDto")
+    return null
   }
 
   override fun getVendorUrl(): String? {
-    throw UnsupportedOperationException("No direct mapping for vendorUrl in PluginDto")
+    LOG.error("No direct mapping for vendorUrl in PluginDto")
+    return null
   }
 
   override fun getUrl(): String? {
-    throw UnsupportedOperationException("No direct mapping for url in PluginDto")
+    LOG.error("No direct mapping for url in PluginDto")
+    return null
   }
 
   override fun isBundled(): Boolean = pluginDto.isBundled
@@ -69,13 +73,15 @@ class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginD
   override fun isImplementationDetail(): Boolean = pluginDto.isImplementationDetail
 
   override fun isRequireRestart(): Boolean {
-    throw UnsupportedOperationException("No direct mapping for isRequireRestart in PluginDto")
+    LOG.error("No direct mapping for isRequireRestart in PluginDto")
+    return false
   }
 
   override fun getDependencies(): List<PluginDependency> = dependenciesList
 
   override fun getResourceBundleBaseName(): String? {
-    throw UnsupportedOperationException("No direct mapping for resourceBundleBaseName in PluginDto")
+    LOG.error("No direct mapping for resourceBundleBaseName in PluginDto")
+    return null
   }
 
   override fun getPluginPath(): Path? {
@@ -83,18 +89,24 @@ class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginD
   }
 
   override fun getDescriptorPath(): String? {
-    throw UnsupportedOperationException("No direct mapping for descriptorPath in PluginDto")
+    LOG.error("No direct mapping for descriptorPath in PluginDto")
+    return null
   }
 
   override fun getPluginClassLoader(): ClassLoader? {
-    throw UnsupportedOperationException("No direct mapping for pluginClassLoader in PluginDto")
+    LOG.error("No direct mapping for pluginClassLoader in PluginDto")
+    return null
   }
 
   @Deprecated("Deprecated in Java")
   override fun isEnabled(): Boolean = pluginDto.isEnabled
 
+  @Deprecated("see com.intellij.openapi.extensions.PluginDescriptor.setEnabled")
   override fun setEnabled(enabled: Boolean) {
-    throw UnsupportedOperationException("Write operations are not allowed here")
+    LOG.error("Write operations are not allowed here")
   }
 
+  companion object {
+    private val LOG = Logger.getInstance(PluginDtoDescriptorWrapper::class.java)
+  }
 }
