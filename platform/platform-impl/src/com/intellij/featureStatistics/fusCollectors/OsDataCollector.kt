@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -18,6 +18,8 @@ import java.util.*
 import kotlin.io.path.name
 
 internal class OsDataCollector : ApplicationUsagesCollector() {
+  private val GROUP = EventLogGroup("system.os", 19)
+
   private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Solaris", "Other")
 
   private val LOCALES = listOf(
@@ -26,7 +28,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "te", "th", "tr", "uk", "ur", "uz", "vi", "yo", "zh", "zu")
 
   @Suppress("SpellCheckingInspection")
-  private val SHELLS = listOf("sh", "ash", "bash", "csh", "dash", "fish", "ksh", "tcsh", "xonsh", "zsh", "nu", "other", "unknown")
+  private val SHELLS = listOf("sh", "ash", "bash", "csh", "dash", "fish", "ksh", "pwsh", "tcsh", "xonsh", "zsh", "nu", "other", "unknown")
 
   @Suppress("SpellCheckingInspection")
   private val DISTROS = listOf(
@@ -35,7 +37,6 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "opensuse-leap", "opensuse-tumbleweed", "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon",
     "slackware", "solus", "ubuntu", "void", "zorin", "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 18)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexpReference("time_zone", "time_zone")
