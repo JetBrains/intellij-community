@@ -1819,7 +1819,7 @@ public abstract class DialogWrapper {
       ClientProperty.put(window, KEEP_POPUPS_OPEN, myKeepPopupsOpen);
     }
 
-    if (useWriteIntentReadAction && !isProgressDialog()) {
+    if (useWriteIntentReadAction && !isProgressDialog() && ApplicationManager.getApplication() != null) {
       WriteIntentReadAction.run((Runnable) () -> {
         myPeer.show();
       });
