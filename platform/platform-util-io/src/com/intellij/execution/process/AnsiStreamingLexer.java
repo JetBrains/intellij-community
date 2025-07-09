@@ -1,10 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class AnsiStreamingLexer {
+@ApiStatus.Internal
+public final class AnsiStreamingLexer {
   // element types
   static final AnsiElementType TEXT = new AnsiElementType("TEXT");
   static final AnsiElementType SGR = new AnsiElementType("SGR");
@@ -28,7 +30,7 @@ class AnsiStreamingLexer {
   /**
    * Appending a {@code text} to the stream
    */
-  void append(@NotNull String text) {
+  public void append(@NotNull String text) {
     myBuffer = myEndOffset < myBuffer.length() ? myBuffer.substring(myEndOffset) + text : text;
     myStartOffset = 0;
     myEndOffset = 0;
@@ -60,6 +62,21 @@ class AnsiStreamingLexer {
       return myBuffer.substring(myStartOffset + CSI.length(), myEndOffset - 1);
     }
     return getElementText();
+  }
+
+  /**
+   * Advances lexer till the end or text
+   */
+  @Nullable
+  public String getNextText() {
+    do {
+      advance();
+      if (getElementType() == TEXT) {
+        return getElementText();
+      }
+    }
+    while (getElementType() != null);
+    return null;
   }
 
   /**
@@ -100,10 +117,10 @@ class AnsiStreamingLexer {
    */
   private void processCSISequence() {
     while (myEndOffset < myBuffer.length() && isInRange(myBuffer.charAt(myEndOffset), (char)0x30, (char)0x3F)) {
-        myEndOffset++;
+      myEndOffset++;
     }
     while (myEndOffset < myBuffer.length() && isInRange(myBuffer.charAt(myEndOffset), (char)0x20, (char)0x2F)) {
-        myEndOffset++;
+      myEndOffset++;
     }
     if (myEndOffset == myBuffer.length()) {
       incompleteSequence();

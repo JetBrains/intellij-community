@@ -151,10 +151,12 @@ class EelLocalExecApiTest {
           val line = decoder.decode(dirtyBuffer.flip()).toString()
           cleanBuffer.add(line)
           dirtyBuffer.clear()
-          if (HELLO in cleanBuffer.getString()) {
+          val fullLine = cleanBuffer.getString()
+          if (HELLO in fullLine) {
             break
-          }else {
-            logger.warn("No $HELLO in $line")
+          }
+          else {
+            logger.warn("No $HELLO in $fullLine")
           }
         }
       }
@@ -277,47 +279,6 @@ class EelLocalExecApiTest {
     finally {
       unmockkStatic(PathEnvironmentVariableUtil::class)
     }
-  }
-
-  @Test
-  fun testAnsiRemover() {
-    val c = 27.toChar()
-    val j = """
-      
-   $c[H
- J $c[8;1H
-  $c[?25l
- he   $c[?25h
-  $c[?25l
- ll   $c[?25h
-  $c[H
- J $c[8;5H
-  $c[?25l
- o   $c[?25h
-  $c[?25l
-  $c[HJ $c[9;1H $c[?25h
-  $c[?25l
- {"   $c[?25h
-  $c[?25l
- $c[H
- J $c[8;1H
-  $c[?25l
- he   $c[?25h
-  $c[?25l
- ll   $c[?25h
-  $c[H
- J $c[8;5H
-  $c[?25l
- o   $c[?25h
-  $c[?25l
-  $c[HJ $c[9;1H $c[?25h
-  $c[?25l
- {"   $c[?25h
-  $c[?25l
-    """.trimIndent()
-  val b =   CleanBuffer()
-    b.add(j)
-    println(b.getString())
   }
 
   /**
