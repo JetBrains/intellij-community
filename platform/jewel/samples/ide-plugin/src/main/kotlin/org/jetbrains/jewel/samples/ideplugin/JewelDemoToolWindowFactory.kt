@@ -14,12 +14,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import org.jetbrains.jewel.bridge.addComposeTab
+import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.samples.ideplugin.releasessample.ReleasesSampleCompose
 
 @Suppress("unused")
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        // Enable custom popup rendering to use JBPopup instead of default Compose implementation
+        JewelFlags.useCustomPopupRenderer = true
+
         toolWindow.addComposeTab("Components") { ComponentShowcaseTab(project) }
 
         toolWindow.addComposeTab("Releases Demo") { ReleasesSampleCompose(project) }

@@ -367,7 +367,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                     }
                     .run { cell(this).align(AlignY.TOP) }
 
-                compose(modifier = Modifier.height(200.dp).padding(horizontal = 8.dp, vertical = 0.dp)) {
+                compose(modifier = Modifier.padding(horizontal = 8.dp, vertical = 0.dp)) {
                     val comboBoxItems = remember {
                         listOf(
                             "Cat",

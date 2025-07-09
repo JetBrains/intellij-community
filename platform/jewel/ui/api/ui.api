@@ -795,6 +795,11 @@ public final class org/jetbrains/jewel/ui/component/PopupContainerKt {
 	public static final fun PopupContainer (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Landroidx/compose/ui/window/PopupProperties;Landroidx/compose/ui/window/PopupPositionProvider;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
+public final class org/jetbrains/jewel/ui/component/PopupKt {
+	public static final fun Popup (Landroidx/compose/ui/window/PopupPositionProvider;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/window/PopupProperties;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun getLocalPopupRenderer ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public final class org/jetbrains/jewel/ui/component/PopupManager {
 	public static final field $stable I
 	public fun <init> ()V
@@ -808,6 +813,14 @@ public final class org/jetbrains/jewel/ui/component/PopupManager {
 	public final fun setPopupVisible (Z)V
 	public fun toString ()Ljava/lang/String;
 	public final fun togglePopupVisibility ()V
+}
+
+public abstract interface class org/jetbrains/jewel/ui/component/PopupRenderer {
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/PopupRenderer$Companion;
+	public abstract fun Popup (Landroidx/compose/ui/window/PopupPositionProvider;Landroidx/compose/ui/window/PopupProperties;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/jetbrains/jewel/ui/component/PopupRenderer$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/RadioButtonKt {
@@ -1245,6 +1258,10 @@ public final class org/jetbrains/jewel/ui/component/ToggleableIconButtonState : 
 public final class org/jetbrains/jewel/ui/component/ToggleableIconButtonState$Companion {
 	public final fun of-CAf7mdk (ZLandroidx/compose/ui/state/ToggleableState;ZZZZ)J
 	public static synthetic fun of-CAf7mdk$default (Lorg/jetbrains/jewel/ui/component/ToggleableIconButtonState$Companion;ZLandroidx/compose/ui/state/ToggleableState;ZZZZILjava/lang/Object;)J
+}
+
+public final class org/jetbrains/jewel/ui/component/TooltipAreaKt {
+	public static final fun TooltipArea (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ILandroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TooltipKt {
