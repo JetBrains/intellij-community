@@ -1,10 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.kernel.withKernel
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
@@ -155,11 +153,30 @@ fun <C : Component> C.launchOnShow(
  * Launches the given task in the global scope without dispatching.
  */
 private fun launchUnconfined(debugName: String, block: suspend CoroutineScope.() -> Unit): Job {
-  @OptIn(DelicateCoroutinesApi::class)
-  return GlobalScope.launch(
-    context = Dispatchers.Unconfined + CoroutineName(debugName),
-    block = block,
-  )
+  if (Registry.`is`("ide.ui.coroutine.scopes.unconfined.fix", false)) {
+    // The whole point here is to launch the coroutine in-place without dispatching,
+    // and to make sure it doesn't dispatch later when called on the EDT from the hierarchy listener.
+    // This is why Dispatchers.ui(UiDispatcherKind.RELAX, immediate = true) is used with ModalityState.any().
+    // The modality is obvious: using any() ensures that the current modality is ignored when processing hierarchy events.
+    // The task itself will then check the modality before executing, but events should be processed immediately.
+    // The dispatcher is a bit more tricky: using EDT will dispatch if the WIL is forbidden (when already running under UI),
+    // and using UI will dispatch if the WIL is currently locked.
+    // But RELAX doesn't care about the WIL and whether it's allowed, so it will not dispatch if immediate = true.
+    // Note that using Dispatchers.Unconfined here seems the obvious choice,
+    // but it doesn't work when already running an unconfined coroutine (IJPL-196231, CPP-45385).
+    @OptIn(DelicateCoroutinesApi::class)
+    return GlobalScope.launch(
+      context = Dispatchers.ui(UiDispatcherKind.RELAX, immediate = true) + ModalityState.any().asContextElement() + CoroutineName(debugName),
+      block = block,
+    )
+  }
+  else {
+    @OptIn(DelicateCoroutinesApi::class)
+    return GlobalScope.launch(
+      context = Dispatchers.Unconfined + CoroutineName(debugName),
+      block = block,
+    )
+  }
 }
 
 private suspend fun showingAsChannel(component: Component, block: suspend (ReceiveChannel<Boolean>) -> Unit) {
