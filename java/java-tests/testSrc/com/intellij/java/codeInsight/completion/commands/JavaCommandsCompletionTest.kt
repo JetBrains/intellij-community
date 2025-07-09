@@ -14,6 +14,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.AsyncDocumentation
 import com.intellij.platform.backend.documentation.DocumentationData
@@ -424,6 +425,23 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }""".trimIndent())
     val elements = myFixture.completeBasic()
     assertTrue(elements.any { element -> element.lookupString.contains("Rename", ignoreCase = true) })
+  }
+
+  fun testParameterRename() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo(String a.<caret>) {
+              String y = "1";
+              System.out.println(y);
+          }
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    val element = elements
+      .firstOrNull { element -> element.lookupString.contains("Rename", ignoreCase = true) }
+      ?.`as`(CommandCompletionLookupElement::class.java)
+    assertNotNull(element)
+    assertEquals(TextRange(30, 31), element?.highlighting?.range)
   }
 
   fun testRenameClass() {
