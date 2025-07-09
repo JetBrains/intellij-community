@@ -79,6 +79,17 @@ import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior.JumpToSpot
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior.NextPage
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 
+/**
+ * A vertical scrollbar that can be tied to a [ScrollableState].
+ *
+ * @param scrollState The [ScrollableState] to control
+ * @param modifier The modifier to apply to this layout node
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param enabled `true` to enable the scrollbar, `false` otherwise.
+ * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
+ * @param style The [ScrollbarStyle] to use for this scrollbar.
+ * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
+ */
 @Composable
 public fun VerticalScrollbar(
     scrollState: ScrollableState,
@@ -101,6 +112,17 @@ public fun VerticalScrollbar(
     )
 }
 
+/**
+ * A horizontal scrollbar that can be tied to a [ScrollableState].
+ *
+ * @param scrollState The [ScrollableState] to control.
+ * @param modifier The modifier to apply to this layout node.
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param enabled `true` to enable the scrollbar, `false` otherwise.
+ * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
+ * @param style The [ScrollbarStyle] to use for this scrollbar.
+ * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
+ */
 @Composable
 public fun HorizontalScrollbar(
     scrollState: ScrollableState,
