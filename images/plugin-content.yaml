@@ -1,3 +1,6 @@
 - name: lib/platform-images.jar
   modules:
   - name: intellij.platform.images
+  contentModules:
+  - name: intellij.platform.images.copyright
+  - name: intellij.platform.images.backend.svg

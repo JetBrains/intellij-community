@@ -2,8 +2,6 @@
   <xi:include href="/META-INF/essential-modules.xml"/>
 
   <content>
-    <module name="intellij.platform.images.copyright"/>
-    <module name="intellij.platform.images.backend.svg"/>
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.smRunner.vcs"/>
     <module name="intellij.platform.collaborationTools"/>

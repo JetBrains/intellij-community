@@ -10,6 +10,11 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
+  <content>
+    <module name="intellij.platform.images.copyright"/>
+    <module name="intellij.platform.images.backend.svg"/>
+  </content>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <colorSettingsPage implementation="org.intellij.images.options.impl.ImageEditorColorSchemeSettings"/>
