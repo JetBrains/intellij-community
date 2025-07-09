@@ -8,6 +8,8 @@ import com.intellij.platform.syntax.extensions.impl.buildExtensionSupportImpl
 import com.intellij.platform.syntax.extensions.impl.performWithExtensionSupportImpl
 import com.intellij.platform.syntax.extensions.impl.registry
 import org.jetbrains.annotations.ApiStatus
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 /**
  * Provides the current instance of [ExtensionRegistry].
@@ -65,8 +67,13 @@ interface StaticExtensionSupport
  * Runs [action] with [support] installed as the current instance of [ExtensionSupport].
  * The previous instance is restored on method exit.
  */
-fun <T> performWithExtensionSupport(support: ExtensionSupport, action: (ExtensionSupport) -> T): T =
-  performWithExtensionSupportImpl(support, action)
+@OptIn(ExperimentalContracts::class)
+fun <T> performWithExtensionSupport(support: ExtensionSupport, action: (ExtensionSupport) -> T): T {
+  contract {
+    callsInPlace(action, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+  }
+  return performWithExtensionSupportImpl(support, action)
+}
 
 /**
  * Builds [ExtensionSupport] instance.

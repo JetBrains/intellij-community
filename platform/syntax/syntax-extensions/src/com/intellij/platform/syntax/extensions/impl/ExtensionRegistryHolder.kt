@@ -5,6 +5,8 @@ import com.intellij.platform.syntax.extensions.ExtensionRegistry
 import com.intellij.platform.syntax.extensions.ExtensionSupport
 import com.intellij.platform.syntax.extensions.StaticExtensionSupport
 import fleet.util.multiplatform.linkToActual
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 internal val registry: ExtensionSupport
   get() {
@@ -36,7 +38,12 @@ internal fun instantiateExtensionRegistry(): ExtensionSupport = linkToActual()
 
 internal val threadLocalRegistry: RegistryHolder = instantiateThreadLocalRegistry()
 
+@OptIn(ExperimentalContracts::class)
 internal fun <T> performWithExtensionSupportImpl(support: ExtensionSupport, action: (ExtensionSupport) -> T): T {
+  contract {
+    callsInPlace(action, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+  }
+
   val oldRegistry = threadLocalRegistry.registry
   try {
     threadLocalRegistry.installRegistry(support)
