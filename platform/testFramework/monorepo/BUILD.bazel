@@ -32,6 +32,7 @@ jvm_library(
     "//jps/model-serialization",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
   ]
 )
 
