@@ -72,7 +72,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /**
    * Produces the default configurable id for the configurables that didn't override it, produced by {@link CodeStyleSettingsProvider}.
    */
-  public static String generateConfigurableIdByLanguage(@NotNull Language language) {
+  public static @NotNull String generateConfigurableIdByLanguage(@NotNull Language language) {
     return "preferences.sourceCode." + language.getID();
   }
 
@@ -176,7 +176,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myRepeatAnnotations.addAll(from.myRepeatAnnotations);
   }
 
-  public void copyFrom(CodeStyleSettings from) {
+  public void copyFrom(@NotNull CodeStyleSettings from) {
     CommonCodeStyleSettings.copyPublicFields(from, this);
     OTHER_INDENT_OPTIONS.copyFrom(from.OTHER_INDENT_OPTIONS);
     mySoftMargins.setValues(from.getDefaultSoftMargins());
@@ -273,13 +273,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getRepeatAnnotations()} */
   @Deprecated(forRemoval = true)
-  public List<String> getRepeatAnnotations() {
+  public @NotNull List<String> getRepeatAnnotations() {
     return myRepeatAnnotations;
   }
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#setRepeatAnnotations(List)} */
   @Deprecated(forRemoval = true)
-  public void setRepeatAnnotations(List<String> repeatAnnotations) {
+  public void setRepeatAnnotations(@NotNull List<String> repeatAnnotations) {
     myRepeatAnnotations.clear();
     myRepeatAnnotations.addAll(repeatAnnotations);
   }
@@ -412,14 +412,14 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getImportLayoutTable()} */
   @Deprecated
   @Override
-  public PackageEntryTable getImportLayoutTable() {
+  public @NotNull PackageEntryTable getImportLayoutTable() {
     return IMPORT_LAYOUT_TABLE;
   }
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#getPackagesToUseImportOnDemand()} */
   @Deprecated
   @Override
-  public PackageEntryTable getPackagesToUseImportOnDemand() {
+  public @NotNull PackageEntryTable getPackagesToUseImportOnDemand() {
     return PACKAGES_TO_USE_IMPORT_ON_DEMAND;
   }
 
@@ -550,7 +550,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     myVersion = getVersion(element);
     myCustomCodeStyleSettingsManager.notifySettingsBeforeLoading();
     myStoredOptions.processOptions(element);
@@ -609,7 +609,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     setVersion(element, myVersion);
     CodeStyleSettings defaultSettings = new CodeStyleSettings(true, false);
     DefaultJDOMExternalizer.write(this, element, myStoredOptions.createDiffFilter(this, defaultSettings));
@@ -641,7 +641,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  private static IndentOptions getDefaultIndentOptions(FileType fileType) {
+  private static @NotNull IndentOptions getDefaultIndentOptions(@NotNull FileType fileType) {
     for (final FileTypeIndentOptionsFactory factory : CodeStyleSettingsService.getInstance().getFileTypeIndentOptionsFactories()) {
       if (factory.getFileType().equals(fileType)) {
         return getFileTypeIndentOptions(factory);
@@ -858,7 +858,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  private static IndentOptions getFileTypeIndentOptions(@NotNull FileTypeIndentOptionsFactory factory) {
+  private static @NotNull IndentOptions getFileTypeIndentOptions(@NotNull FileTypeIndentOptionsFactory factory) {
     try {
       return factory.createIndentOptions();
     }
@@ -931,7 +931,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @return Language-specific code style settings or shared settings if not found.
    * @see CommonCodeStyleSettingsManager#getCommonSettings
    */
-  public CommonCodeStyleSettings getCommonSettings(String langName) {
+  public @NotNull CommonCodeStyleSettings getCommonSettings(@NotNull String langName) {
     return myCommonSettingsManager.getCommonSettings(langName);
   }
 
@@ -1008,16 +1008,15 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   public enum WrapStyle implements PresentableEnum {
-
     DO_NOT_WRAP(CommonCodeStyleSettings.DO_NOT_WRAP, CodeStyleBundle.messagePointer("wrapping.do.not.wrap")),
     WRAP_AS_NEEDED(CommonCodeStyleSettings.WRAP_AS_NEEDED, CodeStyleBundle.messagePointer("wrapping.wrap.if.long")),
     WRAP_ON_EVERY_ITEM(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM, CodeStyleBundle.messagePointer("wrapping.chop.down.if.long")),
     WRAP_ALWAYS(CommonCodeStyleSettings.WRAP_ALWAYS, CodeStyleBundle.messagePointer("wrapping.wrap.always"));
 
     private final int myId;
-    private final Supplier<@Label String> myDescription;
+    private final @NotNull Supplier<@Label String> myDescription;
 
-    WrapStyle(int id, @NotNull Supplier<@Label String> description) {
+    WrapStyle(int id, @NotNull Supplier<@Label @NotNull String> description) {
       myId = id;
       myDescription = description;
     }
@@ -1026,7 +1025,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       return myId;
     }
 
-    @Override public @Label String getPresentableText() {
+    @Override public @Label @NotNull String getPresentableText() {
       return myDescription.get();
     }
 
@@ -1052,7 +1051,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     private final String myValue;
     private final Supplier<@Label String> myDescription;
 
-    HtmlTagNewLineStyle(@NotNull String value, @NotNull Supplier<@Label String> description) {
+    HtmlTagNewLineStyle(@NotNull String value, @NotNull Supplier<@Label @NotNull String> description) {
       myValue = value;
       myDescription = description;
     }
@@ -1062,7 +1061,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       return myValue;
     }
 
-    @Override public @Label String getPresentableText() {
+    @Override public @Label @NotNull String getPresentableText() {
       return myDescription.get();
     }
   }
@@ -1075,12 +1074,12 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     public final String quote;
     private final Supplier<@Label String> myDescription;
 
-    QuoteStyle(@NotNull String quote, @NotNull Supplier<@Label String> description) {
+    QuoteStyle(@NotNull String quote, @NotNull Supplier<@Label @NotNull String> description) {
       this.quote = quote;
       myDescription = description;
     }
 
-    @Override public @Label String getPresentableText() {
+    @Override public @Label @NotNull String getPresentableText() {
      return myDescription.get();
     }
   }
@@ -1152,7 +1151,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @param language The language to set soft margins for.
    * @param softMargins The soft margins to set.
    */
-  public void setSoftMargins(@NotNull Language language, List<Integer> softMargins) {
+  public void setSoftMargins(@NotNull Language language, @NotNull List<Integer> softMargins) {
     CommonCodeStyleSettings languageSettings = myCommonSettingsManager.getCommonSettings(language);
     assert languageSettings != null : "Settings for language " + language.getDisplayName() + " do not exist";
     languageSettings.setSoftMargins(softMargins);
@@ -1169,7 +1168,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * Sets the default soft margins used for languages not defining them explicitly.
    * @param softMargins The default soft margins.
    */
-  public void setDefaultSoftMargins(List<Integer> softMargins) {
+  public void setDefaultSoftMargins(@NotNull List<Integer> softMargins) {
     mySoftMargins.setValues(softMargins);
   }
 
@@ -1177,7 +1176,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return myExcludedFiles;
   }
 
-  public SimpleModificationTracker getModificationTracker() {
+  public @NotNull SimpleModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
 
@@ -1201,8 +1200,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myCustomCodeStyleSettingsManager.registerCustomSettings(this, factory);
   }
 
+  @NotNull
   CustomCodeStyleSettingsManager getCustomCodeStyleSettingsManager() {
     return myCustomCodeStyleSettingsManager;
   }
-
 }

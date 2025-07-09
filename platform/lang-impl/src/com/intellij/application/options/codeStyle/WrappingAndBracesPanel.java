@@ -195,7 +195,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
-  private static List<Integer> castToIntList(@Nullable Object value) {
+  private static @NotNull List<Integer> castToIntList(@Nullable Object value) {
     if (value instanceof List && !((List<?>)value).isEmpty() && ((List<?>)value).get(0) instanceof Integer) {
       //noinspection unchecked
       return (List<Integer>)value;

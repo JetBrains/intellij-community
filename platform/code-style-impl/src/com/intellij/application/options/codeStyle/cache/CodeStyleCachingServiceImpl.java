@@ -115,24 +115,16 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     }
   }
 
-  private static class VirtualFileGetter implements Supplier<VirtualFile> {
-    private final VirtualFile virtualFile;
-
-    private VirtualFileGetter(VirtualFile file) { virtualFile = file; }
-
+  private record VirtualFileGetter(@NotNull VirtualFile virtualFile) implements Supplier<VirtualFile> {
     @Override
-    public VirtualFile get() {
+    public @NotNull VirtualFile get() {
       return virtualFile;
     }
   }
 
-  private static class LightVirtualFileCopyGetter implements Supplier<VirtualFile> {
-    private final LightVirtualFile virtualFile;
-
-    private LightVirtualFileCopyGetter(LightVirtualFile file) { virtualFile = file; }
-
+  private record LightVirtualFileCopyGetter(@NotNull LightVirtualFile virtualFile) implements Supplier<VirtualFile> {
     @Override
-    public VirtualFile get() {
+    public @NotNull VirtualFile get() {
       return getCopy(virtualFile);
     }
   }
