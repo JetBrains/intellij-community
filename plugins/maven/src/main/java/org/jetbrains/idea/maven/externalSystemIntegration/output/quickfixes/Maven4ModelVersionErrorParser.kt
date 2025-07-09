@@ -9,12 +9,15 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.Cancellation.checkCancelled
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -25,13 +28,17 @@ import com.intellij.psi.xml.XmlFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.buildtool.MavenBuildIssueHandler
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.*
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenEventType
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -43,8 +50,16 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 
 @ApiStatus.Internal
-internal class Maven4ModelQuickFix : MavenLoggedEventParser, MavenSpyLoggedEventParser, MavenImportLoggedEventParser {
+class Maven4ModelVersionErrorParser(
+  val eventHandlerProvider: (Project) -> MavenBuildIssueHandler,
+  val pathChecker: (Path) -> Boolean,
+  val triggers: List<Regex>,
+) : MavenLoggedEventParser, MavenSpyLoggedEventParser, MavenImportLoggedEventParser {
 
+  constructor() : this({ MavenProjectsManager.getInstance(it).syncConsole },
+                       { it.exists() },
+                       if (SystemInfo.isWindows) TRIGGER_LINES_WINDOWS else TRIGGER_LINES_UNIX
+  )
   override fun supportsType(type: LogMessageType?): Boolean {
     return true;
   }
@@ -82,13 +97,13 @@ internal class Maven4ModelQuickFix : MavenLoggedEventParser, MavenSpyLoggedEvent
     logLine: String,
     project: Project,
   ): BuildIssue? {
-    for (trigger in TRIGGER_LINES) {
+    for (trigger in triggers) {
       val match = trigger.find(logLine)
       if (match == null) continue
 
       val fileName = match.groupValues[1]
       val path = Path(fileName)
-      if (path.exists()) {
+      if (pathChecker(path)) {
         val modelAndOffset = getModelFromPath(project, path)
         if (modelAndOffset == null || modelAndOffset.first == "4.0.0")
           return newBuildIssue(logLine, path, modelAndOffset?.second)
@@ -112,20 +127,10 @@ internal class Maven4ModelQuickFix : MavenLoggedEventParser, MavenSpyLoggedEvent
 
   override fun processLogLine(project: Project, logLine: String, reader: BuildOutputInstantReader?, messageConsumer: Consumer<in BuildEvent>): Boolean {
     val buildIssue = createBuildIssue(logLine, project) ?: return false
-    val console = MavenProjectsManager.getInstance(project).syncConsole
+    val console = eventHandlerProvider(project)
     val kind = MessageEvent.Kind.WARNING
     console.addBuildIssue(buildIssue, kind)
     return true
-  }
-
-
-  companion object {
-    private val TRIGGER_LINES = listOf(
-      "'subprojects' unexpected subprojects element @ [^,]*, (.*)",
-      "'subprojects' unexpected subprojects element at (.*?)[:,$]",
-      "the model contains elements that require a model version of 4.1.0 @ .*? file://(.*?)[:,$]",
-      "the model contains elements that require a model version of 4.1.0 at file://(.*?)[:,$]",
-    ).map { it.toRegex() };
   }
 }
 
@@ -166,6 +171,10 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
       try {
         val filesToUpdate = collectFiles(projectsManager, project)
         updateFiles(project, filesToUpdate)
+        withContext(Dispatchers.EDT) {
+          FileDocumentManager.getInstance().saveAllDocuments()
+          MavenProjectsManager.getInstance(project).scheduleUpdateAllMavenProjects(MavenSyncSpec.full("Update model version quick fix", true))
+        }
         future.complete(null)
       }
       catch (e: Throwable) {
@@ -198,7 +207,7 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
             val modelVersion = model.modelVersion
             executeCommand(project, MavenProjectBundle.message("maven.project.updating.model.command.name")) {
               if (modelVersion.exists()) {
-                modelVersion.stringValue = "4.1.0"
+                modelVersion.stringValue = MavenConstants.MODEL_VERSION_4_1_0
               }
               val rootTag = psiFile.document?.rootTag
               rootTag?.setAttribute("xmlns", NEW_XMLNS)
@@ -223,3 +232,21 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
     private const val NEW_SCHEMA_LOCATION = "http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd"
   }
 }
+
+@ApiStatus.Internal
+val TRIGGER_LINES_UNIX: List<Regex> = listOf(
+  "'subprojects' unexpected subprojects element @ [^,]*, (.*)",
+  "'subprojects' unexpected subprojects element at (.*?)[:,$]",
+  "the model contains elements that require a model version of 4.1.0 @ .*? file://(.*?)[:,$]",
+  "the model contains elements that require a model version of 4.1.0 at file://(.*?)[:,$]",
+).map { it.toRegex() };
+
+@ApiStatus.Internal
+val TRIGGER_LINES_WINDOWS: List<Regex> = listOf(
+  "'subprojects' unexpected subprojects element @ [^,]*, (.*)",
+  "'subprojects' unexpected subprojects element at ([A-Za-z][:].*?)[:,$]",
+  "the model contains elements that require a model version of 4.1.0 @ .*? file://([A-Za-z][:].*?.*?)[:,$]",
+  "the model contains elements that require a model version of 4.1.0 at file://([A-Za-z][:].*?.*?)[:,$]",
+).map { it.toRegex() };
+
+
