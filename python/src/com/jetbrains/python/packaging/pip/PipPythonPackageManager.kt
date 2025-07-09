@@ -95,8 +95,10 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
 
   private suspend fun installWheelIfMissing(requirementCheck: suspend () -> Boolean, wheelNameToInstall: String): Boolean {
     if (!requirementCheck()) {
-      val wheelPathToInstall = withContext(Dispatchers.IO) { findPathInHelpers(wheelNameToInstall).toString() }
-      return installUsingPipWheel("--no-index", wheelPathToInstall)
+      return withContext(Dispatchers.IO) {
+        val wheelPathToInstall = findPathInHelpers(wheelNameToInstall).toString()
+        installUsingPipWheel("--no-index", wheelPathToInstall)
+      }
     }
     return true
   }

@@ -107,7 +107,8 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     progressTitle: @Nls String,
     operation: suspend (() -> PyResult<T>?),
   ): T? = PythonPackageManagerUIHelpers.runPackagingOperationMaybeBackground(manager.project, sink, progressTitle) {
-    operation()
+
+  operation()
   }
 
   companion object {

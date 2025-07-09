@@ -26,7 +26,10 @@ internal object PythonPackageManagerUIHelpers {
     operation: suspend (() -> PyResult<T>?),
   ): T? = withBackgroundProgress(project = project, title, cancellable = true) {
     runPackagingOperationMaybeShowErrorDialog(errorSink) {
-      operation()
+      withContext(Dispatchers.Default) {
+
+        operation()
+      }
     }
   }
 
