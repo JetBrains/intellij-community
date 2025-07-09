@@ -3894,8 +3894,8 @@ java_library(
 
 jvm_import(
   name = "kotlinx-coroutines-core",
-  jar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-4_http//file",
-  source_jar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-4-sources_http//file",
+  jar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-5_http//file",
+  source_jar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3908,29 +3908,29 @@ java_library(
 
 jvm_import(
   name = "kotlinx-coroutines-debug",
-  jar = "@kotlinx-coroutines-debug-1_10_1-intellij-4_http//file",
-  source_jar = "@kotlinx-coroutines-debug-1_10_1-intellij-4-sources_http//file",
+  jar = "@kotlinx-coroutines-debug-1_10_1-intellij-5_http//file",
+  source_jar = "@kotlinx-coroutines-debug-1_10_1-intellij-5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-coroutines-guava",
-  jar = "@kotlinx-coroutines-guava-1_10_1-intellij-4_http//file",
-  source_jar = "@kotlinx-coroutines-guava-1_10_1-intellij-4-sources_http//file",
+  jar = "@kotlinx-coroutines-guava-1_10_1-intellij-5_http//file",
+  source_jar = "@kotlinx-coroutines-guava-1_10_1-intellij-5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-coroutines-slf4j",
-  jar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-4_http//file",
-  source_jar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-4-sources_http//file",
+  jar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-5_http//file",
+  source_jar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-coroutines-test",
-  jar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-4_http//file",
-  source_jar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-4-sources_http//file",
+  jar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-5_http//file",
+  source_jar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
