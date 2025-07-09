@@ -96,7 +96,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       GridBag constraints = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultWeightX(1.0);
       add(myClassEditorField, constraints.nextLine());
 
-      myImplicitClassField = new TextFieldWithAutoCompletion<>(getProject(), new StringsCompletionProvider(null, AllIcons.FileTypes.JavaClass) {
+      myImplicitClassField = new TextFieldWithAutoCompletion<>(getProject(), new StringsCompletionProvider(null, AllIcons.FileTypes.Java) {
         @Override
         public @NotNull Collection<String> getItems(String prefix, boolean cached, CompletionParameters parameters) {
             return DumbService.isDumb(getProject())
