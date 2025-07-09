@@ -167,7 +167,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         }
       }.visibleIf(enabledCheckboxState!!)
 
-      group(McpServerBundle.message("border.title.terminal.commands")) {
+      group(McpServerBundle.message("border.title.commands.execution")) {
         row {
           checkBox(McpServerBundle.message("checkbox.enable.brave.mode.skip.command.execution.confirmations")).comment(McpServerBundle.message("text.warning.enabling.brave.mode.will.allow.terminal.commands.to.execute.without.confirmation.use.with.caution")).bindSelected(settings.state::enableBraveMode)
         }

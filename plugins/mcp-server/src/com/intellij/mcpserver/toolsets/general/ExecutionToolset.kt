@@ -12,12 +12,14 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Key
@@ -73,16 +75,24 @@ class ExecutionToolset : McpToolset {
     val project = currentCoroutineContext().project
     val runManager = RunManager.getInstance(project)
 
-    val settings = readAction { runManager.allSettings.find { it.name == configurationName } } ?: mcpFail("Run configuration with name '$configurationName' not found.")
+    val runnerAndConfigurationSettings = readAction { runManager.allSettings.find { it.name == configurationName } } ?: mcpFail("Run configuration with name '$configurationName' not found.")
 
+    val runConfigurationParameters = (runnerAndConfigurationSettings.configuration as? CommonProgramRunConfigurationParameters)?.programParameters
+    val notificationText = if (runConfigurationParameters != null) {
+      McpServerBundle.message("label.do.you.want.to.execute.run.configuration.with.command", configurationName)
+    }
+    else {
+      McpServerBundle.message("label.do.you.want.to.execute.run.configuration", configurationName)
+    }
+    checkUserConfirmationIfNeeded(notificationText, command = runConfigurationParameters, project)
     val executor = DefaultRunExecutor.getRunExecutorInstance() ?: mcpFail("Execution is not supported in this environment or IDE")
 
     val exitCodeDeferred = CompletableDeferred<Int>()
     val outputBuilder = StringBuilder()
 
     withContext(Dispatchers.EDT) {
-      val runner: ProgramRunner<*>? = ProgramRunner.getRunner(executor.id, settings.configuration)
-      if (runner == null) mcpFail("No suitable runner found for configuration '${settings.name}'")
+      val runner: ProgramRunner<*>? = ProgramRunner.getRunner(executor.id, runnerAndConfigurationSettings.configuration)
+      if (runner == null) mcpFail("No suitable runner found for configuration '${runnerAndConfigurationSettings.name}'")
 
       val callback = object : ProgramRunner.Callback {
         override fun processStarted(descriptor: RunContentDescriptor) {
@@ -110,7 +120,7 @@ class ExecutionToolset : McpToolset {
         }
       }
 
-      val environment = ExecutionEnvironmentBuilder.create(project, executor, settings.configuration).build()
+      val environment = ExecutionEnvironmentBuilder.create(project, executor, runnerAndConfigurationSettings.configuration).build()
       environment.callback = callback
       runner.execute(environment)
     }
