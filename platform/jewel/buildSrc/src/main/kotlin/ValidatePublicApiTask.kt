@@ -54,7 +54,7 @@ abstract class ValidatePublicApiTask : DefaultTask() {
 
         if (violations.isNotEmpty()) {
             val message = buildString {
-                appendLine("Data classes are not allowed. Found violations:")
+                appendLine("Data classes are not allowed in public API. Found violations:")
                 appendLine()
 
                 for ((file, dataClasses) in violations.entries) {
@@ -65,11 +65,11 @@ abstract class ValidatePublicApiTask : DefaultTask() {
                     appendLine()
                 }
 
-                appendLine("Avoid using data classes. Turn it into a class and add the @GenerateDataFunctions annotation.")
+                appendLine("Avoid using data classes in public API. Turn them into regular classes, implement equals()/hashCode()/toString(), and add the @GenerateDataFunctions annotation.")
                 appendLine(
                     "For specific cases, you can exclude a data class from the validation. " +
                         "For this, just add it to the 'apiValidation.excludedClassRegexes' block in " +
-                        "your build.gradle.kts."
+                        "the module's build.gradle.kts."
                 )
             }
 
