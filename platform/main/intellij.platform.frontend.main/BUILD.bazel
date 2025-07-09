@@ -26,7 +26,10 @@ jvm_library(
   name = "frontend-main_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  deps = ["//platform/execution-impl/frontend"],
+  deps = [
+    "//platform/execution-impl/frontend",
+    "//platform/remote-topics/frontend",
+  ],
   runtime_deps = [
     "//platform/main/intellij.platform.main:main",
     "//platform/navbar/frontend",

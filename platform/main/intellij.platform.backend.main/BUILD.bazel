@@ -32,7 +32,10 @@ jvm_library(
   name = "backend-main_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  deps = ["//platform/execution-impl/backend"],
+  deps = [
+    "//platform/execution-impl/backend",
+    "//platform/remote-topics/backend",
+  ],
   runtime_deps = [
     "//platform/main/intellij.platform.main:main",
     "//platform/kernel/backend",
