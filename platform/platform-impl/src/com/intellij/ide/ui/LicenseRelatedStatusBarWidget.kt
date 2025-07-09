@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -13,6 +14,7 @@ import com.intellij.ui.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
@@ -47,6 +49,11 @@ abstract class LicenseRelatedStatusBarWidgetFactory : StatusBarWidgetFactory {
   abstract override fun isAvailable(project: Project): Boolean
 }
 
+
+@Service(Service.Level.PROJECT)
+private class LicenseRelatedStatusBarWidgetProjectService(val cs: CoroutineScope)
+
+
 @ApiStatus.Internal
 abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelatedStatusBarWidgetFactory) : CustomStatusBarWidget {
   final override fun ID(): String = factory.id
@@ -67,7 +74,9 @@ abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelated
         val rightmostLicenseUnrelated = statusBar.allWidgets?.indexOfLast { it !is LicenseRelatedStatusBarWidget } ?: 0
         if (myIndex < rightmostLicenseUnrelated) {
           statusBar.removeWidget(ID())
-          statusBar.addWidget(factory.createWidget(project), "last")
+          val cs = project.service<LicenseRelatedStatusBarWidgetProjectService>().cs
+          val widget = factory.createWidget(project, cs)
+          statusBar.addWidget(widget, "last")
         }
       }
     }, this)
