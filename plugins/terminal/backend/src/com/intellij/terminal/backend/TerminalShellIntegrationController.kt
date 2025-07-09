@@ -26,7 +26,7 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
           "prompt_finished" -> dispatcher.multicaster.promptFinished()
           "aliases_received" -> {
             val aliasesString = args.getOrNull(1)
-            if (aliasesString != null) {
+            if (aliasesString != null && aliasesString.isNotEmpty()) {
               val aliases = TerminalAliasesInfo(parseAliases(aliasesString, ShellType.ZSH.name))
               dispatcher.multicaster.aliasesReceived(aliases)
             }
