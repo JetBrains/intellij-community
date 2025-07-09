@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.validation.WHEN_DOCUMENT_CHANGED
 import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorGeneratorFactory
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.dsl.builder.*
@@ -189,7 +188,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
 
   private fun createRepositoriesCombobox(): ComboBox<GitRepository?> {
     val items = listOf(ALL_REPOSITORIES, *allRepositories.toTypedArray())
-    val colorGenerator = RepositoryColorGeneratorFactory.create(allRepositories.map { it.rpcId })
 
     return ComboBox(CollectionComboBoxModel(items)).apply {
       renderer = listCellRenderer<GitRepository?>(GitBundle.message("new.branch.dialog.branch.root.all.name")) {
@@ -198,7 +196,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
           icon(AllIcons.Empty)
         }
         else if (repo != null) {
-          icon(GitBranchesTreeIconProvider.forRepository(colorGenerator, repo.rpcId))
+          icon(GitBranchesTreeIconProvider.forRepository(project, repo.rpcId))
           text(DvcsUtil.getShortRepositoryName(repo))
         }
       }

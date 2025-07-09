@@ -7,6 +7,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.application
 import com.intellij.vcs.git.shared.branch.GitInOutStateHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoryColorsHolder
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -20,5 +21,6 @@ internal class GitDataHoldersInitializer : ProjectActivity {
       }
     }
     GitInOutStateHolder.getInstance(project)
+    GitRepositoryColorsHolder.getInstance(project)
   }
 }

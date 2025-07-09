@@ -76,7 +76,7 @@ abstract class GitBranchesTreeRenderer(
     val value = treeNode ?: return null
     return when (value) {
       is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
-      is GitBranchesTreeModel.RepositoryNode -> GitBranchesTreeIconProvider.forRepository(repoColorGenerator, value.repository.repositoryId)
+      is GitBranchesTreeModel.RepositoryNode -> GitBranchesTreeIconProvider.forRepository(treePopupStep.project, value.repository.repositoryId)
       else -> null
     }
   }
