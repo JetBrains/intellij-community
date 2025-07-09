@@ -466,9 +466,6 @@
       <separator/>
     </group>
 
-    <action id="main.toolbar.git.backend.Branches" class="git4idea.ui.toolbar.GitBackendToolbarWidgetAction">
-      <add-to-group group-id="MainToolbarVCSGroup"/>
-    </action>
     <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget">
       <add-to-group group-id="MainToolbarVCSGroup"/>
     </action>

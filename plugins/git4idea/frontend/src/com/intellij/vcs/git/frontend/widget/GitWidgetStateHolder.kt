@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget
+package com.intellij.vcs.git.frontend.widget
 
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.components.Service
@@ -22,8 +22,8 @@ internal class GitWidgetStateHolder(private val project: Project, cs: CoroutineS
     emitAll(manager.selectedEditorFlow)
   }.flatMapLatest { selectedEditor ->
     val projectId = project.projectIdOrNull() ?: return@flatMapLatest flowOf(GitWidgetState.DoNotShow)
-    GitWidgetApi.getInstance().getWidgetState(projectId, selectedEditor?.file?.rpcId())
-  }.stateIn(cs, SharingStarted.Eagerly, GitWidgetState.DoNotShow)
+    GitWidgetApi.Companion.getInstance().getWidgetState(projectId, selectedEditor?.file?.rpcId())
+  }.stateIn(cs, SharingStarted.Companion.Eagerly, GitWidgetState.DoNotShow)
 
   companion object {
     fun getInstance(project: Project): GitWidgetStateHolder = project.service()

@@ -23,5 +23,7 @@
     <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+
+    <postStartupActivity implementation="com.intellij.vcs.git.frontend.GitFrontendStartupActivity"/>
   </extensions>
 </idea-plugin>

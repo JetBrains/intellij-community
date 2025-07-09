@@ -33,10 +33,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true"
-                 key="git.branches.widget.rd"
-                 description="Experimental rem dev view for git branches widget"/>
-
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectSettings service="git4idea.config.GitVcsSettings"/>
 
