@@ -2260,6 +2260,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       var evaluatableContextFuture = new DebuggerCompletableFuture<SuspendContextImpl>();
       var requestor = new FilteredRequestorImpl(process.project) {
         @Override
+        public boolean shouldIgnoreThreadFiltering() {
+          // Such low-level requests are not supposed to be filtered out by stepping filters
+          return true;
+        }
+
+        @Override
         public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
           process.getRequestsManager().deleteRequest(this);
           var evaluatableContext = action.getSuspendContext();
