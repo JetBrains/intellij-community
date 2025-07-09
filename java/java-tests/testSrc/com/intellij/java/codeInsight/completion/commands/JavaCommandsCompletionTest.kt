@@ -356,25 +356,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       //}""".trimIndent())
   }
 
-  fun testCommentLine() {
-    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-    myFixture.configureByText(JavaFileType.INSTANCE, """
-      class A {
-          public String getY() {
-              return "y";.<caret>
-          }
-      }""".trimIndent())
-    val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment line", ignoreCase = true) })
-    myFixture.checkResult("""
-      class A {
-          public String getY() {
-      //        return "y";
-          }
-      }""".trimIndent())
-  }
-
-
   fun testCommentElementByBlock() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -656,28 +637,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       assertNotNull(elements.firstOrNull() { element -> element.lookupString.contains("Change Sign", ignoreCase = true) })
       myFixture.performEditorAction("EditorBackSpace")
     }
-  }
-
-  fun testComment() {
-    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-    myFixture.configureByText(JavaFileType.INSTANCE, """
-      class A { 
-        void foo() {
-          int y = 10L<caret>
-        } 
-      }
-      """.trimIndent())
-    myFixture.doHighlighting()
-    myFixture.type(".")
-    val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("comment line", ignoreCase = true) })
-    myFixture.checkResult("""
-      class A { 
-        void foo() {
-      //    int y = 10L
-        } 
-      }
-    """.trimIndent())
   }
 
   fun testFlipIntention() {

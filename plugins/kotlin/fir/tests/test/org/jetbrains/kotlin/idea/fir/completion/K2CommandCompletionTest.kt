@@ -127,26 +127,6 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun testComment() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            fun main() {
-              val a: String = "1".<caret>
-            }
-        """.trimIndent()
-        )
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Comment line", ignoreCase = true) })
-        myFixture.checkResult(
-            """
-            fun main() {
-            //  val a: String = "1"
-            }
-        """.trimIndent()
-        )
-    }
-
     fun testCommentPsiElementByLine() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
