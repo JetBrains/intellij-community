@@ -29,6 +29,8 @@ import kotlin.math.roundToInt
 
 @ApiStatus.Internal
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
+  private val GROUP = EventLogGroup("system.runtime", 21)
+
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
   private val VENDORS = listOf("JetBrains", "Apple", "Oracle", "Sun", "IBM", "Azul", "Other")
@@ -38,7 +40,6 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   @Suppress("SpellCheckingInspection")
   private val OS_VMS = listOf("none", "xen", "kvm", "vmware", "hyperv", "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.runtime", 21)
   private val CORES = GROUP.registerEvent("cores", EventFields.BoundedInt("value", intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)))
   private val MEMORY_SIZE =
     GROUP.registerEvent("memory.size", EventFields.BoundedInt("gigabytes", intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256)))
