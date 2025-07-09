@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ExceptionUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -102,7 +101,7 @@ inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? = getOr
 @Internal
 inline fun <T> Result<T>.getOrHandleException(handler: (Throwable) -> Unit): T? {
   return onFailure { e ->
-    if (e is ProcessCanceledException || e is CancellationException) {
+    if (e is CancellationException || e is ControlFlowException) {
       throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
     }
     else {
