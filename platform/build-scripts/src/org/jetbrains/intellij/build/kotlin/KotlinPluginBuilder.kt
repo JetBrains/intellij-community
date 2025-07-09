@@ -387,16 +387,10 @@ object KotlinPluginBuilder {
       if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
         when (kind) {
           KotlinPluginKind.IJ, KotlinPluginKind.Fleet -> {
-            // TODO KTIJ-11539 change to `System.getenv("TEAMCITY_VERSION") == null` later but make sure
-            //  that `IdeaUltimateBuildTest.testBuild` passes on TeamCity
-            val skipIfDoesntExist = true
-
-            // Use 'DownloadAppCodeDependencies' run configuration to download LLDBFrontend
-            spec.withBin("../CIDR/cidr-debugger/bin/lldb/linux/bin/LLDBFrontend", "bin/linux", skipIfDoesntExist)
-            spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/LLDBFrontend", "bin/macos", skipIfDoesntExist)
-            spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/linux/x64/bin/LLDBFrontend", "bin/linux")
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/aarch64/LLDBFrontend", "bin/macos")
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows")
             spec.withBin("../CIDR/cidr-debugger/bin/lldb/renderers", "bin/lldb/renderers")
-
             spec.withBin("../mobile-ide/native-debugger/scripts", "scripts")
           }
           else -> {}
