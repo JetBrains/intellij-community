@@ -2,13 +2,13 @@
 
 package com.intellij.mcpserver.toolsets.terminal
 
-import com.intellij.mcpserver.McpExpectedError
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
-import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.currentCoroutineContext
@@ -55,7 +55,7 @@ class TerminalToolset : McpToolset {
     timeout_milliseconds: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
   ): CommandExecutionResult {
     val project = currentCoroutineContext().project
-    if (!McpServerSettings.getInstance().state.enableBraveMode && !askConfirmation(project, command)) throw McpExpectedError("User rejected command execution")
+    checkUserConfirmationIfNeeded(McpServerBundle.message("label.do.you.want.to.execute.command.in.terminal"), command, project)
 
     // TODO pass from http request later (MCP Client name or something else)
     val id = "mcp_session"

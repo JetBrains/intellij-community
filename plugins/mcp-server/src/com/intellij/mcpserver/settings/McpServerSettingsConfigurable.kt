@@ -70,7 +70,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
       }.visibleIf(enabledCheckboxState!!)
       panel {
-        group(McpServerBundle.message("border.title.terminal.commands")) {
+        group(McpServerBundle.message("border.title.commands.execution")) {
           row {
             checkBox(McpServerBundle.message("checkbox.enable.brave.mode.skip.command.execution.confirmations")).bindSelected(settings.state::enableBraveMode)
           }
