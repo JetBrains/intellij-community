@@ -124,6 +124,13 @@ f:org.jetbrains.jewel.ui.component.MenuSelectableItem
 - hashCode():I
 - f:isEnabled():Z
 - f:isSelected():Z
+f:org.jetbrains.jewel.ui.component.PopupKt
+- sf:Popup(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:getLocalPopupRenderer():androidx.compose.runtime.ProvidableCompositionLocal
+org.jetbrains.jewel.ui.component.PopupRenderer
+- sf:Companion:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
+- a:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+f:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
 org.jetbrains.jewel.ui.component.TabContentScope
 - tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.ui.component.TabStripKt
@@ -133,6 +140,8 @@ f:org.jetbrains.jewel.ui.component.TextContextMenu
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.TextContextMenu
 - Area(androidx.compose.foundation.text.TextContextMenu$TextManager,androidx.compose.foundation.ContextMenuState,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+f:org.jetbrains.jewel.ui.component.TooltipAreaKt
+- sf:TooltipArea(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,I,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V

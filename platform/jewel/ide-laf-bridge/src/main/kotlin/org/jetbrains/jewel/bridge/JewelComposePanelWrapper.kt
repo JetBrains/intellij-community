@@ -9,14 +9,17 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.PathManager
 import java.awt.BorderLayout
+import java.awt.Component
 import java.io.File
 import javax.swing.JComponent
 import javax.swing.JPanel
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
+import org.jetbrains.jewel.bridge.component.JBPopupRenderer
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.util.JewelLogger
+import org.jetbrains.jewel.ui.component.LocalPopupRenderer
 
 public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(config, content)
@@ -27,7 +30,10 @@ public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Com
         config()
         setContent {
             SwingBridgeTheme {
-                CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+                CompositionLocalProvider(
+                    LocalComponent provides this@createJewelComposePanel,
+                    LocalPopupRenderer provides JBPopupRenderer,
+                ) {
                     ComponentDataProviderBridge(jewelPanel, content = content)
                 }
             }
@@ -43,7 +49,10 @@ public fun JewelToolWindowComposePanel(
     config()
     setContent {
         SwingBridgeTheme {
-            CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+            CompositionLocalProvider(
+                LocalComponent provides this@createJewelComposePanel,
+                LocalPopupRenderer provides JBPopupRenderer,
+            ) {
                 ComponentDataProviderBridge(jewelPanel, content = content)
             }
         }
@@ -61,7 +70,10 @@ public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, conten
     createJewelComposePanel { jewelPanel ->
         config()
         setContent {
-            CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+            CompositionLocalProvider(
+                LocalComponent provides this@createJewelComposePanel,
+                LocalPopupRenderer provides JBPopupRenderer,
+            ) {
                 ComponentDataProviderBridge(jewelPanel, content = content)
             }
         }
@@ -82,7 +94,10 @@ public fun JewelToolWindowNoThemeComposePanel(
 ): JComponent = createJewelComposePanel { jewelPanel ->
     config()
     setContent {
-        CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+        CompositionLocalProvider(
+            LocalComponent provides this@createJewelComposePanel,
+            LocalPopupRenderer provides JBPopupRenderer,
+        ) {
             ComponentDataProviderBridge(jewelPanel, content = content)
         }
     }
@@ -108,6 +123,23 @@ private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanelWrapp
 
 internal class JewelComposePanelWrapper : JPanel(), UiDataProvider {
     internal var targetProvider: UiDataProvider? = null
+
+    val composePanel: ComposePanel
+        get() =
+            components.singleOrNull() as? ComposePanel
+                ?: error("JewelComposePanelWrapper was not initialized with a ComposePanel")
+
+    override fun addImpl(comp: Component, constraints: Any?, index: Int) {
+        require(components.isEmpty()) {
+            "JewelComposePanelWrapper can only contain a single ComposePanel, attempt to add another component"
+        }
+
+        require(comp is ComposePanel) {
+            "JewelComposePanelWrapper can only contain ComposePanel, attempt to add ${comp::class.java.name}"
+        }
+
+        super.addImpl(comp, constraints, index)
+    }
 
     override fun uiDataSnapshot(sink: DataSink) {
         targetProvider?.uiDataSnapshot(sink)
