@@ -217,7 +217,9 @@ internal class IdeProjectFrameAllocator(
       else {
         val frameHelper = IdeProjectFrameHelper(createIdeFrame(frameInfo), loadingState = loadingState)
         // must be after preInit (frame decorator is required to set a full-screen mode)
-        frameHelper.frame.isVisible = true
+        withContext(Dispatchers.ui(kind = UiDispatcherKind.RELAX)) {
+          frameHelper.frame.isVisible = true
+        }
         completeFrameAndCloseOnCancel(frameHelper) {
           frameHelper.updateFullScreenState(frameInfo.fullScreen)
 
