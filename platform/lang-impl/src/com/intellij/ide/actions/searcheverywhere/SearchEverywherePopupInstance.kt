@@ -14,6 +14,7 @@ interface SearchEverywherePopupInstance {
   fun getSearchFieldDocument(): Document
   fun closePopup()
   fun addSearchListener(listener: SearchListener)
+  fun addSplitSearchListener(listener: SplitSearchListener)
 
   @ApiStatus.Internal
   fun selectFirstItem()

@@ -5,6 +5,7 @@ import com.intellij.ide.rpc.ThrottledAccumulatedItems
 import com.intellij.ide.rpc.ThrottledItems
 import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +15,8 @@ import javax.swing.DefaultListModel
 import javax.swing.ListSelectionModel
 
 @ApiStatus.Internal
-class SeResultListModel(private val selectionModelProvider: () -> ListSelectionModel): DefaultListModel<SeResultListRow>() {
+class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher,
+                        private val selectionModelProvider: () -> ListSelectionModel): DefaultListModel<SeResultListRow>() {
   val freezer: Freezer = Freezer { size }
 
   val isValid: Boolean get() = isValidState.value
@@ -38,7 +40,7 @@ class SeResultListModel(private val selectionModelProvider: () -> ListSelectionM
     }
   }
 
-  fun addFromThrottledEvent(throttledEvent: ThrottledItems<SeResultEvent>) {
+  fun addFromThrottledEvent(searchId: String, throttledEvent: ThrottledItems<SeResultEvent>) {
     if (!isValid) reset()
 
     when (throttledEvent) {
@@ -48,9 +50,19 @@ class SeResultListModel(private val selectionModelProvider: () -> ListSelectionM
           accumulatedList.handleEvent(it)
         }
         addAll(accumulatedList.list)
+
+        accumulatedList.list.filterIsInstance<SeResultListItemRow>().takeIf { it.isNotEmpty() }?.map {
+          it.item
+        }?.let { items ->
+          searchStatePublisher.elementsAdded(searchId, items.associateBy { it.uuid })
+        }
       }
       is ThrottledOneItem<SeResultEvent> -> {
-        SeResultListModelAdapter(this, selectionModelProvider()).handleEvent(throttledEvent.item)
+        SeResultListModelAdapter(this, selectionModelProvider()).handleEvent(throttledEvent.item, onAdd = {
+          searchStatePublisher.elementsAdded(searchId, mapOf(it.uuid to it))
+        }, onRemove = {
+          searchStatePublisher.elementsRemoved(searchId, 1)
+        })
       }
     }
   }

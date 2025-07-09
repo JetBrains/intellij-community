@@ -36,11 +36,12 @@ interface SeResultList {
 }
 
 @ApiStatus.Internal
-fun SeResultList.handleEvent(event: SeResultEvent) {
+fun SeResultList.handleEvent(event: SeResultEvent, onAdd: ((SeItemData) -> Unit)? = null, onRemove: (() -> Unit)? = null) {
   when (event) {
     is SeResultAddedEvent -> {
       val index = indexToAdd(event.itemData)
       addRow(index, SeResultListItemRow(event.itemData))
+      onAdd?.invoke(event.itemData)
 
       /* Animated icon in the text field disappears when the first result appears.
        * So let the loading row will be in the list from the moment the first
@@ -62,14 +63,17 @@ fun SeResultList.handleEvent(event: SeResultEvent) {
       var wasAdded = false
       indexes.forEach { index ->
         removeRow(index)
+        onRemove?.invoke()
         if (!wasAdded) {
           addRow(index, SeResultListItemRow(event.newItemData))
+          onAdd?.invoke(event.newItemData)
           wasAdded = true
         }
       }
 
       if (!wasAdded) {
         addRow(lastIndexToInsertItem, SeResultListItemRow(event.newItemData))
+        onAdd?.invoke(event.newItemData)
       }
     }
     is SeResultEndEvent -> {}// Do nothing

@@ -150,7 +150,13 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     val completable = CompletableDeferred<Unit>()
     withContext(Dispatchers.EDT) {
-      val contentPane = SePopupContentPane(project, popupVm, { size -> popup?.let { it.size = size } }, getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY)) {
+      val searchStatePublisher = SeSearchStatePublisher()
+
+      val contentPane = SePopupContentPane(project,
+                                           popupVm,
+                                           { size -> popup?.let { it.size = size } },
+                                           searchStatePublisher,
+                                           getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY)) {
         popupScope.launch(NonCancellable) {
           removeSessionRef.set(false)
           try {
@@ -174,7 +180,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
         calcPopupPositionAndShow(popup, contentPane)
       }
 
-      popupInstance = SePopupInstance(popupVm, contentPane)
+      popupInstance = SePopupInstance(popupVm, contentPane, searchStatePublisher)
 
       val endTime = System.currentTimeMillis()
       SeLog.log { "Search Everywhere popup opened in ${endTime - startTime} ms" }
