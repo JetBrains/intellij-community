@@ -48,7 +48,9 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
       if (field != value) {
         field = value
         setColoringMode(value)
-        tableResultView.showHorizontalLines = value != ColoringMode.OFF
+        if (useOldColors) {
+          tableResultView.showHorizontalLines = value != ColoringMode.OFF
+        }
         tableResultView.repaint()
       }
     }
@@ -272,7 +274,9 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
       gridColorModel.addLayer(tableHeatmapColorLayer)
       tableResultView.repaint()
 
-      tableResultView.showHorizontalLines = true
+      if (useOldColors) {
+        tableResultView.showHorizontalLines = true
+      }
 
       return tableHeatmapColorLayer
     }
