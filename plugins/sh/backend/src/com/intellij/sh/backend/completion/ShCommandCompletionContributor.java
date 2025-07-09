@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.sh.completion;
+package com.intellij.sh.backend.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.sh.completion.ShCompletionUtil.*;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.*;
 
 public class ShCommandCompletionContributor extends CompletionContributor implements DumbAware {
   private static final int BUILTIN_PRIORITY = -10;

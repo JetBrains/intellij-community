@@ -36,6 +36,18 @@
                      bundle="messages.ShBundle" groupKey="sh.shell.script" key="display.name.shell.check"
                      level="ERROR" unfair="true" implementationClass="com.intellij.sh.backend.shellcheck.ShShellcheckInspection"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.backend.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
+    <completion.contributor id="shShebang" language="Shell Script"
+                            implementationClass="com.intellij.sh.backend.completion.ShShebangCompletionContributor"
+                            order="first"/>
+    <completion.contributor id="shFilePathCompletionContributor" language="Shell Script"
+                            implementationClass="com.intellij.sh.backend.completion.ShFilePathCompletionContributor"
+                            order="after shShebang"/>
+    <completion.contributor id="shCommand" language="Shell Script"
+                            implementationClass="com.intellij.sh.backend.completion.ShCommandCompletionContributor"
+                            order="after shFilePathCompletionContributor"/>
+    <completion.contributor language="Shell Script"
+                            implementationClass="com.intellij.sh.backend.completion.ShKeywordCompletionContributor"
+                            order="after shCommand"/>
   </extensions>
 
   <actions>

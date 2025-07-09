@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.completion;
+package com.intellij.sh.backend.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.sh.completion.ShCompletionUtil.endsWithDot;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.endsWithDot;
 
 class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
   private static final int PRIORITY = 10;

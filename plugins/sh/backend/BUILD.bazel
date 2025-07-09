@@ -37,6 +37,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-impl:codeStyle-impl",
+    "//platform/projectModel-api:projectModel",
   ],
   runtime_deps = [
     ":backend_resources",

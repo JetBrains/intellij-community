@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.completion;
+package com.intellij.sh.backend.completion;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.sh.completion.ShCompletionUtil.*;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.*;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.BASE_KEYWORD_COMPLETION_USED_EVENT_ID;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.CONDITION_KEYWORD_COMPLETION_USED_EVENT_ID;
 
