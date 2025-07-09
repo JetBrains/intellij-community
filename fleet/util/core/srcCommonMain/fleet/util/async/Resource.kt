@@ -61,17 +61,49 @@ fun <T> resource(producer: suspend CoroutineScope.(consumer: Consumer<T>) -> Con
       coroutineScope {
         val deferred = CompletableDeferred<T>()
         val shutdown = Job()
-        // isolate consumers from coroutine context potentially polluted by the resource
         launch(start = CoroutineStart.UNDISPATCHED) {
-          producer { t ->
-            check(deferred.complete(t)) { "Double emission" }
-            shutdown.join()
-            Proof
+          // this is a clever (in a bad sense) way to subscribe to cancelation of the outer coroutine scope
+          // invokeOnCompletion will not work because it is triggered only on *completion* which includes completion of all children
+          val canary = launch(Dispatchers.Unconfined) { awaitCancellation() }
+          // cancellation propagation from parent coroutine will cancel sibling coroutines concurrently
+          // coroutines spawned by [producer] are cousins of the coroutines spawned by [body] and thus are not ordered
+          // we need to control the cancellation manually to guarantee that [producer] is disposed only after [body] has finished
+          withContext(NonCancellable) {
+            val resourceScope = this@withContext
+            // cancel everything if parent is cancelled while the resource is initializing
+            val completionHandler = canary.invokeOnCompletion { ex ->
+              if (ex != null) {
+                resourceScope.cancel("Propagating exception from parent", ex)
+              }
+            }
+            producer { t ->
+              // we are publishing the value, have to make sure [body] is completed before we dispose, so we are unsubscribing from parent
+              completionHandler.dispose()
+              currentCoroutineContext().job.ensureActive()
+              check(deferred.complete(t)) { "Double emission" }
+              shutdown.join()
+              // now that [body] has finised we are enabling cancellation again
+              canary.invokeOnCompletion { ex ->
+                if (ex != null) {
+                  resourceScope.cancel("Propagating exception from parent", ex)
+                }
+              }
+              currentCoroutineContext().job.ensureActive()
+              Proof
+            }
           }
-        }.invokeOnCompletion { cause ->
-          deferred.completeExceptionally(cause ?: RuntimeException("Resource didn't emit"))
+          canary.cancel()
+        }.apply {
+          invokeOnCompletion { ex ->
+            deferred.completeExceptionally(ex ?: RuntimeException("Resource didn't emit"))
+          }
         }
-        coroutineScope { body(deferred.await()) }.also { shutdown.complete() }
+        try {
+          coroutineScope { body(deferred.await()) }
+        }
+        finally {
+          shutdown.complete()
+        }
       }
   }
 
