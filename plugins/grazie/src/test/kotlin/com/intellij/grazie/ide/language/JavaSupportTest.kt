@@ -61,4 +61,8 @@ class JavaSupportTest : GrazieTestBase() {
   fun testCommentIsNotHighlightedIfThereIsReference() {
     runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
   }
+
+  fun `test spellchecking normalization`() {
+    runHighlightTestForFile("ide/language/java/Normalization.java")
+  }
 }

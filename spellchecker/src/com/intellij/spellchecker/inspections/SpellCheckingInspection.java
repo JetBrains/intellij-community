@@ -11,6 +11,7 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -19,7 +20,9 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.grazie.diacritic.Diacritics;
 import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
@@ -245,7 +248,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       }
 
       boolean keyword = myNamesValidator.isKeyword(word, myElement.getProject());
-      if (keyword || !myManager.hasProblem(word) || hasSameNamedReferenceInFile(word)) {
+      if (keyword || !hasProblem(word) || hasSameNamedReferenceInFile(word)) {
         return;
       }
 
@@ -293,6 +296,23 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         }
       }
       return false;
+    }
+
+    private boolean hasProblem(String word) {
+      if (!myManager.hasProblem(word)) {
+        return false;
+      }
+      Language language = myElement.getLanguage();
+      SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, language);
+      if (strategy == null || !strategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Code))) {
+        return true;
+      }
+
+      Project project = myElement.getProject();
+      return SpellCheckerManager.getInstance(project).getSuggestions(word)
+        .stream()
+        .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
+        .noneMatch(suggestion -> Diacritics.equalsIgnoringDiacritics(word, suggestion));
     }
   }
 
