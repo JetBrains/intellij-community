@@ -250,7 +250,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
 
     return invokeAndWaitIfNeeded {
       val holder = GitRepositoriesHolder.getInstance(project)
-      val repositories = holder.getAll().sorted()
+      val repositories = holder.getAll()
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
       val preferredSelection = checkNotNull(holder.get(repo.rpcId))
