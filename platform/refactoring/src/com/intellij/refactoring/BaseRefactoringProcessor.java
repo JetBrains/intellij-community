@@ -110,7 +110,7 @@ import java.util.*;
  *     It calls {@link #performRefactoring} inside a Write Action and under a cancelable modal progress indicator.</p>
  *   </li>
  *   <li>
- *     <b>{@link #performRefactoring}({@code writeableUsages})</b>
+ *     <b>{@link #performRefactoring(UsageInfo[] usages)}</b>
  *     <p>The core refactoring logic is implemented in this method. All code modifications should be performed here –
  *     since we are in a command, the changes made to the code can be reverted with a single CTRL+Z.</p>
  *   </li>
@@ -247,7 +247,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   /**
-   * Called by {@link #doRefactoring} in a command, on EDT, inside a Write Action, under cancelable modal progress.
+   * Called by {@link #doRefactoring} in a command, on EDT, inside a Write Action, under a cancelable modal progress indicator.
    */
   @RequiresEdt
   @RequiresWriteLock
@@ -573,7 +573,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   /**
-   * Starts {@link #performRefactoring} inside a write action.
+   * Starts {@link #performRefactoring} on EDT, inside a Write Action, under a cancelable modal progress indicator.
    */
   private void doRefactoring(final @NotNull Collection<UsageInfo> usageInfoSet) {
    for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
