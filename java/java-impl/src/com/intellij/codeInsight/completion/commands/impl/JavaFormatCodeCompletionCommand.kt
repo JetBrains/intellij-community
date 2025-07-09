@@ -8,10 +8,7 @@ import com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCo
 import com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.psi.PsiCodeBlock
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiStatement
+import com.intellij.psi.*
 import com.intellij.psi.util.parents
 
 internal class JavaFormatCodeCompletionCommandProvider : AbstractFormatCodeCompletionCommandProvider() {
@@ -30,8 +27,11 @@ internal class JavaFormatCodeCompletionCommandProvider : AbstractFormatCodeCompl
 }
 
 private fun findTargetToRefactorInner(element: PsiElement): PsiElement {
-  return element.parents(true).firstOrNull { it is PsiMember || it is PsiCodeBlock || it is PsiStatement } ?: element.containingFile
-         ?: element
+  var parentElement = (element.parents(true).firstOrNull { it is PsiMember || it is PsiCodeBlock || it is PsiStatement }
+                       ?: element.containingFile
+                       ?: element)
+  if(parentElement.parent is PsiMethod) parentElement = parentElement.parent!!
+  return parentElement
 }
 
 internal abstract class JavaFormatCodeCompletionCommand : AbstractFormatCodeCompletionCommand() {

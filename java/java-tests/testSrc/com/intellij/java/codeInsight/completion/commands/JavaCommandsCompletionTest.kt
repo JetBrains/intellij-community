@@ -70,6 +70,28 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
+  fun testFormatWholeMethod() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo                     (                             ) {
+          int y = 10;
+          int x =                           y;
+        }.<caret> 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("format", ignoreCase = true) })
+    myFixture.checkResult("""
+      class A {
+          void foo() {
+              int y = 10;
+              int x = y;
+          } 
+      }
+    """.trimIndent())
+  }
+
   fun testEmptyMatchers() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
