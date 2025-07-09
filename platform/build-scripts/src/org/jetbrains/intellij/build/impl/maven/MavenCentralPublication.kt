@@ -64,7 +64,7 @@ class MavenCentralPublication(
   private val type: PublishingType = PublishingType.AUTOMATIC,
   private val userName: String? = null,
   private val token: String? = null,
-  private val dryRun: Boolean = context.options.isInDevelopmentMode,
+  private val dryRun: Boolean = context.options.isInDevelopmentMode || System.getenv("BUILD_IS_PERSONAL") == "true",
   private val sign: Boolean = !dryRun,
 ) {
   companion object {
