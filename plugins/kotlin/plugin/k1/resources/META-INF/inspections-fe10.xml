@@ -422,7 +422,7 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.ToOrdinaryStringLiteralIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ToOrdinaryStringLiteralIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
