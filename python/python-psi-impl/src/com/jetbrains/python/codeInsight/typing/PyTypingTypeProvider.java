@@ -1146,7 +1146,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   private static @Nullable Ref<PyType> getLiteralStringType(@NotNull PsiElement resolved, @NotNull Context context) {
     if (resolved instanceof PyTargetExpression referenceExpression) {
-      Collection<String> operandNames = resolveToQualifiedNames(referenceExpression, context.getTypeContext());
       if (resolvesToQualifiedNames(referenceExpression, context.getTypeContext(), LITERALSTRING, LITERALSTRING_EXT)) {
         return Ref.create(PyLiteralStringType.Companion.create(resolved));
       }
