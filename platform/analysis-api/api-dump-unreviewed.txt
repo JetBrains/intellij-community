@@ -1041,10 +1041,6 @@ f:com.intellij.codeInspection.InspectionsBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-f:com.intellij.codeInspection.InspectionsDeprecatedMessagesBundle
-- com.intellij.DynamicBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 com.intellij.codeInspection.InspectionsReportConverter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:convert(java.lang.String,java.lang.String,java.util.Map,java.util.List):V
