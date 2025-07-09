@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -29,7 +30,8 @@ object StandardKotlinNames {
         @JvmField val enumValueOf: FqName = BUILT_INS_PACKAGE_FQ_NAME + "enumValueOf"
     }
 
-    @JvmField val exceptionClassId  = ClassId(BUILT_INS_PACKAGE_FQ_NAME , Name.identifier("Exception"))
+    @JvmField val exceptionClassId: ClassId = ClassId(BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("Exception"))
+    @JvmField val throwableClassId: ClassId = ClassId.topLevel( StandardNames.FqNames.throwable)
 
     object Jvm {
         @JvmField val JvmInline: FqName = JvmStandardClassIds.BASE_JVM_PACKAGE + "JvmInline"

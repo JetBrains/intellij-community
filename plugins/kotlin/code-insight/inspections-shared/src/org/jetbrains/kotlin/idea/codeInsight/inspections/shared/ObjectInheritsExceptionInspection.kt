@@ -30,8 +30,8 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                 val isException = analyze(declaration) {
                     val symbol = declaration.symbol as? KaNamedClassSymbol ?: return
                     symbol.superTypes.any {
-                        it.isClassType(StandardKotlinNames.exceptionClassId) ||
-                                it.isSubtypeOf(StandardKotlinNames.exceptionClassId)
+                        it.isClassType(StandardKotlinNames.throwableClassId) ||
+                                it.isSubtypeOf(StandardKotlinNames.throwableClassId)
                     }
                 }
 

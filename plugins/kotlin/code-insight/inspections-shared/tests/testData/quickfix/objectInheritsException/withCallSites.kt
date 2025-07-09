@@ -4,7 +4,7 @@ package some
 
 import some.MyException
 
-<caret>object MyException : Exception()
+<caret>object MyException : Throwable()
 
 fun foo() {
     throw MyException
