@@ -8,21 +8,27 @@ import org.junit.platform.engine.Filter;
 import org.junit.platform.engine.TestEngine;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.ClassNameFilter;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.*;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public final class JUnit5BazelRunner extends JUnit5BaseRunner {
+public final class JUnit5BazelRunner {
   private static final String bazelEnvSelfLocation = "SELF_LOCATION";
   private static final String bazelEnvTestTmpDir = "TEST_TMPDIR";
   private static final String bazelEnvRunFilesDir = "RUNFILES_DIR";
@@ -37,11 +43,30 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
   // true by default. try as much as possible to run tests in sandbox
   private static final String jbEnvSandbox = "JB_TEST_SANDBOX";
 
+  private static final ClassLoader ourClassLoader = Thread.currentThread().getContextClassLoader();
+  private static final Launcher launcher = LauncherFactory.create();
+
+  private LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
+    return LauncherDiscoveryRequestBuilder.request()
+      .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
+      .selectors(this.getTestsSelectors(ourClassLoader))
+      .filters(this.getTestFilters())
+      .build();
+  }
+
+  public List<? extends DiscoverySelector> getTestSelectorsByClassPathRoots(ClassLoader classLoader) throws Throwable {
+    Set<Path> classPathRoots = getClassPathRoots(classLoader);
+    return getSelectors(classPathRoots);
+  }
+
+  public TestPlan getTestPlan() throws Throwable {
+    LauncherDiscoveryRequest discoveryRequest = this.getDiscoveryRequest();
+    return launcher.discover(discoveryRequest);
+  }
+
   public static void main(String[] args) throws IOException {
     try {
       System.err.println("Running tests via " + JUnit5BazelRunner.class.getName());
-
-      JUnit5BaseRunner runner = new JUnit5BazelRunner();
 
       var isBazelTestRun = isBazelTestRun();
       if (!isBazelTestRun) {
@@ -118,20 +143,21 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
 
       System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
 
-      TestPlan testPlan = runner.getTestPlan();
-      if (testPlan.containsTests()) {
-        var testExecutionListener = runner.getTestExecutionListener();
-        execute(testPlan, testExecutionListener);
+      JUnit5BazelRunner runner = new JUnit5BazelRunner();
 
-        if (testExecutionListener instanceof ConsoleTestLogger && ((ConsoleTestLogger)testExecutionListener).hasTestsWithThrowableResults()) {
-          System.err.println("Some tests failed");
-          System.exit(1);
-        }
-      }
-      else {
+      TestPlan testPlan = runner.getTestPlan();
+      if (!testPlan.containsTests()) {
         //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
         System.err.println("No tests found");
         System.exit(42);
+      }
+
+      var testExecutionListener = runner.getTestExecutionListener();
+      launcher.execute(testPlan, testExecutionListener);
+
+      if (testExecutionListener instanceof ConsoleTestLogger && ((ConsoleTestLogger)testExecutionListener).hasTestsWithThrowableResults()) {
+        System.err.println("Some tests failed");
+        System.exit(1);
       }
     }
     catch (Throwable e) {
@@ -146,7 +172,6 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
     }
   }
 
-  @Override
   TestExecutionListener getTestExecutionListener() {
     if (isUnderTeamCity()) {
       return new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener();
@@ -155,15 +180,13 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
     }
   }
 
-  @Override
-  public Filter<?>[] getTestFilters(ClassLoader classLoader) {
+  public Filter<?>[] getTestFilters() {
     ArrayList<Filter<?>> filters = new ArrayList<>(0);
     filters.add(ClassNameFilter.includeClassNamePatterns(".*Test"));
     return filters.toArray(new Filter[0]);
   }
 
-  @Override
-  public List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) {
+  public List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) throws Throwable {
     List<? extends DiscoverySelector> bazelTestClassSelector = getBazelTestClassSelectors(classLoader);
     if (!bazelTestClassSelector.isEmpty()) {
       return bazelTestClassSelector;
@@ -307,6 +330,37 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
     }
   }
 
+  public static Set<Path> getClassPathRoots(ClassLoader classLoader) throws Throwable {
+    //noinspection unchecked
+    List<Path> paths = (List<Path>)MethodHandles.publicLookup()
+      .findStatic(Class.forName("com.intellij.TestAll", false, classLoader),
+                  "getClassRoots", MethodType.methodType(List.class))
+      .invokeExact();
+    if (paths == null) return null;
+
+    // Skip unrelated jars and any other archives, otherwise we will end up with test classes from dependencies.
+    String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+    return paths.stream().filter(path -> {
+      return Files.isDirectory(path) ||
+             (
+               relevantJarsRoot != null &&
+               path.getFileName().toString().endsWith(".jar") &&
+               path.startsWith(relevantJarsRoot)
+             );
+    }).collect(Collectors.toSet());
+  }
+
+  public static List<? extends DiscoverySelector> getSelectors(Set<Path> classPathRoots) {
+    List<? extends DiscoverySelector> selectors;
+    if (classPathRoots != null) {
+      selectors = DiscoverySelectors.selectClasspathRoots(classPathRoots);
+    }
+    else {
+      selectors = Collections.singletonList(DiscoverySelectors.selectPackage(""));
+    }
+
+    return selectors;
+  }
 
   private static class ConsoleTestLogger implements TestExecutionListener {
     private final Set<TestIdentifier> testsWithThrowableResult = new HashSet<>();
