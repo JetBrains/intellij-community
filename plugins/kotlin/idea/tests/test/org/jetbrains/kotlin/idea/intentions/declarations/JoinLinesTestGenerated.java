@@ -123,6 +123,16 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
             runTest("testData/joinLines/addSemicolon/PropertyAndFunction.kt");
         }
 
+        @TestMetadata("PropertyAndPropertyAccessor.kt")
+        public void testPropertyAndPropertyAccessor() throws Exception {
+            runTest("testData/joinLines/addSemicolon/PropertyAndPropertyAccessor.kt");
+        }
+
+        @TestMetadata("PropertyWithInitializerAndPropertyAccessor.kt")
+        public void testPropertyWithInitializerAndPropertyAccessor() throws Exception {
+            runTest("testData/joinLines/addSemicolon/PropertyWithInitializerAndPropertyAccessor.kt");
+        }
+
         @TestMetadata("WhileAndACall.kt")
         public void testWhileAndACall() throws Exception {
             runTest("testData/joinLines/addSemicolon/WhileAndACall.kt");
