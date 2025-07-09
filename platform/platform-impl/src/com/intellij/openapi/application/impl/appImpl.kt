@@ -193,7 +193,9 @@ object InternalThreading {
                                        }
                                      }) {
       try {
-        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+        lock.allowTakingLocksInsideAndRun {
+          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+        }
       } catch (e: Throwable) {
         exceptionRef.set(e)
       }
