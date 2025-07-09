@@ -247,7 +247,10 @@
                      implementationClass="com.jetbrains.python.inspections.PyRelativeImportInspection"/>
     <localInspection language="Python" shortName="PyPandasSeriesToListInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle"
                      key="INSP.pandas.series.values.replace.with.tolist" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.inspections.PyPandasSeriesToListInspection"/>
+                     implementationClass="com.jetbrains.python.inspections.PyPandasSeriesToListInspection" groupKey="INSP.GROUP.pandas"/>
+    <localInspection language="Python" shortName="PyPandasTruthValueIsAmbiguousInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle"
+                     key="INSP.pandas.truth.value.is.ambiguous.df" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyPandasTruthValueIsAmbiguousInspection" groupKey="INSP.GROUP.pandas"/>
 
     <listSplitJoinContext language="Python" implementationClass="com.jetbrains.python.codeInsight.editorActions.PyListSplitJoinContext"/>
 
