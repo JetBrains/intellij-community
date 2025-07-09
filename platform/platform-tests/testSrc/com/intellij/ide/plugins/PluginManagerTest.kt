@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
@@ -6,14 +6,12 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.consume
-import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
@@ -21,12 +19,14 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.TriConsumer
+import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayOutputStream
@@ -135,13 +135,12 @@ class PluginManagerTest {
 
   @Test
   fun compatibilityPlatform() {
-    Assert.assertEquals(SystemInfo.isWindows, checkCompatibility("com.intellij.modules.os.windows"))
-    Assert.assertEquals(SystemInfo.isMac, checkCompatibility("com.intellij.modules.os.mac"))
-    Assert.assertEquals(SystemInfo.isLinux, checkCompatibility("com.intellij.modules.os.linux"))
-    Assert.assertEquals(SystemInfo.isFreeBSD, checkCompatibility("com.intellij.modules.os.freebsd"))
-    Assert.assertEquals(SystemInfo.isSolaris, checkCompatibility("com.intellij.modules.os.solaris"))
-    Assert.assertEquals(SystemInfo.isUnix, checkCompatibility("com.intellij.modules.os.unix"))
-    Assert.assertEquals(SystemInfo.isUnix && !SystemInfo.isMac, checkCompatibility("com.intellij.modules.os.xwindow"))
+    assertEquals(OS.CURRENT == OS.Windows, checkCompatibility("com.intellij.modules.os.windows"))
+    assertEquals(OS.CURRENT == OS.macOS, checkCompatibility("com.intellij.modules.os.mac"))
+    assertEquals(OS.CURRENT == OS.Linux, checkCompatibility("com.intellij.modules.os.linux"))
+    assertEquals(OS.CURRENT == OS.FreeBSD, checkCompatibility("com.intellij.modules.os.freebsd"))
+    assertEquals(OS.CURRENT != OS.Windows, checkCompatibility("com.intellij.modules.os.unix"))
+    assertEquals(OS.isGenericUnix(), checkCompatibility("com.intellij.modules.os.xwindow"))
   }
 
   @Test
@@ -207,7 +206,7 @@ class PluginManagerTest {
     val bundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), true)
     val updated = loadDescriptorInTest(pluginsPath.resolve("updated"))
     val expectedPluginId = updated.getPluginId()
-    Assert.assertEquals(expectedPluginId, bundled.getPluginId())
+    assertEquals(expectedPluginId, bundled.getPluginId())
 
     val bundledList = DiscoveredPluginsList(listOf(bundled), PluginsSourceContext.Bundled)
     val customList = DiscoveredPluginsList(listOf(updated), PluginsSourceContext.Custom)
@@ -289,7 +288,7 @@ class PluginManagerTest {
     }
 
     private fun assertConvertsTo(untilBuild: String?, result: String?) {
-      Assert.assertEquals(result, PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild))
+      assertEquals(result, PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild))
     }
 
     private fun assertIncompatible(ideVersion: String?, sinceBuild: String?, untilBuild: String?) {
@@ -489,7 +488,7 @@ private fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuild
   return PluginDescriptorFromXmlStreamConsumer(readContext = object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-    override val elementOsFilter: (OS) -> Boolean
+    override val elementOsFilter: (com.intellij.platform.plugins.parser.impl.elements.OS) -> Boolean
       get() = { it.convert().isSuitableForOs() }
   }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER.toXIncludeLoader(object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()

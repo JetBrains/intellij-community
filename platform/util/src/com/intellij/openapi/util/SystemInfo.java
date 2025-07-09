@@ -46,7 +46,10 @@ public final class SystemInfo {
   public static final boolean isMac = SystemInfoRt.isMac;
   public static final boolean isLinux = SystemInfoRt.isLinux;
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
-  public static final boolean isSolaris = SystemInfoRt.isSolaris;
+  /** @deprecated press 'F' */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isSolaris = false;
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
   public static final boolean isChromeOS = isLinux && isCrostini();

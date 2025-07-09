@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ide.plugins
@@ -27,9 +27,6 @@ enum class IdeaPluginOsRequirement {
   },
   FreeBSD {
     override fun isHostOs(): Boolean = SystemInfoRt.isFreeBSD
-  },
-  Solaris {
-    override fun isHostOs(): Boolean = SystemInfoRt.isSolaris
   },
   Unix {
     override fun isHostOs(): Boolean = SystemInfoRt.isUnix

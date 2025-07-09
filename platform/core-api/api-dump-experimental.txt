@@ -48,7 +48,6 @@ com.intellij.ide.plugins.DynamicPluginListener
 - sf:FreeBSD:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:Linux:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:Mac:com.intellij.ide.plugins.IdeaPluginOsRequirement
-- sf:Solaris:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:Unix:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:Unknown:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:Windows:com.intellij.ide.plugins.IdeaPluginOsRequirement

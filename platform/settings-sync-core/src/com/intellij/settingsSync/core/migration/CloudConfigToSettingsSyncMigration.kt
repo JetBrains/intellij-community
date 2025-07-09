@@ -166,15 +166,11 @@ internal class CloudConfigToSettingsSyncMigration : SettingsSyncMigration {
       if (SystemInfo.isUnix) {
         return "unix"
       }
-      if (SystemInfo.isSolaris) {
-        return "solaris"
-      }
       if (SystemInfo.isChromeOS) {
         return "chrome"
       }
       return "unknown"
     }
-
   }
 
   fun filterOsName(fileName: String): Boolean {

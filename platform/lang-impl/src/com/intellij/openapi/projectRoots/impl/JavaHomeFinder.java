@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. aversionributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.Project;
@@ -166,9 +166,6 @@ public abstract class JavaHomeFinder {
     if (SystemInfo.isLinux) {
       return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(DEFAULT_JAVA_LINUX_PATHS);
     }
-    if (SystemInfo.isSolaris) {
-      return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths("/usr/jdk");
-    }
 
     return new JavaHomeFinderBasic(systemInfoProvider);
   }
@@ -192,9 +189,7 @@ public abstract class JavaHomeFinder {
     if (SystemInfo.isLinux) {
       return "/opt/java";
     }
-    if (SystemInfo.isSolaris) {
-      return "/usr/jdk";
-    }
+
     return null;
   }
 

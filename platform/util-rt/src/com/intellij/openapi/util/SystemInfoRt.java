@@ -1,5 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
+
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Locale;
 
@@ -36,7 +38,10 @@ public final class SystemInfoRt {
   public static final boolean isMac = _OS_NAME.startsWith("mac");
   public static final boolean isLinux = _OS_NAME.startsWith("linux");
   public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
-  public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
+  /** @deprecated press 'F' */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isSolaris = false;
   public static final boolean isUnix = !isWindows;
   public static final boolean isXWindow = isUnix && !isMac;
 
