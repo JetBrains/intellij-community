@@ -13,7 +13,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isDecoratedMenu
@@ -35,6 +34,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
@@ -198,7 +198,7 @@ internal class ProjectFrameCustomHeaderHelper(
         updateToolbarVisibility()
       }
     }
-    else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
+    else if (OS.isGenericUnix()) {
       toolbarCreator.getToolbarIfCreated()?.isVisible = isToolbarVisible(uiSettings, isFullScreen) {
         blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
       }
@@ -208,7 +208,7 @@ internal class ProjectFrameCustomHeaderHelper(
   }
 
   private fun updateToolbarVisibility() {
-    if (ExperimentalUI.isNewUI() && SystemInfoRt.isMac) {
+    if (ExperimentalUI.isNewUI() && OS.CURRENT == OS.macOS) {
       return
     }
     check(toolbarVisibilityUpdateRequests.tryEmit(Unit))
@@ -244,11 +244,10 @@ internal class ProjectFrameCustomHeaderHelper(
     uiSettings: UISettings,
     isFullScreen: Boolean,
     mainToolbarActionSupplier: () -> MainToolbarActions,
-  ): Boolean {
-    return !isFullScreen ||
-           !SystemInfoRt.isMac && CustomWindowHeaderUtil.isToolbarInHeader(uiSettings, isFullScreen) ||
-           SystemInfoRt.isMac && !isCompactHeader(mainToolbarActionSupplier)
-  }
+  ): Boolean =
+    !isFullScreen ||
+    OS.CURRENT != OS.macOS && CustomWindowHeaderUtil.isToolbarInHeader(uiSettings, isFullscreen = true) ||
+    OS.CURRENT == OS.macOS && !isCompactHeader(mainToolbarActionSupplier)
 
   private inline fun isToolbarVisible(
     uiSettings: UISettings,
@@ -359,7 +358,7 @@ private fun installCustomHeader(
   return if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
     createMacAwareMenuBar(parentCs.childScope(), frame, rootPane, mainMenuActionGroup)
     val headerHelper = FrameHeaderHelper.Undecorated(isFloatingMenuBarSupported = false)
-    if (SystemInfoRt.isXWindow && !isMenuButtonInToolbar(uiSettings)) {
+    if (OS.isGenericUnix() && !isMenuButtonInToolbar(uiSettings)) {
       val menuBar = RootPaneUtil.createMenuBar(parentCs.childScope(), frame, mainMenuActionGroup).apply {
         isOpaque = true
       }
@@ -374,7 +373,7 @@ private fun installCustomHeader(
       val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
         selectedEditorFilePath = null
         ideMenu = createMacAwareMenuBar(parentCs.childScope(), frame, rootPane, mainMenuActionGroup)
-        if (SystemInfoRt.isMac) {
+        if (OS.CURRENT == OS.macOS) {
           MacToolbarFrameHeader(parentCs.childScope(), frame, rootPane, isAlwaysCompact)
         }
         else {
@@ -432,7 +431,7 @@ private fun createMacAwareMenuBar(
   rootPane: JRootPane,
   mainMenuActionGroup: ActionGroup?,
 ): ActionAwareIdeMenuBar {
-  if (!SystemInfoRt.isMac) {
+  if (OS.CURRENT != OS.macOS) {
     return RootPaneUtil.createMenuBar(coroutineScope, frame, mainMenuActionGroup)
   }
   else if (Menu.isJbScreenMenuEnabled()) {

@@ -43,6 +43,9 @@ public final class SystemInfoRt {
   @ApiStatus.ScheduledForRemoval
   public static final boolean isSolaris = false;
   public static final boolean isUnix = !isWindows;
+  /** @deprecated confusing name; consider using {@code com.intellij.util.system.OS.isGenericUnix()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static final boolean isXWindow = isUnix && !isMac;
 
   public static final boolean isJBSystemMenu = isMac && Boolean.parseBoolean(System.getProperty("jbScreenMenuBar.enabled", "true"));
