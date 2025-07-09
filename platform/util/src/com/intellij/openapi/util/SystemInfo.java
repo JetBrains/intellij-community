@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -53,9 +52,9 @@ public final class SystemInfo {
   public static final boolean isAzulJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Azul", 0) >= 0;
   public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
 
-  @SuppressWarnings("SpellCheckingInspection")
+  @SuppressWarnings({"SpellCheckingInspection", "IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   private static boolean isCrostini() {
-    return new File("/dev/.cros_milestone").exists();
+    return new java.io.File("/dev/.cros_milestone").exists();
   }
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {

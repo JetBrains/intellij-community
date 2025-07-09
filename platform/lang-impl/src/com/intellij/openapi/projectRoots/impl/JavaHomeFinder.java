@@ -4,10 +4,8 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.path.EelPath;
@@ -16,13 +14,13 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
-import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,12 +49,13 @@ public abstract class JavaHomeFinder {
     }
 
     public @NotNull Collection<@NotNull Path> getFsRoots() {
-      Iterable<Path> rootDirectories = FileSystems.getDefault().getRootDirectories();
+      var rootDirectories = FileSystems.getDefault().getRootDirectories();
       return rootDirectories != null ? ContainerUtil.newArrayList(rootDirectories) : Collections.emptyList();
     }
 
+    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
     public String getPathSeparator() {
-      return File.pathSeparator;
+      return java.io.File.pathSeparator;
     }
 
     public boolean isFileSystemCaseSensitive() {
@@ -106,16 +105,14 @@ public abstract class JavaHomeFinder {
     /// An entry should appear before another one if it has a **more recent** version or a shorter path.
     @Override
     public int compareTo(@NotNull JavaHomeFinder.JdkEntry o) {
-      final var v1 = versionInfo != null ? versionInfo.version : null;
-      final var v2 = o.versionInfo != null ? o.versionInfo.version : null;
-      final int v = Comparing.compare(v2, v1);
-      if (v != 0) return v;
-      return Comparing.compare(path, o.path);
+      var v1 = versionInfo != null ? versionInfo.version : null;
+      var v2 = o.versionInfo != null ? o.versionInfo.version : null;
+      var byVersion = Comparing.compare(v2, v1);
+      return byVersion != 0 ? byVersion : Comparing.compare(path, o.path);
     }
 
     public @Nullable SdkType.SdkEntry toSdkEntry() {
-      if (versionInfo == null) return null;
-      return new SdkType.SdkEntry(path, versionInfo.displayVersionString());
+      return versionInfo != null ? new SdkType.SdkEntry(path, versionInfo.displayVersionString()) : null;
     }
   }
 
@@ -124,14 +121,12 @@ public abstract class JavaHomeFinder {
    */
   @ApiStatus.Internal
   public static @NotNull List<JdkEntry> findJdks(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
-    JavaHomeFinderBasic javaFinder = getFinder(eelDescriptor, forceEmbeddedJava);
-    if (javaFinder == null) return Collections.emptyList();
-
-    return findJdks(javaFinder);
+    var javaFinder = getFinder(eelDescriptor, forceEmbeddedJava);
+    return javaFinder != null ? findJdks(javaFinder) : Collections.emptyList();
   }
 
   private static @NotNull ArrayList<JdkEntry> findJdks(JavaHomeFinderBasic javaFinder) {
-    ArrayList<JdkEntry> paths = new ArrayList<>(javaFinder.findExistingJdkEntries());
+    var paths = new ArrayList<>(javaFinder.findExistingJdkEntries());
     ContainerUtil.sort(paths);
     return paths;
   }
@@ -155,47 +150,32 @@ public abstract class JavaHomeFinder {
       return javaHomeFinderEel(descriptor);
     }
 
-    SystemInfoProvider systemInfoProvider = new SystemInfoProvider();
-
-    if (SystemInfo.isWindows) {
-      return new JavaHomeFinderWindows(true, true, systemInfoProvider);
-    }
-    if (SystemInfo.isMac) {
-      return new JavaHomeFinderMac(systemInfoProvider);
-    }
-    if (SystemInfo.isLinux) {
-      return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(DEFAULT_JAVA_LINUX_PATHS);
-    }
-
-    return new JavaHomeFinderBasic(systemInfoProvider);
+    var systemInfoProvider = new SystemInfoProvider();
+    return switch (OS.CURRENT) {
+      case Windows -> new JavaHomeFinderWindows(true, true, systemInfoProvider);
+      case macOS -> new JavaHomeFinderMac(systemInfoProvider);
+      case Linux -> new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(DEFAULT_JAVA_LINUX_PATHS);
+      default -> new JavaHomeFinderBasic(systemInfoProvider);
+    };
   }
 
   public static @Nullable String defaultJavaLocation(@Nullable Path path) {
     if (path != null && Registry.is("java.home.finder.use.eel")) {
-      Path location = defaultJavaLocationUsingEel(path);
-      if (location == null) {
-        return null;
-      }
-      else {
-        return location.toString();
-      }
-    }
-    if (SystemInfo.isWindows) {
-      return JavaHomeFinderWindows.defaultJavaLocation;
-    }
-    if (SystemInfo.isMac) {
-      return JavaHomeFinderMac.defaultJavaLocation;
-    }
-    if (SystemInfo.isLinux) {
-      return "/opt/java";
+      var location = defaultJavaLocationUsingEel(path);
+      return location != null ? location.toString() : null;
     }
 
-    return null;
+    return switch (OS.CURRENT) {
+      case Windows -> JavaHomeFinderWindows.defaultJavaLocation;
+      case macOS -> JavaHomeFinderMac.defaultJavaLocation;
+      case Linux -> "/opt/java";
+      default -> null;
+    };
   }
 
   private static @Nullable Path defaultJavaLocationUsingEel(Path path) {
-    EelApi eel = toEelApiBlocking(getEelDescriptor(path));
-    EelPlatform platform = eel.getPlatform();
+    var eel = toEelApiBlocking(getEelDescriptor(path));
+    var platform = eel.getPlatform();
     String eelPath = null;
     if (platform instanceof EelPlatform.Windows) {
       eelPath = JavaHomeFinderWindows.defaultJavaLocation;
@@ -204,8 +184,8 @@ public abstract class JavaHomeFinder {
       eelPath = JavaHomeFinderMac.defaultJavaLocation;
     }
     if (platform instanceof EelPlatform.Linux) {
-      String defaultLinuxPathRepresentation = "/opt/java";
-      Path defaultLinuxPath = EelNioBridgeServiceKt.asNioPath(EelPath.parse(defaultLinuxPathRepresentation, eel.getDescriptor()));
+      var defaultLinuxPathRepresentation = "/opt/java";
+      var defaultLinuxPath = EelNioBridgeServiceKt.asNioPath(EelPath.parse(defaultLinuxPathRepresentation, eel.getDescriptor()));
       if (Files.exists(defaultLinuxPath)) {
         eelPath = defaultLinuxPathRepresentation;
       }
@@ -214,7 +194,7 @@ public abstract class JavaHomeFinder {
       }
     }
     if (eelPath != null) {
-      EelPath absoluteLocation = EelPath.parse(eelPath, eel.getDescriptor());
+      var absoluteLocation = EelPath.parse(eelPath, eel.getDescriptor());
       return EelNioBridgeServiceKt.asNioPathOrNull(absoluteLocation);
     }
     return null;

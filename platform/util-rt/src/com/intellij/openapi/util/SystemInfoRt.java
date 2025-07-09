@@ -38,18 +38,22 @@ public final class SystemInfoRt {
   public static final boolean isMac = _OS_NAME.startsWith("mac");
   public static final boolean isLinux = _OS_NAME.startsWith("linux");
   public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
-  /** @deprecated press 'F' */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isSolaris = false;
   public static final boolean isUnix = !isWindows;
-  /** @deprecated confusing name; consider using {@code com.intellij.util.system.OS.isGenericUnix()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isXWindow = isUnix && !isMac;
 
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 
   private SystemInfoRt() {}
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated press 'F' */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isSolaris = false;
+
+  /** @deprecated confusing name; consider using {@code com.intellij.util.system.OS.isGenericUnix()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isXWindow = isUnix && !isMac;
+  //</editor-fold>
 }
