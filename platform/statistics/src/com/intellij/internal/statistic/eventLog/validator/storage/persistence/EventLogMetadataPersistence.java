@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
@@ -74,12 +74,7 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
         return false;
       }
 
-      EventLogMetadataSettingsPersistence.getInstance().setBuildNumber(myRecorderId, currentBuild.asString());
-      Path builtinFile = Files.createTempFile("builtin-events-scheme", ".json");
-      initBuiltinMetadata(builtinFile);
-
-      String builtinEventsScheme = readEventScheme(builtinFile);
-      EventGroupRemoteDescriptors builtinEventGroupRemoteDescriptors = getEventGroupRemoteDescriptors(builtinEventsScheme);
+      EventGroupRemoteDescriptors builtinEventGroupRemoteDescriptors = getBuildinEventGroupRemoteDescriptors(currentBuild);
       if (builtinEventGroupRemoteDescriptors == null || builtinEventGroupRemoteDescriptors.version == null) {
         return false;
       }
@@ -96,6 +91,17 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
       LOG.error(e);
     }
     return false;
+  }
+
+  private @Nullable EventGroupRemoteDescriptors getBuildinEventGroupRemoteDescriptors(@NotNull BuildNumber currentBuild)
+    throws IOException {
+    EventLogMetadataSettingsPersistence.getInstance().setBuildNumber(myRecorderId, currentBuild.asString());
+    Path builtinFile = Files.createTempFile("builtin-events-scheme", ".json");
+    if (initBuiltinMetadata(builtinFile)) {
+      String builtinEventsScheme = readEventScheme(builtinFile);
+      return getEventGroupRemoteDescriptors(builtinEventsScheme);
+    }
+    return null;
   }
 
   private static @Nullable String readEventScheme(@NotNull Path file) {
@@ -132,13 +138,14 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
     }
   }
 
-  private void initBuiltinMetadata(@NotNull Path file) throws IOException {
+  private boolean initBuiltinMetadata(@NotNull Path file) throws IOException {
     try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinEventSchemePath())) {
       if (stream == null) {
-        return;
+        return false;
       }
       Files.copy(stream, file, StandardCopyOption.REPLACE_EXISTING);
     }
+    return true;
   }
 
   private String builtinEventSchemePath() {
