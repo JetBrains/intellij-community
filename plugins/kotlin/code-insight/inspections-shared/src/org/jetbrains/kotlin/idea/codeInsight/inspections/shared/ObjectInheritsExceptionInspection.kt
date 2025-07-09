@@ -84,9 +84,12 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                     }
 
                     updater.getWritable(expression)
-                }.forEach {
-                    val referencedName = it.getReferencedName()
-                    it.replace(psiFactory.createExpression("$referencedName()"))
+                }.forEach { expression ->
+                    (expression.parent as? KtDotQualifiedExpression)?.selectorExpression?.let {
+                        if (it != expression) return@forEach
+                    }
+                    val referencedName = expression.getReferencedName()
+                    expression.replace(psiFactory.createExpression("$referencedName()"))
                 }
 
             objectDeclaration.getObjectKeyword()?.replace(psiFactory.createClassKeyword())
