@@ -109,6 +109,12 @@ http_file(
   downloaded_file_path = "rpc-compiler-plugin-2.2.0-RC2-0.1.jar"
 )
 
+http_file(
+  name = "noria-compiler-plugin-2_2_0-RC2-0_1_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.0-RC2-0.1/noria-compiler-plugin-2.2.0-RC2-0.1.jar",
+  sha256 = "5c6f43471ed24154f8955b8667e83447c77e79a3b0c99eaf221342d300c58163",
+  downloaded_file_path = "noria-compiler-plugin-2.2.0-RC2-0.1.jar"
+)
 
 http_file(
   name = "kotlin-compiler-2_2_20-dev-4678_http",

@@ -142,11 +142,16 @@ private class CompilerPluginProvider {
       registrar = "com.jetbrains.fleet.rpc.plugin.RpcComponentRegistrar",
       commandLineProcessor = "com.jetbrains.fleet.rpc.plugin.RpcCommandLineProcessor",
     )
+    private val noria by getConstructor(
+      registrar = "noria.plugin.NoriaComponentRegistrar",
+      commandLineProcessor = "noria.plugin.NoriaCommandLineProcessor",
+    )
 
     fun provide(id: String): RegisteredPluginInfo {
       return when (id) {
         "jetbrains.fleet.expects-compiler-plugin" -> createPluginInfo(expects)
         "com.jetbrains.fleet.rpc-compiler-plugin" -> createPluginInfo(rpc)
+        "jetbrains.fleet.noria-compiler-plugin" -> createPluginInfo(noria)
         else -> throw IllegalArgumentException("plugin requires classpath: $id")
       }
     }

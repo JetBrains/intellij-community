@@ -10,7 +10,7 @@ java_binary(
 #     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use @rules_jvm//:jvm-builder-jvm_flags
     main_class = "org.jetbrains.bazel.jvm.worker.JvmBuildWorker",
     visibility = ["//visibility:public"],
-    runtime_deps = ["@rules_jvm//src/jvm-builder:jvm-builder-lib", "@lib//:rhizomedb-compiler-plugin", "@lib//:expects-compiler-plugin", "@lib//:rpc-compiler-plugin"],
+    runtime_deps = ["@rules_jvm//src/jvm-builder:jvm-builder-lib", "@lib//:rhizomedb-compiler-plugin", "@lib//:expects-compiler-plugin", "@lib//:rpc-compiler-plugin", "@lib//:noria-compiler-plugin"],
 )
 
 java_binary(

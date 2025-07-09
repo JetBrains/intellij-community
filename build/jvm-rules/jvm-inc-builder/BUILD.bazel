@@ -105,6 +105,7 @@ java_library(
     ":expects-compiler-plugin-2_2_0-RC_0_1_http_import",
     ":rhizomedb-compiler-plugin-2_2_0-RC2-0_2_http_import",
     ":rpc-compiler-plugin-2_2_0-RC2-0_1_http_import",
+    ":noria-compiler-plugin-2_2_0-RC2-0_1_http_import",
     ":patched-jvm-abi-gen-for-bazel_http_import",
   ],
 )
@@ -128,6 +129,11 @@ jvm_import(
 jvm_import(
     name = "rpc-compiler-plugin-2_2_0-RC2-0_1_http_import",
     jar = "@rpc-compiler-plugin-2_2_0-RC2-0_1_http//file",
+)
+
+jvm_import(
+    name = "noria-compiler-plugin-2_2_0-RC2-0_1_http_import",
+    jar = "@noria-compiler-plugin-2_2_0-RC2-0_1_http//file",
 )
 
 jvm_import(

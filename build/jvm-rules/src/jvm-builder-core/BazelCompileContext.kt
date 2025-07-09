@@ -51,6 +51,10 @@ class BazelCompileContext(
       registrar = "com.jetbrains.fleet.rpc.plugin.RpcComponentRegistrar",
       commandLineProcessor = "com.jetbrains.fleet.rpc.plugin.RpcCommandLineProcessor",
     )
+    private val noria by getConstructor(
+      registrar = "noria.plugin.NoriaComponentRegistrar",
+      commandLineProcessor = "noria.plugin.NoriaCommandLineProcessor",
+    )
 
     @Suppress("SpellCheckingInspection")
     override fun provide(id: String): PluginCliParser.RegisteredPluginInfo {
@@ -58,6 +62,7 @@ class BazelCompileContext(
         "jetbrains.fleet.expects-compiler-plugin" -> createPluginInfo(expects)
         "org.jetbrains.fleet.rhizomedb-compiler-plugin" -> createPluginInfo(rhizomeDb)
         "com.jetbrains.fleet.rpc-compiler-plugin" -> createPluginInfo(rpc)
+        "jetbrains.fleet.noria-compiler-plugin" -> createPluginInfo(noria)
         else -> throw IllegalArgumentException("plugin requires classpath: $id")
       }
     }
