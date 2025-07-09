@@ -17,14 +17,20 @@ class JavaRenameActionCommandProvider: AbstractRenameActionCommandProvider() {
     var element = getCommandContext(currentOffset, psiFile) ?: return null
     if (element is PsiWhiteSpace) {
       element = PsiTreeUtil.prevVisibleLeaf(element) ?: return null
-      currentOffset = element.textRange.startOffset
+      currentOffset = element.textRange.endOffset
     }
 
+    //
+    //void something..(String a)..{
+    //
+    // }..
+    //<..> place to call 'rename'
     val method = element.parentOfType<PsiMethod>()
     if (method != null &&
-        ((method.body?.lBrace?.textRange?.startOffset ?: 0) >= currentOffset ||
-         method.body?.rBrace?.textRange?.endOffset == currentOffset)) return method.identifyingElement?.textRange?.endOffset
-    if (method != null && method.body == null && method.parameterList.textRange.endOffset >= currentOffset) return method.identifyingElement?.textRange?.endOffset
+        (method.identifyingElement?.textRange?.startOffset ?: Int.MAX_VALUE) < currentOffset &&
+        ((!method.parameterList.textRange.contains(currentOffset) && (method.body?.lBrace?.textRange?.startOffset ?: 0) >= currentOffset) ||
+        method.parameterList.textRange.endOffset == currentOffset ||
+        method.body?.rBrace?.textRange?.endOffset == currentOffset)) return method.identifyingElement?.textRange?.endOffset
 
     val psiClass = element.parentOfType<PsiClass>()
     if (psiClass != null && psiClass.rBrace != null && psiClass.rBrace?.textRange?.endOffset == currentOffset) {
