@@ -19,6 +19,10 @@ import kotlin.math.max
 const val MAX_LOG_USAGES: Int = 75
 const val MAX_LOG_NO_USAGES: Int = MAX_LOG_USAGES
 
+private fun List<VirtualFile>.sample(max: Int): List<VirtualFile> {
+  return if (size <= max) this else shuffled().take(max)
+}
+
 @Service(Service.Level.APP)
 class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : FileRankerMlService {
   companion object {
@@ -54,68 +58,44 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
     coroutineScope.launch {
       val sessionId = finishedSessionCounter.incrementAndGet()
 
-      if (activeSessionCounter.get() != sessionId || finishedSessionData.queryNames.isEmpty()) {
+      if (isSessionCorrupted(sessionId, finishedSessionData.queryNames)) {
         // CORRUPTED SESSION
         logInvalid(activeSessionCounter.get(), sessionId)
 
         val sessionFixVal = max(activeSessionCounter.get(), finishedSessionCounter.get()) // fix active session id to avoid duplicates
         activeSessionCounter.set(sessionFixVal)
         finishedSessionCounter.set(sessionFixVal)
-      } else {
-        // VALID SESSION
-        val queryFiles = finishedSessionData.queryFiles()
+        return@launch
+      }
 
-        var candidatesWithUsage = finishedSessionData.candidateFiles().filter { foundUsageFiles.contains(it) }
-        var candidatesNoUsage = finishedSessionData.candidateFiles().filter { !foundUsageFiles.contains(it) }
+      // VALID SESSION
+      val queryFiles = finishedSessionData.queryFiles()
+      val candidateFiles = finishedSessionData.candidateFiles()
 
-        val usageFilesCount = candidatesWithUsage.size
+      val (candidatesWithUsage, candidatesNoUsage) = candidateFiles.partition { foundUsageFiles.contains(it) }
 
-        if (candidatesWithUsage.size > MAX_LOG_USAGES) {
-          // log a random sample from usage files (if too many)
-          candidatesWithUsage = candidatesWithUsage.shuffled().take(MAX_LOG_USAGES)
-        }
-        if (candidatesNoUsage.size > MAX_LOG_NO_USAGES) {
-          // log a random sample from non-usage files (if too many)
-          candidatesNoUsage = candidatesNoUsage.shuffled().take(MAX_LOG_NO_USAGES)
-        }
+      val usageSamples = candidatesWithUsage.sample(MAX_LOG_USAGES)
+      val nonUsageSamples = candidatesNoUsage.sample(MAX_LOG_NO_USAGES)
 
-        // log features from all candidates that contain a usage
-        candidatesWithUsage.forEach {
-          logFeatures(file = it,
-                      queryNames = finishedSessionData.queryNames,
-                      queryFiles = queryFiles,
-                      isUsage = true,
-                      recentFilesList = recentFilesList,
-                      timeStamp = timeStamp,
-                      sessionId = sessionId,
-                      isSearchValid = true,
-                      numberOfUsageFiles = usageFilesCount,
-                      numberOfCandidates = finishedSessionData.candidateFiles().size)
-        }
-        // log features from all candidates that do not contain a usage
-        candidatesNoUsage.forEach {
-          logFeatures(file = it,
-                      queryNames = finishedSessionData.queryNames,
-                      queryFiles = queryFiles,
-                      isUsage = false,
-                      recentFilesList = recentFilesList,
-                      timeStamp = timeStamp,
-                      sessionId = sessionId,
-                      isSearchValid = true,
-                      numberOfUsageFiles = usageFilesCount,
-                      numberOfCandidates = finishedSessionData.candidateFiles().size)
-        }
+      val allSamples = usageSamples + nonUsageSamples
 
-        //finishedSessionData.candidateFiles().forEach { logFeatures(file = it,
-        //                                                           queryNames = finishedSessionData.queryNames,
-        //                                                           queryFiles = queryFiles,
-        //                                                           isUsage = foundUsageFiles.contains(it),
-        //                                                           recentFilesList = recentFilesList,
-        //                                                           timeStamp = timeStamp,
-        //                                                           sessionId = sessionId,
-        //                                                           isSearchValid = true) }
+      allSamples.forEach {
+        logFeatures(file = it,
+                    queryNames = finishedSessionData.queryNames,
+                    queryFiles = queryFiles,
+                    isUsage = foundUsageFiles.contains(it),
+                    recentFilesList = recentFilesList,
+                    timeStamp = timeStamp,
+                    sessionId = sessionId,
+                    isSearchValid = true,
+                    numberOfUsageFiles = candidatesWithUsage.size,
+                    numberOfCandidates = candidateFiles.size)
       }
     }
+  }
+
+  private fun isSessionCorrupted(sessionId: Long, queryNames: List<String>): Boolean {
+    return (activeSessionCounter.get() != sessionId || queryNames.isEmpty())
   }
 
   private fun logFeatures(file: VirtualFile?,
@@ -137,7 +117,7 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
                                                  numberOfUsageFiles = numberOfUsageFiles,
                                                  numberOfCandidates = numberOfCandidates,
                                                  activeSessionId = activeSessionId,
-                                                 finishSessionId = sessionId)),
+                                                 finishSessionId = sessionId))  ,
       features = featureProvider.provideFeatures(
         instance = FindUsagesRankingFileInfo(queryNames = queryNames,
                                              queryFiles = queryFiles,
