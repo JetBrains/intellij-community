@@ -232,7 +232,7 @@ public final class ModuleStructureConfigurable extends BaseStructureConfigurable
                                                                                     ModuleGroupingTreeHelper.createDefaultGrouping(moduleGrouper),
                                                                                     ModuleStructureConfigurable::createModuleGroupNode,
                                                                                     m -> createModuleNode(m, moduleGrouper), getNodeComparator());
-    var modules = Arrays.stream(myModuleManager.getModules()).filter(module -> ModuleStructureFilterExtension.isAllowed(module)).toList();
+    var modules = Arrays.stream(myModuleManager.getModules()).toList();
     helper.createModuleNodes(modules, myRoot, getTreeModel());
     if (containsSecondLevelNodes(myRoot)) {
       myTree.setShowsRootHandles(true);

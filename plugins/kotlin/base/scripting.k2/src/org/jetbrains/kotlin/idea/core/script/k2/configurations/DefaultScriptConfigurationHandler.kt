@@ -10,14 +10,11 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.SdkDependency
-import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
+import org.jetbrains.kotlin.idea.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
@@ -34,8 +31,7 @@ import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
 open class DefaultScriptConfigurationHandler(
-    val project: Project,
-    val coroutineScope: CoroutineScope
+    val project: Project, val coroutineScope: CoroutineScope
 ) : ScriptWorkspaceModelManager, ScriptRefinedConfigurationResolver {
     private val data = ConcurrentHashMap<VirtualFile, ScriptConfigurationWithSdk>()
 
@@ -78,8 +74,8 @@ open class DefaultScriptConfigurationHandler(
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
         val workspaceModel = project.serviceAsync<WorkspaceModel>()
 
+        val entityStorage = getUpdatedStorage(configurationPerFile, workspaceModel)
         workspaceModel.update("updating .kts modules") {
-            val entityStorage = getUpdatedStorage(configurationPerFile, workspaceModel)
             it.applyChangesFrom(entityStorage)
         }
     }
@@ -88,27 +84,27 @@ open class DefaultScriptConfigurationHandler(
         configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
         workspaceModel: WorkspaceModel,
     ): MutableEntityStorage {
-        val result = MutableEntityStorage.from(workspaceModel.currentSnapshot)
+        val storage = workspaceModel.currentSnapshot
+        val result = MutableEntityStorage.from(storage)
+        val index = storage.getVirtualFileUrlIndex()
+
         val fileUrlManager = workspaceModel.getVirtualFileUrlManager()
 
         for ((scriptFile, configurationWithSdk) in configurations) {
+            val scriptUrl = scriptFile.toVirtualFileUrl(fileUrlManager)
+            if (index.findEntitiesByUrl(scriptUrl).any()) continue
+
             val definition = findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
-            val moduleId = getModuleId(project, scriptFile, definition)
-            if (result.contains(moduleId)) continue
-            val wrapper = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
+            val configuration = configurationWithSdk.scriptConfiguration.valueOrNull()?.configuration ?: continue
 
-            val source = DefaultScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
-            val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
-
-            val locationName = project.scriptModuleRelativeLocation(scriptFile)
-            val libraryDependencies = result.addDependencies(wrapper, source, definition, locationName, project)
-
-            val allDependencies = buildList {
-                addIfNotNull(sdkDependency)
-                addAll(libraryDependencies)
+            val libraryIds = generateScriptLibraryEntities(configuration, definition, project)
+            libraryIds.filterNot {
+                result.contains(it)
+            }.forEach { (classes, sources) ->
+                result addEntity KotlinScriptLibraryEntity(classes, sources, DefaultScriptEntitySource)
             }
 
-            result addEntity ModuleEntity(moduleId.name, allDependencies, source)
+            result addEntity KotlinScriptEntity(scriptUrl, libraryIds.toList(), DefaultScriptEntitySource)
         }
 
         return result
@@ -119,5 +115,5 @@ open class DefaultScriptConfigurationHandler(
         fun getInstance(project: Project): DefaultScriptConfigurationHandler = project.service()
     }
 
-    class DefaultScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?) : KotlinScriptEntitySource(virtualFileUrl)
+    object DefaultScriptEntitySource : EntitySource
 }

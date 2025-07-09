@@ -48,7 +48,7 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
             return true
         }
 
-        return projectModelUpdater.isModuleExist(project, ktFile.alwaysVirtualFile, definition)
+        return projectModelUpdater.isScriptExist(project, ktFile.alwaysVirtualFile, definition)
     }
 
     fun execute(vararg ktFiles: KtFile): Job {

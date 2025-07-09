@@ -16,10 +16,10 @@ UnionScope
                 Libraries
                 NotScope
                     IntersectionScope
-                        KaFirJvmLibraryRestrictionScope
-                        KaLibraryModuleScope
+                        KaEntityBasedLibraryModuleScope
                             roots:
                                 library1.jar
-            KaLibraryModuleScope
+                        KaFirJvmLibraryRestrictionScope
+            KaEntityBasedLibraryModuleScope
                 roots:
                     library1.jar

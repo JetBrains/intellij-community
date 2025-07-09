@@ -58,11 +58,11 @@
     <orderEntry type="library" scope="TEST" name="Gradle" level="project" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.platforms" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="kotlin.base.scripting" />
   </component>
 </module>

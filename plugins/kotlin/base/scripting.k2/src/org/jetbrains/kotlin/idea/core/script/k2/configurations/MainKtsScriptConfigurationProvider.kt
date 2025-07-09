@@ -15,16 +15,18 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgressScope
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.kotlin.idea.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.KotlinScriptLibraryEntity.Companion.invoke
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRIPTS_MODULE_NAME
-import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler.DefaultScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
+import org.jetbrains.kotlin.idea.modifyKotlinScriptEntity
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
@@ -89,7 +91,10 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             }
         }
 
-        val result = withBackgroundProgress(project, title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution", mainKts.name)) {
+        val result = withBackgroundProgress(
+            project,
+            title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution", mainKts.name)
+        ) {
             reportProgressScope {
                 try {
                     reporter = it
@@ -137,28 +142,18 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         val storageToUpdate = MutableEntityStorage.from(workspaceModel.currentSnapshot)
 
         for ((scriptFile, configurationWithSdk) in configurationsData) {
-            val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
-
+            val configuration = configurationWithSdk.scriptConfiguration.valueOrNull()?.configuration ?: continue
             val definition = findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
+            val virtualFileUrl = scriptFile.toVirtualFileUrl(virtualFileManager)
 
-            val source = MainKtsKotlinScriptEntitySource(scriptFile.toVirtualFileUrl(virtualFileManager))
-            val locationName = project.scriptModuleRelativeLocation(scriptFile)
-            val libraryDependencies = storageToUpdate.addDependencies(configuration, source, definition, locationName, project)
-
-            val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
-            val allDependencies = listOfNotNull(sdkDependency) + libraryDependencies
-
-            val scriptModuleId = ModuleId("${KOTLIN_SCRIPTS_MODULE_NAME}.${definition.name}.$locationName")
-            val existingModule = storageToUpdate.resolve(scriptModuleId)
-            if (existingModule == null) {
-                storageToUpdate.addEntity(
-                    ModuleEntity(scriptModuleId.name, allDependencies, source)
-                )
-            } else {
-                storageToUpdate.modifyModuleEntity(existingModule) {
-                    dependencies = allDependencies.toMutableList()
-                }
+            val libraryIds = generateScriptLibraryEntities(configuration, definition, project)
+            libraryIds.filterNot {
+                storageToUpdate.contains(it)
+            }.forEach { (classes, sources) ->
+                storageToUpdate addEntity KotlinScriptLibraryEntity(classes, sources, DefaultScriptEntitySource)
             }
+
+            storageToUpdate addEntity KotlinScriptEntity(virtualFileUrl, libraryIds.toList(), MainKtsKotlinScriptEntitySource)
         }
 
         return storageToUpdate
@@ -171,5 +166,5 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         fun getInstance(project: Project): MainKtsScriptConfigurationProvider = project.service()
     }
 
-    class MainKtsKotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?) : KotlinScriptEntitySource(virtualFileUrl)
+    object MainKtsKotlinScriptEntitySource : EntitySource
 }

@@ -14,7 +14,7 @@
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.k2KaModuleFactory"
-            interface="org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KaModuleFactory"
+            interface="org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory"
             dynamic="true"/>
   </extensionPoints>
 

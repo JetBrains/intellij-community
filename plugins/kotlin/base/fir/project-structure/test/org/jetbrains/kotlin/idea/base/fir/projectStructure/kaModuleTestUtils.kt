@@ -34,20 +34,6 @@ internal val kaModulesComparatorForStableRendering =
         .thenBy { it.getOneLineModuleDescriptionForRendering() }
         .thenBy { it.targetPlatform.getTargetPlatformDescriptionForRendering() }
 
-internal fun Collection<KaModule>.computeDependenciesClosure(): List<KaModule> {
-    val result = mutableSetOf<KaModule>()
-
-    fun visit(module: KaModule) {
-        if (module in result) return
-        result += module
-        module.allDirectDependencies().forEach(::visit)
-    }
-
-    forEach(::visit)
-
-    return result.toList()
-}
-
 internal fun getAllKaModules(modules: Collection<Module>): List<KaModule> =
     modules.flatMap { it.toKaSourceModules() }
 

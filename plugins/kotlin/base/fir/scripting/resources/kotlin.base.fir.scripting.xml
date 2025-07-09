@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.base.fir.scripting">
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <k2KaModuleFactory implementation="org.jetbrains.kotlin.base.fir.scripting.projectStructure.K2ScriptingKaModuleFactory"/>
+    <k2KaModuleFactory implementation="org.jetbrains.kotlin.base.fir.scripting.projectStructure.FirKaScriptingModuleFactory"/>
   </extensions>
 
   <dependencies>

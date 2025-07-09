@@ -10,15 +10,17 @@ import com.intellij.psi.search.GlobalSearchScope
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleBase
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaEntityBasedLibraryModuleBase
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryEntityBasedLibraryModuleBase
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 @ApiStatus.Internal
 abstract class KaLibrarySourceModuleBase : KaLibrarySourceModule, KaModuleBase() {
-    abstract override val binaryLibrary: KaLibraryModuleBase<*, *>
+    abstract override val binaryLibrary: KaEntityBasedLibraryModuleBase<*, *>
 
     override val libraryName: String get() = binaryLibrary.libraryName
 

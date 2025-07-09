@@ -5,19 +5,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
+import org.jetbrains.kotlin.idea.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KaModuleFactory
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -38,7 +41,7 @@ internal object CandidateCollector {
     private fun collectCandidatesByExtensions(psiFile: PsiFile?): Collection<ModuleCandidate> {
         if (psiFile == null) return emptyList()
         val data = SmartList<ModuleCandidate>()
-        for (factory in K2KaModuleFactory.Companion.EP_NAME.extensionList) {
+        for (factory in FirKaModuleFactory.EP_NAME.extensionList) {
             val kaModule = factory.createKaModuleByPsiFile(psiFile) ?: continue
             data += ModuleCandidate.FixedModule(kaModule)
         }
@@ -52,7 +55,7 @@ internal object CandidateCollector {
       project: Project
     ): Collection<ModuleCandidate> {
         if (virtualFile == null || psiFile !is KtFile) return emptyList()
-        if (virtualFile in BuiltinsVirtualFileProvider.Companion.getInstance().getBuiltinVirtualFiles()) {
+        if (virtualFile in BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()) {
             return listOf(ModuleCandidate.FixedModule(KaBuiltinsModuleImpl(psiFile.platform, project)))
         }
         return emptyList()
@@ -62,8 +65,8 @@ internal object CandidateCollector {
         if (virtualFile == null) return emptySequence()
         val originalVirtualFileForOutsider = if (isOutsiderFile(virtualFile)) getOutsiderFileOrigin(project, virtualFile) else null
 
-        val workspaceModel = WorkspaceModel.Companion.getInstance(project)
-        val workspaceFileIndex = WorkspaceFileIndexEx.Companion.getInstance(project)
+        val workspaceModel = WorkspaceModel.getInstance(project)
+        val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
         val fileSets = workspaceFileIndex.getFileInfo(
           originalVirtualFileForOutsider ?: virtualFile,
           honorExclusion = false,

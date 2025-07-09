@@ -10,10 +10,10 @@ UnionScope
             ranges.kotlin_builtins
             reflect.kotlin_builtins
     IntersectionScope
-        KaFirJvmLibraryRestrictionScope
-        KaLibraryModuleScope
+        KaEntityBasedLibraryModuleScope
             roots:
                 library1.jar
+        KaFirJvmLibraryRestrictionScope
     ModuleSourcesScope
         roots:
             dependency1

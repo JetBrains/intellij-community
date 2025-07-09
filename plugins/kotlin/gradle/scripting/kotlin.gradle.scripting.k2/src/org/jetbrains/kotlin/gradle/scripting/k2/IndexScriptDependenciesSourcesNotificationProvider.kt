@@ -19,7 +19,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptModuleEntitySource
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.function.Function
 import javax.swing.JComponent
@@ -67,7 +67,7 @@ class IndexScriptDependenciesSourcesNotificationProvider : EditorNotificationPro
                 continue
             }
 
-            return entities.firstOrNull { it.entitySource is KotlinGradleScriptModuleEntitySource } != null
+            return entities.firstOrNull { it.entitySource is KotlinGradleScriptEntitySource } != null
         }
 
         return false

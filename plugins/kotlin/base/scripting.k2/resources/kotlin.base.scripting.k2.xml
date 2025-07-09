@@ -42,9 +42,6 @@
     <registryKey defaultValue="false" key="kotlin.scripting.show.widget"
                  description="Enable displaying Kotlin Script definition name in status bar" restartRequired="false"/>
 
-    <registryKey defaultValue="false"
-                 key="kotlin.k2.scripting.show.modules"
-                 description="Enable displaying Kotlin Script modules in 'Project Structure' | 'Modules' view "/>
     <registryKey
             key="kotlin.scripting.index.dependencies.sources"
             description="Index script dependencies sources eagerly (not deferred)"
@@ -59,6 +56,9 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler"/>
 
+    <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptWorkspaceFileIndexContributor"/>
+    <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptExternalLibrariesNodesProvider"/>
+
     <vfs.asyncListener implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptFileListener"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
@@ -66,9 +66,6 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.KotlinScriptingReportsSink"/>
-
-    <configuration.moduleStructureFilterExtension
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptsProjectStructureFilter"/>
 
     <trafficLightRendererContributor
             implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptTrafficLightRendererContributor"/>
@@ -81,7 +78,6 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptAfterRunCallbackProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
 
-    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingKaModuleFactory"/>
     <scriptDefinitionsSource
             id="StandardScriptDefinitionContributor"
             order="last"

@@ -45,6 +45,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:fastutil-min",
     "//java/openapi:java",
+    "//plugins/kotlin/base/scripting",
   ],
   runtime_deps = [":project-structure_resources"]
 )
@@ -94,13 +95,13 @@ jvm_library(
     "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/base/platforms",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:fastutil-min",
     "//java/openapi:java",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/scripting:scripting_test_lib",
   ],
   runtime_deps = [":project-structure_resources"]
 )

@@ -101,10 +101,13 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         DefaultScriptConfigurationHandler(testProject, CoroutineScope(EmptyCoroutineContext)) {
         override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {}
 
-        override fun isModuleExist(
+        override fun isScriptExist(
             project: Project,
             scriptFile: VirtualFile,
             definition: ScriptDefinition
-        ): Boolean = true
+        ): Boolean {
+            return true
+        }
+
     }
 }

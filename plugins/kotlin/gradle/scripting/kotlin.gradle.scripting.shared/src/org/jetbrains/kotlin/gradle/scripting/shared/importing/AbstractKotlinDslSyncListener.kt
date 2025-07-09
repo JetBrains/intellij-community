@@ -32,7 +32,7 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
         // project may be null in case of new project
         val project = id.findProject() ?: return
         task.projectId = id.ideProjectId
-        GradleBuildRootsLocator.getInstance(project)?.markImportingInProgress(projectPath)
+        GradleBuildRootsLocator.getInstance(project).markImportingInProgress(projectPath)
     }
 
     override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {

@@ -12,11 +12,11 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.JvmLibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.KaModuleFactory
+import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleByModuleInfoBase
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModuleOfType
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
@@ -31,12 +31,6 @@ internal class ScriptingKaModuleFactory : KaModuleFactory {
             is ScriptModuleInfo -> KtScriptModuleByModuleInfo(moduleInfo)
             is ScriptDependenciesInfo -> KtScriptDependencyModuleByModuleInfo(moduleInfo)
             is ScriptDependenciesSourceInfo -> KtScriptDependencySourceModuleByModuleInfo(moduleInfo)
-            is JvmLibraryInfo -> (moduleInfo.source as? KotlinScriptEntitySource)?.let {
-                KtScriptLibraryModuleByModuleInfo(moduleInfo)
-            }
-            is LibrarySourceInfo -> (moduleInfo.source as? KotlinScriptEntitySource)?.let {
-                KtScriptLibrarySourceModuleByModuleInfo(moduleInfo)
-            }
             else -> null
         }
     }

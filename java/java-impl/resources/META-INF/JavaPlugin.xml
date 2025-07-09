@@ -225,9 +225,6 @@
     <extensionPoint qualifiedName="com.intellij.configuration.ModuleStructureExtension" dynamic="true"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>
 
-    <extensionPoint qualifiedName="com.intellij.configuration.moduleStructureFilterExtension" dynamic="true"
-                    interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureFilterExtension"/>
-
     <extensionPoint qualifiedName="com.intellij.projectStructureValidator"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator" dynamic="true"/>
 

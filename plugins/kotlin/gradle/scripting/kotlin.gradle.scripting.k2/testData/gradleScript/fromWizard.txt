@@ -1,0 +1,815 @@
+KaScriptModule:
+  description: Script build.gradle.kts
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/generated-gradle-jars/gradle-api-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/com.google.code.gson/gson/2.8.9/8a432c1d6825781e21a02db2e2c33c5fde2833b9/gson-2.8.9.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.gradle.kotlin/gradle-kotlin-dsl-plugins/5.1.1/3df489c5ed7c79591eaef488ac4462a685a2c3de/gradle-kotlin-dsl-plugins-5.1.1.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.intellij.deps/trove4j/1.0.20200330/3afb14d5f9ceb459d724e907a21145e8ff394f02/trove4j-1.0.20200330.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-assignment/2.0.20/b4f2e732fe09103b173377194c41ef14ef698c5c/kotlin-assignment-2.0.20-gradle85.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-statistics/2.0.20/fa1c73206997fe6ea912319041e105e6438accdf/kotlin-build-statistics-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-tools-api/2.0.20/7898f46131274ac85569ef30f965e3758e217551/kotlin-build-tools-api-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.20/244b603e8c729f98baaf9088d90b5b9350c68af8/kotlin-compiler-embeddable-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-runner/2.0.20/b7298471a2af50b32b7c460775c23759edb5bb70/kotlin-compiler-runner-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-client/2.0.20/910b2107f6a7cc02366687b6e835ae0beaadb59b/kotlin-daemon-client-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-embeddable/2.0.20/9eb02dce62f058efe6a121cf00cf5da9779e2746/kotlin-daemon-embeddable-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-klib-commonizer-api/2.0.20/c3f877ed653b2d5afc74e9ed8b44bee8856807b1/kotlin-klib-commonizer-api-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-native-utils/2.0.20/9041e552da8fe20f7835123822f9ee273655e34b/kotlin-native-utils-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-sam-with-receiver/2.0.20/f53a1b6144691b0fc3c47032e8aa4695a5f59a01/kotlin-sam-with-receiver-2.0.20-gradle85.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/2.0.20/952179e9b7f114e78274ca73cea6df8fce3c8b3b/kotlin-tooling-core-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-io/2.0.20/b74831be580aa621e8158231fbd7904ab634ab7d/kotlin-util-io-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-klib/2.0.20/8f1da03af6d8cc1230daa83fabb150891533fb50/kotlin-util-klib-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.6.4/2c997cd1c0ef33f3e751d3831929aeff1390cb30/kotlinx-coroutines-core-jvm-1.6.4.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-groovy-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-api-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-installation-beacon-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-extensions-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-shared-runtime-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-tooling-models-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-ant-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-astbuilder-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-console-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-datetime-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-dateutil-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-groovydoc-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-json-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-nio-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-sql-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-templates-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-test-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-xml-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar, scriptDependency)
+    KaLibraryModule(SDK)
+    KaLibraryModule(classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar!/, jar://GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/a6abf4122d686e67c307f45a1d056cd2d6ae57b5/kotlin-stdlib-2.0.20-sources.jar!/], scriptDependency)
+    KaSourceModule(GradleKotlinFixture, production)
+    KaSourceModule(GradleKotlinFixture, test)
+  friendDependencies:
+    KaSourceModule(GradleKotlinFixture, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of GradleKotlinFixture
+  targetPlatform: JVM (1.8)
+  name: GradleKotlinFixture
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <GradleKotlinFixture>
+  regularDependencies:
+    KaLibraryModule(SDK)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JVM (1.8)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of GradleKotlinFixture
+  targetPlatform: JVM (1.8)
+  name: GradleKotlinFixture
+  sourceModuleKind: TEST
+  stableModuleName: <GradleKotlinFixture>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaSourceModule(GradleKotlinFixture, production)
+  friendDependencies:
+    KaSourceModule(GradleKotlinFixture, production)
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar!/, jar://GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/a6abf4122d686e67c307f45a1d056cd2d6ae57b5/kotlin-stdlib-2.0.20-sources.jar!/]
+  targetPlatform: JVM (1.8)
+  libraryName: classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar!/, jar://GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/a6abf4122d686e67c307f45a1d056cd2d6ae57b5/kotlin-stdlib-2.0.20-sources.jar!/]
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/8.11/generated-gradle-jars/gradle-api-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/8.11/generated-gradle-jars/gradle-api-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/com.google.code.gson/gson/2.8.9/8a432c1d6825781e21a02db2e2c33c5fde2833b9/gson-2.8.9.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/com.google.code.gson/gson/2.8.9/8a432c1d6825781e21a02db2e2c33c5fde2833b9/gson-2.8.9.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.gradle.kotlin/gradle-kotlin-dsl-plugins/5.1.1/3df489c5ed7c79591eaef488ac4462a685a2c3de/gradle-kotlin-dsl-plugins-5.1.1.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.gradle.kotlin/gradle-kotlin-dsl-plugins/5.1.1/3df489c5ed7c79591eaef488ac4462a685a2c3de/gradle-kotlin-dsl-plugins-5.1.1.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.intellij.deps/trove4j/1.0.20200330/3afb14d5f9ceb459d724e907a21145e8ff394f02/trove4j-1.0.20200330.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.intellij.deps/trove4j/1.0.20200330/3afb14d5f9ceb459d724e907a21145e8ff394f02/trove4j-1.0.20200330.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-assignment/2.0.20/b4f2e732fe09103b173377194c41ef14ef698c5c/kotlin-assignment-2.0.20-gradle85.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-assignment/2.0.20/b4f2e732fe09103b173377194c41ef14ef698c5c/kotlin-assignment-2.0.20-gradle85.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-statistics/2.0.20/fa1c73206997fe6ea912319041e105e6438accdf/kotlin-build-statistics-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-statistics/2.0.20/fa1c73206997fe6ea912319041e105e6438accdf/kotlin-build-statistics-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-tools-api/2.0.20/7898f46131274ac85569ef30f965e3758e217551/kotlin-build-tools-api-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-tools-api/2.0.20/7898f46131274ac85569ef30f965e3758e217551/kotlin-build-tools-api-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.20/244b603e8c729f98baaf9088d90b5b9350c68af8/kotlin-compiler-embeddable-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.20/244b603e8c729f98baaf9088d90b5b9350c68af8/kotlin-compiler-embeddable-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-runner/2.0.20/b7298471a2af50b32b7c460775c23759edb5bb70/kotlin-compiler-runner-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-runner/2.0.20/b7298471a2af50b32b7c460775c23759edb5bb70/kotlin-compiler-runner-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-client/2.0.20/910b2107f6a7cc02366687b6e835ae0beaadb59b/kotlin-daemon-client-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-client/2.0.20/910b2107f6a7cc02366687b6e835ae0beaadb59b/kotlin-daemon-client-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-embeddable/2.0.20/9eb02dce62f058efe6a121cf00cf5da9779e2746/kotlin-daemon-embeddable-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-embeddable/2.0.20/9eb02dce62f058efe6a121cf00cf5da9779e2746/kotlin-daemon-embeddable-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-klib-commonizer-api/2.0.20/c3f877ed653b2d5afc74e9ed8b44bee8856807b1/kotlin-klib-commonizer-api-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-klib-commonizer-api/2.0.20/c3f877ed653b2d5afc74e9ed8b44bee8856807b1/kotlin-klib-commonizer-api-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-native-utils/2.0.20/9041e552da8fe20f7835123822f9ee273655e34b/kotlin-native-utils-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-native-utils/2.0.20/9041e552da8fe20f7835123822f9ee273655e34b/kotlin-native-utils-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-sam-with-receiver/2.0.20/f53a1b6144691b0fc3c47032e8aa4695a5f59a01/kotlin-sam-with-receiver-2.0.20-gradle85.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-sam-with-receiver/2.0.20/f53a1b6144691b0fc3c47032e8aa4695a5f59a01/kotlin-sam-with-receiver-2.0.20-gradle85.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/2.0.20/952179e9b7f114e78274ca73cea6df8fce3c8b3b/kotlin-tooling-core-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/2.0.20/952179e9b7f114e78274ca73cea6df8fce3c8b3b/kotlin-tooling-core-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-io/2.0.20/b74831be580aa621e8158231fbd7904ab634ab7d/kotlin-util-io-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-io/2.0.20/b74831be580aa621e8158231fbd7904ab634ab7d/kotlin-util-io-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-klib/2.0.20/8f1da03af6d8cc1230daa83fabb150891533fb50/kotlin-util-klib-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-klib/2.0.20/8f1da03af6d8cc1230daa83fabb150891533fb50/kotlin-util-klib-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.6.4/2c997cd1c0ef33f3e751d3831929aeff1390cb30/kotlinx-coroutines-core-jvm-1.6.4.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.6.4/2c997cd1c0ef33f3e751d3831929aeff1390cb30/kotlinx-coroutines-core-jvm-1.6.4.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-groovy-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-groovy-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-api-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-api-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-installation-beacon-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-installation-beacon-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-extensions-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-extensions-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-shared-runtime-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-shared-runtime-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-tooling-models-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-tooling-models-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-ant-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-ant-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-astbuilder-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-astbuilder-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-console-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-console-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-datetime-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-datetime-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-dateutil-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-dateutil-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-groovydoc-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-groovydoc-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-json-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-json-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-nio-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-nio-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-sql-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-sql-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-templates-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-templates-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-test-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-test-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-xml-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-xml-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaScriptModule:
+  description: Script settings.gradle.kts
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/generated-gradle-jars/gradle-api-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-groovy-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-api-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-installation-beacon-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-extensions-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-shared-runtime-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-tooling-models-8.11.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-ant-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-astbuilder-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-console-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-datetime-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-dateutil-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-groovydoc-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-json-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-nio-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-sql-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-templates-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-test-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-xml-3.0.22.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar, scriptDependency)
+    KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar, scriptDependency)
+    KaLibraryModule(SDK)
+    KaSourceModule(GradleKotlinFixture, production)
+    KaSourceModule(GradleKotlinFixture, test)
+  friendDependencies:
+    KaSourceModule(GradleKotlinFixture, production)
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes
+  targetPlatform: JVM (1.8)
+  libraryName: GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>

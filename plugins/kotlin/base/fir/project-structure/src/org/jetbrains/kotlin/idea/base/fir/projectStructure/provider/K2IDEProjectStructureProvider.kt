@@ -31,8 +31,10 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.kotlin.config.KOTLIN_TEST_ROOT_TYPE_ID
+import org.jetbrains.kotlin.idea.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KaModuleFactory
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaNotUnderContentRootModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryEntityBasedLibraryModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
@@ -131,6 +133,18 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
             }
         }
 
+        is KotlinScriptEntity -> {
+            getKaScriptModules(entity)
+        }
+
+        is KotlinScriptLibraryEntity -> {
+            val libraryModules = getKaScriptLibraryModules(entity)
+            when (fileKind) {
+                WorkspaceFileKind.EXTERNAL_SOURCE -> libraryModules.mapNotNull { it.librarySources }
+                else -> libraryModules
+            }
+        }
+
         is SdkEntity -> {
             val module = cache.cachedKaSdkModule(entity.symbolicId)
             when (fileKind) {
@@ -167,7 +181,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         return getKaSourceModule(moduleEntity, kind)
     }
 
-    override fun getKaSourceModule(moduleEntity: ModuleEntity, kind: KaSourceModuleKind): KaSourceModule? =
+    override fun getKaSourceModule(moduleEntity: ModuleEntity, kind: KaSourceModuleKind): KaSourceModule =
         cache.cachedKaSourceModule(moduleEntity.symbolicId, kind)
 
     override fun getKaSourceModules(moduleId: ModuleId): List<KaSourceModule> {
@@ -206,10 +220,27 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     }
 
     override fun getKaLibraryModules(libraryEntity: LibraryEntity): List<KaLibraryModule> {
-        for (factory in K2KaModuleFactory.Companion.EP_NAME.extensionList) {
-            factory.createSpecialLibraryModule(libraryEntity, project)?.let { return listOf(it) }
-        }
         return listOf(cache.cachedKaLibraryModule(libraryEntity.symbolicId))
+    }
+
+    override fun getKaScriptModules(scriptEntity: WorkspaceEntity): List<KaScriptModule> {
+        for (factory in FirKaModuleFactory.EP_NAME.extensionList) {
+            if (scriptEntity is KotlinScriptEntity) {
+                factory.createScriptModule(project, scriptEntity)?.let { return listOf(it) }
+            }
+        }
+
+        return listOf()
+    }
+
+    override fun getKaScriptLibraryModules(libraryEntity: WorkspaceEntity): List<KaLibraryModule> {
+        for (factory in FirKaModuleFactory.EP_NAME.extensionList) {
+            if (libraryEntity is KotlinScriptLibraryEntity) {
+                factory.createScriptLibraryModule(project, libraryEntity)?.let { return listOf(it) }
+            }
+        }
+
+        return listOf()
     }
 
     override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {

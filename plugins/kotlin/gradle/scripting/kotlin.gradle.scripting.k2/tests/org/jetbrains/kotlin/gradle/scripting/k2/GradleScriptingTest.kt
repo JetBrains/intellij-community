@@ -70,7 +70,7 @@ class GradleScriptingTest {
                 }
             }
         }.useProjectAsync { project ->
-            ModuleAssertions.assertModules(project, "kotlin.scripts.KotlinSettingsScript.settings.gradle.kts", "project")
+            ModuleAssertions.assertModules(project, "project")
         }
     }
 

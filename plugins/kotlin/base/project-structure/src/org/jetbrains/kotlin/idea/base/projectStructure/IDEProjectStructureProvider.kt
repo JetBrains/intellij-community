@@ -8,11 +8,15 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.library.KotlinLibrary
 import com.intellij.openapi.module.Module as OpenapiModule
@@ -47,6 +51,10 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
     abstract fun getKaLibraryModules(libraryId: LibraryId): List<KaLibraryModule>
 
     abstract fun getKaLibraryModules(libraryEntity: LibraryEntity): List<KaLibraryModule>
+
+    open fun getKaScriptLibraryModules(libraryEntity: WorkspaceEntity): List<KaLibraryModule> = listOf()
+
+    open fun getKaScriptModules(scriptEntity: WorkspaceEntity): List<KaScriptModule> = listOf()
 
     abstract fun getKaLibraryModules(library: OpenapiLibrary): List<KaLibraryModule>
 

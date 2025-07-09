@@ -3,32 +3,24 @@ package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.idea.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.KotlinScriptLibraryEntity
 
 /**
  * Allows customizing the behavior of [org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.K2IDEProjectStructureProvider].
  */
 @ApiStatus.Internal
-interface K2KaModuleFactory {
-    /**
-     * Allows creating an additional candidate module for creating [KaModule] by a given [PsiFile].
-     *
-     * Needed to override default behavior.
-     */
+interface FirKaModuleFactory {
+    fun createScriptModule(project: Project, entity: KotlinScriptEntity): KaScriptModule? = null
+    fun createScriptLibraryModule(project: Project, entity: KotlinScriptLibraryEntity): KaLibraryModule? = null
     fun createKaModuleByPsiFile(file: PsiFile): KaModule? = null
 
-    /**
-     * Allows overriding the behavior of how we create [KaLibraryModule] by some [LibraryEntity].
-     *
-     * If a non-null value is returned, it will be used instead of the default one.
-     */
-    fun createSpecialLibraryModule(libraryEntity: LibraryEntity, project: Project): KaLibraryModule? = null
-
     companion object {
-        val EP_NAME: ExtensionPointName<K2KaModuleFactory> = ExtensionPointName<K2KaModuleFactory>("org.jetbrains.kotlin.k2KaModuleFactory")
+        val EP_NAME: ExtensionPointName<FirKaModuleFactory> = ExtensionPointName<FirKaModuleFactory>("org.jetbrains.kotlin.k2KaModuleFactory")
     }
 }

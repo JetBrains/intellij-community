@@ -107,6 +107,6 @@ internal class KaLibraryModuleImpl @InternalKaModuleConstructor constructor(
     }
 
     companion object {
-        private val KOTLIN_LOGGER = Logger.getInstance(KaLibraryModuleBase::class.java).asKotlinLogger()
+        private val KOTLIN_LOGGER = Logger.getInstance(KaEntityBasedLibraryModuleBase::class.java).asKotlinLogger()
     }
 }

@@ -26,13 +26,13 @@ fun ScriptDefinition.getWorkspaceModelManager(project: Project): ScriptWorkspace
     compilationConfiguration[ScriptCompilationConfiguration.ide.scriptWorkspaceModelManagerDelegate]?.invoke()
         ?: DefaultScriptConfigurationHandler.getInstance(project)
 
-fun Project.scriptModuleRelativeLocation(scriptFile: VirtualFile): String {
-    val scriptPath = this.guessProjectDir()?.path?.let {
+fun VirtualFile.relativeLocation(project: Project): String {
+    val scriptPath = project.guessProjectDir()?.path?.let {
             FileUtil.getRelativePath(
                 it,
-                scriptFile.path,
+                this.path,
                 File.separatorChar
             )
-        } ?: scriptFile.path
+        } ?: this.path
     return scriptPath.replace(VfsUtilCore.VFS_SEPARATOR_CHAR, ':')
 }

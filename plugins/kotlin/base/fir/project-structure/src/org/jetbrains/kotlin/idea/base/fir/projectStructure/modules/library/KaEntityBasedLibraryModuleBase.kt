@@ -21,14 +21,14 @@ import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAnd
 import java.nio.file.Path
 
 @ApiStatus.Internal
-abstract class KaLibraryModuleBase<E : WorkspaceEntityWithSymbolicId, EID : SymbolicEntityId<E>>() :
+abstract class KaEntityBasedLibraryModuleBase<E : WorkspaceEntityWithSymbolicId, EID : SymbolicEntityId<E>>() :
   KaEntityBasedModule<E, EID>(), KaLibraryModule {
 
     override val binaryRoots: Collection<Path>
         get() = binaryVirtualFiles.mapNotNull { it.toNioPathOrNull() }
 
     override val baseContentScope: GlobalSearchScope by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        KaLibraryModuleScope(entityId, binaryVirtualFiles.toTypedArray(), project)
+        KaEntityBasedLibraryModuleScope(entityId, binaryVirtualFiles.toTypedArray(), project)
     }
 
     /**
@@ -45,11 +45,10 @@ abstract class KaLibraryModuleBase<E : WorkspaceEntityWithSymbolicId, EID : Symb
         get() = listOf(KaBuiltinsModuleImpl(targetPlatform, project))
 
     override val transitiveDependsOnDependencies: List<KaModule> get() = emptyList()
-
 }
 
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
-private class KaLibraryModuleScope(
+private class KaEntityBasedLibraryModuleScope(
     private val entityId: SymbolicEntityId<*>,
     classesRoots: Array<VirtualFile>,
     project: Project,
@@ -61,7 +60,7 @@ private class KaLibraryModuleScope(
     override val includesLibraryClassRoots: Boolean get() = true
     override val includesLibrarySourceRoots: Boolean get() = false
 
-    override fun equals(other: Any?): Boolean = this === other || other is KaLibraryModuleScope && entityId == other.entityId
+    override fun equals(other: Any?): Boolean = this === other || other is KaEntityBasedLibraryModuleScope && entityId == other.entityId
     override fun calcHashCode(): Int = entityId.hashCode()
     override fun toString(): String = "KaLibraryModuleScope($entityId)"
 }

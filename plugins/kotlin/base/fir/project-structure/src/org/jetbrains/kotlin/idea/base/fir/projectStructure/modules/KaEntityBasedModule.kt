@@ -35,7 +35,7 @@ abstract class KaEntityBasedModule<E : WorkspaceEntityWithSymbolicId, EID : Symb
     protected val workspaceModel: WorkspaceModel get() = project.workspaceModel
     protected val currentSnapshot: ImmutableEntityStorage get() = workspaceModel.currentSnapshot
 
-    internal val entity: E
+    open val entity: E
         get() = entityId.resolve(currentSnapshot)
             ?: couldNotResolveEntityError(this)
 

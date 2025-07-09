@@ -2,29 +2,22 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.io.URLUtil
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
-import kotlin.script.experimental.api.ScriptDependency
-import kotlin.script.experimental.jvm.JvmDependency
 
 class ScriptClassPathUtil {
     companion object {
-        fun List<ScriptDependency>?.findVirtualFiles(): List<VirtualFile> {
-            this ?: return emptyList()
-            return this
-                .flatMap { (it as? JvmDependency)?.classpath ?: emptyList() }
-                .distinct()
-                .mapNotNull { findVirtualFile(it.path) }
-                .sortedBy { it.name }
-        }
-
         fun findVirtualFile(pathString: String): VirtualFile? {
             val path = pathString.toNioPathOrNull()
             return when {
@@ -78,5 +71,14 @@ class ScriptVirtualFileCache() {
         }
 
         return result.getOrNull()
+    }
+
+    fun toVirtualFileUrl(pathString: String, project: Project): VirtualFileUrl {
+        val url = when {
+            pathString.endsWith(".jar") -> URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + pathString + URLUtil.JAR_SEPARATOR
+            else -> URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(pathString)
+        }
+
+        return project.workspaceModel.getVirtualFileUrlManager().getOrCreateFromUrl(url)
     }
 }
