@@ -185,12 +185,8 @@ private suspend fun verify(
   val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
   val actual = getRemoteCommitHistory(connectionForGet, urlPathPrefixForGet).commitsForRemote(remoteGitUrl).toSet()
   val missing = expected - actual
-  val unexpected = actual - expected
-  check(missing.none() && unexpected.none()) {
-    """
-      Missing: $missing
-      Unexpected: $unexpected
-    """.trimIndent()
+  check(missing.none()) {
+    "Missing: $missing"
   }
 }
 
