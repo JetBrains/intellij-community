@@ -627,7 +627,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup copyGroup = (ActionGroup)actionManager.getAction("FindInFiles.Results.ContextMenu");
-    ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.POPUP, copyGroup);
+    ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.FIND_IN_FILES_POPUP, copyGroup);
     myResultsPreviewTable.setComponentPopupMenu(popupMenu.getComponent());
 
     myResultsPreviewTable.addMouseListener(new MouseAdapter() {

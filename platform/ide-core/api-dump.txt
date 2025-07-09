@@ -122,6 +122,8 @@ com.intellij.notification.Notifications
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z):V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z):V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z,java.lang.String):V
+a:com.intellij.openapi.actionSystem.ActionPlaces
+- sf:FIND_IN_FILES_POPUP:java.lang.String
 com.intellij.openapi.actionSystem.ActionWithDelegate
 - a:getDelegate():java.lang.Object
 - getPresentableName():java.lang.String
