@@ -67,11 +67,7 @@ internal class PolySymbolDocumentationTargetImpl<T : PolySymbol>(
     internal fun check(lambda: Any) {
       if (!ApplicationManager.getApplication().let { it.isUnitTestMode || it.isInternal || it.isEAP }) return
       if (lambda::class.java.declaredFields.any { it.name.startsWith("arg$") || it.name.startsWith("this$") }) {
-        val message = "Do not capture object instance or method parameters in documentation target builder lambda : $lambda"
-        if (ApplicationManager.getApplication().isUnitTestMode)
-          throw AssertionError(message)
-        else
-          thisLogger().error(message)
+        thisLogger().error("Do not capture object instance or method parameters in documentation target builder lambda : $lambda")
       }
     }
   }
