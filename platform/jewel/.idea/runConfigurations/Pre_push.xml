@@ -1,6 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Pre-push" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
+      <option name="env">
+        <map>
+          <entry key="DEVELOPER_DIR" value="/Applications/Xcode.app/Contents/Developer" />
+        </map>
+      </option>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
       <option name="externalSystemIdString" value="GRADLE" />
@@ -10,8 +15,8 @@
       </option>
       <option name="taskNames">
         <list>
-        <option value="validatePublicApi" />
-        <option value="ktfmtFormat" />
+          <option value="validatePublicApi" />
+          <option value="ktfmtFormat" />
         </list>
       </option>
       <option name="vmOptions" />

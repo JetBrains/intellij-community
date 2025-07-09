@@ -65,7 +65,10 @@ abstract class ValidatePublicApiTask : DefaultTask() {
                     appendLine()
                 }
 
-                appendLine("Avoid using data classes in public API. Turn them into regular classes, implement equals()/hashCode()/toString(), and add the @GenerateDataFunctions annotation.")
+                appendLine(
+                    "Avoid using data classes in public API. Turn them into regular classes, implement equals()/hashCode()/toString(), " +
+                    "and add the @GenerateDataFunctions annotation."
+                )
                 appendLine(
                     "For specific cases, you can exclude a data class from the validation. " +
                         "For this, just add it to the 'apiValidation.excludedClassRegexes' block in " +
