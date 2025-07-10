@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -58,6 +59,7 @@ class CodeInsightContextManagerImpl(
         allContexts.invalidate()
 
         project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
+        log.trace { "all contexts are invalidated" }
       }
       _changeFlow.emit(Unit)
     }
@@ -101,6 +103,7 @@ class CodeInsightContextManagerImpl(
     if (!isSharedSourceSupportEnabled(project)) return listOf(defaultContext())
 
     return allContexts.getOrPut(file) {
+      log.trace { "requested all contexts of file ${file.path}" }
       getContextSequence(file).toList()
     }
   }
@@ -122,6 +125,9 @@ class CodeInsightContextManagerImpl(
 
     //ThreadingAssertions.softAssertBackgroundThread()
     //ThreadingAssertions.softAssertReadAccess()
+
+    log.trace { "requested preferred context of file ${file.path}" }
+
     return preferredContext.getOrPut(file) {
       findFirstContext(file)
     }
@@ -129,6 +135,8 @@ class CodeInsightContextManagerImpl(
 
   override fun getCodeInsightContext(fileViewProvider: FileViewProvider): CodeInsightContext {
     if (!isSharedSourceSupportEnabled(project)) return defaultContext()
+
+    log.trace { "requested context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
 
     val context = getCodeInsightContextRaw(fileViewProvider)
 
@@ -140,6 +148,8 @@ class CodeInsightContextManagerImpl(
   }
 
   override fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext {
+    log.trace { "requested getOrSet context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
+
     val rawContext = getCodeInsightContextRaw(fileViewProvider)
     if (rawContext != anyContext()) {
       return rawContext
@@ -177,10 +187,16 @@ class CodeInsightContextManagerImpl(
   }
 
   private fun inferContext(fileViewProvider: FileViewProvider): CodeInsightContext {
+    log.trace { "infer context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
+
     val preferredContext = getPreferredContext(fileViewProvider.virtualFile)
     log.assertTrue(preferredContext != anyContext()) { "preferredContext must not be anyContext" }
 
-    return trySetContext(fileViewProvider, preferredContext)
+    val setContext = trySetContext(fileViewProvider, preferredContext)
+
+    log.trace { "context of FileViewProvider ${fileViewProvider.virtualFile.path} is set to $setContext" }
+
+    return setContext
   }
 
   private fun trySetContext(
@@ -212,6 +228,8 @@ class CodeInsightContextManagerImpl(
     fileViewProvider.getUserData(codeInsightContextKey) ?: defaultContext()
 
   fun setCodeInsightContext(fileViewProvider: FileViewProvider, context: CodeInsightContext) {
+    log.trace { "set context of FileViewProvider ${fileViewProvider.virtualFile.path} to $context" }
+
     val effectiveContext = context.takeUnless { it == defaultContext() }
     fileViewProvider.putUserData(codeInsightContextKey, effectiveContext)
   }
@@ -224,6 +242,7 @@ class CodeInsightContextManagerImpl(
         project.getUserData(multiverse_enabler_key)?.let { return it }
         val result = computeSharedSourceEnabled()
         project.putUserData(multiverse_enabler_key, result)
+        log.info("multiverse is ${if (result) "enabled" else "disabled"}")
         return result
       }
     }
