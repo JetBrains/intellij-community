@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.quarantine.setup
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.openapi.application.edtWriteAction
@@ -17,7 +17,6 @@ import com.intellij.util.asDisposable
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.setup.GradleOpenProjectTestCase
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
