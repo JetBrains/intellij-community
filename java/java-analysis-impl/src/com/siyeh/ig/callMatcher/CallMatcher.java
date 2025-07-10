@@ -319,6 +319,8 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
      * The resulting matcher enforces the following criteria for unresolved calls:
      * - Method name must match the specified names.
      * - The argument list must match certain conditions based on parameter types.
+     * - Checking types is limited and checks only basic cases. Generics, primitive conversions, and so on are not supported and should be checked separately.
+     * - Class name must match the specified class name.
      * - Class name must end with qualifier expressions. Qualifier expression should be unresolved.
      * - Call is checked as it is static.
      * <p>
@@ -445,7 +447,10 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
         else {
           parameter = myParameters[myParameters.length - 1];
         }
-        if (!expressionTypeMatches(parameter, arg)) return false;
+        if (!(expressionTypeMatches(parameter, arg) ||
+              (myParameters.length - 1 == i && args.length == myParameters.length &&
+               parameter.endsWith("...") &&
+               expressionTypeMatches(parameter.substring(0, parameter.length() - 3) + "[]", arg)))) return false;
       }
       return true;
     }
