@@ -4,7 +4,6 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.find.impl.FindPopupPanel;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -74,22 +73,10 @@ public final class CopyReferenceUtil {
     if (elements.isEmpty() && editor == null) {
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
-      // Provides selected files context specifically for Find in Files popup.
-      // Essential for Remote Development - enables frontend UI selection data to be synchronized
-      // with backend action execution through ActionTimestampProvider mechanism.
-      VirtualFile[] selectedFiles = FindPopupPanel.SELECTED_FILES.getData(dataContext);
-      if (selectedFiles != null && project != null) {
-        for (VirtualFile file : selectedFiles) {
+      VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (project != null && files != null) {
+        for (VirtualFile file : files) {
           ContainerUtil.addIfNotNull(elements, PsiManager.getInstance(project).findFile(file));
-        }
-      }
-
-      if (elements.isEmpty()) {
-        VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-        if (project != null && files != null) {
-          for (VirtualFile file : files) {
-            ContainerUtil.addIfNotNull(elements, PsiManager.getInstance(project).findFile(file));
-          }
         }
       }
     }
