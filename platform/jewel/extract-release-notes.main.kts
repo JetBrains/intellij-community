@@ -22,6 +22,7 @@ object Config {
     const val JEWEL_DIR = "."
     const val OUTPUT_FILE = "new_release_notes.md"
     const val MAX_CONCURRENT_JOBS = 5
+    const val RELEASE_NOTES_FILE = "RELEASE NOTES.md"
 }
 
 // --- Data Structures ---
@@ -140,22 +141,80 @@ fun processPr(commitInfo: CommitInfo, isVerbose: Boolean): CommitResult {
 
 // --- Main Entry Point ---
 val isVerbose = args.contains("--verbose") || args.contains("-v")
-val startDate =
-    args.lastOrNull()
-        ?: run {
-            println("Usage: ./generate-release-notes.main.kts [--verbose|-v] <start-date>")
-            println("Example: ./generate-release-notes.main.kts --verbose 2025-05-01")
-            exitProcess(1)
+
+fun getArg(name: String, shortName: String? = null): String? {
+    val nameFlag = "--$name"
+    val shortNameFlag = shortName?.let { "-$it" }
+
+    val values = args.asSequence()
+        .mapIndexedNotNull { index, s ->
+            if (s == nameFlag || s == shortNameFlag) {
+                args.getOrNull(index + 1)
+            } else {
+                null
+            }
         }
+        .toList()
+    return values.firstOrNull()
+}
+
+fun getLatestReleaseDate(): String? {
+    val releaseNotesFile = File(Config.RELEASE_NOTES_FILE)
+    if (!releaseNotesFile.exists()) {
+        println("⚠️ Release notes file not found at '${releaseNotesFile.absolutePath}', can't determine start date.")
+        return null
+    }
+
+    val releaseHeaderRegex = """## v\d+\.\d+ \((....-..-..)\)""".toRegex()
+    releaseNotesFile.useLines { lines ->
+        for (line in lines) {
+            val match = releaseHeaderRegex.find(line)
+            if (match != null) {
+                return match.groupValues[1]
+            }
+        }
+    }
+    println("⚠️ Could not find any release date in ${Config.RELEASE_NOTES_FILE}.")
+    return null
+}
+
+fun printUsageAndExit() {
+    println("Usage: ./extract-release-notes.main.kts --start-date <yyyy-mm-dd> [--end-date <yyyy-mm-dd>] [--verbose]")
+    println("If --start-date is omitted, it will be inferred from the latest release in ${Config.RELEASE_NOTES_FILE}.")
+    println("Example: ./extract-release-notes.main.kts --start-date 2025-05-01 --end-date 2025-05-31")
+    exitProcess(1)
+}
+
+val startDate: String =
+    getArg("start-date", "s")
+        ?: getLatestReleaseDate()
+        ?: run {
+            printUsageAndExit()
+            "" // Should be unreachable
+        }
+val endDate = getArg("end-date", "e")
 
 // --- Phase 1: Sequentially parse local git history ---
 val normalizedJewelPath: String = File(Config.JEWEL_DIR).normalize().absolutePath
-println("🔍 Enumerating commits in '$normalizedJewelPath' since $startDate...")
+val logMessage = buildString {
+    append("🔍 Enumerating commits in '$normalizedJewelPath' since $startDate")
+    if (endDate != null) {
+        append(" until $endDate")
+    }
+}
+println("$logMessage...")
 
 val mark = markNow()
+val gitLogCommand = mutableListOf("git", "log", "--since=$startDate", "--pretty=format:%H")
+if (endDate != null) {
+    gitLogCommand.add("--until=$endDate")
+}
+gitLogCommand.add("--")
+gitLogCommand.add(Config.JEWEL_DIR)
+
 val allCommitHashes =
-    runCommand("git", "log", "--since=$startDate", "--pretty=format:%H", "--", Config.JEWEL_DIR)
-        .lines() // Process line by line
+    runCommand(*gitLogCommand.toTypedArray())
+        .lines()
         .filter { it.isNotBlank() }
 
 val elapsed = mark.elapsedNow()
