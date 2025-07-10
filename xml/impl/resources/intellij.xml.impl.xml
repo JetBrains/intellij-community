@@ -10,6 +10,7 @@
     <module name="intellij.libraries.xerces"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.ui.common"/>
+    <module name="intellij.platform.vcs"/>
   </dependencies>
 
   <extensionPoints>

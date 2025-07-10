@@ -3,6 +3,7 @@
 
   <dependencies>
     <module name="intellij.platform.coverage.agent"/>
+    <module name="intellij.platform.vcs"/>
   </dependencies>
 
   <extensionPoints>

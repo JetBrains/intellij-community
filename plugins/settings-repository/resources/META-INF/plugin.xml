@@ -19,8 +19,11 @@
 ]]></description>
   <vendor>JetBrains</vendor>
 
-  <!-- otherwise plugin will be not loaded in tests -->
-  <depends>com.intellij.modules.xml</depends>
+  <dependencies>
+    <!-- otherwise plugin will be not loaded in tests -->
+    <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.platform.vcs"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="org.jetbrains.settingsRepository.IcsApplicationLoadListener"/>
