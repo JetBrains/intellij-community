@@ -64,12 +64,12 @@ class CodeInsightContextManagerImpl(
   }
 
   init {
-    EP_NAME.addChangeListener(Runnable {
+    EP_NAME.addChangeListener(cs, Runnable {
       cs.launch {
         subscribeToChanges()
         invalidateAllContexts()
       }
-    }, this)
+    })
     subscribeToChanges()
   }
 
