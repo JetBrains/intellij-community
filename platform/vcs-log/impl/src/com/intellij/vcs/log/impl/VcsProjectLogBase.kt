@@ -221,12 +221,21 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     }
 
     LOG.debug { "Creating ${getProjectLogName(logProviders)}" }
-    return createLogManager(logProviders).also { manager ->
-      _logManagerState.value = manager
-      withContext(Dispatchers.EDT) {
-        notifyLogCreated(manager)
-      }
+    val logManager = try {
+      createLogManager(logProviders)
     }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      LOG.error("Failed to initialize log manager", e)
+      throw e
+    }
+    _logManagerState.value = logManager
+    withContext(Dispatchers.EDT) {
+      notifyLogCreated(logManager)
+    }
+    return logManager
   }
 
   protected abstract suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): M
