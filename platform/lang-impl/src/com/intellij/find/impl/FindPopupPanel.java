@@ -383,6 +383,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   public void saveSettings() {
     Window window = myDialog.getWindow();
     if (!window.isShowing()) return;
+    Dimension previousSize = DimensionService.getInstance().getSize(SERVICE_KEY, myProject);
+    if (previousSize != null && !previousSize.equals(window.getSize())) { FindUsagesCollector.findPopupResized();}
     DimensionService.getInstance().setSize(SERVICE_KEY, myDialog.getSize(), myHelper.getProject() );
     DimensionService.getInstance().setLocation(SERVICE_KEY, window.getLocationOnScreen(), myHelper.getProject() );
     FindSettings findSettings = FindSettings.getInstance();
@@ -1007,6 +1009,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     ValidationInfo validationInfo = getValidationInfo(validateModel);
 
+    if (openInFindWindow) FindUsagesCollector.openInFindToolWindowTriggered(validateModel);
     if (validationInfo == null) {
       if (validateModel.isReplaceState() &&
           !openInFindWindow &&
