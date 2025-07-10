@@ -6,11 +6,12 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class PsiPackageStatementStubImpl extends StubBase<PsiPackageStatement> implements PsiPackageStatementStub {
-  private final String myPackageName;
+  private final @NotNull String myPackageName;
 
   public PsiPackageStatementStubImpl(StubElement parent, String packageName) {
     super(parent, JavaStubElementTypes.PACKAGE_STATEMENT);
@@ -18,7 +19,7 @@ public class PsiPackageStatementStubImpl extends StubBase<PsiPackageStatement> i
   }
 
   @Override
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     return myPackageName;
   }
 

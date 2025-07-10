@@ -45,13 +45,13 @@ public class PsiPackageStatementImpl extends JavaStubPsiElement<PsiPackageStatem
   }
 
   @Override
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     PsiPackageStatementStub stub = getGreenStub();
     if (stub != null) {
       return stub.getPackageName();
     }
     PsiJavaCodeReferenceElement ref = getPackageReference();
-    return ref == null ? null : JavaSourceUtil.getReferenceText(ref);
+    return ref == null ? "" : JavaSourceUtil.getReferenceText(ref);
   }
 
   @Override

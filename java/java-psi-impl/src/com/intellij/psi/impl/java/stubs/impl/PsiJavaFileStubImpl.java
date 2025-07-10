@@ -66,7 +66,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   }
 
   @Override
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     PsiPackageStatementStub stub = (PsiPackageStatementStub)(StubElement<?>)findChildStubByElementType(JavaElementType.PACKAGE_STATEMENT);
     return stub == null ? "" : stub.getPackageName();
   }

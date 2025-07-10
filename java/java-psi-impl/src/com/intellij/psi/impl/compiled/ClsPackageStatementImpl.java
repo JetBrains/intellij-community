@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
 
-  private final String myPackageName;
+  private final @NotNull String myPackageName;
 
   public ClsPackageStatementImpl(@NotNull PsiPackageStatementStub stub) {
     super(stub);
@@ -37,13 +37,13 @@ public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageS
   }
 
   @Override
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     return myPackageName;
   }
 
   @Override
   public void appendMirrorText(final int indentLevel, final @NotNull StringBuilder buffer) {
-    if (myPackageName != null) {
+    if (!myPackageName.isEmpty()) { // an empty package name should not happen for a well-formed class file
       PsiModifierList list = getAnnotationList();
       if (list != null) {
         for (PsiAnnotation annotation : list.getAnnotations()) {
