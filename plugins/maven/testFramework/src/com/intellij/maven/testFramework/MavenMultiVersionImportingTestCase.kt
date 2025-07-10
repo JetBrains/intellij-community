@@ -152,7 +152,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     get() = StringUtil.compareVersionNumbers(
       getActualVersion(myMavenVersion!!), "4.0") >= 0
 
-  protected fun maven4orNull(value: String?): String? {
+  protected fun maven4orNull(value: String): String? {
     return if (this.isMaven4) value else null
   }
 
@@ -168,23 +168,23 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     return ArrayUtil.mergeArrays(defaultResources(), *defaultTestResources())
   }
 
-  protected fun assertDefaultResources(moduleName: String, vararg additionalSources: String?) {
+  protected fun assertDefaultResources(moduleName: String, vararg additionalSources: String) {
     val expectedSources = ArrayUtil.mergeArrays(defaultResources(), *additionalSources)
     assertResources(moduleName, *expectedSources)
   }
 
-  protected fun assertDefaultTestResources(moduleName: String, vararg additionalSources: String?) {
+  protected fun assertDefaultTestResources(moduleName: String, vararg additionalSources: String) {
     val expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), *additionalSources)
     assertTestResources(moduleName, *expectedSources)
   }
 
-  protected fun assertDefaultResources(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg additionalSources: String?) {
+  protected fun assertDefaultResources(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg additionalSources: String) {
     val expectedSources = ArrayUtil.mergeArrays(defaultResources(), *additionalSources)
     val contentRoot = getContentRoot(moduleName)
     doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), *expectedSources)
   }
 
-  protected fun assertDefaultTestResources(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg additionalSources: String?) {
+  protected fun assertDefaultTestResources(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg additionalSources: String) {
     val expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), *additionalSources)
     val contentRoot = getContentRoot(moduleName)
     doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), *expectedSources)
@@ -206,13 +206,13 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     createProjectSubDirs(subdir, *folders)
   }
 
-  private fun createProjectSubDirs(subdir: String?, vararg relativePaths: String?) {
+  private fun createProjectSubDirs(subdir: String?, vararg relativePaths: String) {
     for (path in relativePaths) {
       createProjectSubDir(subdir + path)
     }
   }
 
-  protected fun assertRelativeContentRoots(moduleName: String, vararg expectedRelativeRoots: String?) {
+  protected fun assertRelativeContentRoots(moduleName: String, vararg expectedRelativeRoots: String) {
     val expectedRoots = expectedRelativeRoots
       .map { root -> projectPath.resolve(root).toCanonicalPath() }
       .toTypedArray<String>()
@@ -244,6 +244,10 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     doAssertContentFolders(contentRoot, folders, *expectedSources)
   }
 
+  protected fun assertSources(moduleName: String, expectedSources: Collection<String>) {
+    assertSources(moduleName, *expectedSources.toTypedArray())
+  }
+
   protected fun assertSources(moduleName: String, vararg expectedSources: String) {
     doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, *expectedSources)
   }
@@ -260,6 +264,10 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   protected fun assertContentRootResources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
     val root = getContentRoot(moduleName, contentRoot)
     doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.RESOURCE), *expectedSources)
+  }
+
+  protected fun assertTestSources(moduleName: String, expectedSources: Collection<String>) {
+    assertTestSources(moduleName, *expectedSources.toTypedArray())
   }
 
   protected fun assertTestSources(moduleName: String, vararg expectedSources: String) {
