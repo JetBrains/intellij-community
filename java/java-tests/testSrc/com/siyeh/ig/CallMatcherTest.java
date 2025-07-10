@@ -344,6 +344,52 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .allowStaticUnresolved(), textNested));
   }
 
+  public void testUnresolvedWithArgs() {
+    @Language("JAVA") String text = """
+      import static foo.bar.IO2;
+      package foo.bar;
+      class Main{
+        void m() {
+          IO2.<caret>printf("a", new String[]{"test"});
+        }
+      }
+      """;
+
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterCount(2)
+                      .allowStaticUnresolved(), text));
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterTypes("java.lang.String", "java.lang.String[]")
+                      .allowStaticUnresolved(), text));
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterTypes("java.lang.String", "java.lang.String...")
+                      .allowStaticUnresolved(), text));
+
+
+    @Language("JAVA") String textWithArray = """
+      import static foo.bar.IO2;
+      package foo.bar;
+      class Main{
+        void m() {
+          IO2.<caret>printf("a", new String[]{"test"}, "a");
+        }
+      }
+      """;
+
+    assertTrue(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterTypes("java.lang.String", "java.lang.String[]", "java.lang.String")
+                      .allowStaticUnresolved(), textWithArray));
+
+    assertFalse(
+      isMatchedCall(CallMatcher.staticCall("foo.bar.IO2", "printf")
+                      .parameterTypes("java.lang.String", "java.lang.String...")
+                      .allowStaticUnresolved(), textWithArray));
+  }
+
   private boolean isMatchedCall(@NotNull CallMatcher matcher, @Language("JAVA") @NotNull String text) {
     PsiFile file = myFixture.configureByText("Main.java", text);
     PsiElement element = file.findElementAt(myFixture.getCaretOffset());
