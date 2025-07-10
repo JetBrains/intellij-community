@@ -41,7 +41,6 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getAllPluginsTags(): Set<String>
   suspend fun getAllVendors(): Set<String>
   suspend fun updateDescriptorsForInstalledPlugins()
-  suspend fun createSession(sessionId: String)
   suspend fun closeSession(sessionId: String)
   suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   suspend fun enablePlugins(sessionId: String, ids: List<PluginId>, bool: Boolean, id: ProjectId?): SetEnabledStateResult

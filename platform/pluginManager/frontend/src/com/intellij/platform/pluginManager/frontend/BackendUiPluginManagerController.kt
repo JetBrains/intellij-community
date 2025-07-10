@@ -262,12 +262,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().isNeedUpdate(pluginId) }
   }
 
-  override fun createSession(sessionId: String) {
-    awaitForResult {
-      PluginManagerApi.getInstance().createSession(sessionId)
-    }
-  }
-
   override fun closeSession(sessionId: String) {
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
       PluginManagerApi.getInstance().closeSession(sessionId)

@@ -9,6 +9,8 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.newui.PluginManagerSession;
+import com.intellij.ide.plugins.newui.PluginManagerSessionService;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -354,6 +356,12 @@ public final class PluginInstaller {
 
       PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, installedPlugins);
 
+      if (!isRestartRequired) {
+        PluginManagerSession session = PluginManagerSessionService.getInstance().getSession(model.mySessionId.toString());
+        if (session != null) {
+          session.getDynamicPluginsToInstall().put(pluginDescriptor.getPluginId(), new PendingDynamicPluginInstall(file, pluginDescriptor));
+        }
+      }
       callback.accept(new PluginInstallCallbackData(file, pluginDescriptor, isRestartRequired));
       for (var callbackData : installedDependencies) {
         if (!callbackData.getPluginDescriptor().getPluginId().equals(pluginDescriptor.getPluginId())) {

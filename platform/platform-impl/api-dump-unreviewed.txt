@@ -3195,7 +3195,6 @@ f:com.intellij.ide.plugins.InstalledPluginsState
 - wasUpdated(com.intellij.openapi.extensions.PluginId):Z
 - wasUpdatedWithRestart(com.intellij.openapi.extensions.PluginId):Z
 c:com.intellij.ide.plugins.InstalledPluginsTableModel
-- pf:sessionId:java.util.UUID
 - pf:view:java.util.List
 - <init>(com.intellij.openapi.project.Project):V
 - pf:getEnabledMap():java.util.Map

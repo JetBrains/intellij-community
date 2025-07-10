@@ -229,6 +229,8 @@ f:com.intellij.ide.plugins.DependencyInformation
 - hashCode():I
 f:com.intellij.ide.plugins.InstalledPluginsState
 - getInstalledWithoutRestartPlugins():java.util.Collection
+c:com.intellij.ide.plugins.InstalledPluginsTableModel
+- pf:mySessionId:java.util.UUID
 com.intellij.ide.plugins.PluginEnableStateChangedListener
 - a:stateChanged(java.util.Collection,Z):V
 f:com.intellij.ide.plugins.PluginInstallCallbackData

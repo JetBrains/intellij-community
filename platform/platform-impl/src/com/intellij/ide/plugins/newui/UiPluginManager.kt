@@ -37,10 +37,6 @@ class UiPluginManager {
     return getController().getPlugins()
   }
 
-  fun createSession(uuid: UUID) {
-    getController().createSession(uuid.toString())
-  }
-
   fun closeSession(uuid: UUID) {
     getController().closeSession(uuid.toString())
   }

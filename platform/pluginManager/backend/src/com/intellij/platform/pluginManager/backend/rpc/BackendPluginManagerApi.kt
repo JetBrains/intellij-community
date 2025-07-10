@@ -121,10 +121,6 @@ class BackendPluginManagerApi : PluginManagerApi {
     DefaultUiPluginManagerController.closeSession(sessionId)
   }
 
-  override suspend fun createSession(sessionId: String) {
-    DefaultUiPluginManagerController.createSession(sessionId)
-  }
-
   override suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
     return DefaultUiPluginManagerController.executePluginsSearch(query, count, includeIncompatible)
   }
