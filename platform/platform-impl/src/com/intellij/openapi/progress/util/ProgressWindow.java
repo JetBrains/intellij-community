@@ -455,4 +455,27 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     @Override
     public void processFinish() { }
   }
+
+  private static class WindowState extends State {
+    private final String myTitle;
+    protected WindowState(String title, @NotNull State delegate) {
+      super(delegate);
+      myTitle = title;
+    }
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected @NotNull State getState() {
+    return new WindowState(myTitle, super.getState());
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected void restoreFrom(@NotNull State state) {
+    super.restoreFrom(state);
+    if (state instanceof WindowState w && w.myTitle != null) {
+      setTitle(w.myTitle);
+    }
+  }
 }

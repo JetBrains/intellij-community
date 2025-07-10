@@ -1168,4 +1168,31 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void notableStacktrace(ProgressIndicator indicator) {
     indicator.cancel();
   }
+
+  public void testPushPopStateMustSaveProgressWindowTitle() {
+    ProgressWindow window = new ProgressWindow(false, null);
+    window.setTitle("myTitle");
+    window.setIndeterminate(false);
+    window.setFraction(1);
+    window.setText("text0");
+    window.setText2("2text0");
+    assertEquals("myTitle", window.getTitle());
+    assertEquals("text0", window.getText());
+    assertEquals("2text0", window.getText2());
+    assertEquals(1.0, window.getFraction());
+    window.pushState();
+    window.setTitle("myTitle2");
+    window.setFraction(0);
+    window.setText("text1");
+    window.setText2("2text1");
+    assertEquals("myTitle2", window.getTitle());
+    assertEquals("text1", window.getText());
+    assertEquals("2text1", window.getText2());
+    assertEquals(0.0, window.getFraction());
+    window.popState();
+    assertEquals("myTitle", window.getTitle());
+    assertEquals("text0", window.getText());
+    assertEquals("2text0", window.getText2());
+    assertEquals(1.0, window.getFraction());
+  }
 }

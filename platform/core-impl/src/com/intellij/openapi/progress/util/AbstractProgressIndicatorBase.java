@@ -52,7 +52,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   // false by default - do not attempt to use such a relatively heavy code on start-up
   private volatile boolean myShouldStartActivity = SystemInfoRt.isMac && Boolean.parseBoolean(System.getProperty("idea.mac.prevent.app.nap", "true"));
 
-  private static class State {
+  @ApiStatus.Internal
+  protected static class State {
     private final @NlsContexts.ProgressText String myText;
     private final @NlsContexts.ProgressDetails String myText2;
     private final double myFraction;
@@ -63,6 +64,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
       myText2 = text2;
       myFraction = fraction;
       myIndeterminate = indeterminate;
+    }
+    @ApiStatus.Internal
+    protected State(@NotNull State other) {
+      this(other.myText,other.myText2, other.myFraction, other.myIndeterminate);
     }
   }
 
@@ -224,11 +229,13 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private @NotNull State getState() {
+  @ApiStatus.Internal
+  protected @NotNull State getState() {
     return new State(getText(), getText2(), getFraction(), isIndeterminate());
   }
 
-  private void restoreFrom(@NotNull State state) {
+  @ApiStatus.Internal
+  protected void restoreFrom(@NotNull State state) {
     setText(state.myText);
     setText2(state.myText2);
     setIndeterminate(state.myIndeterminate);
