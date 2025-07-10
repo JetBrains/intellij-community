@@ -51,8 +51,7 @@ private class WrongRunnerJdkVersion(val mvnMessage: @NlsSafe String, val runConf
   override val description: @BuildEventsNls.Description String
     get() = mvnMessage + "\n<br/>" + RunnerBundle.message("maven.4.old.jdk.modify.config.quick.fix", ChooseAnotherJdkQuickFix.ID, OpenRunConfigurationQuickFix.ID)
   override val quickFixes: List<BuildIssueQuickFix> = listOf(
-    ChooseAnotherJdkQuickFix(),
-    OpenRunConfigurationQuickFix(runConfiguration),
+    ChooseAnotherJdkQuickFix()
   )
 
   override fun getNavigatable(project: Project): Navigatable? = null
