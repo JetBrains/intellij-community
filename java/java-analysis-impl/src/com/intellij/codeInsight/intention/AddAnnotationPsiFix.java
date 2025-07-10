@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.RetentionPolicy;
+import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
@@ -308,11 +310,15 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
   }
 
   public static void removePhysicalAnnotations(@NotNull PsiModifierListOwner owner, String @NotNull ... fqns) {
-    for (String fqn : fqns) {
-      PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, true, fqn);
-      if (annotation != null && !AnnotationUtil.isInferredAnnotation(annotation)) {
+    if (fqns.length == 0) return;
+    Set<String> toRemove = Set.of(fqns);
+    for (PsiAnnotation annotation : owner.getAnnotations()) {
+      if (toRemove.contains(annotation.getQualifiedName())) {
         new CommentTracker().deleteAndRestoreComments(annotation);
       }
+    }
+    if (owner.getContainingFile() instanceof PsiJavaFile file) {
+      JavaCodeStyleManager.getInstance(file.getProject()).removeRedundantImports(file);
     }
   }
 

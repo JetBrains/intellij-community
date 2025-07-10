@@ -31,7 +31,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -799,7 +798,13 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         final String text = exactlyNull
                             ? JavaAnalysisBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
-        reporter.registerProblem(expr, text, createNPEFixes(expr, expr, reporter.isOnTheFly(), exactlyNull).toArray(LocalQuickFix.EMPTY_ARRAY));
+        List<LocalQuickFix> fixes = createNPEFixes(expr, expr, reporter.isOnTheFly(), exactlyNull);
+        PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
+        if (surroundingMethod != null) {
+          LocalQuickFix fix = LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(surroundingMethod));
+          fixes = StreamEx.of(fixes).append(fix).toList();
+        }
+        reporter.registerProblem(expr, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else if (AnnotationUtil.isAnnotatingApplicable(anchor)) {
         final String defaultNullable = manager.getDefaultNullable();
@@ -809,8 +814,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                             : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
         PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
         final LocalQuickFix fix = surroundingMethod == null ? null :
-                                  LocalQuickFix.from(new AddAnnotationModCommandAction(defaultNullable, surroundingMethod,
-                                                                                       ArrayUtilRt.toStringArray(manager.getNotNulls())));
+                                  LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(surroundingMethod));
         reporter.registerProblem(expr, text, LocalQuickFix.notNullElements(fix));
       }
     }
