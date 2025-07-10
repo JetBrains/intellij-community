@@ -58,11 +58,19 @@ private class LicenseRelatedStatusBarWidgetProjectService(val cs: CoroutineScope
 abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelatedStatusBarWidgetFactory) : CustomStatusBarWidget {
   final override fun ID(): String = factory.id
 
-  private val lazyLabel: Lazy<JLabel> = lazy { createLabel() }
+  private val lazyLabel: Lazy<JLabel> = lazy {
+    createLabel().also {
+      onComponentCreated(it)
+    }
+  }
+
+  @RequiresEdt
+  protected open fun onComponentCreated(label: JLabel) {
+  }
 
   final override fun getComponent(): JComponent = lazyLabel.value
 
-  override fun install(statusBar: StatusBar) {
+  final override fun install(statusBar: StatusBar) {
     val project = statusBar.project ?: return
 
     // The purpose of this listener is to guarantee that license-related widgets are the rightmost ones.
