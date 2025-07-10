@@ -1,11 +1,19 @@
 package de.plushnikov.intellij.plugin.processor;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
 public class DelegateTest extends AbstractLombokParsingTestCase {
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
+    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
+  }
 
   public void testDelegate$DelegateAlreadyImplemented() {
     doTest(true);
@@ -52,10 +60,10 @@ public class DelegateTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
-
   public void testDelegate$DelegateGenericInterfaceIssue88() {
     doTest(true);
   }
+
   public void testDelegate$DelegateWithInterfaces() {
     doTest(true);
   }

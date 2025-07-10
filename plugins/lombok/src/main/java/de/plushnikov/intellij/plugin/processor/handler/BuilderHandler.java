@@ -14,6 +14,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.JacksonizedProcessor;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.constructor.AbstractConstructorClassProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.singular.AbstractSingularHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
@@ -171,7 +172,7 @@ public class BuilderHandler {
         PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR)) {
 
       if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR)) {
-        Collection<PsiField> requiredFields = getNoArgsConstructorProcessor().getRequiredFields(psiClass);
+        Collection<PsiField> requiredFields = AbstractConstructorClassProcessor.getRequiredFields(psiClass);
         List<PsiType> requiredTypes = ContainerUtil.map(requiredFields, PsiField::getType);
         List<PsiType> psiTypes = ContainerUtil.map(builderInfos, BuilderInfo::getFieldType);
         if (requiredTypes.equals(psiTypes)) {

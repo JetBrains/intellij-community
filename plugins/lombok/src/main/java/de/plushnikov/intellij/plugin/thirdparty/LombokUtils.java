@@ -8,9 +8,7 @@ import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author ProjectLombok Team
@@ -429,6 +427,13 @@ public final class LombokUtils {
     return toGetterName(accessorsInfo, psiFieldName, isBoolean);
   }
 
+  public static String getWithByName(@NotNull PsiVariable psiVariable, @NotNull AccessorsInfo accessorsInfo) {
+    final String psiFieldName = psiVariable.getName();
+    final boolean isBoolean = PsiTypes.booleanType().equals(psiVariable.getType());
+
+    return toWithByName(accessorsInfo, psiFieldName, isBoolean);
+  }
+
   public static String getSetterName(@NotNull PsiField psiField) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     return getSetterName(psiField, accessorsInfo);
@@ -514,10 +519,21 @@ public final class LombokUtils {
    * @return The wither name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
    */
   public static String toWitherName(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
-    if (accessors.isFluent()) {
-      throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
-    }
-    return toAccessorName(accessors, fieldName, isBoolean, "with", "with");
+    return toAccessorName(accessors.withFluent(false), fieldName, isBoolean, "with", "with");
+  }
+
+  /**
+   * Generates a withBy name from a given field name.
+   *
+   * Strategy: The same as the {@code toWithName} strategy, but then append {@code "By"} at the end.
+   *
+   * @param accessors Accessors configuration.
+   * @param fieldName the name of the field.
+   * @param isBoolean if the field is of type 'boolean'. For fields of type {@code java.lang.Boolean}, you should provide {@code false}.
+   * @return The with name for this field, or {@code null} if this field does not fit expected patterns and therefore cannot be turned into a getter name.
+   */
+  public static String toWithByName(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+    return toAccessorName(accessors.withFluent(false), fieldName, isBoolean, "with", "with") + "By";
   }
 
   private static String toAccessorName(@NotNull AccessorsInfo accessorsInfo,
@@ -558,11 +574,12 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [isRunning, getRunning, isIsRunning, getIsRunning]}
    *
+   * @param accessors Accessors configuration.
    * @param fieldName the name of the field.
    * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
-  public static Collection<String> toAllGetterNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
-    return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "is", "get");
+  public static Collection<String> toAllGetterNames(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+    return toAllAccessorNames(accessors, fieldName, isBoolean, "is", "get");
   }
 
   /**
@@ -571,11 +588,12 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [setRunning, setIsRunning]}
    *
+   * @param accessors Accessors configuration.
    * @param fieldName the name of the field.
    * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
-  public static Collection<String> toAllSetterNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
-    return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "set", "set");
+  public static Collection<String> toAllSetterNames(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+    return toAllAccessorNames(accessors, fieldName, isBoolean, "set", "set");
   }
 
   /**
@@ -584,14 +602,28 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [withRunning, withIsRunning]}
    *
+   * @param accessors Accessors configuration.
    * @param fieldName the name of the field.
    * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
-  public static Collection<String> toAllWitherNames(@NotNull AccessorsInfo accessorsInfo, String fieldName, boolean isBoolean) {
-    if (accessorsInfo.isFluent()) {
-      throw new IllegalArgumentException("@Wither does not support @Accessors(fluent=true)");
-    }
-    return toAllAccessorNames(accessorsInfo, fieldName, isBoolean, "with", "with");
+  public static Collection<String> toAllWitherNames(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+    return toAllAccessorNames(accessors.withFluent(false), fieldName, isBoolean, "with", "with");
+  }
+
+  /**
+   * Returns all names of methods that would represent the withBy for a field with the provided name.
+   *
+   * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
+   * {@code [withRunningBy, withIsRunningBy]}
+   *
+   * @param accessors Accessors configuration.
+   * @param fieldName the name of the field.
+   * @param isBoolean if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
+   */
+  public static List<String> toAllWithByNames(@NotNull AccessorsInfo accessors, String fieldName, boolean isBoolean) {
+    List<String> result = new ArrayList<>(toAllAccessorNames(accessors.withFluent(false), fieldName, isBoolean, "with", "with"));
+    result.replaceAll(s -> s + "By");
+    return result;
   }
 
   private static Collection<String> toAllAccessorNames(@NotNull AccessorsInfo accessorsInfo,

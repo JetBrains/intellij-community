@@ -1,8 +1,8 @@
 import lombok.SneakyThrows;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.io.Reader;
+import java.io.StringReader;
 
 public class SneakyThrowsTryWithResources {
 
@@ -10,34 +10,38 @@ public class SneakyThrowsTryWithResources {
 
   }
 
-  private Connection getConnection() throws IOException, SQLException, SomeException {
-    return null;
+  private static class CustomException extends Exception {
+
+  }
+
+  private Reader getReader() throws IOException, CustomException, SomeException {
+    return new StringReader("");
   }
 
   @SneakyThrows
   public void methodOneNotCatched() {
-    try (Connection connection = getConnection()) {
+    try (Reader reader = getReader()) {
 
       // no errors
-    } catch (IOException | SQLException e) {
+    } catch (IOException | CustomException e) {
 
     }
   }
 
   @SneakyThrows
   public void methodAllCatched() {
-    try (Connection connection = getConnection()) {
+    try (Reader reader = getReader()) {
 
       // no errors
-    } catch (IOException | SQLException | SomeException e) {
+    } catch (IOException | CustomException | SomeException e) {
 
     }
   }
 
   public void methodWithUnhandledException() {
-    try (Connection connection = <error descr="Unhandled exception: SneakyThrowsTryWithResources.SomeException">getConnection</error>()) {
+    try (Reader reader = <error descr="Unhandled exception: SneakyThrowsTryWithResources.SomeException">getReader</error>()) {
 
-    } catch (IOException | SQLException e) {
+    } catch (IOException | CustomException e) {
 
     }
   }

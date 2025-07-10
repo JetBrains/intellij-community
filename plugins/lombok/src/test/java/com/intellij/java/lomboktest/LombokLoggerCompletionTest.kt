@@ -7,7 +7,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import de.plushnikov.intellij.plugin.LombokTestUtil
 import de.plushnikov.intellij.plugin.logging.LombokLoggingUtils
-import junit.framework.TestCase
 
 class LombokLoggerCompletionTest : LightFixtureCompletionTestCase() {
 
@@ -49,7 +48,7 @@ class LombokLoggerCompletionTest : LightFixtureCompletionTestCase() {
     assertStringItems(*names)
 
     val item = lookup.items.find { it is JvmLoggerLookupElement && it.typeId == typeName }
-    TestCase.assertNotNull(item)
+    assertNotNull(item)
     selectItem(item)
     checkResultByFile("after$name.java")
   }

@@ -58,20 +58,20 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testGeneratedCodeThroughStubs() {
     Benchmark.newBenchmark("200 unrelated methods", () -> {
-        StringBuilder text = new StringBuilder("import lombok.Getter; import lombok.Setter; @interface Tolerate{} class Foo {");
+        StringBuilder text = new StringBuilder("import lombok.Getter; import lombok.Setter; class Foo {\n");
         for (int i = 0; i < 200; i++) {
-          text.append("@Getter @Setter int bar").append(i).append(";");
+          text.append("@Getter @Setter int bar").append(i).append(";\n");
         }
-
         text.append("}");
+        myFixture.configureByText("Foo.java", text.toString());
 
-        myFixture.addClass(text.toString());
-        StringBuilder barText = new StringBuilder("class Bar {void m(Foo foo){");
+        StringBuilder barText = new StringBuilder("class Bar {void m(Foo foo){\n");
         for (int i = 0; i < 200; i++) {
           barText.append("foo.setBar").append(i).append("(0);\n");
         }
-        barText.append("}}");
+        barText.append("}\n}");
         myFixture.configureByText("Bar.java", barText.toString());
+
         myFixture.checkHighlighting();
       })
       .start();

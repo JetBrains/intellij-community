@@ -114,7 +114,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
    * @see ModeRunnerType
    */
   protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return super.getProjectDescriptor();
+    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
   }
 
   protected String annotationToComparePattern() {

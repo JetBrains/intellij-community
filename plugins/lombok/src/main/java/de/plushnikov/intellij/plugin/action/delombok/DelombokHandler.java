@@ -41,10 +41,12 @@ public class DelombokHandler {
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiJavaFile psiFile) {
-    for (PsiClass psiClass : psiFile.getClasses()) {
-      invoke(project, psiClass, true);
+    if (psiFile.isWritable()) {
+      for (PsiClass psiClass : psiFile.getClasses()) {
+        invoke(project, psiClass, true);
+      }
+      finish(project, psiFile);
     }
-    finish(project, psiFile);
   }
 
   private void invoke(Project project, PsiClass psiClass, boolean processInnerClasses) {
@@ -66,7 +68,7 @@ public class DelombokHandler {
     if (processInnerClasses) {
       for (PsiClass innerClass : allInnerClasses) {
         //skip our self generated classes
-        if (!(innerClass instanceof LombokLightClassBuilder)) {
+        if (!(innerClass instanceof LombokLightClassBuilder) && innerClass.isWritable()) {
           invoke(project, innerClass, true);
         }
       }

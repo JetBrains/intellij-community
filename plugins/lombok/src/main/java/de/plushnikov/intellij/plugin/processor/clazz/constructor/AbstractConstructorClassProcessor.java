@@ -232,12 +232,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return getAllNotInitializedAndNotStaticFields(psiClass);
   }
 
-  public @NotNull Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
+  public static @NotNull Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
     return getRequiredFields(psiClass, false);
   }
 
   @NotNull
-  Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass, boolean ignoreNonNull) {
+  static Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass, boolean ignoreNonNull) {
     Collection<PsiField> result = new ArrayList<>();
     final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE);
 

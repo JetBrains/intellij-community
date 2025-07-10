@@ -1,6 +1,9 @@
 package de.plushnikov.intellij.plugin.processor;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
@@ -10,6 +13,11 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   @Override
   protected String annotationToComparePattern() {
     return "java.lang.Deprecated";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
+    return LombokTestUtil.LOMBOK_DESCRIPTOR;
   }
 
   @Override
