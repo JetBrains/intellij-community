@@ -48,7 +48,9 @@ class RemoteTopicSubscribersManager(cs: CoroutineScope) {
   private fun registerLocalClient() {
     clients[ClientId.localId] = {
       RemoteTopicListener.EP_NAME.forEachExtensionSafe { listener ->
-        listener.handleEventLocally(it)
+        if (listener.topic.id == it.topicId) {
+          listener.handleEventLocally(it)
+        }
       }
     }
   }
