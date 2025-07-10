@@ -149,6 +149,7 @@ class EelLocalExecApiTest {
         logger.warn("Waiting for $HELLO")
         while (helloStream.receive(dirtyBuffer) != ReadResult.EOF) {
           val line = decoder.decode(dirtyBuffer.flip()).toString()
+          logger.warn("Adding raw line '$line'")
           cleanBuffer.add(line)
           dirtyBuffer.clear()
           val fullLine = cleanBuffer.getString()
