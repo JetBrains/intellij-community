@@ -11,37 +11,34 @@ import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import javax.swing.JComponent
 
-internal class TerminalVfsSynchronizer private constructor() {
+internal class TerminalVfsSynchronizer(
+  sessionController: TerminalSessionController,
+  terminalComponent: JComponent,
+  parentDisposable: Disposable,
+) {
+  init {
+    sessionController.addShellIntegrationListener(parentDisposable, object : TerminalShellIntegrationEventsListener {
+      override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
+        SaveAndSyncHandler.getInstance().scheduleRefresh()
+      }
+    })
+    terminalComponent.addFocusListener(parentDisposable, object : FocusListener {
+      override fun focusGained(e: FocusEvent) {
+        if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
+          WriteIntentReadAction.run {
+            FileDocumentManager.getInstance().saveAllDocuments()
+          }
+        }
+      }
 
-  companion object {
-    fun install(
-      sessionController: TerminalSessionController,
-      terminalComponent: JComponent,
-      parentDisposable: Disposable,
-    ) {
-      sessionController.addShellIntegrationListener(parentDisposable, object : TerminalShellIntegrationEventsListener {
-        override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
+      override fun focusLost(e: FocusEvent) {
+        if (GeneralSettings.getInstance().isSyncOnFrameActivation) {
+          // Like we sync the external changes when switching to the IDE window, let's do the same
+          // when the focus is transferred from the built-in terminal to some other IDE place.
+          // To get the updates from a long-running command in the built-in terminal.
           SaveAndSyncHandler.getInstance().scheduleRefresh()
         }
-      })
-      terminalComponent.addFocusListener(parentDisposable, object : FocusListener {
-        override fun focusGained(e: FocusEvent) {
-          if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-            WriteIntentReadAction.run {
-              FileDocumentManager.getInstance().saveAllDocuments()
-            }
-          }
-        }
-
-        override fun focusLost(e: FocusEvent) {
-          if (GeneralSettings.getInstance().isSyncOnFrameActivation) {
-            // Like we sync the external changes when switching to the IDE window, let's do the same
-            // when the focus is transferred from the built-in terminal to some other IDE place.
-            // To get the updates from a long-running command in the built-in terminal.
-            SaveAndSyncHandler.getInstance().scheduleRefresh()
-          }
-        }
-      })
-    }
+      }
+    })
   }
 }
