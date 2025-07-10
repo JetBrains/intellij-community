@@ -9,13 +9,17 @@ import com.intellij.openapi.roots.ExcludeFolder
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Function
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import junit.framework.TestCase
+import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -249,7 +253,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   protected fun assertSources(moduleName: String, vararg expectedSources: String) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, *expectedSources)
+    doAssertSourceRoots(moduleName, JavaSourceRootType.SOURCE, *expectedSources)
   }
 
   protected fun assertContentRootSources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
@@ -298,11 +302,47 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     doAssertContentFolders(root, listOf<ExcludeFolder>(*root.getExcludeFolders()), *expectedExcludes)
   }
 
+  protected fun doAssertSourceRoots(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg expected: String) {
+    val sourceRootTypeRegistry = SourceRootTypeRegistry.getInstance()
+    val moduleEntity = project.workspaceModel.currentSnapshot.resolve(ModuleId(moduleName))!!
+    val actualPaths = moduleEntity.contentRoots
+      .flatMap { it.sourceRoots }
+      .filter { sourceRootTypeRegistry.findTypeById(it.rootTypeId) == rootType }
+      .map { Path.of(it.url.url.removePrefix("file://")) }
+
+    val expectedPaths = expected.map { Path.of(it) }
+
+    // compare absolute paths
+    if (expectedPaths.all { it.isAbsolute }) {
+      assertSameElements("Unexpected list of source roots ", actualPaths, expectedPaths)
+      return
+    }
+
+    val basePath: Path = MavenImportUtil.findPomXml(project, moduleName)?.parent?.toNioPath() ?: run {
+      assertSize(1, moduleEntity.contentRoots)
+      Path.of(moduleEntity.contentRoots.first().url.url.removePrefix("file://"))
+    }
+
+    // compare relative paths
+    if (expectedPaths.all { !it.isAbsolute }) {
+      val actualRelativePaths = actualPaths.map { basePath.relativize(it) }
+      assertSameElements("Unexpected list of source roots ", actualRelativePaths, expectedPaths)
+      return
+    }
+
+    // compare absolute + relative paths
+    val expectedAbsolutePaths = expectedPaths.map { basePath.resolve(it) }
+    assertSameElements("Unexpected list of source roots ", actualPaths, expectedAbsolutePaths)
+
+  }
+
+  @Deprecated("use doAssertSourceRoots instead", ReplaceWith("doAssertSourceRoots(moduleName, rootType, *expected)"))
   protected fun doAssertContentFolders(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg expected: String) {
     val contentRoot = getContentRoot(moduleName)
     doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), *expected)
   }
 
+  @Deprecated("use doAssertSourceRoots instead", ReplaceWith("doAssertSourceRoots(moduleName, rootType, *expected)"))
   private fun doAssertContentFolders(
     e: ContentEntry,
     folders: List<ContentFolder>,
