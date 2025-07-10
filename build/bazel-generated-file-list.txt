@@ -1343,7 +1343,6 @@ xml/tests
 xml/xml-analysis-api
 xml/xml-analysis-impl
 xml/xml-frontback-impl
-xml/xml-frontend-split
 xml/xml-parser
 xml/xml-psi-api
 xml/xml-psi-impl
