@@ -326,7 +326,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     // compare relative paths
     if (expectedPaths.all { !it.isAbsolute }) {
       val actualRelativePaths = actualPaths.map { basePath.relativize(it) }
-      assertSameElements("Unexpected list of source roots ", actualRelativePaths, expectedPaths)
+      assertSameElements("Unexpected list of source roots ", actualRelativePaths.map { it.toString() }, expectedPaths.map { it.toString()})
       return
     }
 
