@@ -10,6 +10,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
+import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.*
@@ -48,6 +49,19 @@ object EelPathUtils {
   @JvmStatic
   fun isPathLocal(path: Path): Boolean {
     return path.getEelDescriptor() == LocalEelDescriptor
+  }
+
+  fun expandUserHome(eelDescriptor: EelDescriptor, path: String): Path {
+    val userHome = eelDescriptor.toEelApiBlocking().userInfo.home
+    val path = runCatching { Path(path).asEelPath().toString() }.getOrNull() ?: path // try to normalize path
+
+    return eelDescriptor.getPath(if (path == "~") {
+      userHome.toString()
+    } else if (path.startsWith("~/") || path.startsWith("~\\")) {
+      userHome.toString() + path.substring(1)
+    } else {
+      path
+    }).asNioPath()
   }
 
   /**
