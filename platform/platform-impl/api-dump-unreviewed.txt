@@ -12652,11 +12652,13 @@ f:com.intellij.ui.RemoteTransferUIManager
 - sf:isBeControlizationForbiddenInLux(javax.swing.JComponent):Z
 - sf:isFocusWhenShown(com.intellij.openapi.editor.Inlay):Z
 - sf:isForceDirectTransfer(com.intellij.openapi.client.ClientAppSession,javax.swing.JComponent):Z
+- sf:isPaintedQuickly(javax.swing.JComponent):Z
 - sf:isWellBeControlizable(com.intellij.openapi.util.UserDataHolder):Z
 - sf:isWellBeControlizable(javax.swing.JComponent):Z
 - sf:markFocusOnShowForInlay(javax.swing.JComponent):V
 - sf:setWellBeControlizable(com.intellij.openapi.util.UserDataHolder):V
 - sf:setWellBeControlizable(javax.swing.JComponent):V
+- sf:setWellBeControlizableAndPaintedQuickly(javax.swing.JComponent):V
 f:com.intellij.ui.RightMarginEditorCustomization
 - com.intellij.ui.SimpleEditorCustomization
 - <init>(Z,I):V

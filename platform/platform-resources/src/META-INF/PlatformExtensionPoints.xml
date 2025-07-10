@@ -674,5 +674,10 @@
     <extensionPoint name="managedCacheFactory" interface="com.intellij.util.io.cache.ManagedCacheFactory" dynamic="true" />
 
     <extensionPoint name="editorSkeletonPolicy" interface="com.intellij.openapi.fileEditor.impl.EditorSkeletonPolicy" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.frontend.splitComponentProvider"
+                    beanClass="com.intellij.ui.split.SplitComponentProviderBean">
+      <with attribute="implementation" implements="com.intellij.ui.split.SplitComponentProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

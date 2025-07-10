@@ -425,6 +425,38 @@ f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.components.ValidationType
 - s:values():com.intellij.ui.dsl.builder.components.ValidationType[]
+*f:com.intellij.ui.split.SplitComponentFactory
+- *sf:Companion:com.intellij.ui.split.SplitComponentFactory$Companion
+- f:createComponent(com.intellij.ui.split.SplitComponentModel):com.intellij.openapi.ui.ComponentContainer
+- sf:getInstance():com.intellij.ui.split.SplitComponentFactory
+- f:getRegisteredModel(com.intellij.ui.split.SplitComponentId):com.intellij.ui.split.SplitComponentModel
+*f:com.intellij.ui.split.SplitComponentFactory$Companion
+- f:getInstance():com.intellij.ui.split.SplitComponentFactory
+*f:com.intellij.ui.split.SplitComponentId
+- *sf:Companion:com.intellij.ui.split.SplitComponentId$Companion
+- <init>(I):V
+- f:component1():I
+- f:copy(I):com.intellij.ui.split.SplitComponentId
+- bs:copy$default(com.intellij.ui.split.SplitComponentId,I,I,java.lang.Object):com.intellij.ui.split.SplitComponentId
+- equals(java.lang.Object):Z
+- getUid():I
+- hashCode():I
+*bf:com.intellij.ui.split.SplitComponentId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ui.split.SplitComponentId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ui.split.SplitComponentId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ui.split.SplitComponentId):V
+*f:com.intellij.ui.split.SplitComponentId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.ui.split.SplitComponentModel
+- com.intellij.openapi.Disposable
+- a:getProviderId():java.lang.String
+*:com.intellij.ui.split.SplitComponentProvider
+- *sf:Companion:com.intellij.ui.split.SplitComponentProvider$Companion
+- a:createComponent(com.intellij.ui.split.SplitComponentId):com.intellij.openapi.ui.ComponentContainer
+*f:com.intellij.ui.split.SplitComponentProvider$Companion
 f:com.intellij.util.SwingBindingsKt
 - *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
 - *sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V

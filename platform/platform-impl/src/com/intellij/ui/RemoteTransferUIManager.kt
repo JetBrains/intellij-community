@@ -21,6 +21,7 @@ import javax.swing.JComponent
 object RemoteTransferUIManager {
   private val becontrolizationForbidKey = Key.create<Boolean>("lux.localComponents.forbidBeControlization")
   private val wellBeControlizableKey = Key.create<Boolean>("lux.localComponents.wellBeControlizable")
+  private val paintedQuickly = Key.create<Boolean>("lux.localComponents.paintedQuickly")
   private val forceDirectTransferKey = Key.create<Boolean>("lux.force.direct.transfer")
   private val focusInlayOnShowKey = Key.create<Boolean>("lux.block.inlay.focus.on.show")
   private val becontrolizaitionExceptionKey = "lux.localComponents.becontrolizationException"
@@ -60,6 +61,12 @@ object RemoteTransferUIManager {
   }
 
   @JvmStatic
+  fun setWellBeControlizableAndPaintedQuickly(component: JComponent) {
+    component.putUserData(wellBeControlizableKey, true)
+    component.putUserData(paintedQuickly, true)
+  }
+
+  @JvmStatic
   fun isBeControlizationForbiddenInLux(component: JComponent): Boolean {
     return component.getUserData(becontrolizationForbidKey) == true
   }
@@ -67,6 +74,11 @@ object RemoteTransferUIManager {
   @JvmStatic
   fun isBeControlizationForbiddenInLux(component: UserDataHolder): Boolean {
     return component.getUserData(becontrolizationForbidKey) == true
+  }
+
+  @JvmStatic
+  fun isPaintedQuickly(component: JComponent): Boolean {
+    return component.getUserData(paintedQuickly) == true
   }
 
   @JvmStatic
