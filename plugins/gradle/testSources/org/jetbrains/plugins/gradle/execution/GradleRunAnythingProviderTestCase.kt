@@ -16,9 +16,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Ref
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
-import com.intellij.platform.testFramework.assertion.BuildViewAssertions
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
@@ -46,11 +46,23 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
   fun getRootProjectTasks(prefix: String = "") =
     listOf("init", "wrapper").map { prefix + it }
 
-  fun getCommonTasks(prefix: String = "") =
-    listOf(
-      "components", "projects", "buildEnvironment", "dependencyInsight",
-      "dependencies", "help", "model", "properties", "tasks"
-    ).map { prefix + it }
+  fun getCommonTasks(prefix: String = ""): List<String> {
+    val tasks = mutableListOf(
+      "projects", "buildEnvironment", "dependencyInsight",
+      "dependencies", "help", "properties", "tasks"
+    )
+    if (isGradleOlderThan("9.0")) {
+      /**
+      The model and component tasks report on the structure of legacy software model objects configured for the project.
+      Previously, these tasks were automatically added to the project for every build.
+      These tasks are now only added to a project when a rule-based plugin is applied
+      (such as those provided by Gradle’s support for building native software).
+       **/
+      tasks.add("components")
+      tasks.add("model")
+    }
+    return tasks.map { prefix + it }
+  }
 
   fun getGradleOptions(prefix: String = ""): List<String> {
     val options = GradleCommandLineOptionsProvider.getSupportedOptions().options.filterIsInstance<Option>()

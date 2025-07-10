@@ -42,9 +42,11 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     val runOutput = executeRunConfiguration("myTask", isDebugServerProcess = false)
     assertThat(runOutput)
       .contains("Configuration cache entry stored.")
-      .contains("0 problems were found storing the configuration cache.")
       .contains("BUILD SUCCESSFUL")
       .contains(message)
+    if (isGradleOlderThan("9.0")) {
+      assertThat(runOutput).contains("0 problems were found storing the configuration cache.")
+    }
 
     val debugOutput = executeRunConfiguration("myTask", isDebugServerProcess = true)
     assertThat(debugOutput)
