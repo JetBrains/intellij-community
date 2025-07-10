@@ -1,5 +1,32 @@
 <problems>
   <problem>
+    <file>instanceMain.kt</file>
+    <line>1</line>
+    <module>light_idea_test_case</module>
+    <package>instanceMain</package>
+    <entry_point TYPE="class" FQNAME="instanceMain.A" />
+    <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+    <description>Class &quot;A&quot; is never used</description>
+  </problem>
+  <problem>
+    <file>instanceMain.kt</file>
+    <line>2</line>
+    <module>light_idea_test_case</module>
+    <package>instanceMain</package>
+    <entry_point TYPE="method" FQNAME="instanceMain.A void main()" />
+    <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+    <description>Function &quot;main&quot; is never used</description>
+  </problem>
+  <problem>
+    <file>instanceMain.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <package>instanceMain</package>
+    <entry_point TYPE="method" FQNAME="instanceMain.A void main(java.lang.String[] args)" />
+    <problem_class id="UnusedSymbol" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused symbol</problem_class>
+    <description>Function &quot;main&quot; is never used</description>
+  </problem>
+  <problem>
     <file>topLevelBothMains.kt</file>
     <line>3</line>
     <module>light_idea_test_case</module>

@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
@@ -159,7 +160,7 @@ public final class PsiMethodUtil {
   }
 
   private static boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
-    return PsiUtil.isAvailable(JavaFeature.INSTANCE_MAIN_METHOD, psiElement);
+    return PsiUtil.isAvailable(JavaFeature.INSTANCE_MAIN_METHOD, psiElement) && psiElement.getLanguage() instanceof JavaLanguage;
   }
 
   private static boolean inheritedStaticMainEnabled(@NotNull PsiElement psiElement) {
