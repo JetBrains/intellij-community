@@ -1462,24 +1462,14 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertContentRootTestSources(mn("project", "m1-pom"), "$projectPath/m1", "src/test/java")
     assertContentRootSources(mn("project", "m1-pom"), "$projectPath/pom-sources", "")
     assertContentRootTestSources(mn("project", "m1-pom"), "$projectPath/pom-sources")
-    val expectedRoots = arrayOfNotNull(
-      "$projectPath/custom-sources",
-      "$projectPath/m1/src/main/resources",
-      maven4orNull("$projectPath/m1/src/main/resources-filtered"),
-      "$projectPath/m1/src/test/java",
-      "$projectPath/m1/src/test/resources",
-      maven4orNull("$projectPath/m1/src/test/resources-filtered")
-    )
-    assertContentRoots(mn("project", "m1-custom"), *expectedRoots)
 
     // this is not quite correct behavior, since we have both modules (m1-pom and m2-custom) pointing at the same folders
     // (Though, it somehow works in IJ, and it's a rare case anyway).
     // The assertions are only to make sure the behavior is 'stable'. Should be updates once the behavior changes intentionally
-    assertContentRootSources(mn("project", "m1-custom"), "$projectPath/custom-sources", "")
-    assertContentRootTestSources(mn("project", "m1-custom"), "$projectPath/m1/src/test/java", "")
-    assertContentRootResources(mn("project", "m1-custom"), "$projectPath/m1/src/main/resources", "")
-    assertContentRootTestResources(mn("project", "m1-custom"), "$projectPath/m1/src/test/resources", "")
-  }
+    assertSources("m1-custom", "$projectPath/custom-sources")
+    assertTestSources("m1-custom", "$projectPath/m1/src/test/java")
+    assertDefaultResources("m1-custom")
+    assertDefaultTestResources("m1-custom")  }
 
   @Test
   fun testDoesNotExcludeGeneratedSourcesUnderTargetDir() = runBlocking {
