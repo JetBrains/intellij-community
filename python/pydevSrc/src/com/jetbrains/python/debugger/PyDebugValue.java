@@ -7,10 +7,7 @@ import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -548,12 +545,12 @@ public class PyDebugValue extends XNamedValue {
       public void onClick(MouseEvent event) {
         AnAction action = ActionManager.getInstance().getAction("JupyterShowAsImageAction");
         DataContext dataContext = DataManager.getInstance().getDataContext((Component)event.getSource());
-        AnActionEvent actionEvent = AnActionEvent.createFromAnAction(
-          action,
-          null,
-          "JupyterShowAsImageAction",
-          dataContext
-        );
+        AnActionEvent actionEvent = AnActionEvent.createEvent(action,
+                                                              dataContext,
+                                                              null,
+                                                              "JupyterShowAsImageAction",
+                                                              ActionUiKind.NONE,
+                                                              null);
         action.actionPerformed(actionEvent);
       }
 
@@ -565,13 +562,9 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
-    try {
       return Registry.is("actions.show.as.image.visibility", false)
              && !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
              && checkAndEnableViewAsImageVisibility(debugValue);
-    } catch (MissingResourceException e) {
-      return false;
-    }
   }
 
   private static boolean checkAndEnableViewAsImageVisibility(PyDebugValue debugValue) {
