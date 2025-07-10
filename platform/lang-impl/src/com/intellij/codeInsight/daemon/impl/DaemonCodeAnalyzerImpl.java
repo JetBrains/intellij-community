@@ -625,7 +625,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           if (System.currentTimeMillis() > start + 50) {
             TimeoutUtil.sleep(10);
           }
-          EDT.dispatchAllInvocationEvents();
+          TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+            EDT.dispatchAllInvocationEvents();
+            return Unit.INSTANCE;
+          });
           progress.checkCanceled();
           return progress.isRunning();
         });
