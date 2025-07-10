@@ -40,7 +40,7 @@ object PluginManagerPanelFactory {
         "orderBy=rating"
       )
 
-      val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
+      val errorCheckResults = pluginManager.loadErrors(myPluginModel.mySessionId.toString())
       val errors = MyPluginModel.getErrors(errorCheckResults)
       try {
         for (query in queries) {
@@ -66,7 +66,7 @@ object PluginManagerPanelFactory {
       val pluginManager = UiPluginManager.getInstance()
       val installedPlugins = pluginManager.getInstalledPlugins()
       val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
-      val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
+      val errorCheckResults = pluginManager.loadErrors(myPluginModel.mySessionId.toString())
       val errors = MyPluginModel.getErrors(errorCheckResults)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         try {

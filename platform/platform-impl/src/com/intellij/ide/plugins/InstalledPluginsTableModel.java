@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.InitSessionResult;
 import com.intellij.ide.plugins.newui.PluginManagerSession;
 import com.intellij.ide.plugins.newui.PluginManagerSessionService;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.UiPluginManager;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -28,13 +26,13 @@ public class InstalledPluginsTableModel {
   protected final List<PluginUiModel> view = new ArrayList<>();
   private final Map<PluginId, PluginEnabledState> myEnabled = new HashMap<>();
   private final @Nullable Project myProject;
-  protected final UUID sessionId = UUID.randomUUID();
+  protected final UUID mySessionId = UUID.randomUUID();
   @ApiStatus.Internal
   protected final PluginManagerSession mySession = initializeAndGetSession();
 
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
-    InitSessionResult initSessionResult = UiPluginManager.getInstance().initSession(sessionId);
+    InitSessionResult initSessionResult = UiPluginManager.getInstance().initSession(mySessionId);
     view.addAll(initSessionResult.getVisiblePluginsList());
     initSessionResult.getPluginStates().forEach((pluginId, pluginState) -> {
       myEnabled.put(pluginId, pluginState != null ? (pluginState ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED) : null);
@@ -50,14 +48,14 @@ public class InstalledPluginsTableModel {
   }
 
   private PluginManagerSession initializeAndGetSession() {
-    UiPluginManager.getInstance().createSession(sessionId);
-    PluginManagerSession session = PluginManagerSessionService.getInstance().getSession(sessionId);
+    UiPluginManager.getInstance().createSession(mySessionId);
+    PluginManagerSession session = PluginManagerSessionService.getInstance().getSession(mySessionId);
     if (session == null) {
       // Temporary code, until not all code is split. Will be removed soon
       // To avoid cases when some methoods are already on the backend and others are still trying to get some state from the backend
       // Just an empty session to avoid NPE
       // Should not affect any functionality, when registry option is disabled.
-      return PluginManagerSessionService.getInstance().createSession(sessionId.toString());
+      return PluginManagerSessionService.getInstance().createSession(mySessionId.toString());
     }
     return session;
   }
