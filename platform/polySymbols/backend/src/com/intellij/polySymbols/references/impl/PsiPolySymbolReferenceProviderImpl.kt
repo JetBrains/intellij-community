@@ -19,6 +19,7 @@ import com.intellij.polySymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.polySymbols.inspections.PolySymbolProblemQuickFixProvider
 import com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP
 import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolReferenceProviderListener
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
@@ -27,10 +28,8 @@ import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
+import com.intellij.util.application
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -45,8 +44,11 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> =
     emptyList()
 
-  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> =
-    CachedValuesManager.getCachedValue(element, CachedValuesManager.getManager(element.project).getKeyForClass(this.javaClass)) {
+  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> {
+    val publisher = application.messageBus.syncPublisher(PolySymbolReferenceProviderListener.TOPIC)
+    publisher.beforeProvideReferences(element, hints)
+
+    try {
       val beans = PsiPolySymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
       val result = SmartList<PolySymbolReference>()
       val offsets = MultiMap.createSet<Int, PolySymbol>()
@@ -60,8 +62,11 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
         })
         offsets.putAllValues(offsetsFromProvider)
       }
-      CachedValueProvider.Result.create(Pair(offsets, result), element.containingFile, PsiModificationTracker.MODIFICATION_COUNT)
+      return Pair(offsets, result)
+    } finally {
+      publisher.afterProvideReferences(element, hints)
     }
+  }
 
 }
 

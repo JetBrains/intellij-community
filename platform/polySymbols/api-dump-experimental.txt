@@ -890,10 +890,10 @@
 - a:setFramework(java.lang.String):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
 *:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
 - a:afterQuery(com.intellij.polySymbols.query.PolySymbolQueryParams):V
 - a:beforeQuery(com.intellij.polySymbols.query.PolySymbolQueryParams):V
 *f:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener$Companion
-- f:getTOPIC():com.intellij.util.messages.Topic
 *:com.intellij.polySymbols.query.PolySymbolQueryParams
 - accept(com.intellij.polySymbols.PolySymbol):Z
 - a:getExcludeModifiers():java.util.List
@@ -948,6 +948,12 @@
 - <init>():V
 - <init>(java.util.Collection):V
 - <init>(com.intellij.polySymbols.query.PolySymbolScope[]):V
+*:com.intellij.polySymbols.query.PolySymbolReferenceProviderListener
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolReferenceProviderListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:afterProvideReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.psi.PsiSymbolReferenceHints):V
+- a:beforeProvideReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.psi.PsiSymbolReferenceHints):V
+*f:com.intellij.polySymbols.query.PolySymbolReferenceProviderListener$Companion
 *:com.intellij.polySymbols.query.PolySymbolScope
 - com.intellij.openapi.util.ModificationTracker
 - a:createPointer():com.intellij.model.Pointer
