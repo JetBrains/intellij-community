@@ -250,27 +250,41 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     for (WorkspaceFileSetWithCustomData<?> set : fileSets) {
       if (set instanceof StoredFileSet) {
         WorkspaceFileSetData data = set.getData();
-        WorkspaceEntity entity = ((StoredFileSet)set).getEntityPointer().resolve(snapshot);
-        if (entity instanceof LibraryEntity) {
-          Library library = LibraryEntityUtils.findLibraryBridge((LibraryEntity)entity, snapshot);
-          if (library != null) {
-            result.add(new LibraryRootDescriptor(set.getRoot(), library));
-          }
-        }
-        else if (data instanceof ModuleSourceRootData) {
-          Module module = ((ModuleSourceRootData)data).getModule();
-          result.add(new ModuleRootDescriptor(set.getRoot(), module));
+        if (data instanceof DummyWorkspaceFileSetData) {
+          result.add(new DummyRootDescriptor(set.getRoot()));
         }
         else {
-          Sdk sdk = SdkBridgeImpl.Companion.findSdk(snapshot, set);
-          if (sdk != null) {
-            result.add(new SdkRootDescriptor(set.getRoot(), sdk));
+          WorkspaceEntity entity = ((StoredFileSet)set).getEntityPointer().resolve(snapshot);
+          if (entity instanceof LibraryEntity) {
+            Library library = LibraryEntityUtils.findLibraryBridge((LibraryEntity)entity, snapshot);
+            if (library != null) {
+              result.add(new LibraryRootDescriptor(set.getRoot(), library));
+            }
           }
+          else if (data instanceof ModuleSourceRootData) {
+            Module module = ((ModuleSourceRootData)data).getModule();
+            result.add(new ModuleRootDescriptor(set.getRoot(), module));
+          }
+          else {
+            Sdk sdk = SdkBridgeImpl.Companion.findSdk(snapshot, set);
+            if (sdk != null) {
+              result.add(new SdkRootDescriptor(set.getRoot(), sdk));
+            }
 
-          Library globalLibrary = LibrariesAndSdkContributors.Companion.getGlobalLibrary$intellij_platform_projectModel_impl(set);
-          if (globalLibrary != null) {
-            result.add(new LibraryRootDescriptor(set.getRoot(), globalLibrary));
+            Library globalLibrary = LibrariesAndSdkContributors.Companion.getGlobalLibrary$intellij_platform_projectModel_impl(set);
+            if (globalLibrary != null) {
+              result.add(new LibraryRootDescriptor(set.getRoot(), globalLibrary));
+            }
+
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Unexpected data: " + data);
+            }
           }
+        }
+      }
+      else {
+        if (LOG.isTraceEnabled()) {
+          LOG.debug("Unexpected file set: " + set);
         }
       }
     }

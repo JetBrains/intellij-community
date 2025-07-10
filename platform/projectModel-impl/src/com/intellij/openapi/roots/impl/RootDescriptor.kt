@@ -29,3 +29,8 @@ data class SdkRootDescriptor(
   override val root: VirtualFile,
   val sdk: Sdk,
 ) : RootDescriptor
+
+@Internal
+data class DummyRootDescriptor(
+  override val root: VirtualFile,
+) : RootDescriptor
