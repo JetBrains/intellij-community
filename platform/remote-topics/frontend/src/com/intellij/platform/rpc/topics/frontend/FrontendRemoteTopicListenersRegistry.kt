@@ -14,6 +14,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<FrontendRemoteTopicListenersRegistry>()
 
+/**
+ * Preloaded service which starts subscription on [com.intellij.platform.rpc.topics.impl.RemoteTopicApi] sending its events to
+ * [RemoteTopicListener]s.
+ */
 internal class FrontendRemoteTopicListenersRegistry(cs: CoroutineScope) {
   private val topicsListeners = ConcurrentHashMap<String, MutableSet<RemoteTopicListener<*>>>()
 

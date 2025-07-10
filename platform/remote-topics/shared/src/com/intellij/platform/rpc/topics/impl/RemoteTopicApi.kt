@@ -7,6 +7,9 @@ import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Internal RPC API for [com.intellij.platform.rpc.topics.RemoteTopic] implementation, so the frontend may subscribe on the backend events.
+ */
 @Rpc
 interface RemoteTopicApi : RemoteApi<Unit> {
   suspend fun subscribe(): Flow<RemoteTopicEventDto>

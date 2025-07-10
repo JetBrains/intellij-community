@@ -16,6 +16,11 @@ import kotlinx.serialization.Transient
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Backend's side manager that handles [RemoteTopicApi] subscriptions and send [RemoteTopic] events to them.
+ *
+ * Also, it handles local [RemoteTopicListener] subscriptions and sends events to them as well.
+ */
 @Service(Service.Level.APP)
 class RemoteTopicSubscribersManager(cs: CoroutineScope) {
   private val events = Channel<RemoteTopicInternalEvent>(Channel.UNLIMITED)
