@@ -5,16 +5,18 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.observable.util.addFocusListener
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
+import javax.swing.JComponent
 
 internal class TerminalVfsSynchronizer private constructor() {
 
   companion object {
     fun install(
       sessionController: TerminalSessionController,
-      focusListenerRegistrar: (Disposable, FocusListener) -> Unit,
+      terminalComponent: JComponent,
       parentDisposable: Disposable,
     ) {
       sessionController.addShellIntegrationListener(parentDisposable, object : TerminalShellIntegrationEventsListener {
@@ -22,7 +24,7 @@ internal class TerminalVfsSynchronizer private constructor() {
           SaveAndSyncHandler.getInstance().scheduleRefresh()
         }
       })
-      focusListenerRegistrar(parentDisposable, object : FocusListener {
+      terminalComponent.addFocusListener(parentDisposable, object : FocusListener {
         override fun focusGained(e: FocusEvent) {
           if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
             WriteIntentReadAction.run {
