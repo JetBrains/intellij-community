@@ -3,6 +3,7 @@
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.frontback.impl"/>
+    <module name="intellij.regexp"/>
   </dependencies>
 
   <projectListeners>
