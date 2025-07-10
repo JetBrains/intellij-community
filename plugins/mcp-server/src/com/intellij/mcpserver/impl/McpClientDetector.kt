@@ -83,9 +83,8 @@ object McpClientDetector {
     val path = Paths.get(FileUtil.expandUserHome(configPath))
     if (path.exists() && path.isRegularFile()) {
       runCatching {
-        if (McpClient.json.decodeFromStream<VSCodeConfig>(path.inputStream()).mcp?.servers?.isNotEmpty() == true) return null
+        if (McpClient.json.decodeFromStream<VSCodeConfig>(path.inputStream()).mcp?.servers?.isNotEmpty() == true) return VSCodeClient(path)
       }
-      return VSCodeClient(path)
     }
     return null
   }
