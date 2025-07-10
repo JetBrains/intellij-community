@@ -59,7 +59,8 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     return element == null ? null : getPresentation(context, element);
   }
 
-  private @Nullable E getElement(@NotNull ActionContext context) {
+  @ApiStatus.Internal
+  public @Nullable E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
       E element = myPointer.getElement();
       if (element == null) return null;

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescrip
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.IntentionsInfo
 import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.impl.CachedIntentions
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
@@ -28,6 +29,8 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.INFORMATION
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -35,6 +38,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -182,7 +186,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
         val lineByOffset = mutableMapOf<Int, Int>()
         for (offset in allOffsets) {
           val lineNumber = fileDocument.getLineNumber(offset)
-          lineByOffset.compute(lineNumber) { k, v -> if (v == null) offset else maxOf(v, offset) }
+          lineByOffset.compute(lineNumber) { _, v -> if (v == null) offset else maxOf(v, offset) }
         }
         for (currentOffset in lineByOffset.values) {
           editor.caretModel.moveToOffset(currentOffset)
@@ -435,7 +439,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             if (intention.action is EmptyIntentionAction ||
                 intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, currentOffset)) continue
             val intentionCommand =
-              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, null, currentOffset) {
+              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, calculateIntentionHighlighting(intention, editor, psiFile, offset), currentOffset) {
                 editor.caretModel.moveToOffset(currentOffset)
                 computePreview(psiFile, intention.action, editor, currentOffset)
               }
@@ -449,6 +453,28 @@ internal class DirectIntentionCommandProvider : CommandProvider {
 
       return@readAction result.values.toList()
     }
+  }
+
+  fun calculateIntentionHighlighting(intention: IntentionActionWithTextCaching, editor: Editor, psiFile: PsiFile, currentOffset: Int): HighlightInfoLookup? {
+    val intentionAction = IntentionActionDelegate.unwrap(intention.action)
+    if (intentionAction is CustomizableIntentionAction) {
+      val rangesToHighlight = intentionAction.getRangesToHighlight(editor, psiFile)
+      for (highlight in rangesToHighlight) {
+        if (highlight.rangeInFile.contains(currentOffset)) {
+          return HighlightInfoLookup(highlight.rangeInFile
+                                       .intersection(TextRange(highlight.rangeInFile.startOffset, currentOffset)),
+                                     EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
+        }
+      }
+    }
+    val modCommandAction = intentionAction.asModCommandAction() ?: return null
+    if (modCommandAction is PsiBasedModCommandAction<*>) {
+      modCommandAction.getElement(ActionContext.from(editor, psiFile))?.let {
+        return HighlightInfoLookup(it.textRange.intersection(TextRange(it.textRange.startOffset, currentOffset)),
+          EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
+      }
+    }
+    return null
   }
 }
 
