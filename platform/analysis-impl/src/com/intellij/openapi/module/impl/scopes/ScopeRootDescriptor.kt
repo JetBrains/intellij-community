@@ -20,7 +20,6 @@ internal class ScopeRootDescriptor(
   val orderIndex: Int, // used to check which dependency has higher priority
 ) {
   fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
-    val orderEntry = orderEntry
     when (rootDescriptor) {
       is LibraryRootDescriptor -> {
         if (orderEntry !is LibraryOrderEntry) return false
