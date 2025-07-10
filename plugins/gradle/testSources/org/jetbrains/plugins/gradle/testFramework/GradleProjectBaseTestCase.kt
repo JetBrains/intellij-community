@@ -11,29 +11,21 @@ abstract class GradleProjectBaseTestCase {
 
   private var _gradleVersion: GradleVersion? = null
   val gradleVersion: GradleVersion get() = requireNotNull(_gradleVersion) {
-    "Gradle version wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    "Gradle version wasn't setup. Please use [${GradleProjectBaseTestCase::test}] function inside your tests."
   }
 
   private var _fixtureBuilder: GradleTestFixtureBuilder? = null
-
-  private var _gradleFixture: GradleProjectTestFixture? = null
-  val gradleFixture: GradleProjectTestFixture
-    get() = requireNotNull(_gradleFixture) {
-      "Gradle fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+  private val fixtureBuilder: GradleTestFixtureBuilder
+    get() = requireNotNull(_fixtureBuilder) {
+      "Gradle fixture builder wasn't setup. Please use [${GradleProjectBaseTestCase::test}] function inside your tests."
     }
 
   open fun setUp() {
-    val fixtureBuilder = requireNotNull(_fixtureBuilder) {
-      "Gradle fixture builder wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
-    }
-    _gradleFixture = getOrCreateGradleTestFixture(gradleVersion, fixtureBuilder)
+    reuseOrSetUpGradleFixture(gradleVersion, fixtureBuilder)
   }
 
   open fun tearDown() {
-    runAll(
-      { _gradleFixture?.let { rollbackOrDestroyGradleTestFixture(it) } },
-      { _gradleFixture = null }
-    )
+    rollbackOrTearDownGradleFixture()
   }
 
   fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
@@ -52,46 +44,45 @@ abstract class GradleProjectBaseTestCase {
 
   companion object {
 
-    private val initializedFixtures = LinkedHashSet<FixtureId>()
-    private val fixtures = LinkedHashMap<FixtureId, GradleProjectTestFixture>()
+    private var _gradleFixture: GradleProjectTestFixture? = null
+    val gradleFixture: GradleProjectTestFixture
+      get() = requireNotNull(_gradleFixture) {
+        "Gradle fixture wasn't setup. Please use [${GradleProjectBaseTestCase::test}] function inside your tests."
+      }
 
     @JvmStatic
     @AfterAll
-    fun tearDownGradleBaseTestCase() {
-      destroyAllGradleFixtures()
-    }
-
-    private fun getOrCreateGradleTestFixture(gradleVersion: GradleVersion, builder: GradleTestFixtureBuilder): GradleProjectTestFixture {
-      val fixtureId = builder.getFixtureId(gradleVersion)
-      if (fixtureId !in initializedFixtures) {
-        destroyAllGradleFixtures()
-      }
-      if (fixtureId !in fixtures) {
-        val fixture = builder.createFixture(gradleVersion)
-        runCatching { fixture.setUp() }
-          .onFailureCatching { fixture.tearDown() }
-          .getOrThrow()
-        fixtures[fixtureId] = fixture
-        initializedFixtures.add(fixtureId)
-      }
-      return fixtures[fixtureId]!!
-    }
-
     fun destroyAllGradleFixtures() {
-      runAll(fixtures.values.reversed(), ::destroyGradleFixture)
+      tearDownGradleFixture()
     }
 
-    private fun rollbackOrDestroyGradleTestFixture(fixture: GradleProjectTestFixture) {
-      fixture.fileFixture.rollbackAll()
-      if (fixture.fileFixture.hasErrors()) {
-        initializedFixtures.remove(fixture.getFixtureId())
-        destroyGradleFixture(fixture)
+    private fun reuseOrSetUpGradleFixture(gradleVersion: GradleVersion, builder: GradleTestFixtureBuilder) {
+      if (_gradleFixture?.getFixtureId() != builder.getFixtureId(gradleVersion)) {
+        tearDownGradleFixture()
+        setUpGradleFixture(gradleVersion, builder)
       }
     }
 
-    private fun destroyGradleFixture(fixture: GradleProjectTestFixture) {
-      fixtures.remove(fixture.getFixtureId())
-      fixture.tearDown()
+    private fun rollbackOrTearDownGradleFixture() {
+      val gradleFixture = _gradleFixture ?: return
+      gradleFixture.fileFixture.rollbackAll()
+      if (gradleFixture.fileFixture.hasErrors()) {
+        tearDownGradleFixture()
+      }
+    }
+
+    private fun setUpGradleFixture(gradleVersion: GradleVersion, builder: GradleTestFixtureBuilder) {
+      _gradleFixture = builder.createFixture(gradleVersion)
+        .also { fixture ->
+          runCatching { fixture.setUp() }
+            .onFailureCatching { fixture.tearDown() }
+            .getOrThrow()
+        }
+    }
+
+    private fun tearDownGradleFixture() {
+      _gradleFixture?.tearDown()
+      _gradleFixture = null
     }
 
     private data class FixtureId(val projectName: String, val version: GradleVersion)
