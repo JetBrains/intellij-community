@@ -525,7 +525,7 @@ public final class PyInterpreterInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PyUiUtil.clearFileLevelInspectionResults(descriptor.getPsiElement().getContainingFile());
-      PyProjectSdkConfiguration.INSTANCE.setReadyToUseSdk(project, myModule, mySdk);
+      PyProjectSdkConfiguration.INSTANCE.setReadyToUseSdkSync(project, myModule, mySdk);
     }
   }
 

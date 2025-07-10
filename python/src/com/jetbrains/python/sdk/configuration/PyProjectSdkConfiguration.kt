@@ -5,10 +5,11 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
@@ -68,10 +69,16 @@ object PyProjectSdkConfiguration {
     return true
   }
 
-  fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
-    runInEdt {
+  fun setReadyToUseSdkSync(project: Project, module: Module, sdk: Sdk) {
+    runBlockingMaybeCancellable {
+      setReadyToUseSdk(project, module, sdk)
+    }
+  }
+
+  suspend fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
+    withContext(Dispatchers.EDT) {
       if (module.isDisposed) {
-        return@runInEdt
+        return@withContext
       }
 
       configurePythonSdk(project, module, sdk)

@@ -51,9 +51,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.SwingUtilities
-import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.pathString
+import kotlin.io.path.Path
 
 internal data class TargetAndPath(
   val target: TargetEnvironmentConfiguration?,
@@ -307,8 +307,8 @@ suspend fun PyDetectedSdk.setupSdk(
   }
   withContext(Dispatchers.EDT) {
     SdkConfigurationUtil.addSdk(newSdk)
-    setReadyToUseSdk(module.project, module, newSdk)
   }
+  setReadyToUseSdk(module.project, module, newSdk)
 }
 
 @Internal
