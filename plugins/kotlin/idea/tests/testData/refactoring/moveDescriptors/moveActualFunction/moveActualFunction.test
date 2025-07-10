@@ -1,0 +1,8 @@
+{
+  "mainFile": "B/src/foo/foo.jvm.kt",
+  "targetPackage": "bar",
+  "withRuntime": "true",
+  "modulesWithCommonRuntime": ["A"],
+  "modulesWithRuntime": ["B"],
+  "modulesWithJsRuntime": ["C"]
+}

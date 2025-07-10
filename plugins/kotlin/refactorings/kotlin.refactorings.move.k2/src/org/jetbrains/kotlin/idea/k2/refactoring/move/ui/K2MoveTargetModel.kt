@@ -46,7 +46,12 @@ sealed interface K2MoveTargetModel {
 
     val explicitPkgMoveFqName: FqName?
 
-    fun toDescriptor(): K2MoveTargetDescriptor
+    /**
+     * Creates a [K2MoveTargetDescriptor] from this model.
+     * @param kmpSourceRoot source KMP directory that corresponds to the base [directory] in a different source set.
+     * `null` for non expect-actual moves.
+     */
+    fun toDescriptor(kmpSourceRoot: PsiDirectory? = null): K2MoveTargetDescriptor
 
     fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
@@ -143,10 +148,10 @@ sealed interface K2MoveTargetModel {
         directory: PsiDirectory,
         explicitPkgMoveFqName: FqName?,
     ) : SourceDirectoryChooser(pkgName, directory, explicitPkgMoveFqName) {
-        override fun toDescriptor(): K2MoveTargetDescriptor.Directory {
+        override fun toDescriptor(kmpSourceRoot: PsiDirectory?): K2MoveTargetDescriptor.Directory {
             return K2MoveTargetDescriptor.Directory(
                 pkgName = pkgName,
-                baseDirectory = directory,
+                baseDirectory = kmpSourceRoot ?: directory,
                 isMoveToExplicitPackage = isMoveToExplicitPackage(),
             )
         }
@@ -218,11 +223,11 @@ sealed interface K2MoveTargetModel {
 
     class File(fileName: String, pkg: FqName, directory: PsiDirectory, explicitPkgMoveFqName: FqName?) :
         FileChooser(fileName, pkg, directory, explicitPkgMoveFqName) {
-        override fun toDescriptor(): K2MoveTargetDescriptor.File =
+        override fun toDescriptor(kmpSourceRoot: PsiDirectory?): K2MoveTargetDescriptor.File =
             K2MoveTargetDescriptor.File(
                 fileName = fileName,
                 pkgName = pkgName,
-                baseDirectory = directory,
+                baseDirectory = kmpSourceRoot ?: directory,
                 isMoveToExplicitPackage = isMoveToExplicitPackage(),
             )
 
@@ -253,12 +258,12 @@ sealed interface K2MoveTargetModel {
             FILE, CLASS
         }
 
-        override fun toDescriptor(): K2MoveTargetDescriptor.Declaration<*> {
+        override fun toDescriptor(kmpSourceRoot: PsiDirectory?): K2MoveTargetDescriptor.Declaration<*> {
             val selectedClass = destinationClass
             return if (destinationTargetType == MoveTargetType.CLASS && selectedClass != null) {
                 K2MoveTargetDescriptor.ClassOrObject(selectedClass)
             } else {
-                K2MoveTargetDescriptor.File(fileName, pkgName, directory)
+                K2MoveTargetDescriptor.File(fileName, pkgName, kmpSourceRoot ?: directory)
             }
         }
 

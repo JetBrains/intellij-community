@@ -118,8 +118,8 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
                     project = project,
                     moveDescriptors = descriptors,
                     searchForText = searchForText,
-                    searchInComments = searchReferences,
-                    searchReferences = searchInComments,
+                    searchInComments = searchInComments,
+                    searchReferences = searchReferences,
                     dirStructureMatchesPkg = dirStructureMatchesPkg,
                     moveCallBack = moveCallBack
                 )

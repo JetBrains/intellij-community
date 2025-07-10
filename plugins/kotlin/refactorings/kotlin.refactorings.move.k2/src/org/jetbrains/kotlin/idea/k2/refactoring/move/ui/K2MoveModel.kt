@@ -241,7 +241,7 @@ sealed class K2MoveModel {
                 }.mapNotNull { (baseDir, elements) ->
                     if (baseDir == null) return@mapNotNull null
                     val srcDescriptor = K2MoveSourceDescriptor.ElementSource(elements)
-                    val targetDescriptor = target.toDescriptor() as K2MoveTargetDescriptor.Declaration<*>
+                    val targetDescriptor = target.toDescriptor(kmpSourceRoot = baseDir) as K2MoveTargetDescriptor.Declaration<*>
                     K2MoveDescriptor.Declarations(project, srcDescriptor, targetDescriptor)
                 }
                 return Declarations(

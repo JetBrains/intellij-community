@@ -1,0 +1,9 @@
+{
+  "mainFile": "A/src/foo/foo.kt",
+  "targetPackage": "bar",
+  "targetSourceRoot": "A/src",
+  "withRuntime": "true",
+  "modulesWithCommonRuntime": ["A"],
+  "modulesWithRuntime": ["B"],
+  "modulesWithJsRuntime": ["C"]
+}
