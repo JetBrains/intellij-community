@@ -101,10 +101,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -175,6 +172,8 @@ import java.util.stream.Stream;
 
 import static com.intellij.find.usages.impl.ImplKt.buildUsageViewQuery;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static com.intellij.util.ObjectUtils.coalesce;
+import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.*;
 
 /**
@@ -280,7 +279,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Project project = psiFile.getProject();
     ensureIndexesUpToDate(project);
     VirtualFile virtualFile = filePointer.getVirtualFile();
-    if (!ReadAction.compute(() -> ProblemHighlightFilter.shouldHighlightFile(Objects.requireNonNull(filePointer.getElement())))) {
+    if (!ReadAction.compute(() -> ProblemHighlightFilter.shouldHighlightFile(requireNonNull(filePointer.getElement())))) {
       boolean inSource = ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInSource(virtualFile));
       throw new IllegalStateException(
         "ProblemHighlightFilter.shouldHighlightFile('" + filePointer.getElement() + "') == false, so can't highlight it." +
@@ -738,7 +737,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private @NotNull PsiFile getHostFileAtCaret() {
-    return Objects.requireNonNull(PsiUtilBase.getPsiFileInEditor(getHostEditor(), getProject()));
+    return requireNonNull(PsiUtilBase.getPsiFileInEditor(getHostEditor(), getProject()));
   }
 
   @Override
@@ -1110,10 +1109,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @NotNull String getUsageViewTreeTextRepresentation(@NotNull SearchTarget target) {
     Project project = getProject();
 
-    SearchScope searchScope = ObjectUtils.coalesce(target.getMaximalSearchScope(), GlobalSearchScope.allScope(project));
-    AllSearchOptions allOptions = new AllSearchOptions(UsageOptions.createOptions(searchScope), true);
-    List<UsageTarget> usageTargets = List.of(new SearchTarget2UsageTarget(project, target, allOptions));
-    Collection<? extends Usage> usages = buildUsageViewQuery(getProject(), target, allOptions).findAll();
+    List<UsageTarget> usageTargets = new ArrayList<>();
+    Collection<Usage> usages = new ArrayList<>();
+
+    ReadAction.run(() -> {
+      SearchScope searchScope = coalesce(target.getMaximalSearchScope(), GlobalSearchScope.allScope(project));
+      AllSearchOptions allOptions = new AllSearchOptions(UsageOptions.createOptions(searchScope), true);
+      usageTargets.add(new SearchTarget2UsageTarget(project, target, allOptions));
+      usages.addAll(buildUsageViewQuery(getProject(), target, allOptions).findAll());
+    });
 
     return getUsageViewTreeTextRepresentation(usageTargets, usages);
   }
@@ -2272,7 +2276,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // overrides "getElementToMakeWritable" or has the following line:
     // if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     Project project = file.getProject();
-    VirtualFile vFile = Objects.requireNonNull(InjectedLanguageManager.getInstance(project).getTopLevelFile(file)).getVirtualFile();
+    VirtualFile vFile = requireNonNull(InjectedLanguageManager.getInstance(project).getTopLevelFile(file)).getVirtualFile();
     withReadOnlyFile(vFile, project, () -> {
       try {
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -2346,8 +2350,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public @NotNull String getUsageViewTreeTextRepresentation(@NotNull UsageViewImpl usageView) {
     Disposer.register(getTestRootDisposable(), usageView);
-    usageView.expandAll();
-    return TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation();
+    Ref<String> ref = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      usageView.expandAll();
+      ref.set(TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation());
+    });
+    return ref.get();
   }
 
   private static final class SelectionAndCaretMarkupLoader {
