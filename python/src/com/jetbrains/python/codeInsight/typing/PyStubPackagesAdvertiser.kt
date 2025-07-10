@@ -49,7 +49,8 @@ private class PyStubPackagesAdvertiser : PyInspection() {
                                 "celery" to "celery",
                                 "boto3" to "boto3",
                                 "scipy" to "scipy",
-                                "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
+                                "traits" to "traits",
+                                "rest_framework" to "djangorestframework") // top-level package to package on PyPI, sorted by the latter
 
     private val EXTRAS = mapOf("boto3-stubs" to "[full]")
 
