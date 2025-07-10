@@ -236,6 +236,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return changedStates
   }
 
+  override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
+    return !PluginManagerCore.isDisabled(pluginId)
+  }
+
   override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId)
     val service = PluginUpdatesService.connectWithCounter(callback)
