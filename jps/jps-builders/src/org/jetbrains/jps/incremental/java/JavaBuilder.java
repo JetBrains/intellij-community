@@ -1300,7 +1300,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return map;
   }
 
-  private static final class DiagnosticSink implements DiagnosticOutputConsumer {
+  private final class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
     private final AtomicInteger myErrorCount = new AtomicInteger(0);
     private final AtomicInteger myWarningCount = new AtomicInteger(0);
@@ -1318,9 +1318,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
     @Override
     public void registerJavacFileData(JavacFileData data) {
-      for (JavacFileReferencesRegistrar registrar : myRegistrars) {
-        registrar.registerFile(myContext, data.getFilePath(), Iterators.map(data.getRefs().entrySet(), entry -> entry), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
-      }
+      // ensure constants-, imports- and file content data is registered in the same sequence it arrives
+      submitAsyncTask(myContext, () -> {
+        for (JavacFileReferencesRegistrar registrar : myRegistrars) {
+          registrar.registerFile(myContext, data.getFilePath(), Iterators.map(data.getRefs().entrySet(), entry -> entry), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
+        }
+      });
     }
 
     @Override
