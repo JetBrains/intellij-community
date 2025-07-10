@@ -261,8 +261,8 @@ class StructureViewWrapperImpl(
     }
     else {
       val asyncDataContext = Utils.createAsyncDataContext(dataContext)
-      ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext, owner) }
-        .coalesceBy(this, owner)
+      ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
+        .coalesceBy(*if (owner != null) arrayOf(this, owner) else arrayOf(this))
         .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
           val firstRun = myFirstRun
           myFirstRun = false
@@ -639,7 +639,7 @@ class StructureViewWrapperImpl(
     private const val REFRESH_TIME = 100 // time to check if a context file selection is changed or not
     private const val REBUILD_TIME = 100L // time to wait and merge requests to rebuild a tree model
 
-    private fun getTargetVirtualFile(asyncDataContext: DataContext, focusOwner: Component?): VirtualFile? {
+    private fun getTargetVirtualFile(asyncDataContext: DataContext): VirtualFile? {
       val explicitlySpecifiedFile = STRUCTURE_VIEW_TARGET_FILE_KEY.getData(asyncDataContext)
       // explicitlySpecifiedFile == null           means no value was specified for this key
       // explicitlySpecifiedFile.isEmpty() == true means target virtual file (and structure view itself) is explicitly suppressed

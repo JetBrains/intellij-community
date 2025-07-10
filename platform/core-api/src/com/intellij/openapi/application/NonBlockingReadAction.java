@@ -120,7 +120,7 @@ public interface NonBlockingReadAction<T> {
    */
   @Contract(pure = true)
   @NotNull
-  NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality);
+  NonBlockingReadAction<T> coalesceBy(@NotNull Object @NotNull ... equality);
 
   /**
    * Submit this computation to be performed in a non-blocking read action on background thread. The returned promise

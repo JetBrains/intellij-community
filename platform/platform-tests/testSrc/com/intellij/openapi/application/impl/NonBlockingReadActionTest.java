@@ -159,12 +159,13 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   public void testProhibitCoalescingByCommonObjects() {
     NonBlockingReadAction<Void> ra = ReadAction.nonBlocking(() -> {});
     String shouldBeUnique = "Equality should be unique";
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy((Object)null); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(getProject()); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(new DocumentImpl("")); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(PsiUtilCore.NULL_PSI_ELEMENT); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(getClass()); });
-    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(""); });
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy((Object)null));
+    assertThrows(IllegalArgumentException.class, null, () -> ra.coalesceBy(this, null));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(getProject()));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(new DocumentImpl("")));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(PsiUtilCore.NULL_PSI_ELEMENT));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(getClass()));
+    assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> ra.coalesceBy(""));
   }
 
   public void testReportConflictForSameCoalesceFromDifferentPlaces() throws Exception {

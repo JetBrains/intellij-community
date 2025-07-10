@@ -48,9 +48,10 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
@@ -74,7 +75,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private final ContextConstraint @NotNull [] myConstraints;
   private final BooleanSupplier @NotNull [] myCancellationConditions;
   private final Set<? extends Disposable> myDisposables;
-  private final @Nullable List<?> myCoalesceEquality;
+  private final @Nullable @Unmodifiable List<?> myCoalesceEquality;
   private final @Nullable ProgressIndicator myProgressIndicator;
   /** Original computation passed in */
   private final Callable<? extends T> myOriginalComputation;
@@ -102,8 +103,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   /* ======================== monitoring end =============================================== */
 
+  private static final ContextConstraint[] EMPTY_CONSTRAINTS = new ContextConstraint[0];
+  private static final BooleanSupplier[] EMPTY_CONDITIONS = new BooleanSupplier[0];
   NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation) {
-    this(computation, null, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null, null);
+    this(computation, null, null, EMPTY_CONSTRAINTS, EMPTY_CONDITIONS, Collections.emptySet(), null, null);
   }
 
   private NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation,
@@ -112,7 +115,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                     ContextConstraint @NotNull [] constraints,
                                     BooleanSupplier @NotNull [] cancellationConditions,
                                     @NotNull Set<? extends Disposable> disposables,
-                                    @Nullable List<?> coalesceEquality,
+                                    @Unmodifiable @Nullable List<?> coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
     myOriginalComputation = computation;
     myActualComputation = MONITOR == null ? computation :
@@ -188,16 +191,21 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   @Override
-  public @NotNull NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality) {
-    if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
-    if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
+  public @NotNull NonBlockingReadAction<T> coalesceBy(@NotNull Object @NotNull ... equality) {
+    if (myCoalesceEquality != null) {
+      throw new IllegalStateException("Setting equality twice is not allowed");
+    }
+    if (equality.length == 0) {
+      throw new IllegalArgumentException("Equality should include at least one object");
+    }
     if (equality.length == 1 && isTooCommon(equality[0])) {
-      throw new IllegalArgumentException(
-        "Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
+      throw new IllegalArgumentException("Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
+    }
+    if (ArrayUtil.contains(null, equality)) {
+      throw new IllegalArgumentException("Equality must not contain null but got: " + Arrays.toString(equality));
     }
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
-                                           myDisposables,
-                                           new ArrayList<>(Arrays.asList(equality)), myProgressIndicator);
+                                           myDisposables, List.of(equality), myProgressIndicator);
   }
 
   private static boolean isTooCommon(Object o) {
@@ -260,7 +268,18 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
     private int myUseCount;
 
-    private final AtomicBoolean myCleaned = new AtomicBoolean();
+    @SuppressWarnings("unused") private volatile boolean myCleaned;
+    private static final VarHandle cleanedHandle;
+    static {
+      try {
+        cleanedHandle = MethodHandles.privateLookupIn(NonBlockingReadActionImpl.Submission.class, MethodHandles.lookup()).findVarHandle(
+          NonBlockingReadActionImpl.Submission.class, "myCleaned", boolean.class);
+      }
+      catch (NoSuchFieldException | IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     private final List<Disposable> myExpirationDisposables = new ArrayList<>();
 
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
@@ -365,7 +384,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void cleanupIfNeeded() {
-      if (myCleaned.compareAndSet(false, true)) {
+      if (cleanedHandle.compareAndSet(this, false, true)) {
         cleanup();
       }
     }
@@ -481,9 +500,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           try {
             boolean computationSuccessful;
             if (AppExecutorUtil.propagateContext()) {
-              computationSuccessful = ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> {
-                return attemptComputation();
-              });
+              computationSuccessful = ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> attemptComputation());
             } else {
               computationSuccessful = attemptComputation();
             }
