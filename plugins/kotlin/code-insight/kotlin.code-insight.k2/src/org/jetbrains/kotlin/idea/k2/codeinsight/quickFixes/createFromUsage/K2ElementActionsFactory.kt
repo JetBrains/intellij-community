@@ -584,7 +584,7 @@ private fun createAddPropertyActions(
     )
 
     val actions = if (setterRequired) {
-        listOf(
+        listOfNotNull(
             action, K2CreatePropertyFromUsageBuilder.generatePropertyAction(
                 targetContainer = targetContainer,
                 classOrFileName = classOrFileName,
@@ -593,7 +593,7 @@ private fun createAddPropertyActions(
             )
         )
     } else {
-        listOf(action)
+        listOfNotNull(action)
     }
     return actions
 }

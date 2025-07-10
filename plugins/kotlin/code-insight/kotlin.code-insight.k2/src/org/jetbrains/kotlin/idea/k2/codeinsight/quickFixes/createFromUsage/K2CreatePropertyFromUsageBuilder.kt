@@ -69,8 +69,8 @@ object K2CreatePropertyFromUsageBuilder {
         classOrFileName: String?,
         request: CreateFieldRequest,
         lateinit: Boolean
-    ): IntentionAction {
-        if (!request.isValid) null
+    ): IntentionAction? {
+        if (!request.isValid) return null
         return CreatePropertyFromUsageAction(targetContainer, classOrFileName, request, lateinit)
     }
 
@@ -180,8 +180,8 @@ object K2CreatePropertyFromUsageBuilder {
         owner: KtModifierListOwner,
         target: AnnotationUseSiteTarget?,
         request: AnnotationRequest
-    ): IntentionAction {
-        if (!request.isValid) null
+    ): IntentionAction? {
+        if (!request.isValid) return null
 
         return CreateAnnotationAction(owner, target, request)
     }
@@ -425,7 +425,6 @@ object K2CreatePropertyFromUsageBuilder {
                 }
             }
         }
-        return false
     }
 
     private val fieldAnnotationTargetCallableId: CallableId =
