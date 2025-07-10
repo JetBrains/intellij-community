@@ -246,7 +246,7 @@ public final class CollapsiblePanel extends JPanel {
 
   private void updateTitle() {
     if (paintAsSelected()) {
-      myTitleLabel.setForeground(UIUtil.getTableSelectionForeground());
+      myTitleLabel.setForeground(UIUtil.getTableSelectionForeground(true));
       myTitleLabel.setBackground(UIUtil.getTableSelectionBackground(true));
     } else {
       myTitleLabel.setForeground(UIUtil.getLabelForeground());

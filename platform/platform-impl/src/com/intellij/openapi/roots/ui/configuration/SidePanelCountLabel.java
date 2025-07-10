@@ -54,7 +54,7 @@ public final class SidePanelCountLabel extends JLabel {
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     g.fillRoundRect(0, 3, getWidth() - 6 - 1, getHeight() - 6, getHeight() - 6, getHeight() - 6);
     config.restore();
-    setForeground(isSelected() ? deepBlue.darker() : UIUtil.getListForeground(true));
+    setForeground(isSelected() ? deepBlue.darker() : UIUtil.getListForeground(true, true));
 
     super.paintComponent(g);
   }

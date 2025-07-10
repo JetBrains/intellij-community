@@ -173,12 +173,12 @@ public abstract class GroupedElementsRenderer implements Accessible {
 
     @Override
     protected Color getSelectionBackground() {
-      return UIUtil.getTreeSelectionBackground();
+      return UIUtil.getTreeSelectionBackground(true);
     }
 
     @Override
     protected Color getSelectionForeground() {
-      return UIUtil.getTreeSelectionForeground();
+      return UIUtil.getTreeSelectionForeground(true);
     }
 
     @Override

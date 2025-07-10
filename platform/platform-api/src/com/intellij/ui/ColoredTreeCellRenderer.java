@@ -82,7 +82,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     // We paint background if and only if tree path is selected and tree has focus.
     // If path is selected and tree is not focused then we just paint focused border.
     if (UIUtil.isFullRowSelectionLAF()) {
-      setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+      setBackground(selected ? UIUtil.getTreeSelectionBackground(true) : null);
     }
     else if (WideSelectionTreeUI.isWideSelection(tree)) {
       setPaintFocusBorder(false);
@@ -96,7 +96,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else if (selected) {
       setPaintFocusBorder(true);
       if (isFocused()) {
-        setBackground(UIUtil.getTreeSelectionBackground());
+        setBackground(UIUtil.getTreeSelectionBackground(true));
       }
       else {
         setBackground(null);

@@ -691,7 +691,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
 
     private void configureColors(boolean isSelected, JTable table, boolean hasFocus, final int row, final int column) {
-      setForeground(isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground());
+      setForeground(isSelected ? UIUtil.getTableSelectionForeground(true) : UIUtil.getTableForeground());
       setBackground(isSelected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground());
       if (hasFocus) {
         if (table.isCellEditable(row, column)) {

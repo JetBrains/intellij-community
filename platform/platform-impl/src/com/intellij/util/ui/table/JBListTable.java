@@ -119,7 +119,7 @@ public abstract class JBListTable {
 
     if (selected && focused) {
       panel.setBackground(UIUtil.getTableSelectionBackground(true));
-      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(true), UIUtil.getTableSelectionForeground());
+      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(true), UIUtil.getTableSelectionForeground(true));
     } else {
       panel.setBackground(UIUtil.getTableBackground());
       if (selected) {

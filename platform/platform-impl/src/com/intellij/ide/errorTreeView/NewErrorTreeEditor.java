@@ -133,15 +133,15 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
       myPanel.add(myRight.getTreeCellEditorComponent(tree, value, selected, expanded, leaf, row), BorderLayout.EAST);
 
       if (UIUtil.isFullRowSelectionLAF()) {
-        myPanel.setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+        myPanel.setBackground(selected ? UIUtil.getTreeSelectionBackground(true) : null);
       }
       else if (WideSelectionTreeUI.isWideSelection(tree)) {
         if (selected) {
-          myPanel.setBackground(UIUtil.getTreeSelectionBackground());
+          myPanel.setBackground(UIUtil.getTreeSelectionBackground(true));
         }
       }
       else if (selected) {
-        myPanel.setBackground(UIUtil.getTreeSelectionBackground());
+        myPanel.setBackground(UIUtil.getTreeSelectionBackground(true));
       }
       else {
         myPanel.setBackground(null);
