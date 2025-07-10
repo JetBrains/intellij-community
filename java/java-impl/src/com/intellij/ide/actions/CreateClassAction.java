@@ -11,7 +11,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.ui.InputValidatorEx;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -68,17 +67,14 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder.addKind(JavaPsiBundle.message("node.exception.tooltip"), PlatformIcons.EXCEPTION_CLASS_ICON,
                     JavaTemplateUtil.INTERNAL_EXCEPTION_TYPE_TEMPLATE_NAME);
 
-    if (!Registry.is("java.create.compact.source.file.separately") && JavaFeature.IMPLICIT_CLASSES.isSufficient(level)) {
-      String packageNameByDirectory = PackageIndex.getInstance(project).getPackageNameByDirectory(directory.getVirtualFile());
-      if ("".equals(packageNameByDirectory)) {
-        IconManager iconManager = IconManager.getInstance();
-        Icon icon = iconManager.createLayered(
-          iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.Class),
-          iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.FinalMark),
-          iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.RunnableMark)
-        );
-        builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"), icon, JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
-      }
+    if (JavaFeature.IMPLICIT_CLASSES.isSufficient(level)) {
+      IconManager iconManager = IconManager.getInstance();
+      Icon icon = iconManager.createLayered(
+        iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.Class),
+        iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.FinalMark),
+        iconManager.getPlatformIcon(com.intellij.ui.PlatformIcons.RunnableMark)
+      );
+      builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"), icon, JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
     }
 
     PsiDirectory[] dirs = {directory};
@@ -118,6 +114,17 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
 
   @Override
   protected final PsiClass doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
+    if (JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE.equals(templateName)) {
+      Project project = dir.getProject();
+      PsiDirectory current = dir;
+      PackageIndex instance = PackageIndex.getInstance(project);
+      while (current != null) {
+        if ("".equals(instance.getPackageName(current.getVirtualFile()))) {
+          return JavaDirectoryService.getInstance().createClass(current, className, templateName, true);
+        }
+        current = current.getParentDirectory();
+      }
+    }
     return JavaDirectoryService.getInstance().createClass(dir, className, templateName, true);
   }
 

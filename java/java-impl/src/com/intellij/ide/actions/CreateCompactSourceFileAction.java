@@ -77,5 +77,15 @@ public class CreateCompactSourceFileAction extends CreateClassAction implements 
     builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"), createIcon(), JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
     LanguageLevel level = PsiUtil.getLanguageLevel(directory);
     builder.setValidator(new CreateClassValidator(project, level));
+    String defaultName = "Main";
+    if (directory.findFile(defaultName + ".java") != null) {
+      for (int i = 1; i < 100; i++) {
+        if (directory.findFile(defaultName + i + ".java") == null) {
+          defaultName += i;
+          break;
+        }
+      }
+    }
+    builder.setDefaultText(defaultName);
   }
 }

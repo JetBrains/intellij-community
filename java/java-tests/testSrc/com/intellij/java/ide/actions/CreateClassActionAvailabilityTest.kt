@@ -83,11 +83,10 @@ class CreateClassActionAvailabilityTest : JavaCodeInsightFixtureTestCase() {
 
       builder.templateNames.clear()
       action.buildDialog(project, psiDirectory!!, builder)
-      assertTrue(!builder.templateNames.contains(JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE))
+      assertTrue(builder.templateNames.contains(JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE))
     }
 
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
-
       builder.templateNames.clear()
       action.buildDialog(project, sourceDirectory!!, builder)
       assertTrue(!builder.templateNames.contains(JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE))
