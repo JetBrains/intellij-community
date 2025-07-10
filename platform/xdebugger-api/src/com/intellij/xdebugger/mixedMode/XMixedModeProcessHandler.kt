@@ -13,7 +13,9 @@ class XMixedModeProcessHandler(
   highLevelProcessHandler: ProcessHandler,
   lowLevelProcessHandler: ProcessHandler,
   private val config: XMixedModeProcessesConfiguration,
-) : CompositeProcessHandler(listOf(highLevelProcessHandler, lowLevelProcessHandler)) {
+) : CompositeProcessHandler(
+  // TODO: [initialization-fix]
+  mutableListOf(highLevelProcessHandler, lowLevelProcessHandler)) {
 
   private val high get() = handlers[0]
   private val low get() = handlers[1]
@@ -29,6 +31,12 @@ class XMixedModeProcessHandler(
 
   // if this method was called, at least one of the processes wants to destroy the process
   override fun destroyProcessImpl() {
+    if (config.onlyLowDetaches) {
+      assert(low.detachIsDefault())
+      low.detachProcess()
+      return
+    }
+
     val bothWantDestroy = !low.detachIsDefault() && !high.detachIsDefault()
     if (bothWantDestroy) {
       super.destroyProcessImpl()
@@ -39,5 +47,12 @@ class XMixedModeProcessHandler(
     val (handlerWantsDetach, handlerWantsDestroy) = if (low.detachIsDefault()) Pair(low, high) else Pair(high, low)
     handlerWantsDetach.detachProcess()
     handlerWantsDestroy.destroyProcess()
+  }
+
+  // TODO: [initialization-fix]
+  fun addGoodLowLevelHandler(lowLevelHandler: ProcessHandler) {
+    (handlers as MutableList<ProcessHandler>)[1] = lowLevelHandler
+    low.startNotify()
+    low.addProcessListener(EachListener())
   }
 }

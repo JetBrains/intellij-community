@@ -312,9 +312,11 @@ class XMixedModeCombinedDebugProcess(
     this.stateMachine.set(state)
   }
 
+  // TODO: [initialization-fix]
   fun addGoodLowDebugProcess(low: XDebugProcess) {
     this.low = low
     stateMachine.low = low
+    myProcessHandler?.addGoodLowLevelHandler(low.processHandler)
     if (layouter != null)
       layouter!!.replaceFirstLayouterAndApply(low.createTabLayouter())
   }
