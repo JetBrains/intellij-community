@@ -4,6 +4,7 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.application.options.editor.EditorOptionsListener
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Template
@@ -239,21 +240,10 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         createPass(newPsiFile, hostEditor, newEditor)
       }
       if (identPass != null) {
-        var result = WRONG_DOCUMENT_VERSION // default to restart if canceled in the middle of computation
         var infos = listOf<HighlightInfo>()
-        val indicator = DaemonProgressIndicator()
+        var result = EMPTY_RESULT
         try {
-          // IdentifierHighlighterUpdater.doCollectInformation() could perform some heavy PSI activity,
-          // including resolve and find usages, for which it could call JobScheduler to parallelize the computation,
-          // which relies on the context ProgressIndicator for its own cancelability. So we have to provide this indicator
-          // manually here since it's not created automatically, and make sure it canceled on write action start.
-          // `runBlockingCancellable` here is to run suspendable fun under the indicator and cancel the job if the indicator is canceled;
-          // and `runWithWriteActionPriority` here is to cancel the indicator on WA start
-          ProgressIndicatorUtils.runWithWriteActionPriority({
-            runBlockingCancellable {
-              result = identPass.doCollectInformation(project, visibleRange)
-            }
-          }, indicator);
+          result = identPass.doCollectInformation(project, visibleRange)
           if (result == WRONG_DOCUMENT_VERSION) {
             launch(Dispatchers.EDT + modalityState) {
               updateHighlighted(project, hostEditor, coroutineScope)

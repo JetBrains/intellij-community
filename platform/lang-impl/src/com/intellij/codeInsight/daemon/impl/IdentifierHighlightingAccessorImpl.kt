@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Compani
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
@@ -18,9 +19,18 @@ object IdentifierHighlightingAccessorImpl : IdentifierHighlightingAccessor {
   override suspend fun getMarkupData(psiFile: PsiFile, editor: Editor, visibleRange: ProperTextRange, offset: Int): IdentifierHighlightingResult {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     return readAction {
-      if (psiFile.isValid && !editor.isDisposed)
-        IdentifierHighlightingComputer(psiFile, editor, visibleRange, offset).computeRanges()
-      else EMPTY_RESULT
+      if (!psiFile.isValid || editor.isDisposed) {
+        EMPTY_RESULT
+      }
+      else {
+        // IdentifierHighlightingComputer.computeRanges() could perform some heavy PSI activity,
+        // including resolve and find usages, for which it could call JobScheduler to parallelize the computation,
+        // which relies on the context ProgressIndicator for its own cancelability. So we have to provide this indicator
+        // manually here since it's not created automatically, and make sure it canceled on write action start.
+        blockingContextToIndicator {
+          IdentifierHighlightingComputer(psiFile, editor, visibleRange, offset).computeRanges()
+        }
+      }
     }
   }
 }
