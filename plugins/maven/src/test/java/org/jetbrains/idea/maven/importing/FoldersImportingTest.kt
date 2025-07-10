@@ -1398,20 +1398,18 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     val m1_custom_sources_root = "$projectPath/m1/sources"
     val m1_custom_tests_root = "$projectPath/m1/tests"
     val m1_standard_test_resources = "$projectPath/m1/src/test/resources"
-    val m1_content_roots = ArrayList<String>()
-    m1_content_roots.add(m1_custom_sources_root)
-    m1_content_roots.add(m1_custom_tests_root)
+    val m1_standard_test_resources_list = ArrayList<String>()
 
     // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
     // but I'm testing the behavior as is in order to preserve it in the new Workspace import
-    m1_content_roots.add(m1_standard_test_resources)
+    m1_standard_test_resources_list.add(m1_standard_test_resources)
     if (isMaven4) {
-      m1_content_roots.add("$m1_standard_test_resources-filtered")
+      m1_standard_test_resources_list.add("$m1_standard_test_resources-filtered")
     }
     assertSources(m1_custom_module, m1_custom_sources_root)
     assertResources(m1_custom_module)
     assertTestSources(m1_custom_module, m1_custom_tests_root)
-    assertTestResources(m1_custom_module, m1_standard_test_resources)
+    assertTestResources(m1_custom_module, *m1_standard_test_resources_list.toTypedArray())
   }
 
   @Test
