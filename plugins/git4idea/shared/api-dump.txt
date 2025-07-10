@@ -1,0 +1,346 @@
+f:com.intellij.vcs.git.shared.GitDisplayName
+- sf:INSTANCE:com.intellij.vcs.git.shared.GitDisplayName
+- sf:NAME:java.lang.String
+- sf:POINTER:java.util.function.Supplier
+f:com.intellij.vcs.git.shared.ref.GitRefUtil
+- sf:INSTANCE:com.intellij.vcs.git.shared.ref.GitRefUtil
+- f:getCommonCurrentBranch(java.util.Collection):git4idea.GitStandardLocalBranch
+- f:getCommonLocalBranches(java.util.Collection):java.util.Collection
+- f:getCommonRemoteBranches(java.util.Collection):java.util.Collection
+- f:getCommonTags(java.util.Collection):java.util.Collection
+- sf:stripRefsPrefix(java.lang.String):java.lang.String
+a:git4idea.GitBranch
+- git4idea.GitReference
+- sf:Companion:git4idea.GitBranch$Companion
+- sf:REFS_HEADS_PREFIX:java.lang.String
+- sf:REFS_REMOTES_PREFIX:java.lang.String
+- p:<init>(java.lang.String):V
+- a:isRemote():Z
+f:git4idea.GitBranch$Companion
+f:git4idea.GitDisposable
+- com.intellij.openapi.Disposable
+- sf:Companion:git4idea.GitDisposable$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- dispose():V
+- sf:getInstance(com.intellij.openapi.project.Project):git4idea.GitDisposable
+f:git4idea.GitDisposable$Companion
+- f:getInstance(com.intellij.openapi.project.Project):git4idea.GitDisposable
+Fa:git4idea.GitReference
+- java.lang.Comparable
+- sf:BRANCH_NAME_HASHING_STRATEGY:com.intellij.util.containers.HashingStrategy
+- sf:Companion:git4idea.GitReference$Companion
+- sf:REFS_NAMES_COMPARATOR:java.util.Comparator
+- <init>(java.lang.String):V
+- compareTo(git4idea.GitReference):I
+- equals(java.lang.Object):Z
+- a:getFullName():java.lang.String
+- f:getName():java.lang.String
+- hashCode():I
+f:git4idea.GitReference$Companion
+a:git4idea.GitRemoteBranch
+- git4idea.GitBranch
+- p:<init>(java.lang.String,git4idea.repo.GitRemote):V
+- a:getNameForLocalOperations():java.lang.String
+- a:getNameForRemoteOperations():java.lang.String
+- f:getRemote():git4idea.repo.GitRemote
+- isRemote():Z
+Fc:git4idea.GitStandardLocalBranch
+- git4idea.GitBranch
+- sf:Companion:git4idea.GitStandardLocalBranch$Companion
+- <init>(java.lang.String):V
+- compareTo(git4idea.GitReference):I
+- equals(java.lang.Object):Z
+- getFullName():java.lang.String
+- hashCode():I
+- isRemote():Z
+f:git4idea.GitStandardLocalBranch$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:git4idea.GitStandardRemoteBranch
+- git4idea.GitRemoteBranch
+- sf:Companion:git4idea.GitStandardRemoteBranch$Companion
+- <init>(git4idea.repo.GitRemote,java.lang.String):V
+- compareTo(git4idea.GitReference):I
+- equals(java.lang.Object):Z
+- getFullName():java.lang.String
+- getNameForLocalOperations():java.lang.String
+- getNameForRemoteOperations():java.lang.String
+- hashCode():I
+f:git4idea.GitStandardRemoteBranch$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:git4idea.GitSvnRemoteBranch
+- git4idea.GitRemoteBranch
+- <init>(java.lang.String):V
+- getFullName():java.lang.String
+- getNameForLocalOperations():java.lang.String
+- getNameForRemoteOperations():java.lang.String
+f:git4idea.GitTag
+- git4idea.GitReference
+- sf:Companion:git4idea.GitTag$Companion
+- sf:REFS_TAGS_PREFIX:java.lang.String
+- <init>(java.lang.String):V
+- compareTo(git4idea.GitReference):I
+- getFullName():java.lang.String
+f:git4idea.GitTag$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+e:git4idea.branch.GitBranchType
+- java.lang.Enum
+- git4idea.branch.GitRefType
+- sf:LOCAL:git4idea.branch.GitBranchType
+- sf:RECENT:git4idea.branch.GitBranchType
+- sf:REMOTE:git4idea.branch.GitBranchType
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):git4idea.branch.GitBranchType
+- s:values():git4idea.branch.GitBranchType[]
+git4idea.branch.GitRefType
+- com.intellij.dvcs.branch.BranchType
+- sf:Companion:git4idea.branch.GitRefType$Companion
+f:git4idea.branch.GitRefType$Companion
+- f:of(git4idea.GitReference,Z):git4idea.branch.GitRefType
+- bs:of$default(git4idea.branch.GitRefType$Companion,git4idea.GitReference,Z,I,java.lang.Object):git4idea.branch.GitRefType
+f:git4idea.branch.GitTagType
+- git4idea.branch.GitRefType
+- sf:INSTANCE:git4idea.branch.GitTagType
+- getName():java.lang.String
+e:git4idea.config.GitIncomingCheckStrategy
+- java.lang.Enum
+- sf:Always:git4idea.config.GitIncomingCheckStrategy
+- sf:Auto:git4idea.config.GitIncomingCheckStrategy
+- sf:Never:git4idea.config.GitIncomingCheckStrategy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):git4idea.config.GitIncomingCheckStrategy
+- s:values():git4idea.config.GitIncomingCheckStrategy[]
+e:git4idea.config.GitSaveChangesPolicy
+- java.lang.Enum
+- sf:SHELVE:git4idea.config.GitSaveChangesPolicy
+- sf:STASH:git4idea.config.GitSaveChangesPolicy
+- getText():java.lang.String
+- a:selectBundleMessage(java.lang.String,java.lang.String):java.lang.String
+- s:valueOf(java.lang.String):git4idea.config.GitSaveChangesPolicy
+- s:values():git4idea.config.GitSaveChangesPolicy[]
+f:git4idea.config.GitVcsOptions
+- com.intellij.openapi.components.BaseState
+- <init>():V
+- f:getBranchSettings():com.intellij.dvcs.branch.DvcsBranchSettings
+- f:getCoreFsMonitor():java.lang.String
+- f:getCoreLongpaths():java.lang.String
+- f:getCoreUntrackedCache():java.lang.String
+- f:getFeatureManyFiles():java.lang.String
+- f:getFetchTagsMode():git4idea.fetch.GitFetchTagsMode
+- f:getFilterByActionInPopup():Z
+- f:getFilterByRepositoryInPopup():Z
+- f:getGcAuto():java.lang.String
+- f:getIncomingCheckStrategy():git4idea.config.GitIncomingCheckStrategy
+- f:getPathToGit():java.lang.String
+- f:getPreviousCommitAuthors():java.util.List
+- f:getPushTags():git4idea.push.GitPushTagMode
+- f:getRecentBranchByRepository():java.util.Map
+- f:getRecentCommonBranch():java.lang.String
+- f:getRecentGitRootPath():java.lang.String
+- f:getResetMode():git4idea.reset.GitResetMode
+- f:getRootSync():com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- f:getSaveChangesPolicy():git4idea.config.GitSaveChangesPolicy
+- f:getShowRecentBranches():Z
+- f:getShowTags():Z
+- f:getUpdateMethod():git4idea.config.UpdateMethod
+- f:getWarnAboutCrlf():Z
+- f:getWarnAboutLargeFilesLimitMb():I
+- f:isAddSuffixToCherryPicksOfPublishedCommits():Z
+- f:isCommitRenamesSeparately():Z
+- f:isPreviewPushOnCommitAndPush():Z
+- f:isPreviewPushProtectedOnly():Z
+- f:isPushAutoUpdate():Z
+- f:isSetUserNameGlobally():Z
+- f:isSignOffCommit():Z
+- f:isSwapSidesInCompareBranches():Z
+- f:isUpdateBranchesInfo():Z
+- f:isWarnAboutBadFileNames():Z
+- f:isWarnAboutDetachedHead():Z
+- f:isWarnAboutLargeFiles():Z
+- f:setAddSuffixToCherryPicksOfPublishedCommits(Z):V
+- f:setBranchSettings(com.intellij.dvcs.branch.DvcsBranchSettings):V
+- f:setCommitRenamesSeparately(Z):V
+- f:setCoreFsMonitor(java.lang.String):V
+- f:setCoreLongpaths(java.lang.String):V
+- f:setCoreUntrackedCache(java.lang.String):V
+- f:setFeatureManyFiles(java.lang.String):V
+- f:setFetchTagsMode(git4idea.fetch.GitFetchTagsMode):V
+- f:setFilterByActionInPopup(Z):V
+- f:setFilterByRepositoryInPopup(Z):V
+- f:setGcAuto(java.lang.String):V
+- f:setIncomingCheckStrategy(git4idea.config.GitIncomingCheckStrategy):V
+- f:setPathToGit(java.lang.String):V
+- f:setPreviewPushOnCommitAndPush(Z):V
+- f:setPreviewPushProtectedOnly(Z):V
+- f:setPushAutoUpdate(Z):V
+- f:setPushTags(git4idea.push.GitPushTagMode):V
+- f:setRecentCommonBranch(java.lang.String):V
+- f:setRecentGitRootPath(java.lang.String):V
+- f:setResetMode(git4idea.reset.GitResetMode):V
+- f:setRootSync(com.intellij.dvcs.branch.DvcsSyncSettings$Value):V
+- f:setSaveChangesPolicy(git4idea.config.GitSaveChangesPolicy):V
+- f:setSetUserNameGlobally(Z):V
+- f:setShowRecentBranches(Z):V
+- f:setShowTags(Z):V
+- f:setSignOffCommit(Z):V
+- f:setSwapSidesInCompareBranches(Z):V
+- f:setUpdateBranchesInfo(Z):V
+- f:setUpdateMethod(git4idea.config.UpdateMethod):V
+- f:setWarnAboutBadFileNames(Z):V
+- f:setWarnAboutCrlf(Z):V
+- f:setWarnAboutDetachedHead(Z):V
+- f:setWarnAboutLargeFiles(Z):V
+- f:setWarnAboutLargeFilesLimitMb(I):V
+f:git4idea.config.GitVcsSettings
+- com.intellij.openapi.components.SimplePersistentStateComponent
+- com.intellij.dvcs.branch.DvcsCompareSettings
+- com.intellij.dvcs.branch.DvcsSyncSettings
+- <init>(com.intellij.openapi.project.Project):V
+- autoUpdateIfPushRejected():Z
+- filterByActionInPopup():Z
+- filterByRepositoryInPopup():Z
+- getBranchSettings():com.intellij.dvcs.branch.DvcsBranchSettings
+- getCommitAuthors():java.lang.String[]
+- getFetchTagsMode():git4idea.fetch.GitFetchTagsMode
+- getIncomingCheckStrategy():git4idea.config.GitIncomingCheckStrategy
+- s:getInstance(com.intellij.openapi.project.Project):git4idea.config.GitVcsSettings
+- getPathToGit():java.lang.String
+- getPushTagMode():git4idea.push.GitPushTagMode
+- getRecentBranchesByRepository():java.util.Map
+- getRecentCommonBranch():java.lang.String
+- getRecentRootPath():java.lang.String
+- getResetMode():git4idea.reset.GitResetMode
+- getSaveChangesPolicy():git4idea.config.GitSaveChangesPolicy
+- getSyncSetting():com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- getUpdateMethod():git4idea.config.UpdateMethod
+- getWarnAboutLargeFilesLimitMb():I
+- isCommitRenamesSeparately():Z
+- isPreviewPushProtectedOnly():Z
+- loadState(git4idea.config.GitVcsOptions):V
+- noStateLoaded():V
+- saveCommitAuthor(java.lang.String):V
+- setAddSuffixToCherryPicks(Z):V
+- setAutoUpdateIfPushRejected(Z):V
+- setBranchGroupingSettings(com.intellij.dvcs.branch.GroupingKey,Z):V
+- setCommitRenamesSeparately(Z):V
+- setFetchTagsMode(git4idea.fetch.GitFetchTagsMode):V
+- setFilterByActionInPopup(Z):V
+- setFilterByRepositoryInPopup(Z):V
+- setIncomingCheckStrategy(git4idea.config.GitIncomingCheckStrategy):V
+- setPathToGit(java.lang.String):V
+- setPreviewPushOnCommitAndPush(Z):V
+- setPreviewPushProtectedOnly(Z):V
+- setPushTagMode(git4idea.push.GitPushTagMode):V
+- setRecentBranchOfRepository(java.lang.String,java.lang.String):V
+- setRecentCommonBranch(java.lang.String):V
+- setRecentRoot(java.lang.String):V
+- setResetMode(git4idea.reset.GitResetMode):V
+- setSaveChangesPolicy(git4idea.config.GitSaveChangesPolicy):V
+- setShowRecentBranches(Z):V
+- setShowTags(Z):V
+- setSignOffCommit(Z):V
+- setSwapSidesInCompareBranches(Z):V
+- setSyncSetting(com.intellij.dvcs.branch.DvcsSyncSettings$Value):V
+- setUpdateMethod(git4idea.config.UpdateMethod):V
+- setUserNameGlobally(Z):V
+- setWarnAboutBadFileNames(Z):V
+- setWarnAboutCrlf(Z):V
+- setWarnAboutDetachedHead(Z):V
+- setWarnAboutLargeFiles(Z):V
+- setWarnAboutLargeFilesLimitMb(I):V
+- shouldAddSuffixToCherryPicksOfPublishedCommits():Z
+- shouldExecuteOperationsOnAllRoots():Z
+- shouldPreviewPushOnCommitAndPush():Z
+- shouldSetUserNameGlobally():Z
+- shouldSignOffCommit():Z
+- shouldSwapSidesInCompareBranches():Z
+- showRecentBranches():Z
+- showTags():Z
+- warnAboutBadFileNames():Z
+- warnAboutCrlf():Z
+- warnAboutDetachedHead():Z
+- warnAboutLargeFiles():Z
+e:git4idea.config.UpdateMethod
+- java.lang.Enum
+- sf:BRANCH_DEFAULT:git4idea.config.UpdateMethod
+- sf:MERGE:git4idea.config.UpdateMethod
+- sf:REBASE:git4idea.config.UpdateMethod
+- getMethodName():java.lang.String
+- getPresentation():java.lang.String
+- s:valueOf(java.lang.String):git4idea.config.UpdateMethod
+- s:values():git4idea.config.UpdateMethod[]
+e:git4idea.fetch.GitFetchTagsMode
+- java.lang.Enum
+- sf:ALL_TAGS:git4idea.fetch.GitFetchTagsMode
+- sf:DEFAULT:git4idea.fetch.GitFetchTagsMode
+- sf:NO_TAGS:git4idea.fetch.GitFetchTagsMode
+- sf:PRUNE_TAGS:git4idea.fetch.GitFetchTagsMode
+- f:getDescription():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getModeName():java.lang.String
+- f:getParam():java.lang.String
+- s:valueOf(java.lang.String):git4idea.fetch.GitFetchTagsMode
+- s:values():git4idea.fetch.GitFetchTagsMode[]
+f:git4idea.i18n.GitBundle
+- sf:BUNDLE:java.lang.String
+- s:getString(java.lang.String):java.lang.String
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+f:git4idea.push.GitPushTagMode
+- com.intellij.openapi.components.BaseState
+- sf:ALL:git4idea.push.GitPushTagMode
+- sf:Companion:git4idea.push.GitPushTagMode$Companion
+- sf:FOLLOW:git4idea.push.GitPushTagMode
+- <init>():V
+- <init>(java.lang.String,java.lang.String):V
+- f:getArgument():java.lang.String
+- f:getTitle():java.lang.String
+- sf:getValues():git4idea.push.GitPushTagMode[]
+- f:setArgument(java.lang.String):V
+- f:setTitle(java.lang.String):V
+f:git4idea.push.GitPushTagMode$Companion
+- f:getValues():git4idea.push.GitPushTagMode[]
+f:git4idea.push.GitPushTagModeKt
+- sf:localizedTitle(git4idea.push.GitPushTagMode):java.lang.String
+f:git4idea.push.GitSpecialRefRemoteBranch
+- git4idea.GitRemoteBranch
+- <init>(java.lang.String,git4idea.repo.GitRemote):V
+- getFullName():java.lang.String
+- getNameForLocalOperations():java.lang.String
+- getNameForRemoteOperations():java.lang.String
+f:git4idea.repo.GitRemote
+- java.lang.Comparable
+- sf:Companion:git4idea.repo.GitRemote$Companion
+- sf:DOT:git4idea.repo.GitRemote
+- sf:ORIGIN:java.lang.String
+- <init>(java.lang.String,java.util.List,java.util.Collection,java.util.List,java.util.List):V
+- compareTo(git4idea.repo.GitRemote):I
+- equals(java.lang.Object):Z
+- f:getFetchRefSpecs():java.util.List
+- f:getFirstUrl():java.lang.String
+- f:getName():java.lang.String
+- f:getPushRefSpecs():java.util.List
+- f:getPushUrls():java.util.Collection
+- f:getUrls():java.util.List
+- hashCode():I
+bf:git4idea.repo.GitRemote$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:git4idea.repo.GitRemote$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):git4idea.repo.GitRemote
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,git4idea.repo.GitRemote):V
+f:git4idea.repo.GitRemote$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+e:git4idea.reset.GitResetMode
+- java.lang.Enum
+- sf:HARD:git4idea.reset.GitResetMode
+- sf:KEEP:git4idea.reset.GitResetMode
+- sf:MIXED:git4idea.reset.GitResetMode
+- sf:SOFT:git4idea.reset.GitResetMode
+- getArgument():java.lang.String
+- s:getDefault():git4idea.reset.GitResetMode
+- getDescription():java.lang.String
+- getName():java.lang.String
+- s:valueOf(java.lang.String):git4idea.reset.GitResetMode
+- s:values():git4idea.reset.GitResetMode[]

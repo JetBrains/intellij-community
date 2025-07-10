@@ -17,10 +17,12 @@ import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
 
+@ApiStatus.Internal
 abstract class GitBranchesTreeModel(
   protected val project: Project,
   private val actions: List<Any>,
@@ -151,17 +153,21 @@ abstract class GitBranchesTreeModel(
     return repositories.all { repo -> repo.favoriteRefs.contains(this) }
   }
 
+  @ApiStatus.Internal
   object TreeRoot : PathElementIdProvider {
     const val NAME = "TreeRoot"
     override fun getPathElementId(): String = NAME
   }
+  @ApiStatus.Internal
   data class BranchesPrefixGroup(val type: GitRefType,
                                  val prefix: List<String>,
                                  val repository: GitRepositoryModel? = null) : PathElementIdProvider {
     override fun getPathElementId(): String = type.name + "/" + prefix.toString()
   }
+  @ApiStatus.Internal
   data class RefTypeUnderRepository(val repository: GitRepositoryModel, val type: GitRefType)
 
+  @ApiStatus.Internal
   data class RepositoryNode(
     val repository: GitRepositoryModel,
     /**
@@ -172,11 +178,12 @@ abstract class GitBranchesTreeModel(
     override fun getPresentableText(): String = repository.shortName
   }
 
+  @ApiStatus.Internal
   data class RefUnderRepository(val repository: GitRepositoryModel, val ref: GitReference): PresentableNode {
     override fun getPresentableText(): String = ref.name
   }
 
-  interface PresentableNode : ItemPresentation {
+  internal interface PresentableNode : ItemPresentation {
     override fun getLocationString(): String? = null
     override fun getIcon(unused: Boolean): Icon? = null
   }

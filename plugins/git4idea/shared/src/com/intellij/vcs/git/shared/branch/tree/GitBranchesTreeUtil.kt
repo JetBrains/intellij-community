@@ -12,6 +12,7 @@ import javax.swing.JTree
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
+@ApiStatus.Internal
 object GitBranchesTreeUtil {
   @ApiStatus.Internal
   const val FILTER_DEBOUNCE_MS: Long = 100L
