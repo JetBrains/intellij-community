@@ -91,7 +91,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
     // ok, something did change. but can we still import? (in case of auto-import there maybe multiple fixes wanting to be executed)
     List<? extends PsiClass> classesToImport = getClassesToImport(true);
-    return classesToImport.size() == 1 && !isClassDefinitelyPositivelyImportedAlready(myContainingPsiFile, classesToImport.get(0));
+    return myContainingPsiFile.isValid() && classesToImport.size() == 1 && !isClassDefinitelyPositivelyImportedAlready(myContainingPsiFile, classesToImport.get(0));
   }
 
   /**
