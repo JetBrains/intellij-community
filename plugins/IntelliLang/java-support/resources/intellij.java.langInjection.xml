@@ -32,7 +32,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <tipAndTrick file="InjectSQLLanguage.html"/>
-    <compileServer.plugin classpath="java-langInjection-jps.jar"/>
+    <compileServer.plugin classpath="java-langInjection-jps.jar;modules/intellij.java.langInjection.jps.jar"/>
     <languageInjectionPerformer language="JAVA"
                                 implementationClass="org.intellij.plugins.intelliLang.inject.java.JavaInjectionPerformer"/>
   </extensions>
