@@ -50,6 +50,9 @@ internal open class TerminalEventsHandlerImpl(
   private val terminalState: TerminalState
     get() = sessionModel.terminalState.value
 
+  private val vfsSynchronizer: TerminalVfsSynchronizer?
+    get() = editor.getUserData(TerminalVfsSynchronizer.KEY)
+
   override fun keyTyped(e: TimedKeyEvent) {
     updateLookupOnTyping(e.original.keyChar)
     val selectionModel = editor.selectionModel
@@ -83,6 +86,8 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun processTerminalKeyPressed(e: TimedKeyEvent): Boolean {
     try {
+      vfsSynchronizer?.handleKeyPressed(e.original)
+
       val keyCode = e.original.keyCode
       val keyChar = e.original.keyChar
       updateLookupOnAction(keyCode)

@@ -184,7 +184,14 @@ internal class ReworkedTerminalView(
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
 
-    TerminalVfsSynchronizer(controller, terminalPanel, this)
+    val synchronizer = TerminalVfsSynchronizer(
+      controller,
+      outputModel,
+      sessionModel,
+      terminalPanel,
+      coroutineScope.childScope("TerminalVfsSynchronizer"),
+    )
+    outputEditor.putUserData(TerminalVfsSynchronizer.KEY, synchronizer)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
