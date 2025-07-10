@@ -22,6 +22,8 @@ interface TerminalOutputModel {
    */
   val cursorOffsetState: StateFlow<Int>
 
+  fun getAbsoluteLineIndex(documentOffset: Int): Long
+
   /**
    * Returns document ranges with corresponding text attributes.
    */
@@ -38,7 +40,7 @@ interface TerminalOutputModel {
   fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int)
   
   fun insertAtCursor(text: String)
-  
+
   fun backspace()
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)

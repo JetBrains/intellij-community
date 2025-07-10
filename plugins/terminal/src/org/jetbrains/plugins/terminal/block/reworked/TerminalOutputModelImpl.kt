@@ -44,6 +44,11 @@ class TerminalOutputModelImpl(
 
   private var contentUpdateInProgress: Boolean = false
 
+  override fun getAbsoluteLineIndex(documentOffset: Int): Long {
+    val documentLineIndex = document.getLineNumber(documentOffset)
+    return trimmedLinesCount + documentLineIndex.toLong()
+  }
+
   override fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>) {
     changeDocumentContent {
       // If absolute line index is far in the past - in the already trimmed part of the output,
@@ -84,7 +89,7 @@ class TerminalOutputModelImpl(
   }
 
   override fun insertAtCursor(text: String) {
-    changeDocumentContent { 
+    changeDocumentContent {
       val offset = mutableCursorOffsetState.value
       document.insertString(offset, text)
       offset
