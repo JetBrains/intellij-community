@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.vcs.impl.backend.shelf
+package com.intellij.vcs.shelf
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -15,10 +15,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.GroupingPolicyFactoryHolder
 import com.intellij.platform.project.asEntity
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.platform.vcs.impl.backend.shelf.diff.BackendShelveEditorDiffPreview
-import com.intellij.platform.vcs.impl.backend.shelf.diff.ShelfDiffChangesProvider
-import com.intellij.platform.vcs.impl.backend.shelf.diff.ShelfDiffChangesState
-import com.intellij.platform.vcs.impl.backend.shelf.diff.ShelvedPreviewProcessor
+import com.intellij.vcs.shelf.diff.BackendShelveEditorDiffPreview
+import com.intellij.vcs.shelf.diff.ShelfDiffChangesProvider
+import com.intellij.vcs.shelf.diff.ShelfDiffChangesState
+import com.intellij.vcs.shelf.diff.ShelvedPreviewProcessor
 import com.intellij.platform.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.platform.vcs.impl.shared.rhizome.DiffSplitterEntity

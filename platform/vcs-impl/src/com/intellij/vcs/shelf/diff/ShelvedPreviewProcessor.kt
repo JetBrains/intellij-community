@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.vcs.impl.backend.shelf.diff
+package com.intellij.vcs.shelf.diff
 
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
@@ -13,10 +13,10 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapperDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.platform.project.asEntity
-import com.intellij.platform.vcs.impl.backend.shelf.ShelfTreeHolder
+import com.intellij.vcs.shelf.ShelfTreeHolder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.platform.vcs.impl.backend.shelf.ShelvedListNode
+import com.intellij.vcs.shelf.ShelvedListNode
 import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 import com.intellij.platform.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity

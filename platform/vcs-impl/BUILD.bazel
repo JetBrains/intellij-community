@@ -73,6 +73,8 @@ jvm_library(
     "@lib//:jgoodies-forms",
     "//platform/observable",
     "//platform/platform-impl/concurrency",
+    "//platform/project/shared:project",
+    "//platform/kernel/backend",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )
@@ -151,6 +153,8 @@ jvm_library(
     "@lib//:jgoodies-forms",
     "//platform/observable",
     "//platform/platform-impl/concurrency",
+    "//platform/project/shared:project",
+    "//platform/kernel/backend",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )
