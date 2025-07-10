@@ -128,10 +128,6 @@
       <url>https://cache-redirector.jetbrains.com/intellij-dependencies</url>
     </repository>
     <repository>
-      <id>kotlin-ide-plugin-dependencies</id>
-      <url>https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies</url>
-    </repository>
-    <repository>
       <id>teamcity-repository</id>
       <url>https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository</url>
     </repository>
