@@ -1656,6 +1656,10 @@ com.intellij.util.indexing.PsiDependentFileContent
 - a:getLighterAST():com.intellij.lang.LighterAST
 - a:getPsiFile():com.intellij.psi.PsiFile
 com.intellij.util.messages.MessageBusOwner
+f:com.intellij.util.progress.CancellationUtil
+- sf:acquireMaybeCancellable(java.util.concurrent.Semaphore):V
+- sf:acquireMaybeCancellable(java.util.concurrent.Semaphore,I):V
+- bs:acquireMaybeCancellable$default(java.util.concurrent.Semaphore,I,I,java.lang.Object):V
 com.intellij.util.ui.PresentableEnum
 - a:getPresentableText():java.lang.String
 org.jetbrains.concurrency.CancellablePromise

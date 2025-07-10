@@ -25,6 +25,7 @@ import com.intellij.vcs.log.data.index.*;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
+import com.intellij.vcs.log.impl.VcsLogStorageLocker;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import io.opentelemetry.api.trace.Span;
@@ -65,6 +66,8 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private final @NotNull TopCommitsCache myTopCommitsDetailsCache;
   private final @NotNull VcsUserRegistryImpl myUserRegistry;
   private final @NotNull VcsLogUserResolver myUserResolver;
+  private final @NotNull VcsLogStorageLocker myStorageLocker;
+  private final @NotNull String myStorageId;
   private final @NotNull VcsLogStorage myStorage;
   private final @NotNull ContainingBranchesGetter myContainingBranchesGetter;
   private final @NotNull VcsLogRefresherImpl myRefresher;
@@ -89,9 +92,19 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
     VcsLogProgress progress = new VcsLogProgress(this);
 
-    Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(progress, isIndexEnabled);
-    myStorage = storageAndIndex.first;
-    myIndex = storageAndIndex.second;
+    myStorageLocker = VcsLogStorageLocker.Companion.getInstance();
+    myStorageId = PersistentUtil.calcLogId(myProject, myLogProviders);
+    // storage can not be opened twice, so we have to wait for other clients (previously opened/closed project) to close it first
+    myStorageLocker.acquireLock(myStorageId);
+    try {
+      Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(progress, isIndexEnabled);
+      myStorage = storageAndIndex.first;
+      myIndex = storageAndIndex.second;
+    }
+    catch (Throwable e) {
+      myStorageLocker.releaseLock(myStorageId);
+      throw e;
+    }
 
     myTopCommitsDetailsCache = new TopCommitsCache(myStorage);
     myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
@@ -131,7 +144,6 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
       return new Pair<>(new InMemoryStorage(), new EmptyIndex());
     }
 
-    String logId = PersistentUtil.calcLogId(myProject, myLogProviders);
     Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
     boolean isIndexSwitchedOnInRegistry = isIndexSwitchedOnInRegistry();
     boolean isIndexSwitchedOn = isIndexEnabled && isIndexSwitchedOnInRegistry;
@@ -140,13 +152,15 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     VcsLogStorageBackend indexBackend;
     try {
       if (Registry.is("vcs.log.index.sqlite.storage", false)) {
-        SqliteVcsLogStorageBackend sqliteBackend = new SqliteVcsLogStorageBackend(myProject, logId, myLogProviders, myErrorHandler, this);
+        SqliteVcsLogStorageBackend sqliteBackend =
+          new SqliteVcsLogStorageBackend(myProject, myStorageId, myLogProviders, myErrorHandler, this);
         storage = sqliteBackend;
         indexBackend = sqliteBackend;
       }
       else {
         Set<VirtualFile> indexingRoots = isIndexSwitchedOn ? new LinkedHashSet<>(indexers.keySet()) : Collections.emptySet();
-        Pair<VcsLogStorage, VcsLogStorageBackend> storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(myProject, logId,
+        Pair<VcsLogStorage, VcsLogStorageBackend> storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(myProject,
+                                                                                                                          myStorageId,
                                                                                                                           myLogProviders,
                                                                                                                           indexingRoots,
                                                                                                                           myErrorHandler,
@@ -363,28 +377,33 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @Override
   public void dispose() {
-    SingleTaskController.SingleTask initialization;
+    try {
+      SingleTaskController.SingleTask initialization;
 
-    synchronized (myLock) {
-      initialization = myInitialization;
-      myInitialization = null;
-      myState = State.DISPOSED;
-    }
-
-    if (initialization != null) {
-      initialization.cancel();
-      try {
-        initialization.waitFor(1, TimeUnit.MINUTES);
+      synchronized (myLock) {
+        initialization = myInitialization;
+        myInitialization = null;
+        myState = State.DISPOSED;
       }
-      catch (InterruptedException | ExecutionException | TimeoutException e) {
-        LOG.warn(e);
+
+      if (initialization != null) {
+        initialization.cancel();
+        try {
+          initialization.waitFor(1, TimeUnit.MINUTES);
+        }
+        catch (InterruptedException | ExecutionException | TimeoutException e) {
+          LOG.warn(e);
+        }
+      }
+      resetState();
+
+      if (myStorage instanceof VcsLogStorageImpl concreteStorage && !concreteStorage.isDisposed()) {
+        LOG.error("Storage for $name was not disposed");
+        Disposer.dispose(concreteStorage);
       }
     }
-    resetState();
-
-    if (myStorage instanceof VcsLogStorageImpl concreteStorage && !concreteStorage.isDisposed()) {
-      LOG.error("Storage for $name was not disposed");
-      Disposer.dispose(concreteStorage);
+    finally {
+      myStorageLocker.releaseLock(myStorageId);
     }
   }
 
