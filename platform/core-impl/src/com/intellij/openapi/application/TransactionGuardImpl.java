@@ -57,7 +57,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   @Override
   public void submitTransactionAndWait(final @NotNull Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
-    if (app.isWriteIntentLockAcquired()) {
+    if (app.isDispatchThread()) {
       if (!myWritingAllowed) {
         @NonNls String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                                  "Please use asynchronous submit*Transaction. " +
