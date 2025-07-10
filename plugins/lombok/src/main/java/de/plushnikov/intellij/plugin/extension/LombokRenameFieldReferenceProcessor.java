@@ -40,8 +40,8 @@ public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariabl
   @Override
   public void prepareRenaming(@NotNull PsiElement element, @NotNull String newFieldName, @NotNull Map<PsiElement, String> allRenames) {
     // element is a PsiField or PsiRecordComponent
-    final PsiMember psiElementAsMember = (PsiMember)element;
-    final PsiVariable psiElementAsVariable = (PsiVariable)element;
+    if (!(element instanceof PsiMember psiElementAsMember)) return;
+    if (!(element instanceof PsiVariable psiElementAsVariable)) return;
 
     final PsiClass containingClass = psiElementAsMember.getContainingClass();
     final String currentFieldName = psiElementAsMember.getName();
