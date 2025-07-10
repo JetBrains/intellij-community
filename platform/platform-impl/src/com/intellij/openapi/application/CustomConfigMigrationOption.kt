@@ -19,6 +19,7 @@ private val log = logger<CustomConfigMigrationOption>()
  *
  * - If we need to start with a clean config ("Restore Default Settings" action), the file is empty.
  * - If we need to import config from the given place ("Import Settings" action), the format is `import <path>`.
+ * - If we need to import config from a previous version the same as it happens if the config directory is absent, the format is `merge-configs`.
  * - If the import has already been performed, but the IDE was restarted (because custom vmoptions were added or removed),
  * and we need to restore some values of system properties indicating the first start after importing the config,
  * then the format is `properties <system properties separated by space`, e.g.
