@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.asJavaResourceRoot
@@ -28,6 +29,13 @@ class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRoo
       registrar.registerExclusionPatterns(entity.url, entity.excludedPatterns, entity)
     }
   }
+
+  override val dependenciesOnOtherEntities: List<DependencyDescription<ContentRootEntity>>
+    get() = listOf(
+      DependencyDescription.OnSibling(JavaModuleSettingsEntity::class.java) {
+        it.module.contentRoots.asSequence()
+      }
+    )
 }
 
 class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootEntity>, PlatformInternalWorkspaceFileIndexContributor {
