@@ -262,7 +262,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   protected fun assertResources(moduleName: String, vararg expectedSources: String) {
-    doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, *expectedSources)
+    doAssertSourceRoots(moduleName, JavaResourceRootType.RESOURCE, *expectedSources)
   }
 
   protected fun assertContentRootResources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
@@ -275,7 +275,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   protected fun assertTestSources(moduleName: String, vararg expectedSources: String) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, *expectedSources)
+    doAssertSourceRoots(moduleName, JavaSourceRootType.TEST_SOURCE, *expectedSources)
   }
 
   protected fun assertContentRootTestSources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
@@ -284,7 +284,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   protected fun assertTestResources(moduleName: String, vararg expectedSources: String) {
-    doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, *expectedSources)
+    doAssertSourceRoots(moduleName, JavaResourceRootType.TEST_RESOURCE, *expectedSources)
   }
 
   protected fun assertContentRootTestResources(moduleName: String, contentRoot: String, vararg expectedSources: String) {

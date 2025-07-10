@@ -931,13 +931,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                   mn("project", "m1"),
                   mn("project", "m1.main"),
                   mn("project", "m1.test"))
-    val expectedRoots = ArrayList<String>()
-    expectedRoots.add("$projectPath/custom-sources")
-    expectedRoots.add("$projectPath/m1/src/main/resources")
-    if (isMaven4) {
-      expectedRoots.add("$projectPath/m1/src/main/resources-filtered")
-    }
-    assertContentRoots(mn("project", "m1.main"), *ArrayUtil.toStringArray(expectedRoots))
+    assertSources("m1.main", "../custom-sources")
+    assertDefaultResources("m1.main")
   }
 
   @Test
