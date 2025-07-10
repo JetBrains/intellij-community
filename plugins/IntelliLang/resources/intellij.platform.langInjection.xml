@@ -1,4 +1,8 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.regexp"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint qualifiedName="org.intellij.intelliLang.languageSupport"
                     interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport" dynamic="true"/>
