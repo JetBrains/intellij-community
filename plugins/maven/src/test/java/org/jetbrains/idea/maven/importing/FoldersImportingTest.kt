@@ -1408,11 +1408,10 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     if (isMaven4) {
       m1_content_roots.add("$m1_standard_test_resources-filtered")
     }
-    assertContentRoots(m1_custom_module, *ArrayUtil.toStringArray(m1_content_roots))
-    assertContentRootSources(m1_custom_module, m1_custom_sources_root, "")
-    assertContentRootResources(m1_custom_module, m1_custom_sources_root)
-    assertContentRootTestSources(m1_custom_module, m1_custom_tests_root, "")
-    assertContentRootTestResources(m1_custom_module, m1_standard_test_resources, "")
+    assertSources(m1_custom_module, m1_custom_sources_root)
+    assertResources(m1_custom_module)
+    assertTestSources(m1_custom_module, m1_custom_tests_root)
+    assertTestResources(m1_custom_module, m1_standard_test_resources)
   }
 
   @Test
