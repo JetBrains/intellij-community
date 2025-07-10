@@ -27,6 +27,8 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/code-style-impl:codeStyle-impl",
     "//xml/xml-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//xml/xml-psi-impl:psi-impl",
   ],
   runtime_deps = [":ui-common_resources"]
 )
