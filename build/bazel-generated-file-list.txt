@@ -222,11 +222,7 @@ fleet/andel
 fleet/compiler-plugins
 fleet/fastutil
 fleet/kernel
-fleet/ktor/client/cio
-fleet/ktor/client/core
 fleet/ktor/network/tls
-fleet/ktor/server/cio
-fleet/ktor/server/websockets
 fleet/lsp.protocol
 fleet/multiplatform.shims
 fleet/reporting/api
