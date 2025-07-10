@@ -12,11 +12,13 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import kotlin.io.path.absolutePathString
 
 @State(name = "PySdkSettings", storages = [Storage(value = "pySdk.xml", roamingType = RoamingType.DISABLED)])
+@ApiStatus.Internal
 class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   companion object {
     @JvmStatic
