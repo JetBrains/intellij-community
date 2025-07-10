@@ -54,6 +54,18 @@ data class Lookup(
       additionalInfo = additionalInfo
     )
   }
+
+  fun withElementType(elementType: String): Lookup {
+    return Lookup(
+      prefix = this.prefix,
+      offset = this.offset,
+      suggestions = this.suggestions,
+      latency = this.latency,
+      features = this.features,
+      isNew = this.isNew,
+      additionalInfo = additionalInfo.plus(Pair("element_type", elementType))
+    )
+  }
   companion object {
     fun fromExpectedText(
       expectedText: String,

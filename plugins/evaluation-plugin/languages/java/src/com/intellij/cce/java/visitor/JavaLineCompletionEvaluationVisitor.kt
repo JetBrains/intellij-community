@@ -31,22 +31,22 @@ class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
     }
 
     override fun visitVariable(variable: PsiVariable) {
-      variable.nameIdentifier?.node?.let { visitorHelper.addElement(it) }
+      variable.nameIdentifier?.node?.let { visitorHelper.addElement(it, variable) }
       super.visitVariable(variable)
     }
 
     override fun visitMethod(method: PsiMethod) {
-      method.nameIdentifier?.node?.let { visitorHelper.addElement(it) }
+      method.nameIdentifier?.node?.let { visitorHelper.addElement(it, method) }
       super.visitMethod(method)
     }
 
     override fun visitClass(aClass: PsiClass) {
-      aClass.nameIdentifier?.node?.let { visitorHelper.addElement(it) }
+      aClass.nameIdentifier?.node?.let { visitorHelper.addElement(it, aClass) }
       super.visitClass(aClass)
     }
 
     override fun visitKeyword(keyword: PsiKeyword) {
-      visitorHelper.addElement(keyword.node)
+      visitorHelper.addElement(keyword.node, keyword)
     }
 
     override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
@@ -54,14 +54,14 @@ class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
     }
 
     override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
-      reference.referenceNameElement?.let { visitorHelper.addElement(it.node) }
+      reference.referenceNameElement?.let { visitorHelper.addElement(it.node, reference) }
       super.visitReferenceElement(reference)
     }
 
     override fun visitLiteralExpression(expression: PsiLiteralExpression) {
       if (expression is PsiLiteralExpressionImpl &&
           (expression.type == PsiTypes.booleanType() || expression.type == PsiTypes.nullType())) {
-        visitorHelper.addElement(expression.node)
+        visitorHelper.addElement(expression.node, expression)
       }
     }
 

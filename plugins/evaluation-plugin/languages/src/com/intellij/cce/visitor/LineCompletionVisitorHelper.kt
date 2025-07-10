@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
-import com.intellij.cce.core.CodeFragment
-import com.intellij.cce.core.CodeLine
-import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.*
 import com.intellij.cce.util.CompletionGolfTextUtil.isValuableString
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.lang.ASTNode
@@ -33,13 +31,21 @@ class LineCompletionVisitorHelper {
     }
   }
 
-  fun addElement(element: ASTNode) {
+  private fun addElement(element: ASTNode, codeTokenGenerator: (String, Int) -> CodeToken) {
     val text = element.text.take(MAX_PREFIX_LENGTH)
     if (text.isValuableString()) {
       lines.find { it.offset <= element.startOffset && it.offset + it.text.length > element.startOffset }
         ?.takeIf { it.getChildren().all { it.offset != element.startOffset } }
-        ?.addChild(CodeToken(text, element.startOffset))
+        ?.addChild(codeTokenGenerator(text, element.startOffset))
     }
+  }
+
+  fun addElement(element: ASTNode) {
+    addElement(element) { text, offset -> CodeToken(text, offset) }
+  }
+
+  fun addElement(element: ASTNode, psiElement: PsiElement) {
+    addElement(element) { text, offset -> CodeTokenWithPsi(text, offset, TokenProperties.UNKNOWN, psiElement) }
   }
 
   private fun CodeFragment.validateCorrectness() {
