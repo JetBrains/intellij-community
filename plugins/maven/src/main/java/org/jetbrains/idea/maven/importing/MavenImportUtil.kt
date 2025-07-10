@@ -320,9 +320,13 @@ object MavenImportUtil {
 
   @JvmStatic
   fun findPomXml(module: Module): VirtualFile? {
-    val project = module.project
+    return findPomXml(module.project, module.name)
+  }
+
+  @JvmStatic
+  fun findPomXml(project: Project, moduleName: String): VirtualFile? {
     val storage = project.workspaceModel.currentSnapshot
-    val pomPath = storage.resolve(ModuleId(module.name))?.exModuleOptions?.linkedProjectId?.toNioPathOrNull() ?: return null
+    val pomPath = storage.resolve(ModuleId(moduleName))?.exModuleOptions?.linkedProjectId?.toNioPathOrNull() ?: return null
     return VirtualFileManager.getInstance().findFileByNioPath(pomPath)
   }
 

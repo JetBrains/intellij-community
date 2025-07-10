@@ -30,6 +30,8 @@ jvm_library(
     "//platform/core-api:core",
     "//xml/xml-psi-api:psi",
     "//platform/backend/observation",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
   ]
 )
 ### auto-generated section `build intellij.maven.testFramework` end
