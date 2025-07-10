@@ -4,14 +4,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.IdeaCommunityProperties
-import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
+import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 
 internal object KotlinPluginBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     runBlocking(Dispatchers.Default) {
-      KotlinPluginBuilder.build(home = COMMUNITY_ROOT.communityRoot,
-                                properties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot))
+      CommunityKotlinPluginBuilder.build(home = COMMUNITY_ROOT.communityRoot,
+                                         properties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot))
     }
   }
 }

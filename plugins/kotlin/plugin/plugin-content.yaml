@@ -277,13 +277,13 @@
   - name: kotlin.k2.internal
   - name: kotlin.base.serialization
   - name: kotlin-ultimate.common-native
-  - name: kotlin-ultimate.native-debugger
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs
-  - name: kotlin-ultimate.wasm.debugger
-  - name: kotlin-ultimate.ultimate-plugin
+  - name: kotlin-ultimate.native-debugger
   - name: kotlin-ultimate.ultimate-native
+  - name: kotlin-ultimate.wasm.debugger
   - name: kotlin-ultimate.profiler
+  - name: kotlin-ultimate.ultimate-plugin
   - name: kotlin.plugin
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin
