@@ -38,6 +38,7 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
   ],
   runtime_deps = [
     ":backend_resources",

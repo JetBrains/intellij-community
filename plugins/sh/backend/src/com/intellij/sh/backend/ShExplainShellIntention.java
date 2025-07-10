@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh;
+package com.intellij.sh.backend;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.BrowserUtil;
@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.psi.ShCommand;
 import com.intellij.sh.psi.ShCommandsList;
 import com.intellij.sh.psi.ShCompositeElement;

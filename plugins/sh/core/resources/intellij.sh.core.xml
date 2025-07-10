@@ -47,12 +47,6 @@
       <bundleName>messages.ShBundle</bundleName>
       <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
-    <intentionAction>
-      <language>Shell Script</language>
-      <className>com.intellij.sh.ShExplainShellIntention</className>
-      <bundleName>messages.ShBundle</bundleName>
-      <categoryKey>intention.shell.script</categoryKey>
-    </intentionAction>
     <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="notification.group.shell.script"/>
     <statistics.notificationIdsHolder implementation="com.intellij.sh.ShNotificationDisplayIds"/>
 

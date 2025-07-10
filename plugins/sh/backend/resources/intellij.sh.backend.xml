@@ -48,6 +48,12 @@
     <completion.contributor language="Shell Script"
                             implementationClass="com.intellij.sh.backend.completion.ShKeywordCompletionContributor"
                             order="after shCommand"/>
+    <intentionAction>
+      <language>Shell Script</language>
+      <className>com.intellij.sh.backend.ShExplainShellIntention</className>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
+    </intentionAction>
   </extensions>
 
   <actions>
