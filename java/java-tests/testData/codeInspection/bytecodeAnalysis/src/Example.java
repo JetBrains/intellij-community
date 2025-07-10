@@ -34,7 +34,7 @@ public class Example {
       System.out.println("null");
     }
 
-    @NotNull Class x = <warning descr="'null' is assigned to a variable that is annotated with @NotNull"><warning descr="Result of 'ClassUtils.primitiveToWrapper(null)' is always 'null'">ClassUtils.primitiveToWrapper(null)</warning></warning>;
+    @NotNull Class x = <warning descr="'null' is assigned to a non-null variable"><warning descr="Result of 'ClassUtils.primitiveToWrapper(null)' is always 'null'">ClassUtils.primitiveToWrapper(null)</warning></warning>;
   }
 
   void writeBytes(@Nullable byte[] bytes, FilterOutputStream stream) throws IOException {

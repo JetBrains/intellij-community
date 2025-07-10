@@ -49,7 +49,7 @@ class Test {
     }
     
     public void setNns2(@Nullable String nns) {
-      this.nns = <warning descr="Expression 'nns' might evaluate to null but is assigned to a variable that is annotated with @NotNull">nns</warning>;
+      this.nns = <warning descr="Expression 'nns' might evaluate to null but is assigned to a non-null variable">nns</warning>;
     }
   }
   
