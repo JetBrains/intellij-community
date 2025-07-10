@@ -16,7 +16,7 @@ suspend fun <T> retryWithExponentialBackOff(
   backOffLimitMs: Long = TimeUnit.MINUTES.toMillis(3),
   backOffFactor: Int = 2, backOffJitter: Double = 0.1,
   onException: suspend (attempt: Int, e: Exception) -> Unit = { attempt, e -> defaultExceptionConsumer(attempt, e) },
-  isRetryAllowed: suspend (e: Exception) -> Boolean = { false },
+  isRetryAllowed: suspend (e: Exception) -> Boolean = { true },
   action: suspend (attempt: Int) -> T
 ): T {
   var effectiveDelay = initialDelayMs
