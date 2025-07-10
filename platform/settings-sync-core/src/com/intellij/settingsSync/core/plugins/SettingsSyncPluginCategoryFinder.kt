@@ -16,7 +16,8 @@ internal object SettingsSyncPluginCategoryFinder {
   )
 
   fun getPluginCategory(descriptor: IdeaPluginDescriptor): SettingsCategory {
-    if (UI_CATEGORIES.contains(descriptor.category) || containsOnlyUIExtensions(descriptor)) {
+    if (UI_CATEGORIES.contains(descriptor.category)
+        || descriptor.category == null && containsOnlyUIExtensions(descriptor)) {
       return SettingsCategory.UI
     }
     return SettingsCategory.PLUGINS
@@ -24,9 +25,8 @@ internal object SettingsSyncPluginCategoryFinder {
 
   private fun containsOnlyUIExtensions(descriptor: IdeaPluginDescriptor) : Boolean {
     if (descriptor is IdeaPluginDescriptorImpl) {
-      return descriptor.extensions?.all {
-        UI_EXTENSIONS.contains(it.key)
-      } ?: false
+      val extensions = descriptor.extensions
+      return extensions.isNotEmpty() && extensions.all { UI_EXTENSIONS.contains(it.key) }
     }
     return false
   }
