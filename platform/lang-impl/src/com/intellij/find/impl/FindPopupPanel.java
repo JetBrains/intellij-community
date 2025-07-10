@@ -122,7 +122,6 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 @ApiStatus.Internal
 public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, UiDataProvider {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
-  public static final DataKey<VirtualFile[]> SELECTED_FILES = DataKey.create("SELECTED_FILES_IN_FIND_POPUP");
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
   private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke RESET_FILTERS = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
@@ -886,7 +885,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       .map(info -> info.getElement())
       .filter(Objects::nonNull)
       .toArray(PsiElement[]::new));
-    sink.lazy(SELECTED_FILES, () -> usages.values().stream()
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> usages.values().stream()
       .filter(usage -> usage instanceof UsageInFile)
       .map(usage -> ((UsageInFile)usage).getFile())
       .toArray(VirtualFile[]::new));
