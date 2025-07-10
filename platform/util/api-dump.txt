@@ -19,6 +19,8 @@ com.intellij.openapi.Disposable$Default
 com.intellij.openapi.Disposable$Parent
 - com.intellij.openapi.Disposable
 - a:beforeTreeDispose():V
+a:com.intellij.openapi.application.AccessToken
+- s:compound(java.util.List):com.intellij.openapi.application.AccessToken
 com.intellij.openapi.diagnostic.ExceptionWithAttachments
 - a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
 com.intellij.openapi.diagnostic.Logger$Factory
