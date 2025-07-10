@@ -8,11 +8,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
-import com.intellij.openapi.roots.JdkOrderEntry
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleSourceOrderEntry
-import com.intellij.openapi.roots.OrderEntry
-import com.intellij.openapi.roots.impl.DummyRootDescriptor
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.*
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -29,8 +25,16 @@ internal class ScopeRootDescriptor(
         return library == rootDescriptor.library
       }
       is ModuleRootDescriptor -> {
-        if (orderEntry !is ModuleSourceOrderEntry) return false
-        val module = orderEntry.rootModel.module
+        val module = when (orderEntry) {
+          is ModuleSourceOrderEntry -> {
+            orderEntry.rootModel.module
+          }
+          is ModuleOrderEntry -> {
+            orderEntry.module
+          }
+          else -> return false
+        }
+
         return module == rootDescriptor.module
       }
       is SdkRootDescriptor -> {
