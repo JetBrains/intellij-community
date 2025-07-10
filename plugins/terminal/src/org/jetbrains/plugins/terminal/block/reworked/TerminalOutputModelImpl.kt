@@ -50,6 +50,11 @@ class TerminalOutputModelImpl(
   
   private fun TerminalOffset.toRelative(): Int = ((this as TerminalOffsetImpl).absolute - trimmedCharsCount).toInt()
 
+  override fun getAbsoluteLineIndex(documentOffset: Int): Long {
+    val documentLineIndex = document.getLineNumber(documentOffset)
+    return trimmedLinesCount + documentLineIndex.toLong()
+  }
+
   override fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>) {
     changeDocumentContent {
       // If absolute line index is far in the past - in the already trimmed part of the output,

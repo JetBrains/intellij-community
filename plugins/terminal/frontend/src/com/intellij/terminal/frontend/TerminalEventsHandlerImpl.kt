@@ -53,6 +53,9 @@ internal open class TerminalEventsHandlerImpl(
   private val typeAhead: TerminalTypeAhead?
     get() = editor.getUserData(TerminalTypeAhead.KEY)
 
+  private val vfsSynchronizer: TerminalVfsSynchronizer?
+    get() = editor.getUserData(TerminalVfsSynchronizer.KEY)
+
   override fun keyTyped(e: TimedKeyEvent) {
     updateLookupOnTyping(e.original.keyChar)
     val selectionModel = editor.selectionModel
@@ -90,6 +93,8 @@ internal open class TerminalEventsHandlerImpl(
       inlineCompletionTypingSession?.endTypingSession(editor)
       // To invalidate inline completion in case of inputs like backspace, CTRL + C, etc.
       inlineCompletionTypingSession?.ignoreDocumentChanges = false
+
+      vfsSynchronizer?.handleKeyPressed(e.original)
 
       val keyCode = e.original.keyCode
       val keyChar = e.original.keyChar

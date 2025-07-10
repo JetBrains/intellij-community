@@ -21,6 +21,8 @@ interface TerminalOutputModel {
    * Offset in the document where the cursor is located now.
    */
   val cursorOffsetState: StateFlow<Int>
+
+  fun getAbsoluteLineIndex(documentOffset: Int): Long
   
   fun relativeOffset(offset: Int): TerminalOffset
 
