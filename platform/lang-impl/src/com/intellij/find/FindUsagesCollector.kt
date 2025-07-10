@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.ToolWindowId
 
 internal object FindUsagesCollector : CounterUsagesCollector() {
 
-  private val GROUP = EventLogGroup("find", 8)
+  private val GROUP = EventLogGroup("find", 9)
 
   const val FIND_IN_FILE: String = "FindInFile"
   const val FIND_IN_PATH: String = "FindInPath"
@@ -75,6 +75,10 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
 
   private val REPLACE_ALL_INVOKED = GROUP.registerEvent("replace.all.invoked")
   private val REPLACE_ONE_INVOKED = GROUP.registerEvent("replace.one.invoked")
+
+  private val OPEN_IN_FIND_TOOL_WINDOW = GROUP.registerEvent("open.in.find.tool.window", MODE)
+
+  private val FIND_POPUP_RESIZED = GROUP.registerEvent("find.popup.resized")
 
   @JvmField
   val CHECK_BOX_TOGGLED: EventId3<String?, FindPopupPanel.ToggleOptionName, Boolean> = GROUP.registerEvent("check.box.toggled",
@@ -176,6 +180,16 @@ internal object FindUsagesCollector : CounterUsagesCollector() {
   @JvmStatic
   fun replaceOneInvoked() {
     REPLACE_ONE_INVOKED.log()
+  }
+
+  @JvmStatic
+  fun openInFindToolWindowTriggered(findModel: FindModel) {
+    OPEN_IN_FIND_TOOL_WINDOW.log(if (findModel.isReplaceState) FindReplaceMode.REPLACE else FindReplaceMode.FIND)
+  }
+
+  @JvmStatic
+  fun findPopupResized() {
+    FIND_POPUP_RESIZED.log()
   }
 
   override fun getGroup(): EventLogGroup = GROUP
