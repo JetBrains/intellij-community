@@ -4,12 +4,15 @@ package com.intellij.openapi.module.impl.scopes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.impl.DummyRootDescriptor
 import com.intellij.openapi.roots.impl.*
 import com.intellij.openapi.vfs.VirtualFile
 
