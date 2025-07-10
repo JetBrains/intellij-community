@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.quarantine.compiler;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +12,6 @@ import com.intellij.util.PathsList;
 import com.intellij.util.messages.MessageBusConnection;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.compiler.GradleDelegatedBuildTestCase;
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
