@@ -1,11 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.quarantine.dsl
 
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.codeInspection.GradleDisablerTestUtils
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROPERTY
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -45,28 +42,25 @@ class GradleManagedPropertyTest : GradleCodeInsightTestCase() {
   @AllGradleVersionsSource
   fun highlighting(gradleVersion: GradleVersion) {
     assumeThatGradleIsAtLeast(gradleVersion, "6.0")
-    Disposer.newDisposable().use { parentDisposable ->
-      test(gradleVersion, FIXTURE_BUILDER) {
-        GradleDisablerTestUtils.enableAllDisableableInspections(parentDisposable)
-        fixture.enableInspections(
-          GrUnresolvedAccessInspection::class.java,
-          GroovyAssignabilityCheckInspection::class.java,
-          GroovyAccessibilityInspection::class.java
-        )
-        updateProjectFile("""
-          |myExt.integerProperty = 42
-          |<warning descr="Cannot assign 'Object' to 'Integer'">myExt.integerProperty</warning> = new Object()
-          |myExt.setIntegerProperty(69)
-          |myExt.setIntegerProperty<warning descr="'setIntegerProperty' in 'pkg.MyExtension' cannot be applied to '(java.lang.Object)'">(new Object())</warning>
-          |myExt {
-          |  integerProperty = 42
-          |  <warning descr="Cannot assign 'Object' to 'Integer'">integerProperty</warning> = new Object()
-          |  setIntegerProperty(69)
-          |  setIntegerProperty<warning descr="'setIntegerProperty' in 'pkg.MyExtension' cannot be applied to '(java.lang.Object)'">(new Object())</warning>
-          |}
-        """.trimMargin())
-        fixture.checkHighlighting()
-      }
+    test(gradleVersion, FIXTURE_BUILDER) {
+      fixture.enableInspections(
+        GrUnresolvedAccessInspection::class.java,
+        GroovyAssignabilityCheckInspection::class.java,
+        GroovyAccessibilityInspection::class.java
+      )
+      updateProjectFile("""
+        |myExt.integerProperty = 42
+        |<warning descr="Cannot assign 'Object' to 'Integer'">myExt.integerProperty</warning> = new Object()
+        |myExt.setIntegerProperty(69)
+        |myExt.setIntegerProperty<warning descr="'setIntegerProperty' in 'pkg.MyExtension' cannot be applied to '(java.lang.Object)'">(new Object())</warning>
+        |myExt {
+        |  integerProperty = 42
+        |  <warning descr="Cannot assign 'Object' to 'Integer'">integerProperty</warning> = new Object()
+        |  setIntegerProperty(69)
+        |  setIntegerProperty<warning descr="'setIntegerProperty' in 'pkg.MyExtension' cannot be applied to '(java.lang.Object)'">(new Object())</warning>
+        |}
+      """.trimMargin())
+      fixture.checkHighlighting()
     }
   }
 
