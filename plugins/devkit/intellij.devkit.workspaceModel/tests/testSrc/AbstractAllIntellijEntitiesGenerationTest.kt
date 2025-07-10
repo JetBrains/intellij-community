@@ -79,7 +79,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
   override val testDataDirectory: File
     get() = File(IdeaTestExecutionPolicy.getHomePathWithPolicy())
 
-  fun `test generation of all entities in intellij codebase`() {
+  open fun `test generation of all entities in intellij codebase`() {
     executeWorkspaceCodeGeneration(::compareIntellijWorkspaceCode)
   }
 
