@@ -4,8 +4,10 @@ package com.intellij.platform.buildScripts.testFramework.pluginModel
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
@@ -76,9 +78,23 @@ private class ModuleBasedPluginLayoutProvider(
   private fun JpsModule.findProductionFile(relativePath: String): Path? = JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(this, relativePath)
 
   override fun loadCorePluginLayout(): PluginLayoutDescription {
-    val mainGroupModules = productModules.mainModuleGroup.includedModules
+    val rootEmbeddedModules = productModules.mainModuleGroup.includedModules
       .asSequence()
-      .map { it.moduleDescriptor.moduleId.stringId }
+      .filter { it.loadingRule == RuntimeModuleLoadingRule.EMBEDDED }
+      .map { it.moduleDescriptor }
+    val embeddedModulesWithDependencies = LinkedHashSet<RuntimeModuleDescriptor>()
+    fun collectDependencies(descriptor: RuntimeModuleDescriptor, result: MutableSet<RuntimeModuleDescriptor>) {
+      if (result.add(descriptor)) {
+        descriptor.dependencies.forEach { collectDependencies(it, result) }
+      }
+    }
+    for (descriptor in rootEmbeddedModules) {
+      collectDependencies(descriptor, embeddedModulesWithDependencies)
+    }
+    
+    val mainGroupModules = embeddedModulesWithDependencies
+      .asSequence()
+      .map { it.moduleId.stringId }
       .filterNot { it.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
       .mapNotNull { 
         project.findModuleByName(it)
