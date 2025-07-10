@@ -10,6 +10,7 @@ interface PolySymbolQueryExecutorListener {
   fun afterQuery(queryParams: PolySymbolQueryParams)
 
   companion object {
+    @JvmField
     val TOPIC: Topic<PolySymbolQueryExecutorListener> = Topic(PolySymbolQueryExecutorListener::class.java)
   }
 
