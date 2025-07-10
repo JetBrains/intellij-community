@@ -1,14 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.configuration
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.ide.GeneralSettings
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -18,38 +16,32 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
-import com.jetbrains.python.inspections.PyInspectionExtension
-import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.projectModel.uv.UvProjectModelService
-import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
+import com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor
+import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsInspectionSuppressor
+import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.uv.isUv
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object PyProjectSdkConfiguration {
-
-  private val LOGGER = Logger.getInstance(PyProjectSdkConfiguration::class.java)
-
   fun configureSdkUsingExtension(module: Module, extension: PyProjectSdkConfigurationExtension) {
     val lifetime = suppressTipAndInspectionsFor(module, extension)
 
     val project = module.project
     PyPackageCoroutine.launch(project) {
-      withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), false) {
+      val title = extension.getIntention(module) ?: PySdkBundle.message("python.configuring.interpreter.progress")
+      withBackgroundProgress(project, title, false) {
         lifetime.use {
           setSdkUsingExtension(module, extension) {
-            reportRawProgress {
-              it.text(extension.getIntention(module) ?: "")
-              withContext(Dispatchers.Default) {
-                extension.createAndAddSdkForInspection(module)
-              }
+            withContext(Dispatchers.Default) {
+              extension.createAndAddSdkForInspection(module)
             }
           }
         }
@@ -57,24 +49,23 @@ object PyProjectSdkConfiguration {
     }
   }
 
-  suspend fun setSdkUsingExtension(module: Module, extension: PyProjectSdkConfigurationExtension, supplier: suspend () -> Sdk?) {
+  suspend fun setSdkUsingExtension(module: Module, extension: PyProjectSdkConfigurationExtension, supplier: suspend () -> Sdk?): Boolean {
     ProgressManager.progress("")
-    LOGGER.debug("Configuring sdk with ${extension.javaClass.canonicalName} extension")
+    PyProjectSdkConfiguration.thisLogger().debug("Configuring sdk with ${extension.javaClass.canonicalName} extension")
 
-    val sdk = supplier()
-    if (sdk != null) {
-      // TODO Move this to PyUvSdkConfiguration, show better notification
-      if (sdk.isUv && Registry.`is`("python.project.model.uv", false)) {
-        val ws = UvProjectModelService.findWorkspace(module)
-        if (ws != null) {
-          for (wsModule in ws.members + ws.root) {
-            setReadyToUseSdk(wsModule.project, wsModule, sdk)
-          }
-          return
+    val sdk = supplier() ?: return false
+    // TODO Move this to PyUvSdkConfiguration, show better notification
+    if (sdk.isUv && Registry.`is`("python.project.model.uv", false)) {
+      val ws = UvProjectModelService.findWorkspace(module)
+      if (ws != null) {
+        for (wsModule in ws.members + ws.root) {
+          setReadyToUseSdk(wsModule.project, wsModule, sdk)
         }
+        return true
       }
-      setReadyToUseSdk(module.project, module, sdk)
     }
+    setReadyToUseSdk(module.project, module, sdk)
+    return true
   }
 
   fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
@@ -117,79 +108,5 @@ object PyProjectSdkConfiguration {
       addAction(configureSdkAction)
       notify(project)
     }
-  }
-}
-
-private class TipOfTheDaySuppressor private constructor() : Disposable {
-
-  private val savedValue: Boolean
-
-  companion object {
-    private val LOGGER = Logger.getInstance(TipOfTheDaySuppressor::class.java)
-
-    fun suppress(): Disposable? {
-      return if (!GeneralSettings.getInstance().isShowTipsOnStartup) null else TipOfTheDaySuppressor()
-    }
-  }
-
-  init {
-    val settings = GeneralSettings.getInstance()
-
-    savedValue = settings.isShowTipsOnStartup
-    settings.isShowTipsOnStartup = false
-    LOGGER.info("Tip of the day has been disabled")
-  }
-
-  override fun dispose() {
-    val settings = GeneralSettings.getInstance()
-
-    if (!settings.isShowTipsOnStartup) { // nothing has been changed between init and dispose
-      settings.isShowTipsOnStartup = savedValue
-      LOGGER.info("Tip of the day has been enabled")
-    }
-    else {
-      LOGGER.info("Tip of the day was enabled somewhere else")
-    }
-  }
-}
-
-private class PyInterpreterInspectionSuppressor : PyInspectionExtension() {
-
-  companion object {
-    private val LOGGER = Logger.getInstance(PyInterpreterInspectionSuppressor::class.java)
-    private var suppress = false
-
-    fun suppress(project: Project): Disposable? {
-      DaemonCodeAnalyzer.getInstance(project).restart()
-      return if (suppress) null else Suppressor()
-    }
-  }
-
-  override fun ignoreInterpreterWarnings(file: PyFile): Boolean = suppress
-
-  private class Suppressor : Disposable {
-
-    init {
-      suppress = true
-      LOGGER.info("Interpreter warnings have been disabled")
-    }
-
-    override fun dispose() {
-      suppress = false
-      LOGGER.info("Interpreter warnings have been enabled")
-    }
-  }
-}
-
-private class PyPackageRequirementsInspectionSuppressor(module: Module) : Disposable {
-
-  private val listener = RunningPackagingTasksListener(module)
-
-  init {
-    listener.started()
-  }
-
-  override fun dispose() {
-    listener.finished(emptyList())
   }
 }

@@ -4,8 +4,8 @@ package com.intellij.pycharm.community.ide.impl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -32,31 +32,14 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUs
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * @see [PyConfigureSdkOnWslTest]
- */
+
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
-  companion object {
-    private val LOGGER = Logger.getInstance(PythonSdkConfigurator::class.java)
-
-    private fun getModule(moduleRef: Ref<Module>, project: Project): Module? {
-      val module = (moduleRef.get() ?: ModuleManager.getInstance(project).modules.firstOrNull())
-      return module.also { LOGGER.debug { "Module: $it" } }
-    }
-
-    private fun getDefaultProjectSdk(): Sdk? {
-      return ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk?.takeIf { it.sdkType is PythonSdkType }
-    }
-
-  }
-
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
     val sdk = project.pythonSdk
-    LOGGER.debug { "Input: $sdk, $isProjectCreatedWithWizard" }
+    thisLogger().debug { "Input: $sdk, $isProjectCreatedWithWizard" }
     if (sdk != null || isProjectCreatedWithWizard) {
       return
     }
@@ -69,8 +52,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       PyPackageCoroutine.launch(project) {
-        withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
-          val extension = findExtension(module)
+        val extension = findExtension(module)
+        val title = extension?.getIntention(module) ?: PySdkBundle.message("python.configuring.interpreter.progress")
+        withBackgroundProgress(project, title, true) {
           val lifetime = extension?.let { suppressTipAndInspectionsFor(module, it) }
           lifetime.use { configureSdk(project, module, extension) }
         }
@@ -94,101 +78,152 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     module: Module,
     extension: PyProjectSdkConfigurationExtension?,
   ): Unit = withContext(Dispatchers.Default) {
-    reportRawProgress { indicator ->
-      // please keep this method in sync with com.jetbrains.python.inspections.PyInterpreterInspection.Visitor.getSuitableSdkFix
+    val context = UserDataHolderBase()
 
-      indicator.fraction(null)
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
+      thisLogger().info("Python interpreter has not been configured since project is not trusted")
+      return@withContext
+    }
 
-      val context = UserDataHolderBase()
+    excludeInnerVirtualEnvironments(module, context)
 
-      if (!coroutineContext.isActive) return@reportRawProgress
 
-      indicator.text(PyBundle.message("looking.for.inner.venvs"))
-      LOGGER.debug("Looking for inner virtual environments")
-      detectAssociatedEnvironments(module, emptyList(), context).filter { it.isLocatedInsideModule(module) }.takeIf { it.isNotEmpty() }?.let {
-        withContext(Dispatchers.EDT) { it.forEach { module.excludeInnerVirtualEnv(it) } }
-      }
+    val existingSdks = ProjectSdksModel().apply { reset(project) }.sdks.filter { it.sdkType is PythonSdkType }
 
-      if (!TrustedProjects.isProjectTrusted(project)) {
-        // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
-        LOGGER.info("Python interpreter has not been configured since project is not trusted")
-        return@reportRawProgress
-      }
+    if (searchPreviousUsed(module, existingSdks, project))
+      return@withContext
 
-      val existingSdks = ProjectSdksModel().apply { reset(project) }.sdks.filter { it.sdkType is PythonSdkType }
+    if (findRelatedSdk(module, existingSdks, context))
+      return@withContext
 
-      if (!coroutineContext.isActive) return@reportRawProgress
-
-      indicator.text(PyBundle.message("looking.for.previous.interpreter"))
-      LOGGER.debug("Looking for the previously used interpreter")
-      mostPreferred(filterAssociatedSdks(module, existingSdks))?.let {
-        LOGGER.debug { "The previously used interpreter: $it" }
-        setReadyToUseSdk(project, module, it)
-        return@reportRawProgress
-      }
-
-      if (!coroutineContext.isActive) return@reportRawProgress
-
-      indicator.text(PyBundle.message("looking.for.related.venv"))
-      LOGGER.debug("Looking for a virtual environment related to the project")
-      val env = detectAssociatedEnvironments(module, existingSdks, context).firstOrNull()
-
-      if (env != null) {
-        env.setupSdk(module, existingSdks, true)
-        return@reportRawProgress
-      }
-
-      if (!coroutineContext.isActive) return@reportRawProgress
-
-      if (extension != null) {
-        indicator.text(extension.getIntention(module) ?: "")
-        setSdkUsingExtension(module, extension) { extension.createAndAddSdkForConfigurator(module) }
-        return@reportRawProgress
-      }
-
-      if (!coroutineContext.isActive) return@reportRawProgress
-
-      if (PyCondaSdkCustomizer.instance.suggestSharedCondaEnvironments) {
-        indicator.text(PyBundle.message("looking.for.shared.conda.environment"))
-        mostPreferred(filterSharedCondaEnvs(module, existingSdks))?.let {
-          setReadyToUseSdk(project, module, it)
-          return@reportRawProgress
+    if (extension != null) {
+      val isExtensionSetup = setSdkUsingExtension(module, extension) {
+        withContext(Dispatchers.Default) {
+          extension.createAndAddSdkForConfigurator(module)
         }
-
-        if (!coroutineContext.isActive) return@reportRawProgress
       }
+      if (isExtensionSetup) return@withContext
+    }
 
-      indicator.text(PyBundle.message("looking.for.default.interpreter"))
-      LOGGER.debug("Looking for the default interpreter setting for a new project")
-      getDefaultProjectSdk()?.let {
-        LOGGER.debug { "Default interpreter setting for a new project: $it" }
-        setReadyToUseSdk(project, module, it)
-        return@reportRawProgress
-      }
+    if (setupSharedCondaEnv(module, existingSdks, project)) {
+      return@withContext
+    }
 
-      if (!coroutineContext.isActive) return@reportRawProgress
+    if (findDefaultInterpreter(project, module)) {
+      return@withContext
+    }
 
-      indicator.text(PyBundle.message("looking.for.previous.system.interpreter"))
-      LOGGER.debug("Looking for the previously used system-wide interpreter")
-      mostPreferred(filterSystemWideSdks(existingSdks))?.let {
-        LOGGER.debug { "Previously used system-wide interpreter: $it" }
-        setReadyToUseSdk(project, module, it)
-        return@reportRawProgress
-      }
+    if (findPreviousUsedSdk(existingSdks, project, module)) {
+      return@withContext
+    }
 
-      if (!coroutineContext.isActive) return@reportRawProgress
+    findSystemWideSdk(module, existingSdks, context, project)
+  }
 
-      indicator.text(PyBundle.message("looking.for.system.interpreter"))
-      LOGGER.debug("Looking for a system-wide interpreter")
-      detectSystemWideSdks(module, existingSdks, context).firstOrNull()?.let {
-        LOGGER.debug { "Detected system-wide interpreter: $it" }
-        withContext(Dispatchers.EDT) {
-          SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
-            LOGGER.debug { "Created system-wide interpreter: $this" }
-            setReadyToUseSdk(project, module, this)
-          }
+  private suspend fun findSystemWideSdk(
+    module: Module,
+    existingSdks: List<Sdk>,
+    context: UserDataHolderBase,
+    project: Project,
+  ) = reportRawProgress { indicator ->
+    indicator.text(PyBundle.message("looking.for.system.interpreter"))
+    thisLogger().debug("Looking for a system-wide interpreter")
+    detectSystemWideSdks(module, existingSdks, context).firstOrNull()?.let {
+      thisLogger().debug { "Detected system-wide interpreter: $it" }
+      withContext(Dispatchers.EDT) {
+        SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
+          thisLogger().debug { "Created system-wide interpreter: $this" }
+          setReadyToUseSdk(project, module, this)
         }
       }
     }
+  }
+
+  private suspend fun findPreviousUsedSdk(
+    existingSdks: List<Sdk>,
+    project: Project,
+    module: Module,
+  ): Boolean = reportRawProgress { indicator ->
+    indicator.text(PyBundle.message("looking.for.previous.system.interpreter"))
+    thisLogger().debug("Looking for the previously used system-wide interpreter")
+    val sdk = mostPreferred(filterSystemWideSdks(existingSdks)) ?: return@reportRawProgress false
+    thisLogger().debug { "Previously used system-wide interpreter: $sdk" }
+    setReadyToUseSdk(project, module, sdk)
+    return@reportRawProgress true
+  }
+
+  private suspend fun findDefaultInterpreter(project: Project, module: Module): Boolean = reportRawProgress { indicator ->
+    indicator.text(PyBundle.message("looking.for.default.interpreter"))
+    thisLogger().debug("Looking for the default interpreter setting for a new project")
+    val defaultProjectSdk = getDefaultProjectSdk() ?: return@reportRawProgress false
+    thisLogger().debug { "Default interpreter setting for a new project: $defaultProjectSdk" }
+    setReadyToUseSdk(project, module, defaultProjectSdk)
+    true
+  }
+
+  private suspend fun setupSharedCondaEnv(
+    module: Module,
+    existingSdks: List<Sdk>,
+    project: Project,
+  ): Boolean = reportRawProgress { indicator ->
+    if (!PyCondaSdkCustomizer.instance.suggestSharedCondaEnvironments) {
+      return@reportRawProgress false
+    }
+    indicator.text(PyBundle.message("looking.for.shared.conda.environment"))
+    val sharedCondaEnvs = filterSharedCondaEnvs(module, existingSdks)
+    val preferred = mostPreferred(sharedCondaEnvs) ?: return@reportRawProgress false
+    setReadyToUseSdk(project, module, preferred)
+    return@reportRawProgress false
+  }
+
+  private suspend fun findRelatedSdk(
+    module: Module,
+    existingSdks: List<Sdk>,
+    context: UserDataHolderBase,
+  ): Boolean = reportRawProgress { indicator ->
+    indicator.text(PyBundle.message("looking.for.related.venv"))
+    thisLogger().debug("Looking for a virtual environment related to the project")
+    val env = detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() ?: return@reportRawProgress false
+
+    env.setupSdk(module, existingSdks, true)
+    true
+  }
+
+  private suspend fun searchPreviousUsed(
+    module: Module,
+    existingSdks: List<Sdk>,
+    project: Project,
+  ): Boolean {
+    reportRawProgress { indicator ->
+      indicator.text(PyBundle.message("looking.for.previous.interpreter"))
+      thisLogger().debug("Looking for the previously used interpreter")
+      val associatedSdks = filterAssociatedSdks(module, existingSdks)
+      val preferred = mostPreferred(associatedSdks) ?: return false
+      thisLogger().debug { "The previously used interpreter: $preferred" }
+      setReadyToUseSdk(project, module, preferred)
+    }
+    return true
+  }
+
+  private suspend fun excludeInnerVirtualEnvironments(module: Module, context: UserDataHolderBase) = reportRawProgress { indicator ->
+    indicator.text(PyBundle.message("looking.for.inner.venvs"))
+    thisLogger().debug("Looking for inner virtual environments")
+    val detectedSdks = detectAssociatedEnvironments(module, emptyList(), context)
+    val moduleSdks = detectedSdks.filter { it.isLocatedInsideModule(module) }.takeIf { it.isNotEmpty() } ?: return@reportRawProgress
+    withContext(Dispatchers.EDT) {
+      moduleSdks.forEach {
+        module.excludeInnerVirtualEnv(it)
+      }
+    }
+  }
+
+  private fun getModule(moduleRef: Ref<Module>, project: Project): Module? {
+    val module = (moduleRef.get() ?: ModuleManager.getInstance(project).modules.firstOrNull())
+    return module.also { thisLogger().debug { "Module: $it" } }
+  }
+
+  private fun getDefaultProjectSdk(): Sdk? {
+    return ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk?.takeIf { it.sdkType is PythonSdkType }
   }
 }
