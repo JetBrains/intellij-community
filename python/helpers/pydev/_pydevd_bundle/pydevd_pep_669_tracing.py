@@ -9,7 +9,6 @@ import traceback
 from os.path import splitext, basename
 
 from _pydev_bundle import pydev_log
-from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_bytecode_utils import (
     find_last_call_name, find_last_func_call_order)
@@ -104,13 +103,23 @@ class ThreadInfo:
         self.thread_ident = thread_ident
         self.additional_info = additional_info
         self.trace = trace
-        self._use_is_stopped = hasattr(thread, '_is_stopped')
+
+        self._use_handle = hasattr(thread, "_handle")
+        self._use_started = hasattr(thread, "_started")
+        self._use_os_thread_handle = hasattr(thread, "_os_thread_handle")
 
     def is_thread_alive(self):
-        if self._use_is_stopped:
-            return not self.thread._is_stopped
-        else:
+        # Python >=3.14
+        if self._use_os_thread_handle and self._use_started:
+            return not self.thread._os_thread_handle.is_done()
+
+        # Python ==3.13
+        elif self._use_handle and self._use_started:
             return not self.thread._handle.is_done()
+
+        # Python ==3.12
+        else:
+            return not self.thread._is_stopped
 
 
 class _DeleteDummyThreadOnDel:
@@ -445,10 +454,7 @@ def call_callback(code, instruction_offset, callable, arg0):
             if thread_info is None:
                 return
 
-        thread = thread_info.thread
-
-
-        if not is_thread_alive(thread):
+        if not thread_info.is_thread_alive():
             return
 
         frame_cache_key = _make_frame_cache_key(code)
