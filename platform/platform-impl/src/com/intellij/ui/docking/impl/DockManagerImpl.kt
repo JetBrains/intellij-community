@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ui.docking.impl
@@ -37,7 +37,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.drawImage
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jdom.Element
@@ -219,7 +219,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
         @Synchronized
         override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-          drawImage(g = g, image = defaultDragImage, x = x, y = y, sourceBounds = null, op = null, observer = window)
+          StartupUiUtil.drawImage(g, defaultDragImage, x, y, sourceBounds = null, op = null, observer = window)
         }
       })
       window.contentPane = imageContainer

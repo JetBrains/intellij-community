@@ -5068,6 +5068,7 @@ f:com.intellij.util.ui.StartupUiUtil
 - sf:drawImage(java.awt.Graphics,java.awt.image.BufferedImage,java.awt.image.BufferedImageOp,I,I):V
 - sf:getCenterPoint(java.awt.Dimension,java.awt.Dimension):java.awt.Point
 - sf:getCenterPoint(java.awt.Rectangle,java.awt.Dimension):java.awt.Point
+- sf:getFontWithFallback(java.lang.String,I,F):javax.swing.plaf.FontUIResource
 - sf:getLabelFont():java.awt.Font
 - sf:getLcdContrastValue():I
 - sf:isDialogFont(java.awt.Font):Z

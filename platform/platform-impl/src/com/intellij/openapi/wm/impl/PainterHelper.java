@@ -315,7 +315,7 @@ final class PainterHelper implements Painter.Listener {
       }
 
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
-      StartupUiUtilKt.drawImage(g, scaled, dst, src, null, null);
+      StartupUiUtil.drawImage(g, scaled, dst, src, null, null);
       gc.restore();
     }
 

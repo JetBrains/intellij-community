@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.ide.ui.AntialiasingType
@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.getFontWithFallback
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.FontMetrics
@@ -126,7 +125,7 @@ class InlayTextMetrics(
         editorFont.deriveFont(fontType, size)
       } else {
         val familyName = StartupUiUtil.labelFont.family
-        getFontWithFallback(familyName, fontType, size)
+        StartupUiUtil.getFontWithFallback(familyName, fontType, size)
       }
       val metrics = FontInfo.getFontMetrics(font, context)
       // We assume this will be a better approximation to a real line height for a given font

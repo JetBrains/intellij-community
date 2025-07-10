@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.ide.ui.laf
@@ -8,7 +8,7 @@ import com.intellij.ui.ColoredSideBorder
 import com.intellij.ui.TableActions
 import com.intellij.ui.plaf.beg.*
 import com.intellij.ui.scale.JBUIScale.getSystemFontData
-import com.intellij.util.ui.getFontWithFallback
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
@@ -30,7 +30,7 @@ class IdeaLaf(private val customFontDefaults: Map<Any, Any?>?) : MetalLookAndFee
     initIdeaDefaults(defaults)
     if (customFontDefaults == null) {
       val systemFont = getSystemFontData(uiDefaults = { defaults })
-      initFontDefaults(defaults, getFontWithFallback(familyName = systemFont.first, style = Font.PLAIN, size = systemFont.second.toFloat()))
+      initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(familyName = systemFont.first, style = Font.PLAIN, size = systemFont.second.toFloat()))
     }
     else {
       defaults.putAll(customFontDefaults)

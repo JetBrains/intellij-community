@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -22,7 +22,6 @@ import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.getFontWithFallback
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
@@ -219,7 +218,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
           editorFont.deriveFont(fontType, size)
         } else {
           val familyName = UIManager.getFont("Label.font").family
-          getFontWithFallback(familyName = familyName, style = fontType, size = size)
+          StartupUiUtil.getFontWithFallback(familyName, fontType, size)
         }
         val context = getCurrentContext(editor)
         metrics = FontInfo.getFontMetrics(font, context)

@@ -64,6 +64,7 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -782,7 +783,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       val fontFace = if (overrideLafFonts) uiSettings.fontFace else defaultFont.family
       val fontSize = (if (overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
       LOG.debug { "patchLafFonts: using font '$fontFace' with size $fontSize" }
-      initFontDefaults(uiDefaults, getFontWithFallback(fontFace, Font.PLAIN, fontSize))
+      initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont) fontSize / INTER_SIZE else getFontScale(fontSize)
       LOG.debug { "patchLafFonts: computed user scale factor $userScaleFactor from font size $fontSize" }
       setUserScaleFactor(userScaleFactor)
@@ -810,7 +811,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private val defaultInterFont: FontUIResource
     get() {
       val userScaleFactor = defaultUserScaleFactor
-      return getFontWithFallback(INTER_NAME, Font.PLAIN, scaleFontSize(INTER_SIZE.toFloat(), userScaleFactor).toFloat())
+      return StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, scaleFontSize(INTER_SIZE.toFloat(), userScaleFactor).toFloat())
     }
 
   private val storedLafFont: Font?
