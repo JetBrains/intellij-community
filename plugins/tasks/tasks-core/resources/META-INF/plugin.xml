@@ -17,6 +17,7 @@
     <plugin id="com.intellij.modules.xml" />
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.tasks.impl"/>
+    <module name="intellij.regexp"/>
   </dependencies>
   <depends optional="true" config-file="java-contexts.xml">com.intellij.java</depends>
   <!--
