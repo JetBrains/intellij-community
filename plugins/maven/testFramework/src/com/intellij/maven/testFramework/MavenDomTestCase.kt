@@ -53,6 +53,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.junit.ComparisonFailure
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Function
@@ -473,6 +474,9 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
           fixture.testHighlighting(true, false, true, f)
         }
       }
+    }
+    catch (e: ComparisonFailure) {
+      throw e
     }
     catch (throwable: Throwable) {
       MavenLog.LOG.error("Exception during highlighting", throwable)
