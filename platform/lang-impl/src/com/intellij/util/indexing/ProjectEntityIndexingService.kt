@@ -66,7 +66,8 @@ class ProjectEntityIndexingService(
     if (changes.isEmpty()) {
       logRootChanges(project, true)
       UnindexedFilesScanner(project, "Project roots have changed").queue()
-    } else {
+    }
+    else {
       val parameters = computeScanningParameters(changes)
       UnindexedFilesScanner(project, parameters).queue()
     }
@@ -305,6 +306,7 @@ class ProjectEntityIndexingService(
             Change.Removed -> descriptionsBuilder.registerRemovedEntity(oldEntity!!, uncheckedContributor, entityStorage)
           }
         }
+        handleSiblingEntities(entityClass, oldEntity, newEntity, descriptionsBuilder, uncheckedContributor, entityStorage)
         if (change == Change.Replaced) {
           handleDependencies(oldEntity!!, newEntity!!, descriptionsBuilder, entityClass, uncheckedContributor,
                              entityStorage)
@@ -356,6 +358,39 @@ class ProjectEntityIndexingService(
     ) {
       for (dependency in contributor.dependenciesOnOtherEntities) {
         handleChildEntities(entityClass, oldEntity, newEntity, descriptionsBuilder, contributor, dependency, entityStorage)
+      }
+    }
+
+    private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleSiblingEntities(
+      entityClass: Class<in E>,
+      oldEntity: E?,
+      newEntity: E?,
+      descriptionsBuilder: WorkspaceIndexingRootsBuilder,
+      contributor: WorkspaceFileIndexContributor<C>,
+      entityStorage: EntityStorage,
+    ) {
+      for (dependency in contributor.dependenciesOnOtherEntities) {
+        if (dependency !is DependencyDescription.OnSibling<*, *> || entityClass != dependency.siblingClass) {
+          return
+        }
+        @Suppress("UNCHECKED_CAST")
+        dependency as DependencyDescription.OnSibling<C, E>
+
+        val removedEntities: MutableSet<C> = mutableSetOf()
+        val addedEntities: MutableSet<C> = mutableSetOf()
+        oldEntity?.let {
+          dependency.entityGetter(it).toCollection(removedEntities)
+        }
+        newEntity?.let {
+          dependency.entityGetter(it).toCollection(addedEntities)
+        }
+
+        for (element in addedEntities) {
+          descriptionsBuilder.registerAddedEntity(element, contributor, entityStorage)
+        }
+        for (element in removedEntities) {
+          descriptionsBuilder.registerRemovedEntity(element, contributor, entityStorage)
+        }
       }
     }
 

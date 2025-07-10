@@ -14,44 +14,37 @@ import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
-import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
+import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.util.indexing.testEntities.ChildTestEntity
 import com.intellij.util.indexing.testEntities.ParentTestEntity
 import com.intellij.util.indexing.testEntities.SiblingEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData) : ParentTestEntity, WorkspaceEntityBase(dataSource) {
+internal class SiblingEntityImpl(private val dataSource: SiblingEntityData) : SiblingEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentTestEntity::class.java, ChildTestEntity::class.java,
-                                                                         ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val SECONDCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentTestEntity::class.java, SiblingEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentTestEntity::class.java, SiblingEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
-      CHILD_CONNECTION_ID,
-      SECONDCHILD_CONNECTION_ID,
+      PARENT_CONNECTION_ID,
     )
 
   }
 
-  override val child: ChildTestEntity?
-    get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
+  override val parent: ParentTestEntity
+    get() = snapshot.extractOneToOneParent(PARENT_CONNECTION_ID, this)!!
 
-  override val secondChild: SiblingEntity?
-    get() = snapshot.extractOneToOneChild(SECONDCHILD_CONNECTION_ID, this)
-
-  override val customParentProperty: String
+  override val customSiblingProperty: String
     get() {
-      readField("customParentProperty")
-      return dataSource.customParentProperty
+      readField("customSiblingProperty")
+      return dataSource.customSiblingProperty
     }
 
   override val entitySource: EntitySource
@@ -65,9 +58,9 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
   }
 
 
-  internal class Builder(result: ParentTestEntityData?) : ModifiableWorkspaceEntityBase<ParentTestEntity, ParentTestEntityData>(
-    result), ParentTestEntity.Builder {
-    internal constructor() : this(ParentTestEntityData())
+  internal class Builder(result: SiblingEntityData?) : ModifiableWorkspaceEntityBase<SiblingEntity, SiblingEntityData>(
+    result), SiblingEntity.Builder {
+    internal constructor() : this(SiblingEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -76,7 +69,7 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
           return
         }
         else {
-          error("Entity ParentTestEntity is already created in a different builder")
+          error("Entity SiblingEntity is already created in a different builder")
         }
       }
 
@@ -97,8 +90,18 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isCustomParentPropertyInitialized()) {
-        error("Field ParentTestEntity#customParentProperty should be initialized")
+      if (_diff != null) {
+        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENT_CONNECTION_ID, this) == null) {
+          error("Field SiblingEntity#parent should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] == null) {
+          error("Field SiblingEntity#parent should be initialized")
+        }
+      }
+      if (!getEntityData().isCustomSiblingPropertyInitialized()) {
+        error("Field SiblingEntity#customSiblingProperty should be initialized")
       }
     }
 
@@ -108,9 +111,9 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ParentTestEntity
+      dataSource as SiblingEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.customParentProperty != dataSource.customParentProperty) this.customParentProperty = dataSource.customParentProperty
+      if (this.customSiblingProperty != dataSource.customSiblingProperty) this.customSiblingProperty = dataSource.customSiblingProperty
       updateChildToParentReferences(parents)
     }
 
@@ -124,16 +127,16 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
 
       }
 
-    override var child: ChildTestEntity.Builder?
+    override var parent: ParentTestEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID, this) as? ChildTestEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? ParentTestEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentTestEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildTestEntity.Builder
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentTestEntity.Builder
         }
       }
       set(value) {
@@ -141,91 +144,55 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(CHILD_CONNECTION_ID, this, value)
+          _diff.updateOneToOneParentOfChild(PARENT_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
         }
-        changedProperty.add("child")
+        changedProperty.add("parent")
       }
 
-    override var secondChild: SiblingEntity.Builder?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SECONDCHILD_CONNECTION_ID, this) as? SiblingEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, SECONDCHILD_CONNECTION_ID)] as? SiblingEntity.Builder)
-        }
-        else {
-          this.entityLinks[EntityLink(true, SECONDCHILD_CONNECTION_ID)] as? SiblingEntity.Builder
-        }
-      }
+    override var customSiblingProperty: String
+      get() = getEntityData().customSiblingProperty
       set(value) {
         checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SECONDCHILD_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(SECONDCHILD_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SECONDCHILD_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, SECONDCHILD_CONNECTION_ID)] = value
-        }
-        changedProperty.add("secondChild")
+        getEntityData(true).customSiblingProperty = value
+        changedProperty.add("customSiblingProperty")
       }
 
-    override var customParentProperty: String
-      get() = getEntityData().customParentProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).customParentProperty = value
-        changedProperty.add("customParentProperty")
-      }
-
-    override fun getEntityClass(): Class<ParentTestEntity> = ParentTestEntity::class.java
+    override fun getEntityClass(): Class<SiblingEntity> = SiblingEntity::class.java
   }
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
-  lateinit var customParentProperty: String
+internal class SiblingEntityData : WorkspaceEntityData<SiblingEntity>() {
+  lateinit var customSiblingProperty: String
 
-  internal fun isCustomParentPropertyInitialized(): Boolean = ::customParentProperty.isInitialized
+  internal fun isCustomSiblingPropertyInitialized(): Boolean = ::customSiblingProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentTestEntity> {
-    val modifiable = ParentTestEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SiblingEntity> {
+    val modifiable = SiblingEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ParentTestEntity {
+  override fun createEntity(snapshot: EntityStorageInstrumentation): SiblingEntity {
     val entityId = createEntityId()
     return snapshot.initializeEntity(entityId) {
-      val entity = ParentTestEntityImpl(this)
+      val entity = SiblingEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = entityId
       entity
@@ -233,20 +200,22 @@ internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.util.indexing.testEntities.ParentTestEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.util.indexing.testEntities.SiblingEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ParentTestEntity::class.java
+    return SiblingEntity::class.java
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return ParentTestEntity(customParentProperty, entitySource) {
+    return SiblingEntity(customSiblingProperty, entitySource) {
+      parents.filterIsInstance<ParentTestEntity.Builder>().singleOrNull()?.let { this.parent = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ParentTestEntity::class.java)
     return res
   }
 
@@ -254,10 +223,10 @@ internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ParentTestEntityData
+    other as SiblingEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.customParentProperty != other.customParentProperty) return false
+    if (this.customSiblingProperty != other.customSiblingProperty) return false
     return true
   }
 
@@ -265,21 +234,21 @@ internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ParentTestEntityData
+    other as SiblingEntityData
 
-    if (this.customParentProperty != other.customParentProperty) return false
+    if (this.customSiblingProperty != other.customSiblingProperty) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + customParentProperty.hashCode()
+    result = 31 * result + customSiblingProperty.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + customParentProperty.hashCode()
+    result = 31 * result + customSiblingProperty.hashCode()
     return result
   }
 }

@@ -14,6 +14,7 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.indexing.testEntities.ChildTestEntity
 import com.intellij.util.indexing.testEntities.ParentTestEntity
+import com.intellij.util.indexing.testEntities.SiblingEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import io.kotest.common.runBlocking
@@ -54,6 +55,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
     val model = WorkspaceModel.getInstance(projectModel.project)
     val parent = ParentTestEntity("parent property", NonPersistentEntitySource)
       .also { it.child = ChildTestEntity("child property", NonPersistentEntitySource) }
+      .also { it.secondChild = SiblingEntity("sibling property", NonPersistentEntitySource) }
 
     runBlocking {
       model.update("Add parent") {
@@ -91,20 +93,37 @@ class WorkspaceFileIndexContributorDependenciesTest {
     assertEquals("new child value", parentWorkspaceFileIndexContributor.latestChildProperty, "ParentWorkspaceFileIndexContributor should be called")
   }
 
+  @Test
+  fun `child contributor should be called after its sibling update`() = runBlocking {
+    val model = WorkspaceModel.getInstance(projectModel.project)
+    val siblingEntity = model.currentSnapshot.entities(SiblingEntity::class.java).single()
+
+    model.update("Update sibling") {
+      it.modifyEntity(SiblingEntity.Builder::class.java, siblingEntity) {
+        customSiblingProperty = "new sibling property value"
+      }
+    }
+
+    assertEquals("new sibling property value", childWorkspaceFileIndexContributor.latestSiblingProperty, "ChildWorkspaceFileIndexContributor should be called")
+  }
+
   // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
   private class ChildWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<ChildTestEntity>, SkipAddingToWatchedRoots {
     var latestParentProperty: String? = null
+    var latestSiblingProperty: String? = null
 
     override val entityClass: Class<ChildTestEntity>
       get() = ChildTestEntity::class.java
 
     override val dependenciesOnOtherEntities: List<DependencyDescription<ChildTestEntity>>
       get() = listOf(
-        DependencyDescription.OnParent(ParentTestEntity::class.java) { sequenceOfNotNull(it.child) }
+        DependencyDescription.OnParent(ParentTestEntity::class.java) { sequenceOfNotNull(it.child) },
+        DependencyDescription.OnSibling(SiblingEntity::class.java) { sequenceOfNotNull(it.parent.child) }
       )
 
     override fun registerFileSets(entity: ChildTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       latestParentProperty = entity.parent.customParentProperty
+      latestSiblingProperty = entity.parent.secondChild?.customSiblingProperty
     }
   }
 

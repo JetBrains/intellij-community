@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface ParentTestEntity : WorkspaceEntity {
   val child: ChildTestEntity?
+  val secondChild: SiblingEntity?
   val customParentProperty: String
 
   //region generated code
@@ -18,6 +19,7 @@ interface ParentTestEntity : WorkspaceEntity {
   interface Builder : WorkspaceEntity.Builder<ParentTestEntity> {
     override var entitySource: EntitySource
     var child: ChildTestEntity.Builder?
+    var secondChild: SiblingEntity.Builder?
     var customParentProperty: String
   }
 
@@ -87,5 +89,50 @@ fun MutableEntityStorage.modifyChildTestEntity(
   modification: ChildTestEntity.Builder.() -> Unit,
 ): ChildTestEntity {
   return modifyEntity(ChildTestEntity.Builder::class.java, entity, modification)
+}
+//endregion
+
+/**
+ * Sibling means [ParentTestEntity] has this entity as its child
+ * so it is sibling for [ChildTestEntity]
+ */
+interface SiblingEntity : WorkspaceEntity {
+  @Parent
+  val parent: ParentTestEntity
+  val customSiblingProperty: String
+
+  //region generated code
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SiblingEntity> {
+    override var entitySource: EntitySource
+    var parent: ParentTestEntity.Builder
+    var customSiblingProperty: String
+  }
+
+  companion object : EntityType<SiblingEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(
+      customSiblingProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
+      val builder = builder()
+      builder.customSiblingProperty = customSiblingProperty
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifySiblingEntity(
+  entity: SiblingEntity,
+  modification: SiblingEntity.Builder.() -> Unit,
+): SiblingEntity {
+  return modifyEntity(SiblingEntity.Builder::class.java, entity, modification)
 }
 //endregion

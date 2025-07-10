@@ -93,6 +93,16 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
     /** Computes parent entity by the child */
     val parentGetter: (C) -> E
   ) : DependencyDescription<E>
+
+  /**
+   * Indicates that the contributor must be called for the entities [E] when any sibling entity of type [S] is added, removed or replaced.
+   */
+  data class OnSibling<E : WorkspaceEntity, S : WorkspaceEntity>(
+    /** Type of sibling entity */
+    val siblingClass: Class<S>,
+    /** Computes entities by the sibling */
+    val entityGetter: (S) -> Sequence<E>
+  ) : DependencyDescription<E>
 }
 
 /**

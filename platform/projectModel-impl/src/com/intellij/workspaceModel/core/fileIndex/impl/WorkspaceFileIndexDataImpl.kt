@@ -331,6 +331,8 @@ internal class WorkspaceFileIndexDataImpl(
                                                                                     event, removedEntities, addedEntities)
         is DependencyDescription.OnChild<*, *> -> collectEntitiesWithChangedChild(dependency as DependencyDescription.OnChild<E, *>,
                                                                                   event, removedEntities, addedEntities)
+        is DependencyDescription.OnSibling<*, *> -> collectEntitiesWithChangedSibling(dependency as DependencyDescription.OnSibling<E, *>,
+                                                                                      event, removedEntities, addedEntities)
       }
     }
 
@@ -344,6 +346,20 @@ internal class WorkspaceFileIndexDataImpl(
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for (added in addedEntities) {
         contributor.registerFileSets(added, storeRegistrar, event.storageAfter)
+      }
+    }
+  }
+
+  private fun <E: WorkspaceEntity, P: WorkspaceEntity> collectEntitiesWithChangedSibling(dependency: DependencyDescription.OnSibling<E, P>,
+                                                                                         event: VersionedStorageChange,
+                                                                                         removedEntities: MutableSet<E>,
+                                                                                         addedEntities: MutableSet<E>) {
+    event.getChanges(dependency.siblingClass).asSequence().forEach { change ->
+      change.oldEntity?.let {
+        dependency.entityGetter(it).toCollection(removedEntities)
+      }
+      change.newEntity?.let {
+        dependency.entityGetter(it).toCollection(addedEntities)
       }
     }
   }
