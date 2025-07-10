@@ -29,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +58,8 @@ import icons.JewelIcons
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlinx.datetime.toJavaLocalDate
+import org.jetbrains.jewel.bridge.medium
+import org.jetbrains.jewel.bridge.regular
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
@@ -73,6 +74,7 @@ import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.PopupMenu
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.items
 import org.jetbrains.jewel.ui.component.rememberSplitLayoutState
@@ -80,7 +82,6 @@ import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
-import org.jetbrains.jewel.ui.typography
 
 @Composable
 internal fun ReleasesSampleCompose(project: Project) {
@@ -122,36 +123,34 @@ private fun LeftColumn(project: Project, modifier: Modifier = Modifier, onSelect
             OverflowMenu(currentContentSource) { service.setContentSource(it) }
         }
 
-        key(currentContentSource) {
-            val listState = rememberSelectableLazyListState()
-            VerticallyScrollableContainer(listState.lazyListState, modifier) {
-                SelectableLazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    selectionMode = SelectionMode.Single,
-                    state = listState,
-                    onSelectedIndexesChange = {
-                        val selectedItem =
-                            if (it.isNotEmpty()) {
-                                currentContentSource.items[it.first()]
-                            } else {
-                                null
-                            }
+        val listState = rememberSelectableLazyListState()
+        VerticallyScrollableContainer(listState.lazyListState, modifier) {
+            SelectableLazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                selectionMode = SelectionMode.Single,
+                state = listState,
+                onSelectedIndexesChange = {
+                    val selectedItem =
+                        if (it.isNotEmpty()) {
+                            currentContentSource.items[it.first()]
+                        } else {
+                            null
+                        }
 
-                        onSelectedItemChange(selectedItem)
+                    onSelectedItemChange(selectedItem)
+                },
+            ) {
+                items(
+                    items = currentContentSource.items,
+                    key = { it.key },
+                    contentType = {
+                        when (it) {
+                            is ContentItem.AndroidRelease -> ItemType.AndroidRelease
+                            is ContentItem.AndroidStudio -> ItemType.AndroidStudio
+                        }
                     },
                 ) {
-                    items(
-                        items = currentContentSource.items,
-                        key = { it.key },
-                        contentType = {
-                            when (it) {
-                                is ContentItem.AndroidRelease -> ItemType.AndroidRelease
-                                is ContentItem.AndroidStudio -> ItemType.AndroidStudio
-                            }
-                        },
-                    ) {
-                        ContentItemRow(it, isSelected, isActive) { newFilter -> service.filterContent(newFilter) }
-                    }
+                    ContentItemRow(it, isSelected, isActive) { newFilter -> service.filterContent(newFilter) }
                 }
             }
         }
@@ -212,7 +211,7 @@ private fun ItemTag(
 ) {
     Text(
         text = text,
-        style = JewelTheme.typography.medium,
+        style = Typography.medium(),
         color = foregroundColor,
         modifier = modifier.background(backgroundColor, shape).padding(padding),
     )
@@ -380,13 +379,13 @@ private fun ReleaseImage(imagePath: String) {
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
-                            val newIsHovered = event.type != PointerEventType.Exit
+                            val isHovered = event.type != PointerEventType.Exit
 
-                            if (newIsHovered != controller.isHovered) {
-                                controller.onHoverStateChanged(newIsHovered)
+                            if (isHovered != controller.isHovered) {
+                                controller.onHoverStateChanged(isHovered)
                             }
 
-                            if (newIsHovered) {
+                            if (isHovered) {
                                 val offset =
                                     Offset(
                                         x = (event.changes.first().position.x / size.width.toFloat()) * 2f - 1f,
@@ -414,14 +413,14 @@ private fun ReleaseImage(imagePath: String) {
 @Composable
 private fun ItemDetailsText(selectedItem: ContentItem) {
     Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(selectedItem.displayText, style = JewelTheme.typography.h1TextStyle)
+        Text(selectedItem.displayText, style = Typography.h1TextStyle())
 
         val formatter = remember(Locale.current) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
         val releaseDate = selectedItem.releaseDate
         if (releaseDate != null) {
             Text(
                 text = "Released on ${formatter.format(releaseDate.toJavaLocalDate())}",
-                style = JewelTheme.typography.medium,
+                style = Typography.medium(),
                 color = JewelTheme.globalColors.text.info,
             )
         }
@@ -455,6 +454,6 @@ private fun AndroidStudioReleaseDetails(item: ContentItem.AndroidStudio) {
 private fun TextWithLabel(labelText: String, valueText: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(labelText)
-        Text(valueText, style = JewelTheme.typography.regular.copy(fontWeight = FontWeight.Bold))
+        Text(valueText, style = Typography.regular().copy(fontWeight = FontWeight.Bold))
     }
 }

@@ -141,15 +141,15 @@ internal class FoilInteractionController(private val scope: CoroutineScope) {
     private var currentCursorPosition by mutableStateOf(Offset.Zero)
     private var animationJob: Job? = null
 
-    fun onHoverStateChanged(newIsHovered: Boolean) {
-        isHovered = newIsHovered
+    fun onHoverStateChanged(isHovered: Boolean) {
+        this.isHovered = isHovered
         if (mode == FoilShaderMode.Animating) {
-            if (!newIsHovered) animationJob?.cancel()
+            if (!isHovered) animationJob?.cancel()
             return
         }
 
         // If in tracking mode, either snap or animate to center.
-        if (newIsHovered) {
+        if (isHovered) {
             trackCursor()
         } else {
             returnToCenter()
