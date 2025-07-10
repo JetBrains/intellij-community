@@ -26,6 +26,8 @@ sealed interface SearchEverywhereTab {
    * and define the mapping of experiment groups to the experiment that should be performed.
    */
   sealed interface TabWithExperiments : TabWithLogging {
+    val disableExperimentRegistryKey: String
+
     @get:VisibleForTesting
     val experiments: Map<Int, ExperimentType>
 
@@ -94,7 +96,6 @@ sealed interface SearchEverywhereTab {
      */
     val isMlRankingEnabled: Boolean
       get() {
-        val isMlRankingEnabledByDefault = AdvancedSettings.getDefaultBoolean(advancedSettingKey)
         val isMlRankingEnabled = AdvancedSettings.getBoolean(advancedSettingKey)
 
         val experiment = currentExperimentType
@@ -112,6 +113,13 @@ sealed interface SearchEverywhereTab {
 
         return experiment.shouldSortByMl
       }
+
+    /**
+     * Indicates whether Machine Learning (ML) ranking is enabled by default for this tab.
+     * It does NOT indicate if the ML ranking is currently enabled, for that, use [isMlRankingEnabled] instead.
+     */
+    val isMlRankingEnabledByDefault: Boolean
+      get() = AdvancedSettings.getDefaultBoolean(advancedSettingKey)
 
     /**
      * Indicates whether the experimental model is being used for the current tab.
@@ -137,6 +145,7 @@ sealed interface SearchEverywhereTab {
     override val tabId: String = ALL_CONTRIBUTORS_GROUP_ID
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.all"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.all.model.path"
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.all.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.EssentialContributorPrediction,
@@ -162,6 +171,7 @@ sealed interface SearchEverywhereTab {
     override val tabId: String = ActionSearchEverywhereContributor::class.java.simpleName
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.action"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.action.model.path"
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.action.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.ExactMatchManualFix,
@@ -176,6 +186,7 @@ sealed interface SearchEverywhereTab {
     override val tabId: String = ClassSearchEverywhereContributor::class.java.simpleName
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.classes"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.classes.model.path"
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.classes.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.SemanticSearch,
@@ -192,6 +203,7 @@ sealed interface SearchEverywhereTab {
     override val tabId: String = FileSearchEverywhereContributor::class.java.simpleName
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.files"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.files.model.path"
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.files.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.SemanticSearch,
@@ -204,6 +216,7 @@ sealed interface SearchEverywhereTab {
 
   object Symbols : TabWithExperiments {
     override val tabId: String = SymbolSearchEverywhereContributor::class.java.simpleName
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.symbols.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.SemanticSearch

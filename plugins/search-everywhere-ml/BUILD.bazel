@@ -20,6 +20,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/statistics",
     "@lib//:search_everywhere_ml-ai-grazie-emb",
+    "//platform/projectModel-api:projectModel",
   ],
   exports = ["@lib//:search_everywhere_ml-ai-grazie-emb"],
   runtime_deps = [":search-everywhere-ml_resources"]
@@ -40,6 +41,10 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:search_everywhere_ml-ai-grazie-emb",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:io-mockk-jvm",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ],
   runtime_deps = [":search-everywhere-ml_resources"]
 )

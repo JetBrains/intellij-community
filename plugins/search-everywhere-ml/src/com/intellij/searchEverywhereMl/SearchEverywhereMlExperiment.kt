@@ -7,6 +7,8 @@ import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.VERSION
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.util.MathUtil
 import org.jetbrains.annotations.TestOnly
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 /**
  * Handles the machine learning experiments in Search Everywhere.
@@ -120,4 +122,14 @@ object SearchEverywhereMlExperiment {
      */
     object CombinedExperiment : ActiveExperiment(true)
   }
+}
+
+@OptIn(ExperimentalContracts::class)
+fun SearchEverywhereMlExperiment.ExperimentType.isActiveExperiment(): Boolean {
+  contract {
+    returns(true) implies(this@isActiveExperiment is SearchEverywhereMlExperiment.ExperimentType.ActiveExperiment)
+    returns(false) implies(this@isActiveExperiment is SearchEverywhereMlExperiment.ExperimentType.NoExperiment)
+  }
+
+  return this is SearchEverywhereMlExperiment.ExperimentType.ActiveExperiment
 }
