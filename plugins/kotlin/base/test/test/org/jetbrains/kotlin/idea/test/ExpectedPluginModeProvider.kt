@@ -27,7 +27,10 @@ internal fun assertKotlinPluginMode(
     expectedPluginMode: KotlinPluginMode,
     actualPluginMode: KotlinPluginMode = KotlinPluginModeProvider.currentPluginMode,
 ) = Assert.assertEquals(
-    "Invalid Kotlin plugin detected: $actualPluginMode, but $expectedPluginMode was expected",
+    """
+        Invalid Kotlin plugin detected: $actualPluginMode, but $expectedPluginMode was expected.
+        Troubleshooting: make sure `idea.kotlin.plugin.use.k2` system property is set to the correct value (true/false) in your run configuration.
+    """.trimIndent(),
     expectedPluginMode,
     actualPluginMode,
 )
