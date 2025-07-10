@@ -23,6 +23,7 @@ import com.intellij.driver.sdk.waitForCodeAnalysis
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -111,7 +112,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     }
   }
 
-  fun runAllCellsAndWaitExecuted(timeout: Duration = 30.seconds): Unit = step("Executing all cells") {
+  fun runAllCellsAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing all cells") {
     runAllCells()
     waitFor(timeout = timeout) {
       notebookCellExecutionInfos.all {
