@@ -8,7 +8,7 @@ import org.jetbrains.annotations.TestOnly
 
 internal sealed interface RootContainer {
   /**
-   * @return known priority or 0 if root is not in the container
+   * @return known priority or 0 if the root is not in the container
    */
   fun getPriority(root: VirtualFile): Int
 
@@ -30,16 +30,17 @@ internal sealed interface RootContainer {
 internal class ClassicRootContainer(private val roots: Object2IntMap<VirtualFile>) : RootContainer {
   override fun getPriority(root: VirtualFile): Int = roots.getInt(root)
 
+  @Deprecated("use getRootDescriptor instead")
   override fun containsRoot(root: VirtualFile): Boolean = roots.containsKey(root)
 
   override fun getRoots(): Collection<VirtualFile> = getRoots(sorted = false)
 
   override fun getSortedRoots(): Collection<VirtualFile> = getRoots(sorted = true)
 
-  override fun getRootDescriptor(root: RootDescriptor): ScopeRootDescriptor? =
+  override fun getRootDescriptor(root: RootDescriptor): ScopeRootDescriptor =
     throw UnsupportedOperationException()
 
-  override fun getRootDescriptor(root: VirtualFile): ScopeRootDescriptor? =
+  override fun getRootDescriptor(root: VirtualFile): ScopeRootDescriptor =
     throw UnsupportedOperationException()
 
   override val size: Int
@@ -61,6 +62,7 @@ internal class MultiverseRootContainer(
   override fun getPriority(root: VirtualFile): Int =
     roots[root]?.orderIndex ?: 0
 
+  @Deprecated("use getRootDescriptor instead")
   override fun containsRoot(root: VirtualFile): Boolean =
     roots.containsKey(root)
 
