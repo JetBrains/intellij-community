@@ -13,9 +13,7 @@ class XMixedModeProcessHandler(
   highLevelProcessHandler: ProcessHandler,
   lowLevelProcessHandler: ProcessHandler,
   private val config: XMixedModeProcessesConfiguration,
-) : CompositeProcessHandler(
-  // TODO: [initialization-fix]
-  mutableListOf(highLevelProcessHandler, lowLevelProcessHandler)) {
+) : CompositeProcessHandler(listOf(highLevelProcessHandler, lowLevelProcessHandler)) {
 
   private val high get() = handlers[0]
   private val low get() = handlers[1]
@@ -47,12 +45,5 @@ class XMixedModeProcessHandler(
     val (handlerWantsDetach, handlerWantsDestroy) = if (low.detachIsDefault()) Pair(low, high) else Pair(high, low)
     handlerWantsDetach.detachProcess()
     handlerWantsDestroy.destroyProcess()
-  }
-
-  // TODO: [initialization-fix]
-  fun addGoodLowLevelHandler(lowLevelHandler: ProcessHandler) {
-    (handlers as MutableList<ProcessHandler>)[1] = lowLevelHandler
-    low.startNotify()
-    low.addProcessListener(EachListener())
   }
 }

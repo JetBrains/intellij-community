@@ -53,7 +53,7 @@ import javax.swing.event.HyperlinkListener
  */
 @ApiStatus.Internal
 class XMixedModeCombinedDebugProcess(
-  var low: XDebugProcess,
+  val low: XDebugProcess,
   val high: XDebugProcess,
   val session: XDebugSessionImpl,
   val config: XMixedModeProcessesConfiguration,
@@ -310,15 +310,6 @@ class XMixedModeCombinedDebugProcess(
     val actionSuspendContext = if (isLowLevelStep) suspendContext.lowLevelDebugSuspendContext else suspendContext.highLevelDebugSuspendContext
     val state = if (isLowLevelStep) LowLevelRunToAddress(position, actionSuspendContext) else HighLevelRunToAddress(position, actionSuspendContext)
     this.stateMachine.set(state)
-  }
-
-  // TODO: [initialization-fix]
-  fun addGoodLowDebugProcess(low: XDebugProcess) {
-    this.low = low
-    stateMachine.low = low
-    myProcessHandler?.addGoodLowLevelHandler(low.processHandler)
-    if (layouter != null)
-      layouter!!.replaceFirstLayouterAndApply(low.createTabLayouter())
   }
 
   fun setNextStatement(position: XSourcePosition) {
