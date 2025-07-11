@@ -602,7 +602,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
   override fun createSnapshotsDirectory(): Path {
     val snapshotsDir = context.paths.projectHome.resolve("out/snapshots")
-    NioFiles.deleteRecursively(snapshotsDir)
     Files.createDirectories(snapshotsDir)
     return snapshotsDir
   }
@@ -615,7 +614,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     cleanSystemDir: Boolean,
   ) {
     val snapshotsDir = createSnapshotsDirectory()
-    val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
+    // a heap dump file should not be overridden by the next test process run if any
+    val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom-${System.currentTimeMillis()}.hprof").toString()
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=${hprofSnapshotFilePath}"))
 
     val customMemoryOptions = options.jvmMemoryOptions?.trim()?.split(Regex("\\s+"))?.takeIf { it.isNotEmpty() }
