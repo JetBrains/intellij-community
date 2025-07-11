@@ -1118,8 +1118,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           throw NoTestsFound()
         }
 
-        if (attempt == options.attemptCount) break
-
         if (runJUnit5) {
           val failedClassesJUnit5 = failedClassesJUnit5List.let { if (Files.exists(it)) it.readLines() else emptyList() }
           if (failedClassesJUnit5.isNotEmpty()) {
@@ -1139,6 +1137,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             runJUnit34 = false
           }
         }
+      }
+      if (runJUnit5 || runJUnit34) {
+        throw Exception("Failed to run tests (attempt count: ${options.attemptCount}) runJUnit5=$runJUnit5, runJUnit34=$runJUnit34")
       }
     }
   }
@@ -1246,7 +1247,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     builder.inheritIO()
     val exitCode = builder.start().waitFor()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
-      context.messages.logErrorAndThrow("Tests failed with exit code $exitCode")
+      context.messages.warning("Tests failed with exit code $exitCode")
     }
     return exitCode
   }
