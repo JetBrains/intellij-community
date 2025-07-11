@@ -172,7 +172,6 @@ internal fun toCoreAwareComparator(comparator: Comparator<PluginModuleDescriptor
  */
 @ApiStatus.Obsolete
 private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
-  "Pythonid", //todo remove this: PY-82565
   "com.jetbrains.pycharm.ds.customization", //todo remove this: DS-7102
 )
 
