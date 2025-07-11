@@ -40,23 +40,29 @@ function __JetBrainsIntellijAskPSReadLineUpdating() {
     return
   }
 
-  Write-Host "IntelliJ Terminal requires RSReadLine module to have version 2.0.3+, while current version is $Version"
-  Write-Host "Do you agree to install the latest version of PSReadLine module?"
-  Write-Host "The following command will be executed: 'Install-Module PSReadLine -MinimumVersion 2.0.3 -Scope CurrentUser -Force'"
-  $Answer = Read-Host "[Y] Yes [N] No"
+  # The localized text is passed as env variables
+  $Line1 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_1 -f $Env:__JETBRAINS_INTELLIJ_IDE_NAME, $RequiredVersion, $Version
+  $Line2 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_2
+  $Line3 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_3 -f "'Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser -Force'"
+  $Line4 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_4
+
+  Write-Host $Line1
+  Write-Host $Line2
+  Write-Host $Line3
+  $Answer = Read-Host $Line4
   if ($Answer -ieq 'n') {
-    Write-Host "Installation of latest PSReadLine version was rejected"
+    Write-Host $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_REJECTED
     Write-Host "$([char]0x1B)]1341;psreadline_update_rejected`a" -NoNewline
     return
   }
   if ($Answer -ine 'y') {
-    Write-Host "Installation of latest PSReadLine version was skipped"
+    Write-Host $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_SKIPPED
     return
   }
 
-  Install-Module PSReadLine -MinimumVersion 2.0.3 -Scope CurrentUser -Force
+  Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser -Force
   if ($? -eq $true) {
-    Write-Host "New version of PSReadLine was successfully installed. Please open new Terminal tab."
+    Write-Host $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_COMPLETED
   }
 }
 
