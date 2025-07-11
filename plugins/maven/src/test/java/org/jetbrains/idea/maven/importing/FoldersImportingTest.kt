@@ -1403,7 +1403,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
     // but I'm testing the behavior as is in order to preserve it in the new Workspace import
     m1_standard_test_resources_list.add(m1_standard_test_resources)
-    if (isMaven4) {
+    if (isModel410()) {
       m1_standard_test_resources_list.add("$m1_standard_test_resources-filtered")
     }
     assertSources(m1_custom_module, m1_custom_sources_root)
