@@ -63,6 +63,30 @@ public final class JavaExecutionUtil {
     return contextModule;
   }
 
+  /**
+   * Returns the runtime-qualified (aka "binary") name of the specified class.
+   * <p>
+   * Below is a case where the <i>fully qualified name</i> of the class {@code NestedMain} differs from its <i>binary name</i>:
+   *
+   * <pre>{@code
+   * package simple;
+   *
+   * public class Main {
+   *   public static class NestedMain {
+   *     public static void main(String[] args) {
+   *       System.out.println("hello world");
+   *     }
+   *   }
+   * }}
+   *
+   * Fully qualified name is {@code simple.Main.NestedMain}, but the binary name is {@code simple.Main$NestedMain}.
+   * <p>
+   * See also:
+   * <ul>
+   *   <li>JLS 6.7. Fully Qualified Names and Canonical Names</li>
+   *   <li>JLS 13.1. The Form of a Binary</li>
+   * </ul>
+   */
   public static @Nullable String getRuntimeQualifiedName(final @NotNull PsiClass aClass) {
     return ClassUtil.getJVMClassName(aClass);
   }
