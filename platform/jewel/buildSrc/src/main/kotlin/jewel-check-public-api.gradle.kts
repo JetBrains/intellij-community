@@ -11,7 +11,7 @@ with(extension) { excludedClassRegexes.convention(emptySet()) }
 tasks {
     val validatePublicApi =
         register<ValidatePublicApiTask>("validatePublicApi") {
-            apiFiles.from(
+            source(
                 project.fileTree(".") {
                     include("api-dump*.txt")
                 }

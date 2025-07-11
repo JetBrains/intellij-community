@@ -1,23 +1,15 @@
-import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.regex.PatternSyntaxException
 
 @CacheableTask
-abstract class ValidatePublicApiTask : DefaultTask() {
+abstract class ValidatePublicApiTask : SourceTask() {
     @get:Input
     abstract var excludedClassRegexes: Set<String>
-
-    @get:InputFiles
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val apiFiles: ConfigurableFileCollection
 
     init {
         group = "verification"
@@ -40,14 +32,14 @@ abstract class ValidatePublicApiTask : DefaultTask() {
                 }
                 .toSet()
 
-        apiFiles.forEach { apiFile ->
-            logger.lifecycle("Validating public API from file ${apiFile.path}")
+        source.forEach { apiDumpFile ->
+            logger.lifecycle("Validating public API from file ${apiDumpFile.path}")
 
-            apiFile.useLines { lines ->
-                val actualDataClasses = findDataClasses(apiFile.readLines()).filterExclusions(excludedRegexes)
+            apiDumpFile.useLines { lines ->
+                val actualDataClasses = findDataClasses(lines).filterExclusions(excludedRegexes)
 
                 if (actualDataClasses.isNotEmpty()) {
-                    violations[apiFile] = actualDataClasses
+                    violations[apiDumpFile] = actualDataClasses
                 }
             }
         }
@@ -82,7 +74,7 @@ abstract class ValidatePublicApiTask : DefaultTask() {
         }
     }
 
-    private fun findDataClasses(lines: List<String>): Set<String> {
+    private fun findDataClasses(lines: Sequence<String>): Set<String> {
         var currentClassFqn: String? = null
         var isCurrentClassCandidate = false
         val dataClasses = mutableMapOf<String, DataClassInfo>()
