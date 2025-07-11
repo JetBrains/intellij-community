@@ -1,5 +1,5 @@
 <idea-plugin>
-  <module value="intellij.regexp.plugin"/>
+  <module value="com.intellij.modules.regexp"/>
 
   <extensionPoints>
     <extensionPoint name="regExpLanguageHost" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
