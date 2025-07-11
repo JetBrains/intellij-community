@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
@@ -20,13 +20,13 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.ZipEntryResolverPool
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -420,7 +420,7 @@ object PluginManagerCore {
   fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginNonLoadReason? {
     val requiredOs = getUnfulfilledOsRequirement(descriptor)
     if (requiredOs != null) {
-      return PluginIsIncompatibleWithHostPlatform(descriptor, requiredOs, SystemInfo.getOsName())
+      return PluginIsIncompatibleWithHostPlatform(descriptor, requiredOs, OS.CURRENT.name)
     }
 
     if (isIgnoreCompatibility) {

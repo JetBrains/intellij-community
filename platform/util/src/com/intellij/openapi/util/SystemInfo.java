@@ -138,12 +138,18 @@ public final class SystemInfo {
     return isWindows ? WinBuildNumber.getWinBuildNumber() : null;
   }
 
+  /** @deprecated use {@link OS#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static String getOsName() {
-    return isMac ? "macOS" : OS_NAME;
+    return OS.CURRENT.name();
   }
 
+  /** @deprecated use {@link OS#CURRENT} and {@link OS#version} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static String getOsNameAndVersion() {
-    return getOsName() + ' ' + OS_VERSION;
+    return OS.CURRENT.name() + ' ' + OS.CURRENT.version();
   }
 
   //<editor-fold desc="Deprecated stuff.">

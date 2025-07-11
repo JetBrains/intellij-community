@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -33,6 +33,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.io.copyRecursively
 import com.intellij.util.io.delete
+import com.intellij.util.system.OS
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assert.*
@@ -563,7 +564,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testLineBreaksInName() {
-    assumeTrue("Expected Unix but got: " + SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix)
+    assumeTrue("Unix-only", OS.isGenericUnix())
 
     val root = tempDir.newDirectoryPath("root")
     val file = tempDir.newFile("root/weird\ndir\nname/weird\nfile\nname").toPath()
@@ -614,8 +615,9 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ file.writeText("abc") }, mapOf(file to 'U'))
   }
 
+  @Suppress("LocalVariableName")
   @Test fun testDisplacementByIsomorphicTree() {
-    assumeTrue("Expected not Mac but got: " + SystemInfo.getOsNameAndVersion(), !SystemInfo.isMac)
+    assumeFalse("macOS-incompatible", OS.CURRENT == OS.macOS)
 
     val top = tempDir.newDirectoryPath("top")
     val root = tempDir.newDirectoryPath("top/root")

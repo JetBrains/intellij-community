@@ -1,21 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("CredentialStoreHelpers")
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.impl.BasePasswordSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions
+import com.intellij.util.system.OS
 import org.junit.Assume.assumeTrue
 import java.util.*
 
 internal fun assumeLocalMac() =
-  assumeTrue("The test needs macOS on a local PC but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
+  assumeTrue("Local macOS only", OS.CURRENT == OS.macOS && !UsefulTestCase.IS_UNDER_TEAMCITY)
 
 internal fun assumeLocalLinux() =
-  assumeTrue("The test needs Linux on a local PC but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isLinux && (
-    !UsefulTestCase.IS_UNDER_TEAMCITY || System.getenv("FORCE_CREDENTIALS_TEST") != null)
-  )
+  assumeTrue("Local Linux only", OS.CURRENT == OS.Linux && (!UsefulTestCase.IS_UNDER_TEAMCITY || System.getenv("FORCE_CREDENTIALS_TEST") != null))
 
 internal fun randomString() = UUID.randomUUID().toString()
 
