@@ -63,6 +63,12 @@ internal fun openEditorForFile(
         else if (mode == FileEditorManagerImpl.OpenMode.NEW_WINDOW) {
           manager.openFileInNewWindow(file, reuseOpen = true)
         }
+        else if (value.editorWindow != null) {
+          val editorWindow = findAppropriateWindow(value.editorWindow)
+          if (editorWindow != null) {
+            manager.openFileImpl2(window = editorWindow, file = file, options = FileEditorOpenOptions(requestFocus = true))
+          }
+        }
         else {
           val settings = UISettings.getInstance().state
           val oldValue = settings.reuseNotModifiedTabs
@@ -85,8 +91,8 @@ internal fun openEditorForFile(
   )
 }
 
-internal fun closeEditorForFile(selectedFile: SwitcherVirtualFile, project: Project) {
-  val virtualFile = selectedFile.virtualFile ?: return
+internal fun closeEditorForFile(selectedFile: SwitcherVirtualFile, project: Project): Boolean {
+  val virtualFile = selectedFile.virtualFile ?: return true
   val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
 
   val maybePreservedItemWindow = null
@@ -97,4 +103,6 @@ internal fun closeEditorForFile(selectedFile: SwitcherVirtualFile, project: Proj
   else {
     fileEditorManager.closeFile(virtualFile, window)
   }
+
+  return fileEditorManager.getEditors(virtualFile).isEmpty()
 }

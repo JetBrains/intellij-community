@@ -51,5 +51,5 @@ internal class FrontendRecentFilesMutableState(project: Project): RecentFilesMut
 
 internal suspend fun convertVirtualFileToViewModel(virtualFile: VirtualFile, project: Project): SwitcherVirtualFile {
   val localIcon = readAction { IconUtil.getIcon(virtualFile, 0, project) }
-  return SwitcherVirtualFile(virtualFile, localIcon, project)
+  return SwitcherVirtualFile(virtualFile, localIcon)
 }

@@ -39,11 +39,7 @@ import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED_ORIGI
 import com.intellij.platform.recentFiles.frontend.SwitcherLogger.SHOWN_TIME_ACTIVITY
 import com.intellij.platform.recentFiles.frontend.SwitcherSpeedSearch.Companion.installOn
 import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
-import com.intellij.platform.recentFiles.shared.FileChangeKind
-import com.intellij.platform.recentFiles.shared.FileSwitcherApi
-import com.intellij.platform.recentFiles.shared.RecentFileKind
-import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
-import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
+import com.intellij.platform.recentFiles.shared.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
@@ -471,8 +467,9 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
         when (item) {
           is SwitcherVirtualFile -> {
             listModel.remove(item)
-            closeEditorForFile(item, project)
-            filesToHide.add(item)
+            if (closeEditorForFile(item, project)) {
+              filesToHide.add(item)
+            }
           }
           is SwitcherToolWindow -> {
             closeToolWindow(item, project)
