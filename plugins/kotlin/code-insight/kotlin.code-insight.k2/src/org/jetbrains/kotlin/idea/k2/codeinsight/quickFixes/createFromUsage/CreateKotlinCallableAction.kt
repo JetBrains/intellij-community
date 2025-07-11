@@ -86,6 +86,7 @@ internal class CreateKotlinCallableAction(
     override fun startInWriteAction(): Boolean = true
 
     override fun getPriority(): PriorityAction.Priority {
+        if (isExtension) return PriorityAction.Priority.LOW
         return if (methodName.firstOrNull()?.isLowerCase() == true) PriorityAction.Priority.NORMAL else PriorityAction.Priority.LOW
     }
 
