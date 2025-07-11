@@ -2724,8 +2724,8 @@ jvm_import(
 
 jvm_import(
   name = "jetbrains-intellij-deps-rwmutex-idea",
-  jar = "@rwmutex-idea-0_0_8_http//file",
-  source_jar = "@rwmutex-idea-0_0_8-sources_http//file",
+  jar = "@rwmutex-idea-0_0_9_http//file",
+  source_jar = "@rwmutex-idea-0_0_9-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

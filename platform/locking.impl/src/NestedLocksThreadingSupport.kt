@@ -367,26 +367,26 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      */
     fun upgradeWritePermit(permit: WriteIntentPermit): ExposedWritePermitData {
       val finalPermit = runSuspendMaybeConsuming(false) {
-        permit.acquireWritePermit()
+        permit.acquireWriteActionPermit()
       }
 
       // we need to acquire writes on the whole stack of lower-level write-intent permits,
       // since we want to cancel all lower-level running read actions
       val writePermits = Array(level()) {
         runSuspendMaybeConsuming(false) {
-          lowerLevelPermits[it].acquireWritePermit()
+          lowerLevelPermits[it].acquireWriteActionPermit()
         }
       }
       return ExposedWritePermitData(lowerLevelPermits, writePermits, finalPermit, permit, permit)
     }
 
     suspend fun upgradeWritePermitSuspending(permit: WriteIntentPermit): ExposedWritePermitData {
-      val finalPermit = permit.acquireWritePermit()
+      val finalPermit = permit.acquireWriteActionPermit()
 
       // we need to acquire writes on the whole stack of lower-level write-intent permits,
       // since we want to cancel all lower-level running read actions
       val writePermits = Array(level()) {
-        lowerLevelPermits[it].acquireWritePermit()
+        lowerLevelPermits[it].acquireWriteActionPermit()
       }
       return ExposedWritePermitData(lowerLevelPermits, writePermits, finalPermit, permit, permit)
     }
@@ -414,7 +414,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      */
     fun acquireWriteIntentPermit(): WriteIntentPermit {
       val permit = runSuspendMaybeConsuming(false) {
-        thisLevelLock.acquireWriteIntentPermit()
+        thisLevelLock.acquireWriteIntentActionPermit()
       }
       thisLevelPermit.set(permit)
       return permit
@@ -424,7 +424,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      * Obtains a write-intent permit if the current thread does not hold anything
      */
     suspend fun acquireWriteIntentPermitSuspending(): WriteIntentPermit {
-      val permit = thisLevelLock.acquireWriteIntentPermit()
+      val permit = thisLevelLock.acquireWriteIntentActionPermit()
       // we DO NOT use thread-locals here, the thread is not set in stone for suspending code
       return permit
     }
@@ -443,7 +443,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      */
     fun acquireReadPermit(): ReadPermit {
       val permit = runSuspendMaybeConsuming(true) {
-        thisLevelLock.acquireReadPermit(false)
+        thisLevelLock.acquireReadActionPermit(false)
       }
       thisLevelPermit.set(permit)
       return permit
@@ -454,7 +454,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      */
     fun tryAcquireReadPermit(): ReadPermit? {
       val permit = runSuspendMaybeConsuming(false) {
-        thisLevelLock.tryAcquireReadPermit()
+        thisLevelLock.tryAcquireReadActionPermit()
       }
       if (permit != null) {
         thisLevelPermit.set(permit)
@@ -607,7 +607,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
           currentComputationState.releaseReadPermit(newPermit)
           // we need to reacquire the previously released write permit
           val newWritePermit = runSuspendMaybeConsuming(false) {
-            currentWriteIntentPermit.acquireWritePermit()
+            currentWriteIntentPermit.acquireWriteActionPermit()
           }
           hack_setThisLevelPermit(newWritePermit)
           hack_setPublishedPermitData(currentPermits.copy(finalWritePermit = newWritePermit))
@@ -1209,12 +1209,12 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     finally {
       myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
       val newWritePermit = runSuspendMaybeConsuming(false) {
-        rootWriteIntentPermit.acquireWritePermit()
+        rootWriteIntentPermit.acquireWriteActionPermit()
       }
       hack_setThisLevelPermit(newWritePermit)
       val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
         runSuspendMaybeConsuming(false) {
-          exposedPermitData.writeIntentStack[it].acquireWritePermit()
+          exposedPermitData.writeIntentStack[it].acquireWriteActionPermit()
         }
       }
       hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit))

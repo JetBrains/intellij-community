@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="jetbrains.intellij.deps.rwmutex.idea" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:rwmutex-idea:0.0.8">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:rwmutex-idea:0.0.9">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0.0.8/rwmutex-idea-0.0.8.jar">
-          <sha256sum>d1257ece864c3e69ef30150aec007efe3f0adfa016f93724c7fc45ecdda90bd3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0.0.9/rwmutex-idea-0.0.9.jar">
+          <sha256sum>d0cebf5bf9b1b0a5dcc17675875095fba236d7af7bce4c57d98c8662a4a235af</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0.0.8/rwmutex-idea-0.0.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0.0.9/rwmutex-idea-0.0.9.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0.0.8/rwmutex-idea-0.0.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0.0.9/rwmutex-idea-0.0.9-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0.0.8/rwmutex-idea-0.0.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/rwmutex-idea/0.0.9/rwmutex-idea-0.0.9-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

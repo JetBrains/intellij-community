@@ -3716,17 +3716,17 @@ http_file(
 )
 
 http_file(
-  name = "rwmutex-idea-0_0_8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/rwmutex-idea/0.0.8/rwmutex-idea-0.0.8.jar",
-  sha256 = "d1257ece864c3e69ef30150aec007efe3f0adfa016f93724c7fc45ecdda90bd3",
-  downloaded_file_path = "rwmutex-idea-0.0.8.jar"
+  name = "rwmutex-idea-0_0_9_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/rwmutex-idea/0.0.9/rwmutex-idea-0.0.9.jar",
+  sha256 = "d0cebf5bf9b1b0a5dcc17675875095fba236d7af7bce4c57d98c8662a4a235af",
+  downloaded_file_path = "rwmutex-idea-0.0.9.jar"
 )
 
 http_file(
-  name = "rwmutex-idea-0_0_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/rwmutex-idea/0.0.8/rwmutex-idea-0.0.8-sources.jar",
-  sha256 = "594eb6819ea1a79bbdbfa6d6cfdb13efda5887550c0774c9c3744107702e1fc5",
-  downloaded_file_path = "rwmutex-idea-0.0.8-sources.jar"
+  name = "rwmutex-idea-0_0_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/rwmutex-idea/0.0.9/rwmutex-idea-0.0.9-sources.jar",
+  sha256 = "f96c9559dff11e693055459881b3e22ac9bc7dc8f5910fd478fa8368e81496c0",
+  downloaded_file_path = "rwmutex-idea-0.0.9-sources.jar"
 )
 
 http_file(
