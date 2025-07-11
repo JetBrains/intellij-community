@@ -59,10 +59,10 @@ public fun SelectableLazyColumn(
 ) {
     val scope = rememberCoroutineScope()
     val latestContent = rememberUpdatedState(content)
-    val containerState = remember {
+    val containerState by remember {
         derivedStateOf(referentialEqualityPolicy()) { SelectableLazyListScopeContainer().apply(latestContent.value) }
     }
-    val container = containerState.value
+    val container = containerState
 
     val keys = remember(container) { container.getKeys() }
     var isFocused by remember { mutableStateOf(false) }
