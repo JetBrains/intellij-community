@@ -18,6 +18,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/platform-impl/bootstrap",
     "//platform/util/xmlDom",
+    "@lib//:aalto-xml",
     "//platform/runtime/product",
     "//jps/model-api:model",
   ]

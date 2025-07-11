@@ -19,14 +19,12 @@ import com.intellij.platform.plugins.parser.impl.LoadPathUtil
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.plugins.testFramework.ValidationPluginDescriptorReaderContext
+import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -290,7 +288,7 @@ class PluginDependenciesValidator private constructor(
     require(pluginDescriptorPath != null) { "Cannot find plugin descriptor file in '${mainModule.name}' module" }
     val xIncludeLoader = PluginMainModuleFromSourceXIncludeLoader(pluginLayout)
     val descriptor = PluginMainDescriptor(
-      raw = loadRawPluginDescriptor(pluginDescriptorPath, xIncludeLoader),
+      raw = loadRawPluginDescriptorInTest(pluginDescriptorPath, xIncludeLoader),
       pluginPath = pluginDir,
       isBundled = pluginLayout.mainJpsModule in mainModulesOfBundledPlugins,
       useCoreClassLoader = false
@@ -304,17 +302,6 @@ class PluginDependenciesValidator private constructor(
     loadPluginSubDescriptors(descriptor, pathResolver, loadingContext = loadingContext, dataLoader = dataLoader, pluginDir = pluginDir, pool = zipPool)
     descriptor.jarFiles = (pluginLayout.jpsModulesInClasspath + embeddedContentModules).map { getModuleOutputDir(it) }
     return descriptor
-  }
-
-  //todo reuse?
-  private fun loadRawPluginDescriptor(file: Path, xIncludeLoader: PluginMainModuleFromSourceXIncludeLoader): RawPluginDescriptor {
-    val xmlInput = createNonCoalescingXmlStreamReader(file.inputStream(), file.pathString)
-    val rawPluginDescriptor = PluginDescriptorFromXmlStreamConsumer(ValidationPluginDescriptorReaderContext, xIncludeLoader).let {
-      it.consume(xmlInput)
-      it.build()
-    }
-
-    return rawPluginDescriptor
   }
 
   private fun getModuleOutputDir(moduleName: String): Path = tempDir.resolve("module-output").resolve(moduleName)
