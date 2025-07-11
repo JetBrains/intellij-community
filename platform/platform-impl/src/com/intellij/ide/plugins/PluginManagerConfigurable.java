@@ -1075,8 +1075,9 @@ public final class PluginManagerConfigurable
             Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
               .stream()
               .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
-
-            List<PluginUiModel> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
+            List<PluginId> installedPluginIds = ContainerUtil.map(model.getInstalledPlugins(), it -> it.getPluginId());
+            List<PluginUiModel> nonBundledPlugins =
+              ContainerUtil.filter(visiblePlugins.get(Boolean.FALSE), it -> !installedPluginIds.contains(it.getPluginId()));
             downloaded.addModels(nonBundledPlugins);
 
             LinkListener<Object> updateAllListener = new LinkListener<>() {
