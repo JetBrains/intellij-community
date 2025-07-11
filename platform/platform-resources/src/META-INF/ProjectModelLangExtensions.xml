@@ -91,9 +91,6 @@
     <projectService serviceInterface="com.intellij.framework.detection.DetectionExcludesConfiguration"
                     serviceImplementation="com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl"/>
 
-    <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator" order="first"
-                                  id="PlatformProjectConfigurator"/>
-
     <jdkDownloader.jdkInstallerListener implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.UnknownJdkInstallerListener"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderLogger"/>
 

@@ -45,6 +45,8 @@ data class OpenProjectTask @Internal constructor(
   val preventIprLookup: Boolean,
   val processorChooser: ((List<Any>) -> Any)?,
   val implOptions: Any?,
+  @Internal
+  val createModule: Boolean,
 ) {
   @Internal
   constructor(
@@ -82,6 +84,7 @@ data class OpenProjectTask @Internal constructor(
     processorChooser = null,
 
     implOptions = null,
+    createModule = true,
   )
 
   companion object {
@@ -146,6 +149,9 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   @Internal
   var processorChooser: ((List<Any>) -> Any)? = null
 
+  @Internal
+  var createModule: Boolean = true
+
   var project: Project? = null
 
   @PublishedApi internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
@@ -176,6 +182,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
 
       projectWorkspaceId = projectWorkspaceId,
       implOptions = implOptions,
+      createModule = createModule,
 
       line = line,
       column = column,

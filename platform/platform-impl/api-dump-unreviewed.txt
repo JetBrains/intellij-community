@@ -11029,7 +11029,6 @@ f:com.intellij.platform.PlatformProjectOpenProcessor$Companion
 - f:isTempProject(com.intellij.openapi.project.Project):Z
 - f:openProjectAsync(java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask,kotlin.coroutines.Continuation):java.lang.Object
 - bs:openProjectAsync$default(com.intellij.platform.PlatformProjectOpenProcessor$Companion,java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- f:runDirectoryProjectConfigurators(java.nio.file.Path,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
 e:com.intellij.platform.PlatformProjectOpenProcessor$Option
 - java.lang.Enum
 - sf:FORCE_NEW_FRAME:com.intellij.platform.PlatformProjectOpenProcessor$Option

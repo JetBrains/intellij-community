@@ -963,6 +963,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         baseDir = projectStoreBaseDir,
         project = project,
         newProject = options.isProjectCreatedWithWizard,
+        createModule = options.createModule
       )
       if (module != null) {
         options.preparedToOpen?.invoke(module)
