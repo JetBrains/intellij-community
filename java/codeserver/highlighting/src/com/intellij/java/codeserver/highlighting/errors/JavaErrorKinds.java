@@ -26,6 +26,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.*;
 
@@ -1492,7 +1493,14 @@ public final class JavaErrorKinds {
       .withDescription((ref, var) -> message("variable.already.assigned", var.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_CONSTRUCTOR =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.constructor")
-      .withDescription((ref, var) -> message("variable.already.assigned.constructor", var.getName()));
+      .withDescription((ref, var) -> {
+        PsiMethod constructor = PsiTreeUtil.getParentOfType(ref, PsiMethod.class);
+        assert constructor != null;
+        PsiMethodCallExpression thisCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+        assert thisCall != null;
+        return message("variable.already.assigned.constructor", var.getName(),
+                       thisCall.getTextOffset() + thisCall.getTextLength() > ref.getTextOffset() ? 1 : 2);
+      });
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_FIELD =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.field")
       .withDescription((ref, var) -> message("variable.already.assigned.field", var.getName()));
