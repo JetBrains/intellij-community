@@ -51,7 +51,7 @@ data class PluginValidationOptions(
   val skipUnresolvedOptionalContentModules: Boolean = false,
   val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
   val referencedPluginIdsOfExternalPlugins: Set<String> = emptySet(),
-  val pathsIncludedFromLibrariesViaXiInclude: Set<String> = emptySet(),
+  val prefixesOfPathsIncludedFromLibrariesViaXiInclude: List<String> = emptyList(),
 
   /**
    * Describes different core plugins (with ID `com.intellij`) located in the project sources. 
@@ -142,7 +142,7 @@ class PluginModelValidator(
   private val _errors = mutableListOf<PluginValidationError>()
   private val xIncludeLoader =
     LoadFromSourceXIncludeLoader(
-      pathsIncludedFromLibrariesViaXiInclude = validationOptions.pathsIncludedFromLibrariesViaXiInclude, 
+      prefixesOfPathsIncludedFromLibrariesViaXiInclude = validationOptions.prefixesOfPathsIncludedFromLibrariesViaXiInclude,
       project = project,
       directoriesToIndex = listOf("META-INF", "idea", ""),
     )
@@ -798,7 +798,7 @@ class PluginModelValidator(
 }
 
 private class LoadFromSourceXIncludeLoader(
-  private val pathsIncludedFromLibrariesViaXiInclude: Set<String>, 
+  private val prefixesOfPathsIncludedFromLibrariesViaXiInclude: List<String>,
   private val project: JpsProject,
   private val directoriesToIndex: List<String>,
 ) : XIncludeLoader {
@@ -827,8 +827,7 @@ private class LoadFromSourceXIncludeLoader(
   }
 
   override fun loadXIncludeReference(path: String): XIncludeLoader.LoadedXIncludeReference? {
-    if (path in pathsIncludedFromLibrariesViaXiInclude 
-        || path.startsWith("META-INF/tips-")
+    if (prefixesOfPathsIncludedFromLibrariesViaXiInclude.any { path.startsWith(it) }
         || path.startsWith("com/intellij/database/dialects/") //contains many files which slow down tests
         || path.startsWith("com/intellij/sql/dialects/") //contains many files which slow down tests
     ) {

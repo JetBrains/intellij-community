@@ -25,10 +25,11 @@ class CommunityPluginModelTest {
       modulesWithIncorrectlyPlacedModuleDescriptor = setOf(
         "intellij.android.device-explorer",
       ),
-      pathsIncludedFromLibrariesViaXiInclude = setOf(
+      prefixesOfPathsIncludedFromLibrariesViaXiInclude = listOf(
         "META-INF/analysis-api/analysis-api-fe10.xml",
         "META-INF/analysis-api/analysis-api-fir.xml",
         "META-INF/wizard-template-impl.xml",
+        "META-INF/tips-"
       ),
       pluginVariantsWithDynamicIncludes = listOf(
         PluginVariantWithDynamicIncludes(
