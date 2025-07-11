@@ -90,7 +90,7 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
       }
     }
 
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(item) ?: return emptyList()
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(item)
     result.addAll(getLanguageFeatures(psiElement, cache))
     result.addAll(getNameFeatures(item, searchQuery))
     return result
@@ -160,11 +160,11 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
 }
 
 object SearchEverywherePsiElementFeaturesProviderUtils {
-  fun getPsiElement(element: Any): PsiElement? = when (element) {
+  fun getPsiElement(element: Any): PsiElement = when (element) {
     is PsiItemWithSimilarity<*> -> getPsiElement(element.value)
     is PsiItemWithPresentation -> element.item
     is PsiElement -> element
     is ItemWithPresentation<*> -> getPsiElement(element.item)
-    else -> null
+    else -> throw IllegalArgumentException("Unsupported element type: ${element::class.java}")
   }
 }

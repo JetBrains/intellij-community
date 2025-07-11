@@ -123,7 +123,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val item = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
+    val item = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
     val file = getContainingFile(item)
 
     val project = ReadAction.compute<Project?, Nothing> {
