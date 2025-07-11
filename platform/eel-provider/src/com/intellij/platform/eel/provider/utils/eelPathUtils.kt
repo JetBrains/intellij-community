@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.createTemporaryDirectory
@@ -759,6 +760,11 @@ object EelPathUtils {
       from.lastAccessTime(),
       from.creationTime(),
     )
+  }
+
+  fun deleteRecursively(path: Path) {
+    // TODO optimize the remote FS case
+    NioFiles.deleteRecursively(path)
   }
 }
 
