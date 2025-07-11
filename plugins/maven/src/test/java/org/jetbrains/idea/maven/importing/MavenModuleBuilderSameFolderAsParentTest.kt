@@ -2,11 +2,10 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ArrayUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.model.MavenId
@@ -60,11 +59,13 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
     setModuleNameAndRoot("module", projectPath)
     setParentProject(customPomXml)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    val contentRoots = ArrayUtil.mergeArrays(allDefaultResources(),
-                                             "src/main/java",
-                                             "src/test/java")
-    assertRelativeContentRoots("project", *contentRoots)
+    assertSources("project", "src/main/java")
+    assertTestSources("project", "src/test/java")
+    assertDefaultResources("project")
+    assertDefaultTestResources("project")
+
     assertRelativeContentRoots("module", "")
+
     val module = MavenProjectsManager.getInstance(project).findProject(getModule("module"))
     readAction {
       val domProjectModel = MavenDomUtil.getMavenDomProjectModel(project, module!!.file)
