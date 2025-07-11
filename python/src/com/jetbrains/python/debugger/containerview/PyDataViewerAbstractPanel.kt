@@ -53,11 +53,11 @@ abstract class PyDataViewerAbstractPanel(
 
   abstract fun recreateTable()
 
-  protected fun onEnterPressed(commandSource: TextFieldCommandSource) {
+  protected fun onEnterPressed(commandSource: DataViewerCommandSource) {
     apply(commandSource)
   }
 
-  fun apply(commandSource: TextFieldCommandSource) {
+  fun apply(commandSource: DataViewerCommandSource) {
     dataViewerModel.format = formatValueFromUI
     dataViewerModel.slicing = slicingValueFromUI
     dataViewerModel.isColored = isColoredValueFromUI
@@ -65,18 +65,19 @@ abstract class PyDataViewerAbstractPanel(
     apply(dataViewerModel.slicing, false, commandSource)
   }
 
-  fun apply(name: String?, modifier: Boolean, commandSource: TextFieldCommandSource? = null) {
+  fun apply(name: String?, modifier: Boolean, commandSource: DataViewerCommandSource? = null) {
     ApplicationManager.getApplication().executeOnPooledThread {
       val debugValue = getDebugValue(name, modifier)
       ApplicationManager.getApplication().invokeLater { debugValue?.let { apply(it, modifier, commandSource) } }
     }
   }
 
-  fun apply(debugValue: PyDebugValue, modifier: Boolean, commandSource: TextFieldCommandSource? = null) {
+  fun apply(debugValue: PyDebugValue, modifier: Boolean, commandSource: DataViewerCommandSource? = null) {
     if (!modifier) {
       when (commandSource) {
-        TextFieldCommandSource.SLICING -> PyDataViewerCollector.logDataSlicingApplied(isPanelFromFactory)
-        TextFieldCommandSource.FORMATTING -> PyDataViewerCollector.logDataFormattingApplied(isPanelFromFactory)
+        DataViewerCommandSource.SLICING -> PyDataViewerCollector.logDataSlicingApplied(isPanelFromFactory)
+        DataViewerCommandSource.FORMATTING -> PyDataViewerCollector.logDataFormattingApplied(isPanelFromFactory)
+        DataViewerCommandSource.RELOAD -> PyDataViewerCollector.logDataReloadApplied(isPanelFromFactory)
         else -> Unit
       }
 
