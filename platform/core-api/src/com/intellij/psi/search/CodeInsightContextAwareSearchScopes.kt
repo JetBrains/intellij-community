@@ -1,5 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("CodeInsightContextAwareSearchScopes")
+
 package com.intellij.psi.search
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -183,12 +184,12 @@ fun NoContextFileInfo(): NoContextFileInfo = NoContextFileInfoImpl
 // -------------------------------- implementation --------------------------------
 
 
-private object NoContextInformationImpl: NoContextInformation
+private object NoContextInformationImpl : NoContextInformation
 
-private object DoesNotContainFileInfoImpl: DoesNotContainFileInfo
+private object DoesNotContainFileInfoImpl : DoesNotContainFileInfo
 
 private class ActualContextFileInfoImpl(
-  override val contexts: Collection<CodeInsightContext>
+  override val contexts: Collection<CodeInsightContext>,
 ) : ActualContextFileInfo
 
-private object NoContextFileInfoImpl: NoContextFileInfo
+private object NoContextFileInfoImpl : NoContextFileInfo
