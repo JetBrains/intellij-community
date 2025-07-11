@@ -3,22 +3,25 @@ package com.intellij.platform.scopes.backend
 
 import com.intellij.ide.scratch.ScratchesSearchScope
 import com.intellij.ide.util.scopeChooser.*
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProjectOrNull
+import com.intellij.platform.project.findProjectOrNullWithLogError
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.scopes.ScopeModelApi
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -26,13 +29,15 @@ private val LOG = logger<ScopesModelApiImpl>()
 
 internal class ScopesModelApiImpl : ScopeModelApi {
   private val modelIdToModel = ConcurrentHashMap<String, AbstractScopeModel>()
+  private var selectedScopeName: String? = null
+    get() {
+      val result = field
+      field = null
+      return result
+    }
 
   override suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>? {
-    val project = projectId.findProjectOrNull()
-    if (project == null) {
-      LOG.warn("Project not found for projectId: $projectId")
-      return null
-    }
+    val project = projectId.findProjectOrNullWithLogError(LOG) ?: return null
     val model = project.getService(ScopeService::class.java)
       .createModel(EnumSet.of(
         ScopeOption.FROM_SELECTION,
@@ -51,6 +56,20 @@ internal class ScopesModelApiImpl : ScopeModelApi {
     return flow
   }
 
+  override suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): String? {
+    val project = projectId.findProjectOrNullWithLogError(LOG) ?: return null
+    return withContext(Dispatchers.EDT) {
+      val dialog = EditScopesDialog.showDialog(project, selectedScopeName)
+      if (dialog.isOK) {
+        val scopeName = dialog.selectedScope?.scopeId
+        val scopeId = scopeName?.let { ScopesStateService.getInstance(project).getIdByScopeName(it) }
+         if (scopeId == null) selectedScopeName = scopeName
+        return@withContext scopeId
+      }
+      return@withContext null
+    }
+  }
+
   private fun subscribeToModelUpdates(model: AbstractScopeModel, modelId: String, project: Project): Flow<SearchScopesInfo> {
     val flow = channelFlow {
       model.addScopeModelListener(object : ScopeModelListener {
@@ -67,7 +86,9 @@ internal class ScopesModelApiImpl : ScopeModelApi {
           }
           scopesState.updateScopes(scopesStateMap)
 
-          val searchScopesInfo = SearchScopesInfo(scopesData, null, null, null)
+          val currentScopeName = selectedScopeName
+          val currentScopeId = currentScopeName?.let { name -> scopesStateMap.entries.find { it.value.displayName == name }?.key }
+          val searchScopesInfo = SearchScopesInfo(scopesData, currentScopeId, null, null)
           launch {
             send(searchScopesInfo)
           }

@@ -25,6 +25,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
   ],
   runtime_deps = [
     ":backend_resources",

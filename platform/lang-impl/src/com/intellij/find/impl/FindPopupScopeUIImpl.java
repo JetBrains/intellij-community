@@ -4,7 +4,7 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
-import com.intellij.ide.util.scopeChooser.FrontendScopeChooserCombo;
+import com.intellij.ide.util.scopeChooser.FrontendScopeChooser;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.project.module.ModulesStateService;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
@@ -50,7 +51,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   private ComboBox<String> myModuleComboBox;
   private FindPopupDirectoryChooser myDirectoryChooser;
   private ScopeChooserCombo myScopeCombo;
-  private FrontendScopeChooserCombo newScopeCombo;
+  private FrontendScopeChooser newScopeCombo;
 
   FindPopupScopeUIImpl(@NotNull FindPopupPanel panel) {
     myHelper = panel.getHelper();
@@ -91,13 +92,26 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   }
 
   private ComboBox<ScopeDescriptor> getScopeCombo() {
-    return FindKey.isEnabled() ? newScopeCombo: myScopeCombo.getComboBox();
+    return FindKey.isEnabled() ? newScopeCombo.getComboBox() : myScopeCombo.getComboBox();
   }
 
   private void initScopeCombo(ActionListener restartSearchListener) {
     String selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     if (FindKey.isEnabled()) {
-      newScopeCombo = new FrontendScopeChooserCombo(myProject, selection, ScopesFilterConditionType.FIND);
+      newScopeCombo = new FrontendScopeChooser(myProject, selection, ScopesFilterConditionType.FIND);
+      ScopeChooserCombo.BrowseListener browseListener = new ScopeChooserCombo.BrowseListener() {
+        @Override
+        public void onBeforeBrowseStarted() {
+          myFindPopupPanel.getCanClose().set(false);
+        }
+
+        @Override
+        public void onAfterBrowseFinished() {
+          myFindPopupPanel.getCanClose().set(true);
+          IdeFocusManager.getInstance(myProject).requestFocus(getScopeCombo(), true);
+        }
+      };
+      newScopeCombo.setBrowseListener(browseListener);
       Disposer.register(myFindPopupPanel.getDisposable(), newScopeCombo);
     }
     else {

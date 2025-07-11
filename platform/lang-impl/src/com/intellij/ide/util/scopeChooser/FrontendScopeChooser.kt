@@ -2,18 +2,22 @@
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.find.FindBundle
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo.BrowseListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.ListSeparator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.Dimension
 import java.util.*
-import javax.swing.plaf.basic.BasicComboBoxEditor
+import javax.swing.JPanel
 import kotlin.math.min
 
 /**
@@ -24,36 +28,49 @@ import kotlin.math.min
  * `getDisposable()` is `DialogWrapper`'s method.
  */
 @ApiStatus.Internal
-class FrontendScopeChooserCombo(project: Project,  private val preselectedScopeName: String?, val filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER) : ComboBox<ScopeDescriptor>(300), Disposable {
+class FrontendScopeChooser(private val project: Project, private val preselectedScopeName: String?, private val filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER) : JPanel(BorderLayout()), Disposable {
   private val scopeService = ScopeModelService.getInstance(project)
   private val modelId = UUID.randomUUID().toString()
   private var scopesMap: Map<String, ScopeDescriptor> = emptyMap()
   private val scopeToSeparator: MutableMap<ScopeDescriptor, ListSeparator> = mutableMapOf()
 
+  private val comboBox = ComboBox<ScopeDescriptor>(300)
+  private var selectedItem: ScopeDescriptor?
+    get() = comboBox.selectedItem as? ScopeDescriptor
+    set(value) = comboBox.setSelectedItem(value)
+
+  private val editScopesButton = FixedSizeButton(comboBox).apply {
+    addActionListener { editScopes() }
+  }
+  private var browseListener: BrowseListener? = null
+
   init {
-    setEditor( BasicComboBoxEditor().apply {
-      renderer = createScopeDescriptorRenderer ({ descriptor -> scopeToSeparator[descriptor] }, FindBundle.message("find.usages.loading.search.scopes"))
-    })
+    comboBox.renderer = createScopeDescriptorRenderer({ descriptor -> scopeToSeparator[descriptor] }, FindBundle.message("find.usages.loading.search.scopes"))
 
     val cachedScopes = ScopesStateService.getInstance(project).getCachedScopeDescriptors()
     initItems(cachedScopes)
     loadItemsAsync()
+
+    add(comboBox, BorderLayout.CENTER)
+    add(editScopesButton, BorderLayout.EAST)
   }
 
   private fun loadItemsAsync() {
-    scopeService.loadItemsAsync(modelId, filterConditionType, onFinished = { scopeIdToScopeDescriptor ->
+    scopeService.loadItemsAsync(modelId, filterConditionType, onScopesUpdate = { scopeIdToScopeDescriptor, selectedScopeId ->
       scopesMap = scopeIdToScopeDescriptor ?: emptyMap()
       val items = scopesMap.values
       withContext(Dispatchers.EDT) {
-        initItems(items)
+        initItems(items, selectedScopeId)
       }
     })
   }
 
-  private fun initItems(items: Collection<ScopeDescriptor>) {
-    val previousSelection = selectedItem as? ScopeDescriptor
-    removeAllItems()
-    items.filterOutSeparators().forEach { addItem(it) }
+  fun getComboBox(): ComboBox<ScopeDescriptor> = comboBox
+
+  private fun initItems(items: Collection<ScopeDescriptor>, selectedScopeId: String? = null) {
+    val previousSelection = selectedScopeId?.let { scopesMap[it] } ?: selectedItem
+    comboBox.removeAllItems()
+    items.filterOutSeparators().forEach { comboBox.addItem(it) }
     tryToSelectItem(items, previousSelection)
   }
 
@@ -88,22 +105,34 @@ class FrontendScopeChooserCombo(project: Project,  private val preselectedScopeN
   }
 
   fun getSelectedScopeId(): String? {
-    val scopeDescriptor = selectedItem as? ScopeDescriptor
+    val scopeDescriptor = selectedItem
     return scopesMap.entries.firstOrNull { it.value == scopeDescriptor }?.key
   }
 
   @Nls
   fun getSelectedScopeName(): String? {
-    return (selectedItem as? ScopeDescriptor)?.displayName
+    return selectedItem?.displayName
   }
 
 
   override fun dispose() {
     scopeService.disposeModel(modelId)
-    // ActionListener[] listeners = myBrowseButton.getActionListeners();
-    //    for (ActionListener listener : listeners) {
-    //      myBrowseButton.removeActionListener(listener);
-    //    }
+    editScopesButton.actionListeners.forEach { editScopesButton.removeActionListener(it) }
+  }
+
+  private fun editScopes() {
+    val selection = getSelectedScopeId()
+    browseListener?.onBeforeBrowseStarted()
+    ScopeModelService.getInstance(project).openEditScopesDialog(selection) { scopeId ->
+      ApplicationManager.getApplication().invokeLater {
+        scopeId?.let { selectedItem = scopesMap[it] }
+        browseListener?.onAfterBrowseFinished()
+      }
+    }
+  }
+
+  fun setBrowseListener(browseListener: BrowseListener?) {
+    this@FrontendScopeChooser.browseListener = browseListener
   }
 
 }

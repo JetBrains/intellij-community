@@ -34,6 +34,10 @@ class ScopesStateService(val project: Project) {
     return scopesState.scopeIdToDescriptor.values.toList()
   }
 
+  fun getIdByScopeName(scopeName: String): String? {
+    return scopesState.scopeIdToDescriptor.entries.find { it.value.displayName == scopeName }?.key
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ScopesStateService {

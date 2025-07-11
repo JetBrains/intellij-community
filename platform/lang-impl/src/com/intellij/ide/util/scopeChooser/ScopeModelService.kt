@@ -11,11 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface ScopeModelService {
 
-  fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER, onFinished: suspend (Map<String, ScopeDescriptor>?) -> Unit)
+  fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER, onScopesUpdate: suspend (Map<String, ScopeDescriptor>?, selectedScopeId: String?) -> Unit)
 
   fun disposeModel(modelId: String)
 
   fun getScopeById(scopeId: String): ScopeDescriptor?
+
+  fun openEditScopesDialog(selectedScopeId: String?, onFinish: (selectedScopeId: String?) -> Unit)
 
   companion object {
     @JvmStatic
