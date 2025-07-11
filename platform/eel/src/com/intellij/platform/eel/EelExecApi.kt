@@ -41,7 +41,8 @@ sealed interface EelExecApi {
 
     try {
       return Ok(spawnProcess(generatedBuilder))
-    } catch (e: ExecuteProcessException) {
+    }
+    catch (e: ExecuteProcessException) {
       return Error(ExecuteProcessErrorImpl(e.errno, e.message))
     }
   }
@@ -236,10 +237,23 @@ sealed interface EelExecApi {
   }
 
   /**
-   * Do not use pty, but redirect `stderr` to `stdout` much like `redirectErrorStream` in JVM
+   * Do not use pty, but redirect `stderr` to [to]
    */
   @ApiStatus.Experimental
-  data object RedirectStdErr : InteractionOptions
+  data class RedirectStdErr(val to: RedirectTo) : InteractionOptions
+
+  @ApiStatus.Experimental
+  enum class RedirectTo {
+    /**
+     * `/dev/null`, much like `DISCARD` in JVM
+     */
+    NULL,
+
+    /**
+     * `stdout` much like `redirectErrorStream` in JVM
+     */
+    STDOUT
+  }
 }
 
 @ApiStatus.Experimental

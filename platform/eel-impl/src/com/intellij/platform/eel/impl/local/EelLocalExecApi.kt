@@ -119,10 +119,18 @@ private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
           false,
         ) as PtyProcess
       }
-      EelExecApi.RedirectStdErr, null -> {
+      is EelExecApi.RedirectStdErr, null -> {
         ProcessBuilder(escapedCommandLine).apply {
           environment().putAll(environment)
-          redirectErrorStream(p != null)
+          when (p?.to) {
+            null -> Unit
+            EelExecApi.RedirectTo.NULL -> {
+              redirectError(ProcessBuilder.Redirect.DISCARD)
+            }
+            EelExecApi.RedirectTo.STDOUT -> {
+              redirectErrorStream(true)
+            }
+          }
           builder.workingDirectory?.let {
             directory(File(it.toString()))
           }

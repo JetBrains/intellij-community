@@ -122,7 +122,7 @@ fun runProcessBlocking(
 
   val interactionOptions = when {
     ptyOptions != null -> with(ptyOptions) { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) }
-    processBuilder.redirectErrorStream() -> EelExecApi.RedirectStdErr
+    processBuilder.redirectErrorStream() -> EelExecApi.RedirectStdErr(to = EelExecApi.RedirectTo.STDOUT)
     else -> null
   }
 

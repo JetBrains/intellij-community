@@ -63,9 +63,20 @@
 - f:getRows():I
 *f:com.intellij.platform.eel.EelExecApi$RedirectStdErr
 - com.intellij.platform.eel.EelExecApi$InteractionOptions
-- sf:INSTANCE:com.intellij.platform.eel.EelExecApi$RedirectStdErr
+- <init>(com.intellij.platform.eel.EelExecApi$RedirectTo):V
+- f:component1():com.intellij.platform.eel.EelExecApi$RedirectTo
+- f:copy(com.intellij.platform.eel.EelExecApi$RedirectTo):com.intellij.platform.eel.EelExecApi$RedirectStdErr
+- bs:copy$default(com.intellij.platform.eel.EelExecApi$RedirectStdErr,com.intellij.platform.eel.EelExecApi$RedirectTo,I,java.lang.Object):com.intellij.platform.eel.EelExecApi$RedirectStdErr
 - equals(java.lang.Object):Z
+- f:getTo():com.intellij.platform.eel.EelExecApi$RedirectTo
 - hashCode():I
+*e:com.intellij.platform.eel.EelExecApi$RedirectTo
+- java.lang.Enum
+- sf:NULL:com.intellij.platform.eel.EelExecApi$RedirectTo
+- sf:STDOUT:com.intellij.platform.eel.EelExecApi$RedirectTo
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.EelExecApi$RedirectTo
+- s:values():com.intellij.platform.eel.EelExecApi$RedirectTo[]
 *f:com.intellij.platform.eel.EelExecApiHelpers
 - sf:INSTANCE:com.intellij.platform.eel.EelExecApiHelpers
 *f:com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
