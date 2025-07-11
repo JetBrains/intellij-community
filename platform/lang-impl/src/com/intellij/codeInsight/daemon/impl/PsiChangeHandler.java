@@ -111,7 +111,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
 
   private PsiFile getRawCachedPsiFile(@NotNull Document document) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    return virtualFile == null ? null : TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, CodeInsightContexts.anyContext());
+    return virtualFile == null || !virtualFile.isValid() ? null : TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, CodeInsightContexts.anyContext());
   }
 
   private void addChangesFromCompositeDirtyRange(@NotNull PsiFile psiFile,

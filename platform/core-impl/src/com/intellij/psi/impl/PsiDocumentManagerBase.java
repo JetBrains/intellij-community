@@ -693,7 +693,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       // this client obviously expects all documents to be committed ASAP even inside modal dialog
       for (Document document : myUncommittedDocuments) {
         try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162971")) {
-          retainProviderAndCommitAsync(document, "re-added because performWhenAllCommitted(" + modality + ") was called", modality);
+          commitAsync(document, "re-added because performWhenAllCommitted(" + modality + ") was called", modality);
         }
       }
     }
@@ -1077,7 +1077,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         commitDocument(document);
       }
       else if (!document.isInBulkUpdate() && myPerformBackgroundCommit) {
-        retainProviderAndCommitAsync(document, event, ModalityState.defaultModalityState());
+        commitAsync(document, event, ModalityState.defaultModalityState());
       }
     }
     else {
@@ -1092,17 +1092,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void bulkUpdateFinished(@NotNull Document document) {
-    retainProviderAndCommitAsync(document, "Bulk update finished", ModalityState.defaultModalityState());
+    commitAsync(document, "Bulk update finished", ModalityState.defaultModalityState());
   }
 
-  private void retainProviderAndCommitAsync(@NotNull Document document,
-                                            @NotNull Object reason,
-                                            @NotNull ModalityState modality) {
+  private void commitAsync(@NotNull Document document,
+                           @NotNull Object reason,
+                           @NotNull ModalityState modality) {
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     if (FileViewProviderUtil.isEventSystemEnabled(viewProviders)) {
       ThreadingAssertions.assertEventDispatchThread();
       // make cached provider non-gcable temporarily (until commit end) to avoid surprising getCachedProvider()==null
-      myDocumentCommitProcessor.commitAsynchronously(myProject, this, document, reason, modality, viewProviders);
+      myDocumentCommitProcessor.commitAsynchronously(myProject, this, document, reason, modality);
     }
   }
 
