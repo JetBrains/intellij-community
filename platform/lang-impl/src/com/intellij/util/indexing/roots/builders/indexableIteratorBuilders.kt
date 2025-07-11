@@ -4,7 +4,6 @@ package com.intellij.util.indexing.roots.builders
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -23,22 +22,8 @@ import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
 internal object IndexableIteratorBuilders {
   private val logger = thisLogger()
 
-  fun forModuleRoots(moduleId: ModuleId, urls: Collection<VirtualFileUrl>): Collection<IndexableIteratorBuilder> =
-    if (urls.isEmpty()) emptyList() else listOf(ModuleRootsIteratorBuilder(moduleId, urls))
-
   fun forModuleRootsFileBased(moduleId: ModuleId, rootHolder: IndexingUrlRootHolder): Collection<IndexableIteratorBuilder> =
     if (rootHolder.isEmpty()) emptyList() else listOf(ModuleRootsFileBasedIteratorBuilder(moduleId, rootHolder))
-
-  fun forModuleRoots(moduleId: ModuleId, url: VirtualFileUrl): Collection<IndexableIteratorBuilder> =
-    listOf(ModuleRootsIteratorBuilder(moduleId, url))
-
-  fun forModuleRoots(moduleId: ModuleId,
-                     newRoots: List<VirtualFileUrl>,
-                     oldRoots: List<VirtualFileUrl>): Collection<IndexableIteratorBuilder> {
-    val roots = newRoots.toMutableList()
-    roots.removeAll(oldRoots)
-    return forModuleRoots(moduleId, roots)
-  }
 
   @JvmOverloads
   fun forLibraryEntity(libraryId: LibraryId,
@@ -112,17 +97,13 @@ internal data class LibraryIdIteratorBuilder(val libraryId: LibraryId,
 internal data class SdkIteratorBuilder(val sdkName: String,
                                        val sdkType: String,
                                        val roots: Collection<VirtualFile>? = null,
-                                       val rootsUrls: IndexingUrlRootHolder? = null) : IndexableIteratorBuilder {
-  constructor(sdk: Sdk, roots: Collection<VirtualFile>) : this(sdk.name, sdk.sdkType.name, roots)
-}
+                                       val rootsUrls: IndexingUrlRootHolder? = null) : IndexableIteratorBuilder
 
 internal object InheritedSdkIteratorBuilder : IndexableIteratorBuilder
 
 internal data class FullModuleContentIteratorBuilder(val moduleId: ModuleId) : IndexableIteratorBuilder
 
-internal class ModuleRootsIteratorBuilder(val moduleId: ModuleId, val urls: Collection<VirtualFileUrl>) : IndexableIteratorBuilder {
-  constructor(moduleId: ModuleId, url: VirtualFileUrl) : this(moduleId, listOf(url))
-}
+internal class ModuleRootsIteratorBuilder(val moduleId: ModuleId, val urls: Collection<VirtualFileUrl>) : IndexableIteratorBuilder
 
 internal class ModuleRootsFileBasedIteratorBuilder(val moduleId: ModuleId, val files: IndexingUrlRootHolder) : IndexableIteratorBuilder
 

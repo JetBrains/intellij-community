@@ -444,7 +444,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
       addRoot(libraryUrlRoots, entity as LibraryEntity, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
     }
     else if (kind == WorkspaceFileKind.CUSTOM) {
-      addRoot(customKindRoots, entityReference, )
+      addRoot(customKindRoots, entityReference)
     }
     else {
       addRoot(externalRoots, entityReference, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
