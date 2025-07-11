@@ -142,7 +142,6 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testSwitchBooleanWhen() { doTest(); }
 
   public void testJetBrainsNotNullByDefault() {
-    addJetBrainsNotNullByDefault(myFixture);
     doTest();
   }
   
