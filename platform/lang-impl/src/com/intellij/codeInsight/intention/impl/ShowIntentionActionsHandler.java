@@ -343,7 +343,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
             PsiFile psiFile = pair.first;
             Editor editor = pair.second;
-            if (fixOffset != -1) {
+            if (maybeInjectedFixOffset != -1) {
               Document document = editor.getDocument();
               if (document instanceof DocumentWindow) {
                 maybeInjectedFixOffset = ((DocumentWindow)document).hostToInjected(fixOffset);

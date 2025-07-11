@@ -32,7 +32,9 @@ object CreateFromUsageUtil {
         val psiFactory = KtPsiFactory(container.project)
         val newLine = psiFactory.createNewLine()
 
-        val actualContainer = (container as? KtClassOrObject)?.getOrCreateBody() ?: getActualContainerForScript(container)
+        val actualContainer = (container as? KtClassOrObject)?.getOrCreateBody()
+            ?: (container as? KtFile)?.script?.blockExpression
+            ?: container
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
@@ -235,16 +237,5 @@ object CreateFromUsageUtil {
         } else {
             actualContainer.addAfter(declaration, sibling)
         } as D
-    }
-
-    /**
-     * In scripts, no elements should exist outside the main block expression
-     */
-    private fun getActualContainerForScript(container: PsiElement): PsiElement {
-        return if ((container as? KtFile)?.isScript() == true) {
-            container.script?.blockExpression ?: container
-        } else {
-            container
-        }
     }
 }
