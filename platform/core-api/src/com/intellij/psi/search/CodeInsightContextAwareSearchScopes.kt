@@ -81,7 +81,7 @@ sealed interface CodeInsightContextInfo
 
 /**
  * if [CodeInsightContextAwareSearchScope.codeInsightContextInfo] returns this object, it means the scope does not contain information
- * about scopes.
+ * about scopes. Note that this scope still can contain files.
  *
  * Implementation note: we need this interface because not all scopes can know at compilation time if they are aware of contexts.
  * Examples of such scope are Union and Intersection scopes.
