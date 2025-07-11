@@ -427,7 +427,9 @@ com.intellij.util.keyFMap.KeyFMap
 - a:size():I
 e:com.intellij.util.system.OS
 - f:getOsInfo():com.intellij.util.system.OS$OsInfo
+- f:isAtLeast(I,I):Z
 - s:isGenericUnix():Z
+- f:version():java.lang.String
 f:com.intellij.util.system.OS$LinuxInfo
 - com.intellij.util.system.OS$UnixInfo
 - isUnderWsl():Z

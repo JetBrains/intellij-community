@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -25,14 +25,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TimeoutCachedValue
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -61,6 +59,7 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLConnection
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -195,7 +194,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         }
 
         val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
-        val os = URLEncoder.encode(OS.CURRENT.name + " " + OS.CURRENT.version, CharsetToolkit.UTF8)
+        val os = URLEncoder.encode("${OS.CURRENT} ${OS.CURRENT.version()}", StandardCharsets.UTF_8)
         val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
             .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
@@ -208,7 +207,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
             append("&mid=$machineId")
           }
           for (id in ids) {
-            append("&pluginXmlId=${URLEncoder.encode(id.idString, CharsetToolkit.UTF8)}")
+            append("&pluginXmlId=${URLEncoder.encode(id.idString, StandardCharsets.UTF_8)}")
           }
         }
 

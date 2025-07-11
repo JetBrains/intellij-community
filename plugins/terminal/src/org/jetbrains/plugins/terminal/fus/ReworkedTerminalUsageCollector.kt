@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.execution.filters.HyperlinkInfo
@@ -71,7 +71,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val hyperlinkFollowedEvent = GROUP.registerEvent("hyperlink.followed", HYPERLINK_INFO_CLASS)
 
   private val osVersion: String by lazy {
-    Version.parseVersion(OS.CURRENT.version)?.toCompactString() ?: "unknown"
+    Version.parseVersion(OS.CURRENT.version())?.toCompactString() ?: "unknown"
   }
 
   private val frontendTypingLatencyEvent = GROUP.registerVarargEvent(
