@@ -41,9 +41,14 @@ function __JetBrainsIntellijAskPSReadLineUpdating() {
   }
 
   # The localized text is passed as env variables
-  $Line1 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_1 -f $Env:__JETBRAINS_INTELLIJ_IDE_NAME, $RequiredVersion, $Version
+  $Esc = [char]0x1b
+  $VersionColored = "$Esc[1m$Version$Esc[0m"
+  $RequiredVersionColored = "$Esc[1m$RequiredVersion$Esc[0m"
+  $Line1 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_1 -f $Env:__JETBRAINS_INTELLIJ_IDE_NAME, $RequiredVersionColored, $VersionColored
   $Line2 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_2
-  $Line3 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_3 -f "'Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser -Force'"
+  $CommandText = "'Install-Module PSReadLine -MinimumVersion $RequiredVersion -Scope CurrentUser -Force'"
+  $CommandTextColored = "$Esc[32m$CommandText$Esc[0m"
+  $Line3 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_3 -f $CommandTextColored
   $Line4 = $Env:__JETBRAINS_INTELLIJ_PSREADLINE__UPDATE_TEXT_LINE_4
 
   Write-Host $Line1
