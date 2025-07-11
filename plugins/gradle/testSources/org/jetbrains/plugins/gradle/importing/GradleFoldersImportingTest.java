@@ -24,6 +24,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import static com.intellij.codeInsight.multiverse.CodeInsightContexts.isSharedSourceSupportEnabled;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 
 /**
@@ -1101,8 +1102,15 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       .sourceRoots(ExternalSystemSourceType.RESOURCE, path("shared/resources"))
     );
 
-    assertContentRoots("project.app2", path("app2"));
-    assertNoSourceRoots("project.app2");
+    if (isSharedSourceSupportEnabled(myProject)) {
+      assertContentRoots("project.app2", path("app2"), path("shared/resources"));
+      assertSourceRoots("project.app2", it -> it
+        .sourceRoots(ExternalSystemSourceType.RESOURCE, path("shared/resources")));
+    }
+    else {
+      assertContentRoots("project.app2", path("app2"));
+      assertNoSourceRoots("project.app2");
+    }
   }
 
   @Test
