@@ -1045,6 +1045,16 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertTrue(elements.any { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
   }
 
+  fun testForceCallException() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+        } 
+      }
+      a<caret>""".trimIndent())
+    myFixture.completeBasic()
+  }
 
   private class TestHintManager : HintManagerImpl() {
     var called: Boolean = false
