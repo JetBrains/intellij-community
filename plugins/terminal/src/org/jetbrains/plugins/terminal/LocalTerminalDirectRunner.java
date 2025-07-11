@@ -62,6 +62,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
                                                                             isGenOneTerminalEnabled(),
                                                                             isGenTwoTerminalEnabled());
     }
+    updatedOptions = TerminalPSReadLineUpdateUtil.configureOptions(updatedOptions);
     return applyTerminalCustomizers(updatedOptions);
   }
 

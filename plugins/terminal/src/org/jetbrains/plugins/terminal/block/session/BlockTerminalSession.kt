@@ -14,6 +14,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
 import com.jediterm.terminal.model.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalPSReadLineUpdateUtil
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
 import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
@@ -69,6 +70,7 @@ class BlockTerminalSession(
     model = TerminalModel(textBuffer)
     val alarmManager = TerminalAlarmManager(settings)
     controller = JediTerminal(ModelUpdatingTerminalDisplay(alarmManager, model, settings), textBuffer, styleState)
+    TerminalPSReadLineUpdateUtil.trackUpdateRejection(controller)
 
     commandManager = ShellCommandManager(this)
     commandExecutionManager = ShellCommandExecutionManagerImpl(this, commandManager, shellIntegration, controller, this as Disposable)
