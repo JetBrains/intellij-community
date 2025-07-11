@@ -14,7 +14,6 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
 import java.util.*
-import java.util.Date
 
 /**
  * A lightweight model for representing plugin information in the UI.
@@ -227,7 +226,9 @@ fun PluginUiModel.presentableSize(): String? {
 
 @ApiStatus.Internal
 fun PluginUiModel.calculateTags(): List<String> {
-  return this.getDescriptor().getTags()
+  val result = this.getDescriptor().getTags()
+  val customization = PluginInstallationCustomization.findPluginInstallationCustomization(pluginId)
+  return customization?.customizeTags(result) ?: result
 }
 
 @NlsSafe

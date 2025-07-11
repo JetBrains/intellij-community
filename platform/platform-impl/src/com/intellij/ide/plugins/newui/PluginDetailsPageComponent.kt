@@ -1158,7 +1158,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (customLicense != null) {
       customLicensePanel.add(customLicense, BorderLayout.CENTER)
-      customLicensePanel.isVisible = true
+      customLicensePanel.isVisible = customLicense.components.isNotEmpty()
       licensePanel.isVisible = false
       return
     }
