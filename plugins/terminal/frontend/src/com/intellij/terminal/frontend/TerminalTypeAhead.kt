@@ -1,6 +1,8 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
@@ -40,15 +42,28 @@ internal class TerminalTypeAhead(
 }
 
 private fun TerminalOutputModel.insertAtCursor(string: String) {
+  val remainingLinePart = getRemainingLinePart()
+  if (!remainingLinePart.isBlank()) return // at this moment we only support type-ahead at the end of a visible line
   withTypeAhead {
-    replaceContent(relativeOffset(cursorOffsetState.value), 0, string, emptyList())
-    // Do not extract cursorOffsetState.value to a local var because replaceContent might change it.
-    updateCursorPosition(relativeOffset(cursorOffsetState.value + 1))
+    val replaceLength = string.length.coerceAtMost(remainingLinePart.length)
+    replaceContent(relativeOffset(cursorOffsetState.value), replaceLength, string, emptyList())
+    // Do not reuse cursorOffset because replaceContent might change it.
+    updateCursorPosition(relativeOffset(cursorOffsetState.value + string.length))
   }
 }
 
 private fun TerminalOutputModel.backspace() {
+  if (!getRemainingLinePart().isBlank()) return
   val offset = cursorOffsetState.value
   if (offset <= 1) return
-  replaceContent(relativeOffset(offset - 1), 1, "", emptyList()) // false because that's what inline completion expects
+  replaceContent(relativeOffset(offset - 1), 1, " ", emptyList()) // false because that's what inline completion expects
+}
+
+private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
+  val cursorOffset = cursorOffsetState.value
+  val document = document
+  val line = document.getLineNumber(cursorOffset)
+  val lineEnd = document.getLineEndOffset(line)
+  val remainingLinePart = document.getText(TextRange(cursorOffset, lineEnd))
+  return remainingLinePart
 }
