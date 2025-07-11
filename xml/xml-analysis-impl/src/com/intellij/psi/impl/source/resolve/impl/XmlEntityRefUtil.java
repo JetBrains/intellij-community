@@ -9,7 +9,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.xml.XmlEntityCacheImplUtil;
+import com.intellij.psi.impl.source.xml.XmlEntityCache;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -44,8 +44,8 @@ public final class XmlEntityRefUtil {
 
     final PsiElement targetElement = targetFile != null ? targetFile : element;
     CachedValue<XmlEntityDecl> value;
-    synchronized (XmlEntityCacheImplUtil.LOCK) {
-      Map<String, CachedValue<XmlEntityDecl>> map = XmlEntityCacheImplUtil.getCachingMap(targetElement);
+    synchronized (XmlEntityCache.LOCK) {
+      Map<String, CachedValue<XmlEntityDecl>> map = XmlEntityCache.getCachingMap(targetElement);
 
       value = map.get(entityName);
       final PsiFile containingFile = element.getContainingFile();
