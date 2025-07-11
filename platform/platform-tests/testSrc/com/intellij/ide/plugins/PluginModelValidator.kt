@@ -813,7 +813,7 @@ private class LoadFromSourceXIncludeLoader(
   private fun collectXmlFiles(): Map<String, List<Path>> {
     val shortNameToPaths = LinkedHashMap<String, MutableList<Path>>()
     for (module in project.modules) {
-      for (sourceRoot in module.productionSourceRoots) {
+      for (sourceRoot in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
         for (directoryPattern in parentDirectoriesPatterns) {
           val (directoryName, withChildren) = if (directoryPattern.endsWith("/*")) {
             directoryPattern.removeSuffix("/*") to true
