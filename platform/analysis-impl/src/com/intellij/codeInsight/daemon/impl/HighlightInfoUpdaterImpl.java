@@ -1271,9 +1271,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                                        int infoEndOffset,
                                                        int newLayer,
                                                        @NotNull SeverityRegistrar severityRegistrar) {
+    CodeInsightContext context = session.getCodeInsightContext();
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
-      BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes);
+      BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes, context);
     };
     if (LOG.isDebugEnabled()) {
       LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + " "+session.getProgressIndicator());
@@ -1293,8 +1294,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                                       HighlighterTargetArea.EXACT_RANGE, false,
                                                       changeAttributes);
         newInfo.setHighlighter(highlighter);
-        CodeInsightContext context = session.getCodeInsightContext();
-        CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
         newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
       }
     }
@@ -1311,8 +1310,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       }
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);
-        CodeInsightContext context = session.getCodeInsightContext();
-        CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
         newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
       }
       oldInfo.copyComputedLazyFixesTo(newInfo, session.getDocument());

@@ -251,10 +251,7 @@ public final class BackgroundUpdateHighlightersUtil {
     EditorColorsScheme colorsScheme = session.getColorsScheme(); // if null, the global scheme will be used
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
-      changeAttributes(finalHighlighter, info, colorsScheme, psiFile, infoAttributes);
-
-      CodeInsightContextHighlightingUtil.installCodeInsightContext(finalHighlighter, session.getProject(), context);
-
+      changeAttributes(finalHighlighter, info, colorsScheme, psiFile, infoAttributes, context);
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
@@ -306,7 +303,8 @@ public final class BackgroundUpdateHighlightersUtil {
                                @NotNull HighlightInfo info,
                                @Nullable EditorColorsScheme colorsScheme,
                                @NotNull PsiFile psiFile,
-                               @Nullable TextAttributes infoAttributes) {
+                               @Nullable TextAttributes infoAttributes,
+                               @NotNull CodeInsightContext context) {
     TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
     highlighter.setTextAttributesKey(textAttributesKey);
 
@@ -314,6 +312,8 @@ public final class BackgroundUpdateHighlightersUtil {
         infoAttributes != null && !infoAttributes.equals(highlighter.getTextAttributes(colorsScheme))) {
       highlighter.setTextAttributes(infoAttributes);
     }
+
+    CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, psiFile.getProject(), context);
 
     highlighter.setAfterEndOfLine(info.isAfterEndOfLine());
 
