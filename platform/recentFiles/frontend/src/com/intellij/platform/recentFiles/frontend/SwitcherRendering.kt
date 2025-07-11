@@ -10,19 +10,14 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
-import com.intellij.ui.BackgroundSupplier
-import com.intellij.ui.CellRendererPanel
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
@@ -35,6 +30,7 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
+import java.util.Objects
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JList
@@ -133,9 +129,10 @@ class SwitcherVirtualFile : SwitcherListItem, BackgroundSupplier {
     foregroundTextColor = rpcModel.foregroundTextColorId?.color()
     icon = rpcModel.iconId.icon()
     hasProblems = rpcModel.hasProblems
+    editorWindow = null
   }
 
-  constructor(localFile: VirtualFile, localIcon: Icon, project: Project) {
+  constructor(localFile: VirtualFile, localIcon: Icon) {
     mainText = localFile.name
     statusText = ""
     pathText = ""
@@ -147,6 +144,52 @@ class SwitcherVirtualFile : SwitcherListItem, BackgroundSupplier {
     foregroundTextColor = null
     icon = localIcon
     hasProblems = false
+    editorWindow = null
+  }
+
+  private constructor(
+    mainText: String,
+    statusText: String,
+    pathText: String,
+    mnemonic: String?,
+    shortcutText: String?,
+    separatorAbove: Boolean,
+    virtualFile: VirtualFile?,
+    backgroundColor: Color?,
+    foregroundTextColor: Color?,
+    icon: Icon?,
+    hasProblems: Boolean,
+    editorWindow: EditorWindow?,
+  ) {
+    this.mainText = mainText
+    this.statusText = statusText
+    this.pathText = pathText
+    this.mnemonic = mnemonic
+    this.shortcutText = shortcutText
+    this.separatorAbove = separatorAbove
+    this.virtualFile = virtualFile
+    this.backgroundColor = backgroundColor
+    this.foregroundTextColor = foregroundTextColor
+    this.icon = icon
+    this.hasProblems = hasProblems
+    this.editorWindow = editorWindow
+  }
+
+  fun withAssociatedEditorWindow(editorWindow: EditorWindow): SwitcherVirtualFile {
+    return SwitcherVirtualFile(
+      mainText,
+      statusText,
+      pathText,
+      mnemonic,
+      shortcutText,
+      separatorAbove,
+      virtualFile,
+      backgroundColor,
+      foregroundTextColor,
+      icon,
+      hasProblems,
+      editorWindow
+    )
   }
 
   override val mainText: @NlsSafe String
@@ -160,6 +203,7 @@ class SwitcherVirtualFile : SwitcherListItem, BackgroundSupplier {
   val foregroundTextColor: Color?
   val icon: Icon?
   val hasProblems: Boolean
+  val editorWindow: EditorWindow?
 
   override fun getElementBackground(row: Int): Color? {
     return backgroundColor
@@ -197,11 +241,11 @@ class SwitcherVirtualFile : SwitcherListItem, BackgroundSupplier {
     if (this === other) return true
     if (other !is SwitcherVirtualFile) return false
 
-    return this.virtualFile != null && this.virtualFile == other.virtualFile
+    return this.virtualFile != null && this.virtualFile == other.virtualFile && this.editorWindow == other.editorWindow
   }
 
   override fun hashCode(): Int {
-    return virtualFile?.hashCode() ?: Integer.MIN_VALUE
+    return Objects.hash(virtualFile, editorWindow)
   }
 }
 
