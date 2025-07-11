@@ -5,11 +5,11 @@ import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ContentFolder
-import com.intellij.openapi.roots.ExcludeFolder
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.RunAll
@@ -19,8 +19,8 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.importing.MavenImportUtil
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -31,7 +31,6 @@ import org.junit.Assume
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
-import java.util.*
 import kotlin.math.min
 
 private const val MAVEN_4_VERSION = "4.0.0-rc-4"
@@ -317,13 +316,12 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   protected fun assertExcludes(moduleName: String, vararg expectedExcludes: String) {
-    val contentRoot = getContentRoot(moduleName)
-    doAssertContentFolders(contentRoot, Arrays.asList<ExcludeFolder?>(*contentRoot.getExcludeFolders()), *expectedExcludes)
-  }
+    val moduleEntity = project.workspaceModel.currentSnapshot.resolve(ModuleId(moduleName))!!
+    val actualPaths = moduleEntity.contentRoots
+      .flatMap { it.excludedUrls }
+      .map { Path.of(it.url.url.removePrefix("file://")) }
 
-  protected fun assertContentRootExcludes(moduleName: String, contentRoot: String, vararg expectedExcludes: String) {
-    val root = getContentRoot(moduleName, contentRoot)
-    doAssertContentFolders(root, listOf<ExcludeFolder>(*root.getExcludeFolders()), *expectedExcludes)
+    doAssertSourceRootPaths(moduleEntity, actualPaths, expectedExcludes.map { Path.of(it) })
   }
 
   protected fun doAssertSourceRoots(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg expected: String) {
@@ -336,13 +334,17 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
 
     val expectedPaths = expected.map { Path.of(it) }
 
+    doAssertSourceRootPaths(moduleEntity, actualPaths, expectedPaths)
+  }
+
+  private fun doAssertSourceRootPaths(moduleEntity: ModuleEntity, actualPaths: List<Path>, expectedPaths: List<Path>) {
     // compare absolute paths
     if (expectedPaths.all { it.isAbsolute }) {
       assertSameElements("Unexpected list of source roots ", actualPaths, expectedPaths)
       return
     }
 
-    val basePath: Path = MavenImportUtil.findPomXml(project, moduleName)?.parent?.toNioPath() ?: run {
+    val basePath: Path = MavenImportUtil.findPomXml(project, moduleEntity.name)?.parent?.toNioPath() ?: run {
       assertSize(1, moduleEntity.contentRoots)
       Path.of(moduleEntity.contentRoots.first().url.url.removePrefix("file://"))
     }
@@ -357,7 +359,6 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     // compare absolute + relative paths
     val expectedAbsolutePaths = expectedPaths.map { basePath.resolve(it) }
     assertSameElements("Unexpected list of source roots ", actualPaths, expectedAbsolutePaths)
-
   }
 
   @Deprecated("use doAssertSourceRoots instead", ReplaceWith("doAssertSourceRoots(moduleName, rootType, *expected)"))

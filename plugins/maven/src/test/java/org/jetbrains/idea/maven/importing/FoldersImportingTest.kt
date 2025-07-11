@@ -850,48 +850,27 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertTestSources("project")
     assertTestResources("project")
     assertExcludes("project", "target")
-    val mainResources = "$projectPath/src/main/resources"
-    val mainResourcesFiltered = "$projectPath/src/main/resources-filtered"
+
     val mainSources = arrayOfNotNull(
       "$projectPath/src/main/java",
-      mainResources,
-      if (isModel410()) mainResourcesFiltered else null,
       "$projectPath/target/generated-sources/src1",
       "$projectPath/target/generated-sources/src2"
     )
-    val testResources = "$projectPath/src/test/resources"
-    val testResourcesFiltered = "$projectPath/src/test/resources-filtered"
     val testSources = arrayOfNotNull(
       "$projectPath/src/test/java",
-      testResources,
-      if (isModel410()) testResourcesFiltered else null,
       "$projectPath/target/generated-test-sources/test1",
       "$projectPath/target/generated-test-sources/test2"
     )
-    assertContentRoots("project.main", *mainSources)
-    assertContentRoots("project.test", *testSources)
-    for (main in mainSources) {
-      if (main == mainResources || main == mainResourcesFiltered) {
-        assertContentRootResources("project.main", main, "")
-      }
-      else {
-        assertContentRootSources("project.main", main, "")
-      }
-      assertContentRootTestSources("project.main", main)
-      assertContentRootTestResources("project.main", main)
-      assertContentRootExcludes("project.main", main)
-    }
-    for (test in testSources) {
-      assertContentRootResources("project.test", test)
-      assertContentRootSources("project.test", test)
-      if (test == testResources || test == testResourcesFiltered) {
-        assertContentRootTestResources("project.test", test, "")
-      }
-      else {
-        assertContentRootTestSources("project.test", test, "")
-      }
-      assertContentRootExcludes("project.test", test)
-    }
+
+    assertSources("project.main", *mainSources)
+    assertDefaultResources("project.main")
+    assertTestSources("project.main")
+    assertTestResources("project.main")
+
+    assertSources("project.test")
+    assertResources("project.test")
+    assertTestSources("project.test", *testSources)
+    assertDefaultTestResources("project.test")
   }
 
   @Test
