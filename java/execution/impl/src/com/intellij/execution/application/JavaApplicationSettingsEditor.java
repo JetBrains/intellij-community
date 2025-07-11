@@ -59,7 +59,8 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                                    ExecutionBundle.message("application.configuration.is.implicit.class"),
                                                    ExecutionBundle.message("group.java.options"),
                                                    configuration -> {
-                                                     // Called only on the initial display of the dialog. Controls whether to display this TagButton or not.
+                                                     // Called only on the initial display of the run configuration.
+                                                     // Controls whether to display this TagButton or not.
                                                      return configuration.isImplicitClassConfiguration();
                                                    },
                                                    (configuration, value) -> {

@@ -40,7 +40,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   /**
-   * Resets the current editor UI state to the initial settings state.
+   * Resets the current editor UI state to the specified settings state.
    */
   protected abstract void resetEditorFrom(@NotNull Settings s);
 

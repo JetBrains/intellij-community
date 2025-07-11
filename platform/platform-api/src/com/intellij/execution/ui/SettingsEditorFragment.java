@@ -290,7 +290,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   /**
-   * Can be hidden by user even if {@link #isInitiallyVisible isInitiallyVisible()} returns true
+   * Can be hidden by user even if {@link #isInitiallyVisible(Settings)} returns true
    */
   public boolean isCanBeHidden() {
     return myCanBeHidden;
