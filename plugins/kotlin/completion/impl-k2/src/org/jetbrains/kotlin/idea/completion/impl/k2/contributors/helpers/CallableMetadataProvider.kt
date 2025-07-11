@@ -261,13 +261,11 @@ internal object CallableMetadataProvider {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun buildClassType(symbol: KaClassLikeSymbol): KaType = buildClassType(symbol) {
-        val containingSymbol = if (symbol is KaNamedClassSymbol && symbol.isInner)
-            symbol.containingDeclaration as? KaClassSymbol
-        else
-            null
+        val times = when (val defaultType = symbol.defaultType) {
+            is KaClassType -> defaultType.qualifiers.sumOf { it.typeArguments.size }
+            else -> 0
+        }
 
-        val times = (containingSymbol?.typeParameters?.size ?: 0) +
-                symbol.typeParameters.size
         @OptIn(KaExperimentalApi::class)
         repeat(times) {
             argument(buildStarTypeProjection())
