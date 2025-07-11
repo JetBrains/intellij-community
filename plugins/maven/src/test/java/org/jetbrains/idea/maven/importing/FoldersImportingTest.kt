@@ -1402,9 +1402,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
     // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
     // but I'm testing the behavior as is in order to preserve it in the new Workspace import
-    m1_content_roots.add(m1_standard_test_resources)
+    m1_standard_test_resources_list.add(m1_standard_test_resources)
     if (isMaven4) {
-      m1_content_roots.add("$m1_standard_test_resources-filtered")
+      m1_standard_test_resources_list.add("$m1_standard_test_resources-filtered")
     }
     assertSources(m1_custom_module, m1_custom_sources_root)
     assertResources(m1_custom_module)
@@ -1462,10 +1462,10 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     val expectedRoots = arrayOfNotNull(
       "$projectPath/custom-sources",
       "$projectPath/m1/src/main/resources",
-      maven4orNull("$projectPath/m1/src/main/resources-filtered"),
+      withModel410Only("$projectPath/m1/src/main/resources-filtered"),
       "$projectPath/m1/src/test/java",
       "$projectPath/m1/src/test/resources",
-      maven4orNull("$projectPath/m1/src/test/resources-filtered")
+      withModel410Only("$projectPath/m1/src/test/resources-filtered")
     )
     assertContentRoots(mn("project", "m1-custom"), *expectedRoots)
 
