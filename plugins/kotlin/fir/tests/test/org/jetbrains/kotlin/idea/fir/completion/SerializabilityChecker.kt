@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlin.idea.completion.api.serialization.lookup.LookupModelConverter
 import org.jetbrains.kotlin.idea.completion.api.serialization.lookup.model.LookupElementModel
 import org.jetbrains.kotlin.idea.completion.impl.k2.serializableInsertionHandlerSerializersModule
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Checks that the given [LookupElement] can be serialized and deserialized for the needs of Kotlin LSP
@@ -22,15 +24,19 @@ object SerializabilityChecker {
 
             LookupModelConverter.deserializeLookupElementForInsertion(serialized, project)
         } catch (e: Throwable) {
-            if (e::class.qualifiedName == "com.intellij.psi.stubs.UpToDateStubIndexMismatch") {
-                // KTIJ-34849
-                LOG.warn(e)
-                return
+            when {
+                e is CancellationException || e is ControlFlowException -> throw e
+                e::class.qualifiedName == "com.intellij.psi.stubs.UpToDateStubIndexMismatch" -> {
+                    // KTIJ-34849
+                    LOG.warn(e)
+                    return
+                }
+
+                else -> throw AssertionError(
+                    "LookupElement ${lookupElement::class.java} is not serializable. See the Kdoc of ${LookupModelConverter::class.qualifiedName} for more details.",
+                    e
+                )
             }
-            throw AssertionError(
-                "LookupElement ${lookupElement::class.java} is not serializable. See the Kdoc of ${LookupModelConverter::class.qualifiedName} for more details.",
-                e
-            )
         }
     }
 
