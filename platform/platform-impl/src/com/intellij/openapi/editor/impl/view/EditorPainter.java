@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -427,7 +428,7 @@ public final class EditorPainter implements TextDrawingCallback {
                 Color foregroundColor = attributes.getForegroundColor();
                 if (foregroundColor != null) {
                   if (attributes.getEffectType() == EffectType.FADED) {
-                    foregroundColor = ColorUtil.faded(foregroundColor);
+                    foregroundColor = ColorUtil.editorFaded(foregroundColor, EditorColorsManager.getInstance().isDarkEditor());
                   }
 
                   Color color = foregroundColor;
