@@ -1617,10 +1617,10 @@ final class ExpressionChecker {
     }
     if (!(expression instanceof PsiThisExpression) && !(expression instanceof PsiSuperExpression) ||
         ((PsiQualifiedExpression)expression).getQualifier() == null) {
-      PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class, true);
+      PsiClass expressionClass = PsiUtil.getContainingClass(expression);
       while (expressionClass != null && parentClass != expressionClass) {
         if (InheritanceUtil.isInheritorOrSelf(expressionClass, referencedClass, true)) return;
-        expressionClass = PsiTreeUtil.getParentOfType(expressionClass, PsiClass.class, true);
+        expressionClass = PsiUtil.getContainingClass(expressionClass);
       }
     }
 

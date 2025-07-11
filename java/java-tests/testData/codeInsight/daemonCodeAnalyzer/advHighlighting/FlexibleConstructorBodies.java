@@ -195,3 +195,20 @@ class InitializeField {
     super();
   }
 }
+class Person {
+
+  Person(Other other) {
+  }
+
+  Person() {
+    Other o = new Other(<error descr="Cannot call 'Object.hashCode()' before superclass constructor is called">hashCode</error>()) {};
+    this(o);
+  }
+
+  Person(int i) {
+    this(new Other(<error descr="Cannot call 'Object.hashCode()' before superclass constructor is called">hashCode</error>()));
+  }
+}
+class Other {
+  Other(int x) {}
+}
