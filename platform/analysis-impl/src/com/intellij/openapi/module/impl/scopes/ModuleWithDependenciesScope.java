@@ -68,7 +68,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     myModule = module;
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
-    if (CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
+    if (isSharedSourceSupportEnabled()) {
       // todo IJPL-339
       myRoots = new MultiverseRootContainer(calcRootsMultiverse());
     }
@@ -209,7 +209,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     // in case of single file source
     if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) return true;
 
-    if (CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
+    if (isSharedSourceSupportEnabled()) {
       Collection<RootDescriptor> roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file);
       return ContainerUtil.exists(roots, root -> myRoots.getRootDescriptor(root) != null);
     }
@@ -222,7 +222,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   @ApiStatus.Internal
   @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
-    if (!CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
+    if (!isSharedSourceSupportEnabled()) {
       return contains(file);
     }
 
@@ -344,6 +344,10 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     }
 
     return getFileEnumerationUnderRoots(myRoots.getRoots());
+  }
+
+  private boolean isSharedSourceSupportEnabled() {
+    return CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()));
   }
 
   /**
