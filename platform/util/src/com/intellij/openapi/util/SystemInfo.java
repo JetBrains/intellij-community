@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,10 +21,10 @@ import static com.intellij.openapi.util.NotNullLazyValue.lazy;
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
 public final class SystemInfo {
-  /** Use {@link com.intellij.util.system.OS} instead */
+  /** Use {@link OS} instead */
   @ApiStatus.Obsolete
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
-  /** Use {@link com.intellij.util.system.OS#version} instead */
+  /** Use {@link OS#version()} instead */
   @ApiStatus.Obsolete
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   /** Use {@link CpuArch} instead */
@@ -39,11 +40,11 @@ public final class SystemInfo {
     return rtVersion != null && Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
   }
 
-  public static final boolean isWindows = SystemInfoRt.isWindows;
-  public static final boolean isMac = SystemInfoRt.isMac;
-  public static final boolean isLinux = SystemInfoRt.isLinux;
-  public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
-  public static final boolean isUnix = SystemInfoRt.isUnix;
+  public static final boolean isWindows = OS.CURRENT == OS.Windows;
+  public static final boolean isMac = OS.CURRENT == OS.macOS;
+  public static final boolean isLinux = OS.CURRENT == OS.Linux;
+  public static final boolean isFreeBSD = OS.CURRENT == OS.FreeBSD;
+  public static final boolean isUnix = OS.CURRENT != OS.Windows;
 
   public static final boolean isChromeOS = isLinux && isCrostini();
 
@@ -61,9 +62,16 @@ public final class SystemInfo {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
   }
 
-  public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
-  public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
-  public static final boolean isWin11OrNewer = isWindows && isOsVersionAtLeast("11.0");
+  /** @deprecated always true on Windows */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isWin8OrNewer = OS.CURRENT == OS.Windows;
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isWin10OrNewer = OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(10, 0);
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isWin11OrNewer = OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(11, 0);
 
   /**
    * Set to true if we are running in a Wayland environment, either through XWayland or using Wayland directly.
@@ -109,7 +117,7 @@ public final class SystemInfo {
   public static final boolean isMacOSSonoma = isMac && isOsVersionAtLeast("14.0");
   public static final boolean isMacOSSequoia = isMac && isOsVersionAtLeast("15.0");
 
-  /** Use {@link com.intellij.util.system.OS.WindowsInfo#getBuildNumber} instead */
+  /** Use {@link OS.WindowsInfo#getBuildNumber} instead */
   @ApiStatus.Obsolete
   public static @Nullable Long getWinBuildNumber() {
     return isWindows ? WinBuildNumber.getWinBuildNumber() : null;
@@ -208,7 +216,7 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static final boolean isSolaris = false;
 
-  /** @deprecated misleading; consider using {@link com.intellij.util.system.OS#isGenericUnix} instead, if appropriate */
+  /** @deprecated misleading; consider using {@link OS#isGenericUnix} instead, if appropriate */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static final boolean isXWindow = isUnix && !isMac;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.execution.Platform;
@@ -389,8 +389,6 @@ public final class JBCefApp {
         !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled")) {
       return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
     }
-    if (SystemInfo.isWindows && !SystemInfo.isWin8OrNewer)
-      return unsupported.apply("JCEF isn't supported in Windows 7");
 
     if (!SKIP_VERSION_CHECK) {
       JCefVersionDetails version;

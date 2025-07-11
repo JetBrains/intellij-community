@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.updateSettings.impl.PatchInfo
 import com.intellij.openapi.updateSettings.impl.UpdateRequestParametersProvider
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.util.Url
@@ -174,7 +173,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 fun currentOsNameForIntelliJSupport(): String = when (OS.CURRENT) {
   OS.Windows -> {
     "win-" +
-    (if (SystemInfo.isWin10OrNewer) "-10" else if (SystemInfo.isWin8OrNewer) "-8" else "-7") +
+    (if (OS.CURRENT.isAtLeast(10, 0)) "-10" else "-8") +
     (if (CpuArch.CURRENT.width == 64) "-64" else "")
   }
   OS.macOS -> "mac"
