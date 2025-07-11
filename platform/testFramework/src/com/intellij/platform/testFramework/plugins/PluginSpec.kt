@@ -17,6 +17,7 @@ class PluginSpec internal constructor(
 
   val untilBuild: String?,
   val sinceBuild: String?,
+  val category: String?,
   val version: String?,
   val vendor: String?,
   val description: String?,
@@ -51,6 +52,7 @@ class PluginSpecBuilder(
 
   var untilBuild: String? = null,
   var sinceBuild: String? = null,
+  var category: String? = null,
   var version: String? = null,
   var vendor: String? = null,
   var description: String? = null,
@@ -76,7 +78,7 @@ class PluginSpecBuilder(
 ) {
   fun build(): PluginSpec = PluginSpec(
     id = id, name = name, packagePrefix = packagePrefix, implementationDetail = implementationDetail, isSeparateJar = isSeparateJar,
-    rootTagAttributes = rootTagAttributes, untilBuild = untilBuild, sinceBuild = sinceBuild, version = version,
+    rootTagAttributes = rootTagAttributes, untilBuild = untilBuild, sinceBuild = sinceBuild, category = category, version = version,
     vendor = vendor, description = description, pluginDependencies = pluginDependencies, moduleDependencies = moduleDependencies,
     pluginMainModuleDependencies = pluginMainModuleDependencies, pluginAliases = pluginAliases, incompatibleWith = incompatibleWith,
     content = content, resourceBundle = resourceBundle, actions = actions, applicationListeners = applicationListeners,

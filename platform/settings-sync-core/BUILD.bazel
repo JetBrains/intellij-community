@@ -114,6 +114,8 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/diff-impl",
     "@lib//:assert_j",
+    "//platform/plugins/testFramework",
+    "//platform/platform-tests:tests_test_lib",
   ],
   runtime_deps = [":settingsSync-core_resources"]
 )
