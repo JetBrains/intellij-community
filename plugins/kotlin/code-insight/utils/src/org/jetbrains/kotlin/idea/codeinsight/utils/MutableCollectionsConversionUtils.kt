@@ -5,7 +5,9 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -34,17 +36,51 @@ object MutableCollectionsConversionUtils {
         else -> null
     }
 
-    private fun mutableCallableName(
-        initializer: KtExpression,
-    ): String? {
-        val fqName = analyze(initializer) {
-            initializer.resolveToCall()
-                ?.singleFunctionCallOrNull()
-                ?.symbol
-                ?.callableId
-        }?.asSingleFqName()
+    private sealed interface MutableCollectionCall
 
-        return mutableConversionMap[fqName?.asString()]
+    private data class TopLevelCall(
+        val callableId: CallableId,
+        val replacement: String,
+    ) : MutableCollectionCall
+
+    private data class ConstructorCall(
+        val classId: ClassId,
+    ) : MutableCollectionCall
+
+    private fun callableName(
+        initializer: KtExpression,
+    ): MutableCollectionCall? = analyze(initializer) {
+        val functionSymbol = initializer.resolveToCall()
+            ?.singleFunctionCallOrNull()
+            ?.symbol
+            ?: return@analyze null
+
+        when (functionSymbol) {
+            is KaConstructorSymbol -> {
+                val containingClassId = functionSymbol.containingClassId
+                    ?: return@analyze null
+
+                val returnType = functionSymbol.returnType
+                val hasMutableCollectionType = returnType.isSubtypeOf(StandardClassIds.MutableList)
+                        || returnType.isSubtypeOf(StandardClassIds.MutableSet)
+                        || returnType.isSubtypeOf(StandardClassIds.MutableMap)
+                if (!hasMutableCollectionType) return@analyze null
+
+                ConstructorCall(containingClassId)
+            }
+
+            else -> {
+                val callableId = functionSymbol.callableId
+                    ?: return@analyze null
+
+                val replacement = callableId.asSingleFqName()
+                    .asString()
+                    .let(::convertToMutable)
+                    ?: return@analyze null
+
+                TopLevelCall(callableId, replacement)
+            }
+        }
     }
 
     fun convertDeclarationTypeToMutable(
@@ -54,21 +90,26 @@ object MutableCollectionsConversionUtils {
     ) {
         val defaultValue = defaultValue(declaration) ?: return
 
-        val mutableCallableName = mutableCallableName(defaultValue)
-        if (mutableCallableName != null) {
-            (defaultValue as? KtCallExpression)
-                ?.calleeExpression
-                ?.replaced(psiFactory.createExpression(mutableCallableName))
-                ?: return
-        } else {
-            val toMutable = toMutableCollectionCallableName(immutableCollectionClassId) ?: return
-            val dotQualifiedExpression = defaultValue.replaced(
-                psiFactory.createExpressionByPattern("($0).$1()", defaultValue, toMutable)
-            ) as KtDotQualifiedExpression
-            val receiver = dotQualifiedExpression.receiverExpression
-            val deparenthesize = KtPsiUtil.deparenthesize(dotQualifiedExpression.receiverExpression)
-            if (deparenthesize != null && receiver != deparenthesize) {
-                receiver.replace(deparenthesize)
+        when (val callableName = callableName(defaultValue)) {
+            is TopLevelCall -> {
+                (defaultValue as? KtCallExpression)
+                    ?.calleeExpression
+                    ?.replaced(psiFactory.createExpression(callableName.replacement))
+                    ?: return
+            }
+
+            is ConstructorCall -> {}
+
+            else -> {
+                val toMutable = toMutableCollectionCallableName(immutableCollectionClassId) ?: return
+                val dotQualifiedExpression = defaultValue.replaced(
+                    psiFactory.createExpressionByPattern("($0).$1()", defaultValue, toMutable)
+                ) as KtDotQualifiedExpression
+                val receiver = dotQualifiedExpression.receiverExpression
+                val deparenthesize = KtPsiUtil.deparenthesize(dotQualifiedExpression.receiverExpression)
+                if (deparenthesize != null && receiver != deparenthesize) {
+                    receiver.replace(deparenthesize)
+                }
             }
         }
 
@@ -87,9 +128,16 @@ object MutableCollectionsConversionUtils {
 
     private const val COLLECTIONS: String = "kotlin.collections"
 
-    private val mutableConversionMap: Map<String, String> = mapOf(
-        "$COLLECTIONS.listOf" to "mutableListOf",
-        "$COLLECTIONS.setOf" to "mutableSetOf",
-        "$COLLECTIONS.mapOf" to "mutableMapOf"
-    )
+    private fun convertToMutable(text: String): String? = when (text) {
+        "$COLLECTIONS.listOf",
+        "$COLLECTIONS.emptyList" -> "mutableListOf"
+
+        "$COLLECTIONS.setOf",
+        "$COLLECTIONS.emptySet" -> "mutableSetOf"
+
+        "$COLLECTIONS.mapOf",
+        "$COLLECTIONS.emptyMap" -> "mutableMapOf"
+
+        else -> null
+    }
 }

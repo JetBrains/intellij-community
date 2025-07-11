@@ -2988,6 +2988,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ArrayList.kt")
+        public void testArrayList() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/ArrayList.kt");
+        }
+
+        @TestMetadata("emptyList.kt")
+        public void testEmptyList() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/emptyList.kt");
+        }
+
+        @TestMetadata("LinkedList.kt")
+        public void testLinkedList() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/LinkedList.kt");
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/list.kt");

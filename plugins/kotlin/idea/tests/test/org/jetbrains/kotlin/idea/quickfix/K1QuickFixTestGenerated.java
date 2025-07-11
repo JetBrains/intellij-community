@@ -3799,6 +3799,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ArrayList.kt")
+        public void testArrayList() throws Exception {
+            runTest("testData/quickfix/changeToMutableCollection/ArrayList.kt");
+        }
+
+        @TestMetadata("emptyList.kt")
+        public void testEmptyList() throws Exception {
+            runTest("testData/quickfix/changeToMutableCollection/emptyList.kt");
+        }
+
+        @TestMetadata("LinkedList.kt")
+        public void testLinkedList() throws Exception {
+            runTest("testData/quickfix/changeToMutableCollection/LinkedList.kt");
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("testData/quickfix/changeToMutableCollection/list.kt");
