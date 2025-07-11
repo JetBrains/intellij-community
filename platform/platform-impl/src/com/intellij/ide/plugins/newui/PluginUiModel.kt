@@ -234,7 +234,9 @@ fun PluginUiModel.presentableSize(): String? {
 
 @ApiStatus.Internal
 fun PluginUiModel.calculateTags(): List<String> {
-  return this.getDescriptor().getTags()
+  val result = this.getDescriptor().getTags()
+  val customization = PluginInstallationCustomization.findPluginInstallationCustomization(pluginId)
+  return customization?.customizeTags(result) ?: result
 }
 
 @ApiStatus.Internal
