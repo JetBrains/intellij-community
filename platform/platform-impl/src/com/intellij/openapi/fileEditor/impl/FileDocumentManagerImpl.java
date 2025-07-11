@@ -30,7 +30,9 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -283,12 +285,38 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     myMultiCaster.beforeAllDocumentsSaving();
     if (myUnsavedDocuments.isEmpty()) return;
 
+    ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
+    PotemkinProgress myProgress = current instanceof PotemkinProgress p ? p :
+      new PotemkinProgress("", null, null, null);
+    myProgress.pushState();
+    myProgress.setTitle(UIBundle.message("file.save.all.document.dialog.title"));
+    try {
+      // if already run under progress, reuse it with another title, otherwise create and show the progress dialog
+      if (current instanceof PotemkinProgress) {
+        doSave(myProgress, isExplicit, filter);
+      }
+      else {
+        myProgress.runInSwingThread(() -> doSave(myProgress, isExplicit, filter));
+      }
+    }
+    finally {
+      myProgress.popState();
+    }
+  }
+
+  private void doSave(@NotNull PotemkinProgress myProgress, boolean isExplicit, @Nullable Predicate<? super Document> filter) {
     Map<Document, IOException> failedToSave = new HashMap<>();
     Set<Document> vetoed = new HashSet<>();
     while (true) {
       int count = 0;
-
+      myProgress.setIndeterminate(false);
+      int size = myUnsavedDocuments.size();
       for (Document document : myUnsavedDocuments) {
+        myProgress.setFraction(1.0 * count / size);
+        VirtualFile virtualFile = getFile(document);
+        if (virtualFile != null) {
+          myProgress.setText2(virtualFile.getPresentableUrl());
+        }
         if (filter != null && !filter.test(document)) continue;
         if (failedToSave.containsKey(document)) continue;
         if (vetoed.contains(document)) continue;
@@ -306,7 +334,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       if (count == 0) break;
     }
-
     if (!failedToSave.isEmpty()) {
       handleErrorsOnSave(failedToSave);
     }
