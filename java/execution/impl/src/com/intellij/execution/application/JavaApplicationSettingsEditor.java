@@ -71,7 +71,9 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     fragments.add(commonParameterFragments.createRedirectFragment());
     SettingsEditorFragment<ApplicationConfiguration, MainClassPanel> mainClassFragment = createMainClass(moduleClasspath.component());
     fragments.add(mainClassFragment);
-    DefaultJreSelector jreSelector = DefaultJreSelector.fromSourceRootsDependencies(moduleClasspath.component(), mainClassFragment.component().getEditorTextField());
+    DefaultJreSelector jreSelector = DefaultJreSelector.fromSourceRootsDependencies(
+      moduleClasspath.component(), mainClassFragment.component().getEditorTextField()
+    );
     SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
     fragments.add(createShortenClasspath(moduleClasspath.component(), jrePath, true));
@@ -103,9 +105,9 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       myImplicitClassField = new TextFieldWithAutoCompletion<>(getProject(), new StringsCompletionProvider(null, AllIcons.FileTypes.Java) {
         @Override
         public @NotNull Collection<String> getItems(String prefix, boolean cached, CompletionParameters parameters) {
-            return DumbService.isDumb(getProject())
-                   ? List.of()
-                   : ReadAction.compute(() -> StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.IMPLICIT_CLASSES, getProject()));
+          return DumbService.isDumb(getProject())
+                 ? List.of()
+                 : ReadAction.compute(() -> StubIndex.getInstance().getAllKeys(JavaStubIndexKeys.IMPLICIT_CLASSES, getProject()));
         }
       }, true, null);
       CommonParameterFragments.setMonospaced(myImplicitClassField);
@@ -147,14 +149,17 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     List<ValidationInfo> getValidation(ApplicationConfiguration configuration) {
       return Collections.singletonList(RuntimeConfigurationException.validate(
         myIsImplicitClassConfiguration ? myImplicitClassField : myClassEditorField,
-        () -> { if (!isDefaultSettings()) configuration.checkClass(); }
+        () -> {
+          if (!isDefaultSettings()) configuration.checkClass();
+        }
       ));
     }
 
     JComponent getEditorComponent() {
       if (myIsImplicitClassConfiguration) {
         return myImplicitClassField;
-      } else {
+      }
+      else {
         Editor editor = myClassEditorField.getEditor();
         return editor == null ? myClassEditorField : editor.getContentComponent();
       }
@@ -192,7 +197,8 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
 
     if (isImplicitClass) {
       myMainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.unnamed.hint"));
-    } else {
+    }
+    else {
       myMainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
     }
   }
