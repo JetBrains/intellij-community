@@ -38,10 +38,20 @@ public final class SystemInfo {
     return rtVersion != null && Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
   }
 
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
   public static final boolean isWindows = OS.CURRENT == OS.Windows;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
   public static final boolean isMac = OS.CURRENT == OS.macOS;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
   public static final boolean isLinux = OS.CURRENT == OS.Linux;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
   public static final boolean isFreeBSD = OS.CURRENT == OS.FreeBSD;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
   public static final boolean isUnix = OS.CURRENT != OS.Windows;
 
   /** @deprecated unimportant; use {@link OS.UnixInfo#getDistro()} if needed */
