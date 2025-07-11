@@ -24,4 +24,6 @@ interface SearchEverywhereContributorModule {
   fun perProductFetchWeightedElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in FoundItemDescriptor<Any>>)
 
   fun currentSearchEverywhereToggledActionChanged(newAction: SearchEverywhereToggleAction)
+
+  fun adjustFoundElementWeight(element: Any, weight: Int): Int
 }

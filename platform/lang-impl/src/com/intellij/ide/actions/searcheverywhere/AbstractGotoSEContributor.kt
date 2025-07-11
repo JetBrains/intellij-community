@@ -406,7 +406,11 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       return true
     }
 
-    return consumer.process(FoundItemDescriptor(element, degree))
+    return consumer.process(
+      FoundItemDescriptor(
+        element, contributorModules?.firstNotNullOf { it.adjustFoundElementWeight(element, degree) } ?: degree
+      )
+    )
   }
 
   override fun getScope(): ScopeDescriptor = myScopeDescriptor
