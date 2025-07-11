@@ -11,6 +11,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.QualifierToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
@@ -111,7 +112,12 @@ private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
     val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
         ?: return false
 
-    return when (contextReceiverList.parent?.parent) {
+    val modifierList = contextReceiverList.parent
+    if (modifierList is KtDeclarationModifierList) {
+        // dangling modifier list
+        return false
+    }
+    return when (modifierList?.parent) {
         is KtDeclaration -> false
         is KtFunctionType -> false
         else -> true
