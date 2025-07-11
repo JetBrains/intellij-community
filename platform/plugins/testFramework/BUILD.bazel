@@ -19,6 +19,7 @@ jvm_library(
     "//platform/platform-impl/bootstrap",
     "//platform/util/xmlDom",
     "//platform/runtime/product",
+    "//jps/model-api:model",
   ]
 )
 ### auto-generated section `build intellij.platform.plugins.testFramework` end
