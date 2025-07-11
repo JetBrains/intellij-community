@@ -206,9 +206,7 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
         case COMMENTS -> RegExpBundle.message("regexp.dialog.flag.comments.description");
         case LITERAL -> RegExpBundle.message("regexp.dialog.flag.literal.description");
       };
-      String html = HtmlChunk.html().child(HtmlChunk.div("width: 200px").addRaw(description)).toString();
-      System.out.println("html = " + html);
-      return html;
+      return HtmlChunk.html().child(HtmlChunk.div("width: 200px").addRaw(description)).toString();
     }
   }
 
