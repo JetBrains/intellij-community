@@ -1,6 +1,7 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.PsiItemWithPresentation
 import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -163,6 +164,7 @@ object SearchEverywherePsiElementFeaturesProviderUtils {
     is PsiItemWithSimilarity<*> -> getPsiElement(element.value)
     is PsiItemWithPresentation -> element.item
     is PsiElement -> element
+    is ItemWithPresentation<*> -> getPsiElement(element.item)
     else -> null
   }
 }

@@ -285,7 +285,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 121, MLSE_RECORDER_ID)
+  private val GROUP = EventLogGroup("mlse.log", 122, MLSE_RECORDER_ID)
 
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
