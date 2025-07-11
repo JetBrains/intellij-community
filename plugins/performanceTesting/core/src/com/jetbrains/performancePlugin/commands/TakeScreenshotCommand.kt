@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.system.OS
 import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import java.awt.*
 import java.awt.image.BufferedImage
@@ -114,7 +114,7 @@ internal fun takeFullScreenshot(childFolder: String? = null): String? {
   // don't try to take a screenshot when IDE in a headless mode
   if (ApplicationManager.getApplication().isHeadlessEnvironment) return null
   // On Wayland it triggers system dialog about granting permissions each time, and it can't be disabled.
-  if (SystemInfo.isWayland) return null
+  if (StartupUiUtil.isWayland) return null
 
   var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
   screenshotPath = getNextFolder(screenshotPath)

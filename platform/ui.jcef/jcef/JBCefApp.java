@@ -19,6 +19,7 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
@@ -122,7 +123,7 @@ public final class JBCefApp {
         final boolean val = isRemoteEnabledSystemProp.trim().compareToIgnoreCase("true") == 0;
         LOG.info(String.format("Force %s out-of-process jcef mode.", val ? "enabled" : "disabled"));
       } else {
-        if (SystemInfo.isWayland)
+        if (StartupUiUtil.isWayland())
           LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
         else
           System.setProperty(PROPERTY_NAME, "true");

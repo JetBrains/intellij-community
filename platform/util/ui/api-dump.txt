@@ -5077,6 +5077,7 @@ f:com.intellij.util.ui.StartupUiUtil
 - sf:isJreHiDPI(java.awt.Component):Z
 - sf:isUnderDarcula():Z
 - sf:isUnderIntelliJLaF():Z
+- sf:isWayland():Z
 - sf:isWaylandToolkit():Z
 - sf:isXToolkit():Z
 - f:pump():V
@@ -5508,6 +5509,13 @@ f:com.intellij.util.ui.UIUtil$TextPainter
 - withFont(java.awt.Font):com.intellij.util.ui.UIUtil$TextPainter
 - withLineSpacing(F):com.intellij.util.ui.UIUtil$TextPainter
 - withShadow(Z,java.awt.Color):com.intellij.util.ui.UIUtil$TextPainter
+e:com.intellij.util.ui.UnixDesktopEnv
+- java.lang.Enum
+- s:CURRENT:com.intellij.util.ui.UnixDesktopEnv
+- sf:GNOME:com.intellij.util.ui.UnixDesktopEnv
+- sf:KDE:com.intellij.util.ui.UnixDesktopEnv
+- s:valueOf(java.lang.String):com.intellij.util.ui.UnixDesktopEnv
+- s:values():com.intellij.util.ui.UnixDesktopEnv[]
 f:com.intellij.util.ui.WatermarkIcon
 - javax.swing.Icon
 - <init>(javax.swing.Icon,F):V

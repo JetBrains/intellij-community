@@ -44,17 +44,15 @@ public final class SystemInfo {
   public static final boolean isFreeBSD = OS.CURRENT == OS.FreeBSD;
   public static final boolean isUnix = OS.CURRENT != OS.Windows;
 
-  public static final boolean isChromeOS = isLinux && isCrostini();
+  /** @deprecated unimportant; use {@link OS.UnixInfo#getDistro()} if needed */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isChromeOS = false;
 
   public static final boolean isOracleJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Oracle", 0) >= 0;
   public static final boolean isIbmJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "IBM", 0) >= 0;
   public static final boolean isAzulJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Azul", 0) >= 0;
   public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
-
-  @SuppressWarnings({"SpellCheckingInspection", "IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  private static boolean isCrostini() {
-    return new java.io.File("/dev/.cros_milestone").exists();
-  }
 
   /** @deprecated use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
   @Deprecated
@@ -74,25 +72,31 @@ public final class SystemInfo {
   @ApiStatus.Obsolete
   public static final boolean isWin11OrNewer = OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(11, 0);
 
-  /**
-   * Set to true if we are running in a Wayland environment, either through XWayland or using Wayland directly.
-   */
-  public static final boolean isWayland;
-  public static final boolean isGNOME, isKDE, isXfce, isI3;
-  static {
-    // http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669
-    // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
-    if (!isWindows && !isMac) {
-      isWayland = System.getenv("WAYLAND_DISPLAY") != null;
-      @SuppressWarnings({"SpellCheckingInspection", "RedundantSuppression"}) String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
-      isGNOME = desktop != null && desktop.contains("GNOME") || gdmSession != null && gdmSession.contains("gnome");
-      isKDE = !isGNOME && (desktop != null && desktop.contains("KDE") || System.getenv("KDE_FULL_SESSION") != null);
-      isXfce = !isGNOME && !isKDE && (desktop != null && desktop.contains("XFCE"));
-      isI3 = !isGNOME && !isKDE && !isXfce && (desktop != null && desktop.contains("i3"));
-    }
-    else {
-      isWayland = isGNOME = isKDE = isXfce = isI3 = false;
-    }
+  /** @deprecated use {@link com.intellij.util.ui.StartupUiUtil#isWayland} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isWayland = OS.isGenericUnix() && System.getenv("WAYLAND_DISPLAY") != null;
+  /** @deprecated use {@link com.intellij.util.ui.UnixDesktopEnv#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("SpellCheckingInspection")
+  public static final boolean isGNOME = OS.isGenericUnix() && (env("XDG_CURRENT_DESKTOP", "GNOME") || env("GDMSESSION", "gnome"));
+  /** @deprecated use {@link com.intellij.util.ui.UnixDesktopEnv#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isKDE = OS.isGenericUnix() && (env("XDG_CURRENT_DESKTOP", "KDE") || System.getenv("KDE_FULL_SESSION") != null);
+  /** @deprecated use {@link com.intellij.util.ui.UnixDesktopEnv#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isXfce = OS.isGenericUnix() && env("XDG_CURRENT_DESKTOP", "XFCE");
+  /** @deprecated use {@link com.intellij.util.ui.UnixDesktopEnv#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isI3 = OS.isGenericUnix() && env("XDG_CURRENT_DESKTOP", "i3");
+
+  private static boolean env(String varName, String marker) {
+    String value = System.getenv(varName);
+    return value != null && value.contains(marker);
   }
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
