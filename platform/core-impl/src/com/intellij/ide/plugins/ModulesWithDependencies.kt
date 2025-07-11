@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
@@ -165,11 +166,14 @@ internal fun toCoreAwareComparator(comparator: Comparator<PluginModuleDescriptor
   }
 }
 
+/**
+ * No new entries should be added to this set; if a plugin modules depends on content modules extracted from the core plugin, explicit dependencies on them should be added.
+ * There is no need to fully convert the plugin to v2 for that.
+ */
+@ApiStatus.Obsolete
 private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
-  // Migration started with converting intellij.notebooks.visualization to a platform plugin, but adding a package prefix to Pythonid
-  // or com.jetbrains.pycharm.ds.customization is a challenging task that can't be done by a single shot.
-  "Pythonid",
-  "com.jetbrains.pycharm.ds.customization",
+  "Pythonid", //todo remove this: PY-82565
+  "com.jetbrains.pycharm.ds.customization", //todo remove this: DS-7102
 )
 
 /**
