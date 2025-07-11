@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 
 import static com.intellij.openapi.util.NotNullLazyValue.lazy;
 
@@ -58,6 +56,9 @@ public final class SystemInfo {
     return new java.io.File("/dev/.cros_milestone").exists();
   }
 
+  /** @deprecated use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
   }
@@ -110,61 +111,31 @@ public final class SystemInfo {
     return ourHasXdgMime.get();
   }
 
-  public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
-  public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
-  public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
-  public static final boolean isMacOSVentura = isMac && isOsVersionAtLeast("13.0");
-  public static final boolean isMacOSSonoma = isMac && isOsVersionAtLeast("14.0");
-  public static final boolean isMacOSSequoia = isMac && isOsVersionAtLeast("15.0");
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMacOSCatalina = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(10, 15);
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMacOSBigSur = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(10, 16);
+  /** @deprecated use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isMacOSMonterey = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(12, 0);
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMacOSVentura = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(13, 0);
+  /** @deprecated use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isMacOSSonoma = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(14, 0);
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMacOSSequoia = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(15, 0);
 
   /** Use {@link OS.WindowsInfo#getBuildNumber} instead */
   @ApiStatus.Obsolete
   public static @Nullable Long getWinBuildNumber() {
     return isWindows ? WinBuildNumber.getWinBuildNumber() : null;
-  }
-
-  public static @NotNull String getMacOSMajorVersion() {
-    return getMacOSMajorVersion(OS_VERSION);
-  }
-
-  public static String getMacOSMajorVersion(String version) {
-    int[] parts = getMacOSVersionParts(version);
-    return String.format("%d.%d", parts[0], parts[1]);
-  }
-
-  public static @NotNull String getMacOSVersionCode() {
-    return getMacOSVersionCode(OS_VERSION);
-  }
-
-  public static @NotNull String getMacOSMajorVersionCode() {
-    return getMacOSMajorVersionCode(OS_VERSION);
-  }
-
-  public static @NotNull String getMacOSMinorVersionCode() {
-    return getMacOSMinorVersionCode(OS_VERSION);
-  }
-
-  public static @NotNull String getMacOSVersionCode(@NotNull String version) {
-    int[] parts = getMacOSVersionParts(version);
-    return String.format("%02d%d%d", parts[0], normalize(parts[1]), normalize(parts[2]));
-  }
-
-  public static @NotNull String getMacOSMajorVersionCode(@NotNull String version) {
-    int[] parts = getMacOSVersionParts(version);
-    return String.format("%02d%d%d", parts[0], normalize(parts[1]), 0);
-  }
-
-  public static @NotNull String getMacOSMinorVersionCode(@NotNull String version) {
-    int[] parts = getMacOSVersionParts(version);
-    return String.format("%02d%02d", parts[1], parts[2]);
-  }
-
-  private static int[] getMacOSVersionParts(@NotNull String version) {
-    List<String> parts = StringUtil.split(version, ".");
-    if (parts.size() < 3) {
-      parts = ContainerUtil.append(parts, "0", "0", "0");
-    }
-    return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
 
   public static String getOsName() {
@@ -173,19 +144,6 @@ public final class SystemInfo {
 
   public static String getOsNameAndVersion() {
     return getOsName() + ' ' + OS_VERSION;
-  }
-
-  private static int normalize(int number) {
-    return Math.min(number, 9);
-  }
-
-  private static int toInt(String string) {
-    try {
-      return Integer.parseInt(string);
-    }
-    catch (NumberFormatException e) {
-      return 0;
-    }
   }
 
   //<editor-fold desc="Deprecated stuff.">

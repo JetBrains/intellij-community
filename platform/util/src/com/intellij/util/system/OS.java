@@ -35,6 +35,14 @@ public enum OS {
     return VersionHolder.STR;
   }
 
+  /**
+   * Returns the OS version string parsed as a {@link Version} object ("major.minor.bugfix" triple).
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  public final @NotNull Version parsedVersion() {
+    return VersionHolder.VAL;
+  }
+
   /** @deprecated use {@link #version()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
