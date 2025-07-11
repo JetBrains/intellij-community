@@ -95,7 +95,7 @@ internal fun closeEditorForFile(selectedFile: SwitcherVirtualFile, project: Proj
   val virtualFile = selectedFile.virtualFile ?: return true
   val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
 
-  val maybePreservedItemWindow = null
+  val maybePreservedItemWindow = selectedFile.editorWindow
   val window = findAppropriateWindow(maybePreservedItemWindow)
   if (window == null) {
     fileEditorManager.closeFile(virtualFile, false, false)
@@ -104,5 +104,5 @@ internal fun closeEditorForFile(selectedFile: SwitcherVirtualFile, project: Proj
     fileEditorManager.closeFile(virtualFile, window)
   }
 
-  return fileEditorManager.getEditors(virtualFile).isEmpty()
+  return fileEditorManager.getAllEditors(virtualFile).isEmpty()
 }

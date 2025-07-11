@@ -43,9 +43,8 @@ internal class FrontendRecentFilesMutableState(project: Project) : RecentFilesMu
         // If there is only one opened file, users will benefit more from the entire _recently opened_ files list
         val capturedSwitcherModelState = recentlyOpenedPinnedFilesState.value.entries
         when {
-          capturedSwitcherModelState.isEmpty() -> recentlyOpenedFilesState
           capturedSwitcherModelState.size == 1 && isSingleFileOpenedInMultipleEditors(capturedSwitcherModelState.single().virtualFile) -> recentlyOpenedPinnedFilesState
-          capturedSwitcherModelState.size == 1 -> recentlyOpenedFilesState
+          capturedSwitcherModelState.isEmpty() || capturedSwitcherModelState.size == 1 -> recentlyOpenedFilesState
           else -> recentlyOpenedPinnedFilesState
         }
       }
@@ -54,7 +53,7 @@ internal class FrontendRecentFilesMutableState(project: Project) : RecentFilesMu
 
   private fun isSingleFileOpenedInMultipleEditors(file: VirtualFile?): Boolean {
     if (file == null) return false
-    return FileEditorManager.getInstance(project).getEditors(file).size == 1
+    return FileEditorManager.getInstance(project).getAllEditors(file).size > 1
   }
 }
 
