@@ -147,7 +147,12 @@ public class BuildContextImpl implements BuildContext {
   private @NotNull List<String> buildJavaOptions(Map<CLFlags, List<String>> flags) {
     // for now, only options available in the flags map can be specified in the build configuration
     List<String> options = new ArrayList<>();
-    options.add("-g"); // todo: for now hardcoded
+    if (JavaCompilerConfig.GENERATE_DEBUG_INFO) {
+      options.add("-g"); 
+    }
+    if (JavaCompilerConfig.REPORT_DEPRECATION) {
+      options.add("-deprecation");
+    }
 
     String warn = CLFlags.WARN.getOptionalScalarValue(flags);
     if ("off".equals(warn)) {
@@ -165,11 +170,19 @@ public class BuildContextImpl implements BuildContext {
 
     String jvmTarget = CLFlags.JVM_TARGET.getOptionalScalarValue(flags);
     if (jvmTarget != null) {
-      options.add("-source");
-      options.add(jvmTarget); // todo: need more flexibility in language level specification?
+      if (JavaCompilerConfig.USE_RELEASE_OPTION) {
+        options.add("--release");
+        options.add(jvmTarget);
+      }
+      else {
+        options.add("-source");
+        options.add(jvmTarget);
 
-      options.add("-target");
-      options.add(jvmTarget);
+        options.add("-target");
+        options.add(jvmTarget);
+        
+        // todo: support '-system' option to specify the JDK against which the generated code should be linked
+      }
     }
 
     Path trashDir = DataPaths.getTrashDir(this);

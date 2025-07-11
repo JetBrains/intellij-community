@@ -21,11 +21,15 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.jetbrains.jps.util.Iterators.*;
 
 /** @noinspection IO_FILE_USAGE*/
 public class JavaCompilerRunner implements CompilerRunner {
+  private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.impl.JavaCompilerRunner");
+
   private static final String MODULE_INFO_FILE = "module-info.java";
   private static final String MODULE_INFO_FILE_SUFFIX = "/" + MODULE_INFO_FILE;
 
@@ -109,6 +113,9 @@ public class JavaCompilerRunner implements CompilerRunner {
 
     // todo: revise command line options to ensure correct compilation
     try {
+      if (LOG.isLoggable(Level.FINE)) {
+        LOG.log(Level.FINE, "Compiling " + myContext.getTargetName() + " options: " + myOptions + "; classpath: " + collect(myClassPath, new ArrayList<>()) + ";  platform_cp: " + platformCp);
+      }
       final boolean compileOk = JavacMain.compile(
         myOptions,
         map(sources, ns -> pathMapper.toPath(ns).toFile()),
