@@ -15,6 +15,8 @@ import org.jetbrains.annotations.ApiStatus
 interface ScopeModelApi : RemoteApi<Unit> {
   suspend fun createModelAndSubscribe(projectId: ProjectId, modelId: String, filterConditionType: ScopesFilterConditionType): Flow<SearchScopesInfo>?
 
+  suspend fun openEditScopesDialog(projectId: ProjectId, selectedScopeId: String?): String?
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): ScopeModelApi {
