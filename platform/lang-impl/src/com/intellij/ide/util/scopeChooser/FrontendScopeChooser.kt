@@ -46,6 +46,7 @@ class FrontendScopeChooser(private val project: Project, private val preselected
 
   init {
     comboBox.renderer = createScopeDescriptorRenderer({ descriptor -> scopeToSeparator[descriptor] }, FindBundle.message("find.usages.loading.search.scopes"))
+    comboBox.setSwingPopup(false)
 
     val cachedScopes = ScopesStateService.getInstance(project).getCachedScopeDescriptors()
     initItems(cachedScopes)
