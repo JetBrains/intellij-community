@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.chooseDan
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiBasedModCommandAction.ClassBased]
+ * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction.ClassBased]
  * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase].
  */
 interface ContextProvider<E : KtElement, C : Any> {
