@@ -360,7 +360,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
       }
     }
     val disposedStr = if (isDisposed) " (disposed)" else ""
-    return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr"
+    val creationTrace = if (ApplicationManager.getApplication().isUnitTestMode) creationTrace?.let {"\n"+it} ?:"" else ""
+    return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr$creationTrace"
   }
 
   override fun isOpen(): Boolean {

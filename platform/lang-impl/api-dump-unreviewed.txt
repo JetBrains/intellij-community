@@ -13816,7 +13816,6 @@ f:com.intellij.psi.impl.PsiDocumentManagerImpl
 - assertFileIsFromCorrectProject(com.intellij.openapi.vfs.VirtualFile):V
 - commitAllDocumentsUnderProgress():Z
 - doPostponedOperationsAndUnblockDocument(com.intellij.openapi.editor.Document):V
-- documentChanged(com.intellij.openapi.editor.event.DocumentEvent):V
 - getPsiFile(com.intellij.openapi.editor.Document):com.intellij.psi.PsiFile
 - isDocumentBlockedByPsi(com.intellij.openapi.editor.Document):Z
 - reparseFiles(java.util.Collection,Z):V

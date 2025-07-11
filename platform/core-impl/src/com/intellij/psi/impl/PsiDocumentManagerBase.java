@@ -34,6 +34,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
+import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
@@ -72,8 +74,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private final PsiManager myPsiManager;
   private final DocumentCommitProcessor myDocumentCommitProcessor;
 
-  @ApiStatus.Internal
-  protected final Set<Document> myUncommittedDocuments = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
+  private final Set<Document> myUncommittedDocuments = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
   private final Map<Document, Throwable> myUncommittedDocumentTraces = CollectionFactory.createConcurrentWeakMap();
   private /*non-static*/ final Key<UncommittedInfo> UNCOMMITTED_INFO_KEY = Key.create("UNCOMMITTED_INFO");
 
@@ -87,6 +88,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private final PsiToDocumentSynchronizer mySynchronizer;
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  @ApiStatus.Internal
+  protected volatile boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   protected PsiDocumentManagerBase(@NotNull Project project) {
     myProject = project;
@@ -1083,6 +1086,36 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     else {
       clearUncommittedInfo(document);
     }
+
+    // optimisation: avoid documents piling up during batch processing
+    if (isUncommited(document) && areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
+      // must not commit during document save
+      if (PomModelImpl.isAllowPsiModification()
+          // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
+          && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        // commit one document to avoid OOME
+        for (Document uncommitted : myUncommittedDocuments) {
+          if (uncommitted != event.getDocument()) {
+            commitDocument(uncommitted);
+            break;
+          }
+        }
+      }
+      if (myUnitTestMode) {
+        myStopTrackingDocuments = true;
+        try {
+          //noinspection TestOnlyProblems
+          Logger.getInstance(getClass()).error(
+            "Too many uncommitted documents for " + myProject + "(" +myUncommittedDocuments.size()+")"+
+            ":\n" + StringUtil.join(myUncommittedDocuments, "\n") +
+            myProject);
+        }
+        finally {
+          //noinspection TestOnlyProblems
+          clearUncommittedDocuments();
+        }
+      }
+    }
   }
 
   @Override
@@ -1104,6 +1137,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       // make cached provider non-gcable temporarily (until commit end) to avoid surprising getCachedProvider()==null
       myDocumentCommitProcessor.commitAsynchronously(myProject, this, document, reason, modality);
     }
+  }
+
+  @ApiStatus.Internal
+  public static boolean areTooManyDocumentsInTheQueue(@NotNull Collection<? extends Document> documents) {
+    if (documents.size() > 100) return true;
+    int totalSize = 0;
+    for (Document document : documents) {
+      totalSize += document.getTextLength();
+      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @ApiStatus.Internal
@@ -1257,7 +1303,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public void reparseFileFromText(@NotNull PsiFileImpl file) {
-    if (isCommitInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
+    if (isCommitInProgress()) {
+      throw new IllegalStateException("Re-entrant commit is not allowed");
+    }
 
     FileElement node = file.calcTreeElement();
     CharSequence text = node.getChars();

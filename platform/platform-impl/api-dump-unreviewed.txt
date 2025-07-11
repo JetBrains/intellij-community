@@ -7831,7 +7831,6 @@ c:com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 - sf:NOT_RELOADABLE_DOCUMENT_KEY:com.intellij.openapi.util.Key
 - s:ourConflictsSolverEnabled:Z
 - <init>():V
-- s:areTooManyDocumentsInTheQueue(java.util.Collection):Z
 - contentsChanged(com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent):V
 - p:createDocument(java.lang.CharSequence,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.ex.DocumentEx
 - dropAllUnsavedDocuments():V

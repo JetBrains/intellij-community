@@ -9,19 +9,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -40,8 +36,6 @@ import java.util.*;
 
 //todo listen & notifyListeners readonly events?
 public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
-  private final boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-
   public PsiDocumentManagerImpl(@NotNull Project project) {
     super(project);
 
@@ -80,40 +74,6 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
           "This error happens if ProjectLocatorImpl#isUnder(project, file) returns false, which means that the file is not included\n" +
           "in the project model of the project. And usually, projects should not touch such files.\n" +
           "Feel free to reach out to IntelliJ Code Platform team if you have questions or concerns.");
-      }
-    }
-  }
-
-  @Override
-  public void documentChanged(@NotNull DocumentEvent event) {
-    super.documentChanged(event);
-    // optimisation: avoid documents piling up during batch processing
-    if (isUncommited(event.getDocument()) && FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
-      // must not commit during document save
-      if (PomModelImpl.isAllowPsiModification()
-          // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
-          && ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        // commit one document to avoid OOME
-        for (Document document : myUncommittedDocuments) {
-          if (document != event.getDocument()) {
-            commitDocument(document);
-            break;
-          }
-        }
-      }
-      if (myUnitTestMode) {
-        myStopTrackingDocuments = true;
-        try {
-          //noinspection TestOnlyProblems
-          Logger.getInstance(getClass()).error(
-            "Too many uncommitted documents for " + myProject + "(" +myUncommittedDocuments.size()+")"+
-            ":\n" + StringUtil.join(myUncommittedDocuments, "\n") +
-            (myProject instanceof ProjectEx ? "\n\n Project creation trace: " + ((ProjectEx)myProject).getCreationTrace() : ""));
-        }
-        finally {
-          //noinspection TestOnlyProblems
-          clearUncommittedDocuments();
-        }
       }
     }
   }

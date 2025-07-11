@@ -42,7 +42,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -53,6 +52,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
@@ -108,7 +108,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       Document document = e.getDocument();
       markDocumentUnsaved(document, false);
       // avoid documents piling up during batch processing
-      if (areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
+      if (PsiDocumentManagerBase.areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
         saveAllDocumentsLater();
       }
     }
@@ -190,18 +190,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     catch (Exception e) {
       unwrapAndRethrow(e);
     }
-  }
-
-  public static boolean areTooManyDocumentsInTheQueue(@NotNull Collection<? extends Document> documents) {
-    if (documents.size() > 100) return true;
-    int totalSize = 0;
-    for (Document document : documents) {
-      totalSize += document.getTextLength();
-      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @ApiStatus.Internal
