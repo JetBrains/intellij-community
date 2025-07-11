@@ -1,9 +1,12 @@
 class Foo<T> {
 
-    inner class Bar<U, V>(private val foo: T) {
+    inner class Bar<U> {
 
-        init {
-            fo<caret>
+        inner class Baz<V>(private val foo: T) {
+
+            init {
+                fo<caret>
+            }
         }
     }
 }
