@@ -16,8 +16,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+ import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
@@ -92,8 +91,7 @@ object ChangeSignatureFixFactory {
     }
 
     val removeParameterFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoValueForParameter ->
-        if (!isWritable(diagnostic.violatedParameter)) return@IntentionBased emptyList()
-        createRemoveParameterFix(diagnostic.violatedParameter, diagnostic.psi)
+        createRemoveParameterFix(diagnostic.psi, diagnostic.violatedParameter.asString())
     }
 
     val typeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
@@ -414,26 +412,28 @@ object ChangeSignatureFixFactory {
 
     context(KaSession)
     private fun createRemoveParameterFix(
-        symbol: KaSymbol,
-        element: PsiElement,
+        element: KtElement,
+        parameterName: String,
     ): List<ParameterQuickFix> {
-        if (symbol !is KaParameterSymbol) return emptyList()
-        val containingSymbol = symbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
-        if (containingSymbol is KaNamedFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
-            containingSymbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED ||
-            containingSymbol.origin == KaSymbolOrigin.LIBRARY
+        val functionLikeSymbol =
+            ((element.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionSymbol
+                ?: return emptyList()
+
+        if (!isWritable(functionLikeSymbol)) return emptyList()
+        if (functionLikeSymbol is KaNamedFunctionSymbol && functionLikeSymbol.valueParameters.any { it.isVararg } ||
+            functionLikeSymbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED ||
+            functionLikeSymbol.origin == KaSymbolOrigin.LIBRARY
         ) return emptyList()
 
-        val name = (symbol as? KaNamedSymbol)?.name?.asString() ?: return emptyList()
         val callee = (element as? KtDotQualifiedExpression)?.selectorExpression ?: element
         if (callee.parentOfType<KtCallElement>(true) == null) return emptyList()
 
         val input = Input(
             type = ChangeType.REMOVE,
-            name = name,
-            isConstructor = containingSymbol is KaConstructorSymbol,
-            idx = containingSymbol.valueParameters.indexOf<Any>(symbol),
-            parameterCount = containingSymbol.valueParameters.size,
+            name = parameterName,
+            isConstructor = functionLikeSymbol is KaConstructorSymbol,
+            idx = functionLikeSymbol.valueParameters.indexOfFirst { it.name.asString() == parameterName },
+            parameterCount = functionLikeSymbol.valueParameters.size,
         )
         return listOf(
             ParameterQuickFix(callee, input),
