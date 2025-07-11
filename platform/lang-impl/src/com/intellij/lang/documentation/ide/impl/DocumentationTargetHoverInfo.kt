@@ -102,7 +102,7 @@ private class DocumentationTargetHoverInfo(
 
   override fun createQuickDocComponent(editor: Editor, jointPopup: Boolean, bridge: PopupBridge): JComponent {
     val project = editor.project!!
-    val documentationUI = DocumentationUI(project, browser)
+    val documentationUI = DocumentationUI(project, browser, isPopup = true)
     val popupUI = DocumentationPopupUI(project, documentationUI)
     if (jointPopup) {
       popupUI.jointHover()

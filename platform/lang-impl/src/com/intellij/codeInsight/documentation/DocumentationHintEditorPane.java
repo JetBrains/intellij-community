@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,8 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
+
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocPopupPreferredMinWidth;
 
 @Internal
 public final class DocumentationHintEditorPane extends DocumentationEditorPane {
@@ -31,6 +34,18 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
       return null;
     });
     myProject = project;
+  }
+
+  private boolean customSettingsEnabled = false;
+
+  @Internal
+  public boolean isCustomSettingsEnabled() {
+    return customSettingsEnabled;
+  }
+
+  @Internal
+  public void setCustomSettingsEnabled(boolean customSettingsEnabled) {
+    this.customSettingsEnabled = customSettingsEnabled;
   }
 
   public void setHint(@NotNull JBPopup hint) {
@@ -92,5 +107,16 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
       return;
     }
     super.processMouseMotionEvent(e);
+  }
+
+  @Override
+  protected int getExtraHeight(int height, int contentPreferredWidth, int expectedWidth) {
+    if (!customSettingsEnabled) return 0;
+    if (contentPreferredWidth <= getDocPopupPreferredMinWidth()) return 0;
+    int lines = (int)Math.ceil(contentPreferredWidth * 1.0 / expectedWidth);
+    if (lines <= 1) return 0;
+    FontMetrics fontMetrics = this.getFontMetrics(getFont());
+    int lineHeight = fontMetrics.getHeight();
+    return JBUIScale.scale((lines - 1) * lineHeight);
   }
 }

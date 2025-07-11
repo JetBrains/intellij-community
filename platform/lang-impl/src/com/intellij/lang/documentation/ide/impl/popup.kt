@@ -40,7 +40,7 @@ internal suspend fun showDocumentationPopup(
     Disposer.dispose(browser)
     throw ce
   }
-  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser))
+  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser, isPopup = true))
   val popup = createDocumentationPopup(project, popupUI, popupContext)
   try {
     writeIntentReadAction {

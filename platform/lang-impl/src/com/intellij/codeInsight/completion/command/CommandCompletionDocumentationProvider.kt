@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult.HighlightingType
@@ -163,18 +164,14 @@ private class CommandCompletionDocumentationTarget(
   @NlsSafe
   private fun renderHtml(diffs: List<IntentionPreviewDiffResult.DiffInfo>): String {
     val builder = StringBuilder()
-    val maxLine = (diffs.maxOfOrNull { it.startLine + it.length } ?: 1000).toString().length
+    val maxLine = (diffs.maxOfOrNull { it.startLine + it.length + 1 } ?: 1000).toString().length
     for (i in 0..diffs.size - 1) {
       ProgressManager.checkCanceled()
-      var codeSnippet = diffs[i].fileText
-      val length = codeSnippet.split("\n").lastOrNull()?.length ?: -1
-      if (length > 0 && length < 35) {
-        codeSnippet += " ".repeat(35 - length)
-      }
+      val codeSnippet = diffs[i].fileText
       val lineNumberIndexes = codeSnippet.indexesOf("\n").map { it + 1 }.toMutableList()
       lineNumberIndexes.add(0, 0)
       val additionalHighlighting = additionalHighlighting(diffs[i].fragments, lineNumberIndexes)
-      val textHandler = if (diffs[i].startLine != -1) createLineNumberTextHandler(lineNumberIndexes, diffs[i].startLine, maxLine) else null
+      val textHandler = if (diffs[i].startLine != -1) createLineNumberTextHandler(lineNumberIndexes, diffs[i].startLine + 1, maxLine) else null
       var properties = HtmlSyntaxInfoUtil.HtmlGeneratorProperties.createDefault()
         .generateWrappedTags()
         .generateBackground()
@@ -196,10 +193,10 @@ private class CommandCompletionDocumentationTarget(
     val defaultBackground = scheme.defaultBackground
     val lineSpacing = scheme.lineSpacing
     val backgroundColor = ColorUtil.toHtmlColor(defaultBackground)
-    return """
-      <div style="min-width: 150px; max-width: 250px; padding: 0; margin: 0;"> 
-      <div style="width: 95%; background-color:$backgroundColor; line-height: ${lineSpacing * 1.1}">$builder<br/>
-      </div></div>""".trimIndent()
+    val editorFontSize = scheme.editorFontSize
+    return """<${DocumentationHtmlUtil.codePreviewFloatingKey} background-color="$backgroundColor" font-size="$editorFontSize">""" + """
+      <div style="$backgroundColor; line-height:${lineSpacing * 1.1};">$builder
+      </div>""" + "</${DocumentationHtmlUtil.codePreviewFloatingKey}>".trimIndent()
   }
 
   private fun createLineNumberTextHandler(

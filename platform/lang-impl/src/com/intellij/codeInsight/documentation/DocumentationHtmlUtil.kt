@@ -60,6 +60,14 @@ object DocumentationHtmlUtil {
   @JvmStatic
   val lookupDocPopupMinHeight: Int get() = 300
 
+  /**
+   * Represents a key used internally to identify the configuration or behavior of the code preview for floating documentation popup.
+   * It enables customization of this popup and some documentation panes
+   */
+  @JvmStatic
+  @get:ApiStatus.Internal
+  val codePreviewFloatingKey: String get() = "ideaFloatingCodePreview"
+
   @JvmStatic
   fun getModuleIconResolver(baseIconResolver: Function<in String?, out Icon?>): (String) -> Icon? = { key: String ->
     baseIconResolver.apply(key)

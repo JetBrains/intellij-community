@@ -24,14 +24,17 @@ import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent.ContentUpdateKind
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.options.FontSize
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
 import com.intellij.platform.util.coroutines.flow.collectLatestUndispatched
 import com.intellij.ui.PopupHandler
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingTextTrimmer
@@ -44,7 +47,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.awt.Color
+import java.awt.Font
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -53,6 +59,7 @@ import javax.swing.JScrollPane
 internal class DocumentationUI(
   val project: Project,
   val browser: DocumentationBrowser,
+  private var isPopup: Boolean = false,
 ) : DataProvider, Disposable {
 
   val scrollPane: JScrollPane
@@ -183,6 +190,16 @@ internal class DocumentationUI(
     imageResolver = null
   }
 
+  fun reloadAsDetached() {
+    val localInitialDecoratedData = initialDecoratedData
+    if (localInitialDecoratedData != null && editorPane.isCustomSettingsEnabled) {
+      editorPane.isCustomSettingsEnabled = false
+      editorPane.background = localInitialDecoratedData.backgroundColor
+      editorPane.applyFontProps(localInitialDecoratedData.fontSize)
+    }
+    isPopup = false
+  }
+
   private suspend fun handlePage(page: DocumentationPage) {
     val presentation = page.request.presentation
     val i = switcher.elements.indexOf(page.request)
@@ -193,16 +210,20 @@ internal class DocumentationUI(
     else {
       switcher.index = i
     }
-    updateSwitcherVisibility()
+    if (!editorPane.isCustomSettingsEnabled) {
+      updateSwitcherVisibility()
+    }
     page.contentFlow.collectLatest {
       handleContent(presentation, it)
     }
   }
 
-  fun updateSwitcherVisibility() {
+  fun updateSwitcherVisibility(forceTopMarginDisabled: Boolean = false) {
     val visible = switcher.elements.count() > 1
     switcherToolbarComponent.isVisible = visible
-    editorPane.border = JBUI.Borders.emptyTop(
+    editorPane.border =
+      if (forceTopMarginDisabled) JBUI.Borders.empty(0, 0, 2, JBUI.scale(20))
+      else JBUI.Borders.emptyTop(
       if (visible) 0 else DocumentationHtmlUtil.contentOuterPadding - DocumentationHtmlUtil.spaceBeforeParagraph
     )
   }
@@ -232,8 +253,9 @@ internal class DocumentationUI(
     val content = pageContent.content
     imageResolver = content.imageResolver
     val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
-    val decorated = decorate(content.html, null, linkChunk, pageContent.downloadSourcesLink)
-    if (!updateContent(decorated, presentation, ContentKind.DocumentationPage)) {
+    val decoratedData = extractAdditionalData(content.html)
+    val decorated = decorate(decoratedData?.html ?: content.html, null, linkChunk, pageContent.downloadSourcesLink)
+    if (!updateContent(decorated, presentation, ContentKind.DocumentationPage, decoratedData?.decoratedStyle)) {
       return
     }
     val uiState = pageContent.uiState
@@ -241,6 +263,25 @@ internal class DocumentationUI(
       yield()
       applyUIState(uiState)
     }
+  }
+
+  private data class DecoratedData(@NlsSafe val html: String, val decoratedStyle: DecoratedStyle?)
+  private data class DecoratedStyle(val fontSize: Float, val backgroundColor: Color)
+  private data class PreviousDecoratedStyle(val fontSize: FontSize, val backgroundColor: Color)
+  private fun extractAdditionalData(@NlsSafe html: String): DecoratedData? {
+    if (!html.startsWith("<" + DocumentationHtmlUtil.codePreviewFloatingKey)) return null
+    val document: Document = Jsoup.parse(html)
+    val children = document.getElementsByTag(DocumentationHtmlUtil.codePreviewFloatingKey)
+    if (children.size != 1) return null
+    val element = children[0]
+    if (!isPopup) {
+      return DecoratedData("<div style=\"min-width: 150px; max-width: 300px; padding: 0; margin: 0;\"> " +
+                           element.children()[0].html() + "</div></div>", null)
+    }
+    val backgroundColor = element.attribute("background-color")?.value ?: return null
+    val fontSize = element.attribute("font-size")?.value?.toFloat() ?: return null
+    if(element.children().size!=1) return null
+    return DecoratedData(element.children()[0].html(), DecoratedStyle(fontSize, Color.decode(backgroundColor)))
   }
 
   private fun fetchingMessage() {
@@ -260,9 +301,13 @@ internal class DocumentationUI(
       .toString()
   }
 
-  private fun updateContent(text: @Nls String,
-                            presentation: TargetPresentation?,
-                            newContentKind: ContentKind): Boolean {
+  private var initialDecoratedData: PreviousDecoratedStyle? = null
+  private fun updateContent(
+    text: @Nls String,
+    presentation: TargetPresentation?,
+    newContentKind: ContentKind,
+    decoratedStyle: DecoratedStyle? = null,
+  ): Boolean {
     EDT.assertIsEdt()
     if (editorPane.text == text &&
         locationLabel.text == presentation?.locationText &&
@@ -273,6 +318,7 @@ internal class DocumentationUI(
     val oldContentKind = contentKind
     contentKind = newContentKind
     editorPane.text = text
+    customizePane(decoratedStyle)
     if (presentation?.locationText != null) {
       locationLabel.text = presentation.locationText
       locationLabel.toolTipText = presentation.locationText
@@ -292,6 +338,35 @@ internal class DocumentationUI(
           ContentUpdateKind.DocumentationPageNavigated
       }))
     return true
+  }
+
+  private fun customizePane(decoratedStyle: DecoratedStyle?) {
+    if (decoratedStyle != null) {
+      updateSwitcherVisibility(true)
+    }
+    else {
+      updateSwitcherVisibility()
+    }
+    if (isPopup && (decoratedStyle != null && decoratedStyle.backgroundColor != editorPane.background ||
+                    decoratedStyle == null && initialDecoratedData != null &&
+                    initialDecoratedData?.backgroundColor != editorPane.background)) {
+      if (initialDecoratedData == null) {
+        initialDecoratedData = PreviousDecoratedStyle(fontSize.value, editorPane.background)
+      }
+      if (decoratedStyle != null) {
+        editorPane.isCustomSettingsEnabled = true
+        editorPane.setFont(UIUtil.getFontWithFallback(editorPane.getFontName(), Font.PLAIN, JBUIScale.scale(decoratedStyle.fontSize).toInt()))
+        editorPane.background = decoratedStyle.backgroundColor
+      }
+      else {
+        val localInitialDecoratedData = initialDecoratedData
+        if (localInitialDecoratedData != null) {
+          editorPane.isCustomSettingsEnabled = false
+          editorPane.background = localInitialDecoratedData.backgroundColor
+          editorPane.applyFontProps(localInitialDecoratedData.fontSize)
+        }
+      }
+    }
   }
 
   private fun applyUIState(uiState: UIState) {

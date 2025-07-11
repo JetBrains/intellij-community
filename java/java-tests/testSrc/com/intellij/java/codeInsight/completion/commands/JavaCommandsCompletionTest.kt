@@ -776,9 +776,9 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       assertNotNull(documentation)
       val resultDocumentation = documentation?.supplier?.invoke() as? DocumentationData
       assertNotNull(resultDocumentation)
-      val expected = "<div style=\"min-width: 150px; max-width: 250px; padding: 0; margin: 0;\"> \n" +
-                     "<div style=\"width: 95%; background-color:#ffffff; line-height: 1.3200000524520874\"><div style=\"background-color:#ffffff;color:#000000\"><pre style=\"font-family:'JetBrains Mono',monospace;\"><span style=\"font-size: 90%; color:#999999;\">  2  </span><span style=\"color:#000080;font-weight:bold;\">int&#32;</span>y&#32;=&#32;<span style=\"color:#0000ff;background-color:#cad9fa;\">10</span>;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;</pre></div><br/>\n" +
-                     "</div></div>"
+      val expected = """<ideaFloatingCodePreview background-color="#ffffff" font-size="13">
+      <div style="#ffffff; line-height:1.3200000524520874;"><div style="background-color:#ffffff;color:#000000"><pre style="font-family:'JetBrains Mono',monospace;"><span style="font-size: 90%; color:#999999;">  3  </span><span style="color:#000080;font-weight:bold;">int&#32;</span>y&#32;=&#32;<span style="color:#0000ff;background-color:#cad9fa;">10</span>;</pre></div>
+      </div></ideaFloatingCodePreview>"""
       assertEquals(expected, resultDocumentation?.html ?: "")
       selectItem(item)
       myFixture.checkResult("""
