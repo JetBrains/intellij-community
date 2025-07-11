@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -114,16 +113,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected JComponent createItemComponent() {
     createLabel();
     JPanel panel = new JPanel(new BorderLayout()) {
-      private final AccessibleContext myAccessibleContext = myTextLabel.getAccessibleContext();
-
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        if (myAccessibleContext == null) {
-          return super.getAccessibleContext();
-        }
-        return myAccessibleContext;
-      }
-
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
