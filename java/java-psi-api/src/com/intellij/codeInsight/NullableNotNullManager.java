@@ -350,7 +350,7 @@ public abstract class NullableNotNullManager {
 
   private @Nullable NullabilityAnnotationInfo findNullabilityDefault(@NotNull PsiElement place,
                                                                      @NotNull PsiAnnotation.TargetType @NotNull ... placeTargetTypes) {
-    PsiElement element = place.getContext();
+    PsiElement element = place;
     while (element != null) {
       if (element instanceof PsiModifierListOwner) {
         NullabilityAnnotationInfo result = getNullityDefault((PsiModifierListOwner)element, placeTargetTypes).forContext(place);
