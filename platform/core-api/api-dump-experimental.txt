@@ -442,6 +442,36 @@ com.intellij.psi.StubBasedPsiElement
 - *:getIElementType():com.intellij.psi.tree.IElementType
 com.intellij.psi.SyntheticElement
 - *:findSameElementInCopy(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
+*:com.intellij.psi.search.ActualCodeInsightContextInfo
+- com.intellij.psi.search.CodeInsightContextInfo
+- a:contains(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):Z
+- a:getFileInfo(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.CodeInsightContextFileInfo
+*:com.intellij.psi.search.ActualContextFileInfo
+- com.intellij.psi.search.CodeInsightContextFileInfo
+- a:getContexts():java.util.Collection
+*:com.intellij.psi.search.CodeInsightContextAwareSearchScope
+- a:getCodeInsightContextInfo():com.intellij.psi.search.CodeInsightContextInfo
+*f:com.intellij.psi.search.CodeInsightContextAwareSearchScopes
+- *sf:ActualContextFileInfo(java.util.Collection):com.intellij.psi.search.ActualContextFileInfo
+- *sf:DoesNotContainFileInfo():com.intellij.psi.search.DoesNotContainFileInfo
+- *sf:NoContextFileInfo():com.intellij.psi.search.NoContextFileInfo
+- *sf:NoContextInformation():com.intellij.psi.search.NoContextInformation
+- *sf:createContainingContextFileInfo(java.util.Collection):com.intellij.psi.search.CodeInsightContextFileInfo
+- *sf:getAnyCorrespondingContext(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.multiverse.CodeInsightContext
+- *sf:getCodeInsightContextInfo(com.intellij.psi.search.SearchScope):com.intellij.psi.search.CodeInsightContextInfo
+- *sf:getCorrespondingContexts(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+*:com.intellij.psi.search.CodeInsightContextFileInfo
+*:com.intellij.psi.search.CodeInsightContextInfo
+c:com.intellij.psi.search.DelegatingGlobalSearchScope
+- com.intellij.psi.search.GlobalSearchScope
+- com.intellij.psi.search.CodeInsightContextAwareSearchScope
+- *:getCodeInsightContextInfo():com.intellij.psi.search.CodeInsightContextInfo
+*:com.intellij.psi.search.DoesNotContainFileInfo
+- com.intellij.psi.search.CodeInsightContextFileInfo
+*:com.intellij.psi.search.NoContextFileInfo
+- com.intellij.psi.search.CodeInsightContextFileInfo
+*:com.intellij.psi.search.NoContextInformation
+- com.intellij.psi.search.CodeInsightContextInfo
 f:com.intellij.psi.search.PsiSearchScopeUtil
 - *s:restrictScopeToFileLanguage(com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope,com.intellij.lang.LanguageMatcher):com.intellij.psi.search.SearchScope
 com.intellij.psi.stubs.BinaryFileStubBuilder

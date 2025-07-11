@@ -9,6 +9,7 @@ import com.intellij.psi.search.ActualCodeInsightContextInfo;
 import com.intellij.psi.search.CodeInsightContextFileInfo;
 import com.intellij.psi.search.CodeInsightContextInfo;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 // Tests only (module plus dependencies) scope
@@ -25,6 +26,7 @@ final class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope im
     return scope.contains(file, CodeInsightContexts.anyContext(), true);
   }
 
+  @ApiStatus.Experimental
   @Override
   public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
     return this;

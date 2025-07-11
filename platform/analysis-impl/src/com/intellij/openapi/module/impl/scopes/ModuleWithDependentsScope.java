@@ -107,6 +107,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
     return contains(file, CodeInsightContexts.anyContext(), false);
   }
 
+  @ApiStatus.Experimental
   @Override
   public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
     return this;

@@ -173,7 +173,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     return hasOption(LIBRARIES);
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
   public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
     return this;

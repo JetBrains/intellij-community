@@ -1,4 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Experimental
 @file:JvmName("CodeInsightContextAwareSearchScopes")
 
 package com.intellij.psi.search
@@ -6,6 +7,7 @@ package com.intellij.psi.search
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -16,8 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *
  * It makes sense to implement this interface if your scope encapsulates information about the project structure of your technology.
  */
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 interface CodeInsightContextAwareSearchScope {
   /**
    * @return an object encapsulating information about [CodeInsightContext]s associated with the scope
@@ -49,7 +50,7 @@ fun SearchScope.getFileContextInfo(file: VirtualFile): CodeInsightContextFileInf
 }
 
 // todo IJPL-339 does not support case when this scope contains a file in several contexts
-@Internal
+@ApiStatus.Experimental
 fun SearchScope.getAnyCorrespondingContext(file: VirtualFile): CodeInsightContext {
   val contextInfo = getFileContextInfo(file)
   return when (contextInfo) {
@@ -58,8 +59,7 @@ fun SearchScope.getAnyCorrespondingContext(file: VirtualFile): CodeInsightContex
   }
 }
 
-//todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 fun SearchScope.getCorrespondingContexts(file: VirtualFile): Collection<CodeInsightContext> {
   return when (val contextInfo = getFileContextInfo(file)) {
     is ActualContextFileInfo -> contextInfo.contexts
@@ -69,15 +69,14 @@ fun SearchScope.getCorrespondingContexts(file: VirtualFile): Collection<CodeInsi
 }
 
 val SearchScope.codeInsightContextInfo: CodeInsightContextInfo
-  @Internal
+  @ApiStatus.Experimental
   get() = if (this is CodeInsightContextAwareSearchScope) this.codeInsightContextInfo else NoContextInformation()
 
 
 /**
  * A base interface storing information about [CodeInsightContext]s associated with the [SearchScope] which returns this object
  */
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 sealed interface CodeInsightContextInfo
 
 /**
@@ -87,16 +86,14 @@ sealed interface CodeInsightContextInfo
  * Implementation note: we need this interface because not all scopes can know at compilation time if they are aware of contexts.
  * Examples of such scope are Union and Intersection scopes.
  */
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 sealed interface NoContextInformation : CodeInsightContextInfo
 
 /**
  * [CodeInsightContextAwareSearchScope.codeInsightContextInfo] can return this object.
  * If you get its instance, you can use it for checking if a given [VirtualFile] is associated with [CodeInsightContext]s within the [SearchScope].
  */
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 sealed interface ActualCodeInsightContextInfo : CodeInsightContextInfo {
   /**
    * @return true if scope contains [file] with [context].
@@ -114,8 +111,7 @@ sealed interface ActualCodeInsightContextInfo : CodeInsightContextInfo {
  *
  * @see CodeInsightContextAwareSearchScope
  */
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 sealed interface CodeInsightContextFileInfo
 
 /**
@@ -123,8 +119,7 @@ sealed interface CodeInsightContextFileInfo
  *
  * @see ActualCodeInsightContextInfo.getFileInfo
  */
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 sealed interface DoesNotContainFileInfo : CodeInsightContextFileInfo
 
 /**
@@ -136,30 +131,25 @@ sealed interface DoesNotContainFileInfo : CodeInsightContextFileInfo
  *
  * @see ActualCodeInsightContextInfo.getFileInfo
  */
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 sealed interface NoContextFileInfo : CodeInsightContextFileInfo
 
 /**
  * File info indicating the [CodeInsightContext]s associated with the corresponding [VirtualFile]
  */
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 sealed interface ActualContextFileInfo : CodeInsightContextFileInfo {
   val contexts: Collection<CodeInsightContext>
 }
 
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 fun NoContextInformation(): NoContextInformation = NoContextInformationImpl
 
 
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 fun DoesNotContainFileInfo(): DoesNotContainFileInfo = DoesNotContainFileInfoImpl
 
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 fun ActualContextFileInfo(contexts: Collection<CodeInsightContext>): ActualContextFileInfo {
   if (contexts.isEmpty()) {
     throw IllegalArgumentException("Contexts cannot be empty")
@@ -167,7 +157,7 @@ fun ActualContextFileInfo(contexts: Collection<CodeInsightContext>): ActualConte
   return ActualContextFileInfoImpl(contexts)
 }
 
-@Internal
+@ApiStatus.Experimental
 fun createContainingContextFileInfo(contexts: Collection<CodeInsightContext>): CodeInsightContextFileInfo {
   if (contexts.isEmpty()) {
     return NoContextFileInfo()
@@ -177,8 +167,7 @@ fun createContainingContextFileInfo(contexts: Collection<CodeInsightContext>): C
   }
 }
 
-// todo IJPL-339 mark experimental
-@Internal
+@ApiStatus.Experimental
 fun NoContextFileInfo(): NoContextFileInfo = NoContextFileInfoImpl
 
 // -------------------------------- implementation --------------------------------

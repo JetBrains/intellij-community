@@ -39,13 +39,13 @@ public class ModulesScope extends GlobalSearchScope implements CodeInsightContex
     }
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
   public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
     return this;
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
   public @NotNull CodeInsightContextFileInfo getFileInfo(@NotNull VirtualFile file) {
     Set<Module> modulesOfFile = myProjectFileIndex.getModulesForFile(file, true);

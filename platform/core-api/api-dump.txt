@@ -1477,6 +1477,8 @@ com.intellij.psi.scope.PsiScopeProcessor
 - handleEvent(com.intellij.psi.scope.PsiScopeProcessor$Event,java.lang.Object):V
 com.intellij.psi.scope.PsiScopeProcessor$Event
 - sf:SET_DECLARATION_HOLDER:com.intellij.psi.scope.PsiScopeProcessor$Event
+c:com.intellij.psi.search.DelegatingGlobalSearchScope
+- com.intellij.psi.search.CodeInsightContextAwareSearchScope
 com.intellij.psi.search.PsiElementProcessor
 - a:execute(com.intellij.psi.PsiElement):Z
 com.intellij.psi.search.PsiNonJavaFileReferenceProcessor
