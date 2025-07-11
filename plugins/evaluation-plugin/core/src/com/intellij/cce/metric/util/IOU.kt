@@ -32,6 +32,8 @@ fun <T : Range> computeIOU(range1: T, range2: T): Double {
 }
 
 
+data class Match<T>(val reference: T, val prediction: T, val iou: Double)
+
 /**
  * Matches reference ranges with predicted ranges based on maximum IOU overlap.
  * Each predicted range can only be matched once.
@@ -46,8 +48,6 @@ fun <T : Range> matchRanges(references: List<T>, predictions: List<T>): Map<T, T
   val usedPredictions = mutableSetOf<T>()
 
   // Calculate all possible matches and their IOU scores
-  data class Match(val reference: T, val prediction: T, val iou: Double)
-
   val allMatches = references.flatMap { reference ->
     predictions.map { prediction ->
       Match(reference, prediction, computeIOU(reference, prediction))
@@ -66,4 +66,20 @@ fun <T : Range> matchRanges(references: List<T>, predictions: List<T>): Map<T, T
   }
 
   return result
+}
+
+/**
+ * Computes the overlap between all pairs of ranges in a list.
+ * Each range can only be paired once.
+ * The resulting map contains the maximum overlap for each pair of ranges.
+ *
+ * @param ranges List of ranges
+ * @return Map overlapped ranges
+ */
+fun <T : Range> overlapWithinRanges(ranges: List<T>): Map<T, T> {
+  return ranges.flatMapIndexed { i, range1 ->
+    ranges.subList(i + 1, ranges.size).map { range2 ->
+      Match(range1, range2, computeIOU(range1, range2))
+    }
+  }.filter { it.iou > 0.0 }.associateBy({ it.reference }, { it.prediction })
 }
