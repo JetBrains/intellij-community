@@ -110,7 +110,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       new PsiClassStubImpl<>(JavaStubElementTypes.CLASS, myParent, fqn == null ? TypeInfo.SimpleTypeInfo.NULL : fqn, shortName, null,
                              stubFlags);
     myModList = new PsiModifierListStubImpl(myResult, classFlags);
-    if (shortName.equals(PsiPackage.PACKAGE_INFO_CLASS)) {
+    if (PsiPackage.PACKAGE_INFO_CLASS.equals(shortName)) {
       // Attach annotations to the package statement
       myModList = new PsiModifierListStubImpl(packageStatement, 0);
     }
