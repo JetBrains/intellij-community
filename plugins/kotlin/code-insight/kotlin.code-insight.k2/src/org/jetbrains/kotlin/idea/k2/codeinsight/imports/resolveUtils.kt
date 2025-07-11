@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
@@ -97,65 +96,3 @@ internal fun KaCallableSymbol.isJavaStaticDeclaration(): Boolean =
         is KaJavaFieldSymbol -> isStatic
         else -> false
     }
-
-
-/**
- * Handles incorrectly resolved references to typealiased companion objects in invoke operator calls.
- *
- * Example:
- *
- * ```
- * class MyClass private constructor() {
- *     companion object {
- *         operator fun invoke() {}
- *     }
- * }
- *
- * typealias MyClassTypeAlias = MyClass
- *
- * fun test() {
- *     MyClassTypeAlias()
- * //  ^^^^^^^^^^^^^^^^ - this reference
- * }
- * ```
- *
- * Due to KT-75057, `MyClassTypeAlias` reference currently resolves to `MyClass.Companion` object directly.
- *
- * This functions tries to find the relevant `MyClassTypeAlias` symbol.
- */
-internal fun KaSession.resolveTypeAliasedCompanionObjectAsInvokeCallReceiver(reference: KtReference, originalTarget: KaSymbol): KaTypeAliasSymbol? {
-    if (!reference.isImplicitReferenceToCompanion()) {
-        // we only want to handle implicit references to companion objects, in other cases resolve should work fine as is
-        return null
-    }
-
-    val originalReferenceName = reference.resolvesByNames.singleOrNull() ?: return null
-
-    return if (
-        // we want to check only references to companion objects
-        originalTarget is KaClassSymbol && originalTarget.classKind == KaClassKind.COMPANION_OBJECT &&
-
-        // we handle only calls and nothing else for now
-        reference.element.parent is KtCallExpression &&
-
-        // optimization to avoid resolve of non-existing type alias
-        typeAliasIsAvailable(originalReferenceName, reference.element.containingKtFile)
-    ) {
-        resolveReferencedName(reference) as? KaTypeAliasSymbol
-    } else {
-        null
-    }
-}
-
-private fun KaSession.resolveReferencedName(reference: KtReference): KaSymbol? {
-    val originalReferenceName = reference.resolvesByNames.singleOrNull() ?: return null
-
-    val psiFactory = KtPsiFactory.contextual(reference.element)
-    val psiExpression = psiFactory.createTypeCodeFragment(originalReferenceName.asString(), context = reference.element).getContentElement()
-
-    // FIXME: KTIJ-34283
-    @OptIn(KaImplementationDetail::class)
-    return KaBaseIllegalPsiException.allowIllegalPsiAccess {
-        psiExpression?.type?.abbreviation?.symbol
-    }
-}
