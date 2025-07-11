@@ -272,11 +272,7 @@ public final class IdeaTestUtil {
       return BazelTestUtil.findRunfilesDirectoryUnderCommunityOrUltimate("java/" + name).toFile();
     }
 
-    File file = new File(PlatformTestUtil.getCommunityPath(), "java/" + name);
-    if (!file.isDirectory()) {
-      throw new RuntimeException("Can't find JDK directory for " + name + " at " + file);
-    }
-    return file;
+    return new File(PlatformTestUtil.getCommunityPath(), "java/" + name);
   }
 
   public static void addWebJarsToModule(@NotNull Module module) {
