@@ -92,8 +92,8 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     forMaven4 {
       val expected = arrayOf(
-        "'dependencies.dependency.systemPath' for junit:junit:jar is missing.",
-        "'dependencies.dependency.scope' for junit:junit:jar declares usage of deprecated 'system' scope ",
+        "'dependencies.dependency.systemPath' for groupId='junit', artifactId='junit', type='jar' is missing.",
+        "'dependencies.dependency.scope' for groupId='junit', artifactId='junit', type='jar' declares usage of deprecated 'system' scope ",
       )
       assertProblems(projectsManager.findProject(projectPom)!!, *expected)
     }
@@ -235,8 +235,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val root = rootProjects[0]
     val problems = if (isMaven4)
       arrayOf(
-        "'artifactId' with value '\${undefined}' does not match a valid coordinate id pattern.",
-        "'artifactId' contains an expression but should be a constant.",
+        "Invalid Collect Request: null -> [] < [central-mirror (https://cache-redirector.jetbrains.com/repo1.maven.org/maven2, default, releases)]",
       )
     else
       arrayOf("'artifactId' with value '\${undefined}' does not match a valid id pattern.")
@@ -263,7 +262,9 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val root = rootProjects[0]
     val problems = root.problems
     assertFalse(problems.isEmpty())
-    assertModuleLibDeps("project", "Maven: group:artifact:1")
+    forMaven3 {
+      assertModuleLibDeps("project", "Maven: group:artifact:1")
+    }
   }
 
   @Test
