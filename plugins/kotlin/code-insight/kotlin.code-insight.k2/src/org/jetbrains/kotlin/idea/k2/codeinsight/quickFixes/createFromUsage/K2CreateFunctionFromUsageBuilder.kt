@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageBuilder.buildRequestsAndActions
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.canRefactor
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -236,11 +237,7 @@ object K2CreateFunctionFromUsageBuilder {
         if (containingClass is KtEnumEntry || containingClass.isAnnotation()) return null
 
         val classSymbol = containingClass.symbol as? KaClassSymbol ?: return null
-        val classType = buildClassType(classSymbol) {
-            for (typeParameter in containingClass.typeParameters) {
-                argument(buildStarTypeProjection())
-            }
-        }
+        val classType = buildClassTypeWithStarProjections(classSymbol)
         if (containingClass.modifierList.hasAbstractModifier() || classSymbol.classKind == KaClassKind.INTERFACE) return classType
 
         // KaType.getAbstractSuperType() does not guarantee it's the closest abstract super type. We can implement it as a

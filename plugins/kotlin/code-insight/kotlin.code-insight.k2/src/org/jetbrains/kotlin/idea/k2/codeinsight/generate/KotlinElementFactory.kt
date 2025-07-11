@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
@@ -72,11 +73,8 @@ object KotlinElementFactory {
             superSymbols.filter { it.classKind == KaClassKind.INTERFACE }.map { it.classId?.asFqNameString() }.toTypedArray()
 
         ce.isDeprecated = classSymbol.isDeprecated()
-        ce.isException = buildClassType(classSymbol) {
-            repeat(classSymbol.typeParameters.size) {
-                argument(buildStarTypeProjection())
-            }
-        }.allSupertypes.any { it is KaClassType && it.classId == StandardClassIds.Throwable }
+        ce.isException = buildClassTypeWithStarProjections(classSymbol)
+            .allSupertypes.any { it is KaClassType && it.classId == StandardClassIds.Throwable }
 
         return ce
     }

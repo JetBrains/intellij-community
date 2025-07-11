@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -32,9 +34,14 @@ infix fun KaType.isPossiblySubTypeOf(superType: KaType): Boolean {
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun buildClassTypeWithStarProjections(symbol: KaClassSymbol, nullability: KaTypeNullability): KaType =
+    buildClassTypeWithStarProjections(symbol).withNullability(nullability)
+
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+fun buildClassTypeWithStarProjections(symbol: KaClassLikeSymbol): KaType =
     buildClassType(symbol) {
         @OptIn(KaExperimentalApi::class)
-        repeat(symbol.typeParameters.size) {
+        repeat((symbol.defaultType as? KaClassType)?.qualifiers?.sumOf { it.typeArguments.size } ?: 0) {
             argument(buildStarTypeProjection())
         }
-    }.withNullability(nullability)
+    }

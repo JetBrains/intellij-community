@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
@@ -68,7 +69,7 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
         private fun KaClassLikeSymbol.buildStarProjectedType(): KaType =
             buildClassType(this@buildStarProjectedType) {
                 @OptIn(KaExperimentalApi::class)
-                repeat(typeParameters.size) {
+                repeat((this@buildStarProjectedType.defaultType as? KaClassType)?.qualifiers?.sumOf { it.typeArguments.size } ?: 0) {
                     argument(buildStarTypeProjection())
                 }
             }
