@@ -6,15 +6,7 @@ import org.jetbrains.jps.dependency.NodeSource;
 
 public interface OutputSink extends OutputExplorer, CompilerDataSink{
 
-  class NodeWithSources {
-    public final Node<?, ?> node;
-    public final Iterable<NodeSource> sources;
-
-    public NodeWithSources(Node<?, ?> node, Iterable<NodeSource> sources) {
-      this.node = node;
-      this.sources = sources;
-    }
-  }
+  record NodeWithSources(Node<?, ?> node, Iterable<NodeSource> sources) {}
 
   Iterable<NodeWithSources> getNodes();
 

@@ -368,7 +368,7 @@ public class BazelIncBuilder {
   private static Delta createGraphDelta(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, OutputSinkImpl outSink) {
     Delta delta = depGraph.createDelta(snapshotDelta.getModified(), snapshotDelta.getDeleted(), false);
     for (var pair : outSink.getNodes()) {
-      delta.associate(pair.node, pair.sources);
+      delta.associate(pair.node(), pair.sources());
     }
     return delta;
   }
