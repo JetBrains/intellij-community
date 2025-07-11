@@ -18,15 +18,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
-import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
-import org.jetbrains.yaml.psi.impl.YAMLHashImpl;
 
 import java.util.List;
 
 public class YAMLFoldingBuilder extends CustomFoldingBuilder {
 
-  private static final int PLACEHOLDER_LEN = 20;
+  private static final int LIMIT_FOR_ELLIPSIS_IN_THE_END = 2;
 
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
@@ -148,14 +146,18 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
     return false;
   }
 
-  private static String normalizePlaceHolderText(@Nullable String text) {
+  protected static String normalizePlaceHolderText(@Nullable String text) {
     if (text == null) {
       return null;
     }
 
-    if (text.length() <= PLACEHOLDER_LEN) {
+    var settings = YAMLFoldingSettings.getInstance();
+    if (!settings.useAbbreviation || text.length() <= settings.abbreviationLengthLimit) {
       return text;
     }
-    return StringUtil.trimMiddle(text, PLACEHOLDER_LEN);
+    if (settings.abbreviationLengthLimit <= LIMIT_FOR_ELLIPSIS_IN_THE_END) {
+      return text.substring(0, settings.abbreviationLengthLimit) + "…";
+    }
+    return StringUtil.trimMiddle(text, settings.abbreviationLengthLimit);
   }
 }

@@ -10,27 +10,57 @@ public class YAMLFoldingTest extends BasePlatformTestCase {
   public static final String TEST_DATA_PATH = PathManagerEx.getCommunityHomePath() + RELATIVE_TEST_DATA_PATH;
 
   public void testFolding() {
-    defaultTest();
+    withFoldingSettings()
+      .execute(() -> defaultTest());
   }
 
   public void testSequenceFolding() {
-    defaultTest();
+    withFoldingSettings()
+      .execute(() -> defaultTest());
   }
 
   public void testRuby18677() {
-    defaultTest();
+    withFoldingSettings()
+      .execute(() -> defaultTest());
   }
 
   public void testRuby22423() {
-    defaultTest();
+    withFoldingSettings()
+      .execute(() -> defaultTest());
   }
-  
+
   public void testComments() {
-    defaultTest();
+    withFoldingSettings()
+      .execute(() -> defaultTest());
   }
 
   public void testRegionFolding() {
-    defaultTest();
+    withFoldingSettings()
+      .execute(() -> defaultTest());
+  }
+
+  public void testAbbreviationLimit1() {
+    withFoldingSettings()
+      .withAbbreviationLengthLimit(1)
+      .execute(() -> defaultTest());
+  }
+
+  public void testAbbreviationLimit2() {
+    withFoldingSettings()
+      .withAbbreviationLengthLimit(2)
+      .execute(() -> defaultTest());
+  }
+
+  public void testAbbreviationLimit8() {
+    withFoldingSettings()
+      .withAbbreviationLengthLimit(8)
+      .execute(() -> defaultTest());
+  }
+
+  public void testNoAbbreviation() {
+    withFoldingSettings()
+      .withUseAbbreviation(false)
+      .execute(() -> defaultTest());
   }
 
   public void defaultTest() {
@@ -41,4 +71,43 @@ public class YAMLFoldingTest extends BasePlatformTestCase {
   protected String getTestDataPath() {
     return TEST_DATA_PATH + "/folding/data/";
   }
-} 
+
+  protected static class YamlFoldingSettingsBuilder {
+    private boolean useAbbreviation = true;
+    private int abbreviationLengthLimit = 20;
+
+    public YamlFoldingSettingsBuilder withUseAbbreviation(boolean value) {
+      this.useAbbreviation = value;
+      return this;
+    }
+
+    public YamlFoldingSettingsBuilder withAbbreviationLengthLimit(int value) {
+      this.abbreviationLengthLimit = value;
+      return this;
+    }
+
+    public void execute(ThrowableRunnable<? extends RuntimeException> runnable) {
+      YAMLFoldingSettings settings = YAMLFoldingSettings.getInstance();
+      boolean originalUseAbbreviation = settings.useAbbreviation;
+      int originalAbbreviationLengthLimit = settings.abbreviationLengthLimit;
+      try {
+        settings.useAbbreviation = useAbbreviation;
+        settings.abbreviationLengthLimit = abbreviationLengthLimit;
+        runnable.run();
+      }
+      finally {
+        settings.useAbbreviation = originalUseAbbreviation;
+        settings.abbreviationLengthLimit = originalAbbreviationLengthLimit;
+      }
+    }
+  }
+
+  protected YamlFoldingSettingsBuilder withFoldingSettings() {
+    return new YamlFoldingSettingsBuilder();
+  }
+
+  @FunctionalInterface
+  public interface ThrowableRunnable<E extends Exception> {
+    void run() throws E;
+  }
+}
