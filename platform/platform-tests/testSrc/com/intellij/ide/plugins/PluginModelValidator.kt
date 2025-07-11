@@ -417,7 +417,7 @@ class PluginModelValidator(
             moduleInfo = dependency
           )
           if (referencingModuleInfo.dependencies.contains(ref)) {
-            registerError("Referencing module dependencies contains $id: $id")
+            registerError("Dependency on '$id' is already declared in ${referencingModuleInfo.descriptorFile.name}", fix = "Remove duplicating dependency on '$id'")
             continue
           }
           referencingModuleInfo.dependencies.add(ref)
