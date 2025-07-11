@@ -31,6 +31,10 @@ class CommunityPluginModelTest {
         "META-INF/wizard-template-impl.xml",
         "META-INF/tips-"
       ),
+      additionalPatternsOfDirectoriesContainingIncludedXmlFiles = listOf(
+        "org/jetbrains/android/dom",
+        "com/android/tools/idea/ui/resourcemanager/META-INF",
+      ),
       pluginVariantsWithDynamicIncludes = listOf(
         PluginVariantWithDynamicIncludes(
           mainModuleName = "kotlin.plugin",
