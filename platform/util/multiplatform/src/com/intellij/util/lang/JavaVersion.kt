@@ -3,8 +3,8 @@ package com.intellij.util.lang
 
 import com.intellij.util.currentJavaVersionPlatformSpecific
 import kotlin.jvm.JvmField
-import kotlin.jvm.JvmStatic
 import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 /**
  * A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.
@@ -138,12 +138,11 @@ class JavaVersion private constructor(
     fun compose(feature: Int, minor: Int = 0, update: Int = 0, build: Int = 0, ea: Boolean = false): JavaVersion =
       JavaVersion(feature, minor, update, build, ea)
 
-    /**
-     * Returns the version of a Java runtime the class is loaded into.
-     * The method attempts to parse `"java.runtime.version"` system property first (usually, it is more complete),
-     * and falls back to `"java.version"` if the former is invalid or differs in [.feature] or [.minor] numbers.
-     */
-    @Deprecated("Use CurrentJavaVersion.currentJavaVersion() instead", ReplaceWith("com.intellij.util.lang.CurrentJavaVersion.currentJavaVersion()"))
+    @Deprecated(
+      "Use CurrentJavaVersion.currentJavaVersion() instead",
+      ReplaceWith("com.intellij.util.lang.CurrentJavaVersion.currentJavaVersion()"),
+      level = DeprecationLevel.ERROR
+    )
     @JvmStatic
     fun current(): JavaVersion = currentJavaVersionPlatformSpecific()
 
@@ -252,8 +251,7 @@ class JavaVersion private constructor(
             }
           }
         }
-        catch (_: NumberFormatException) {
-        }
+        catch (_: NumberFormatException) { }
       }
 
       throw IllegalArgumentException(versionString)
@@ -271,8 +269,7 @@ class JavaVersion private constructor(
         try {
           return parse(versionString)
         }
-        catch (_: IllegalArgumentException) {
-        }
+        catch (_: IllegalArgumentException) { }
       }
 
       return null
