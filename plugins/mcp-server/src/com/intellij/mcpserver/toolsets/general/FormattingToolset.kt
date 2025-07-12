@@ -3,12 +3,9 @@
 package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.mcpFail
-import com.intellij.mcpserver.project
-import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.EDT
@@ -30,7 +27,7 @@ class FormattingToolset : McpToolset {
     @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
     path: String,
   ): String {
-    currentCoroutineContext().reportToolActivity("Formatting file '$path'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.formatting.file", path))
     val project = currentCoroutineContext().project
     val resolvedFilePath = project.resolveInProject(path)
 

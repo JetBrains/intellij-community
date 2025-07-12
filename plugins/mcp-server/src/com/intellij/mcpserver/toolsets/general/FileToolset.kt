@@ -56,7 +56,7 @@ class FileToolset : McpToolset {
     @McpDescription("Maximum recursion depth") maxDepth: Int = 5,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION) timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): DirectoryTreeInfo {
-    currentCoroutineContext().reportToolActivity("Traversing folder tree for '$directoryPath'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.traversing.folder.tree", directoryPath))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(directoryPath)
     if (!resolvedPath.exists()) mcpFail("No such directory: $resolvedPath")
@@ -94,7 +94,7 @@ class FileToolset : McpToolset {
     @McpDescription("Timeout in milliseconds")
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): FilesListResult {
-    currentCoroutineContext().reportToolActivity("Finding files with name containing '$nameKeyword'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.finding.files.by.name", nameKeyword))
     val project = currentCoroutineContext().project
     val projectDir = project.projectDirectory
 
@@ -145,7 +145,7 @@ class FileToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE
   ) : FilesListResult {
-    currentCoroutineContext().reportToolActivity("Finding files by glob '$globPattern'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.finding.files.by.glob", globPattern))
     val project = currentCoroutineContext().project
     val projectDirPath = project.projectDirectory
     val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
@@ -205,7 +205,7 @@ class FileToolset : McpToolset {
     @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
     filePath: String,
   ) {
-    currentCoroutineContext().reportToolActivity("Opening file '$filePath'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.opening.file", filePath))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(filePath)
 
@@ -226,7 +226,7 @@ class FileToolset : McpToolset {
         |Use this tool to explore current open editors.
     """)
   suspend fun get_all_open_file_paths(): OpenFilesInfo {
-    currentCoroutineContext().reportToolActivity("Getting open files")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.getting.open.files"))
     val project = currentCoroutineContext().project
     val projectDir = project.projectDirectory
 
@@ -255,7 +255,7 @@ class FileToolset : McpToolset {
     @McpDescription("Content to write into the new file")
     text: String? = null,
   ) {
-    currentCoroutineContext().reportToolActivity("Creating file '$pathInProject'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.creating.file", pathInProject))
     val project = currentCoroutineContext().project
 
     val path = project.resolveInProject(pathInProject)
