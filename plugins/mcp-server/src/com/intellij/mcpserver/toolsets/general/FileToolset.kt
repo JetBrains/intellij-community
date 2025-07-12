@@ -28,6 +28,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.*
+import kotlinx.io.IOException
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -53,7 +54,7 @@ class FileToolset : McpToolset {
     @McpDescription("Maximum recursion depth") maxDepth: Int = 5,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION) timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): DirectoryTreeInfo {
-    reportToolActivity("Showing folder tree for '$directoryPath'")
+    currentCoroutineContext().reportToolActivity("Traversing folder tree for '$directoryPath'")
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(directoryPath)
     if (!resolvedPath.exists()) mcpFail("No such directory: $resolvedPath")
@@ -91,7 +92,7 @@ class FileToolset : McpToolset {
     @McpDescription("Timeout in milliseconds")
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): FilesListResult {
-    reportToolActivity("Finding files with name containing '$nameKeyword'")
+    currentCoroutineContext().reportToolActivity("Finding files with name containing '$nameKeyword'")
     val project = currentCoroutineContext().project
     val projectDir = project.projectDirectory
 
@@ -142,7 +143,7 @@ class FileToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE
   ) : FilesListResult {
-    reportToolActivity("Finding files by glob '$globPattern'")
+    currentCoroutineContext().reportToolActivity("Finding files by glob '$globPattern'")
     val project = currentCoroutineContext().project
     val projectDirPath = project.projectDirectory
     val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
@@ -202,7 +203,7 @@ class FileToolset : McpToolset {
     @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
     filePath: String,
   ) {
-    reportToolActivity("Opening file '$filePath'")
+    currentCoroutineContext().reportToolActivity("Opening file '$filePath'")
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(filePath)
 
@@ -223,7 +224,7 @@ class FileToolset : McpToolset {
         |Use this tool to explore current open editors.
     """)
   suspend fun get_all_open_file_paths(): OpenFilesInfo {
-    reportToolActivity("Getting open files")
+    currentCoroutineContext().reportToolActivity("Getting open files")
     val project = currentCoroutineContext().project
     val projectDir = project.projectDirectory
 
@@ -252,11 +253,21 @@ class FileToolset : McpToolset {
     @McpDescription("Content to write into the new file")
     text: String? = null,
   ) {
-    reportToolActivity("Creating file '$pathInProject'")
+    currentCoroutineContext().reportToolActivity("Creating file '$pathInProject'")
     val project = currentCoroutineContext().project
 
     val path = project.resolveInProject(pathInProject)
-    val newFile = LocalFileSystem.getInstance().createChildFile(null, VfsUtil.createDirectories(path.parent.pathString), path.name)
+    val newFile = try {
+      LocalFileSystem.getInstance().createChildFile(null, VfsUtil.createDirectories(path.parent.pathString), path.name)
+    }
+    catch (io: IOException) {
+      mcpFail("Can't create file: $path: ${io.message}")
+    }
+    val refreshed = CompletableDeferred<Unit>()
+    LocalFileSystem.getInstance().refreshFiles(listOf(newFile), true, false) {
+      refreshed.complete(Unit)
+    }
+    refreshed.await()
     writeAction {
       val document = FileDocumentManager.getInstance().getDocument(newFile, project) ?: mcpFail("Can't get document for created file: $newFile")
       if (text != null) {

@@ -215,47 +215,47 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
 
         EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener, this.asDisposable())
 
+        val sideEffectEvents = mutableListOf<McpToolSideEffectEvent>()
         @Suppress("IncorrectCancellationExceptionHandling")
         try {
           application.messageBus.syncPublisher(ToolCallListener.TOPIC).beforeMcpToolCall(this@mcpToolToRegisteredTool.descriptor)
 
           logger.trace { "Start calling tool '${this@mcpToolToRegisteredTool.descriptor.name}'. Arguments: ${request.arguments}" }
-          val result = withContext(ProjectContextElement(project)) {
+          val result = withContext(ProjectContextElement(project) + McpToolDescriptorElement(this@mcpToolToRegisteredTool.descriptor)) {
             this@mcpToolToRegisteredTool.call(request.arguments)
           }
 
           logger.trace { "Tool call successful '${this@mcpToolToRegisteredTool.descriptor.name}'. Result: ${result.content.joinToString("\n") { it.toString() }}" }
           try {
             val processedChangedFiles = mutableSetOf<VirtualFile>()
-            val events = mutableListOf<McpToolSideEffectEvent>()
 
             for ((doc, oldContent) in initialDocumentContents) {
               val virtualFile = FileDocumentManager.getInstance().getFile(doc) ?: continue
               val newContent = readAction { doc.text }
-              events.add(FileContentChangeEvent(virtualFile, oldContent, newContent))
+              sideEffectEvents.add(FileContentChangeEvent(virtualFile, oldContent, newContent))
               processedChangedFiles.add(virtualFile)
             }
 
             for (event in vfsEvent) {
               when (event) {
                 is VFileMoveEvent -> {
-                  events.add(FileMovedEvent(event.file, event.oldParent, event.newParent))
+                  sideEffectEvents.add(FileMovedEvent(event.file, event.oldParent, event.newParent))
                 }
                 is VFileCreateEvent -> {
                   val virtualFile = event.file ?: continue
                   val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
-                  events.add(FileCreatedEvent(virtualFile, newContent))
+                  sideEffectEvents.add(FileCreatedEvent(virtualFile, newContent))
                 }
                 is VFileDeleteEvent -> {
                   val virtualFile = event.file
                   val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile) } ?: continue
                   val oldContent = initialDocumentContents[document]
-                  events.add(FileDeletedEvent(virtualFile, oldContent))
+                  sideEffectEvents.add(FileDeletedEvent(virtualFile, oldContent))
                 }
                 is VFileCopyEvent -> {
                   val createdFile = event.findCreatedFile() ?: continue
                   val newContent = readAction { FileDocumentManager.getInstance().getDocument(createdFile)?.text } ?: continue
-                  events.add(FileCreatedEvent(createdFile, newContent))
+                  sideEffectEvents.add(FileCreatedEvent(createdFile, newContent))
                 }
                 is VFileContentChangeEvent -> {
                   // reported in documents loop
@@ -265,12 +265,11 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
                   // Important: there may be a case when file is changed via low level change (like File.replaceText).
                   // in this case we don't track the old content, because it may be heavy, it requires loading the file in
                   // AsyncFileListener above and decoding with encoding etc. The file can be binary etc.
-                  events.add(FileContentChangeEvent(virtualFile, oldContent = null, newContent = newContent))
+                  sideEffectEvents.add(FileContentChangeEvent(virtualFile, oldContent = null, newContent = newContent))
                 }
               }
             }
 
-            application.messageBus.syncPublisher(ToolCallListener.TOPIC).afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, events)
           }
           catch (ce: CancellationException) {
             throw ce
@@ -278,20 +277,24 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
           catch (t: Throwable) {
             logger.error("Failed to process changed documents after calling MCP tool ${this@mcpToolToRegisteredTool.descriptor.name}", t)
           }
+          application.messageBus.syncPublisher(ToolCallListener.TOPIC).afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, null)
           result
         }
         catch (ce: CancellationException) {
           val message = "MCP tool call has been cancelled: ${ce.message}"
           logger.traceThrowable { CancellationException(message, ce) }
+          application.messageBus.syncPublisher(ToolCallListener.TOPIC).afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, ce)
           McpToolCallResult.error(message)
         }
         catch (mcpException: McpExpectedError) {
           logger.traceThrowable { mcpException }
+          application.messageBus.syncPublisher(ToolCallListener.TOPIC).afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, mcpException)
           McpToolCallResult.error(mcpException.mcpErrorText)
         }
         catch (t: Throwable) {
           val errorMessage = "MCP tool call has been failed: ${t.message}"
           logger.error(t)
+          application.messageBus.syncPublisher(ToolCallListener.TOPIC).afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, sideEffectEvents, t)
           McpToolCallResult.error(errorMessage)
         }
         finally {

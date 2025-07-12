@@ -30,7 +30,7 @@ class FormattingToolset : McpToolset {
     @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
     path: String,
   ): String {
-    reportToolActivity("Formatting file '$path'")
+    currentCoroutineContext().reportToolActivity("Formatting file '$path'")
     val project = currentCoroutineContext().project
     val resolvedFilePath = project.resolveInProject(path)
 

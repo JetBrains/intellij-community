@@ -52,7 +52,7 @@ class TextToolset : McpToolset {
     @McpDescription("Max number of lines to return. Truncation will be performed depending on truncateMode.")
     maxLinesCount: Int = 1000,
   ): String {
-    reportToolActivity("Reading file '$pathInProject'")
+    currentCoroutineContext().reportToolActivity("Reading file '$pathInProject'")
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
 
@@ -104,7 +104,7 @@ class TextToolset : McpToolset {
     @McpDescription("Case-sensitive search")
     caseSensitive: Boolean = true,
   ) {
-    reportToolActivity("Replacing text in '$pathInProject': '$oldText' → '$newText'")
+    currentCoroutineContext().reportToolActivity("Replacing text in '$pathInProject': '$oldText' → '$newText'")
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
     val (document, text) = readAction {
@@ -157,7 +157,7 @@ class TextToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): UsageInfoResult {
-    reportToolActivity("Searching project files for '$searchText'")
+    currentCoroutineContext().reportToolActivity("Searching project files for '$searchText'")
     return search_in_files(searchText, false, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
   }
 
@@ -182,7 +182,7 @@ class TextToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): UsageInfoResult {
-    reportToolActivity("Searching content with regex '$regexPattern'")
+    currentCoroutineContext().reportToolActivity("Searching content with regex '$regexPattern'")
     return search_in_files(regexPattern, true, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
   }
 

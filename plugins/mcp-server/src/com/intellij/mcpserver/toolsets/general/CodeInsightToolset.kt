@@ -46,7 +46,7 @@ class CodeInsightToolset : McpToolset {
     @McpDescription("1-based column number")
     column: Int,
   ): SymbolInfoResult {
-    reportToolActivity("Getting symbol info at '$filePath:$line:$column'")
+    currentCoroutineContext().reportToolActivity("Getting symbol info at '$filePath:$line:$column'")
     val project = currentCoroutineContext().project
 
     val resolvedPath = project.resolveInProject(filePath)

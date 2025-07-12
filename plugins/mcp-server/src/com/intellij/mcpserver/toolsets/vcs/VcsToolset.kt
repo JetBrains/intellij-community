@@ -27,7 +27,7 @@ class VcsToolset : McpToolset {
         @McpDescription("Text or keywords to search for in commit messages")
         text: String
     ): String {
-        reportToolActivity("Searching commits for '$text'")
+        currentCoroutineContext().reportToolActivity("Searching commits for '$text'")
         val project = currentCoroutineContext().project
         val queryText = text
         val matchingCommits = mutableListOf<String>()
@@ -79,7 +79,7 @@ class VcsToolset : McpToolset {
         Note: Works with any VCS supported by the IDE, but is most commonly used with Git
     """)
     suspend fun get_project_vcs_status(): String {
-        reportToolActivity("Checking VCS status")
+      currentCoroutineContext().reportToolActivity("Checking VCS status")
         val project = currentCoroutineContext().project
         val projectDir = project.projectDirectory
 

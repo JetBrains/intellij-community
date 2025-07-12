@@ -40,7 +40,7 @@ class ExecutionToolset : McpToolset {
     |Use this tool to query the list of available run configurations in the current project.
   """)
   suspend fun get_run_configurations(): RunConfigurationsList {
-    reportToolActivity("Getting run configurations")
+    currentCoroutineContext().reportToolActivity("Getting run configurations")
     val project = currentCoroutineContext().project
     val runManager = RunManager.getInstance(project)
 
@@ -76,7 +76,7 @@ class ExecutionToolset : McpToolset {
     @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
     truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
     ): RunConfigurationResult {
-    reportToolActivity("Executing run configuration '$configurationName'")
+    currentCoroutineContext().reportToolActivity("Executing run configuration '$configurationName'")
     val project = currentCoroutineContext().project
     val runManager = RunManager.getInstance(project)
 

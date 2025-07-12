@@ -54,7 +54,7 @@ class TerminalToolset : McpToolset {
     @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
     truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
   ): CommandExecutionResult {
-    reportToolActivity("Running command: '$command'")
+    currentCoroutineContext().reportToolActivity("Running command: '$command'")
     val project = currentCoroutineContext().project
     checkUserConfirmationIfNeeded(McpServerBundle.message("label.do.you.want.to.execute.command.in.terminal"), command, project)
 

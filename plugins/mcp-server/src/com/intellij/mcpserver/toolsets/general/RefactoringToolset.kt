@@ -45,7 +45,7 @@ class RefactoringToolset : McpToolset {
     @McpDescription("New name for the symbol")
     newName: String,
   ): String {
-    reportToolActivity("Renaming '$symbolName' to '$newName' in '$pathInProject'")
+    currentCoroutineContext().reportToolActivity("Renaming '$symbolName' to '$newName' in '$pathInProject'")
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
 
