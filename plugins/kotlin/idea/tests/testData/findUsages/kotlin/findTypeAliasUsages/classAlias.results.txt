@@ -1,9 +1,10 @@
-Function return types 26 fun f2(par: Alias, par2: OOO) : Alias {
-Local variable declaration 28 val a: Alias
-New instance creation 30 a = Alias()
-Parameter type 26 fun f2(par: Alias, par2: OOO) : Alias {
-Super type qualifier 18 super<Alias>.opFun()
-Supertype 15 class Child : Alias() {
-Target type of 'is' operation 38 if (par2 is Alias) {}
-Type parameter 32 val b = WithGeneric<Alias>()
-Usage in cast target type 41 val c = par2 as Alias
+Function return types 28 fun f2(par: Alias, par2: OOO) : Alias {
+Local variable declaration 30 val a: Alias
+New instance creation 32 a = Alias()
+Parameter type 28 fun f2(par: Alias, par2: OOO) : Alias {
+Super type qualifier 20 super<Alias>.opFun()
+Supertype 17 class Child : Alias() {
+Target type of 'is' operation 43 if (par2 is Alias) {}
+Type parameter 34 val b = WithGeneric<Alias>()
+Unclassified 40 Alias(10)
+Usage in cast target type 46 val c = par2 as Alias
