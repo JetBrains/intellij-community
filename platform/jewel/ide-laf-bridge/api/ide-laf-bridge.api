@@ -35,6 +35,12 @@ public final class org/jetbrains/jewel/bridge/BridgeTypography : org/jetbrains/j
 	public fun getSmall (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 }
 
+public final class org/jetbrains/jewel/bridge/BridgeUriHandler : androidx/compose/ui/platform/UriHandler {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/bridge/BridgeUriHandler;
+	public fun openUri (Ljava/lang/String;)V
+}
+
 public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun createVerticalBrush-8A-3gB4 (Ljava/util/List;FFI)Landroidx/compose/ui/graphics/Brush;
 	public static synthetic fun createVerticalBrush-8A-3gB4$default (Ljava/util/List;FFIILjava/lang/Object;)Landroidx/compose/ui/graphics/Brush;

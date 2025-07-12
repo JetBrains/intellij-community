@@ -625,6 +625,7 @@ public final class org/jetbrains/jewel/ui/component/LinearProgressBarKt {
 
 public final class org/jetbrains/jewel/ui/component/LinkKt {
 	public static final fun DropdownLink-RWo7tUw (Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/text/TextStyle;ILandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ExternalLink-kye4rC8 (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/text/TextStyle;ILandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun ExternalLink-kye4rC8 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/text/TextStyle;ILandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Link-kye4rC8 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/text/TextStyle;ILandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/runtime/Composer;II)V
 }
@@ -5094,6 +5095,14 @@ public final class org/jetbrains/jewel/ui/util/ColorExtensionsKt {
 	public static final fun isDark-8_81llA (J)Z
 	public static final fun toRgbaHexString (Ljava/awt/Color;)Ljava/lang/String;
 	public static final fun toRgbaHexString-8_81llA (J)Ljava/lang/String;
+}
+
+public abstract interface class org/jetbrains/jewel/ui/util/MessageResourceResolver {
+	public abstract fun resolveIdeBundleMessage (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/util/MessageResourceResolverKt {
+	public static final fun getLocalMessageResourceResolverProvider ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
 public final class org/jetbrains/jewel/ui/util/ModifierExtensionsKt {
