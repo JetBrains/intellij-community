@@ -102,8 +102,11 @@
 
     <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider"
                     interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
-                    dynamic="true">
-    </extensionPoint>
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.ideCodeInsightExtension"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinIdeCodeInsightExtension"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

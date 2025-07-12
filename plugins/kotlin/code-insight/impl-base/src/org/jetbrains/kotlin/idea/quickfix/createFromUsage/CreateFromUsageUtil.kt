@@ -10,8 +10,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.shouldAddDeclarationBeforeUsage
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.isKotlinNotebookCell
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -74,9 +74,7 @@ object CreateFromUsageUtil {
                 }
                 val addBefore = insertToBlock ||
                         declaration is KtTypeAlias ||
-                        // In K2 REPL model, notebook cells are somewhat similar to function bodies,
-                        // so we should add declarations before their usage
-                        container.isKotlinNotebookCell
+                        shouldAddDeclarationBeforeUsage(container)
                 addNextToOriginalElementContainer(addBefore, anchor, declaration, actualContainer)
             }
 

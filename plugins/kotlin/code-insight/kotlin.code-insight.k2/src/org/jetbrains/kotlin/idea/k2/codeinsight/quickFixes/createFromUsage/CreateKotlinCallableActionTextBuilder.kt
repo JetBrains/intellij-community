@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.cleanupRenderedType
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.modifyRenderedType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction.ParamCandidate
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.hasAbstractDeclaration
@@ -72,7 +72,7 @@ object CreateKotlinCallableActionTextBuilder {
             if (request.receiverExpression == null || request.receiverExpression.expressionType is KaErrorType) {
                 if (receiverType == null) return "" to ""
                 receiverSymbol = null
-                receiverTypeText = cleanupRenderedType(
+                receiverTypeText = modifyRenderedType(
                     contextElement = request.call,
                     renderedType = receiverType.render(renderer, Variance.INVARIANT),
                 )
@@ -85,7 +85,7 @@ object CreateKotlinCallableActionTextBuilder {
                 val renderedReceiver = receiverSymbol?.renderAsReceiver(request.isAbstractClassOrInterface, receiverType, renderer)
                     ?: receiverType?.render(renderer, Variance.IN_VARIANCE)
                     ?: request.receiverExpression.text
-                receiverTypeText = addedPackage + cleanupRenderedType(
+                receiverTypeText = addedPackage + modifyRenderedType(
                     contextElement = request.call,
                     renderedType = renderedReceiver,
                 )
