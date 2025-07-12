@@ -31,6 +31,8 @@ public class GradleConsoleFilterTest extends CodeInsightFixtureTestCase {
     doTest("build file 'C:\\project\\build.gradle': 49: unexpected token: 5 @ line 49, column 28.", "C:\\project\\build.gradle", 49);
     doTest("Settings file 'C:\\project\\settings.gradle' line: 7", "C:\\project\\settings.gradle", 7);
     doTest("Settings file '/project/settings.gradle' line: 7", "/project/settings.gradle", 7);
+    doTest("Initialization script '/user/.gradle/init.d/offline.gradle' line: 19", "/user/.gradle/init.d/offline.gradle", 19);
+    doTest("Script '/project/script.gradle' line: 7", "/project/script.gradle", 7);
     doTestExpectingNull("Build file '/home/ezm/projects/intellij/one.com/commons-webservice-utils/build.gradle' line: ");
     doTestExpectingNull("Garbage");
   }
