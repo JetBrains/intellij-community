@@ -5,12 +5,9 @@ package com.intellij.mcpserver.toolsets.general
 import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
-import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.mcpFail
-import com.intellij.mcpserver.project
-import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.*
 import com.intellij.openapi.application.readAction
@@ -52,7 +49,7 @@ class TextToolset : McpToolset {
     @McpDescription("Max number of lines to return. Truncation will be performed depending on truncateMode.")
     maxLinesCount: Int = 1000,
   ): String {
-    currentCoroutineContext().reportToolActivity("Reading file '$pathInProject'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.reading.file", pathInProject))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
 
@@ -104,7 +101,7 @@ class TextToolset : McpToolset {
     @McpDescription("Case-sensitive search")
     caseSensitive: Boolean = true,
   ) {
-    currentCoroutineContext().reportToolActivity("Replacing text in '$pathInProject': '$oldText' → '$newText'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.replacing.text.in.file", pathInProject, oldText, newText))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
     val (document, text) = readAction {
@@ -157,7 +154,7 @@ class TextToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): UsageInfoResult {
-    currentCoroutineContext().reportToolActivity("Searching project files for '$searchText'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.files.for.text", searchText))
     return search_in_files(searchText, false, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
   }
 
@@ -182,7 +179,7 @@ class TextToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): UsageInfoResult {
-    currentCoroutineContext().reportToolActivity("Searching content with regex '$regexPattern'")
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.content.with.regex", regexPattern))
     return search_in_files(regexPattern, true, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
   }
 

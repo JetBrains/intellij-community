@@ -1,5 +1,6 @@
 package com.intellij.mcpserver
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.application
 import com.intellij.util.messages.Topic
@@ -15,7 +16,7 @@ interface ToolCallListener {
 
   fun afterMcpToolCall(mcpToolDescriptor: McpToolDescriptor, events: List<McpToolSideEffectEvent>, error: Throwable?) {}
 
-  fun toolActivity(mcpToolDescriptor: McpToolDescriptor, toolActivityDescription: String) {}
+  fun toolActivity(mcpToolDescriptor: McpToolDescriptor, @NlsContexts.Label toolActivityDescription: String) {}
 }
 
 sealed interface McpToolSideEffectEvent
@@ -27,6 +28,6 @@ class FileDeletedEvent(val file: VirtualFile, val content: String?) : FileEvent
 class FileMovedEvent(val file: VirtualFile, val oldParent: VirtualFile, val newParent: VirtualFile) : FileEvent
 class FileContentChangeEvent(val file: VirtualFile, val oldContent: String?, val newContent: String) : FileEvent
 
-fun CoroutineContext.reportToolActivity(toolDescription: String) {
+fun CoroutineContext.reportToolActivity(@NlsContexts.Label toolDescription: String) {
   application.messageBus.syncPublisher(ToolCallListener.TOPIC).toolActivity(this.currentToolDescriptor, toolDescription)
 }
