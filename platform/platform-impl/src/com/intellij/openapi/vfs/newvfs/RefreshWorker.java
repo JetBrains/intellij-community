@@ -224,7 +224,7 @@ final class RefreshWorker {
     Map<String, FileAttributes> dirList;
     t = System.nanoTime();
     if (fs instanceof BatchingFileSystem) {
-      Map<String, FileAttributes> rawDirList = ((BatchingFileSystem)fs).listWithAttributes(dir, null);
+      Map<String, FileAttributes> rawDirList = computeAllChildrenAttributes((BatchingFileSystem)fs, dir, null);
       dirList = adjustCaseSensitivity(rawDirList, dir.isCaseSensitive());
     }
     else {
