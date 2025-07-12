@@ -7,6 +7,7 @@ import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
@@ -53,6 +54,7 @@ class TerminalToolset : McpToolset {
     @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
     truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
   ): CommandExecutionResult {
+    reportToolActivity("Running command: '$command'")
     val project = currentCoroutineContext().project
     checkUserConfirmationIfNeeded(McpServerBundle.message("label.do.you.want.to.execute.command.in.terminal"), command, project)
 

@@ -6,6 +6,7 @@ import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.SymbolInfo
 import com.intellij.mcpserver.util.convertHtmlToMarkdown
@@ -45,6 +46,7 @@ class CodeInsightToolset : McpToolset {
     @McpDescription("1-based column number")
     column: Int,
   ): SymbolInfoResult {
+    reportToolActivity("Getting symbol info at '$filePath:$line:$column'")
     val project = currentCoroutineContext().project
 
     val resolvedPath = project.resolveInProject(filePath)

@@ -51,7 +51,7 @@ class AnalysisToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): FileProblemsResult {
-    reportToolActivity("Collecting problems in file $filePath")
+    reportToolActivity("Collecting problems in file '$filePath'")
     val project = currentCoroutineContext().project
     val projectDir = project.projectDirectory
 
@@ -107,6 +107,7 @@ class AnalysisToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
   ): ProjectProblemsResult {
+    reportToolActivity("Checking project issues")
     val project = currentCoroutineContext().project
 
     val problems = CopyOnWriteArrayList<ProjectProblem>()
@@ -144,6 +145,7 @@ class AnalysisToolset : McpToolset {
     |Returns structured information about each module including name and type.
   """)
   suspend fun get_project_modules(): ProjectModulesResult {
+    reportToolActivity("Listing modules")
     val project = currentCoroutineContext().project
 
     val modules = readAction {
@@ -165,6 +167,7 @@ class AnalysisToolset : McpToolset {
     |Returns structured information about project library names.
   """)
   suspend fun get_project_dependencies(): ProjectDependenciesResult {
+    reportToolActivity("Checking dependencies")
     val project = currentCoroutineContext().project
 
     val dependencies = readAction {
