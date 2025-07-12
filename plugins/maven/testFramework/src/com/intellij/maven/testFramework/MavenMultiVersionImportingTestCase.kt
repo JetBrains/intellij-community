@@ -35,7 +35,7 @@ import kotlin.math.min
 
 private const val MAVEN_4_VERSION = "4.0.0-rc-4"
 private val MAVEN_VERSIONS: Array<String> = arrayOf<String>(
-  //"bundled",
+  "bundled",
   "4/4.0.0",
 )
 
