@@ -51,7 +51,7 @@ class AnalysisToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): FileProblemsResult {
-    currentCoroutineContext().reportToolActivity("Collecting problems in file $filePath")
+    currentCoroutineContext().reportToolActivity("Collecting problems in file '$filePath'")
     val project = currentCoroutineContext().project
     val projectDir = project.projectDirectory
 
