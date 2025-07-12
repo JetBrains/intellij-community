@@ -18,6 +18,7 @@ import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
@@ -43,6 +44,7 @@ class ExecutionToolset : McpToolset {
     |Use this tool to query the list of available run configurations in the current project.
   """)
   suspend fun get_run_configurations(): RunConfigurationsList {
+    currentCoroutineContext().reportToolActivity("Getting run configurations")
     val project = currentCoroutineContext().project
     val runManager = RunManager.getInstance(project)
 
@@ -78,6 +80,7 @@ class ExecutionToolset : McpToolset {
     @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
     truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
     ): RunConfigurationResult {
+    currentCoroutineContext().reportToolActivity("Executing run configuration '$configurationName'")
     val project = currentCoroutineContext().project
     val runManager = RunManager.getInstance(project)
 
