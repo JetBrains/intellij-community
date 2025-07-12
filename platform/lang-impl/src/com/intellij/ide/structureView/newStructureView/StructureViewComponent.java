@@ -72,6 +72,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -97,7 +98,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final Project myProject;
   private final StructureViewModel myTreeModel;
 
-  private final Tree myTree;
+  private final MyTree myTree;
   private final SmartTreeStructure myTreeStructure;
 
   private final StructureTreeModel<SmartTreeStructure> myStructureTreeModel;
@@ -244,6 +245,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     addTreeKeyListener();
     addTreeMouseListeners();
+    addTreeSelectionListener();
     restoreState();
   }
 
@@ -295,6 +297,18 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private void addTreeKeyListener() {
     EditSourceOnEnterKeyHandler.install(getTree());
     getTree().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
+  }
+
+  private void addTreeSelectionListener() {
+    getTree().addTreeSelectionListener((TreeSelectionEvent e) -> {
+      if (!(getContent() instanceof MyLayeredPane myLayeredPane)) return;
+      var path = e.getPath();
+      if (path == null) return;
+      var pathBounds = getTree().getPathBounds(path);
+      if (pathBounds == null) return;
+      myTree.lastHoveredPath = path;
+      myLayeredPane.repaintFloatingToolbar(pathBounds.y, (path.getPathCount() - 1) / 2 + 1);
+    });
   }
 
   @Override
@@ -777,8 +791,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       .filter(Symbol.class)
       .toList());
     sink.lazy(LogicalStructureDataKeys.STRUCTURE_TREE_ELEMENT, () -> Optional.of(myTree)
-      .filter(tree -> tree instanceof MyTree)
-      .map(tree -> ((MyTree) tree).getLastHoveredPath())
+      .map(tree -> tree.getLastHoveredPath())
       .map(path -> path.getLastPathComponent())
       .map(component -> getStructureTreeElement(component))
       .orElse(null));
@@ -971,7 +984,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private final class MyTree extends DnDAwareTree implements PlaceProvider {
 
-    private volatile TreePath lastHoveredPath = null;
+    volatile TreePath lastHoveredPath = null;
 
     MyTree(javax.swing.tree.TreeModel model) {
       super(model);
