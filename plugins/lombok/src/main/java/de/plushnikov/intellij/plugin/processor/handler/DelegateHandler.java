@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -9,6 +10,7 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokDelegateMethod;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -16,8 +18,10 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +49,7 @@ public final class DelegateHandler {
 
     final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
     result &= validateTypes(excludes, problemSink);
+    result &= validateTypesMethodsExistsInDelegateTargetType(excludes, delegateTargetType, problemSink);
 
     return result;
   }
@@ -65,6 +70,7 @@ public final class DelegateHandler {
           ContainerUtil.map(psiDelegateTargetClass.getVisibleSignatures(),
                             signature -> MethodSignatureBackedByPsiMethod.create(signature.getMethod(), resolveResult.getSubstitutor()));
 
+        final Collection<HierarchicalMethodSignature> invalidMethodSignature = new ArrayList<>();
         for (PsiType psiType : typesToCheck) {
           final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
           if (null != psiClass) {
@@ -75,11 +81,23 @@ public final class DelegateHandler {
                 ContainerUtil.find(delegateTargetSignatures,
                                    signature -> MethodSignatureUtil.areSignaturesErasureEqual(signature, methodSignature));
               if (matchingSignature == null) {
-                sink.addWarningMessage("inspection.message.delegate.unknown.type.method", methodSignature.getName())
-                  .withLocalQuickFixes(() -> LocalQuickFix.from(new DeleteElementFix(methodSignature.getMethod())));
+                invalidMethodSignature.add(methodSignature);
               }
             }
           }
+        }
+
+        if (!invalidMethodSignature.isEmpty()) {
+          final String invalidMethodNames =
+            invalidMethodSignature.stream().map(MethodSignatureBackedByPsiMethod::getName).collect(Collectors.joining(", "));
+
+          @SuppressWarnings("unchecked")
+          final Supplier<LocalQuickFix>[] fixes = invalidMethodSignature.stream().map(MethodSignatureBackedByPsiMethod::getMethod)
+            .map((method) -> ((Supplier<LocalQuickFix>)() -> LocalQuickFix.from(
+              new DeleteElementFix(method, CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.METHOD.object(), method.getName())))))
+            .toArray(Supplier[]::new);
+
+          sink.addWarningMessage("inspection.message.delegate.unknown.type.method", invalidMethodSignature.size(), invalidMethodNames).withLocalQuickFixes(fixes);
         }
       }
     }
