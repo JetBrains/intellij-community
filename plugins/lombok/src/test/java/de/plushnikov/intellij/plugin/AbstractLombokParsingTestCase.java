@@ -105,7 +105,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
    * @see ModeRunnerType
    */
   protected @NotNull LightProjectDescriptor getProjectDescriptorForIncompleteMode() {
-    return LombokTestUtil.WITHOUT_LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.WITHOUT_LOMBOK_JAVA_21_DESCRIPTOR;
   }
 
   /**
@@ -114,7 +114,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
    * @see ModeRunnerType
    */
   protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
   }
 
   protected String annotationToComparePattern() {
@@ -155,11 +155,11 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     compareFiles(loadBeforeLombokFile(testName), loadAfterDeLombokFile(testName));
   }
 
-  private PsiJavaFile loadBeforeLombokFile(String testName) {
+  protected PsiJavaFile loadBeforeLombokFile(String testName) {
     return getPsiJavaFile(testName, "before");
   }
 
-  private PsiJavaFile loadAfterDeLombokFile(String testName) {
+  protected PsiJavaFile loadAfterDeLombokFile(String testName) {
     return getPsiJavaFile(testName, "after");
   }
 

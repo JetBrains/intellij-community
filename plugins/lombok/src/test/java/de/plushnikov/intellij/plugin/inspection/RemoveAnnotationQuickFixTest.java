@@ -2,17 +2,9 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.testFramework.LightProjectDescriptor;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
-import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
 
 public class RemoveAnnotationQuickFixTest extends AbstractLombokLightCodeInsightTestCase {
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
-  }
 
   @Override
   protected void setUp() throws Exception {

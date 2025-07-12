@@ -18,11 +18,6 @@ public class LombokRenameFieldReferenceProcessorTest extends AbstractLombokLight
     return super.getBasePath() + "/extension";
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
-  }
-
   public void testRenameFieldInDataClass() {
     doTest("RenameFieldInDataClass", "oldField", "newField");
   }

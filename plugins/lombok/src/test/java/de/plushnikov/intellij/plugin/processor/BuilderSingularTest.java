@@ -12,7 +12,7 @@ public class BuilderSingularTest extends AbstractLombokParsingTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR;
   }
 
   @Override

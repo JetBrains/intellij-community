@@ -40,7 +40,7 @@ class LombokLoggerCompletionTest : LightFixtureCompletionTestCase() {
 
   override fun getBasePath(): String = "community/plugins/lombok/testData/completion/logger"
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LombokTestUtil.LOMBOK_OLD_DESCRIPTOR
+  override fun getProjectDescriptor(): LightProjectDescriptor = LombokTestUtil.LOMBOK_OLD_JAVA_1_8_DESCRIPTOR
 
   private fun doTest(typeName: String, vararg names: String) {
     val name = getTestName(false)

@@ -23,7 +23,7 @@ public final class LombokTestUtil {
   public static void addLombokDependency(@NotNull ModifiableRootModel model) {
     MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES, false, DependencyScope.PROVIDED);
   }
-  public static final DefaultLightProjectDescriptor LOMBOK_DESCRIPTOR = new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk18) {
+  public static final DefaultLightProjectDescriptor LOMBOK_JAVA_1_8_DESCRIPTOR = new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk18) {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
@@ -36,7 +36,7 @@ public final class LombokTestUtil {
     }
   };
 
-  public static final DefaultLightProjectDescriptor WITHOUT_LOMBOK_DESCRIPTOR = new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk21) {
+  public static final DefaultLightProjectDescriptor WITHOUT_LOMBOK_JAVA_21_DESCRIPTOR = new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk21) {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
@@ -48,7 +48,7 @@ public final class LombokTestUtil {
     }
   };
 
-  public static final DefaultLightProjectDescriptor LOMBOK_NEW_DESCRIPTOR = new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk21) {
+  public static final DefaultLightProjectDescriptor LOMBOK_JAVA21_DESCRIPTOR = new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk21) {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
@@ -61,7 +61,7 @@ public final class LombokTestUtil {
     }
   };
 
-  public static final DefaultLightProjectDescriptor LOMBOK_OLD_DESCRIPTOR = new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk18) {
+  public static final DefaultLightProjectDescriptor LOMBOK_OLD_JAVA_1_8_DESCRIPTOR = new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk18) {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       MavenDependencyUtil.addFromMaven(model, "org.projectlombok:lombok:1.18.2", false, DependencyScope.PROVIDED);

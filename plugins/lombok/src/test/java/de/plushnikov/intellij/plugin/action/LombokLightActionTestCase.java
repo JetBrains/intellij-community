@@ -19,12 +19,6 @@ import java.util.concurrent.TimeoutException;
 public abstract class LombokLightActionTestCase extends AbstractLombokLightCodeInsightTestCase {
   protected abstract AnAction getAction();
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
-  }
-
   protected void doTest() throws Exception {
     myFixture.configureByFile("/before" + getTestName(false) + ".java");
     performActionTest();

@@ -12,7 +12,7 @@ import com.intellij.ui.UiInterceptors
 import de.plushnikov.intellij.plugin.LombokTestUtil
 
 class LombokGenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = LombokTestUtil.LOMBOK_NEW_DESCRIPTOR
+  override fun getProjectDescriptor(): LightProjectDescriptor = LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR
 
   override fun getBasePath(): String = "community/plugins/lombok/testData/intention/generateLogger"
 

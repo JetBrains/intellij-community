@@ -19,19 +19,6 @@ public class RedundantSlf4jDefinitionInspectionTest extends LombokInspectionTest
   }
 
   @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new DefaultLightProjectDescriptor() {
-
-      @Override
-      public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        MavenDependencyUtil.addFromMaven(model, "org.projectlombok:lombok:1.18.12");
-        MavenDependencyUtil.addFromMaven(model, "org.slf4j:slf4j-log4j12:1.7.30");
-        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
-      }
-    };
-  }
-
-  @Override
   protected InspectionProfileEntry getInspection() {
     return new RedundantSlf4jDefinitionInspection();
   }

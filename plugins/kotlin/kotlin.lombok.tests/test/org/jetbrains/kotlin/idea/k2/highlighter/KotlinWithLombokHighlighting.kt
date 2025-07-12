@@ -18,11 +18,11 @@ internal class KotlinWithLombokHighlighting : JavaCodeInsightFixtureTestCase(), 
         get() = KotlinPluginMode.K2
 
     private val sdk: Sdk
-        get() = LombokTestUtil.LOMBOK_DESCRIPTOR.sdk ?: error("Lombok SDK is not found")
+        get() = LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR.sdk ?: error("Lombok SDK is not found")
 
     override fun setUp() {
         setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-        LombokTestUtil.LOMBOK_DESCRIPTOR.registerSdk(testRootDisposable)
+        LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR.registerSdk(testRootDisposable)
     }
 
     fun `test using lombok classes from java module in kotlin module without lombok compiler plugin`() {

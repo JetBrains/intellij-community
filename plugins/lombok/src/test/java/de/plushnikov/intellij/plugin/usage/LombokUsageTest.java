@@ -23,12 +23,6 @@ import java.util.List;
  */
 public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
-  }
-
   public void testFindUsageGetterSetter() {
     final Collection<UsageInfo> usages = loadTestClass();
     assertUsages(usages, "findUsageGetterSetter.setBar", "findUsageGetterSetter.getBar");

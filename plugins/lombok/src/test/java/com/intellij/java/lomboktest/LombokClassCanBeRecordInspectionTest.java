@@ -31,7 +31,7 @@ public class LombokClassCanBeRecordInspectionTest extends LightQuickFixParameter
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
   }
 
   @Override
