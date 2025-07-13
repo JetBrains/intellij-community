@@ -7,8 +7,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.samples.showcase.components.Banners
 import org.jetbrains.jewel.samples.showcase.components.Borders
+import org.jetbrains.jewel.samples.showcase.components.BrushesShowcase
 import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
@@ -19,7 +21,6 @@ import org.jetbrains.jewel.samples.showcase.components.ProgressBar
 import org.jetbrains.jewel.samples.showcase.components.RadioButtons
 import org.jetbrains.jewel.samples.showcase.components.Scrollbars
 import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
-import org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons
 import org.jetbrains.jewel.samples.showcase.components.Sliders
 import org.jetbrains.jewel.samples.showcase.components.SplitLayouts
 import org.jetbrains.jewel.samples.showcase.components.Tabs
@@ -96,6 +97,7 @@ public class ComponentsViewModel(
                 iconKey = ShowcaseIcons.Components.typography,
                 content = { TypographyShowcase() },
             ),
+            ViewInfo(title = "Brushes", iconKey = ShowcaseIcons.Components.brush, content = { BrushesShowcase() }),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())
