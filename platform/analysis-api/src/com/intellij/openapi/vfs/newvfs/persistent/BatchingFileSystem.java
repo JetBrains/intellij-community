@@ -20,6 +20,8 @@ public interface BatchingFileSystem {
   /**
    * Returns a list of files in a directory along with their attributes.
    * When the {@code childrenNames} set is {@code null}, all files should be returned.
+   * TODO RC: specify, should returned map be case-(in)sensitive, according to dir.isCaseSensitive(), or it should be a plain
+   *          case-sensitive map, and it is up to client code to transform it, if needed?
    */
   @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames);
 
