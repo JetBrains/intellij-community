@@ -185,7 +185,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
         override fun elementTooltip(element: KtDeclaration): String = try {
             ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT)
-        } catch (e: IndexNotReadyException) {
+        } catch (_: IndexNotReadyException) {
             KotlinBundle.message("breadcrumbs.tooltip.indexing")
         }
     }
@@ -385,9 +385,9 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
         return handler as ElementHandler<in KtElement>?
     }
 
-    override fun getLanguages() = arrayOf(KotlinLanguage.INSTANCE)
+    override fun getLanguages(): Array<KotlinLanguage> = arrayOf(KotlinLanguage.INSTANCE)
 
-    override fun acceptElement(e: PsiElement) = !DumbService.isDumb(e.project) && handler(e) != null
+    override fun acceptElement(e: PsiElement): Boolean = !DumbService.isDumb(e.project) && handler(e) != null
 
     override fun acceptStickyElement(e: PsiElement): Boolean {
         // do not check isDumb IDEA-345105
@@ -425,6 +425,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
             WhenEntryHandler,
             ForHandler
         )
+
         val stickyHandlers: List<ElementHandler<*>> = listOf<ElementHandler<*>>(
             LambdaHandler,
             AnonymousObjectHandler,

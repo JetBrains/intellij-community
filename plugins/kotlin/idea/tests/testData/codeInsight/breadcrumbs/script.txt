@@ -1,4 +1,4 @@
 Crumbs:
   plugins{…}
 Tooltips:
-  lambda <b><code>Script.&lt;anonymous&gt;()</code></b>
+  lambda <b><code>plugins{}</code></b>

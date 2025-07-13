@@ -11,12 +11,12 @@ Crumbs:
   Something().apply{…}
 Tooltips:
   function <b><code>foo()</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;()</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;()</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;()</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;()</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;()</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;()</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;(Int)</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;()</code></b>
-  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;()</code></b>
+  lambda <b><code>foo.buildString{}</code></b>
+  lambda <b><code>foo.&lt;anonymous&gt;.with{}</code></b>
+  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;{}</code></b>
+  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;{}</code></b>
+  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.filterTo{}</code></b>
+  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.doIt{}</code></b>
+  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;{Int}</code></b>
+  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;{}</code></b>
+  lambda <b><code>foo.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.&lt;anonymous&gt;.apply{}</code></b>
