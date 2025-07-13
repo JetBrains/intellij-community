@@ -385,7 +385,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     return pathFromBasedir(myProjectRoot, relPath)
   }
 
-  protected fun createSettingsXml(innerContent: String): VirtualFile {
+  protected fun createSettingsXml(@Language(value = "XML", prefix = "<settings>", suffix = "</settings>") innerContent: String): VirtualFile {
     val content = createSettingsXmlContent(innerContent)
     val path = myDir.resolve("settings.xml")
     Files.writeString(path, content)
@@ -393,7 +393,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
   }
 
-  protected suspend fun updateSettingsXml(content: String): VirtualFile {
+  protected suspend fun updateSettingsXml(@Language(value = "XML", prefix = "<settings>", suffix = "</settings>") content: String): VirtualFile {
     return updateSettingsXmlFully(createSettingsXmlContent(content)).also {
       MavenSettingsCache.getInstance(project).reloadAsync()
     }

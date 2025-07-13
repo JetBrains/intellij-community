@@ -683,10 +683,12 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     val repositories = projectsManager.getRemoteRepositories()
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-    val repoIds = mavenEmbedderWrappers.use {
+    val repos = mavenEmbedderWrappers.use {
       val mavenEmbedderWrapper = mavenEmbedderWrappers.getEmbedder(MavenUtil.getBaseDir(projectPom).toString())
-      mavenEmbedderWrapper.resolveRepositories(repositories).map { it.id }.toSet()
+      mavenEmbedderWrapper.resolveRepositories(repositories).toSet()
     }
+
+    val repoIds = repos.map { it.id }
 
     val project = MavenProjectsManager.getInstance(project).findProject(projectPom)
     assertNotNull(project)
@@ -699,7 +701,9 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
     //    assertTrue(repoIds.contains("maven-default-http-blocker"));
     assertFalse(repoIds.contains("repo-pom"))
     assertFalse(repoIds.contains("repo"))
-    assertFalse(repoIds.contains("repo-http"))
+    if (mavenVersionIsOrMoreThan("3.8.1")) {
+      assertFalse(repoIds.contains("repo-http"))
+    }
   }
 
   @Test
