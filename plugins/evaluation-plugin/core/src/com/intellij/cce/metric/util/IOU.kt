@@ -13,7 +13,8 @@ import com.intellij.cce.evaluation.data.Range
 fun <T : Range> computeIOU(range1: T, range2: T): Double {
   // Calculate intersection
   val intersectionStart = maxOf(range1.start, range2.start)
-  val intersectionEnd = minOf(range1.end, range2.end)
+  // +1 because end is inclusive
+  val intersectionEnd = minOf(range1.end + 1, range2.end + 1)
 
   // If there's no intersection, return 0
   if (intersectionEnd < intersectionStart) {
@@ -23,8 +24,8 @@ fun <T : Range> computeIOU(range1: T, range2: T): Double {
   val intersectionArea = intersectionEnd - intersectionStart
 
   // Calculate union
-  val range1Size = range1.end - range1.start
-  val range2Size = range2.end - range2.start
+  val range1Size = range1.end + 1 - range1.start
+  val range2Size = range2.end + 1 - range2.start
   val unionArea = range1Size + range2Size - intersectionArea
 
   // Return IOU

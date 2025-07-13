@@ -108,6 +108,11 @@ data class FileUpdate(
 
 fun sanitizeText(text: String): String = text.replace("\r\n", "\n")
 
+
+/**
+ * 0-based line numbers.
+ * [start] and [end] are inclusive.
+ */
 interface Range {
   val start: Int
   val end: Int
