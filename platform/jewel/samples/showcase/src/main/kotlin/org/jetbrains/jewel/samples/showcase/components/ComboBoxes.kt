@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.ui.component.ComboBox
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.EditableComboBox

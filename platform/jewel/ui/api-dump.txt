@@ -2270,6 +2270,9 @@ e:org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 - s:values():org.jetbrains.jewel.ui.component.styling.TrackClickBehavior[]
+f:org.jetbrains.jewel.ui.graphics.CssLinearGradientBrushKt
+- sf:cssLinearGradient-2FSbUU4(androidx.compose.ui.graphics.Brush$Companion,D,java.util.List,java.util.List,F,F,J):androidx.compose.ui.graphics.Brush
+- bs:cssLinearGradient-2FSbUU4$default(androidx.compose.ui.graphics.Brush$Companion,D,java.util.List,java.util.List,F,F,J,I,java.lang.Object):androidx.compose.ui.graphics.Brush
 org.jetbrains.jewel.ui.icon.IconKey
 - a:getIconClass():java.lang.Class
 - a:path(Z):java.lang.String
@@ -3923,10 +3926,20 @@ f:org.jetbrains.jewel.ui.theme.JewelThemeKt
 - sf:getTooltipStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.TooltipStyle
 - sf:getTreeStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 f:org.jetbrains.jewel.ui.util.ColorExtensionsKt
+- sf:fromArgbHexStringOrNull(androidx.compose.ui.graphics.Color$Companion,java.lang.String):androidx.compose.ui.graphics.Color
 - sf:fromRGBAHexStringOrNull(androidx.compose.ui.graphics.Color$Companion,java.lang.String):androidx.compose.ui.graphics.Color
+- sf:fromRgbaHexStringOrNull(androidx.compose.ui.graphics.Color$Companion,java.lang.String):androidx.compose.ui.graphics.Color
 - sf:isDark-8_81llA(J):Z
+- sf:toArgbHexString(java.awt.Color,Z,Z):java.lang.String
+- bs:toArgbHexString$default(java.awt.Color,Z,Z,I,java.lang.Object):java.lang.String
+- sf:toArgbHexString-ek8zF_U(J,Z,Z):java.lang.String
+- bs:toArgbHexString-ek8zF_U$default(J,Z,Z,I,java.lang.Object):java.lang.String
 - sf:toRgbaHexString(java.awt.Color):java.lang.String
+- sf:toRgbaHexString(java.awt.Color,Z,Z):java.lang.String
+- bs:toRgbaHexString$default(java.awt.Color,Z,Z,I,java.lang.Object):java.lang.String
 - sf:toRgbaHexString-8_81llA(J):java.lang.String
+- sf:toRgbaHexString-ek8zF_U(J,Z,Z):java.lang.String
+- bs:toRgbaHexString-ek8zF_U$default(J,Z,Z,I,java.lang.Object):java.lang.String
 f:org.jetbrains.jewel.ui.util.MessageResourceResolverKt
 - sf:getLocalMessageResourceResolverProvider():androidx.compose.runtime.ProvidableCompositionLocal
 f:org.jetbrains.jewel.ui.util.ModifierExtensionsKt
