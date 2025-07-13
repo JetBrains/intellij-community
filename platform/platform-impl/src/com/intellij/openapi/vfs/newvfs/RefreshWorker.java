@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -30,7 +31,6 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
@@ -49,6 +49,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
+import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshWorker {
@@ -59,6 +62,14 @@ final class RefreshWorker {
   private static final Executor ourExecutor = ExecutorsKt.asExecutor(
     Dispatchers.getIO().limitedParallelism(ourParallelism, "RefreshWorkerDispatcher")
   );
+
+  /**
+   * Use legacy {@link LocalFileSystemImpl#listWithCaching(VirtualFile)} method instead of new, more generic
+   * {@link BatchingFileSystem#listWithAttributes(VirtualFile, Set)}
+   * Temporary flag, to investigate performance issues linked to the transition to  {@link BatchingFileSystem},
+   * remove afterwards.
+   */
+  private static final boolean USE_LEGACY_LOCAL_FS_METHOD = getBooleanProperty("vfs.RefreshWorker.USE_LEGACY_LOCAL_FS_METHOD", true);
 
   private final boolean myIsRecursive;
   private final boolean myParallel;
@@ -225,6 +236,10 @@ final class RefreshWorker {
     t = System.nanoTime();
     if (fs instanceof BatchingFileSystem) {
       Map<String, FileAttributes> rawDirList = computeAllChildrenAttributes((BatchingFileSystem)fs, dir, null);
+      //TODO RC: why do we adjust map case-sensitivity here -- but don't adjust it in the branch below?
+      //         Seems like there is a reason for dirList to be a case-(in)sensitive map -- at least in getAttributes()
+      //         it is used .get(vFile.getName()), there vFile.getName() may return a name in different case from that
+      //         is in the dirList
       dirList = adjustCaseSensitivity(rawDirList, dir.isCaseSensitive());
     }
     else {
@@ -235,14 +250,15 @@ final class RefreshWorker {
     }
     myIoTime.addAndGet(System.nanoTime() - t);
 
-    Set<String> newNames = new HashSet<>(dirList.keySet());
+    Set<String> newNames = new HashSet<>(dirList.keySet());//TODO RC: why it is not case-(in)sensitive?
     vfsNames.forEach(newNames::remove);
 
-    Set<String> deletedNames = new HashSet<>(vfsNames);
+    Set<String> deletedNames = new HashSet<>(vfsNames);//TODO RC: why it is not case-(in)sensitive?
     dirList.keySet().forEach(deletedNames::remove);
 
-    ObjectOpenCustomHashSet<String> actualNames =
-      dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(dirList.keySet(), false);
+    ObjectOpenCustomHashSet<String> actualNames = dir.isCaseSensitive() ?
+                                                  null :
+                                                  (ObjectOpenCustomHashSet<String>)createFilePathSet(dirList.keySet(), false);
     if (LOG.isTraceEnabled()) {
       LOG.trace("current=" + vfsNames + " +" + newNames + " -" + deletedNames);
     }
@@ -301,7 +317,7 @@ final class RefreshWorker {
     List<VirtualFile> cached = snapshot.first;
     List<String> wanted = snapshot.second;
 
-    Set<String> names = CollectionFactory.createFilePathSet(wanted, dir.isCaseSensitive());
+    Set<String> names = createFilePathSet(wanted, dir.isCaseSensitive());
     for (VirtualFile file : cached) names.add(file.getName());
 
     Map<String, FileAttributes> dirList = null;
@@ -317,12 +333,12 @@ final class RefreshWorker {
       actualNames = null;
     }
     else if (dirList != null) {
-      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(dirList.keySet(), false);
+      actualNames = (ObjectOpenCustomHashSet<String>)createFilePathSet(dirList.keySet(), /*caseSensitive: */ false);
     }
     else {
       t = System.nanoTime();
       String[] rawList = fs.list(dir);
-      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(rawList, false);
+      actualNames = (ObjectOpenCustomHashSet<String>)createFilePathSet(rawList, /*caseSensitive: */ false);
       myIoTime.addAndGet(System.nanoTime() - t);
     }
 
@@ -336,7 +352,7 @@ final class RefreshWorker {
       FakeVirtualFile child = new FakeVirtualFile(dir, newName);
       FileAttributes attributes = getAttributes(fs, dirList, child);
       if (attributes != null) {
-        newKids.add(childRecord(fs, child, attributes, true));
+        newKids.add(childRecord(fs, child, attributes, /*canonicalize: */ true));
       }
     }
 
@@ -366,27 +382,32 @@ final class RefreshWorker {
     return changed;
   }
 
-  /** converts a case-sensitive rawDirList map into case-insensitive, if toCaseSensitive=false,
-   *  leaves map as-is otherwise*/
+  /** Converts a case-sensitive rawDirList map into case-insensitive, if toCaseSensitive=false, leaves the map as-is otherwise */
   private static @NotNull Map<String, FileAttributes> adjustCaseSensitivity(@NotNull Map<String, FileAttributes> rawDirList,
                                                                             boolean toCaseSensitive) {
     if (toCaseSensitive) {
       return rawDirList;
     }
     else {
-      Map<String, FileAttributes> filtered = CollectionFactory.createFilePathMap(rawDirList.size(), false);
+      Map<String, FileAttributes> filtered = createFilePathMap(rawDirList.size(), /*caseSensitive: */ false);
       filtered.putAll(rawDirList);
       return filtered;
     }
   }
 
-  private @Nullable FileAttributes getAttributes(NewVirtualFileSystem fs,
-                                                 @Nullable Map<String, FileAttributes> dirList, VirtualFile child) {
+  private @Nullable FileAttributes getAttributes(@NotNull NewVirtualFileSystem fs,
+                                                 @Nullable Map<String, FileAttributes> dirList,
+                                                 @NotNull VirtualFile child) {
     FileAttributes attributes = null;
     if (dirList != null) {
       attributes = dirList.get(child.getName());
     }
-    if (attributes == null && !(fs instanceof BatchingFileSystem)) {
+    if (
+      attributes == null && (
+        (USE_LEGACY_LOCAL_FS_METHOD && fs instanceof LocalFileSystemImpl)
+        || !(fs instanceof BatchingFileSystem)
+      )
+    ) {
       var t = System.nanoTime();
       attributes = computeAttributesForFile(fs, child);
       myIoTime.addAndGet(System.nanoTime() - t);
@@ -407,8 +428,21 @@ final class RefreshWorker {
   }
 
   /** See {@link RefreshWorker#computeAttributesForFile(NewVirtualFileSystem, VirtualFile)} docs about cancellability */
-  private static Map<String, FileAttributes> computeAllChildrenAttributes(BatchingFileSystem fs, VirtualFile dir, Set<String> filter) {
-    return Cancellation.computeInNonCancelableSection(() -> fs.listWithAttributes(dir, filter));
+  private static Map<String, FileAttributes> computeAllChildrenAttributes(@NotNull BatchingFileSystem fs,
+                                                                          @NotNull VirtualFile dir,
+                                                                          @Nullable Set<String> filter) {
+    if (USE_LEGACY_LOCAL_FS_METHOD
+        && (fs instanceof LocalFileSystemImpl localFileSystem) ) {
+      String[] childrenNames = Cancellation.computeInNonCancelableSection(() -> localFileSystem.listWithCaching(dir, filter));
+      Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(childrenNames.length, dir.isCaseSensitive());
+      for (String childName : childrenNames) {
+        childrenWithAttributes.put(childName, null);
+      }
+      return childrenWithAttributes;
+    }
+    else {
+      return Cancellation.computeInNonCancelableSection(() -> fs.listWithAttributes(dir, filter));
+    }
   }
 
   private ChildInfo childRecord(NewVirtualFileSystem fs, FakeVirtualFile child, FileAttributes attributes, boolean canonicalize) {
@@ -464,6 +498,9 @@ final class RefreshWorker {
   }
 
   private static void clearFsCache(NewVirtualFileSystem fs) {
+    if (USE_LEGACY_LOCAL_FS_METHOD && fs instanceof LocalFileSystemImpl) {
+      ((LocalFileSystemImpl)fs).clearListCache();
+    }
   }
 
   private static final class RefreshCancelledException extends RuntimeException {
