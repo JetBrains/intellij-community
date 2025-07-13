@@ -36,6 +36,9 @@ jvm_test(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop-junit",
     "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:kotlin-test-junit",
   ],
   runtime_deps = [":uiTests_test_resources"],
   plugins = ["@lib//:compose-plugin"]
