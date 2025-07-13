@@ -147,6 +147,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       return LanguageLevel.JDK_1_5
     }
 
+
   protected fun getDefaultPluginVersion(pluginId: String): String {
     if (pluginId == "org.apache.maven:maven-compiler-plugin") {
       if (getActualVersion(myMavenVersion!!) in setOf("3.3.9", "3.5.4", "3.6.3", "3.8.9")) {
@@ -414,6 +415,20 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
                          "\nExpected root: " + path +
                          "\nExisting roots:" +
                          "\n" + StringUtil.join<ContentEntry?>(roots, Function { it: ContentEntry? -> " * " + it!!.getUrl() }, "\n"))
+  }
+
+  protected fun getExpectedSourceLanguageLevel(): LanguageLevel {
+    if (mavenVersionIsOrMoreThan("3.9.3")) {
+      return LanguageLevel.JDK_1_8
+    }
+    return LanguageLevel.JDK_1_5
+  }
+
+  protected fun getExpectedTargetLanguageLevel(): String {
+    if (mavenVersionIsOrMoreThan("3.9.3")) {
+      return "1.8"
+    }
+    return "1.5"
   }
 
   companion object {
