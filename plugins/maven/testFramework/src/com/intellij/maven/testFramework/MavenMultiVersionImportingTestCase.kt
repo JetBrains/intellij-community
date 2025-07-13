@@ -431,6 +431,10 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     return "1.5"
   }
 
+  protected fun getActualMavenVersion(): String {
+    return getActualVersion(myMavenVersion!!)
+  }
+
   companion object {
     @Parameterized.Parameters(name = "with Maven-{0} and model-{1}")
     @JvmStatic

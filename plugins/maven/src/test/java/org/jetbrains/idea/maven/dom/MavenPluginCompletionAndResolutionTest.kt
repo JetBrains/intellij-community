@@ -89,6 +89,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
       assertCompletionVariants(projectPom, "2.0.2", "3.1", "3.10.1")
     }
+    else if (getActualMavenVersion() in setOf("3.8.9", "3.6.3", "3.5.4", "3.3.9")) {
+      assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0")
+    }
     else {
       assertCompletionVariants(projectPom, "2.0.2", "3.1")
     }
@@ -202,6 +205,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     }
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
       assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1")
+    }
+    else if (getActualMavenVersion() in setOf("3.8.9", "3.6.3", "3.5.4", "3.3.9")) {
+      assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0")
     }
     else {
       assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1")
