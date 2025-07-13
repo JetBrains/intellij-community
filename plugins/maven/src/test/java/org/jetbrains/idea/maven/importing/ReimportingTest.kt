@@ -164,7 +164,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
     updateAllProjects()
-    assertEquals("1.8", CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
+    assertEquals(getExpectedTargetLanguageLevel(), CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
 
     updateModulePom("m1", """
       <groupId>test</groupId>
@@ -210,7 +210,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
     updateAllProjects()
-    assertEquals("1.8", CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
+    assertEquals(getExpectedTargetLanguageLevel(), CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule("m1")))
   }
 
   @Test
