@@ -9,6 +9,7 @@ import org.junit.Test
 class MultiReleaseHighlightingTest : MavenDomWithIndicesTestCase() {
   @Test
   fun testDoNotHighlightVersionRanges() = runBlocking {
+    assumeVersionAtLeast("3.9.0")
     createProjectSubFile("src/main/java/org/example/A.java", """
       package org.example;
       class A {}
