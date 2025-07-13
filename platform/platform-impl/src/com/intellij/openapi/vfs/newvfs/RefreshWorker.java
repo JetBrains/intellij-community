@@ -66,8 +66,8 @@ final class RefreshWorker {
   /**
    * Use legacy {@link LocalFileSystemImpl#listWithCaching(VirtualFile)} method instead of new, more generic
    * {@link BatchingFileSystem#listWithAttributes(VirtualFile, Set)}
-   * Temporary flag, to investigate performance issues linked to the transition to  {@link BatchingFileSystem},
-   * remove afterwards.
+   * Temporary flag, to investigate performance issues linked to the transition to {@link BatchingFileSystem},
+   * remove afterward.
    */
   private static final boolean USE_LEGACY_LOCAL_FS_METHOD = getBooleanProperty("vfs.RefreshWorker.USE_LEGACY_LOCAL_FS_METHOD", true);
 
@@ -81,8 +81,14 @@ final class RefreshWorker {
   private final FSRecordsImpl myPersistencePeer = ((PersistentFSImpl)myPersistence).peer();
   private volatile boolean myCancelled;
 
-  private final AtomicInteger myFullScans = new AtomicInteger(), myPartialScans = new AtomicInteger(), myProcessed = new AtomicInteger();
-  private final AtomicLong myVfsTime = new AtomicLong(), myIoTime = new AtomicLong();
+  // =========================== monitoring =========================================================================== //
+  private final AtomicInteger myFullScans = new AtomicInteger();
+  private final AtomicInteger myPartialScans = new AtomicInteger();
+  private final AtomicInteger myProcessed = new AtomicInteger();
+  /** Total time (ns) since instance creation, spent on VFS (i.e. potentially cached) requests */
+  private final AtomicLong myVfsTime = new AtomicLong();
+  /** Total time (ns) since instance creation, spent on IO -- usually, via {@link VirtualFileSystem} */
+  private final AtomicLong myIoTime = new AtomicLong();
 
   RefreshWorker(Collection<NewVirtualFile> refreshRoots, boolean isRecursive) {
     myIsRecursive = isRecursive;
@@ -417,7 +423,7 @@ final class RefreshWorker {
 
   /**
    * If attributes are computed in a cancellable context, then single-thread refresh gets a performance degradation.
-   * The reason is {@link com.intellij.openapi.vfs.DiskQueryRelay#accessDiskWithCheckCanceled(java.lang.Object)},
+   * The reason is {@link com.intellij.openapi.vfs.DiskQueryRelay#accessDiskWithCheckCanceled(Object)},
    * which starts constant exchanging messages with an IO thread.
    * The non-cancellable section here is merely a reification of the existing implicit assumption on cancellability,
    * so it does not make anything worse.
@@ -498,7 +504,7 @@ final class RefreshWorker {
   }
 
   private static void clearFsCache(NewVirtualFileSystem fs) {
-    if (USE_LEGACY_LOCAL_FS_METHOD && fs instanceof LocalFileSystemImpl) {
+    if (USE_LEGACY_LOCAL_FS_METHOD && (fs instanceof LocalFileSystemImpl) ) {
       ((LocalFileSystemImpl)fs).clearListCache();
     }
   }
