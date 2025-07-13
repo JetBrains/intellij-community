@@ -9,6 +9,7 @@ import org.junit.Test
 
 class MultiReleaseOutputTest : MavenCompilingTestCase() {
   override fun setUp() {
+    assumeVersionAtLeast("3.9.0")
     super.setUp()
     Registry.get("maven.import.separate.main.and.test.modules.when.multiReleaseOutput").setValue("true", testRootDisposable)
   }
