@@ -149,6 +149,9 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
 
   protected fun getDefaultPluginVersion(pluginId: String): String {
     if (pluginId == "org.apache.maven:maven-compiler-plugin") {
+      if (getActualVersion(myMavenVersion!!) in setOf("3.3.9", "3.5.4", "3.6.3", "3.8.9")) {
+        return "3.11.0"
+      }
       if (mavenVersionIsOrMoreThan("3.9.7")) {
         return "3.13.0"
       }
