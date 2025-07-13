@@ -294,7 +294,10 @@ public class PersistentFSTreeAccessor {
 
     int index = ArrayUtil.find(rootsIds, rootId);
     if (index < 0) {
-      throw new IOException("No root[#" + rootId + "] entry found among roots " + Arrays.toString(rootsIds));
+      String rootUrlsString = rootsIds.length < 128 ?
+                              Arrays.toString(rootsIds) :
+                              Arrays.toString(Arrays.copyOf(rootsIds, 128)) + "...";
+      throw new IOException("No root[#" + rootId + "] entry found among roots " + rootUrlsString);
     }
 
     rootsUrlIds = ArrayUtil.remove(rootsUrlIds, index);
@@ -351,11 +354,12 @@ public class PersistentFSTreeAccessor {
   }
 
   /**
-   * Serializes urlIds and fileIds sorted arrays into output stream, in diff-compressed format:
+   * Serializes urlIds and fileIds arrays into output stream, in diff-compressed format:
    * <pre>
    * {urlIds.length: varint} ({urlId[i]-urlId[i-1]: varint}, {fileId[i]-fileId[i-1]: varint})*
    * </pre>
-   * Both urlIds and fileIds must be sorted, same length, and without duplicates -- otherwise {@link IllegalStateException} is thrown
+   * urlIds array must be sorted, urlIds and fileIds arrays must be the same length, and without duplicates -- otherwise
+   * {@link IllegalStateException} is thrown
    */
   private static void saveUrlAndFileIdsAsDiffCompressed(int[] urlIds,
                                                         int[] fileIds,
@@ -372,6 +376,8 @@ public class PersistentFSTreeAccessor {
       int diffUrlId = urlId - prevUrlId;
       int diffFileId = fileId - prevFileId;
       if (diffUrlId <= 0) {
+        //MAYBE RC: limit printed urlsIds number to something reasonable, like [i-64..i+64]? Seems like we have VFS with
+        //          very high roots count today, so printing them all could be quite a burden for logs reading
         throw new IllegalStateException(
           "urlIds are not sorted: urlIds[" + i + "](=" + urlId + ") <= urlIds[" + (i - 1) + "](=" + prevUrlId + "), " +
           "urlIds: " + Arrays.toString(urlIds)
