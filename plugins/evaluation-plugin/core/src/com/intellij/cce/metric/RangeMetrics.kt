@@ -142,13 +142,13 @@ class NegativeIOURecallMetric : RecallRangeMetricBase(), IOUScorer, NegativeExam
   override val description: String = "Sum of IoU between predicted & negative reference range divided by total number of negative reference ranges"
 }
 
-class PositiveMatchedTextLengthMetric : RangeMetricBase(), PositiveExamplesRangeFilter {
-  override val name = "Positive Matched Text Length"
-  override val description: String = "Length of predicted text within matched predicted & reference ranges"
+class PositiveMatchedNumWordsMetric : RangeMetricBase(), PositiveExamplesRangeFilter {
+  override val name = "Positive Matched Num Words"
+  override val description: String = "Number of words in predicted text within matched predicted & reference ranges"
 
   override fun calculateMetric(matchedRanges: Map<NamedRange, NamedRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {
     matchedRanges.forEach { (predicted, _) ->
-      val score = predicted.text.length.toDouble()
+      val score = predicted.text.split("\\s+".toRegex()).size.toDouble()
       fileSample.add(score)
       coreSample.add(score)
     }
