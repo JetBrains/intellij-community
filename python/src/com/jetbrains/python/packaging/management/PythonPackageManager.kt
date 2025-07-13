@@ -4,6 +4,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -11,6 +12,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -38,11 +40,13 @@ import kotlin.coroutines.cancellation.CancellationException
  * @see com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI to execute commands with UI handlers
  */
 @ApiStatus.Experimental
-abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
+abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Disposable.Default {
   private val isInited = AtomicBoolean(false)
   private val initializationJob by lazy {
     PyPackageCoroutine.launch(project, start = CoroutineStart.LAZY) {
       initManager()
+    }.also {
+      it.cancelOnDispose(this)
     }
   }
 
@@ -123,7 +127,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       installedPackages = packages
       PyPackageCoroutine.launch(project) {
         reloadOutdatedPackages()
-      }
+      }.cancelOnDispose(this)
 
       ApplicationManager.getApplication().messageBus.apply {
         syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
