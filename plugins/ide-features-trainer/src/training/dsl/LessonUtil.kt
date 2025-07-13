@@ -10,8 +10,10 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
+import com.intellij.find.impl.FindPopupItem
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -86,6 +88,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
 import javax.swing.JList
+import javax.swing.JTable
 import javax.swing.JWindow
 import javax.swing.KeyStroke
 
@@ -148,6 +151,13 @@ object LessonUtil {
     }
   }
 
+  fun TaskContext.showWarningIfSearchPopupClosed() {
+    showWarning(LessonsBundle.message("goto.action.popup.closed.warning.message", action("GotoAction"),
+                                      rawKeyStroke(KeyEvent.VK_SHIFT))) {
+      !checkInsideSearchEverywhere()
+    }
+  }
+
   fun TaskRuntimeContext.checkPositionOfEditor(sample: LessonSample,
                                                checkCaret: TaskRuntimeContext.(LessonSample) -> Boolean = { checkCaretValid(it) }
   ): TaskContext.RestoreNotification? {
@@ -201,7 +211,7 @@ object LessonUtil {
     return if (message != null) sampleRestoreNotification(message, sample) else null
   }
 
-  fun TaskRuntimeContext.sampleRestoreNotification(@Nls message: String, sample: LessonSample) =
+  fun TaskRuntimeContext.sampleRestoreNotification(@Nls message: String, sample: LessonSample): TaskContext.RestoreNotification =
     TaskContext.RestoreNotification(message) { setSample(sample) }
 
   fun TaskRuntimeContext.checkEditorModification(sample: LessonSample,
@@ -224,6 +234,10 @@ object LessonUtil {
     return change.replace(" ", "") == needChange
   }
 
+  fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
+    return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
+  }
+
   fun findItem(ui: JList<*>, checkList: (item: Any) -> Boolean): Int? {
     for (i in 0 until ui.model.size) {
       val elementAt = ui.model.getElementAt(i)
@@ -232,6 +246,16 @@ object LessonUtil {
       }
     }
     return null
+  }
+
+  fun findLastRowIndexOfItemWithText(ui: JTable, textToFind: String): Int {
+    for (i in (ui.rowCount - 1) downTo 0) {
+      val item = ui.getValueAt(i, 0) as? FindPopupItem
+      if (item?.presentableText?.contains(textToFind, true) == true) {
+        return i
+      }
+    }
+    return -1
   }
 
   fun setEditorReadOnly(editor: Editor) {
@@ -266,7 +290,7 @@ object LessonUtil {
     }
   }
 
-  fun rawShift() = rawKeyStroke(KeyStroke.getKeyStroke("SHIFT"))
+  fun rawShift(): String = rawKeyStroke(KeyStroke.getKeyStroke("SHIFT"))
 
   val breakpointXRange: (width: Int) -> IntRange = { IntRange(5, it - 38) }
 
@@ -434,6 +458,12 @@ object LessonUtil {
   fun lastHighlightedUi(): JComponent? {
     return LearningUiHighlightingManager.highlightingComponents.getOrNull(0) as? JComponent
   }
+}
+
+object EditorSettingsState {
+  fun isLineNumbersShown(): Boolean = EditorSettingsExternalizable.getInstance().isLineNumbersShown
+
+  fun isWhitespacesShown(): Boolean = EditorSettingsExternalizable.getInstance().isWhitespacesShown
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
@@ -770,7 +800,7 @@ fun TaskContext.showBalloonOnHighlightingComponent(@Language("HTML") @Nls messag
   text(message, useBalloon)
 }
 
-fun LessonContext.showInvalidDebugLayoutWarning() = task {
+fun LessonContext.showInvalidDebugLayoutWarning(): Unit = task {
   val step = stateCheck {
     val viewImpl = getDebugFramesView()
     !(viewImpl?.isMinimizedInGrid ?: false)

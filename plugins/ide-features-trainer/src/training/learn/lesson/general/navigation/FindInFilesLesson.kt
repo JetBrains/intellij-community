@@ -6,7 +6,6 @@ import com.intellij.find.FindInProjectSettings
 import com.intellij.find.FindManager
 import com.intellij.find.SearchTextArea
 import com.intellij.find.impl.FindInProjectSettingsBase
-import com.intellij.find.impl.FindPopupItem
 import com.intellij.find.impl.FindPopupPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -21,6 +20,7 @@ import org.assertj.swing.fixture.JTableFixture
 import org.assertj.swing.fixture.JTextComponentFixture
 import org.intellij.lang.annotations.Language
 import training.dsl.*
+import training.dsl.LessonUtil.findLastRowIndexOfItemWithText
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.ui.LearningUiUtil.findComponentWithTimeout
@@ -85,7 +85,7 @@ open class FindInFilesLesson(override val sampleFilePath: String,
     val neededText = "apple..."
     task {
       triggerAndBorderHighlight().componentPart { table: JTable ->
-        val rowIndex = table.findLastRowIndexOfItemWithText(neededText)
+        val rowIndex = findLastRowIndexOfItemWithText(table, neededText)
         if (rowIndex >= 0) {
           table.getCellRect(rowIndex, 0, false)
         }
@@ -106,7 +106,7 @@ open class FindInFilesLesson(override val sampleFilePath: String,
         ideFrame {
           val table = previous.ui as? JTable ?: error("No table")
           val tableFixture = JTableFixture(robot(), table)
-          val rowIndex = { table.findLastRowIndexOfItemWithText(neededText) }
+          val rowIndex = { findLastRowIndexOfItemWithText(table, neededText) }
           tableFixture.pointAt(TableCell.row(rowIndex()).column(0)) // It seems, the list may change for a while
           tableFixture.click(TableCell.row(rowIndex()).column(0), MouseClickInfo.leftButton())
         }
@@ -221,7 +221,7 @@ open class FindInFilesLesson(override val sampleFilePath: String,
 
   private fun TaskRuntimeContext.isSelectedNeededItem(neededText: String): Boolean {
     return (previous.ui as? JTable)?.let {
-      it.isShowing && it.selectedRow != -1 && it.selectedRow == it.findLastRowIndexOfItemWithText(neededText)
+      it.isShowing && it.selectedRow != -1 && it.selectedRow == findLastRowIndexOfItemWithText(it,neededText)
     } == true
   }
 
@@ -236,16 +236,6 @@ open class FindInFilesLesson(override val sampleFilePath: String,
     triggerUI().component { button: ActionButton ->
       button.action.templateText == buttonText && button.isSelected
     }
-  }
-
-  private fun JTable.findLastRowIndexOfItemWithText(textToFind: String): Int {
-    for (ind in (rowCount - 1) downTo 0) {
-      val item = getValueAt(ind, 0) as? FindPopupItem
-      if (item?.presentableText?.contains(textToFind, true) == true) {
-        return ind
-      }
-    }
-    return -1
   }
 
   private fun TaskContext.showWarningIfPopupClosed(isReplacePopup: Boolean) {
