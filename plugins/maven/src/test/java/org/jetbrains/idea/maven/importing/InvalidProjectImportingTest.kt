@@ -285,7 +285,11 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val root = rootProjects[0]
     val problems = root.problems
     UsefulTestCase.assertSize(1, problems)
-    assertTrue(problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
+    val description = if (mavenVersionIsOrMoreThan("3.9.0"))
+      "Could not find artifact test:parent:pom:1"
+    else
+      "Non-resolvable parent POM for test:project:1"
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
   }
 
   @Test
@@ -309,7 +313,11 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val problems = root.problems
     forMaven3 {
       UsefulTestCase.assertSize(2, problems)
-      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
+      val description = if (mavenVersionIsOrMoreThan("3.9.0"))
+        "Could not find artifact test:parent:pom:1"
+      else
+        "Non-resolvable parent POM for test:project:1"
+      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
       assertTrue(problems[1]!!.description, problems[1]!!.description == "Module 'foo' not found")
     }
     forMaven4 {
