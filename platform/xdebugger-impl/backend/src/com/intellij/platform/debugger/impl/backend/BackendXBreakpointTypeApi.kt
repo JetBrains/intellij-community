@@ -77,6 +77,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val project = projectId.findProjectOrNull() ?: return XBreakpointsLineInfo(listOf(), false)
     val editor = editorId.findEditorOrNull() ?: return XBreakpointsLineInfo(listOf(), false)
     val rawInfo: BreakpointsLineRawInfo? = readAction {
+      if (!DocumentUtil.isValidLine(line, editor.document)) return@readAction null
       blockingContextToIndicator {
         val position = XDebuggerUtil.getInstance().createPosition(FileDocumentManager.getInstance().getFile(editor.document), line)
                        ?: return@blockingContextToIndicator null
