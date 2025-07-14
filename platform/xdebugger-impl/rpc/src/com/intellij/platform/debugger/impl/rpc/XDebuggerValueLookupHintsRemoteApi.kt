@@ -47,9 +47,11 @@ val LOOKUP_HINTS_EVENTS_REMOTE_TOPIC: RemoteTopic<ValueHintEvent> = RemoteTopic(
 @ApiStatus.Internal
 @Serializable
 sealed interface ValueHintEvent {
-  @Serializable
-  data class StartListening(val project: ProjectId) : ValueHintEvent
+  val project: ProjectId
 
   @Serializable
-  data class HideHint(val project: ProjectId) : ValueHintEvent
+  data class StartListening(override val project: ProjectId) : ValueHintEvent
+
+  @Serializable
+  data class HideHint(override val project: ProjectId) : ValueHintEvent
 }

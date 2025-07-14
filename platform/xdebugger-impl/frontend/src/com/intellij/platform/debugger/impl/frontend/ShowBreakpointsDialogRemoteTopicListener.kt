@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.topics.RemoteTopic
 import com.intellij.platform.rpc.topics.RemoteTopicListener
 import com.intellij.xdebugger.impl.breakpoints.SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
@@ -13,8 +14,9 @@ private class ShowBreakpointsDialogRemoteTopicListener : RemoteTopicListener<Sho
   override val topic: RemoteTopic<ShowBreakpointDialogRequest> = SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
 
   override fun handleEvent(event: ShowBreakpointDialogRequest) {
+    val project = event.projectId.findProjectOrNull() ?: return
     runInEdt {
-      BreakpointsDialogFactory.getInstance(event.projectId.findProject()).showDialogImpl(event.breakpointId)
+      BreakpointsDialogFactory.getInstance(project).showDialogImpl(event.breakpointId)
     }
   }
 }
