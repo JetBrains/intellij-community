@@ -2,10 +2,12 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -97,6 +99,9 @@ public sealed class TypeEvalContext {
    * the analyzed code was called or may be called. Since this is basically guesswork, the results should be used only for code completion.
    */
   public static @NotNull TypeEvalContext codeCompletion(final @NotNull Project project, final @Nullable PsiFile origin) {
+    if (Registry.is("python.use.library.leve.type.eval.context")) {
+      return new LibraryLongLiveTypeEvalContext(true, true, true, origin);
+    }
     return getContextFromCache(project, new TypeEvalContext(true, true, true, origin));
   }
 
@@ -108,6 +113,9 @@ public sealed class TypeEvalContext {
    * For code completion see {@link TypeEvalContext#codeCompletion(Project, PsiFile)}.
    */
   public static TypeEvalContext userInitiated(final @NotNull Project project, final @Nullable PsiFile origin) {
+    if (Registry.is("python.use.library.leve.type.eval.context")) {
+      return new LibraryLongLiveTypeEvalContext(true, true, false, origin);
+    }
     return getContextFromCache(project, new TypeEvalContext(true, true, false, origin));
   }
 
@@ -421,6 +429,60 @@ public sealed class TypeEvalContext {
     public boolean equals(Object o) {
       // Otherwise, it can be equal to other AssumptionContext with same constraints
       return this == o;
+    }
+  }
+
+  final static class LibraryLongLiveTypeEvalContext extends TypeEvalContext {
+    private LibraryLongLiveTypeEvalContext(boolean allowDataFlow,
+                                           boolean allowStubToAST,
+                                           boolean allowCallContext,
+                                           @Nullable PsiFile origin) {
+      super(allowDataFlow, allowStubToAST, allowCallContext, origin);
+    }
+
+    private static boolean isInLibrary(@NotNull PsiElement element) {
+      VirtualFile vFile = element.getContainingFile().getOriginalFile().getVirtualFile();
+      return vFile != null && ("pyi".equals(vFile.getExtension()) || ProjectFileIndex.getInstance(element.getProject()).isInLibrary(vFile));
+    }
+
+    private @NotNull TypeEvalContext getLibraryContext(@NotNull Project project) {
+      return project.getService(TypeEvalContextCache.class).getLibraryContext(new TypeEvalContext(getConstraints()));
+    }
+
+    @Override
+    protected @Nullable PyType getKnownType(@NotNull PyTypedElement element) {
+      if (!isInLibrary(element)) {
+        return super.getKnownType(element);
+      }
+      var context = getLibraryContext(element.getProject());
+      return context.getKnownType(element);
+    }
+
+    @Override
+    protected @Nullable PyType getKnownReturnType(@NotNull PyCallable callable) {
+      if (!isInLibrary(callable)) {
+        return super.getKnownReturnType(callable);
+      }
+      var context = getLibraryContext(callable.getProject());
+      return context.getKnownReturnType(callable);
+    }
+
+    @Override
+    public @Nullable PyType getType(@NotNull PyTypedElement element) {
+      if (!isInLibrary(element)) {
+        return super.getType(element);
+      }
+      var context = getLibraryContext(element.getProject());
+      return context.getType(element);
+    }
+
+    @Override
+    public @Nullable PyType getReturnType(@NotNull PyCallable callable) {
+      if (!isInLibrary(callable)) {
+        return super.getReturnType(callable);
+      }
+      var context = getLibraryContext(callable.getProject());
+      return context.getReturnType(callable);
     }
   }
 

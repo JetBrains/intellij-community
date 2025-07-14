@@ -23,6 +23,7 @@ jvm_library(
     "//python/python-ast:ast",
     "//python/python-syntax-core:syntax-core",
     "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
   ],
   exports = [
     "//python/python-parser:parser",
