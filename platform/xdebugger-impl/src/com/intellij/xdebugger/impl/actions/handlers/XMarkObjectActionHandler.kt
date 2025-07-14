@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
+import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.ui.ComponentUtil
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.withId
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialog

@@ -20,7 +20,10 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
 import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
+import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerId
+import com.intellij.platform.debugger.impl.rpc.consoleView
+import com.intellij.platform.debugger.impl.rpc.sourcePosition
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -40,19 +43,7 @@ import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.*
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
-import com.intellij.xdebugger.impl.rpc.SuspendData
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDataDto
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionState
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoCallback
-import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
-import com.intellij.xdebugger.impl.rpc.consoleView
-import com.intellij.xdebugger.impl.rpc.sourcePosition
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
@@ -393,7 +384,7 @@ class FrontendXDebuggerSession private constructor(
     return false
   }
 
-  override fun getDropFrameHandler(): XDropFrameHandler? = dropFrameHandler
+  override fun getDropFrameHandler(): XDropFrameHandler = dropFrameHandler
 
   override fun getActiveNonLineBreakpoint(): XBreakpointProxy? {
     return activeNonLineBreakpoint.value

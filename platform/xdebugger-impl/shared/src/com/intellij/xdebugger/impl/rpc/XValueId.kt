@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.platform.rpc.Id
+import com.intellij.platform.rpc.UID
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -10,4 +11,4 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @Serializable
-data class XValueId(override val uid: com.intellij.platform.rpc.UID) : Id
+data class XValueId(override val uid: UID) : Id

@@ -144,6 +144,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myIcon: Icon? = icon
   private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
   private val executionStackFlow = MutableStateFlow<Ref<XExecutionStack?>>(Ref.create(null))
+
   @get:ApiStatus.Internal
   val fileColorsComputer: FileColorsComputer = FileColorsComputer(project, coroutineScope)
 
@@ -617,7 +618,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   override fun areBreakpointsMuted(): Boolean {
     return sessionData.isBreakpointsMuted
   }
-  
+
   @ApiStatus.Internal
   fun getBreakpointsMutedFlow(): StateFlow<Boolean> {
     return sessionData.breakpointsMutedFlow

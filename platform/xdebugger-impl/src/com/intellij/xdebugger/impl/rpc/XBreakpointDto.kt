@@ -8,6 +8,9 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.debugger.impl.rpc.XExpressionDto
+import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
+import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -97,7 +100,7 @@ data class XBreakpointCustomPresentationDto(
   val timestamp: Long,
 )
 
-private fun CustomizedBreakpointPresentation.toRpc(): XBreakpointCustomPresentationDto? {
+private fun CustomizedBreakpointPresentation.toRpc(): XBreakpointCustomPresentationDto {
   return XBreakpointCustomPresentationDto(icon?.rpcId(), errorMessage, timestamp)
 }
 

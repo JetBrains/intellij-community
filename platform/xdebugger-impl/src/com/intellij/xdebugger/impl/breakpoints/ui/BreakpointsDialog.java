@@ -26,7 +26,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroup;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
@@ -386,7 +389,7 @@ public class BreakpointsDialog extends DialogWrapper {
     XBreakpointsDialogState settings = (getBreakpointManager()).getBreakpointsDialogSettings();
 
     for (XBreakpointGroupingRule rule : myRulesAvailable) {
-      if (rule.isAlwaysEnabled() || (settings != null && settings.getSelectedGroupingRules().contains(rule.getId()) ) ) {
+      if (rule.isAlwaysEnabled() || (settings != null && settings.getSelectedGroupingRules().contains(rule.getId()))) {
         myRulesEnabled.add(rule);
       }
     }

@@ -1,12 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.rpc
+package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.vfs.VirtualFileId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-// TODO: should be moved to RPC module!!
 @ApiStatus.Internal
 @Serializable
 data class XFileColorDto(

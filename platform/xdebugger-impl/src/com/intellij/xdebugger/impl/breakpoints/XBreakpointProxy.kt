@@ -126,7 +126,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
       breakpoint.isEnabled = enabled
     }
 
-    override fun getSourcePosition(): XSourcePosition? = breakpoint.getSourcePosition()
+    override fun getSourcePosition(): XSourcePosition? = breakpoint.sourcePosition
 
     override fun getNavigatable(): Navigatable? = breakpoint.getNavigatable()
 
@@ -213,7 +213,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
     }
 
     override fun isDisposed(): Boolean = breakpoint.isDisposed
-    
+
     override fun updateIcon() {
       breakpoint.updateIcon()
     }

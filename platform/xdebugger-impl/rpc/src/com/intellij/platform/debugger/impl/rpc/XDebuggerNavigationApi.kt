@@ -6,7 +6,6 @@ import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

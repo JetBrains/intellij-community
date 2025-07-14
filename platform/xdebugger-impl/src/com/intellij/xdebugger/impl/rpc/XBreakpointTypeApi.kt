@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.rpc
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
+import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -44,7 +45,7 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 @Serializable
 data class XBreakpointsLineInfo(
   val availableTypes: List<XBreakpointTypeId>,
-  val singleBreakpointVariant: Boolean
+  val singleBreakpointVariant: Boolean,
 )
 
 @ApiStatus.Internal
