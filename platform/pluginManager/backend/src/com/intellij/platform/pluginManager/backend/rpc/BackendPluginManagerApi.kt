@@ -180,7 +180,8 @@ class BackendPluginManagerApi : PluginManagerApi {
     return channelFlow {
       val session = PluginManagerSessionService.getInstance().getSession(sessionId)
       session?.updateService?.calculateUpdates { result ->
-        trySend(result.map { PluginDto.fromModel(it) })
+        val pluginDtos = result?.map { PluginDto.fromModel(it) } ?: emptyList()
+        trySend(pluginDtos)
       }
       awaitClose()
     }
