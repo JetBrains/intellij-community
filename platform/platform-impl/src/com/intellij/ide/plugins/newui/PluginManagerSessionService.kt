@@ -1,15 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Pair
-import fleet.multiplatform.shims.ConcurrentHashMap
-import fleet.multiplatform.shims.ConcurrentHashSet
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A session is required to store plugin information between calls.
@@ -50,13 +50,13 @@ class PluginManagerSessionService {
 @ApiStatus.Internal
 class PluginManagerSession {
   val dynamicPluginsToInstall: MutableMap<PluginId, PendingDynamicPluginInstall> = ConcurrentHashMap()
-  val pluginsToRemoveOnCancel: MutableSet<IdeaPluginDescriptorImpl> = ConcurrentHashSet()
-  val dynamicPluginsToUninstall: MutableSet<IdeaPluginDescriptor> = ConcurrentHashSet()
+  val pluginsToRemoveOnCancel: MutableSet<IdeaPluginDescriptorImpl> = ConcurrentCollectionFactory.createConcurrentSet()
+  val dynamicPluginsToUninstall: MutableSet<IdeaPluginDescriptor> = ConcurrentCollectionFactory.createConcurrentSet()
   val dependentToRequiredListMap: MutableMap<PluginId, MutableSet<PluginId>> = ConcurrentHashMap()
   var isUiDisposedWithApply: Boolean = false
 
-  val errorPluginsToDisable: MutableSet<PluginId> = ConcurrentHashSet()
-  val uninstalledPlugins: MutableSet<PluginId> = ConcurrentHashSet()
+  val errorPluginsToDisable: MutableSet<PluginId> = ConcurrentCollectionFactory.createConcurrentSet()
+  val uninstalledPlugins: MutableSet<PluginId> = ConcurrentCollectionFactory.createConcurrentSet()
   val pluginStates: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
   val statesDiff: MutableMap<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> = ConcurrentHashMap()
   var updateService: PluginUpdatesService? = null
