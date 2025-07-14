@@ -42,7 +42,7 @@ private data class Context(
 )
 
 internal class ConvertFunctionToPropertyIntention :
-    PsiBasedModCommandAction<KtNamedFunction>(/*element = */ null, /*elementClass =*/ KtNamedFunction::class.java), PriorityAction {
+    PsiBasedModCommandAction<KtNamedFunction>(/*element = */ null, /*elementClass =*/ KtNamedFunction::class.java) {
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("convert.function.to.property")
@@ -74,8 +74,6 @@ internal class ConvertFunctionToPropertyIntention :
                 )
             })
     }
-
-    override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.LOW
 
     private fun isApplicableByPsi(element: KtNamedFunction, context: ActionContext): Boolean {
         val funKeyword = element.funKeyword ?: return false

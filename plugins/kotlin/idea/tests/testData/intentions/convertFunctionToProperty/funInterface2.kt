@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 fun interface I {
     fun foo(): Int
 
