@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
+    <orderEntry type="library" name="commons-lang3" level="project" />
   </component>
 </module>

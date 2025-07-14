@@ -12,7 +12,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.internal.impldep.com.google.gson.Gson
+import com.google.gson.Gson
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test

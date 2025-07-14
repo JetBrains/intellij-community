@@ -18,7 +18,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
+import com.google.gson.GsonBuilder;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.jetbrains.annotations.NotNull;

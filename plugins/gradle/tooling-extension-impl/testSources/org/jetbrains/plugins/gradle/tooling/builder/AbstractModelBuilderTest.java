@@ -14,9 +14,11 @@ import com.intellij.testFramework.ApplicationRule;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
+import gnu.trove.TObjectHash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
-import org.gradle.internal.impldep.com.google.common.collect.Multimap;
+import com.google.common.collect.Multimap;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
@@ -206,10 +208,12 @@ public abstract class AbstractModelBuilderTest {
   @NotNull
   public static Set<Class<?>> getToolingExtensionClasses() {
     return ContainerUtil.newHashSet(
-      Multimap.class, // repacked gradle guava
-      ShortTypeHandling.class, // groovy
+      IonType.class,  // ion-java jar
+      Multimap.class, // guava.jar
       Object2ObjectMap.class, // fastutil
-      IonType.class  // ion-java jar
+      ShortTypeHandling.class, // groovy
+      StringUtils.class, // apache-commons.jar
+      TObjectHash.class //trove4j.jar
     );
   }
 

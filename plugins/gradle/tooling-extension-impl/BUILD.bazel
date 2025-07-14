@@ -34,6 +34,10 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:kotlin-stdlib",
     "//platform/diagnostic/telemetry/rt",
+    "@lib//:commons-lang3",
+    "@lib//:commons-io",
+    "@lib//:guava",
+    "//platform/util/trove",
   ],
   exports = [
     "@lib//:slf4j-api",
@@ -81,6 +85,9 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/boot",
     "//plugins/gradle",
+    "@lib//:guava",
+    "//platform/util/trove",
+    "@lib//:commons-lang3",
   ],
   runtime_deps = [":toolingExtension-tests_test_resources"]
 )

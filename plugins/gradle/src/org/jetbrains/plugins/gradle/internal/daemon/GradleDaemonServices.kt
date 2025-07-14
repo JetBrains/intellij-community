@@ -19,7 +19,7 @@ import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.lang.UrlClassLoader
 import it.unimi.dsi.fastutil.Hash
 import org.gradle.internal.classpath.ClassPath
-import org.gradle.internal.impldep.com.google.common.cache.Cache
+import com.google.common.cache.Cache
 import org.gradle.internal.service.CloseableServiceRegistry
 import org.gradle.internal.service.DefaultServiceRegistry
 import org.gradle.tooling.internal.consumer.ConnectorServices

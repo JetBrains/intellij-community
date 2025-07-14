@@ -68,6 +68,8 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/ijent",
     "//platform/core-api:core",
+    "@lib//:guava",
+    "//platform/util/trove",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
@@ -170,6 +172,8 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
+    "@lib//:gson",
+    "@lib//:guava",
   ],
   runtime_deps = [
     ":gradle-tests_test_resources",

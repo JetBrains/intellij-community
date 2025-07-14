@@ -26,6 +26,7 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:gradle",
     "//platform/object-serializer:objectSerializer-annotations",
+    "@lib//:commons-lang3",
   ],
   runtime_deps = [":tooling_resources"]
 )

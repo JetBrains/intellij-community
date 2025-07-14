@@ -40,5 +40,9 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.rt" />
+    <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="library" name="commons-io" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.trove" />
   </component>
 </module>

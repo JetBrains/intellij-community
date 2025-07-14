@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.internal;
 
-import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
@@ -9,6 +8,7 @@ import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 
 public class AnnotationProcessingModelImpl implements AnnotationProcessingModel, Serializable {
   private final Map<String, AnnotationProcessingConfig> configs;
@@ -32,11 +32,11 @@ public class AnnotationProcessingModelImpl implements AnnotationProcessingModel,
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     AnnotationProcessingModelImpl model = (AnnotationProcessingModelImpl)o;
-    return Objects.equal(configs, model.configs);
+    return Objects.equals(configs, model.configs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(configs);
+    return Objects.hash(configs);
   }
 }

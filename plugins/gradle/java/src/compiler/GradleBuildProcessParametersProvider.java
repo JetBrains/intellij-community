@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import groovy.lang.GroovyObject;
-import org.gradle.internal.impldep.com.google.common.base.Optional;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Adds Gradle build dependencies to the project build process' classpath.

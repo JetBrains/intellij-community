@@ -25,9 +25,9 @@ public final class StringUtils {
           if (!matcher.find()) {
             chunk = string.subSequence(pos, string.length()).toString();
             if (lower && first) {
-              chunk = org.gradle.internal.impldep.org.apache.commons.lang.StringUtils.uncapitalize(chunk);
+              chunk = org.apache.commons.lang3.StringUtils.uncapitalize(chunk);
             } else {
-              chunk = org.gradle.internal.impldep.org.apache.commons.lang.StringUtils.capitalize(chunk);
+              chunk = org.apache.commons.lang3.StringUtils.capitalize(chunk);
             }
 
             builder.append(chunk);
@@ -39,10 +39,10 @@ public final class StringUtils {
         } while(chunk.isEmpty());
 
         if (lower && first) {
-          chunk = org.gradle.internal.impldep.org.apache.commons.lang.StringUtils.uncapitalize(chunk);
+          chunk = org.apache.commons.lang3.StringUtils.uncapitalize(chunk);
           first = false;
         } else {
-          chunk = org.gradle.internal.impldep.org.apache.commons.lang.StringUtils.capitalize(chunk);
+          chunk = org.apache.commons.lang3.StringUtils.capitalize(chunk);
         }
 
         builder.append(chunk);
