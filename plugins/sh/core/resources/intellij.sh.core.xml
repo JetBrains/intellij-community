@@ -27,6 +27,8 @@
     <typedHandler implementation="com.intellij.sh.ShTypedHandler"/>
     <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
 
+    <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
+
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
     <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>
     <defaultLiveTemplates file="liveTemplates/ShellScriptHidden.xml" hidden="true"/>

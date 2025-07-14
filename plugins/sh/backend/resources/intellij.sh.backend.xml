@@ -16,6 +16,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.sh.codeInsight.ShPsiReferenceSupport"
                         serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport" />
+    <applicationService serviceInterface="com.intellij.sh.formatter.ShFormatterService"
+                        serviceImplementation="com.intellij.sh.backend.formatter.ShBackendFormatterService" />
 
     <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.backend.ShUrlReferenceContributor"/>
     <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.backend.ShStructureViewFactory"/>
@@ -35,7 +37,7 @@
     <localInspection language="Shell Script" shortName="ShellCheck" enabledByDefault="true"
                      bundle="messages.ShBundle" groupKey="sh.shell.script" key="display.name.shell.check"
                      level="ERROR" unfair="true" implementationClass="com.intellij.sh.backend.shellcheck.ShShellcheckInspection"/>
-    <langCodeStyleSettingsProvider implementation="com.intellij.sh.backend.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
+    <virtualFileCustomDataProvider implementation="com.intellij.sh.frontend.split.codeStyle.ShCodeStyleSettingsCustomDataSynchronizer"/>
     <completion.contributor id="shShebang" language="Shell Script"
                             implementationClass="com.intellij.sh.backend.completion.ShShebangCompletionContributor"
                             order="first"/>
