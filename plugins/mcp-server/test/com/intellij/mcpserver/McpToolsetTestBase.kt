@@ -3,6 +3,7 @@
 package com.intellij.mcpserver
 
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -17,12 +18,21 @@ import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeAll
 import org.junit.platform.commons.annotation.Testable
 import kotlin.test.fail
 
 @Testable
 @TestApplication
 abstract class McpToolsetTestBase {
+  companion object {
+    @BeforeAll
+    @JvmStatic
+    fun init() {
+      System.setProperty("java.awt.headless", "false")
+    }
+  }
+
   protected val projectFixture = projectFixture(openAfterCreation = true)
   protected val project by projectFixture
   protected val moduleFixture = projectFixture.moduleFixture("testModule")
@@ -34,6 +44,7 @@ abstract class McpToolsetTestBase {
   protected val mainJavaFile by mainJavaFileFixture
   protected val classJavaFile by classJavaFileFixture
   protected val testJavaFile by testJavaFileFixture
+
 
 
   protected suspend fun withConnection(action: suspend (Client) -> Unit) {
@@ -84,12 +95,18 @@ abstract class McpToolsetTestBase {
   ) {
     withConnection { client ->
       // Call the tool with the provided input
-      val result = client.callTool(toolName, input) ?: fail("Tool call result should not be null")
-      resultChecker(result)
-      // Just verify that the call doesn't throw an exception
-      assertNotNull(result, "Tool call result should not be null")
-      // Log the result for debugging
-      println("[DEBUG_LOG] Tool $toolName result: $result")
+      try {
+        McpServerSettings.getInstance().state.enableBraveMode = true
+        val result = client.callTool(toolName, input) ?: fail("Tool call result should not be null")
+        resultChecker(result)
+        // Just verify that the call doesn't throw an exception
+        assertNotNull(result, "Tool call result should not be null")
+        // Log the result for debugging
+        println("[DEBUG_LOG] Tool $toolName result: $result")
+      }
+      finally {
+        McpServerSettings.getInstance().state.enableBraveMode = false
+      }
     }
   }
 }
