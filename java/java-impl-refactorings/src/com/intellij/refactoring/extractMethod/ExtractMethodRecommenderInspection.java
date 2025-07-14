@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
@@ -93,7 +93,7 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
               Collection<PsiStatement> exitStatements = wrapper.prepareExitStatements(range);
               if (!exitStatements.isEmpty()) continue;
               if (wrapper.isGenerateConditionalExit() || wrapper.isReturnPresentBetween()) continue;
-              PsiVariable[] variables = wrapper.getOutputVariables();
+              PsiVariable[] variables = wrapper.getOutputVariables(2);
               if (variables.length != 1) continue;
               PsiVariable output = variables[0];
               if (SideEffectsVisitor.hasSideEffectOrSimilarUseOutside(range, output)) continue;
@@ -178,7 +178,7 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
             PsiStatement[] subRange = Arrays.copyOf(range, declarationIndex);
             ControlFlowWrapper subWrapper = new ControlFlowWrapper(fragment, subRange);
             subWrapper.prepareExitStatements(subRange);
-            return subWrapper.getOutputVariables().length == 0;
+            return subWrapper.getOutputVariables(1).length == 0;
           }
         }
         return false;

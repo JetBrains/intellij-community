@@ -398,7 +398,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean areAllExitPointsNotNull(PsiType returnStatementType) {
-    if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false).length == 0) {
+    if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false, 1).length == 0) {
       if (returnStatementType != null && !PsiTypes.voidType().equals(returnStatementType)) {
         return getReturnsNullability(false);
       }
@@ -1221,7 +1221,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private String declareVariableAtMethodCallLocation(String name, PsiType type) {
-    if (myControlFlowWrapper.getOutputVariables(false).length == 0) {
+    if (myControlFlowWrapper.getOutputVariables(false, 1).length == 0) {
       PsiElement lastStatement = PsiTreeUtil.getNextSiblingOfType(myEnclosingBlockStatement != null ? myEnclosingBlockStatement : myElements[myElements.length - 1], PsiStatement.class);
       if (lastStatement != null) {
         name = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(name, lastStatement, true);

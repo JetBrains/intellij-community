@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -911,12 +911,21 @@ public final class ControlFlowUtil {
   }
 
   public static PsiVariable @NotNull [] getOutputVariables(@NotNull ControlFlow flow, int start, int end, int @NotNull [] exitPoints) {
+    return getOutputVariables(flow, start, end, exitPoints, Integer.MAX_VALUE);
+  }
+
+  /**
+   * No more than the specified limit output variables.
+   */
+  public static PsiVariable @NotNull [] getOutputVariables(@NotNull ControlFlow flow, int start, int end, int @NotNull [] exitPoints,
+                                                           int limit) {
     Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, false);
     List<PsiVariable> array = new ArrayList<>();
-    for (PsiVariable variable : writtenVariables) {
+    outer: for (PsiVariable variable : writtenVariables) {
       for (int exitPoint : exitPoints) {
         if (needVariableValueAt(variable, flow, exitPoint)) {
           array.add(variable);
+          if (array.size() >= limit) break outer;
         }
       }
     }
