@@ -736,6 +736,70 @@ public class ThreadDumpParserTest {
   }
 
   @Test
+  public void testOurDebuggerExportFormatWithVirtualThreads() {
+    // Note, that virtual threads have no priority.
+    String text = """
+      "main@1" prio=5 tid=0x1 nid=NA runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.lang.Throwable.fillInStackTrace(Throwable.java:-1)
+      	at java.lang.Throwable.fillInStackTrace(Throwable.java:820)
+      	  - locked <0x450> (a java.lang.Throwable)
+      	at java.lang.Throwable.<init>(Throwable.java:258)
+      	at com.intellij.rt.debugger.agent.CaptureStorage$3.run(CaptureStorage.java:56)
+      	at com.intellij.rt.debugger.agent.CaptureStorage$9.call(CaptureStorage.java:209)
+      	at com.intellij.rt.debugger.agent.CaptureStorage$9.call(CaptureStorage.java:206)
+      	at com.intellij.rt.debugger.agent.CaptureStorage.withoutThrowableCapture(CaptureStorage.java:220)
+      	at com.intellij.rt.debugger.agent.CaptureStorage.withoutThrowableCapture(CaptureStorage.java:206)
+      	at com.intellij.rt.debugger.agent.CaptureStorage.capture(CaptureStorage.java:48)
+      	at java.util.concurrent.FutureTask.<init>(FutureTask.java:132)
+      	at java.util.concurrent.ThreadPerTaskExecutor$ThreadBoundFuture.<init>(ThreadPerTaskExecutor.java:334)
+      	at java.util.concurrent.ThreadPerTaskExecutor.submit(ThreadPerTaskExecutor.java:285)
+      	at java.util.concurrent.ThreadPerTaskExecutor.submit(ThreadPerTaskExecutor.java:293)
+      	at VirtualThreadsDemo.main(VirtualThreadsDemo.java:30)
+      
+      "ForkJoinPool-1-worker-1@934" daemon prio=5 tid=0x1a nid=NA waiting
+        java.lang.Thread.State: WAITING
+      	at jdk.internal.vm.Continuation.run(Continuation.java:248)
+      	at java.lang.VirtualThread.runContinuation(VirtualThread.java:221)
+      	at java.lang.VirtualThread$$Lambda/0x0000007001062870.run(Unknown Source:-1)
+      	at java.util.concurrent.ForkJoinTask$RunnableExecuteAction.exec(ForkJoinTask.java:1423)
+      	at java.util.concurrent.ForkJoinTask.doExec$$$capture(ForkJoinTask.java:387)
+      	at java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:-1)
+      	at java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312)
+      	at java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843)
+      	at java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808)
+      	at java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
+      
+      "@960" tid=0x19 nid=NA virtual runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.base/java.lang.VirtualThread.parkNanos(VirtualThread.java:621)
+      	at java.base/java.lang.VirtualThread.sleepNanos(VirtualThread.java:791)
+      	at java.base/java.lang.Thread.sleep(Thread.java:590)
+      	at VirtualThreadsDemo.simulateWork(VirtualThreadsDemo.java:12)
+      	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+      	at java.base/java.util.concurrent.FutureTask.run$$$capture(FutureTask.java:317)
+      	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java)
+      	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+      
+      "@957" tid=0x1c nid=NA virtual runnable
+        java.lang.Thread.State: RUNNABLE
+      	at java.base/java.lang.VirtualThread.parkNanos(VirtualThread.java:621)
+      	at java.base/java.lang.VirtualThread.sleepNanos(VirtualThread.java:791)
+      	at java.base/java.lang.Thread.sleep(Thread.java:590)
+      	at VirtualThreadsDemo.simulateWork(VirtualThreadsDemo.java:12)
+      	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+      	at java.base/java.util.concurrent.FutureTask.run$$$capture(FutureTask.java:317)
+      	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java)
+      	at java.base/java.lang.VirtualThread.run(VirtualThread.java:309)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(4, threads.size());
+
+    assertTrue(threads.get(3).getName().endsWith("@957"));
+    assertTrue(threads.get(3).isVirtual());
+  }
+
+  @Test
 	public void testVeryLongLineParsingPerformance() {
     final String spaces = " ".repeat(1_000_000);
     final String letters = "a".repeat(1_000_000);
