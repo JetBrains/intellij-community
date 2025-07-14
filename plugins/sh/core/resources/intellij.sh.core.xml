@@ -28,6 +28,7 @@
     <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
 
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
+    <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
     <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>
