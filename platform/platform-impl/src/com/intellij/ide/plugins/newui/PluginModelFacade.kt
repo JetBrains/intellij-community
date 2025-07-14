@@ -43,6 +43,10 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     pluginModel.disable(models.map { it.getDescriptor() })
   }
 
+  fun isDisableAllowed(model: PluginUiModel): Boolean {
+    return pluginModel.isDisableAllowed(model.getDescriptor())
+  }
+
   @JvmOverloads
   fun installOrUpdatePlugin(component: JComponent?, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController(), callback: (Boolean) -> Unit = {}) {
     pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState, controller, callback)
