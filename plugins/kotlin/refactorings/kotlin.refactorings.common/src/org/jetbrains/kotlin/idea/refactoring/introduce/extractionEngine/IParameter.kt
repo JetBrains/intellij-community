@@ -6,6 +6,7 @@ interface IParameter<KotlinType> {
     val name: String
     val mirrorVarName: String?
     val receiverCandidate: Boolean
+    val contextParameter: Boolean
 
     val parameterType: KotlinType
 

@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -11,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UnixDesktopEnv;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -420,12 +420,12 @@ public final class X11UiUtil {
 
   @RequiresBackgroundThread
   public static @Nullable String getTheme() {
-    if (SystemInfo.isGNOME) {
+    if (UnixDesktopEnv.CURRENT == UnixDesktopEnv.GNOME) {
       String result = exec("Cannot get gnome theme", GSETTINGS_COMMAND, "get", "org.gnome.desktop.interface", "gtk-theme");
       return trimQuotes(result);
     }
 
-    if (SystemInfo.isKDE) {
+    if (UnixDesktopEnv.CURRENT == UnixDesktopEnv.KDE) {
       // https://github.com/shalva97/kde-configuration-files
       Path home = Path.of(System.getenv("HOME"), ".config/kdeglobals");
       List<String> matches = grepFile("Cannot get KDE theme", home,
@@ -457,7 +457,7 @@ public final class X11UiUtil {
   @RequiresBackgroundThread
   @ApiStatus.Internal
   public static @Nullable String getWindowButtonsConfig() {
-    if (SystemInfo.isGNOME || SystemInfo.isKDE) {
+    if (UnixDesktopEnv.CURRENT == UnixDesktopEnv.GNOME || UnixDesktopEnv.CURRENT == UnixDesktopEnv.KDE) {
       String execResult =
         exec("Cannot get gnome WM buttons layout", GSETTINGS_COMMAND, "get", "org.gnome.desktop.wm.preferences", "button-layout");
       return trimQuotes(execResult);

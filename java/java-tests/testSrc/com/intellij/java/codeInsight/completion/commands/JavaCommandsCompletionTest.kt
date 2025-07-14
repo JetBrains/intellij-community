@@ -443,7 +443,11 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }""".trimIndent())
     val elements = myFixture.completeBasic()
-    assertTrue(elements.any { element -> element.lookupString.contains("Rename", ignoreCase = true) })
+    val lookupElement = elements
+      .firstOrNull { element -> element.lookupString.contains("rename", ignoreCase = true) }
+      ?.`as`(CommandCompletionLookupElement::class.java)
+    assertNotNull(lookupElement)
+    assertEquals(TextRange(19, 22), (lookupElement as CommandCompletionLookupElement).highlighting?.range)
   }
 
   fun testRenameMethod2() {
@@ -456,7 +460,28 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }.<caret>
       }""".trimIndent())
     val elements = myFixture.completeBasic()
-    assertTrue(elements.any { element -> element.lookupString.contains("Rename", ignoreCase = true) })
+    val lookupElement = elements
+      .firstOrNull { element -> element.lookupString.contains("rename", ignoreCase = true) }
+      ?.`as`(CommandCompletionLookupElement::class.java)
+    assertNotNull(lookupElement)
+    assertEquals(TextRange(19, 22), (lookupElement as CommandCompletionLookupElement).highlighting?.range)
+  }
+
+  fun testRenameMethod3() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo.<caret>() {
+              String y = "1";
+              System.out.println(y);
+          }
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    val lookupElement = elements
+      .firstOrNull { element -> element.lookupString.contains("rename", ignoreCase = true) }
+      ?.`as`(CommandCompletionLookupElement::class.java)
+    assertNotNull(lookupElement)
+    assertEquals(TextRange(19, 22), (lookupElement as CommandCompletionLookupElement).highlighting?.range)
   }
 
   fun testParameterRename() {

@@ -795,13 +795,17 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         if (looksLikePlatformPluginAlias(dependencyPluginId)) {
           continue
         }
+        if (session.isPluginDisabled(dependencyPluginId)) {
+          // FIXME IJPL-196672 I don't understand why this code exists and what it is supposed to do
+          //  (even if it is intended for something, it does not work properly)
+          continue
+        }
 
         val descriptor = pluginIdMap[dependencyPluginId]
         if (descriptor != null && !InstalledPluginsTableModel.isHidden(descriptor)) {
           descriptors.add(descriptor)
           LOG.warn("For ${entry.key} dependent plugin: ${descriptor.pluginId} not found")
         }
-        break
       }
     }
 

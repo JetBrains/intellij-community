@@ -44,6 +44,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   public static final int CURR_VERSION = 142;
 
+  @ApiStatus.Internal
+  public static final String ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION = "editor.color.scheme.mark.colors";
+
   public static final String NAME_BUNDLE_PROPERTY = "lcNameBundle";
   public static final String NAME_KEY_PROPERTY = "lcNameKey";
   public static final @NonNls String NAME_ATTR = "name";
@@ -85,7 +88,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
 
-  private final boolean myMarkColorIds = SystemProperties.getBooleanProperty("editor.color.scheme.mark.colors", false);
+  private final boolean myMarkColorIds = SystemProperties.getBooleanProperty(ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION, false);
   private final TextAttributesReader myValueReader = new TextAttributesReader();
   //region Meta info-related fields
   private final Properties metaInfo = new Properties();

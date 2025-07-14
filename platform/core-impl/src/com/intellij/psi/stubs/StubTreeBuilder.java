@@ -71,8 +71,10 @@ public final class StubTreeBuilder {
       if (stubDescriptor == null) return null;
 
       VirtualFile vFile = file.getFile();
-      boolean shouldBuildStubFor = stubDescriptor.getStubDefinition().shouldBuildStubFor(vFile);
-      if (toBuild && !shouldBuildStubFor) return null;
+      if (toBuild) {
+        boolean shouldBuildStubFor = stubDescriptor.getStubDefinition().shouldBuildStubFor(vFile);
+        if (!shouldBuildStubFor) return null;
+      }
 
       PushedFilePropertiesRetriever pushedFilePropertiesRetriever = PushedFilePropertiesRetriever.getInstance();
       @NotNull List<String> properties = pushedFilePropertiesRetriever != null

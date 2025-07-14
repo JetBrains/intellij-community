@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.ide.plugins.newui
@@ -49,6 +49,7 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.PlatformUtils
+import com.intellij.util.system.OS
 import com.intellij.util.ui.*
 import com.intellij.util.ui.AsyncProcessIcon.BigCentered
 import com.intellij.util.ui.StartupUiUtil.labelFont
@@ -274,7 +275,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       IdeBundle.message("plugins.configurable.not.allowed"))
     platformIncompatibleNotification = createNotificationPanel(
       AllIcons.General.Information,
-      IdeBundle.message("plugins.configurable.plugin.unavailable.for.platform", SystemInfo.getOsName()))
+      IdeBundle.message("plugins.configurable.plugin.unavailable.for.platform", OS.CURRENT))
 
     val feedbackDialogProvider = PlatformFeedbackDialogs.getInstance()
     uninstallFeedbackNotification = createFeedbackNotificationPanel { pluginId: String, pluginName: String, project: Project? ->

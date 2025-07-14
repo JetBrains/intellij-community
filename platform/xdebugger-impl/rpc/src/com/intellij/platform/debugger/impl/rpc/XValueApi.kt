@@ -3,10 +3,7 @@ package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.util.ThreeState
-import com.intellij.xdebugger.impl.rpc.XExpressionDto
-import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
 import com.intellij.xdebugger.impl.rpc.XValueId
-import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow

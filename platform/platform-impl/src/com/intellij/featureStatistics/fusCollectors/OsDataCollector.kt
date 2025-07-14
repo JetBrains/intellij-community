@@ -53,7 +53,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val tz = getTimeZone()
     val metrics = mutableSetOf(
-      OS_EVENT.metric(OS_NAME.with(getOSName()), Version.with(OS.CURRENT.version), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell()))
+      OS_EVENT.metric(OS_NAME.with(getOSName()), Version.with(OS.CURRENT.version()), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell()))
     )
     if (OS.CURRENT == OS.Linux) {
       val osInfo = OS.CURRENT.osInfo as OS.LinuxInfo

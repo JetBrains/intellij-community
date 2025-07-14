@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.win;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +62,10 @@ final class WinShellIntegration implements Disposable {
    * Indicates the features provided by this class are available to use.
    * If false then {@link #getInstance} will return null always.
    */
-  public static final boolean isAvailable;
+  public static final boolean isAvailable =
+    OS.CURRENT == OS.Windows &&
+    Boolean.getBoolean("ide.native.launcher") &&
+    !Boolean.getBoolean("ide.win.shell.integration.disabled");
 
   /**
    * @return null if !{@link #isAvailable}
@@ -155,12 +158,4 @@ final class WinShellIntegration implements Disposable {
   }
 
   private final @NotNull Bridge bridge;
-
-  static {
-    final boolean ideIsLaunchedViaDLL = Boolean.getBoolean("ide.native.launcher");
-
-    isAvailable = SystemInfo.isWin8OrNewer
-                  && ideIsLaunchedViaDLL
-                  && !Boolean.getBoolean("ide.win.shell.integration.disabled");
-  }
 }

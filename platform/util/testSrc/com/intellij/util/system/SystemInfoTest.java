@@ -20,6 +20,11 @@ class SystemInfoTest {
     assertThat(OS.CURRENT).isNotEqualTo(OS.Other);
   }
 
+  @Test void osVersionDetection() {
+    assertThat(OS.CURRENT.version()).isNotBlank();
+    assertThat(OS.CURRENT.isAtLeast(1, 0)).isTrue();
+  }
+
   @Test void windowsBuildNumberReading() {
     assumeTrue(OS.CURRENT == OS.Windows);
 
@@ -36,7 +41,7 @@ class SystemInfoTest {
     assertThat(osInfo.getRelease()).isNotBlank();
   }
 
-  @Test void linuxFeatures() {
+  @Test void glibcVersionDetection() {
     assumeTrue(OS.CURRENT == OS.Linux);
 
     var osInfo = (OS.LinuxInfo)OS.CURRENT.getOsInfo();

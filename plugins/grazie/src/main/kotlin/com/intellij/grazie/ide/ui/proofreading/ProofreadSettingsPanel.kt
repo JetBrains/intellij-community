@@ -7,6 +7,7 @@ import com.intellij.grazie.ide.ui.components.dsl.panel
 import com.intellij.grazie.ide.ui.proofreading.component.GrazieLanguagesComponent
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
+import com.intellij.grazie.remote.GrazieRemote.getLanguagesBasedOnUserAgreement
 import com.intellij.grazie.remote.LanguageDownloader
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.EDT
@@ -17,6 +18,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ex.Settings
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.layout.migLayout.createLayoutConstraints
@@ -36,6 +39,7 @@ private val logger = logger<ProofreadSettingsPanel>()
 class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
   private val EP: ExtensionPointName<Configurable> = ExtensionPointName("com.intellij.grazie.proofreadSettingsExtension")
   private val languages = GrazieLanguagesComponent(::download)
+  private val project: Project = guessCurrentProject(languages.component)
 
   private val downloadingLanguages: MutableSet<Lang> = ConcurrentHashMap.newKeySet()
   private val downloadLabel: JLabel by lazy {
@@ -45,9 +49,9 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
     AsyncProcessIcon("Downloading language models").apply { isVisible = false }
   }
 
-  private suspend fun download(lang: Lang) {
-    withProcessIcon(lang) {
-      LanguageDownloader.startDownloading(listOf(it))
+  private suspend fun download(langs: Collection<Lang>) {
+    withProcessIcon(langs) {
+      LanguageDownloader.startDownloading(it)
     }
     languages.updateLinkToDownloadMissingLanguages()
   }
@@ -99,12 +103,16 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
     EP.extensionList.forEach { add(it.createComponent(), CC().wrap()) }
   }
 
-  private suspend fun withProcessIcon(lang: Lang, download: suspend (Lang) -> Unit) {
+  private suspend fun withProcessIcon(langs: Collection<Lang>, download: suspend (Collection<Lang>) -> Unit) {
     var failed = false
     try {
-      if (GrazieRemote.isAvailableLocally(lang)) return
+      if (GrazieRemote.allAvailableLocally(langs)) return
+      val filteredLanguages = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        getLanguagesBasedOnUserAgreement(langs, project)
+      }
+      if (filteredLanguages.isEmpty()) return
       if (downloadingLanguages.isEmpty()) {
-        downloadingLanguages.add(lang)
+        downloadingLanguages.addAll(langs)
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           downloadLabel.text = msg("grazie.settings.proofreading.languages.download")
           asyncDownloadingIcon.resume()
@@ -112,20 +120,19 @@ class ProofreadSettingsPanel : ConfigurableUi<GrazieConfig> {
           downloadLabel.isVisible = true
         }
       }
-      download(lang)
+      download(filteredLanguages)
     }
     catch (e: Exception) {
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        downloadLabel.text = msg("grazie.settings.proofreading.languages.download.failed", lang.displayName)
+        downloadLabel.text = msg("grazie.settings.proofreading.languages.download.failed", langs.joinToString { it.displayName })
         asyncDownloadingIcon.suspend()
       }
       failed = true
       downloadingLanguages.clear()
-      logger.warn("Failed to download language '${lang.displayName}'", e)
       throw e
     }
     finally {
-      downloadingLanguages.remove(lang)
+      downloadingLanguages.removeAll(langs)
       if (downloadingLanguages.isEmpty() && !failed) {
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           asyncDownloadingIcon.isVisible = false

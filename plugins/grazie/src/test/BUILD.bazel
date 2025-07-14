@@ -29,6 +29,7 @@ jvm_library(
     "//plugins/grazie",
     "@lib//:kotlin-test",
     "//java/testFramework",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-ru",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-de",

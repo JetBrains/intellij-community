@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>

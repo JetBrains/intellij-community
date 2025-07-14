@@ -4,11 +4,11 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeDto
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
-import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
-import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CompletableDeferred

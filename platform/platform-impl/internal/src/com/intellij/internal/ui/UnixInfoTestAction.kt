@@ -1,6 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DialogTitleCapitalization")
-
 package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -10,7 +9,6 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
@@ -25,6 +23,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.system.OS
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UnixDesktopEnv
 import kotlinx.coroutines.*
 import java.awt.Frame
 import javax.swing.JComponent
@@ -35,7 +34,6 @@ import kotlin.reflect.KProperty0
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class UnixInfoTestAction : DumbAwareAction() {
-
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -74,25 +72,20 @@ private class UnixInfoDialog(val project: Project?, dialogTitle: String) :
     }
 
     return panel {
-      group("SystemInfo class") {
-        properties(listOf(
-          SystemInfo::isLinux,
-          SystemInfo::isFreeBSD,
-          SystemInfo::isUnix,
-          SystemInfo::isChromeOS))
-        properties(listOf(
-          SystemInfo::isWayland,
-          SystemInfo::isGNOME,
-          SystemInfo::isKDE,
-          SystemInfo::isXfce,
-          SystemInfo::isI3))
+      group("OS / desktop") {
+        row("OS:") {
+          label(OS.CURRENT.name)
+        }
+        row("desktop:") {
+          label(UnixDesktopEnv.CURRENT?.name ?: "-")
+        }
       }
 
       group("StartupUiUtil class") {
         properties(listOf(
+          StartupUiUtil::isWayland,
           StartupUiUtil::isWaylandToolkit,
           StartupUiUtil::isXToolkit,
-          StartupUiUtil::isLWCToolkit,
         ))
       }
 
@@ -146,7 +139,6 @@ private class UnixInfoDialog(val project: Project?, dialogTitle: String) :
           }
         }
       }
-
 
       group("IdeFrame") {
         row("isInFullScreen:") {
@@ -213,8 +205,7 @@ private class UnixInfoDialog(val project: Project?, dialogTitle: String) :
               label.comment?.text = "Obtained by `gsettings get org.gnome.desktop.wm.preferences button-layout` command<br>Value: $config"
             }
           }
-          WindowButtonsConfiguration.getInstance()?.state?.let {
-          }
+          WindowButtonsConfiguration.getInstance()?.state?.let { }
         }
       }
     }
@@ -243,13 +234,11 @@ private class UnixInfoDialog(val project: Project?, dialogTitle: String) :
     lbIsInFullScreenMode.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isInFullScreenMode(frame).toString()
     lbIsMaximizedVert.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isMaximizedVert(frame).toString()
     lbIsMaximizedHorz.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isMaximizedHorz(frame).toString()
-    lbIdeFrameInFullScreen.text = if (frame == null) "IdeFrame not found" else frame.isInFullScreen.toString()
+    lbIdeFrameInFullScreen.text = frame?.isInFullScreen?.toString() ?: "IdeFrame not found"
     lbFrameExtendedState.text = if (frame == null) "IdeFrame not found" else extendedStateToString(frame.extendedState)
   }
 
-  private fun getFrame(): IdeFrameImpl? {
-    return WindowManagerEx.getInstanceEx().getFrame(project)
-  }
+  private fun getFrame(): IdeFrameImpl? = WindowManagerEx.getInstanceEx().getFrame(project)
 
   private fun extendedStateToString(state: Int): String {
     val horiz = state and Frame.MAXIMIZED_HORIZ != 0

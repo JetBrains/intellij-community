@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.codeWithMe.ClientId
@@ -38,8 +38,14 @@ abstract class Animator @JvmOverloads constructor(
     isRepeatable: Boolean,
     isForward: Boolean = true,
     disposable: Disposable,
-  ) : this(name = name, totalFrames = totalFrames, cycleDuration = cycleDuration, isRepeatable = isRepeatable, isForward = isForward,
-           coroutineScope = animatorCoroutineScope(name, disposable))
+  ) : this(
+    name = name,
+    totalFrames = totalFrames,
+    cycleDuration = cycleDuration,
+    isRepeatable = isRepeatable,
+    isForward = isForward,
+    coroutineScope = animatorCoroutineScope(name, disposable),
+  )
 
   @Obsolete
   fun isForward(): Boolean = isForward
@@ -56,7 +62,7 @@ abstract class Animator @JvmOverloads constructor(
   }
 
   /**
-   * This operation is used for manual processing of animation in cases when IDE event queue is unavailable
+   * This operation is used for manual processing of animation in cases when the IDE event queue is unavailable
    */
   @ApiStatus.Internal
   fun forceTick() {
@@ -204,7 +210,7 @@ private fun skipAnimation(): Boolean {
 private fun animatorCoroutineScopeWithError(name: String?): CoroutineScope {
   val realName = name ?: getCallerClassName()
   logger<Animator>().error("Do not use repeatable animators without an explicit lifetime scope. " +
-                           "An explicit Disposable would at least let us to log memory leaks and runaway tasks.")
+                           "An explicit Disposable would at least let us log memory leaks and runaway tasks.")
   return CoroutineScope(SupervisorJob() +
                         Dispatchers.Default +
                         ModalityState.defaultModalityState().asContextElement() +

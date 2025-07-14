@@ -118,7 +118,7 @@ public class ContextSubmenu(label: String, public val submenu: () -> List<Contex
 
 public class ContextMenuItemOption(
     public val icon: IconKey? = null,
-    public val actionType: ContextMenuItemOptionAction,
+    public val actionType: ContextMenuItemOptionAction? = null,
     label: String,
     action: () -> Unit,
 ) : ContextMenuItem(label, action)

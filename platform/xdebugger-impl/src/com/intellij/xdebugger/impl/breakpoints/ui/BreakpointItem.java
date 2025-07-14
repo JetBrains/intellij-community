@@ -57,7 +57,7 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
 
   public abstract @Nls String getDisplayText();
 
-  protected void dispose() {}
+  protected void dispose() { }
 
   @Override
   public boolean equals(Object o) {

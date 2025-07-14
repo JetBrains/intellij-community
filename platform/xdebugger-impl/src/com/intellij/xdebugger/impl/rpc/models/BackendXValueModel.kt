@@ -4,6 +4,8 @@ package com.intellij.xdebugger.impl.rpc.models
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
+import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.deleteValueById
 import com.intellij.platform.kernel.ids.findValueById
@@ -15,8 +17,6 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XValueId
-import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
-import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope

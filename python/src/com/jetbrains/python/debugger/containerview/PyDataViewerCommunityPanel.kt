@@ -41,9 +41,9 @@ class PyDataViewerCommunityPanel(
 
   private val panelWithTable: JPanel = JPanel(BorderLayout())
 
-  private var formatTextField: EditorTextField = createEditorField(TextFieldCommandSource.FORMATTING)
+  private var formatTextField: EditorTextField = createEditorField(DataViewerCommandSource.FORMATTING)
 
-  override val slicingTextField: EditorTextField = createEditorField(TextFieldCommandSource.SLICING)
+  override val slicingTextField: EditorTextField = createEditorField(DataViewerCommandSource.SLICING)
 
   override var topToolbar: JPanel? = null
 
@@ -219,7 +219,7 @@ class PyDataViewerCommunityPanel(
     return mainTable
   }
 
-  private fun createEditorField(commandSource: TextFieldCommandSource): EditorTextField {
+  private fun createEditorField(commandSource: DataViewerCommandSource): EditorTextField {
     return object : EditorTextField(EditorFactory.getInstance().createDocument(""), dataViewerModel.project, PythonFileType.INSTANCE, false, true) {
       override fun createEditor(): EditorEx {
         val editor = super.createEditor()

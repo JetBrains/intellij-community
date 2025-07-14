@@ -4,6 +4,7 @@ package com.intellij.spellchecker.dictionary;
 
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -27,7 +28,7 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
     doContainTest(wordToCheck, Present);
   }
 
-  private static void doContainTest(String wordToCheck, Dictionary.LookupStatus lookupStatus) {
+  private static void doContainTest(String wordToCheck, @NotNull Dictionary.LookupStatus lookupStatus) {
     assertEquals(lookupStatus, APP_DICTIONARY.lookup(wordToCheck));
   }
 
@@ -36,7 +37,7 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testContainsNeg() {
-    doContainTest("eeeee", null);
+    doContainTest("eeeee", Alien);
   }
 
   public void testWords() {

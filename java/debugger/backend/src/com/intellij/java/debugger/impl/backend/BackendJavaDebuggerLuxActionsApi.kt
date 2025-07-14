@@ -6,8 +6,8 @@ import com.intellij.debugger.memory.filtering.ClassInstancesProvider
 import com.intellij.debugger.memory.ui.InstancesWindow
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
 import com.intellij.openapi.application.EDT
-import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.sun.jdi.ReferenceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

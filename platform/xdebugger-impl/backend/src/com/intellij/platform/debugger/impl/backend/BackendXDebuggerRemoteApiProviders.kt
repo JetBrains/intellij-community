@@ -4,10 +4,8 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.platform.debugger.impl.backend.hotswap.BackendXDebuggerHotSwapApi
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
-import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
+import com.intellij.xdebugger.impl.rpc.XDebugSessionTabApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerHotSwapApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import fleet.rpc.remoteApiDescriptor
 
 private class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
@@ -23,6 +21,9 @@ private class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
     }
     remoteApi(remoteApiDescriptor<XDebugSessionApi>()) {
       BackendXDebugSessionApi()
+    }
+    remoteApi(remoteApiDescriptor<XDebugSessionTabApi>()) {
+      BackendXDebugSessionTabApi()
     }
     remoteApi(remoteApiDescriptor<XDebuggerHotSwapApi>()) {
       BackendXDebuggerHotSwapApi()

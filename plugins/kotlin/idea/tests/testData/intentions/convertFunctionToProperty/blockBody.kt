@@ -1,4 +1,5 @@
 // AFTER-WARNING: Variable 't' is never used
+// PRIORITY: LOW
 class A(val n: Int) {
     fun <caret>foo(): Boolean {
         return n > 1

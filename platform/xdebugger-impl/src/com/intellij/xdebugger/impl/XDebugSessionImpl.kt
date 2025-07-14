@@ -144,6 +144,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myIcon: Icon? = icon
   private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
   private val executionStackFlow = MutableStateFlow<Ref<XExecutionStack?>>(Ref.create(null))
+
   @get:ApiStatus.Internal
   val fileColorsComputer: FileColorsComputer = FileColorsComputer(project, coroutineScope)
 
@@ -485,11 +486,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
       }
     }
     else {
-      if (myTabInitDataFlow.value != null) return
-      val proxy = this.asProxy()
-      val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
-                                        forceNewDebuggerUi, withFramesCustomization)
-      if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit(tab))) {
+      if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit)) {
+        val proxy = this.asProxy()
+        val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
+                                          forceNewDebuggerUi, withFramesCustomization)
         tabInitialized(tab)
         myDebugProcess!!.sessionInitialized()
         if (shouldShowTab) {
@@ -617,7 +617,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   override fun areBreakpointsMuted(): Boolean {
     return sessionData.isBreakpointsMuted
   }
-  
+
   @ApiStatus.Internal
   fun getBreakpointsMutedFlow(): StateFlow<Boolean> {
     return sessionData.breakpointsMutedFlow

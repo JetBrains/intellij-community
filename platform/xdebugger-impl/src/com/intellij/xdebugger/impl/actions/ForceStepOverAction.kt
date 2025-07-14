@@ -4,10 +4,10 @@ package com.intellij.xdebugger.impl.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 
 open class ForceStepOverAction : XDebuggerActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {

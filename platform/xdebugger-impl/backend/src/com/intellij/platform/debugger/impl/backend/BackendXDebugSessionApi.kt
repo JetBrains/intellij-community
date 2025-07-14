@@ -30,7 +30,6 @@ import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
-import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -72,14 +71,6 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     return withContext(Dispatchers.EDT) {
       val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
       backendDocument.bindToFrontend(frontendDocumentId, project)
-    }
-  }
-
-  override suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto?> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return session.tabInitDataFlow.map {
-      if (it == null) return@map null
-      XDebuggerSessionTabDto(it, session.getPausedEventsFlow().toRpc())
     }
   }
 
@@ -194,14 +185,6 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.updateExecutionPosition()
-    }
-  }
-
-  override suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback) {
-    val tab = tabInfo.tab ?: return
-    val session = sessionId.findValue() ?: return
-    withContext(Dispatchers.EDT) {
-      session.tabInitialized(tab)
     }
   }
 

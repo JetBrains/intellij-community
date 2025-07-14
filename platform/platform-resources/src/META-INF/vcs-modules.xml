@@ -6,7 +6,7 @@
     <module name="intellij.platform.vcs.impl.lang.actions"/>
     <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
-    <module name="intellij.platform.vcs.impl.backend"/>
+    <module name="intellij.platform.vcs" loading="embedded"/>
   </content>
 
   <xi:include href="/META-INF/vcs-modules-shared.xml"/>

@@ -110,6 +110,33 @@ com.intellij.openapi.util.ValueKey$BeforeThen
 - a:or(com.intellij.openapi.util.ValueKey):com.intellij.openapi.util.ValueKey$BeforeThen
 - a:then(java.lang.Object):com.intellij.openapi.util.ValueKey$BeforeIf
 - a:thenGet(java.util.function.Supplier):com.intellij.openapi.util.ValueKey$BeforeIf
+f:com.intellij.openapi.util.Version
+- java.io.Serializable
+- java.lang.Comparable
+- f:bugfix:I
+- f:major:I
+- f:minor:I
+- <init>(I,I):V
+- <init>(I,I,I):V
+- compareTo(com.intellij.openapi.util.Version):I
+- compareTo(java.lang.Integer):I
+- compareTo(java.lang.Integer,java.lang.Integer):I
+- compareTo(java.lang.Integer,java.lang.Integer,java.lang.Integer):I
+- equals(java.lang.Object):Z
+- hashCode():I
+- is(java.lang.Integer):Z
+- is(java.lang.Integer,java.lang.Integer):Z
+- is(java.lang.Integer,java.lang.Integer,java.lang.Integer):Z
+- isOrGreaterThan(java.lang.Integer):Z
+- isOrGreaterThan(java.lang.Integer,java.lang.Integer):Z
+- isOrGreaterThan(java.lang.Integer,java.lang.Integer,java.lang.Integer):Z
+- lessThan(java.lang.Integer):Z
+- lessThan(java.lang.Integer,java.lang.Integer):Z
+- lessThan(java.lang.Integer,java.lang.Integer,java.lang.Integer):Z
+- s:parseVersion(java.lang.String):com.intellij.openapi.util.Version
+- toCompactString():java.lang.String
+- s:toCompactString(I,I,I):java.lang.String
+- withoutBugfix():com.intellij.openapi.util.Version
 com.intellij.openapi.util.io.ByteSequence
 - a:byteAt(I):B
 - a:length():I
@@ -427,7 +454,10 @@ com.intellij.util.keyFMap.KeyFMap
 - a:size():I
 e:com.intellij.util.system.OS
 - f:getOsInfo():com.intellij.util.system.OS$OsInfo
+- f:isAtLeast(I,I):Z
 - s:isGenericUnix():Z
+- f:parsedVersion():com.intellij.openapi.util.Version
+- f:version():java.lang.String
 f:com.intellij.util.system.OS$LinuxInfo
 - com.intellij.util.system.OS$UnixInfo
 - isUnderWsl():Z

@@ -6,6 +6,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -15,11 +16,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private val logger = logger<GrazieLanguagesPopupStep>()
+
 class GrazieLanguagesPopupStep(
   @NlsContexts.PopupTitle title: String, available: List<Lang>, toDownload: List<Lang>,
-  private val download: suspend (Lang) -> Unit, private val onResult: (Lang) -> Unit,
-)
-  : BaseListPopupStep<Lang>(title, available + toDownload) {
+  private val download: suspend (Collection<Lang>) -> Unit, private val onResult: (Lang) -> Unit,
+) : BaseListPopupStep<Lang>(title, available + toDownload) {
   private val firstOther = toDownload.firstOrNull()
 
   override fun getSeparatorAbove(value: Lang) = if (value == firstOther) ListSeparator() else null
@@ -30,9 +32,14 @@ class GrazieLanguagesPopupStep(
   override fun onChosen(selectedValue: Lang, finalChoice: Boolean): PopupStep<*>? {
     return doFinalStep {
       GrazieScope.coroutineScope().launch {
-        download(selectedValue)
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          onResult(selectedValue)
+        try {
+          download(listOf(selectedValue))
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            onResult(selectedValue)
+          }
+        }
+        catch (e: Exception) {
+          logger.warn("Failed to download language '$selectedValue'", e)
         }
       }
     }

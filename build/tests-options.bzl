@@ -50,19 +50,10 @@ JAVA_TEST_FLAGS = [
     "-Djava.awt.headless=true",
     "-Djunit.jupiter.extensions.autodetection.enabled=true",
     "-Didea.force.use.core.classloader=true",
-    "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
     "-Dintellij.build.use.compiled.classes=false",
 ]
 
 JAVA_TEST_ARGS = [
-    # Classpath jar does not work for us (needs investigating why)
-    # --classpath_limit is set to pass classpath unconditionally via java binary command line parameters
-    # see output_base/external/rules_java+/java/bazel/rules/java_stub_template.txt
-    #
-    # A better way would be passing java command line parameters via java argfile:
-    # https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html#java-command-line-argument-files
-    # (available since java 9)
-    "--classpath_limit=10000000",
 ]
 
 TEST_FRAMEWORK_DEPS = [

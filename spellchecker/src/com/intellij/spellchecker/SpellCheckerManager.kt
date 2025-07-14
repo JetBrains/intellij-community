@@ -219,18 +219,21 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     spellChecker.addModifiableDictionary(projectDictionary!!)
   }
 
-  internal fun loadDictionary(path: String) {
+  fun loadDictionary(path: String) {
     val dictionaryProvider = findApplicable(path)
     if (dictionaryProvider == null) {
       spellChecker!!.loadDictionary(FileLoader(path))
+      return
     }
-    else {
-      val dictionary = dictionaryProvider.get(path)
-      if (dictionary != null) {
-        spellChecker!!.addDictionary(dictionary)
-      }
+    val dictionary = dictionaryProvider.get(path)
+    if (dictionary != null) {
+      spellChecker!!.addDictionary(dictionary)
     }
   }
+
+  fun removeDictionary(path: String): Unit = spellChecker!!.removeDictionary(path)
+
+  fun isDictionaryLoad(path: String): Boolean = spellChecker!!.isDictionaryLoad(path)
 
   fun hasProblem(word: String): Boolean {
     return !spellChecker!!.isCorrect(word) && !isCorrectExtensionWord(word)

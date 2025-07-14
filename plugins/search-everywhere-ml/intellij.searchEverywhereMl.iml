@@ -58,5 +58,8 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>
 </module>

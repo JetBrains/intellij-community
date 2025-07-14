@@ -4,14 +4,13 @@ package com.intellij.spellchecker.hunspell
 import ai.grazie.spell.lists.hunspell.HunspellWordList
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.VfsUtil.findFileByIoFile
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.util.Consumer
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 
-internal data class HunspellBundle(val dic: File, val aff: File)
+internal data class HunspellBundle(val dic: File, val aff: File, val trigrams: File)
 
 class HunspellDictionary(path: String, name: String? = null) : Dictionary {
   companion object {
@@ -21,8 +20,9 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
       val pathWithoutExtension = FileUtilRt.getNameWithoutExtension(path)
       val dic = File("$pathWithoutExtension.dic")
       val aff = File("$pathWithoutExtension.aff")
+      val trigrams = File("$pathWithoutExtension.trigrams.txt")
 
-      return if (dic.exists() && aff.exists()) HunspellBundle(dic, aff) else null
+      return if (dic.exists() && aff.exists()) HunspellBundle(dic, aff, trigrams) else null
     }
 
     fun isHunspell(path: String): Boolean {
@@ -35,21 +35,20 @@ class HunspellDictionary(path: String, name: String? = null) : Dictionary {
   private val alphabet: HashSet<Int> = HashSet()
 
   init {
-
     val bundle = loadHunspellBundle(path)
     if (bundle !== null) {
-      this.dict = bundle.aff.inputStream().use { affix ->
-        bundle.dic.inputStream().use { dictionary ->
-          HunspellWordList(
-            affix,
-            dictionary,
-            checkCanceled = { ProgressManager.checkCanceled() }
-          )
-        }
+      var trigrams: List<String>? = null
+      if (bundle.trigrams.exists()) {
+        trigrams = InputStreamReader(bundle.trigrams.inputStream(), Charsets.UTF_8).use { it.readLines() }
       }
 
-      val file = findFileByIoFile(bundle.dic, true)!!
-      InputStreamReader(file.inputStream, file.charset).use { reader ->
+      this.dict = HunspellWordList.create(
+        bundle.aff.readText(),
+        bundle.dic.readText(),
+        trigrams
+      ) { ProgressManager.checkCanceled() }
+
+      InputStreamReader(bundle.dic.inputStream()).use { reader ->
         reader.forEachLine { line ->
           line.takeWhile { it != ' ' && it != '/' }.lowercase().chars().forEach { this.alphabet.add(it) }
         }

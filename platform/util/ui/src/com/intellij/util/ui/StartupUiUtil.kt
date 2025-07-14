@@ -33,6 +33,9 @@ import kotlin.math.roundToInt
 
 object StartupUiUtil {
   @JvmStatic
+  val isWayland: Boolean = OS.isGenericUnix() && System.getenv("WAYLAND_DISPLAY") != null
+
+  @JvmStatic
   val isUnderDarcula: Boolean
     @Deprecated("Do not use it. Use UI theme properties.", ReplaceWith("StartupUiUtil[isDarkTheme]"))
     @ApiStatus.ScheduledForRemoval
@@ -195,7 +198,7 @@ object StartupUiUtil {
   fun getFontWithFallback(
     familyName: String?,
     @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
-    size: Float
+    size: Float,
   ): FontUIResource {
     // on macOS, font fallback is implemented in JRE by default
     // (except for explicitly registered fonts, e.g., the fonts we bundle with IDE - for them, we don't have a solution now)
@@ -392,5 +395,5 @@ object StartupUiUtil {
 fun getFontWithFallback(
   familyName: String?,
   @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
-  size: Float
+  size: Float,
 ): FontUIResource = StartupUiUtil.getFontWithFallback(familyName, style, size)

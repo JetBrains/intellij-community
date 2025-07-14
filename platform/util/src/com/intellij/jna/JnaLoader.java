@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jna;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +33,7 @@ public final class JnaLoader {
       }
       catch (Throwable t) {
         logger.warn(
-          "Unable to load JNA library (" + os + '/' + os.version + ", jna.boot.library.path=" + System.getProperty("jna.boot.library.path") + ')',
+          "Unable to load JNA library (" + os + '/' + os.version() + ", jna.boot.library.path=" + System.getProperty("jna.boot.library.path") + ')',
           t);
       }
     }

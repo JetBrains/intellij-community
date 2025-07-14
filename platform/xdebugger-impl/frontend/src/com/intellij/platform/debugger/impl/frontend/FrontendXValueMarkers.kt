@@ -5,11 +5,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
+import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.ui.JBColor
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
-import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -29,15 +29,15 @@ internal class FrontendXValueMarkers<V : XValue, M>(private val project: Project
     return true
   }
 
-  override fun markValue(value: XValue, markup: ValueMarkup): Promise<in Any>? {
+  override fun markValue(value: XValue, markup: ValueMarkup): Promise<in Any> {
     return project.service<FrontendXValueMarkersService>().markValue(value, markup)
   }
 
-  override fun unmarkValue(value: XValue): Promise<in Any>? {
+  override fun unmarkValue(value: XValue): Promise<in Any> {
     return project.service<FrontendXValueMarkersService>().unmarkValue(value)
   }
 
-  override fun getAllMarkers(): Map<M?, ValueMarkup?>? {
+  override fun getAllMarkers(): Map<M?, ValueMarkup?> {
     // TODO[IJPL-160146]: Implement getAllMarkers
     return mapOf()
   }
@@ -58,7 +58,7 @@ private class FrontendXValueMarkersService(project: Project, private val cs: Cor
     return valueMarked.asCompletableFuture().asPromise()
   }
 
-  fun unmarkValue(value: XValue): Promise<in Any>? {
+  fun unmarkValue(value: XValue): Promise<in Any> {
     val valueUnmarked = cs.async {
       XDebuggerValueMarkupApi.getInstance().unmarkValue((value as FrontendXValue).xValueDto.id)
       Any()

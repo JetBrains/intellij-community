@@ -44,6 +44,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import com.intellij.util.ui.*;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
@@ -295,7 +296,7 @@ public final class AboutDialog extends DialogWrapper {
 
     text.append("Toolkit: ").append(Toolkit.getDefaultToolkit().getClass().getName()).append("\n");
 
-    text.append(SystemInfo.getOsNameAndVersion()).append('\n');
+    text.append(OS.CURRENT.name()).append(' ').append(OS.CURRENT.version()).append('\n');
 
     for (var aboutInfoProvider : EP_NAME.getExtensionList()) {
       var description = aboutInfoProvider.getExtendedDescription();

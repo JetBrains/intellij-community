@@ -23,6 +23,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.system.OS;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
@@ -3356,7 +3357,7 @@ public final class UIUtil {
 
   public static boolean isXServerOnWindows() {
     // This is heuristics to detect using Cygwin/X or other build of X.Org server on Windows in a WSL 2 environment
-    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
+    return OS.isGenericUnix() && !StartupUiUtil.isWayland() && System.getenv("WSLENV") != null;
   }
 
   public static void applyDeprecatedBackground(@Nullable JComponent component) {

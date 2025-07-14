@@ -6,6 +6,8 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.kernel.backend"/>
   </dependencies>
 
   <xi:include href="/META-INF/VcsExtensionPoints.xml"/>

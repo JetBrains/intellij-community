@@ -8,8 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.debugger.impl.rpc.XValueApi
-import com.intellij.platform.debugger.impl.rpc.XValueDto
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ThreeState
@@ -17,7 +16,6 @@ import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*

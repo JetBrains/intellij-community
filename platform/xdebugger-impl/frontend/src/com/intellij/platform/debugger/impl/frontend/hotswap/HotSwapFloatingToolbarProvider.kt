@@ -22,9 +22,9 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
-import com.intellij.xdebugger.impl.hotswap.HotSwapVisibleStatus
+import com.intellij.xdebugger.impl.rpc.HotSwapSource
+import com.intellij.xdebugger.impl.rpc.HotSwapVisibleStatus
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import icons.PlatformDebuggerImplIcons
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +64,7 @@ internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
     val project = e.project ?: return
     val status = getCurrentStatus(project) ?: return
     if (!status.hasChanges) return
-    FrontendHotSwapManager.getInstance(project).performHotSwap(status.sessionId, HotSwapStatistics.HotSwapSource.RELOAD_MODIFIED_ACTION)
+    FrontendHotSwapManager.getInstance(project).performHotSwap(status.sessionId, HotSwapSource.RELOAD_MODIFIED_ACTION)
   }
 
   override fun update(e: AnActionEvent) {
@@ -93,7 +93,7 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, Dumb
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val status = getCurrentStatus(project) ?: return
-    FrontendHotSwapManager.getInstance(project).performHotSwap(status.sessionId, HotSwapStatistics.HotSwapSource.RELOAD_MODIFIED_BUTTON)
+    FrontendHotSwapManager.getInstance(project).performHotSwap(status.sessionId, HotSwapSource.RELOAD_MODIFIED_BUTTON)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT

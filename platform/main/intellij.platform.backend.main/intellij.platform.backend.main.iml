@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.progress.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere.backend" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.editor.backend" scope="RUNTIME" />

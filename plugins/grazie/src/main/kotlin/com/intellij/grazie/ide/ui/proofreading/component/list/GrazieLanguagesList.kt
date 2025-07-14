@@ -21,7 +21,7 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-class GrazieLanguagesList(private val download: suspend (Lang) -> Unit, private val onLanguageRemoved: (lang: Lang) -> Unit) :
+class GrazieLanguagesList(private val download: suspend (Collection<Lang>) -> Unit, private val onLanguageRemoved: (lang: Lang) -> Unit) :
   AddDeleteListPanel<Lang>(null, emptyList()), GrazieUIComponent {
 
   private val decorator: ToolbarDecorator = MyToolbarDecorator(myList)
@@ -78,8 +78,8 @@ class GrazieLanguagesList(private val download: suspend (Lang) -> Unit, private 
 
   /** Returns pair of (available languages, languages to download) */
   private fun getLangsForPopup(): Pair<List<Lang>, List<Lang>> {
-    val enabledLangs = myListModel.elements().asSequence().map { it.displayName }.toSet()
-    val (available, toDownload) = Lang.sortedValues().filter { it.displayName !in enabledLangs }.partition { it.isAvailable() }
+    val enabledLangs = myListModel.elements().asSequence().map { it.nativeName }.toSet()
+    val (available, toDownload) = Lang.sortedValues().filter { it.nativeName !in enabledLangs }.partition { it.isAvailable() }
     return available to toDownload
   }
 

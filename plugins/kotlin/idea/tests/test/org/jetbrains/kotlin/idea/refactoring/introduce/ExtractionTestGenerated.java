@@ -1611,6 +1611,35 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/extractFunction/contextParameters")
+        public static class ContextParameters extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("base.kt")
+            public void testBase() throws Exception {
+                runTest("testData/refactoring/extractFunction/contextParameters/base.kt");
+            }
+
+            @TestMetadata("unnamed.kt")
+            public void testUnnamed() throws Exception {
+                runTest("testData/refactoring/extractFunction/contextParameters/unnamed.kt");
+            }
+
+            @TestMetadata("withProvidedContext.kt")
+            public void testWithProvidedContext() throws Exception {
+                runTest("testData/refactoring/extractFunction/contextParameters/withProvidedContext.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/controlFlow")
         public abstract static class ControlFlow extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)

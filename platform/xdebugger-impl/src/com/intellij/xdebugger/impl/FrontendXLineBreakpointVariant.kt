@@ -7,12 +7,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.util.channels.use
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel

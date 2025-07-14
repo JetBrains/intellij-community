@@ -9,8 +9,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
-import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -20,10 +20,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
-import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
-import com.intellij.xdebugger.impl.rpc.XLineBreakpointTypeInfo
-import com.intellij.xdebugger.impl.rpc.standardPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.swing.Icon

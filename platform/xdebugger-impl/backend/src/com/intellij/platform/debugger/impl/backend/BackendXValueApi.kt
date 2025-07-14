@@ -3,10 +3,7 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
-import com.intellij.platform.debugger.impl.rpc.XInlineDebuggerDataDto
-import com.intellij.platform.debugger.impl.rpc.XValueApi
-import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
@@ -15,7 +12,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*

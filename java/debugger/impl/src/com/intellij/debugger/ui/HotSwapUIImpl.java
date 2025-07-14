@@ -34,6 +34,7 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
+import com.intellij.xdebugger.impl.rpc.HotSwapSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -176,7 +177,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
             statusListener.onCancel(sessions);
             return;
           }
-          HotSwapStatistics.logHotSwapCalled(myProject, HotSwapStatistics.HotSwapSource.ON_REBUILD_ASK);
+          HotSwapStatistics.logHotSwapCalled(myProject, HotSwapSource.ON_REBUILD_ASK);
           Set<DebuggerSession> toReload = new HashSet<>(dialog.getSessionsToReload());
           for (DebuggerSession session : modifiedClasses.keySet()) {
             if (!toReload.contains(session)) {
@@ -404,7 +405,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         if (listener == null) continue;
         context.putUserData(HOT_SWAP_CALLBACK_KEY, listener);
         if (alwaysDoHotSwapOnRebuild) {
-          HotSwapStatistics.logHotSwapCalled(myProject, HotSwapStatistics.HotSwapSource.ON_REBUILD_AUTO);
+          HotSwapStatistics.logHotSwapCalled(myProject, HotSwapSource.ON_REBUILD_AUTO);
         }
         return;
       }

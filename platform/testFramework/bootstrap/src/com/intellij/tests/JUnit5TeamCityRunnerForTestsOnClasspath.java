@@ -3,10 +3,13 @@ package com.intellij.tests;
 
 import org.junit.platform.engine.*;
 import org.junit.platform.engine.discovery.ClassNameFilter;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.*;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 
 import java.io.IOException;
@@ -16,30 +19,61 @@ import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 // Used to run JUnit 5 tests via JUnit 5 runtime
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public final class JUnit5TeamCityRunnerForTestsOnClasspath extends JUnit5BaseRunner {
+public final class JUnit5TeamCityRunnerForTestsOnClasspath {
   private static final String ourCollectTestsFile = System.getProperty("intellij.build.test.list.classes");
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     try {
-      JUnit5BaseRunner runner = new JUnit5TeamCityRunnerForTestsOnClasspath();
+      Launcher launcher = LauncherFactory.create();
 
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      // DiscoveryRequest first filters classes by ClassNameFilter, then loads class and runs additional checks:
+      // presense of annotations, test methods, etc.
+      // See usages of `org.junit.platform.commons.util.ClassFilter.match(java.lang.String)`.
+      // ClassNameFilter could and will be called for every class in classpath, even non-test one, even for synthetic lambda classes.
+      // That's why it should be fast and should not incur additional overhead, like checking whether it belongs to the current bucket.
+      ClassNameFilter nameFilter;
+      // PostDiscoveryFilter runs on already discovered classes and methods (TestDescriptors), so we could run more complex checks,
+      // like determining whether it belongs to the current bucket.
+      PostDiscoveryFilter postDiscoveryFilter;
+      Set<Path> classPathRoots;
+      try {
+        nameFilter = createClassNameFilter(classLoader);
+        postDiscoveryFilter = createPostDiscoveryFilter(classLoader);
+        classPathRoots = getClassPathRoots(classLoader);
+      }
+      catch (Throwable e) {
+        e.printStackTrace();
+        System.exit(1);
+        return;
+      }
       System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
 
-      TestPlan testPlan = runner.getTestPlan();
+      List<? extends DiscoverySelector> selectors;
+      if (classPathRoots != null) {
+        selectors = DiscoverySelectors.selectClasspathRoots(classPathRoots);
+      }
+      else {
+        selectors = Collections.singletonList(DiscoverySelectors.selectPackage(""));
+      }
+      LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
+        .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
+        .selectors(selectors)
+        .filters(nameFilter, postDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
+      TestPlan testPlan = launcher.discover(discoveryRequest);
       if (testPlan.containsTests()) {
         if (ourCollectTestsFile != null) {
           saveListOfTestClasses(testPlan);
           return;
         }
-        var testExecutionListener = runner.getTestExecutionListener();
-        execute(testPlan, testExecutionListener);
+        launcher.execute(testPlan, new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener());
       }
       else {
         //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
-        System.err.println("No tests found");
         System.exit(42);
       }
     }
@@ -48,42 +82,20 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath extends JUnit5BaseRun
     }
   }
 
-  @Override
-  TestExecutionListener getTestExecutionListener() {
-    return new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener();
-  }
-
-  @Override
-  public List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) {
-    return getTestSelectorsByClassPathRoots(classLoader);
-  }
-
-  @Override
-  public Filter<?>[] getTestFilters(ClassLoader classLoader) {
-    ArrayList<Filter<?>> filters = new ArrayList<>(0);
-    // DiscoveryRequest first filters classes by ClassNameFilter, then loads class and runs additional checks:
-    // presense of annotations, test methods, etc.
-    // See usages of `org.junit.platform.commons.util.ClassFilter.match(java.lang.String)`.
-    // ClassNameFilter could and will be called for every class in classpath, even non-test one, even for synthetic lambda classes.
-    // That's why it should be fast and should not incur additional overhead, like checking whether it belongs to the current bucket.
-    ClassNameFilter nameFilter;
-    // PostDiscoveryFilter runs on already discovered classes and methods (TestDescriptors), so we could run more complex checks,
-    // like determining whether it belongs to the current bucket.
-    PostDiscoveryFilter postDiscoveryFilter;
-
-    try {
-      nameFilter = createClassNameFilter(classLoader);
-      postDiscoveryFilter = createPostDiscoveryFilter(classLoader);
-    }
-    catch (Throwable e) {
-      e.printStackTrace();
-      System.exit(1);
-      return new Filter[0]; // unreachable, but javac doesn't know it.
-    }
-    filters.add(nameFilter);
-    filters.add(postDiscoveryFilter);
-    filters.add(EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID));
-    return filters.toArray(new Filter[0]);
+  private static Set<Path> getClassPathRoots(ClassLoader classLoader) throws Throwable {
+    //noinspection unchecked
+    List<Path> paths = (List<Path>)MethodHandles.publicLookup()
+      .findStatic(Class.forName("com.intellij.TestAll", false, classLoader),
+                  "getClassRoots", MethodType.methodType(List.class))
+      .invokeExact();
+    if (paths == null) return null;
+    // Skip unrelated jars and any other archives, otherwise we will end up with test classes from dependencies.
+    String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+    return paths.stream()
+      .filter(path ->
+                Files.isDirectory(path) ||
+                (relevantJarsRoot != null && path.getFileName().toString().endsWith(".jar") && path.startsWith(relevantJarsRoot)))
+      .collect(Collectors.toSet());
   }
 
   private static ClassNameFilter createClassNameFilter(ClassLoader classLoader)

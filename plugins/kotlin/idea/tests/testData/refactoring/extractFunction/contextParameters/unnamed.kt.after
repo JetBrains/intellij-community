@@ -1,0 +1,19 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+context(_: String)
+fun bar(p: Int) {}
+
+context(_: Int)
+val prop: Int
+    get() = 42
+
+context(a: String, b: Int)
+fun m() {
+    val i = prop
+    __dummyTestFun__(i)
+}
+
+context(_: String) private fun __dummyTestFun__(i: Int) {
+    bar(i)
+}
+
+// IGNORE_K1

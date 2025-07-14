@@ -1,0 +1,6 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
+  </extensions>
+</idea-plugin>

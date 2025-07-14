@@ -45,7 +45,7 @@ fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiCom
 open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   private val caretPosition
     get() = editor.getCaretModel().getLogicalPosition()
-  protected open val editorComponent : EditorComponentImpl
+  protected open val editorComponent: EditorComponentImpl
     get() = driver.cast(component, EditorComponentImpl::class)
 
   val editor: Editor get() = editorComponent.getEditor()
@@ -74,7 +74,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     click(inlayCenter)
   }
 
-  fun getInlayHints(): List<InlayHint> {
+  fun getInlayHints(braceAround: Boolean = true): List<InlayHint> {
     val hints = mutableListOf<InlayHint>()
     this.editor.getInlayModel().getInlineElementsInRange(0, Int.MAX_VALUE).forEach { element ->
       val hintText = try {
@@ -85,7 +85,9 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
           driver.cast(element.getRenderer(), DeclarativeInlayRenderer::class).getPresentationList().getEntries().joinToString { it.getText() }
         }
         catch (e: DriverCallException) {
-          element.getRenderer().toString().substring(1, element.getRenderer().toString().length - 1)
+          if (braceAround)
+            element.getRenderer().toString().substring(1, element.getRenderer().toString().length - 1)
+          else element.getRenderer().toString()
         }
       }
       hints.add(InlayHint(element.getOffset(), hintText!!))
@@ -138,14 +140,16 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun goToPosition(line: Int, column: Int): Unit = step("Go to position $line line $column column") {
     click()
     interact {
-      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1, (this as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT))
+      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1, (this as? RefWrapper)?.getRef()?.rdTarget
+                                                                                         ?: RdTarget.DEFAULT))
     }
   }
 
   fun goToLine(line: Int): Unit = step("Go to $line line") {
     click()
     interact {
-      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, 1, (this as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT))
+      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, 1, (this as? RefWrapper)?.getRef()?.rdTarget
+                                                                                ?: RdTarget.DEFAULT))
     }
   }
 

@@ -89,6 +89,18 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     super.documentChanged(event);
     // optimisation: avoid documents piling up during batch processing
     if (isUncommited(event.getDocument()) && FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
+      // must not commit during document save
+      if (PomModelImpl.isAllowPsiModification()
+          // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
+          && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        // commit one document to avoid OOME
+        for (Document document : myUncommittedDocuments) {
+          if (document != event.getDocument()) {
+            commitDocument(document);
+            break;
+          }
+        }
+      }
       if (myUnitTestMode) {
         myStopTrackingDocuments = true;
         try {
@@ -101,18 +113,6 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
         finally {
           //noinspection TestOnlyProblems
           clearUncommittedDocuments();
-        }
-      }
-      // must not commit during document save
-      if (PomModelImpl.isAllowPsiModification()
-          // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
-          && ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        // commit one document to avoid OOME
-        for (Document document : myUncommittedDocuments) {
-          if (document != event.getDocument()) {
-            commitDocument(document);
-            break;
-          }
         }
       }
     }

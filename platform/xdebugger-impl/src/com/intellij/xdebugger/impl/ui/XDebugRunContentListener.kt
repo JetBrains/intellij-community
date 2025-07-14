@@ -9,12 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.platform.project.projectId
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest

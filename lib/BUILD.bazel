@@ -1711,6 +1711,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "grazie-tests-ai-grazie-spell-hunspell-de",
+  jar = "@hunspell-de-jvm-0_2_281_http//file",
+  source_jar = "@hunspell-de-jvm-0_2_281-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-be",
   exports = [
@@ -4420,8 +4427,8 @@ jvm_import(
 
 jvm_import(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
-  jar = "@hunspell-en-jvm-0_2_278_http//file",
-  source_jar = "@hunspell-en-jvm-0_2_278-sources_http//file",
+  jar = "@hunspell-en-jvm-0_2_281_http//file",
+  source_jar = "@hunspell-en-jvm-0_2_281-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -6661,366 +6668,387 @@ java_library(
 )
 
 java_library(
-  name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-3",
+  name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-4",
   exports = [
-    ":maven-embedder-4_0_0-rc-3_http_import",
-    ":maven-api-annotations-4_0_0-rc-3_http_import",
-    ":maven-api-core-4_0_0-rc-3_http_import",
-    ":maven-api-di-4_0_0-rc-3_http_import",
-    ":maven-api-settings-4_0_0-rc-3_http_import",
-    ":maven-api-toolchain-4_0_0-rc-3_http_import",
-    ":maven-api-plugin-4_0_0-rc-3_http_import",
-    ":maven-api-cli-4_0_0-rc-3_http_import",
-    ":maven-api-model-4_0_0-rc-3_http_import",
-    ":maven-api-xml-4_0_0-rc-3_http_import",
-    ":maven-core-4_0_0-rc-3_http_import",
-    ":maven-api-metadata-4_0_0-rc-3_http_import",
-    ":maven-api-spi-4_0_0-rc-3_http_import",
-    ":maven-impl-4_0_0-rc-3_http_import",
-    ":maven-repository-metadata-4_0_0-rc-3_http_import",
-    ":maven-cli-4_0_0-rc-3_http_import",
-    ":maven-di-4_0_0-rc-3_http_import",
-    ":maven-jline-4_0_0-rc-3_http_import",
-    ":jline-reader-3_29_0_http_import",
-    ":jline-style-3_29_0_http_import",
-    ":jline-builtins-3_29_0_http_import",
-    ":jline-console-3_29_0_http_import",
-    ":jline-console-ui-3_29_0_http_import",
-    ":jline-terminal-3_29_0_http_import",
-    ":jline-native-3_29_0_http_import",
-    ":jline-terminal-jni-3_29_0_http_import",
-    ":maven-logging-4_0_0-rc-3_http_import",
-    ":maven-xml-4_0_0-rc-3_http_import",
-    ":woodstox-core-7_1_0_http_import",
+    ":maven-embedder-4_0_0-rc-4_http_import",
+    ":maven-api-annotations-4_0_0-rc-4_http_import",
+    ":maven-api-core-4_0_0-rc-4_http_import",
+    ":maven-api-di-4_0_0-rc-4_http_import",
+    ":maven-api-settings-4_0_0-rc-4_http_import",
+    ":maven-api-toolchain-4_0_0-rc-4_http_import",
+    ":maven-api-plugin-4_0_0-rc-4_http_import",
+    ":maven-api-cli-4_0_0-rc-4_http_import",
+    ":maven-api-model-4_0_0-rc-4_http_import",
+    ":maven-api-xml-4_0_0-rc-4_http_import",
+    ":maven-core-4_0_0-rc-4_http_import",
+    ":maven-api-metadata-4_0_0-rc-4_http_import",
+    ":maven-api-spi-4_0_0-rc-4_http_import",
+    ":maven-impl-4_0_0-rc-4_http_import",
+    ":maven-resolver-connector-basic-2_0_9_http_import",
+    ":maven-repository-metadata-4_0_0-rc-4_http_import",
+    ":maven-cli-4_0_0-rc-4_http_import",
+    ":maven-resolver-transport-file-2_0_9_http_import",
+    ":maven-resolver-transport-jdk-2_0_9_http_import",
+    ":jdom2-2_0_6_1_http_import",
+    ":maven-di-4_0_0-rc-4_http_import",
+    ":maven-jline-4_0_0-rc-4_http_import",
+    ":jline-reader-3_30_4_http_import",
+    ":jline-style-3_30_4_http_import",
+    ":jline-builtins-3_30_4_http_import",
+    ":jline-console-3_30_4_http_import",
+    ":jline-console-ui-3_30_4_http_import",
+    ":jline-terminal-3_30_4_http_import",
+    ":jline-native-3_30_4_http_import",
+    ":jline-terminal-jni-3_30_4_http_import",
+    ":maven-logging-4_0_0-rc-4_http_import",
+    ":maven-xml-4_0_0-rc-4_http_import",
+    ":woodstox-core-7_1_1_http_import",
     ":stax2-api-4_2_2_http_import",
-    ":maven-artifact-4_0_0-rc-3_http_import",
-    ":maven-builder-support-4_0_0-rc-3_http_import",
-    ":maven-model-4_0_0-rc-3_http_import",
-    ":maven-support-4_0_0-rc-3_http_import",
-    ":maven-model-builder-4_0_0-rc-3_http_import",
-    ":plexus-interpolation-1_27_http_import",
-    ":maven-plugin-api-4_0_0-rc-3_http_import",
-    ":org_eclipse_sisu_plexus-0_9_0_M3_http_import",
-    ":maven-settings-4_0_0-rc-3_http_import",
-    ":maven-settings-builder-4_0_0-rc-3_http_import",
-    ":maven-toolchain-builder-4_0_0-rc-3_http_import",
-    ":maven-toolchain-model-4_0_0-rc-3_http_import",
-    ":maven-resolver-api-2_0_7_http_import",
-    ":maven-resolver-spi-2_0_7_http_import",
-    ":gson-2_12_1_http_import",
-    ":maven-resolver-util-2_0_7_http_import",
-    ":maven-resolver-impl-2_0_7_http_import",
-    ":maven-resolver-named-locks-2_0_7_http_import",
-    ":plexus-utils-4_0_1_http_import",
-    ":plexus-xml-4_0_4_http_import",
-    ":maven-xml-impl-4_0_0-alpha-9_http_import",
-    ":plexus-classworlds-2_8_0_http_import",
+    ":maven-artifact-4_0_0-rc-4_http_import",
+    ":maven-builder-support-4_0_0-rc-4_http_import",
+    ":maven-model-4_0_0-rc-4_http_import",
+    ":maven-support-4_0_0-rc-4_http_import",
+    ":maven-model-builder-4_0_0-rc-4_http_import",
+    ":plexus-interpolation-1_28_http_import",
+    ":maven-plugin-api-4_0_0-rc-4_http_import",
+    ":org_eclipse_sisu_plexus-0_9_0_M4_http_import",
+    ":maven-settings-4_0_0-rc-4_http_import",
+    ":maven-settings-builder-4_0_0-rc-4_http_import",
+    ":maven-toolchain-builder-4_0_0-rc-4_http_import",
+    ":maven-toolchain-model-4_0_0-rc-4_http_import",
+    ":maven-resolver-api-2_0_9_http_import",
+    ":maven-resolver-spi-2_0_9_http_import",
+    ":gson-2_13_1_http_import",
+    ":maven-resolver-util-2_0_9_http_import",
+    ":maven-resolver-impl-2_0_9_http_import",
+    ":maven-resolver-named-locks-2_0_9_http_import",
+    ":plexus-utils-4_0_2_http_import",
+    ":plexus-xml-4_1_0_http_import",
+    ":plexus-classworlds-2_9_0_http_import",
     ":plexus-sec-dispatcher-4_1_0_http_import",
     ":slf4j-api-2_0_17_http_import",
     ":commons-cli-1_9_0_http_import",
-    ":jansi-core-3_29_0_http_import",
+    ":jansi-core-3_30_4_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "maven-embedder-4_0_0-rc-3_http_import",
-  jar = "@maven-embedder-4_0_0-rc-3_http//file",
-  source_jar = "@maven-embedder-4_0_0-rc-3-sources_http//file"
+  name = "maven-embedder-4_0_0-rc-4_http_import",
+  jar = "@maven-embedder-4_0_0-rc-4_http//file",
+  source_jar = "@maven-embedder-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-annotations-4_0_0-rc-3_http_import",
-  jar = "@maven-api-annotations-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-annotations-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-annotations-4_0_0-rc-4_http_import",
+  jar = "@maven-api-annotations-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-annotations-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-core-4_0_0-rc-3_http_import",
-  jar = "@maven-api-core-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-core-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-core-4_0_0-rc-4_http_import",
+  jar = "@maven-api-core-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-core-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-di-4_0_0-rc-3_http_import",
-  jar = "@maven-api-di-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-di-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-di-4_0_0-rc-4_http_import",
+  jar = "@maven-api-di-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-di-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-settings-4_0_0-rc-3_http_import",
-  jar = "@maven-api-settings-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-settings-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-settings-4_0_0-rc-4_http_import",
+  jar = "@maven-api-settings-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-settings-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-toolchain-4_0_0-rc-3_http_import",
-  jar = "@maven-api-toolchain-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-toolchain-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-toolchain-4_0_0-rc-4_http_import",
+  jar = "@maven-api-toolchain-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-toolchain-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-plugin-4_0_0-rc-3_http_import",
-  jar = "@maven-api-plugin-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-plugin-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-plugin-4_0_0-rc-4_http_import",
+  jar = "@maven-api-plugin-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-plugin-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-cli-4_0_0-rc-3_http_import",
-  jar = "@maven-api-cli-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-cli-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-cli-4_0_0-rc-4_http_import",
+  jar = "@maven-api-cli-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-cli-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-model-4_0_0-rc-3_http_import",
-  jar = "@maven-api-model-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-model-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-model-4_0_0-rc-4_http_import",
+  jar = "@maven-api-model-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-model-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-xml-4_0_0-rc-3_http_import",
-  jar = "@maven-api-xml-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-xml-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-xml-4_0_0-rc-4_http_import",
+  jar = "@maven-api-xml-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-xml-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-core-4_0_0-rc-3_http_import",
-  jar = "@maven-core-4_0_0-rc-3_http//file",
-  source_jar = "@maven-core-4_0_0-rc-3-sources_http//file"
+  name = "maven-core-4_0_0-rc-4_http_import",
+  jar = "@maven-core-4_0_0-rc-4_http//file",
+  source_jar = "@maven-core-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-metadata-4_0_0-rc-3_http_import",
-  jar = "@maven-api-metadata-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-metadata-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-metadata-4_0_0-rc-4_http_import",
+  jar = "@maven-api-metadata-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-metadata-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-api-spi-4_0_0-rc-3_http_import",
-  jar = "@maven-api-spi-4_0_0-rc-3_http//file",
-  source_jar = "@maven-api-spi-4_0_0-rc-3-sources_http//file"
+  name = "maven-api-spi-4_0_0-rc-4_http_import",
+  jar = "@maven-api-spi-4_0_0-rc-4_http//file",
+  source_jar = "@maven-api-spi-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-impl-4_0_0-rc-3_http_import",
-  jar = "@maven-impl-4_0_0-rc-3_http//file",
-  source_jar = "@maven-impl-4_0_0-rc-3-sources_http//file"
+  name = "maven-impl-4_0_0-rc-4_http_import",
+  jar = "@maven-impl-4_0_0-rc-4_http//file",
+  source_jar = "@maven-impl-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-repository-metadata-4_0_0-rc-3_http_import",
-  jar = "@maven-repository-metadata-4_0_0-rc-3_http//file",
-  source_jar = "@maven-repository-metadata-4_0_0-rc-3-sources_http//file"
+  name = "maven-resolver-connector-basic-2_0_9_http_import",
+  jar = "@maven-resolver-connector-basic-2_0_9_http//file",
+  source_jar = "@maven-resolver-connector-basic-2_0_9-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-cli-4_0_0-rc-3_http_import",
-  jar = "@maven-cli-4_0_0-rc-3_http//file",
-  source_jar = "@maven-cli-4_0_0-rc-3-sources_http//file"
+  name = "maven-repository-metadata-4_0_0-rc-4_http_import",
+  jar = "@maven-repository-metadata-4_0_0-rc-4_http//file",
+  source_jar = "@maven-repository-metadata-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-di-4_0_0-rc-3_http_import",
-  jar = "@maven-di-4_0_0-rc-3_http//file",
-  source_jar = "@maven-di-4_0_0-rc-3-sources_http//file"
+  name = "maven-cli-4_0_0-rc-4_http_import",
+  jar = "@maven-cli-4_0_0-rc-4_http//file",
+  source_jar = "@maven-cli-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-jline-4_0_0-rc-3_http_import",
-  jar = "@maven-jline-4_0_0-rc-3_http//file",
-  source_jar = "@maven-jline-4_0_0-rc-3-sources_http//file"
+  name = "maven-resolver-transport-file-2_0_9_http_import",
+  jar = "@maven-resolver-transport-file-2_0_9_http//file",
+  source_jar = "@maven-resolver-transport-file-2_0_9-sources_http//file"
 )
 
 jvm_import(
-  name = "jline-reader-3_29_0_http_import",
-  jar = "@jline-reader-3_29_0_http//file",
-  source_jar = "@jline-reader-3_29_0-sources_http//file"
+  name = "maven-resolver-transport-jdk-2_0_9_http_import",
+  jar = "@maven-resolver-transport-jdk-2_0_9_http//file",
+  source_jar = "@maven-resolver-transport-jdk-2_0_9-sources_http//file"
 )
 
 jvm_import(
-  name = "jline-style-3_29_0_http_import",
-  jar = "@jline-style-3_29_0_http//file",
-  source_jar = "@jline-style-3_29_0-sources_http//file"
+  name = "maven-di-4_0_0-rc-4_http_import",
+  jar = "@maven-di-4_0_0-rc-4_http//file",
+  source_jar = "@maven-di-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "jline-builtins-3_29_0_http_import",
-  jar = "@jline-builtins-3_29_0_http//file",
-  source_jar = "@jline-builtins-3_29_0-sources_http//file"
+  name = "maven-jline-4_0_0-rc-4_http_import",
+  jar = "@maven-jline-4_0_0-rc-4_http//file",
+  source_jar = "@maven-jline-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "jline-console-3_29_0_http_import",
-  jar = "@jline-console-3_29_0_http//file",
-  source_jar = "@jline-console-3_29_0-sources_http//file"
+  name = "jline-reader-3_30_4_http_import",
+  jar = "@jline-reader-3_30_4_http//file",
+  source_jar = "@jline-reader-3_30_4-sources_http//file"
 )
 
 jvm_import(
-  name = "jline-console-ui-3_29_0_http_import",
-  jar = "@jline-console-ui-3_29_0_http//file",
-  source_jar = "@jline-console-ui-3_29_0-sources_http//file"
+  name = "jline-style-3_30_4_http_import",
+  jar = "@jline-style-3_30_4_http//file",
+  source_jar = "@jline-style-3_30_4-sources_http//file"
 )
 
 jvm_import(
-  name = "jline-terminal-3_29_0_http_import",
-  jar = "@jline-terminal-3_29_0_http//file",
-  source_jar = "@jline-terminal-3_29_0-sources_http//file"
+  name = "jline-builtins-3_30_4_http_import",
+  jar = "@jline-builtins-3_30_4_http//file",
+  source_jar = "@jline-builtins-3_30_4-sources_http//file"
 )
 
 jvm_import(
-  name = "jline-native-3_29_0_http_import",
-  jar = "@jline-native-3_29_0_http//file",
-  source_jar = "@jline-native-3_29_0-sources_http//file"
+  name = "jline-console-3_30_4_http_import",
+  jar = "@jline-console-3_30_4_http//file",
+  source_jar = "@jline-console-3_30_4-sources_http//file"
 )
 
 jvm_import(
-  name = "jline-terminal-jni-3_29_0_http_import",
-  jar = "@jline-terminal-jni-3_29_0_http//file",
-  source_jar = "@jline-terminal-jni-3_29_0-sources_http//file"
+  name = "jline-console-ui-3_30_4_http_import",
+  jar = "@jline-console-ui-3_30_4_http//file",
+  source_jar = "@jline-console-ui-3_30_4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-logging-4_0_0-rc-3_http_import",
-  jar = "@maven-logging-4_0_0-rc-3_http//file",
-  source_jar = "@maven-logging-4_0_0-rc-3-sources_http//file"
+  name = "jline-terminal-3_30_4_http_import",
+  jar = "@jline-terminal-3_30_4_http//file",
+  source_jar = "@jline-terminal-3_30_4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-xml-4_0_0-rc-3_http_import",
-  jar = "@maven-xml-4_0_0-rc-3_http//file",
-  source_jar = "@maven-xml-4_0_0-rc-3-sources_http//file"
+  name = "jline-native-3_30_4_http_import",
+  jar = "@jline-native-3_30_4_http//file",
+  source_jar = "@jline-native-3_30_4-sources_http//file"
 )
 
 jvm_import(
-  name = "woodstox-core-7_1_0_http_import",
-  jar = "@woodstox-core-7_1_0_http//file",
-  source_jar = "@woodstox-core-7_1_0-sources_http//file"
+  name = "jline-terminal-jni-3_30_4_http_import",
+  jar = "@jline-terminal-jni-3_30_4_http//file",
+  source_jar = "@jline-terminal-jni-3_30_4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-artifact-4_0_0-rc-3_http_import",
-  jar = "@maven-artifact-4_0_0-rc-3_http//file",
-  source_jar = "@maven-artifact-4_0_0-rc-3-sources_http//file"
+  name = "maven-logging-4_0_0-rc-4_http_import",
+  jar = "@maven-logging-4_0_0-rc-4_http//file",
+  source_jar = "@maven-logging-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-builder-support-4_0_0-rc-3_http_import",
-  jar = "@maven-builder-support-4_0_0-rc-3_http//file",
-  source_jar = "@maven-builder-support-4_0_0-rc-3-sources_http//file"
+  name = "maven-xml-4_0_0-rc-4_http_import",
+  jar = "@maven-xml-4_0_0-rc-4_http//file",
+  source_jar = "@maven-xml-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-model-4_0_0-rc-3_http_import",
-  jar = "@maven-model-4_0_0-rc-3_http//file",
-  source_jar = "@maven-model-4_0_0-rc-3-sources_http//file"
+  name = "woodstox-core-7_1_1_http_import",
+  jar = "@woodstox-core-7_1_1_http//file",
+  source_jar = "@woodstox-core-7_1_1-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-support-4_0_0-rc-3_http_import",
-  jar = "@maven-support-4_0_0-rc-3_http//file",
-  source_jar = "@maven-support-4_0_0-rc-3-sources_http//file"
+  name = "maven-artifact-4_0_0-rc-4_http_import",
+  jar = "@maven-artifact-4_0_0-rc-4_http//file",
+  source_jar = "@maven-artifact-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-model-builder-4_0_0-rc-3_http_import",
-  jar = "@maven-model-builder-4_0_0-rc-3_http//file",
-  source_jar = "@maven-model-builder-4_0_0-rc-3-sources_http//file"
+  name = "maven-builder-support-4_0_0-rc-4_http_import",
+  jar = "@maven-builder-support-4_0_0-rc-4_http//file",
+  source_jar = "@maven-builder-support-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-plugin-api-4_0_0-rc-3_http_import",
-  jar = "@maven-plugin-api-4_0_0-rc-3_http//file",
-  source_jar = "@maven-plugin-api-4_0_0-rc-3-sources_http//file"
+  name = "maven-model-4_0_0-rc-4_http_import",
+  jar = "@maven-model-4_0_0-rc-4_http//file",
+  source_jar = "@maven-model-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "org_eclipse_sisu_plexus-0_9_0_M3_http_import",
-  jar = "@org_eclipse_sisu_plexus-0_9_0_M3_http//file",
-  source_jar = "@org_eclipse_sisu_plexus-0_9_0_M3-sources_http//file"
+  name = "maven-support-4_0_0-rc-4_http_import",
+  jar = "@maven-support-4_0_0-rc-4_http//file",
+  source_jar = "@maven-support-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-settings-4_0_0-rc-3_http_import",
-  jar = "@maven-settings-4_0_0-rc-3_http//file",
-  source_jar = "@maven-settings-4_0_0-rc-3-sources_http//file"
+  name = "maven-model-builder-4_0_0-rc-4_http_import",
+  jar = "@maven-model-builder-4_0_0-rc-4_http//file",
+  source_jar = "@maven-model-builder-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-settings-builder-4_0_0-rc-3_http_import",
-  jar = "@maven-settings-builder-4_0_0-rc-3_http//file",
-  source_jar = "@maven-settings-builder-4_0_0-rc-3-sources_http//file"
+  name = "plexus-interpolation-1_28_http_import",
+  jar = "@plexus-interpolation-1_28_http//file",
+  source_jar = "@plexus-interpolation-1_28-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-toolchain-builder-4_0_0-rc-3_http_import",
-  jar = "@maven-toolchain-builder-4_0_0-rc-3_http//file",
-  source_jar = "@maven-toolchain-builder-4_0_0-rc-3-sources_http//file"
+  name = "maven-plugin-api-4_0_0-rc-4_http_import",
+  jar = "@maven-plugin-api-4_0_0-rc-4_http//file",
+  source_jar = "@maven-plugin-api-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-toolchain-model-4_0_0-rc-3_http_import",
-  jar = "@maven-toolchain-model-4_0_0-rc-3_http//file",
-  source_jar = "@maven-toolchain-model-4_0_0-rc-3-sources_http//file"
+  name = "org_eclipse_sisu_plexus-0_9_0_M4_http_import",
+  jar = "@org_eclipse_sisu_plexus-0_9_0_M4_http//file",
+  source_jar = "@org_eclipse_sisu_plexus-0_9_0_M4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-resolver-api-2_0_7_http_import",
-  jar = "@maven-resolver-api-2_0_7_http//file",
-  source_jar = "@maven-resolver-api-2_0_7-sources_http//file"
+  name = "maven-settings-4_0_0-rc-4_http_import",
+  jar = "@maven-settings-4_0_0-rc-4_http//file",
+  source_jar = "@maven-settings-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-resolver-spi-2_0_7_http_import",
-  jar = "@maven-resolver-spi-2_0_7_http//file",
-  source_jar = "@maven-resolver-spi-2_0_7-sources_http//file"
+  name = "maven-settings-builder-4_0_0-rc-4_http_import",
+  jar = "@maven-settings-builder-4_0_0-rc-4_http//file",
+  source_jar = "@maven-settings-builder-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "gson-2_12_1_http_import",
-  jar = "@gson-2_12_1_http//file",
-  source_jar = "@gson-2_12_1-sources_http//file"
+  name = "maven-toolchain-builder-4_0_0-rc-4_http_import",
+  jar = "@maven-toolchain-builder-4_0_0-rc-4_http//file",
+  source_jar = "@maven-toolchain-builder-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-resolver-util-2_0_7_http_import",
-  jar = "@maven-resolver-util-2_0_7_http//file",
-  source_jar = "@maven-resolver-util-2_0_7-sources_http//file"
+  name = "maven-toolchain-model-4_0_0-rc-4_http_import",
+  jar = "@maven-toolchain-model-4_0_0-rc-4_http//file",
+  source_jar = "@maven-toolchain-model-4_0_0-rc-4-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-resolver-impl-2_0_7_http_import",
-  jar = "@maven-resolver-impl-2_0_7_http//file",
-  source_jar = "@maven-resolver-impl-2_0_7-sources_http//file"
+  name = "maven-resolver-api-2_0_9_http_import",
+  jar = "@maven-resolver-api-2_0_9_http//file",
+  source_jar = "@maven-resolver-api-2_0_9-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-resolver-named-locks-2_0_7_http_import",
-  jar = "@maven-resolver-named-locks-2_0_7_http//file",
-  source_jar = "@maven-resolver-named-locks-2_0_7-sources_http//file"
+  name = "maven-resolver-spi-2_0_9_http_import",
+  jar = "@maven-resolver-spi-2_0_9_http//file",
+  source_jar = "@maven-resolver-spi-2_0_9-sources_http//file"
 )
 
 jvm_import(
-  name = "plexus-utils-4_0_1_http_import",
-  jar = "@plexus-utils-4_0_1_http//file",
-  source_jar = "@plexus-utils-4_0_1-sources_http//file"
+  name = "gson-2_13_1_http_import",
+  jar = "@gson-2_13_1_http//file",
+  source_jar = "@gson-2_13_1-sources_http//file"
 )
 
 jvm_import(
-  name = "plexus-xml-4_0_4_http_import",
-  jar = "@plexus-xml-4_0_4_http//file",
-  source_jar = "@plexus-xml-4_0_4-sources_http//file"
+  name = "maven-resolver-util-2_0_9_http_import",
+  jar = "@maven-resolver-util-2_0_9_http//file",
+  source_jar = "@maven-resolver-util-2_0_9-sources_http//file"
 )
 
 jvm_import(
-  name = "maven-xml-impl-4_0_0-alpha-9_http_import",
-  jar = "@maven-xml-impl-4_0_0-alpha-9_http//file",
-  source_jar = "@maven-xml-impl-4_0_0-alpha-9-sources_http//file"
+  name = "maven-resolver-impl-2_0_9_http_import",
+  jar = "@maven-resolver-impl-2_0_9_http//file",
+  source_jar = "@maven-resolver-impl-2_0_9-sources_http//file"
 )
 
 jvm_import(
-  name = "plexus-classworlds-2_8_0_http_import",
-  jar = "@plexus-classworlds-2_8_0_http//file",
-  source_jar = "@plexus-classworlds-2_8_0-sources_http//file"
+  name = "maven-resolver-named-locks-2_0_9_http_import",
+  jar = "@maven-resolver-named-locks-2_0_9_http//file",
+  source_jar = "@maven-resolver-named-locks-2_0_9-sources_http//file"
+)
+
+jvm_import(
+  name = "plexus-utils-4_0_2_http_import",
+  jar = "@plexus-utils-4_0_2_http//file",
+  source_jar = "@plexus-utils-4_0_2-sources_http//file"
+)
+
+jvm_import(
+  name = "plexus-xml-4_1_0_http_import",
+  jar = "@plexus-xml-4_1_0_http//file",
+  source_jar = "@plexus-xml-4_1_0-sources_http//file"
+)
+
+jvm_import(
+  name = "plexus-classworlds-2_9_0_http_import",
+  jar = "@plexus-classworlds-2_9_0_http//file",
+  source_jar = "@plexus-classworlds-2_9_0-sources_http//file"
 )
 
 jvm_import(
@@ -7042,14 +7070,14 @@ jvm_import(
 )
 
 jvm_import(
-  name = "jansi-core-3_29_0_http_import",
-  jar = "@jansi-core-3_29_0_http//file",
-  source_jar = "@jansi-core-3_29_0-sources_http//file"
+  name = "jansi-core-3_30_4_http_import",
+  jar = "@jansi-core-3_30_4_http//file",
+  source_jar = "@jansi-core-3_30_4-sources_http//file"
 )
 
 java_library(
-  name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-3-provided",
-  exports = [":maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-3"],
+  name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-4-provided",
+  exports = [":maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-4"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )

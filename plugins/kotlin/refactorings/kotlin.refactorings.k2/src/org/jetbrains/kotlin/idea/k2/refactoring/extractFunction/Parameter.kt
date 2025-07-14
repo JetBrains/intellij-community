@@ -49,7 +49,8 @@ internal class MutableParameter(
     override val originalDescriptor: PsiNamedElement,
     override val receiverCandidate: Boolean,
     private val originalType: KaType,
-    private val scope: KtElement
+    private val scope: KtElement,
+    override val contextParameter: Boolean
 ) : Parameter, IMutableParameter<KaType> {
 
     private val typePredicates = mutableSetOf<TypePredicate>()

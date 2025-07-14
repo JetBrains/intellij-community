@@ -17,6 +17,24 @@
     <orderEntry type="module" module-name="intellij.grazie" exported="" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module-library" exported="" scope="TEST">
+      <library name="ai.grazie.spell.hunspell.de" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-de-jvm:0.2.281">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de-jvm/0.2.281/hunspell-de-jvm-0.2.281.jar">
+              <sha256sum>17e8741b0bba21fd034d40a3b4190b819913f4ae9234b62e7c960bcd6cbd1c87</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de-jvm/0.2.281/hunspell-de-jvm-0.2.281.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de-jvm/0.2.281/hunspell-de-jvm-0.2.281-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="module-library">
       <library name="org.jetbrains.intellij.deps.languagetool:languagetool-core" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.5.0.12">

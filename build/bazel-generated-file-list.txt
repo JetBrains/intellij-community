@@ -666,7 +666,6 @@ platform/util/zip
 platform/vcs-api
 platform/vcs-api/vcs-api-core
 platform/vcs-impl
-platform/vcs-impl/backend
 platform/vcs-impl/exec
 platform/vcs-impl/frontend
 platform/vcs-impl/lang

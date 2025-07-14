@@ -4,12 +4,7 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
-import com.intellij.platform.debugger.impl.rpc.XStackFramePresentation
-import com.intellij.platform.debugger.impl.rpc.XStackFramePresentationFragment
-import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
-import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
-import com.intellij.platform.debugger.impl.rpc.toRpc
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId

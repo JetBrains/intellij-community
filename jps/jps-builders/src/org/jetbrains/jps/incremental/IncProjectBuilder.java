@@ -633,7 +633,11 @@ public final class IncProjectBuilder {
   }
 
   private @NotNull CompileContextImpl createContext(@NotNull CompileScope scope) {
-    return new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
+    CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
+    if (myIsTestMode) {
+      Utils.TEST_MODE_KEY.set(context, Boolean.TRUE);
+    }
+    return context;
   }
 
   private void cleanOutputRoots(@NotNull CompileContext context, boolean cleanCaches) throws ProjectBuildException {

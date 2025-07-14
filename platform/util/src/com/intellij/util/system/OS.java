@@ -4,6 +4,7 @@ package com.intellij.util.system;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.execution.Platform;
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.WinBuildNumber;
 import com.intellij.util.ArrayUtil;
 import com.sun.jna.Library;
@@ -29,7 +30,34 @@ public enum OS {
    * A string representation of the OS version.
    * The format is system-dependent ("major.minor" for Windows and macOS, kernel version for Linux, etc.)
    */
-  public final @NotNull String version = getOsVersion();
+  @SuppressWarnings("MethodMayBeStatic")
+  public final @NotNull String version() {
+    return VersionHolder.STR;
+  }
+
+  /**
+   * Returns the OS version string parsed as a {@link Version} object ("major.minor.bugfix" triple).
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  public final @NotNull Version parsedVersion() {
+    return VersionHolder.VAL;
+  }
+
+  /** @deprecated use {@link #version()} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("FieldMayBeStatic")
+  public final @NotNull String version = VersionHolder.STR;
+
+  /**
+   * Checks whether the current OS version is at least the specified major and minor versions.
+   * If the current OS version has only major number (e.g., Windows 11), pass {@code 0} as the minor version.
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  public final boolean isAtLeast(int major, int minor) {
+    if (major <= 0 || minor < 0) throw new IllegalArgumentException();
+    return VersionHolder.VAL.compareTo(new Version(major, minor, 0)) >= 0;
+  }
 
   /**
    * Returns an instance of {@link OsInfo} for the current OS.
@@ -56,20 +84,27 @@ public enum OS {
     return Other;
   }
 
-  private static String getOsVersion() {
-    String name = System.getProperty("os.name");
-    String version = System.getProperty("os.version", "unknown").toLowerCase(Locale.ENGLISH);
-    if (name.startsWith("Windows") && name.matches("Windows \\d+")) {
-      // for whatever reason, JRE reports "Windows 11" as a name and "10.0" as a version on Windows 11
-      try {
-        String version2 = name.substring("Windows".length() + 1) + ".0";
-        if (Float.parseFloat(version2) > Float.parseFloat(version)) {
-          version = version2;
+  private static final class VersionHolder {
+    private static final String STR;
+    private static final Version VAL;
+
+    static {
+      String name = System.getProperty("os.name");
+      String version = System.getProperty("os.version", "unknown").toLowerCase(Locale.ENGLISH);
+      if (name.startsWith("Windows") && name.matches("Windows \\d+")) {
+        // for whatever reason, JRE reports "Windows 11" as a name and "10.0" as a version on Windows 11
+        try {
+          String version2 = name.substring("Windows".length() + 1) + ".0";
+          if (Float.parseFloat(version2) > Float.parseFloat(version)) {
+            version = version2;
+          }
         }
+        catch (NumberFormatException ignored) { }
       }
-      catch (NumberFormatException ignored) { }
+      STR = version;
+      Version parsed = Version.parseVersion(version);
+      VAL = parsed != null ? parsed : new Version(0, 0, 0);
     }
-    return version;
   }
 
   public @NotNull Platform getPlatform() {

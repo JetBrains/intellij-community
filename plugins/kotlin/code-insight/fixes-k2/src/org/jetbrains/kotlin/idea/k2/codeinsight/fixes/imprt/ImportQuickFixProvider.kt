@@ -74,8 +74,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
     private fun renderCandidate(candidate: ImportCandidate): String = prettyPrint {
         val fqName = candidate.getFqName()
         if (
-            candidate.symbol is KaNamedClassSymbol || 
-            candidate.symbol is KaEnumEntrySymbol
+            candidate.symbol is KaNamedClassSymbol
         ) {
             append("class $fqName")
         } else {
@@ -185,7 +184,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             symbol is KaNamedFunctionSymbol && symbol.isInfix -> ImportFixHelper.ImportKind.INFIX_FUNCTION
             symbol is KaNamedFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
 
-            symbol is KaEnumEntrySymbol -> ImportFixHelper.ImportKind.CLASS
+            symbol is KaEnumEntrySymbol -> ImportFixHelper.ImportKind.ENUM_ENTRY
 
             else -> null
         }
@@ -202,8 +201,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
     context(KaSession)
     private fun ImportCandidate.getImportName(): String = buildString {
         if (
-            this@getImportName is CallableImportCandidate && 
-            symbol !is KaEnumEntrySymbol
+            this@getImportName is CallableImportCandidate
         ) {
             val classSymbol = when {
                 receiverType != null -> receiverType?.expandedSymbol

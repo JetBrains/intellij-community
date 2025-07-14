@@ -309,8 +309,6 @@
     <notificationGroup id="Vcs Notifications" displayType="BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.notifications"/>
     <notificationGroup id="Vcs Silent Notifications" displayType="NONE" bundle="messages.VcsBundle" key="notification.group.vcs.silent.notifications"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
 
@@ -361,6 +359,14 @@
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.actions.AnnotateWarningsProvider"/>
 
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.shelf.ShelfApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.shelf.ShelfActionsApiProvider"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeListToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.TagNodeToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeNodeConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ModuleNodeToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.FilePathNodeToEntityConverter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

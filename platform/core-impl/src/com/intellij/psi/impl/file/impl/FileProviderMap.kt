@@ -5,27 +5,69 @@ import com.intellij.ReviseWhenPortedToJDK
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
 import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Key
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
 import com.intellij.util.containers.ContainerUtil
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 /**
- * Contains view providers for a given virtual file.
+ * A map that stores file view providers for a given virtual file.
+ * Is thread-safe.
+ * Stored [FileViewProvider]s can be collected by GC at any time.
+ *
+ * The map handles [anyContext] as a special case:
+ * - The map can be empty.
+ * - If the map contains only one entry, it can have as a key either a specific context or [anyContext].
+ * - If the map contains only [anyContext] entry, and it receives a request for some specific context, the provider of [anyContext] is reassigned to the requested context, and it is returned.
+ * - If the map contains several view providers, all of them are guaranteed to be assigned to some specific contexts ([anyContext] is not allowed to be stored in the map)
+ * - If this map contains several entries or a single entry assigned to non-[anyContext], and it receives a request for [anyContext], one of the existing providers is returned.
+ *   The returned provider is guaranteed to be the same for subsequent requests until it gets collected by GC.
  */
 internal sealed interface FileProviderMap {
+
+  /**
+   * Returns a view provider for the given [context]. Can be null if there's no view provider for the given context assigned yet.
+   */
   operator fun get(context: CodeInsightContext): FileViewProvider?
 
+  /**
+   * Removes all existing view providers from this and installs the only [provider] tp [anyContext]
+   */
   fun removeAllAndSetAny(provider: FileViewProvider)
 
+  /**
+   * Removes the view provider for the given [context] if it is equal to [provider].
+   *
+   * @return true if the provider was removed.
+   */
   fun remove(context: CodeInsightContext, provider: AbstractFileViewProvider): Boolean
 
+  /**
+   * Tries to cache or get [provider] for [context].
+   *
+   * @return the actual provider stored in the map. Either [provider] or a provider that was already stored in the map.
+   */
   fun cacheOrGet(context: CodeInsightContext, provider: FileViewProvider): FileViewProvider
 
+  /**
+   * Support [anyContext] special case. See doc of [FileProviderMap].
+   *
+   * This method is called when the map contains a single entry, it has [anyContext] as a key, and we want to reassing this entry to [context]..
+   * The method tries to assign the context to the existing provider.
+   *
+   * @return the actual context assigned to [viewProvider]. Either [context] or a context that had been assigned to [viewProvider] concurrently.
+   */
   fun trySetContext(viewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext?
 
+  /**
+   * Returns all existing entries. The returned collection is thread-safe and cannot be collected by GC.
+   * Thus, don't store it in a field.
+   */
   val entries: Collection<Map.Entry<CodeInsightContext, FileViewProvider>>
 }
 
@@ -51,6 +93,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     val provider = map[context]
 
     if (provider != null) {
+      log.trace { "found provider in [$this]" }
       return provider
     }
 
@@ -58,9 +101,16 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
       return findAnyContext(map)
     }
 
+    log.trace { "no provider found in [$this]" }
     return null
   }
 
+  /**
+   * [map] has a designated value for [anyContext] that is called [ContextMap.defaultValue].
+   *
+   * We try to use it if it's not collected.
+   * Otherwise, we process the GC queue and try again.
+   */
   private fun findAnyContext(
     map: ContextMap<FileViewProvider>,
   ): FileViewProvider? {
@@ -73,6 +123,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
 
     val defaultValue = map.defaultValue()
     if (defaultValue != null) {
+      log.trace { "anyContext found for [$this]" }
       return defaultValue
     }
 
@@ -85,26 +136,23 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
         map.processQueue()
       }
       this.map.defaultValue()?.let {
+        log.trace { "anyContext found for [$this] after GC queue processing." }
         return it
       }
       // Damn it. Another view provider was collected too! Let's try one more time.
+      log.trace { "anyContext was GCed for [$this]. Trying again" }
     }
 
+    log.trace { "anyContext was GCed for [$this]. no provider found" }
     return null
   }
 
   override fun removeAllAndSetAny(provider: FileViewProvider) {
     update {
-      newMap(anyContext(), provider)
+      mapOf(anyContext(), provider)
     }
     storeStrongLinkInProvider(provider)
   }
-
-  private fun newMap(
-    context: CodeInsightContext,
-    provider: FileViewProvider,
-  ): ContextMap<FileViewProvider> =
-    emptyContextMap<FileViewProvider>().add(context, provider)
 
   /**
    * Write-only code. Please don't try to amend.
@@ -121,6 +169,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     update { map ->
       val currentProvider = map[context]
       if (currentProvider != null) {
+        log.trace { "found provider in [$this]" }
         return currentProvider
       }
 
@@ -131,12 +180,13 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
         else {
           val defaultValue = map.defaultValue()
           if (defaultValue != null) {
+            log.trace { "found provider for any-context in [$this]" }
             return defaultValue
           }
           else {
             // GC collected the default value, let's clean up map (processQueue()) and try again
-            update {
-              it.processQueue()
+            update { map1 ->
+              map1.processQueue()
             }
             return@update null
           }
@@ -152,6 +202,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
 
           val updatedContext = trySetContext(anyViewProvider, context)
           if (updatedContext === context) {
+            log.trace { "found provider in [$this]" }
             return anyViewProvider
           }
           else {
@@ -191,11 +242,6 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     return context
   }
 
-  private fun installContext(viewProvider: FileViewProvider, context: CodeInsightContext) {
-    val manager = CodeInsightContextManagerImpl.getInstanceImpl(viewProvider.manager.project)
-    manager.setCodeInsightContext(viewProvider, context)
-  }
-
   override fun remove(context: CodeInsightContext, provider: AbstractFileViewProvider): Boolean {
     update { map ->
       val currentProvider = map[context]
@@ -214,13 +260,20 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     get() = map.entries()
 
   /**
-   * If [block] returns the same instance, the update succeeds
-   * If [block] returns null, updates starts from scratch
-   * If [block] returns a new value, update tries doing CAS and if it does not succeed, retries from scratch.
+   * Updates the map atomically with the provided [block].
+   *
+   * The [block] can run several times:
+   *  - If [block] returns the same instance, the update succeeds
+   *  - If [block] returns `null`, updates starts from scratch
+   *  - If [block] returns a new value, update tries doing CAS and if it does not succeed, retries from scratch.
    */
+  @OptIn(ExperimentalContracts::class)
   private inline fun update(
     block: (currentMap: ContextMap<FileViewProvider>) -> ContextMap<FileViewProvider>?
   ) {
+    contract {
+      callsInPlace(block, kotlin.contracts.InvocationKind.AT_LEAST_ONCE)
+    }
     while (true) {
       val currentMap = map
       val newMap = block(currentMap) ?: continue
@@ -242,6 +295,23 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
   }
 }
 
+private fun mapOf(
+  context: CodeInsightContext,
+  provider: FileViewProvider,
+): ContextMap<FileViewProvider> =
+  emptyContextMap<FileViewProvider>().add(context, provider)
+
+private fun installContext(viewProvider: FileViewProvider, context: CodeInsightContext) {
+  val manager = CodeInsightContextManagerImpl.getInstanceImpl(viewProvider.manager.project)
+  manager.setCodeInsightContext(viewProvider, context)
+}
+
+/**
+ * An immutable map from contexts to [V].
+ * It has a stable [defaultValue] which corresponds to one of the contexts.
+ * It stays the same during the whole life of a given [ContextMap]. Though it can be collected by GC.
+ * To reassign the default context, [processQueue] should be called which will return a new instance of [ContextMap] with a new default context.
+ */
 private interface ContextMap<V : Any> {
   operator fun get(key: CodeInsightContext): V?
   fun add(key: CodeInsightContext, value: V): ContextMap<V>
@@ -436,5 +506,7 @@ private class EntryImpl<V : Any>(
   override val key: CodeInsightContext,
   override val value: V,
 ): Map.Entry<CodeInsightContext, V>
+
+private val log = com.intellij.openapi.diagnostic.logger<FileProviderMap>()
 
 private val strongLinkToFileProviderMap = Key.create<FileProviderMap>("strongLinkToFileProviderMap")

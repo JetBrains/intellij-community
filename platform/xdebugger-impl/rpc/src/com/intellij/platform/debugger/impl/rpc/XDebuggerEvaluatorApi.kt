@@ -11,7 +11,8 @@ import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValueDescriptor
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer

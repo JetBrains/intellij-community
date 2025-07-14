@@ -380,6 +380,35 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/contextParameters")
+    public static class ContextParameters extends AbstractK2IntroduceFunctionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("base.kt")
+        public void testBase() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/contextParameters/base.kt");
+        }
+
+        @TestMetadata("unnamed.kt")
+        public void testUnnamed() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/contextParameters/unnamed.kt");
+        }
+
+        @TestMetadata("withProvidedContext.kt")
+        public void testWithProvidedContext() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/contextParameters/withProvidedContext.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/controlFlow")
     public abstract static class ControlFlow extends AbstractK2IntroduceFunctionTest {
         @RunWith(JUnit3RunnerWithInners.class)

@@ -11,13 +11,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
+import com.intellij.platform.debugger.impl.rpc.XBreakpointEvent
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -69,22 +73,38 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       FrontendXBreakpointTypesManager.getInstance(project).typesInitialized().await()
       val (initialBreakpoints, breakpointEvents) = XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
       for (breakpointDto in initialBreakpoints) {
-        addBreakpoint(breakpointDto, updateUI = false)
+        try {
+          addBreakpoint(breakpointDto, updateUI = false)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          log.error("Error during initial breakpoints creation from backend $breakpointDto", e)
+        }
       }
       lineBreakpointManager.queueAllBreakpointsUpdate()
 
       breakpointEvents.toFlow().collect { event ->
-        when (event) {
-          is XBreakpointEvent.BreakpointAdded -> {
-            log.info("Breakpoint add request from backend: ${event.breakpointDto.id}")
-            addBreakpoint(event.breakpointDto, updateUI = true)
+        try {
+          when (event) {
+            is XBreakpointEvent.BreakpointAdded -> {
+              log.info("Breakpoint add request from backend: ${event.breakpointDto.id}")
+              addBreakpoint(event.breakpointDto, updateUI = true)
+            }
+            is XBreakpointEvent.BreakpointRemoved -> {
+              log.info("Breakpoint removal request from backend: ${event.breakpointId}")
+              removeBreakpointLocally(event.breakpointId)
+              // breakpointRemoved event happened on the server, so we can remove id from the frontend
+              breakpointIdsRemovedLocally.remove(event.breakpointId)
+            }
           }
-          is XBreakpointEvent.BreakpointRemoved -> {
-            log.info("Breakpoint removal request from backend: ${event.breakpointId}")
-            removeBreakpointLocally(event.breakpointId)
-            // breakpointRemoved event happened on the server, so we can remove id from the frontend
-            breakpointIdsRemovedLocally.remove(event.breakpointId)
-          }
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          log.error("Error during breakpoint event processing from backend: $event", e)
         }
       }
     }

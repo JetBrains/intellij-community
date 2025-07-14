@@ -7,14 +7,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.editor.BreakpointPromoterEditorListener
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerSessionEvent
 import com.intellij.platform.project.projectId
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerSessionEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
