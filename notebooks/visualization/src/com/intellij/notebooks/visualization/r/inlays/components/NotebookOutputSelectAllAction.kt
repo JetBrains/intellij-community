@@ -28,7 +28,7 @@ internal class NotebookOutputSelectAllAction : DumbAwareAction() {
   }
 }
 
-val NOTEBOOKS_CONSOLE_OUTPUT_KEY = Key.create<Boolean>("NOTEBOOKS_CONSOLE_OUTPUT")
+private val NOTEBOOKS_CONSOLE_OUTPUT_KEY = Key.create<Boolean>("NOTEBOOKS_CONSOLE_OUTPUT")
 
 fun initOutputTextConsole(editor: Editor,
                           consoleEditor: EditorEx,
