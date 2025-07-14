@@ -1104,7 +1104,7 @@ public final class PluginManagerConfigurable
               downloaded.sortByName();
 
               long enabledNonBundledCount = nonBundledPlugins.stream()
-                .filter(descriptor -> !uiPluginManager.isPluginDisabled(descriptor.getPluginId()))
+                .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
                 .count();
               downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
               myInstalledPanel.addGroup(downloaded);
