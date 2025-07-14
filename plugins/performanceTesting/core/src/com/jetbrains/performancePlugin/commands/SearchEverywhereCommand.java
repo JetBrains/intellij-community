@@ -91,40 +91,18 @@ public class SearchEverywhereCommand extends AbstractCommand {
     Ref<String> tabId = computeTabId(tab);
 
     int numberOfPermits = getNumberOfPermits(insertText);
+    var manager = SearchEverywhereManager.getInstance(project);
+    boolean isNewSe = !(manager instanceof SearchEverywhereManagerImpl);
     Semaphore typingSemaphore = new Semaphore(numberOfPermits);
+
     TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere"), globalSpan -> {
-      ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
-        try {
-          TypingTarget target = findTarget(context);
-          Component component;
-          if (!(target instanceof EditorComponentImpl)) {
-            LOG.info("Editor is not opened, focus owner will be used.");
-            component = IdeFocusManager.getInstance(project).getFocusOwner();
-          }
-          else {
-            component = (EditorComponentImpl)target;
-          }
-          DataContext dataContext = CustomizedDataContext.withSnapshot(
-            DataManager.getInstance().getDataContext(component),
-            sink -> sink.set(CommonDataKeys.PROJECT, context.getProject()));
-          DataContext wrappedDataContext = wrapDataContextWithActionStartData(dataContext);
-          IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-          TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_dialog_shown"), dialogSpan -> {
-            var manager = SearchEverywhereManager.getInstance(project);
-            AnActionEvent event = AnActionEvent.createEvent(
-              wrappedDataContext, null, ActionPlaces.EDITOR_POPUP, ActionUiKind.POPUP, null);
-            manager.show(tabId.get(), "", event);
-            SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
-            assert (popupInstance != null);
-            attachSearchListeners(popupInstance);
-            return null;
-          });
-          typeOrInsertText(context, insertText, typingSemaphore, warmup);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }));
+      if (isNewSe) {
+        showPopupInEdtWaitForPopupAndTypeText(manager, project, context, tabId, insertText, typingSemaphore, warmup);
+      }
+      else {
+        showPopupAndTypeTextAllInEDT(manager, project, context, tabId, insertText, typingSemaphore, warmup);
+      }
+
       try {
         typingSemaphore.acquire();
         SearchEverywherePopupInstance popupInstance = SearchEverywhereManager.getInstance(project).getCurrentlyShownPopupInstance();
@@ -149,6 +127,82 @@ public class SearchEverywhereCommand extends AbstractCommand {
     });
 
     return Promises.toPromise(actionCallback);
+  }
+
+  private void showPopupAndTypeTextAllInEDT(SearchEverywhereManager manager, Project project, @NotNull PlaybackContext context, Ref<String> tabId, String insertText, Semaphore typingSemaphore, boolean warmup) {
+    ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
+      try {
+        DataContext wrappedDataContext = createDataContext(context, project);
+        IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+        TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_dialog_shown"), dialogSpan -> {
+          showPopup(manager, wrappedDataContext, tabId);
+          SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+          assert (popupInstance != null);
+          attachSearchListeners(popupInstance);
+          return null;
+        });
+        typeOrInsertText(context, insertText, typingSemaphore, warmup);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }));
+  }
+
+  private void showPopupInEdtWaitForPopupAndTypeText(SearchEverywhereManager manager, Project project, @NotNull PlaybackContext context, Ref<String> tabId, String insertText, Semaphore typingSemaphore, boolean warmup) {
+    ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
+      try {
+        DataContext wrappedDataContext = createDataContext(context, project);
+        IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+        TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_dialog_shown"), dialogSpan -> {
+          showPopup(manager, wrappedDataContext, tabId);
+          return null;
+        });
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }));
+
+    // Get the popup instance outside if EDT
+    SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+
+    ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
+      try {
+        attachListenersToPopup(popupInstance);
+        typeOrInsertText(context, insertText, typingSemaphore, warmup);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }));
+  }
+
+  private static DataContext createDataContext(@NotNull PlaybackContext context, @NotNull Project project) {
+    TypingTarget target = findTarget(context);
+    Component component;
+    if (!(target instanceof EditorComponentImpl)) {
+      LOG.info("Editor is not opened, focus owner will be used.");
+      component = IdeFocusManager.getInstance(project).getFocusOwner();
+    }
+    else {
+      component = (EditorComponentImpl)target;
+    }
+    DataContext dataContext = CustomizedDataContext.withSnapshot(
+      DataManager.getInstance().getDataContext(component),
+      sink -> sink.set(CommonDataKeys.PROJECT, context.getProject()));
+    return wrapDataContextWithActionStartData(dataContext);
+  }
+
+  private static void showPopup(SearchEverywhereManager manager, DataContext dataContext, Ref<String> tabId) {
+    AnActionEvent event = AnActionEvent.createEvent(
+      dataContext, null, ActionPlaces.EDITOR_POPUP, ActionUiKind.POPUP, null);
+    manager.show(tabId.get(), "", event);
+  }
+
+  private void attachListenersToPopup(SearchEverywherePopupInstance popupInstance) {
+    assert (popupInstance != null);
+    attachSearchListeners(popupInstance);
   }
 
   private static @NotNull Ref<String> computeTabId(String tab) {
