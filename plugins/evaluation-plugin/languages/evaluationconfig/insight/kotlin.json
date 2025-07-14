@@ -1,0 +1,46 @@
+{
+  "language": "Kotlin",
+  "projectPath": "../ml-eval/ultimate",
+  "outputDir": "bin/ml-eval-insight-java-output",
+  "strategy": {
+    "collectContextOnly": false,
+    "insightsFilePath": "../mockInsights/insights dataset.csv"
+  },
+  "actions": {
+    "evaluationRoots": [
+      "plugins/llm/daemon/src/com/intellij/ml/llm/daemon/insight/ui/FeedbackPanel.kt",
+      "plugins/full-line/core-completion/src/com/intellij/ml/inline/completion/experiment/extendable/ExperimentStatusManager.kt",
+      "phpstorm/php/src/com/jetbrains/php/lang/inspections/PhpDeprecationInspection.java",
+      "plugins/async/intellij.performanceTesting.async.core/src/com/jetbrains/performancePlugin/profilers/async/core/AsyncProfilerCommandBuilder.java",
+      "plugins/evaluation-plugin/ijnext/src/com/intellij/evaluationPlugin/ijnext/insight/InsightFeature.kt",
+      "plugins/full-line/core-completion/src/com/intellij/ml/inline/completion/experiment/extendable/ExperimentStatusManager.kt",
+      "plugins/llm/agents/impl/src/com/intellij/ml/llm/agents/impl/chat/mcp/McpToolUseApprovalMessagePartView.kt",
+      "plugins/llm/codeGeneration/src/com/intellij/ml/llm/codeGeneration/multifile/core/part/LlmPatchMessagePartFactory.kt",
+      "phpstorm/php/src/com/jetbrains/php/mockery/PhpMockeryExpectedMethodReferenceContributor.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/inspections/PhpPassByRefInspection.java",
+      "community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java",
+      "rustrover/core/src/main/kotlin/org/rust/lang/core/types/infer/TypeInferenceWalker.kt",
+      "plugins/llm/core/src/com/intellij/ml/llm/core/chat/ui/chat/AIAssistantChatPanel.kt",
+      "plugins/llm/core/src/com/intellij/ml/llm/core/chat/ui/chat/input/AIAssistantInput.kt",
+      "plugins/full-line/cloud-impl/src/com/intellij/ml/llm/completion/cloud/context/mainEditor/RecentlyViewedContextCollector.kt",
+      "plugins/full-line/markdown/cloud/src/com/intellij/ml/llm/markdown/completion/MarkdownCloudCompletionLanguageKit.kt",
+      "plugins/evaluation-plugin/ijnext/src/com/intellij/evaluationPlugin/ijnext/insight/AIInsightFeatureInvoker.kt"
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 10,
+    "filesLimit": 5,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Java_FLCC_-_INSIGHTS",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}
