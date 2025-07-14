@@ -86,6 +86,7 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core",
     "//platform/backend/observation",
     "//plugins/kotlin/code-insight/utils",
+    "@lib//:opentelemetry",
   ],
   runtime_deps = [":gradle-java_resources"]
 )
@@ -169,6 +170,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//plugins/kotlin/code-insight/utils",
+    "@lib//:opentelemetry",
   ],
   runtime_deps = [":gradle-java_resources"]
 )

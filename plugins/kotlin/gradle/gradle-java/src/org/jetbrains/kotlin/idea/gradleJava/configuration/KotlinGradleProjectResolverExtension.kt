@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -87,8 +88,10 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
     }
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
-        return super.createModule(gradleModule, projectDataNode)?.also {
-            initializeModuleData(gradleModule, it, projectDataNode, resolverCtx)
+        return super.createModule(gradleModule, projectDataNode)?.also { mainModuleNode ->
+            ExternalSystemTelemetryUtil.runWithSpan(projectDataNode.data.owner, "kotlin_import_jvm_createModule") {
+                initializeModuleData(gradleModule, mainModuleNode, projectDataNode, resolverCtx)
+            }
         }
     }
 
