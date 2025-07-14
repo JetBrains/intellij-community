@@ -173,14 +173,18 @@ object GrazieReplaceTypoQuickFix {
   @JvmStatic
   fun toFileReplacements(replacementRange: TextRange, suggestion: CharSequence, text: TextContent): List<Pair<SmartPsiFileRange, String>> {
     val replacedText = replacementRange.subSequence(text)
+    val file = text.containingFile
+    val spm = SmartPointerManager.getInstance(file.project)
+    if (replacedText.contains(Regex("(- *\n)|(\n *-)"))) {
+      val fileRange = text.textRangeToFile(replacementRange)
+      return listOf(spm.createSmartPsiFileRangePointer(file, fileRange) to suggestion.toString())
+    }
     val commonPrefix = commonPrefixLength(suggestion, replacedText)
     val commonSuffix =
       min(commonSuffixLength(suggestion, replacedText), min(suggestion.length, replacementRange.length) - commonPrefix)
     val localRange = TextRange(replacementRange.startOffset + commonPrefix, replacementRange.endOffset - commonSuffix)
     var replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
 
-    val file = text.containingFile
-    val spm = SmartPointerManager.getInstance(file.project)
     val shreds = text.intersection(text.textRangeToFile(localRange))
     if (shreds.isEmpty()) return emptyList()
 
@@ -255,8 +259,8 @@ object GrazieReplaceTypoQuickFix {
     val model = DocumentMarkupModel.forDocument(document, project, false) ?: return
 
     for (highlighter in model.allHighlighters) {
-      if (TextRange.areSegmentsEqual(range, highlighter!!)) {
-        model.removeHighlighter(highlighter!!)
+      if (TextRange.areSegmentsEqual(range, highlighter)) {
+        model.removeHighlighter(highlighter)
       }
     }
   }
