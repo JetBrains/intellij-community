@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.rpc
+package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.rpc.ProcessHandlerDto
 import com.intellij.ide.rpc.BackendDocumentId
@@ -8,15 +8,15 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.debugger.impl.rpc.XDebuggerConsoleViewData
-import com.intellij.platform.debugger.impl.rpc.XExpressionDto
-import com.intellij.platform.debugger.impl.rpc.XFileColorDto
-import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow

@@ -28,6 +28,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoTargetDto
+import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoTargetId
 import com.intellij.ui.Hint
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ListActions
@@ -43,9 +46,6 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
-import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetDto
-import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetId
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import com.intellij.xdebugger.ui.DebuggerColors

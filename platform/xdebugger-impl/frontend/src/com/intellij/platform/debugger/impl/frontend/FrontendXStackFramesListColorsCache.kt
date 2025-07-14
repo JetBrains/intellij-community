@@ -5,11 +5,11 @@ import com.intellij.ide.ui.colors.color
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.rpc.SerializedColorState
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.psi.search.scope.NonProjectFilesScope
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import kotlinx.coroutines.launch
 import java.awt.Color
 import java.util.concurrent.atomic.AtomicInteger
