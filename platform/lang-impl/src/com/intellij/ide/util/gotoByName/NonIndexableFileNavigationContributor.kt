@@ -32,8 +32,15 @@ class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAwa
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
     val project = scope.project ?: return
     if (!isGotoFileToNonIndexableEnabled(project)) return
+    val filenamesProcessed = hashSetOf<String>()
     FileBasedIndex.getInstance().iterateNonIndexableFiles(project, scope, { file ->
-      processor.process(file.name)
+      val filename = file.name
+      if (filenamesProcessed.add(filename)) {
+        processor.process(filename)
+      }
+      else {
+        true
+      }
     })
   }
 

@@ -188,7 +188,7 @@ class NonIndexableFileNavigationContributorTest {
     VfsTestUtil.syncRefresh()
 
     val names = processNames()
-    assertThat(names).containsExactlyInAnyOrder("u1", "u2", "link-1", "link-1", "link-2", "link-2")
+    assertThat(names).containsExactlyInAnyOrder("u1", "u2", "link-1", "link-2")
   }
 
   @Test
