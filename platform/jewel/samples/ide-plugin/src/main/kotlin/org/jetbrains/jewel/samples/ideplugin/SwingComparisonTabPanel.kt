@@ -51,7 +51,9 @@ import org.jetbrains.jewel.bridge.medium
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
@@ -302,12 +304,12 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             Text("Not editable")
                             Text(text = "Selected item: $selectedText")
 
-                            //                            ListComboBox(
-                            //                                items = comboBoxItems,
-                            //                                selectedIndex = selectedIndex,
-                            //                                onSelectedItemChange = { selectedIndex = it },
-                            //                                modifier = Modifier.width(200.dp),
-                            //                            )
+                            ListComboBox(
+                                items = comboBoxItems,
+                                selectedIndex = selectedIndex,
+                                onSelectedItemChange = { selectedIndex = it },
+                                modifier = Modifier.width(200.dp),
+                            )
                         }
 
                         Column {
@@ -317,13 +319,13 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             Text("Not editable + disabled")
                             Text(text = "Selected item: $selectedText")
 
-                            //                            ListComboBox(
-                            //                                items = comboBoxItems,
-                            //                                selectedIndex = selectedIndex,
-                            //                                onSelectedItemChange = { selectedIndex = it },
-                            //                                modifier = Modifier.width(200.dp),
-                            //                                enabled = false,
-                            //                            )
+                            ListComboBox(
+                                items = comboBoxItems,
+                                selectedIndex = selectedIndex,
+                                onSelectedItemChange = { selectedIndex = it },
+                                modifier = Modifier.width(200.dp),
+                                enabled = false,
+                            )
                         }
 
                         Column {
@@ -333,13 +335,13 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             Text("Editable")
                             Text(text = "Selected item: $selectedText")
 
-                            //                            EditableListComboBox(
-                            //                                items = comboBoxItems,
-                            //                                selectedIndex = selectedIndex,
-                            //                                onSelectedItemChange = { selectedIndex = it },
-                            //                                modifier = Modifier.width(200.dp),
-                            //                                maxPopupHeight = 150.dp,
-                            //                            )
+                            EditableListComboBox(
+                                items = comboBoxItems,
+                                selectedIndex = selectedIndex,
+                                onSelectedItemChange = { selectedIndex = it },
+                                modifier = Modifier.width(200.dp),
+                                maxPopupHeight = 150.dp,
+                            )
                         }
 
                         Column {
@@ -349,13 +351,13 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             Text("Editable + disabled")
                             Text(text = "Selected item: $selectedText")
 
-                            //                            EditableListComboBox(
-                            //                                items = comboBoxItems,
-                            //                                selectedIndex = selectedIndex,
-                            //                                onSelectedItemChange = { selectedIndex = it },
-                            //                                modifier = Modifier.width(200.dp),
-                            //                                enabled = false,
-                            //                            )
+                            EditableListComboBox(
+                                items = comboBoxItems,
+                                selectedIndex = selectedIndex,
+                                onSelectedItemChange = { selectedIndex = it },
+                                modifier = Modifier.width(200.dp),
+                                enabled = false,
+                            )
                         }
                     }
                 }
