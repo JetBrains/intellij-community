@@ -803,7 +803,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
           descriptors.add(descriptor)
           LOG.warn("For ${entry.key} dependent plugin: ${descriptor.pluginId} not found")
         }
-        break
       }
     }
 
