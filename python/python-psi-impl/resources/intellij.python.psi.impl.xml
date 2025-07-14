@@ -507,7 +507,7 @@
                  description="When enabled, activates LiteralString inference for Python string literals" />
     <registryKey key="python.optimized.type.eval.context" defaultValue="true"
                  description="It optimises cache usage for storing calculated types."/>
-    <registryKey key="python.use.library.leve.type.eval.context" defaultValue="true"
+    <registryKey key="python.use.separated.libraries.type.cache" defaultValue="true"
                  description="It enables the use of a library-level cache for PSI elements from packages."/>
     <registryKey key="python.statement.lists.incremental.reparse" defaultValue="false"
                  description="Enables incremental reparse for statement lists"/>

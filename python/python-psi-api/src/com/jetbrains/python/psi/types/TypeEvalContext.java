@@ -99,7 +99,7 @@ public sealed class TypeEvalContext {
    * the analyzed code was called or may be called. Since this is basically guesswork, the results should be used only for code completion.
    */
   public static @NotNull TypeEvalContext codeCompletion(final @NotNull Project project, final @Nullable PsiFile origin) {
-    if (Registry.is("python.use.library.leve.type.eval.context")) {
+    if (Registry.is("python.use.separated.libraries.type.cache")) {
       return new LibraryLongLiveTypeEvalContext(true, true, true, origin);
     }
     return getContextFromCache(project, new TypeEvalContext(true, true, true, origin));
@@ -113,7 +113,7 @@ public sealed class TypeEvalContext {
    * For code completion see {@link TypeEvalContext#codeCompletion(Project, PsiFile)}.
    */
   public static TypeEvalContext userInitiated(final @NotNull Project project, final @Nullable PsiFile origin) {
-    if (Registry.is("python.use.library.leve.type.eval.context")) {
+    if (Registry.is("python.use.separated.libraries.type.cache")) {
       return new LibraryLongLiveTypeEvalContext(true, true, false, origin);
     }
     return getContextFromCache(project, new TypeEvalContext(true, true, false, origin));
