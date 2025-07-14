@@ -16,12 +16,9 @@ import java.util.*;
  * <p>
  * Supports optimized {@link Collection#add(Object)} and {@link Collection#addAll(Collection)}
  * without materialization of all containing files.
- * Remove operations are not supported.
  * NOT thread-safe.
  * </p>
- * <p>
  * Use {@link VfsUtilCore#createCompactVirtualFileSet()} to instantiate a new set.
- * </p>
  */
 @ApiStatus.Internal
 public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implements VirtualFileSetEx {
