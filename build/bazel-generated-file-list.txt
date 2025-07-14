@@ -492,6 +492,7 @@ platform/kernel/shared
 platform/lang-api
 platform/lang-core
 platform/lang-impl
+platform/lang-impl/backend
 platform/lang-impl/testEntities
 platform/libraries/cglib
 platform/locking.impl

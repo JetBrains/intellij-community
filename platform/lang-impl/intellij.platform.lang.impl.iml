@@ -14,7 +14,10 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+              <args>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-0.1/rpc-compiler-plugin-2.2.0-0.1.jar</arg>
+              </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>
@@ -131,6 +134,7 @@
     <orderEntry type="module" module-name="intellij.platform.experiment" />
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
   </component>
 </module>

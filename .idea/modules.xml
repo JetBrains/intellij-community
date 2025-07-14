@@ -865,6 +865,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lang-api/intellij.platform.lang.iml" filepath="$PROJECT_DIR$/platform/lang-api/intellij.platform.lang.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-core/intellij.platform.lang.core.iml" filepath="$PROJECT_DIR$/platform/lang-core/intellij.platform.lang.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/intellij.platform.lang.impl.iml" filepath="$PROJECT_DIR$/platform/lang-impl/intellij.platform.lang.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/backend/intellij.platform.lang.impl.backend.iml" filepath="$PROJECT_DIR$/platform/lang-impl/backend/intellij.platform.lang.impl.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/testEntities/intellij.platform.lang.testEntities.iml" filepath="$PROJECT_DIR$/platform/lang-impl/testEntities/intellij.platform.lang.testEntities.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/intellij.platform.lang.tests.iml" filepath="$PROJECT_DIR$/platform/lang-impl/intellij.platform.lang.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/intellij.platform.langInjection.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/intellij.platform.langInjection.iml" />
