@@ -182,8 +182,8 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
           }
           else {
             // GC collected the default value, let's clean up map (processQueue()) and try again
-            update {
-              it.processQueue()
+            update { map1 ->
+              map1.processQueue()
             }
             return@update null
           }
