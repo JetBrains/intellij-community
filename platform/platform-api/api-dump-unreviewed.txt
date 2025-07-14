@@ -8140,7 +8140,6 @@ f:com.intellij.ui.table.AdditionalTableHeaderPositionHelper
 - <init>(com.intellij.ui.table.AdditionalTableHeader):V
 - f:changeTable(javax.swing.JTable,javax.swing.JTable):V
 - f:currentHeaderContainmentUpdate():V
-- f:findTableHeader():java.awt.Component
 - f:getMyLocation():com.intellij.ui.table.AdditionalTableHeader$Position
 - f:getPosition():com.intellij.ui.table.AdditionalTableHeader$Position
 - f:getStatisticsHeader():com.intellij.ui.table.AdditionalTableHeader
@@ -8148,7 +8147,6 @@ f:com.intellij.ui.table.AdditionalTableHeaderPositionHelper
 - propertyChange(java.beans.PropertyChangeEvent):V
 - f:setMyLocation(com.intellij.ui.table.AdditionalTableHeader$Position):V
 - f:setPosition(com.intellij.ui.table.AdditionalTableHeader$Position):V
-- f:setStatisticsHeader(com.intellij.ui.table.AdditionalTableHeader):V
 c:com.intellij.ui.table.BaseTableView
 - com.intellij.ui.table.JBTable
 - <init>(javax.swing.table.TableModel):V
