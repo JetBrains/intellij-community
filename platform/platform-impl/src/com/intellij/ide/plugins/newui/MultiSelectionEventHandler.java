@@ -90,12 +90,12 @@ public final class MultiSelectionEventHandler extends EventHandler {
           }
 
           DefaultActionGroup group = new DefaultActionGroup();
-          component.createPopupMenu(group, getSelectionWithoutEssential());
+          component.createPopupMenu(group, getDisableableSelection());
           if (group.getChildrenCount() == 0) {
             return;
           }
 
-          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelectionWithoutEssential());
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getDisableableSelection());
 
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
@@ -186,9 +186,9 @@ public final class MultiSelectionEventHandler extends EventHandler {
           if (component.getSelection() != SelectionType.SELECTION) {
             component.setSelection(SelectionType.SELECTION);
           }
-          component.handleKeyAction(event, getSelectionWithoutEssential());
+          component.handleKeyAction(event, getDisableableSelection());
 
-          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelectionWithoutEssential());
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getDisableableSelection());
         }
       }
 
@@ -286,13 +286,11 @@ public final class MultiSelectionEventHandler extends EventHandler {
 
   @Override
   public @NotNull List<ListPluginComponent> getSelection() {
-    return myComponents.stream()
-      .filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
+    return myComponents.stream().filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
   }
 
-  private @NotNull List<ListPluginComponent> getSelectionWithoutEssential() {
-    return getSelection().stream()
-      .filter(pluginComponent -> pluginComponent.isDisableAllowed()).toList();
+  private @NotNull List<ListPluginComponent> getDisableableSelection() {
+    return getSelection().stream().filter(pluginComponent -> pluginComponent.isDisableAllowed()).toList();
   }
 
   @Override
