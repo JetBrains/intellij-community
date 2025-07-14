@@ -75,6 +75,10 @@ val SearchScope.codeInsightContextInfo: CodeInsightContextInfo
 
 /**
  * A base interface storing information about [CodeInsightContext]s associated with the [SearchScope] which returns this object
+ *
+ * There are two sealed implementations of this interface:
+ *  - [ActualCodeInsightContextInfo]
+ *  - [NoContextInformation]
  */
 @ApiStatus.Experimental
 sealed interface CodeInsightContextInfo
@@ -84,7 +88,11 @@ sealed interface CodeInsightContextInfo
  * about scopes. Note that this scope still can contain files.
  *
  * Implementation note: we need this interface because not all scopes can know at compilation time if they are aware of contexts.
- * Examples of such scope are Union and Intersection scopes.
+ * Examples of such a scope are Union and Intersection scopes. I.e., a union scope can contain scopes aware of contexts as well as scopes that are not aware of contexts.
+ *
+ * @see NoContextInformation() constructor function
+ * @see codeInsightContextInfo
+ * @see CodeInsightContextAwareSearchScope
  */
 @ApiStatus.Experimental
 sealed interface NoContextInformation : CodeInsightContextInfo
@@ -92,11 +100,17 @@ sealed interface NoContextInformation : CodeInsightContextInfo
 /**
  * [CodeInsightContextAwareSearchScope.codeInsightContextInfo] can return this object.
  * If you get its instance, you can use it for checking if a given [VirtualFile] is associated with [CodeInsightContext]s within the [SearchScope].
+ *
+ * E.g., a scope representing a module's sources contains a source files in the scope of this module and does not contain this source files in the scope of other module.
+ *
+ * @see ActualCodeInsightContextInfo() constructor function
+ * @see codeInsightContextInfo
+ * @see CodeInsightContextAwareSearchScope
  */
 @ApiStatus.Experimental
 sealed interface ActualCodeInsightContextInfo : CodeInsightContextInfo {
   /**
-   * @return true if scope contains [file] with [context].
+   * @return true if scope contains [file] in the context of [context].
    */
   fun contains(file: VirtualFile, context: CodeInsightContext): Boolean
 
@@ -109,7 +123,15 @@ sealed interface ActualCodeInsightContextInfo : CodeInsightContextInfo {
 /**
  * A base interface encapsulating information about [VirtualFile] and [CodeInsightContext] association within a given [SearchScope].
  *
+ * There are three sealed implementations of this interface:
+ *  - [ActualContextFileInfo]   - the corresponding [SearchScope] CONTAINS the corresponding [VirtualFile] and contains information about contexts associated with this file.
+ *  - [DoesNotContainFileInfo]  - the corresponding [SearchScope] DOES NOT CONTAIN the corresponding [VirtualFile]
+ *  - [NoContextFileInfo]       - the corresponding [SearchScope] DOES NOT HAVE INFORMATION about contexts associated with this file.
+ *
  * @see CodeInsightContextAwareSearchScope
+ * @see ActualContextFileInfo
+ * @see DoesNotContainFileInfo
+ * @see NoContextFileInfo
  */
 @ApiStatus.Experimental
 sealed interface CodeInsightContextFileInfo
@@ -117,7 +139,9 @@ sealed interface CodeInsightContextFileInfo
 /**
  * File info indicating that the corresponding [SearchScope] does not contain the corresponding [VirtualFile].
  *
+ * @see DoesNotContainFileInfo() constructor function
  * @see ActualCodeInsightContextInfo.getFileInfo
+ * @see codeInsightContextInfo
  */
 @ApiStatus.Experimental
 sealed interface DoesNotContainFileInfo : CodeInsightContextFileInfo
@@ -129,26 +153,45 @@ sealed interface DoesNotContainFileInfo : CodeInsightContextFileInfo
  * This is possible when you unite a scope aware of contexts and a scope unaware of contexts.
  *  todo IJPL-339 should this be possible??? Can we forbid this???
  *
- * @see ActualCodeInsightContextInfo.getFileInfo
+ * @see NoContextFileInfo() constructor function
+ * @see codeInsightContextInfo
  */
 @ApiStatus.Experimental
 sealed interface NoContextFileInfo : CodeInsightContextFileInfo
 
 /**
  * File info indicating the [CodeInsightContext]s associated with the corresponding [VirtualFile]
+ *
+ * @see ActualContextFileInfo() constructor function
+ * @see codeInsightContextInfo
  */
 @ApiStatus.Experimental
 sealed interface ActualContextFileInfo : CodeInsightContextFileInfo {
   val contexts: Collection<CodeInsightContext>
 }
 
+/**
+ * Constructs a [NoContextInformation] object
+ *
+ * @see CodeInsightContextFileInfo
+ */
 @ApiStatus.Experimental
 fun NoContextInformation(): NoContextInformation = NoContextInformationImpl
 
-
+/**
+ * Constructs a [DoesNotContainFileInfo] object
+ *
+ * @see CodeInsightContextFileInfo
+ */
 @ApiStatus.Experimental
 fun DoesNotContainFileInfo(): DoesNotContainFileInfo = DoesNotContainFileInfoImpl
 
+/**
+ * Constructs an [ActualContextFileInfo] object.
+ * The passed [contexts] must not be empty.
+ *
+ * @see CodeInsightContextFileInfo
+ */
 @ApiStatus.Experimental
 fun ActualContextFileInfo(contexts: Collection<CodeInsightContext>): ActualContextFileInfo {
   if (contexts.isEmpty()) {
@@ -157,6 +200,13 @@ fun ActualContextFileInfo(contexts: Collection<CodeInsightContext>): ActualConte
   return ActualContextFileInfoImpl(contexts)
 }
 
+/**
+ * Constructs an [CodeInsightContextFileInfo] with the given [contexts].
+ * If the [contexts] are empty, then [DoesNotContainFileInfo] is returned.
+ * Otherwise, [ActualContextFileInfo] is returned.
+ *
+ * @see CodeInsightContextFileInfo
+ */
 @ApiStatus.Experimental
 fun createContainingContextFileInfo(contexts: Collection<CodeInsightContext>): CodeInsightContextFileInfo {
   if (contexts.isEmpty()) {
@@ -167,6 +217,11 @@ fun createContainingContextFileInfo(contexts: Collection<CodeInsightContext>): C
   }
 }
 
+/**
+ * Constructs a [NoContextFileInfo] object.
+ *
+ * @see CodeInsightContextFileInfo
+ */
 @ApiStatus.Experimental
 fun NoContextFileInfo(): NoContextFileInfo = NoContextFileInfoImpl
 
