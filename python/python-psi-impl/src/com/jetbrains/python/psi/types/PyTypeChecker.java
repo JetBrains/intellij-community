@@ -336,7 +336,7 @@ public final class PyTypeChecker {
   private static @Nullable PyType toClass(@Nullable PyType type) {
     return PyTypeUtil.toStream(type)
       .map(t -> t instanceof PyInstantiableType<?> instantiableType ? instantiableType.toClass() : t)
-      .collect(PyTypeUtil.toUnion());
+      .collect(PyTypeUtil.toUnion(type));
   }
 
   private static boolean match(@NotNull PyPositionalVariadicType expected, @Nullable PyType actual, @NotNull MatchContext context) {
@@ -1282,7 +1282,7 @@ public final class PyTypeChecker {
         }
         return PyTypeUtil.toStream(qualifierType)
           .filter(memberType -> match(selfScopeClassType, memberType, context))
-          .collect(PyTypeUtil.toUnion());
+          .collect(PyTypeUtil.toUnion(qualifierType));
       }
 
       @Override
@@ -1473,7 +1473,7 @@ public final class PyTypeChecker {
       // TODO how does it work with @classmethods?
       actualType = PyTypeUtil.toStream(actualType)
         .filter(type -> match(superType, type, context))
-        .collect(PyTypeUtil.toUnion());
+        .collect(PyTypeUtil.toUnion(actualType));
     }
 
     PyClass containingClass = function.getContainingClass();

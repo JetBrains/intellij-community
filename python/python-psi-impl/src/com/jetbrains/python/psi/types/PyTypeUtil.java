@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -136,6 +138,18 @@ public final class PyTypeUtil {
    * @see #toUnion()
    */
   public static @NotNull Collector<Ref<PyType>, ?, Ref<PyType>> toUnionFromRef() {
+    return toUnionFromRef(PyUnionType::union);
+  }
+
+  public static @NotNull Collector<Ref<PyType>, ?, Ref<PyType>> toUnsafeUnionFromRef() {
+    return toUnionFromRef(PyUnsafeUnionType::unsafeUnion);
+  }
+
+  public static @NotNull Collector<Ref<PyType>, ?, Ref<PyType>> toUnionFromRef(@Nullable PyType streamSource) {
+    return toUnionFromRef(streamSource instanceof PyUnsafeUnionType ? PyUnsafeUnionType::unsafeUnion : PyUnionType::union);
+  }
+  
+  private static @NotNull Collector<Ref<PyType>, ?, Ref<PyType>> toUnionFromRef(@NotNull BinaryOperator<PyType> unionReduction) {
     return Collectors.reducing(null, (accType, hintType) -> {
       if (hintType == null) {
         return accType;
@@ -144,7 +158,7 @@ public final class PyTypeUtil {
         return hintType;
       }
       else {
-        return Ref.create(PyUnionType.union(accType.get(), hintType.get()));
+        return Ref.create(unionReduction.apply(accType.get(), hintType.get()));
       }
     });
   }
@@ -163,6 +177,18 @@ public final class PyTypeUtil {
    */
   public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnion() {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnionType::union);
+  }
+
+  public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnsafeUnion() {
+    return Collectors.collectingAndThen(Collectors.toList(), PyUnsafeUnionType::unsafeUnion);
+  }
+
+  public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnion(@Nullable PyType streamSource) {
+    return toUnion(streamSource instanceof PyUnsafeUnionType ? PyUnsafeUnionType::unsafeUnion : PyUnionType::union);
+  }
+
+  private static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnion(@NotNull Function<List<@Nullable PyType>, @Nullable PyType> unionFactory) {
+    return Collectors.collectingAndThen(Collectors.toList(), unionFactory);
   }
 
   public static boolean isDict(@Nullable PyType type) {
