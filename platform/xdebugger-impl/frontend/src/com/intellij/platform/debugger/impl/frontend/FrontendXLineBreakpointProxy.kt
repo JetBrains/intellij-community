@@ -8,15 +8,11 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
-import com.intellij.xdebugger.impl.rpc.XBreakpointDto
-import com.intellij.xdebugger.impl.rpc.XLineBreakpointInfo
-import com.intellij.xdebugger.impl.rpc.XLineBreakpointTextRange
-import com.intellij.xdebugger.impl.rpc.toTextRange
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicReference
 
@@ -185,7 +181,7 @@ internal class FrontendXLineBreakpointProxy(
     }
   }
 
-  override fun createBreakpointDraggableObject(): GutterDraggableObject? {
+  override fun createBreakpointDraggableObject(): GutterDraggableObject {
     return visualRepresentation.createBreakpointDraggableObject()
   }
 
