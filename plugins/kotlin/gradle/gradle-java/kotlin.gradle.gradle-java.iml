@@ -90,5 +90,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="commons-lang3" level="project" />
   </component>
 </module>

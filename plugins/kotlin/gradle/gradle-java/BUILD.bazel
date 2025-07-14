@@ -87,6 +87,7 @@ jvm_library(
     "//platform/backend/observation",
     "//plugins/kotlin/code-insight/utils",
     "@lib//:opentelemetry",
+    "@lib//:commons-lang3",
   ],
   runtime_deps = [":gradle-java_resources"]
 )
@@ -171,6 +172,7 @@ jvm_library(
     "//platform/backend/observation:observation_test_lib",
     "//plugins/kotlin/code-insight/utils",
     "@lib//:opentelemetry",
+    "@lib//:commons-lang3",
   ],
   runtime_deps = [":gradle-java_resources"]
 )
