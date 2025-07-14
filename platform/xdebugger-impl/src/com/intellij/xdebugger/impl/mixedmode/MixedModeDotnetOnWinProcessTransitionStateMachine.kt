@@ -159,17 +159,19 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
             changeState(BothStopped(event.suspendContext, requireNotNull(currentState.highSuspendContext)))
           }
           is OnlyHighStoppedWaitingForLowStepToComplete -> {
-            val highSuspendCtx: XSuspendContext? = run {
+            val highSuspendCtx: XSuspendContext = run {
 
               //lowExtension.handleBreakpointDuringStep()
 
-              highExtension.refreshSuspendContextOnLowLevelStepFinish(currentState.highSuspendContext)
+              checkNotNull(highExtension.refreshSuspendContextOnLowLevelStepFinish(currentState.highSuspendContext))
               // If we've set the null object instead of a real suspend context, we don't need to refresh it
               //if (currentState.highSuspendContext != nullObjectHighLevelSuspendContext && lowExtension.lowToHighTransitionDuringLastStepHappened())
               //  highExtension.refreshSuspendContextOnLowLevelStepFinish(currentState.highSuspendContext) ?: currentState.highSuspendContext
               //else
               //  currentState.highSuspendContext
             }
+            val threadId = highExtension.getStoppedThreadId(highSuspendCtx)
+            highExtension.afterLowLevelStepCompleted(highSuspendCtx, threadId)
 
             val lowSuspendCtx = event.suspendContext
             changeState(BothStopped(lowSuspendCtx, requireNotNull(highSuspendCtx)))
