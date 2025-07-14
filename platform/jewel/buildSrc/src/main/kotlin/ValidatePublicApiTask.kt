@@ -1,15 +1,14 @@
+import java.io.File
+import java.util.regex.PatternSyntaxException
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
-import java.io.File
-import java.util.regex.PatternSyntaxException
 
 @CacheableTask
 abstract class ValidatePublicApiTask : SourceTask() {
-    @get:Input
-    abstract var excludedClassRegexes: Set<String>
+    @get:Input abstract var excludedClassRegexes: Set<String>
 
     init {
         group = "verification"
@@ -58,8 +57,11 @@ abstract class ValidatePublicApiTask : SourceTask() {
                 }
 
                 appendLine(
-                    "Avoid using data classes in public API. Turn them into regular classes, implement equals()/hashCode()/toString(), " +
-                    "and add the @GenerateDataFunctions annotation."
+                    "Avoid using data classes in public API: https://jakewharton.com/public-api-challenges-in-kotlin/."
+                )
+                appendLine(
+                    "Turn them into regular classes, implement equals()/hashCode()/toString(), " +
+                        "and add the @GenerateDataFunctions annotation."
                 )
                 appendLine(
                     "For specific cases, you can exclude a data class from the validation. " +
@@ -117,20 +119,18 @@ abstract class ValidatePublicApiTask : SourceTask() {
         if (excludedRegexes.isEmpty()) return this
 
         return filterNot { dataClassFqn ->
-            val isExcluded = excludedRegexes.any { it.matchEntire(dataClassFqn) != null }
+                val isExcluded = excludedRegexes.any { it.matchEntire(dataClassFqn) != null }
 
-            if (isExcluded) {
-                logger.lifecycle("  Ignoring excluded data class $dataClassFqn")
+                if (isExcluded) {
+                    logger.lifecycle("  Ignoring excluded data class $dataClassFqn")
+                }
+                isExcluded
             }
-            isExcluded
-        }.toSet()
+            .toSet()
     }
 }
 
 @Suppress("DataClassShouldBeImmutable") // Only used in a loop, saves memory and is faster
-private data class DataClassInfo(
-    var hasCopyMethod: Boolean = false,
-    var hasComponentMethod: Boolean = false,
-) {
+private data class DataClassInfo(var hasCopyMethod: Boolean = false, var hasComponentMethod: Boolean = false) {
     fun isDataClass(): Boolean = hasCopyMethod && hasComponentMethod
 }
