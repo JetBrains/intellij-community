@@ -42,7 +42,7 @@ fun DB.change(defaultPart: Part = 1, f: ChangeScope.() -> Unit): Change = let { 
       f()
       meta.remove(MutableNoveltyKey)
     }
-    setPoison(Throwable("change closed"))
+    markClosed()
   }
   Change(dbBefore = dbBefore,
          dbAfter = mutableDb.snapshot(),
