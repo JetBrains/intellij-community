@@ -29,18 +29,22 @@ public final class JvmMainMethodUtil {
   public static boolean isMainMethod(@NotNull JvmMethod method) {
     if (!MAIN.equals(method.getName())) return false;
     final JvmClass containingClass = method.getContainingClass();
-    return containingClass != null && canBeMainClass(containingClass) && (hasMainMethodSignature(method) ||
-           //just to partially support instance methods for Java, these methods are abandoned
-           //please use original methods
-           (method instanceof PsiMethod && PsiMethodUtil.isMainMethod((PsiMethod)method)));
+    return containingClass != null && canBeMainClass(containingClass) && hasMainMethodSignature(method);
   }
 
   public static boolean hasMainMethodInHierarchy(@NotNull JvmClass clazz) {
     if (!canBeMainClass(clazz)) return false;
-    return findMainMethodInHierarchy(clazz) != null ||
-           //just to partially support instance methods for Java, these methods are abandoned,
-           //please use original methods
-           (clazz instanceof PsiClass && PsiMethodUtil.hasMainMethod((PsiClass)clazz));
+    //just to partially support instance methods for Java, these methods are abandoned,
+    //please use original methods
+    if (clazz instanceof PsiClass && PsiMethodUtil.hasMainMethod((PsiClass)clazz)) return true;
+
+    JvmMethod methodInHierarchy = JvmHierarchyUtil.traverseSupers(clazz, superClazz -> {
+      if (superClazz.getClassKind() == JvmClassKind.INTERFACE) {
+        return null;
+      }
+      return findMainMethodInClass(superClazz);
+    });
+    return methodInHierarchy != null;
   }
 
   private static boolean canBeMainClass(@NotNull JvmClass clazz) {
@@ -50,24 +54,22 @@ public final class JvmMainMethodUtil {
     return clazz.getContainingClass() == null || clazz.hasModifier(JvmModifier.STATIC);
   }
 
-  private static @Nullable JvmMethod findMainMethodInHierarchy(@NotNull JvmClass clazz) {
-    return JvmHierarchyUtil.traverseSupers(clazz, superClazz -> {
-      if (superClazz.getClassKind() == JvmClassKind.INTERFACE) {
-        return null;
-      }
-      return findMainMethodInClass(superClazz);
-    });
-  }
-
   private static @Nullable JvmMethod findMainMethodInClass(@NotNull JvmClass clazz) {
     JvmMethod[] candidates = clazz.findMethodsByName(MAIN);
     return find(candidates, JvmMainMethodUtil::hasMainMethodSignature);
   }
 
   /**
-   * @return {@code true} if the method matches {@code public static void xxx(String[] args) {}}, otherwise {@code false}
+   * @return {@code true} if the method matches {@code public static void xxx(String[] args) {}}, otherwise {@code false}.
+   * It also supports java instance methods.
+   * @see JvmMainMethodUtil
    */
   private static boolean hasMainMethodSignature(@NotNull JvmMethod method) {
+    //just to partially support instance methods for Java, these methods are abandoned
+    //please use original methods
+    if (method instanceof PsiMethod &&
+        PsiMethodUtil.isMainMethod((PsiMethod)method)) return true;
+
     if (method.isConstructor()) return false;
     if (!method.hasModifier(JvmModifier.PUBLIC)) return false;
     if (!method.hasModifier(JvmModifier.STATIC)) return false;
