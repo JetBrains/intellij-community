@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.util.currentJavaVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -22,6 +23,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
                                                  ExpectedPluginModeProvider {
+
+    // it is known that Kotlin 1.9.25 is incompatible with JDK25
+    val isCompatibleVersions: Boolean = (pluginMode == KotlinPluginMode.K2 || currentJavaVersion().feature < 25)
 
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)

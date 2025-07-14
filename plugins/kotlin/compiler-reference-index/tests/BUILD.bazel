@@ -50,6 +50,7 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/util",
   ]
 )
 

@@ -16,19 +16,21 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
     }
 
     protected fun doTest(testDataFilePath: String) {
+
         myFixture.testDataPath = testDataFilePath
 
         val configurationPath = Path(testDataFilePath, "testConfig.json")
-        val isFir = pluginMode == KotlinPluginMode.K2
+        val isK2 = pluginMode == KotlinPluginMode.K2
         val firConfigurationPath = Path(testDataFilePath, "testConfig.fir.json")
-            .takeIf { isFir && it.exists() }
+            .takeIf { isK2 && it.exists() }
         val pathToCheck = firConfigurationPath ?: configurationPath
         val config: JsonObject = JsonParser.parseReader(pathToCheck.reader()).asJsonObject
 
         val mainFile = config[MAIN_FILE]?.asString ?: error("Main file not found")
         val shouldBeUsage = config[SHOULD_BE_USAGE]?.asJsonArray?.map { it.asString }?.toSet().orEmpty()
         val ignoreK2Compiler = config[IGNORE_K2_COMPILER]?.asString
-        val isTestEnabled = !isFir || ignoreK2Compiler == null
+
+        val isTestEnabled = isCompatibleVersions && (!isK2 || ignoreK2Compiler == null)
 
         runCatching {
             val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)

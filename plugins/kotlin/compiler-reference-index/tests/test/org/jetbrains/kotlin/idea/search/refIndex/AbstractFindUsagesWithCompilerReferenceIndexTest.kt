@@ -62,6 +62,6 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
     }
 
     private fun shouldIgnore(path: String): Boolean {
-        return InTextDirectivesUtils.findStringWithPrefixes(Path(path).readText(), "// FIR_CRI_IGNORE:") != null
+        return !isCompatibleVersions || InTextDirectivesUtils.findStringWithPrefixes(Path(path).readText(), "// FIR_CRI_IGNORE:") != null
     }
 }
