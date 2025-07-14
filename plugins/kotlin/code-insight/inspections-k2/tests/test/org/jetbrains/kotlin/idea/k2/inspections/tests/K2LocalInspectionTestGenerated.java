@@ -14823,6 +14823,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/constantAsFirstArgument.kt");
             }
 
+            @TestMetadata("dontReplaceWithTakeDropLast.kt")
+            public void testDontReplaceWithTakeDropLast() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/dontReplaceWithTakeDropLast.kt");
+            }
+
             @TestMetadata("expressionAsFirstArgument.kt")
             public void testExpressionAsFirstArgument() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/expressionAsFirstArgument.kt");

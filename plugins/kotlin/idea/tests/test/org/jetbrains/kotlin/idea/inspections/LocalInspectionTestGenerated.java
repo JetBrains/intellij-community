@@ -14546,6 +14546,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceSubstring/withTake/constantAsFirstArgument.kt");
             }
 
+            @TestMetadata("dontReplaceWithTakeDropLast.kt")
+            public void testDontReplaceWithTakeDropLast() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSubstring/withTake/dontReplaceWithTakeDropLast.kt");
+            }
+
             @TestMetadata("expressionAsFirstArgument.kt")
             public void testExpressionAsFirstArgument() throws Exception {
                 runTest("testData/inspectionsLocal/replaceSubstring/withTake/expressionAsFirstArgument.kt");
