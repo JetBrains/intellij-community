@@ -3782,9 +3782,11 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
 	public final fun getQuestionDialog ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getReaderMode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRefresh ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getRefreshAuto ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRemove ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getReset ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRunWithCoverage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getSelectIn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSeparatorH ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSettings ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getShow ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
