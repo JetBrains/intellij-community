@@ -8012,35 +8012,36 @@ jvm_import(
 java_library(
   name = "platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
   exports = [
-    ":detekt-api-1_23_7_http_import",
-    ":kotlin-compiler-embeddable-2_0_10_http_import",
-    ":kotlin-script-runtime-2_0_10_http_import",
+    ":detekt-api-1_23_8_http_import",
+    ":kotlin-compiler-embeddable-2_0_21_http_import",
+    ":kotlin-script-runtime-2_0_21_http_import",
     ":kotlin-reflect-1_6_10_http_import",
-    ":kotlin-daemon-embeddable-2_0_10_http_import",
+    ":kotlin-daemon-embeddable-2_0_21_http_import",
     ":trove4j-1_0_20200330_http_import",
-    ":detekt-psi-utils-1_23_7_http_import",
-    ":detekt-utils-1_23_7_http_import",
-    ":poko-annotations-jvm-0_16_0_http_import",
+    ":kotlinx-coroutines-core-jvm-1_6_4_http_import",
+    ":detekt-psi-utils-1_23_8_http_import",
+    ":detekt-utils-1_23_8_http_import",
+    ":poko-annotations-jvm-0_17_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "detekt-api-1_23_7_http_import",
-  jar = "@detekt-api-1_23_7_http//file",
-  source_jar = "@detekt-api-1_23_7-sources_http//file"
+  name = "detekt-api-1_23_8_http_import",
+  jar = "@detekt-api-1_23_8_http//file",
+  source_jar = "@detekt-api-1_23_8-sources_http//file"
 )
 
 jvm_import(
-  name = "kotlin-compiler-embeddable-2_0_10_http_import",
-  jar = "@kotlin-compiler-embeddable-2_0_10_http//file",
-  source_jar = "@kotlin-compiler-embeddable-2_0_10-sources_http//file"
+  name = "kotlin-compiler-embeddable-2_0_21_http_import",
+  jar = "@kotlin-compiler-embeddable-2_0_21_http//file",
+  source_jar = "@kotlin-compiler-embeddable-2_0_21-sources_http//file"
 )
 
 jvm_import(
-  name = "kotlin-script-runtime-2_0_10_http_import",
-  jar = "@kotlin-script-runtime-2_0_10_http//file",
-  source_jar = "@kotlin-script-runtime-2_0_10-sources_http//file"
+  name = "kotlin-script-runtime-2_0_21_http_import",
+  jar = "@kotlin-script-runtime-2_0_21_http//file",
+  source_jar = "@kotlin-script-runtime-2_0_21-sources_http//file"
 )
 
 jvm_import(
@@ -8050,9 +8051,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "kotlin-daemon-embeddable-2_0_10_http_import",
-  jar = "@kotlin-daemon-embeddable-2_0_10_http//file",
-  source_jar = "@kotlin-daemon-embeddable-2_0_10-sources_http//file"
+  name = "kotlin-daemon-embeddable-2_0_21_http_import",
+  jar = "@kotlin-daemon-embeddable-2_0_21_http//file",
+  source_jar = "@kotlin-daemon-embeddable-2_0_21-sources_http//file"
 )
 
 jvm_import(
@@ -8062,61 +8063,230 @@ jvm_import(
 )
 
 jvm_import(
-  name = "detekt-psi-utils-1_23_7_http_import",
-  jar = "@detekt-psi-utils-1_23_7_http//file",
-  source_jar = "@detekt-psi-utils-1_23_7-sources_http//file"
+  name = "kotlinx-coroutines-core-jvm-1_6_4_http_import",
+  jar = "@kotlinx-coroutines-core-jvm-1_6_4_http//file",
+  source_jar = "@kotlinx-coroutines-core-jvm-1_6_4-sources_http//file"
 )
 
 jvm_import(
-  name = "detekt-utils-1_23_7_http_import",
-  jar = "@detekt-utils-1_23_7_http//file",
-  source_jar = "@detekt-utils-1_23_7-sources_http//file"
+  name = "detekt-psi-utils-1_23_8_http_import",
+  jar = "@detekt-psi-utils-1_23_8_http//file",
+  source_jar = "@detekt-psi-utils-1_23_8-sources_http//file"
 )
 
 jvm_import(
-  name = "poko-annotations-jvm-0_16_0_http_import",
-  jar = "@poko-annotations-jvm-0_16_0_http//file",
-  source_jar = "@poko-annotations-jvm-0_16_0-sources_http//file"
+  name = "detekt-utils-1_23_8_http_import",
+  jar = "@detekt-utils-1_23_8_http//file",
+  source_jar = "@detekt-utils-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "poko-annotations-jvm-0_17_1_http_import",
+  jar = "@poko-annotations-jvm-0_17_1_http//file",
+  source_jar = "@poko-annotations-jvm-0_17_1-sources_http//file"
 )
 
 java_library(
-  name = "platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
+  name = "platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-core",
   exports = [
-    ":detekt-test-1_23_7_http_import",
-    ":detekt-api-1_23_7_http_import",
-    ":kotlin-compiler-embeddable-2_0_10_http_import",
-    ":kotlin-script-runtime-2_0_10_http_import",
-    ":kotlin-daemon-embeddable-2_0_10_http_import",
+    ":detekt-core-1_23_8_http_import",
+    ":detekt-api-1_23_8_http_import",
+    ":kotlin-compiler-embeddable-2_0_21_http_import",
+    ":kotlin-script-runtime-2_0_21_http_import",
+    ":kotlin-daemon-embeddable-2_0_21_http_import",
     ":trove4j-1_0_20200330_http_import",
-    ":detekt-psi-utils-1_23_7_http_import",
-    ":poko-annotations-jvm-0_16_0_http_import",
-    ":detekt-test-utils-1_23_7_http_import",
-    ":junit-jupiter-api-5_10_2_http_import",
-    ":opentest4j-1_3_0_http_import",
-    ":junit-platform-commons-1_10_2_http_import",
-    ":apiguardian-api-1_1_2_http_import",
-    ":detekt-parser-1_23_7_http_import",
+    ":kotlinx-coroutines-core-jvm-1_6_4_http_import",
+    ":poko-annotations-jvm-0_17_1_http_import",
+    ":detekt-parser-1_23_8_http_import",
     ":contester-breakpoint-0_2_0_http_import",
-    ":kotlin-main-kts-2_0_10_http_import",
-    ":kotlin-scripting-compiler-embeddable-2_0_10_http_import",
-    ":kotlin-scripting-compiler-impl-embeddable-2_0_10_http_import",
-    ":kotlin-scripting-common-2_0_10_http_import",
-    ":kotlin-scripting-jvm-2_0_10_http_import",
-    ":detekt-utils-1_23_7_http_import",
+    ":detekt-tooling-1_23_8_http_import",
+    ":kotlin-stdlib-2_0_21_http_import",
+    ":annotations-13_0_http_import",
+    ":snakeyaml-engine-2_7_http_import",
+    ":kotlin-reflect-2_0_21_http_import",
+    ":detekt-metrics-1_23_8_http_import",
+    ":detekt-psi-utils-1_23_8_http_import",
+    ":detekt-report-html-1_23_8_http_import",
+    ":kotlinx-html-jvm-0_8_1_http_import",
+    ":detekt-report-md-1_23_8_http_import",
+    ":detekt-report-txt-1_23_8_http_import",
+    ":detekt-report-xml-1_23_8_http_import",
+    ":detekt-report-sarif-1_23_8_http_import",
+    ":sarif4k-jvm-0_6_0_http_import",
+    ":kotlinx-serialization-json-jvm-1_4_1_http_import",
+    ":kotlin-stdlib-common-1_7_20_http_import",
+    ":kotlinx-serialization-core-jvm-1_4_1_http_import",
+    ":kotlin-stdlib-jdk8-1_7_20_http_import",
+    ":kotlin-stdlib-jdk7-1_7_20_http_import",
+    ":detekt-utils-1_23_8_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "detekt-test-1_23_7_http_import",
-  jar = "@detekt-test-1_23_7_http//file",
-  source_jar = "@detekt-test-1_23_7-sources_http//file"
+  name = "detekt-core-1_23_8_http_import",
+  jar = "@detekt-core-1_23_8_http//file",
+  source_jar = "@detekt-core-1_23_8-sources_http//file"
 )
 
 jvm_import(
-  name = "detekt-test-utils-1_23_7_http_import",
-  jar = "@detekt-test-utils-1_23_7_http//file",
-  source_jar = "@detekt-test-utils-1_23_7-sources_http//file"
+  name = "detekt-parser-1_23_8_http_import",
+  jar = "@detekt-parser-1_23_8_http//file",
+  source_jar = "@detekt-parser-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "contester-breakpoint-0_2_0_http_import",
+  jar = "@contester-breakpoint-0_2_0_http//file",
+  source_jar = "@contester-breakpoint-0_2_0-sources_http//file"
+)
+
+jvm_import(
+  name = "detekt-tooling-1_23_8_http_import",
+  jar = "@detekt-tooling-1_23_8_http//file",
+  source_jar = "@detekt-tooling-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-2_0_21_http_import",
+  jar = "@kotlin-stdlib-2_0_21_http//file",
+  source_jar = "@kotlin-stdlib-2_0_21-sources_http//file"
+)
+
+jvm_import(
+  name = "annotations-13_0_http_import",
+  jar = "@annotations-13_0_http//file",
+  source_jar = "@annotations-13_0-sources_http//file"
+)
+
+jvm_import(
+  name = "snakeyaml-engine-2_7_http_import",
+  jar = "@snakeyaml-engine-2_7_http//file",
+  source_jar = "@snakeyaml-engine-2_7-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-reflect-2_0_21_http_import",
+  jar = "@kotlin-reflect-2_0_21_http//file",
+  source_jar = "@kotlin-reflect-2_0_21-sources_http//file"
+)
+
+jvm_import(
+  name = "detekt-metrics-1_23_8_http_import",
+  jar = "@detekt-metrics-1_23_8_http//file",
+  source_jar = "@detekt-metrics-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "detekt-report-html-1_23_8_http_import",
+  jar = "@detekt-report-html-1_23_8_http//file",
+  source_jar = "@detekt-report-html-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-html-jvm-0_8_1_http_import",
+  jar = "@kotlinx-html-jvm-0_8_1_http//file",
+  source_jar = "@kotlinx-html-jvm-0_8_1-sources_http//file"
+)
+
+jvm_import(
+  name = "detekt-report-md-1_23_8_http_import",
+  jar = "@detekt-report-md-1_23_8_http//file",
+  source_jar = "@detekt-report-md-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "detekt-report-txt-1_23_8_http_import",
+  jar = "@detekt-report-txt-1_23_8_http//file",
+  source_jar = "@detekt-report-txt-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "detekt-report-xml-1_23_8_http_import",
+  jar = "@detekt-report-xml-1_23_8_http//file",
+  source_jar = "@detekt-report-xml-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "detekt-report-sarif-1_23_8_http_import",
+  jar = "@detekt-report-sarif-1_23_8_http//file",
+  source_jar = "@detekt-report-sarif-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "sarif4k-jvm-0_6_0_http_import",
+  jar = "@sarif4k-jvm-0_6_0_http//file",
+  source_jar = "@sarif4k-jvm-0_6_0-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-serialization-json-jvm-1_4_1_http_import",
+  jar = "@kotlinx-serialization-json-jvm-1_4_1_http//file",
+  source_jar = "@kotlinx-serialization-json-jvm-1_4_1-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-common-1_7_20_http_import",
+  jar = "@kotlin-stdlib-common-1_7_20_http//file",
+  source_jar = "@kotlin-stdlib-common-1_7_20-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlinx-serialization-core-jvm-1_4_1_http_import",
+  jar = "@kotlinx-serialization-core-jvm-1_4_1_http//file",
+  source_jar = "@kotlinx-serialization-core-jvm-1_4_1-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-jdk8-1_7_20_http_import",
+  jar = "@kotlin-stdlib-jdk8-1_7_20_http//file",
+  source_jar = "@kotlin-stdlib-jdk8-1_7_20-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-stdlib-jdk7-1_7_20_http_import",
+  jar = "@kotlin-stdlib-jdk7-1_7_20_http//file",
+  source_jar = "@kotlin-stdlib-jdk7-1_7_20-sources_http//file"
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
+  exports = [
+    ":detekt-test-1_23_8_http_import",
+    ":detekt-api-1_23_8_http_import",
+    ":kotlin-compiler-embeddable-2_0_21_http_import",
+    ":kotlin-script-runtime-2_0_21_http_import",
+    ":kotlin-daemon-embeddable-2_0_21_http_import",
+    ":trove4j-1_0_20200330_http_import",
+    ":detekt-psi-utils-1_23_8_http_import",
+    ":poko-annotations-jvm-0_17_1_http_import",
+    ":detekt-test-utils-1_23_8_http_import",
+    ":junit-jupiter-api-5_10_2_http_import",
+    ":opentest4j-1_3_0_http_import",
+    ":junit-platform-commons-1_10_2_http_import",
+    ":apiguardian-api-1_1_2_http_import",
+    ":detekt-parser-1_23_8_http_import",
+    ":contester-breakpoint-0_2_0_http_import",
+    ":kotlin-main-kts-2_0_21_http_import",
+    ":kotlin-scripting-compiler-embeddable-2_0_21_http_import",
+    ":kotlin-scripting-compiler-impl-embeddable-2_0_21_http_import",
+    ":kotlin-scripting-common-2_0_21_http_import",
+    ":kotlin-scripting-jvm-2_0_21_http_import",
+    ":detekt-utils-1_23_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "detekt-test-1_23_8_http_import",
+  jar = "@detekt-test-1_23_8_http//file",
+  source_jar = "@detekt-test-1_23_8-sources_http//file"
+)
+
+jvm_import(
+  name = "detekt-test-utils-1_23_8_http_import",
+  jar = "@detekt-test-utils-1_23_8_http//file",
+  source_jar = "@detekt-test-utils-1_23_8-sources_http//file"
 )
 
 jvm_import(
@@ -8132,45 +8302,33 @@ jvm_import(
 )
 
 jvm_import(
-  name = "detekt-parser-1_23_7_http_import",
-  jar = "@detekt-parser-1_23_7_http//file",
-  source_jar = "@detekt-parser-1_23_7-sources_http//file"
+  name = "kotlin-main-kts-2_0_21_http_import",
+  jar = "@kotlin-main-kts-2_0_21_http//file",
+  source_jar = "@kotlin-main-kts-2_0_21-sources_http//file"
 )
 
 jvm_import(
-  name = "contester-breakpoint-0_2_0_http_import",
-  jar = "@contester-breakpoint-0_2_0_http//file",
-  source_jar = "@contester-breakpoint-0_2_0-sources_http//file"
+  name = "kotlin-scripting-compiler-embeddable-2_0_21_http_import",
+  jar = "@kotlin-scripting-compiler-embeddable-2_0_21_http//file",
+  source_jar = "@kotlin-scripting-compiler-embeddable-2_0_21-sources_http//file"
 )
 
 jvm_import(
-  name = "kotlin-main-kts-2_0_10_http_import",
-  jar = "@kotlin-main-kts-2_0_10_http//file",
-  source_jar = "@kotlin-main-kts-2_0_10-sources_http//file"
+  name = "kotlin-scripting-compiler-impl-embeddable-2_0_21_http_import",
+  jar = "@kotlin-scripting-compiler-impl-embeddable-2_0_21_http//file",
+  source_jar = "@kotlin-scripting-compiler-impl-embeddable-2_0_21-sources_http//file"
 )
 
 jvm_import(
-  name = "kotlin-scripting-compiler-embeddable-2_0_10_http_import",
-  jar = "@kotlin-scripting-compiler-embeddable-2_0_10_http//file",
-  source_jar = "@kotlin-scripting-compiler-embeddable-2_0_10-sources_http//file"
+  name = "kotlin-scripting-common-2_0_21_http_import",
+  jar = "@kotlin-scripting-common-2_0_21_http//file",
+  source_jar = "@kotlin-scripting-common-2_0_21-sources_http//file"
 )
 
 jvm_import(
-  name = "kotlin-scripting-compiler-impl-embeddable-2_0_10_http_import",
-  jar = "@kotlin-scripting-compiler-impl-embeddable-2_0_10_http//file",
-  source_jar = "@kotlin-scripting-compiler-impl-embeddable-2_0_10-sources_http//file"
-)
-
-jvm_import(
-  name = "kotlin-scripting-common-2_0_10_http_import",
-  jar = "@kotlin-scripting-common-2_0_10_http//file",
-  source_jar = "@kotlin-scripting-common-2_0_10-sources_http//file"
-)
-
-jvm_import(
-  name = "kotlin-scripting-jvm-2_0_10_http_import",
-  jar = "@kotlin-scripting-jvm-2_0_10_http//file",
-  source_jar = "@kotlin-scripting-jvm-2_0_10-sources_http//file"
+  name = "kotlin-scripting-jvm-2_0_21_http_import",
+  jar = "@kotlin-scripting-jvm-2_0_21_http//file",
+  source_jar = "@kotlin-scripting-jvm-2_0_21-sources_http//file"
 )
 
 jvm_import(
