@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.markdown.extensions.images
 
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -66,7 +65,12 @@ public class Coil3ImagesRendererExtensionImpl(private val imageLoader: ImageLoad
                 onError = { error ->
                     JewelLogger.getInstance("Jewel").warn("AsyncImage loading: ${error.result.throwable}")
                 },
-                modifier = knownSize.value?.let { Modifier.height(it.height.dp).width(it.width.dp) } ?: Modifier,
+                modifier =
+                    knownSize.value
+                        // If we have a knownSize, let's use it
+                        ?.let { size -> Modifier.size(size.height.dp, size.width.dp) }
+                        // Otherwise, we'll do it when we have it
+                        ?: Modifier,
             )
         }
     }

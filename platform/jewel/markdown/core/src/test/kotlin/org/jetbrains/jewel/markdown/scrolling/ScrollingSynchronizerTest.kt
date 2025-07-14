@@ -696,6 +696,7 @@ public class ScrollingSynchronizerTest {
         doTest(yieldBlocks = { processMarkdownDocument(markdown) }, action = action)
     }
 
+    @Suppress("ImplicitUnitReturnType")
     @OptIn(ExperimentalTestApi::class)
     private fun doTest(
         yieldBlocks: MarkdownProcessor.() -> List<MarkdownBlock>,

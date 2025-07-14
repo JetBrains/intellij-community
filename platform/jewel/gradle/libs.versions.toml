@@ -2,7 +2,7 @@
 coil = "3.1.0"
 commonmark = "0.24.0"
 composeDesktop = "1.8.2"
-detekt = "1.23.6"
+detekt = "1.23.8"
 dokka = "2.0.0"
 filepicker = "3.1.0"
 idea = "252.16512.17"
@@ -15,7 +15,7 @@ kotlinpoet = "2.1.0"
 kotlinterGradlePlugin = "5.0.1"
 kotlinxSerialization = "1.8.0"
 kotlinxBinaryCompat = "0.17.0"
-ktfmtGradlePlugin = "0.22.0"
+ktfmtGradlePlugin = "0.23.0"
 
 [libraries]
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }

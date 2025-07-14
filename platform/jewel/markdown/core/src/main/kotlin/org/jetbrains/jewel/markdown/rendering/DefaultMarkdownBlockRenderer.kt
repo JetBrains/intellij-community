@@ -541,7 +541,8 @@ public open class DefaultMarkdownBlockRenderer(
                 getImages(blockInlineContent).associate { image ->
                     image.source to imagesRenderer.renderImagesContent(image)
                 }
-            } ?: emptyMap()
+            }
+            .orEmpty()
     }
 
     @Composable
