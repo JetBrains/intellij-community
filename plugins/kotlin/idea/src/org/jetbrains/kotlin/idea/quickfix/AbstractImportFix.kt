@@ -169,8 +169,11 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
             } ?: return@mapNotNull null
 
             val name = buildString {
-                if (descriptor is CallableDescriptor) {
-                    val extensionReceiverParameter = descriptor.extensionReceiverParameter
+                if (
+                    descriptor is CallableDescriptor ||
+                    descriptor is ClassDescriptor && descriptor.kind == ClassKind.ENUM_ENTRY
+                ) {
+                    val extensionReceiverParameter = (descriptor as? CallableDescriptor)?.extensionReceiverParameter
                     if (extensionReceiverParameter != null) {
                         extensionReceiverParameter.type.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.name?.let {
                             append(it.asString())

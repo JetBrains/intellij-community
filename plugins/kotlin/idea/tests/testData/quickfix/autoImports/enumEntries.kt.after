@@ -1,4 +1,4 @@
-// "Import class 'BLUE'" "true"
+// "Import class 'ImportEnum.BLUE'" "true"
 package e
 
 enum class ImportEnum {
