@@ -5,6 +5,7 @@ import com.intellij.ReviseWhenPortedToJDK
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
 import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Key
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
@@ -92,6 +93,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     val provider = map[context]
 
     if (provider != null) {
+      log.trace { "found provider in [$this]" }
       return provider
     }
 
@@ -99,6 +101,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
       return findAnyContext(map)
     }
 
+    log.trace { "no provider found in [$this]" }
     return null
   }
 
@@ -120,6 +123,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
 
     val defaultValue = map.defaultValue()
     if (defaultValue != null) {
+      log.trace { "anyContext found for [$this]" }
       return defaultValue
     }
 
@@ -132,11 +136,14 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
         map.processQueue()
       }
       this.map.defaultValue()?.let {
+        log.trace { "anyContext found for [$this] after GC queue processing." }
         return it
       }
       // Damn it. Another view provider was collected too! Let's try one more time.
+      log.trace { "anyContext was GCed for [$this]. Trying again" }
     }
 
+    log.trace { "anyContext was GCed for [$this]. no provider found" }
     return null
   }
 
@@ -162,6 +169,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     update { map ->
       val currentProvider = map[context]
       if (currentProvider != null) {
+        log.trace { "found provider in [$this]" }
         return currentProvider
       }
 
@@ -172,6 +180,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
         else {
           val defaultValue = map.defaultValue()
           if (defaultValue != null) {
+            log.trace { "found provider for any-context in [$this]" }
             return defaultValue
           }
           else {
@@ -193,6 +202,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
 
           val updatedContext = trySetContext(anyViewProvider, context)
           if (updatedContext === context) {
+            log.trace { "found provider in [$this]" }
             return anyViewProvider
           }
           else {
@@ -496,5 +506,7 @@ private class EntryImpl<V : Any>(
   override val key: CodeInsightContext,
   override val value: V,
 ): Map.Entry<CodeInsightContext, V>
+
+private val log = com.intellij.openapi.diagnostic.logger<FileProviderMap>()
 
 private val strongLinkToFileProviderMap = Key.create<FileProviderMap>("strongLinkToFileProviderMap")
