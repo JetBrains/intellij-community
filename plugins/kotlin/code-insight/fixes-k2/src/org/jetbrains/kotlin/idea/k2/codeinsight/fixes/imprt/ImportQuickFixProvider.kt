@@ -184,7 +184,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             symbol is KaNamedFunctionSymbol && symbol.isInfix -> ImportFixHelper.ImportKind.INFIX_FUNCTION
             symbol is KaNamedFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
 
-            symbol is KaEnumEntrySymbol -> ImportFixHelper.ImportKind.CLASS
+            symbol is KaEnumEntrySymbol -> ImportFixHelper.ImportKind.ENUM_ENTRY
 
             else -> null
         }
