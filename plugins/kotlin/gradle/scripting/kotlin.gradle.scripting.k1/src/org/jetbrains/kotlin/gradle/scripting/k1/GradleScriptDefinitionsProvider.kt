@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.gradle.scripting.k1
 import KotlinGradleScriptingBundle
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.gradle.scripting.shared.ErrorGradleScriptDefinition
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleDefinitionsParams
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.WithoutScriptModels
@@ -15,6 +17,7 @@ import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
+import org.jetbrains.kotlin.scripting.definitions.runReadAction
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
@@ -107,12 +110,26 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
         }
     }
 
-    private fun loadGradleDefinitions(root: LightGradleBuildRoot) = org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions(
-        workingDir = root.workingDir,
-        gradleHome = root.gradleHome,
-        javaHome = root.javaHome,
-        project = project
-    )
+    private fun loadGradleDefinitions(root: LightGradleBuildRoot): List<ScriptDefinition> {
+        val settings = runReadAction {
+            runBlockingMaybeCancellable {
+                ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(
+                    project, root.workingDir, GradleConstants.SYSTEM_ID
+                )
+            }
+        }
+
+        return org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions(
+            project, GradleDefinitionsParams(
+                workingDir = root.workingDir,
+                gradleHome = root.gradleHome,
+                javaHome = root.javaHome,
+                gradleVersion = null,
+                jvmArguments = settings.jvmArguments,
+                environment = settings.env
+            )
+        )
+    }
 
     private fun subscribeToGradleSettingChanges() {
         val listener = object : GradleSettingsListener {
@@ -139,16 +156,14 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
     // TODO: possibly combine exceptions from every loadGradleTemplates call, be mindful of KT-19276
     override val definitions: Sequence<ScriptDefinition>
         get() {
-            definitionsByRoots.keys().iterator().forEachRemaining { root ->
-                // reload definitions marked as error
+            definitionsByRoots.keys().iterator().forEachRemaining { root -> // reload definitions marked as error
                 if (root.isError()) {
                     definitionsByRoots[root] = loadGradleDefinitions(root)
                 }
             }
-            if (definitionsByRoots.isEmpty()) {
-                // can be empty in case when import wasn't done from IDE start up,
+            if (definitionsByRoots.isEmpty()) { // can be empty in case when import wasn't done from IDE start up,
                 // otherwise KotlinDslSyncListener should run reloadIfNeeded for valid roots
-                GradleBuildRootsLocator.getInstance(project).getAllRoots().forEach {
+                for (it in GradleBuildRootsLocator.getInstance(project).getAllRoots()) {
                     val workingDir = it.pathPrefix
                     val (gradleHome, javaHome) = when (it) {
                         is Imported -> {
@@ -156,11 +171,14 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
                         }
 
                         is WithoutScriptModels -> {
-                            val settings = ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(
-                                project,
-                                workingDir,
-                                GradleConstants.SYSTEM_ID
-                            )
+                            val settings = runReadAction {
+                                runBlockingMaybeCancellable {
+                                    ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(
+                                        project, workingDir, GradleConstants.SYSTEM_ID
+                                    )
+                                }
+                            } ?: continue
+
                             settings.gradleHome to settings.javaHome
                         }
                     }
