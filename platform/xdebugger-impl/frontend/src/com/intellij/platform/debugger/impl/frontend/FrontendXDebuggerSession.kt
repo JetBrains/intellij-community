@@ -66,7 +66,9 @@ class FrontendXDebuggerSession private constructor(
   private val eventsDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
   override val id: XDebugSessionId = sessionDto.id
 
-  val sourcePosition: StateFlow<XSourcePosition?> =
+  // TODO merge sourcePosition, topSourcePosition, sessionState with suspendContext flow
+  // TODO to be sure that the state is not out of sync
+  private val sourcePosition: StateFlow<XSourcePosition?> =
     cs.createPositionFlow { XDebugSessionApi.getInstance().currentSourcePosition(id) }
 
   private val topSourcePosition: StateFlow<XSourcePosition?> =
@@ -95,14 +97,8 @@ class FrontendXDebuggerSession private constructor(
 
   // TODO Actually session could have a global evaluator, see
   //  com.intellij.xdebugger.XDebugProcess.getEvaluator overrides
-  private val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
-    currentStackFrame.map { frame ->
-      val frameEvaluator = frame?.evaluator ?: return@map null
-      frameEvaluator as FrontendXDebuggerEvaluator
-    }.stateIn(cs, SharingStarted.Eagerly, null)
-
   override val currentEvaluator: XDebuggerEvaluator?
-    get() = evaluator.value
+    get() = currentStackFrame.value?.evaluator
 
   override val isStopped: Boolean
     get() = sessionState.value.isStopped
