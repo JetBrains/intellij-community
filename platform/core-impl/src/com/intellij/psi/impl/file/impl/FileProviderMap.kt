@@ -232,11 +232,6 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     return context
   }
 
-  private fun installContext(viewProvider: FileViewProvider, context: CodeInsightContext) {
-    val manager = CodeInsightContextManagerImpl.getInstanceImpl(viewProvider.manager.project)
-    manager.setCodeInsightContext(viewProvider, context)
-  }
-
   override fun remove(context: CodeInsightContext, provider: AbstractFileViewProvider): Boolean {
     update { map ->
       val currentProvider = map[context]
@@ -295,6 +290,11 @@ private fun mapOf(
   provider: FileViewProvider,
 ): ContextMap<FileViewProvider> =
   emptyContextMap<FileViewProvider>().add(context, provider)
+
+private fun installContext(viewProvider: FileViewProvider, context: CodeInsightContext) {
+  val manager = CodeInsightContextManagerImpl.getInstanceImpl(viewProvider.manager.project)
+  manager.setCodeInsightContext(viewProvider, context)
+}
 
 /**
  * An immutable map from contexts to [V].
