@@ -15,7 +15,13 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
@@ -85,8 +91,18 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
 
                     updater.getWritable(expression)
                 }.forEach { expression ->
-                    (expression.parent as? KtDotQualifiedExpression)?.selectorExpression?.let {
-                        if (it != expression) return@forEach
+                    val qualifiedExpression = expression.parent as? KtDotQualifiedExpression
+
+                    if (qualifiedExpression != null) {
+                        if (qualifiedExpression.selectorExpression != expression) {
+                            val functionCallOrVariableAccess = analyze(qualifiedExpression) {
+                                val resolveToCall = qualifiedExpression.resolveToCall()
+                                val call = resolveToCall?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return@analyze false
+                                val symbol = call.symbol
+                                symbol !is KaConstructorSymbol && symbol is KaFunctionSymbol || symbol is KaVariableSymbol
+                            }
+                            if (!functionCallOrVariableAccess) return@forEach
+                        }
                     }
                     val referencedName = expression.getReferencedName()
                     expression.replace(psiFactory.createExpression("$referencedName()"))

@@ -49,6 +49,11 @@ public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuic
             public void testWithInnerDeclarations() throws Exception {
                 runTest("../testData/quickfix/objectInheritsException/withInnerDeclarations.kt");
             }
+
+            @TestMetadata("withInnerDeclarations2.kt")
+            public void testWithInnerDeclarations2() throws Exception {
+                runTest("../testData/quickfix/objectInheritsException/withInnerDeclarations2.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
