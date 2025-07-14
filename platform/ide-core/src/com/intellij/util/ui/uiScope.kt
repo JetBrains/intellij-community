@@ -10,6 +10,8 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -55,6 +57,10 @@ fun <C : Component> C.launchOnceOnShow(
 ): Job {
   ThreadingAssertions.assertEventDispatchThread()
   val component = this
+
+  if (isUnconfinedFixEnabled()) {
+    return launchOnceOnShowFixed(component, debugName, context, block)
+  }
 
   return launchUnconfined(debugName) {
     var started = false
@@ -125,6 +131,10 @@ fun <C : Component> C.launchOnShow(
   ThreadingAssertions.assertEventDispatchThread()
   val component = this
 
+  if (isUnconfinedFixEnabled()) {
+    return launchOnShowFixed(component, debugName, context, block)
+  }
+
   return launchUnconfined(debugName) {
     showingAsChannel(component) { channel ->
       supervisorScope {
@@ -153,30 +163,11 @@ fun <C : Component> C.launchOnShow(
  * Launches the given task in the global scope without dispatching.
  */
 private fun launchUnconfined(debugName: String, block: suspend CoroutineScope.() -> Unit): Job {
-  if (Registry.`is`("ide.ui.coroutine.scopes.unconfined.fix", false)) {
-    // The whole point here is to launch the coroutine in-place without dispatching,
-    // and to make sure it doesn't dispatch later when called on the EDT from the hierarchy listener.
-    // This is why Dispatchers.ui(UiDispatcherKind.RELAX, immediate = true) is used with ModalityState.any().
-    // The modality is obvious: using any() ensures that the current modality is ignored when processing hierarchy events.
-    // The task itself will then check the modality before executing, but events should be processed immediately.
-    // The dispatcher is a bit more tricky: using EDT will dispatch if the WIL is forbidden (when already running under UI),
-    // and using UI will dispatch if the WIL is currently locked.
-    // But RELAX doesn't care about the WIL and whether it's allowed, so it will not dispatch if immediate = true.
-    // Note that using Dispatchers.Unconfined here seems the obvious choice,
-    // but it doesn't work when already running an unconfined coroutine (IJPL-196231, CPP-45385).
-    @OptIn(DelicateCoroutinesApi::class)
-    return GlobalScope.launch(
-      context = Dispatchers.ui(UiDispatcherKind.RELAX, immediate = true) + ModalityState.any().asContextElement() + CoroutineName(debugName),
-      block = block,
-    )
-  }
-  else {
-    @OptIn(DelicateCoroutinesApi::class)
-    return GlobalScope.launch(
-      context = Dispatchers.Unconfined + CoroutineName(debugName),
-      block = block,
-    )
-  }
+  @OptIn(DelicateCoroutinesApi::class)
+  return GlobalScope.launch(
+    context = Dispatchers.Unconfined + CoroutineName(debugName),
+    block = block,
+  )
 }
 
 private suspend fun showingAsChannel(component: Component, block: suspend (ReceiveChannel<Boolean>) -> Unit) {
@@ -197,6 +188,93 @@ private suspend fun showingAsChannel(component: Component, block: suspend (Recei
   }
 }
 
+private fun isUnconfinedFixEnabled(): Boolean = Registry.`is`("ide.ui.coroutine.scopes.unconfined.fix", defaultValue = false)
+
+private fun launchOnceOnShowFixed(
+  component: Component,
+  debugName: String,
+  context: CoroutineContext,
+  block: suspend CoroutineScope.() -> Unit,
+): Job {
+  var started = false
+  return launchUsingIsShowingFlow(component, debugName, context) { parentScope, childScope ->
+    if (!started) {
+      started = true
+      try {
+        childScope.block()
+      }
+      finally {
+        parentScope.cancel("launchOnceOnShow completed")
+      }
+    }
+  }
+}
+
+private fun launchOnShowFixed(
+  component: Component,
+  debugName: String,
+  context: CoroutineContext,
+  block: suspend CoroutineScope.() -> Unit,
+): Job {
+  return launchUsingIsShowingFlow(component, debugName, context) { _, childScope ->
+    childScope.block()
+  }
+}
+
+private fun launchUsingIsShowingFlow(
+  component: Component,
+  debugName: String,
+  context: CoroutineContext,
+  block: suspend (CoroutineScope, CoroutineScope) -> Unit,
+): Job {
+  @OptIn(DelicateCoroutinesApi::class)
+  return GlobalScope.launch(
+    context = Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement() + CoroutineName(debugName),
+  ) {
+    val parentScope = this
+    val isShowingFlow = MutableStateFlow(isShowing(component))
+    val listener = HierarchyListener { evt ->
+      if (BitUtil.isSet(evt.changeFlags, HierarchyEvent.SHOWING_CHANGED.toLong()) || showingChanged) {
+        isShowingFlow.value = isShowing(component)
+      }
+    }
+    component.installHierarchyListener(listener).use {
+      isShowingFlow.collectLatest { isShowing ->
+        if (isShowing) {
+          supervisorScope {
+            launchUiCoroutine(component, context) {
+              // Because this thing is launched in a separate EDT event, we need to check again.
+              // Otherwise, it's possible that the component is no longer showing,
+              // but the coroutine wasn't cancelled yet.
+              if (isShowing(component)) {
+                val childScope = this
+                block(parentScope, childScope)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@Internal
+@VisibleForTesting
+var forceRespectIsShowingClientProperty: Boolean = false
+
+@Internal
+@VisibleForTesting
+inline fun withForcedRespectIsShowingClientProperty(block: () -> Unit) {
+  assert(!forceRespectIsShowingClientProperty)
+  forceRespectIsShowingClientProperty = true
+  try {
+    block()
+  }
+  finally {
+    forceRespectIsShowingClientProperty = false
+  }
+}
+
 // For some reason, HierarchyEvent.SHOWING_CHANGED check does not pass in unit tests.
 private var showingChanged: Boolean = false
 
@@ -213,7 +291,19 @@ fun withShowingChanged(block: () -> Unit) {
 }
 
 private fun isShowing(component: Component): Boolean {
-  return ComponentUtil.isShowing(component, false)
+  return if (isUnconfinedFixEnabled() && !forceRespectIsShowingClientProperty) {
+    // Outside unit tests, we ignore the client property that forces isShowing, and use pure Swing instead.
+    // This is because there are some usages that crash when there's no real window parent.
+    // And anyway, this new API is designed for pure UI code.
+    // But even in remdev scenarios with various hacks, isShowing works just fine.
+    // When it does NOT work is when this property is set and then the component is hidden.
+    // If we're unlucky enough to get our event scheduled when the component is in that limbo state,
+    // we get all kinds of trouble.
+    component.isShowing
+  }
+  else {
+    ComponentUtil.isShowing(component, false)
+  }
 }
 
 private fun CoroutineScope.launchUiCoroutine(
