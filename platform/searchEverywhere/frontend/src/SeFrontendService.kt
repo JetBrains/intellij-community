@@ -34,6 +34,7 @@ import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import fleet.kernel.DurableRef
@@ -45,6 +46,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.Point
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 
@@ -57,7 +60,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
   private val popupSemaphore = OverflowSemaphore(1, overflow = BufferOverflow.DROP_LATEST)
 
   @Volatile
-  private var popupInstance: SePopupInstance? = null
+  private var popupInstanceFuture: CompletableFuture<SePopupInstance>? = null
+  private val popupInstance: SePopupInstance?
+    get() = if (EDT.isCurrentThreadEdt()) popupInstanceFuture?.getNow(null)
+    else runCatching { popupInstanceFuture?.get(2, TimeUnit.SECONDS) }.getOrNull()
+
 
   @Volatile
   var localProvidersHolder: SeProvidersHolder? = null
@@ -68,6 +75,9 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
   val removeSessionRef: AtomicBoolean = AtomicBoolean(true)
 
   override fun show(tabId: String, searchText: String?, initEvent: AnActionEvent) {
+    val popupFuture = CompletableFuture<SePopupInstance>()
+    popupInstanceFuture = popupFuture
+
     coroutineScope.launch {
       val popupScope = coroutineScope.childScope("SearchEverywhereFrontendService popup scope")
       val sessionRef = SeSessionEntity.createRef()
@@ -75,12 +85,12 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       try {
         popupSemaphore.withPermit {
           localProvidersHolder = SeProvidersHolder.initialize(initEvent, project, sessionRef, "Frontend")
-          val completable = doShowPopup(tabId, searchText, initEvent, popupScope, sessionRef)
+          val completable = doShowPopup(popupFuture, tabId, searchText, initEvent, popupScope, sessionRef)
           completable.await()
         }
       }
       finally {
-        popupInstance = null
+        popupInstanceFuture = null
         localProvidersHolder?.let { Disposer.dispose(it) }
         localProvidersHolder = null
 
@@ -99,6 +109,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
   }
 
   private suspend fun doShowPopup(
+    popupFuture: CompletableFuture<SePopupInstance>,
     tabId: String,
     searchText: String?,
     initEvent: AnActionEvent,
@@ -187,7 +198,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
         calcPopupPositionAndShow(popup, contentPane)
       }
 
-      popupInstance = SePopupInstance(popupVm, contentPane, searchStatePublisher)
+      popupFuture.complete(SePopupInstance(popupVm, contentPane, searchStatePublisher))
 
       val endTime = System.currentTimeMillis()
       SeLog.log { "Search Everywhere popup opened in ${endTime - startTime} ms" }
