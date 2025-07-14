@@ -2,7 +2,9 @@ package com.intellij.driver.sdk.ui.components.settings
 
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.checkBox
+import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.textField
 import javax.swing.JButton
 import javax.swing.JCheckBox
@@ -32,9 +34,11 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   class PluginDetailsPage(data: ComponentData) : UiComponent(data) {
     val optionButton = x { byType("com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction${"$"}OptionButton") }
     val installButton = x { and(byType(JButton::class.java), byAccessibleName("Install")) }
+    val installOptionButton = x { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
     val uninstallButton = x { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
     val installedButton = x { and(byType(JButton::class.java), byAccessibleName("Installed")) }
     val disableButton = x { and(byType(JButton::class.java), byAccessibleName("Disable")) }
     val enableButton = x { and(byType(JButton::class.java), byAccessibleName("Enable")) }
+    val arrowButton = x { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton")}
   }
 }
