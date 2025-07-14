@@ -68,11 +68,6 @@ f:org.jetbrains.jewel.ui.OutlineKt
 f:org.jetbrains.jewel.ui.component.ActionButtonKt
 - sf:ActionButton(kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:ActionButton(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,androidx.compose.foundation.layout.PaddingValues,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
-f:org.jetbrains.jewel.ui.component.BannerKt
-- sf:ErrorDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:InformationDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:SuccessDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:WarningDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.ButtonKt
 - sf:DefaultButton(kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ButtonStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:DefaultSplitButton(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,androidx.compose.ui.text.TextStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
@@ -213,13 +208,6 @@ f:org.jetbrains.jewel.ui.component.ComboBoxState
 f:org.jetbrains.jewel.ui.component.ComboBoxState$Companion
 - f:of-b6bHBqw(Z,Z,Z,Z,Z):J
 - bs:of-b6bHBqw$default(org.jetbrains.jewel.ui.component.ComboBoxState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
-f:org.jetbrains.jewel.ui.component.ComposableSingletons$BannerKt
-- sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$BannerKt
-- <init>():V
-- f:getLambda$-1598537304$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda$-1749954721$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda$-1861256637$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda$57961071$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - <init>():V
