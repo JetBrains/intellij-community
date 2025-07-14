@@ -42,6 +42,18 @@ object Result {
       ignoreMissingData = true
     )
   )
+
+  val COLORED_INSIGHTS: EvalDataDescription<List<ColoredInsightsData>, ColoredInsightsData> = EvalDataDescription(
+    name = "Colored insights",
+    description = "Bind with colored insights (model, positive, negative)",
+    DataPlacement.ColoredInsightsPlacement("colored_insights"),
+    presentation = EvalDataPresentation(
+      PresentationCategory.RESULT,
+      DataRenderer.ColoredInsights,
+      DynamicName.ColoredInsightsFileName,
+      ignoreMissingData = true
+    )
+  )
 }
 
 object Execution {

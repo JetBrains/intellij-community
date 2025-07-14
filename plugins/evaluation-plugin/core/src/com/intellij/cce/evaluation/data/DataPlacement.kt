@@ -142,6 +142,22 @@ sealed interface DataPlacement<In, Out> {
     }
   }
 
+  data class ColoredInsightsPlacement(val propertyKey: String) : DataPlacement<List<ColoredInsightsData>, ColoredInsightsData> {
+    override val serialName: String = "colored_insights_placement"
+
+    override fun dump(lookup: Lookup, t: List<ColoredInsightsData>): Lookup {
+      return lookup.copy(
+        additionalInfo = lookup.additionalInfo + Pair(propertyKey, gson.toJsonTree(t))
+      )
+    }
+
+    override fun restore(props: DataProps): List<ColoredInsightsData> {
+      val insights = props.lookup.additionalInfo[propertyKey] ?: return emptyList()
+      val insightsJson = insights as? JsonElement ?: gson.toJsonTree(insights)
+      return gson.fromJson(insightsJson, Array<ColoredInsightsData>::class.java).toList()
+    }
+  }
+
   class Serializer : JsonSerializer<DataPlacement<*, *>>, JsonDeserializer<DataPlacement<*, *>> {
     override fun serialize(src: DataPlacement<*, *>?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement? {
       val serialized = context?.serialize(src)
@@ -163,6 +179,7 @@ sealed interface DataPlacement<In, Out> {
         "latency" -> Latency
         "current_file_update" -> CurrentFileUpdate
         "file_updates" -> context?.deserialize(json, FileUpdates::class.java)
+        "colored_insights_placement" -> context?.deserialize(json, ColoredInsightsPlacement::class.java)
         else -> throw IllegalArgumentException("Unknown type: $type")
       }
     }

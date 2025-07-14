@@ -359,6 +359,7 @@ private data class PropertyValue(
         is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]}, ${description});""", null)
         is DataRenderer.TextDiff -> PropertyValue("""openDiff($element, ${stringValues[0]}, ${stringValues[1]}, ${description});""", null)
         is DataRenderer.Snippets -> PropertyValue("""openSnippets($element, ${stringValues[0]});""", inline = null)
+        is DataRenderer.ColoredInsights -> PropertyValue("""openText($element, ${stringValues[0]}, ${description});""", null)
       }
     }
 
@@ -404,6 +405,9 @@ private data class PropertyValue(
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].end""",
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].text"""
         )
+        is DataPlacement.ColoredInsightsPlacement -> listOf(
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"][${placementIndex}].text"""
+        )
       }
     }
 
@@ -426,6 +430,7 @@ private data class PropertyValue(
           "\"${(value as NamedRange).end}\"",
           embedString((value as NamedRange).text)
         )
+        DataRenderer.ColoredInsights -> listOf(embedString((value as ColoredInsightsData).text))
       }
     }
   }

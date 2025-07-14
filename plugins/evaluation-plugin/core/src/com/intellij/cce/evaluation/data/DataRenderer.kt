@@ -52,6 +52,10 @@ sealed interface DataRenderer<in T> {
     override val serialName: String = "text_diff"
   }
 
+  data object ColoredInsights : DataRenderer<ColoredInsightsData> {
+    override val serialName: String = "colored_insights"
+  }
+
   class Serializer : JsonSerializer<DataRenderer<*>>, JsonDeserializer<DataRenderer<*>> {
     override fun serialize(src: DataRenderer<*>?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement? {
       val serialized = context?.serialize(src)
@@ -73,6 +77,7 @@ sealed interface DataRenderer<in T> {
         "lines" -> Lines
         "text_diff" -> TextDiff
         "snippets" -> Snippets
+        "colored_insights" -> ColoredInsights
         else -> throw IllegalArgumentException("Unknown type: $type")
       }
     }
