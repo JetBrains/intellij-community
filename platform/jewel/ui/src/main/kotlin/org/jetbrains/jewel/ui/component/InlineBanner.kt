@@ -36,6 +36,10 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.ui.component.banner.BannerActionsRow
+import org.jetbrains.jewel.ui.component.banner.BannerIconActionScope
+import org.jetbrains.jewel.ui.component.banner.BannerIconActionsRow
+import org.jetbrains.jewel.ui.component.banner.BannerLinkActionScope
 import org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.inlineBannerStyle
@@ -78,6 +82,22 @@ import org.jetbrains.jewel.ui.theme.inlineBannerStyle
  *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
  */
 @Composable
+@Deprecated(
+    "Use the overload with 'linkActions' and 'iconActions' parameters instead",
+    replaceWith =
+        ReplaceWith(
+            "org.jetbrains.jewel.ui.component.InlineInformationBanner(" +
+                "text = text, " +
+                "modifier = modifier, " +
+                "title = title, " +
+                "icon = icon, " +
+                "linkActions = actions, " +
+                "iconActions = actionIcons," +
+                "style = style, " +
+                "textStyle = textStyle" +
+                ")"
+        ),
+)
 public fun InformationInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
@@ -96,6 +116,69 @@ public fun InformationInlineBanner(
         actions = actions,
         modifier = modifier,
         actionIcons = actionIcons,
+    ) {
+        Text(text = text, style = textStyle)
+    }
+}
+
+/**
+ * Displays an informational inline banner providing subtle, non-intrusive context or feedback.
+ *
+ * Use this banner to provide relevant, non-critical information in a compact layout.
+ *
+ * **Guidelines:** [on IntelliJ Platform SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html) (note:
+ * there are no guidelines for inline banners)
+ *
+ * **Swing equivalent:**
+ * [`InlineBanner`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/InlineBanner.kt)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * ```kotlin
+ * InlineInformationBanner(
+ *     text = "Project index up to date.",
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * )
+ * ```
+ *
+ * @param text The primary content of the banner, briefly describing the information it conveys.
+ * @param modifier [Modifier] to apply to the banner.
+ * @param title An optional title, rendered in bold, that appears above the [text].
+ * @param icon Slot for an optional icon displayed on the left of the [text] or [title]. If null, there is no icon. By
+ *   default, it is the [AllIconsKeys.General.BalloonInformation] icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style An [InlineBannerStyle] used to style the banner. The default is the theme's
+ *   [`JewelTheme.inlineBannerStyle.information`][org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.information].
+ * @param textStyle The base [TextStyle] used by the [text] and [title]. Note that the [title] always has a
+ *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
+ */
+@Composable
+public fun InlineInformationBanner(
+    text: String,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: InlineBannerStyle = JewelTheme.inlineBannerStyle.information,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+) {
+    InlineInformationBanner(
+        title = title,
+        style = style,
+        textStyle = textStyle,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
     ) {
         Text(text = text, style = textStyle)
     }
@@ -140,6 +223,22 @@ public fun InformationInlineBanner(
  * @param content The primary content of the banner, briefly describing the information it conveys.
  */
 @Composable
+@Deprecated(
+    "Use the overload with 'linkActions' and 'iconActions' parameters instead",
+    replaceWith =
+        ReplaceWith(
+            "org.jetbrains.jewel.ui.component.InlineInformationBanner(" +
+                "text = text, " +
+                "modifier = modifier, " +
+                "title = title, " +
+                "icon = icon, " +
+                "linkActions = actions, " +
+                "iconActions = actionIcons," +
+                "style = style, " +
+                "textStyle = textStyle" +
+                ")"
+        ),
+)
 public fun InformationInlineBanner(
     modifier: Modifier = Modifier,
     title: String? = null,
@@ -158,6 +257,69 @@ public fun InformationInlineBanner(
         actions = actions,
         modifier = modifier,
         actionIcons = actionIcons,
+        content = content,
+    )
+}
+
+/**
+ * Displays an informational inline banner providing subtle, non-intrusive context or feedback.
+ *
+ * Use this banner to provide relevant, non-critical information in a compact layout.
+ *
+ * **Guidelines:** [on IntelliJ Platform SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html) (note:
+ * there are no guidelines for inline banners)
+ *
+ * **Swing equivalent:**
+ * [`InlineBanner`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/InlineBanner.kt)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * ```kotlin
+ * InlineInformationBanner(
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * ) {
+ *     Markdown("Project index **up to date**.")
+ * }
+ * ```
+ *
+ * @param modifier [Modifier] to apply to the banner.
+ * @param title An optional title, rendered in bold, that appears above the [content].
+ * @param icon Slot for an optional icon displayed on the left of the [content] or [title]. If null, there is no icon.
+ *   By default, it is the [AllIconsKeys.General.BalloonInformation] icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style An [InlineBannerStyle] used to style the banner. The default is the theme's
+ *   [`JewelTheme.inlineBannerStyle.information`][org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.information].
+ * @param textStyle The base [TextStyle] used by the [content] and [title]. Note that the [title] always has a
+ *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
+ * @param content The primary content of the banner, briefly describing the information it conveys.
+ */
+@Composable
+public fun InlineInformationBanner(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: InlineBannerStyle = JewelTheme.inlineBannerStyle.information,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    content: @Composable () -> Unit,
+) {
+    InlineBannerImpl(
+        title = title,
+        style = style,
+        textStyle = textStyle,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
         content = content,
     )
 }
@@ -198,6 +360,22 @@ public fun InformationInlineBanner(
  *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
  */
 @Composable
+@Deprecated(
+    "Use the overload with 'linkActions' and 'iconActions' parameters instead",
+    replaceWith =
+        ReplaceWith(
+            "org.jetbrains.jewel.ui.component.InlineSuccessBanner(" +
+                "text = text, " +
+                "modifier = modifier, " +
+                "title = title, " +
+                "icon = icon, " +
+                "linkActions = actions, " +
+                "iconActions = actionIcons," +
+                "style = style, " +
+                "textStyle = textStyle" +
+                ")"
+        ),
+)
 public fun SuccessInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
@@ -216,6 +394,67 @@ public fun SuccessInlineBanner(
         actions = actions,
         modifier = modifier,
         actionIcons = actionIcons,
+    ) {
+        Text(text = text, style = textStyle)
+    }
+}
+
+/**
+ * Displays a success inline banner providing information about the successful completion of an operation.
+ *
+ * **Guidelines:** [on IntelliJ Platform SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html) (note:
+ * there are no guidelines for inline banners)
+ *
+ * **Swing equivalent:**
+ * [`InlineBanner`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/InlineBanner.kt)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * ```kotlin
+ * InlineSuccessBanner(
+ *     text = "Project indexed successfully.",
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * )
+ * ```
+ *
+ * @param text The primary content of the banner, briefly describing the information it conveys.
+ * @param modifier [Modifier] to apply to the banner.
+ * @param title An optional title, rendered in bold, that appears above the [text].
+ * @param icon Slot for an optional icon displayed on the left of the [text] or [title]. If null, there is no icon. By
+ *   default, it is the [AllIconsKeys.Status.Success] icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style An [InlineBannerStyle] used to style the banner. The default is the theme's
+ *   [`JewelTheme.inlineBannerStyle.success`][org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.success].
+ * @param textStyle The base [TextStyle] used by the [text] and [title]. Note that the [title] always has a
+ *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
+ */
+@Composable
+public fun InlineSuccessBanner(
+    text: String,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Status.Success, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: InlineBannerStyle = JewelTheme.inlineBannerStyle.success,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+) {
+    InlineSuccessBanner(
+        title = title,
+        style = style,
+        textStyle = textStyle,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
     ) {
         Text(text = text, style = textStyle)
     }
@@ -260,6 +499,22 @@ public fun SuccessInlineBanner(
  * @param content The primary content of the banner, briefly describing the information it conveys.
  */
 @Composable
+@Deprecated(
+    "Use the overload with 'linkActions' and 'iconActions' parameters instead",
+    replaceWith =
+        ReplaceWith(
+            "org.jetbrains.jewel.ui.component.InlineSuccessBanner(" +
+                "text = text, " +
+                "modifier = modifier, " +
+                "title = title, " +
+                "icon = icon, " +
+                "linkActions = actions, " +
+                "iconActions = actionIcons," +
+                "style = style, " +
+                "textStyle = textStyle" +
+                ")"
+        ),
+)
 public fun SuccessInlineBanner(
     modifier: Modifier = Modifier,
     title: String? = null,
@@ -278,6 +533,71 @@ public fun SuccessInlineBanner(
         actions = actions,
         modifier = modifier,
         actionIcons = actionIcons,
+        content = content,
+    )
+}
+
+/**
+ * Displays a success inline banner providing information about the successful completion of an operation.
+ *
+ * Use this banner to provide relevant, non-critical information in a compact layout.
+ *
+ * **Guidelines:** [on IntelliJ Platform SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html) (note:
+ * there are no guidelines for inline banners)
+ *
+ * **Swing equivalent:**
+ * [`InlineBanner`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/InlineBanner.kt)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * ```kotlin
+ * InlineSuccessBanner(
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * ) {
+ *     Markdown("Project indexed **successfully**.")
+ * }
+ * ```
+ *
+ * @param modifier [Modifier] to apply to the banner.
+ * @param title An optional title, rendered in bold, that appears above the [content].
+ * @param icon Slot for an optional icon displayed on the left of the [content] or [title]. If null, there is no icon.
+ *   By default, it is the [AllIconsKeys.Status.Success] icon.
+ * @param actions Slot for optional primary actions (usually links) to show at the bottom of the banner, below the
+ *   [content].
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style An [InlineBannerStyle] used to style the banner. The default is the theme's
+ *   [`JewelTheme.inlineBannerStyle.success`][org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.success].
+ * @param textStyle The base [TextStyle] used by the [content] and [title]. Note that the [title] always has a
+ *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
+ * @param content The primary content of the banner, briefly describing the information it conveys.
+ */
+@Composable
+public fun InlineSuccessBanner(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Status.Success, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: InlineBannerStyle = JewelTheme.inlineBannerStyle.success,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    content: @Composable () -> Unit,
+) {
+    InlineBannerImpl(
+        title = title,
+        style = style,
+        textStyle = textStyle,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
         content = content,
     )
 }
@@ -320,6 +640,22 @@ public fun SuccessInlineBanner(
  *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
  */
 @Composable
+@Deprecated(
+    "Use the overload with 'linkActions' and 'iconActions' parameters instead",
+    replaceWith =
+        ReplaceWith(
+            "org.jetbrains.jewel.ui.component.InlineWarningBanner(" +
+                "text = text, " +
+                "modifier = modifier, " +
+                "title = title, " +
+                "icon = icon, " +
+                "linkActions = actions, " +
+                "iconActions = actionIcons," +
+                "style = style, " +
+                "textStyle = textStyle" +
+                ")"
+        ),
+)
 public fun WarningInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
@@ -338,6 +674,69 @@ public fun WarningInlineBanner(
         actions = actions,
         modifier = modifier,
         actionIcons = actionIcons,
+    ) {
+        Text(text = text, style = textStyle)
+    }
+}
+
+/**
+ * Shows a warning inline banner to draw attention to non-critical issues that require user awareness or resolution.
+ *
+ * Use this banner to provide relevant, non-critical information in a compact layout.
+ *
+ * **Guidelines:** [on IntelliJ Platform SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html) (note:
+ * there are no guidelines for inline banners)
+ *
+ * **Swing equivalent:**
+ * [`InlineBanner`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/InlineBanner.kt)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * ```kotlin
+ * InlineWarningBanner(
+ *     text = "Project indexed with warnings.",
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * )
+ * ```
+ *
+ * @param text The primary content of the banner, briefly describing the information it conveys.
+ * @param modifier [Modifier] to apply to the banner.
+ * @param title An optional title, rendered in bold, that appears above the [text].
+ * @param icon Slot for an optional icon displayed on the left of the [text] or [title]. If null, there is no icon. By
+ *   default, it is the [AllIconsKeys.General.BalloonWarning] icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style An [InlineBannerStyle] used to style the banner. The default is the theme's
+ *   [`JewelTheme.inlineBannerStyle.warning`][org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.warning].
+ * @param textStyle The base [TextStyle] used by the [text] and [title]. Note that the [title] always has a
+ *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
+ */
+@Composable
+public fun InlineWarningBanner(
+    text: String,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: InlineBannerStyle = JewelTheme.inlineBannerStyle.warning,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+) {
+    InlineWarningBanner(
+        title = title,
+        style = style,
+        textStyle = textStyle,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
     ) {
         Text(text = text, style = textStyle)
     }
@@ -382,6 +781,22 @@ public fun WarningInlineBanner(
  * @param content The primary content of the banner, briefly describing the information it conveys.
  */
 @Composable
+@Deprecated(
+    "Use the overload with 'linkActions' and 'iconActions' parameters instead",
+    replaceWith =
+        ReplaceWith(
+            "org.jetbrains.jewel.ui.component.InlineWarningBanner(" +
+                "text = text, " +
+                "modifier = modifier, " +
+                "title = title, " +
+                "icon = icon, " +
+                "linkActions = actions, " +
+                "iconActions = actionIcons," +
+                "style = style, " +
+                "textStyle = textStyle" +
+                ")"
+        ),
+)
 public fun WarningInlineBanner(
     modifier: Modifier = Modifier,
     title: String? = null,
@@ -400,6 +815,69 @@ public fun WarningInlineBanner(
         actions = actions,
         modifier = modifier,
         actionIcons = actionIcons,
+        content = content,
+    )
+}
+
+/**
+ * Shows a warning inline banner to draw attention to non-critical issues that require user awareness or resolution.
+ *
+ * Use this banner to provide relevant, non-critical information in a compact layout.
+ *
+ * **Guidelines:** [on IntelliJ Platform SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html) (note:
+ * there are no guidelines for inline banners)
+ *
+ * **Swing equivalent:**
+ * [`InlineBanner`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/InlineBanner.kt)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * ```kotlin
+ * InlineWarningBanner(
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * ) {
+ *     Markdown("Project indexed **with warnings**.")
+ * }
+ * ```
+ *
+ * @param modifier [Modifier] to apply to the banner.
+ * @param title An optional title, rendered in bold, that appears above the [content].
+ * @param icon Slot for an optional icon displayed on the left of the [content] or [title]. If null, there is no icon.
+ *   By default, it is the [AllIconsKeys.General.BalloonWarning] icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style An [InlineBannerStyle] used to style the banner. The default is the theme's
+ *   [`JewelTheme.inlineBannerStyle.warning`][org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.warning].
+ * @param textStyle The base [TextStyle] used by the [content] and [title]. Note that the [title] always has a
+ *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
+ * @param content The primary content of the banner, briefly describing the information it conveys.
+ */
+@Composable
+public fun InlineWarningBanner(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: InlineBannerStyle = JewelTheme.inlineBannerStyle.warning,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    content: @Composable () -> Unit,
+) {
+    InlineBannerImpl(
+        title = title,
+        style = style,
+        textStyle = textStyle,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
         content = content,
     )
 }
@@ -442,6 +920,22 @@ public fun WarningInlineBanner(
  *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
  */
 @Composable
+@Deprecated(
+    "Use the overload with 'linkActions' and 'iconActions' parameters instead",
+    replaceWith =
+        ReplaceWith(
+            "org.jetbrains.jewel.ui.component.InlineErrorBanner(" +
+                "text = text, " +
+                "modifier = modifier, " +
+                "title = title, " +
+                "icon = icon, " +
+                "linkActions = actions, " +
+                "iconActions = actionIcons," +
+                "style = style, " +
+                "textStyle = textStyle" +
+                ")"
+        ),
+)
 public fun ErrorInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
@@ -460,6 +954,69 @@ public fun ErrorInlineBanner(
         actions = actions,
         modifier = modifier,
         actionIcons = actionIcons,
+    ) {
+        Text(text = text, style = textStyle)
+    }
+}
+
+/**
+ * Shows an error inline banner to draw attention to non-critical issues that require user awareness or resolution.
+ *
+ * Use this banner to provide relevant, non-critical information in a compact layout.
+ *
+ * **Guidelines:** [on IntelliJ Platform SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html) (note:
+ * there are no guidelines for inline banners)
+ *
+ * **Swing equivalent:**
+ * [`InlineBanner`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/InlineBanner.kt)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * ```kotlin
+ * InlineErrorBanner(
+ *     text = "Project indexed failed.",
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * )
+ * ```
+ *
+ * @param text The primary content of the banner, briefly describing the information it conveys.
+ * @param modifier [Modifier] to apply to the banner.
+ * @param title An optional title, rendered in bold, that appears above the [text].
+ * @param icon Slot for an optional icon displayed on the left of the [text] or [title]. If null, there is no icon. By
+ *   default, it is the [AllIconsKeys.General.BalloonError] icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style An [InlineBannerStyle] used to style the banner. The default is the theme's
+ *   [`JewelTheme.inlineBannerStyle.error`][org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.error].
+ * @param textStyle The base [TextStyle] used by the [text] and [title]. Note that the [title] always has a
+ *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
+ */
+@Composable
+public fun InlineErrorBanner(
+    text: String,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: InlineBannerStyle = JewelTheme.inlineBannerStyle.error,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+) {
+    InlineErrorBanner(
+        style = style,
+        textStyle = textStyle,
+        title = title,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
     ) {
         Text(text = text, style = textStyle)
     }
@@ -504,6 +1061,22 @@ public fun ErrorInlineBanner(
  * @param content The primary content of the banner, briefly describing the information it conveys.
  */
 @Composable
+@Deprecated(
+    "Use the overload with 'linkActions' and 'iconActions' parameters instead",
+    replaceWith =
+        ReplaceWith(
+            "org.jetbrains.jewel.ui.component.InlineErrorBanner(" +
+                "text = text, " +
+                "modifier = modifier, " +
+                "title = title, " +
+                "icon = icon, " +
+                "linkActions = actions, " +
+                "iconActions = actionIcons," +
+                "style = style, " +
+                "textStyle = textStyle" +
+                ")"
+        ),
+)
 public fun ErrorInlineBanner(
     modifier: Modifier = Modifier,
     title: String? = null,
@@ -523,6 +1096,103 @@ public fun ErrorInlineBanner(
         modifier = modifier,
         actionIcons = actionIcons,
         content = content,
+    )
+}
+
+/**
+ * Shows an error inline banner to draw attention to non-critical issues that require user awareness or resolution.
+ *
+ * Use this banner to provide relevant, non-critical information in a compact layout.
+ *
+ * **Guidelines:** [on IntelliJ Platform SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html) (note:
+ * there are no guidelines for inline banners)
+ *
+ * **Swing equivalent:**
+ * [`InlineBanner`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/InlineBanner.kt)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * ```kotlin
+ * InlineErrorBanner(
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * ) {
+ *     Markdown("Project indexed **successfully**.")
+ * }
+ * ```
+ *
+ * @param modifier [Modifier] to apply to the banner.
+ * @param title An optional title, rendered in bold, that appears above the [content].
+ * @param icon Slot for an optional icon displayed on the left of the [content] or [title]. If null, there is no icon.
+ *   By default, it is the [AllIconsKeys.General.BalloonError] icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions or there is not enough space to fit the actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style An [InlineBannerStyle] used to style the banner. The default is the theme's
+ *   [`JewelTheme.inlineBannerStyle.error`][org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.error].
+ * @param textStyle The base [TextStyle] used by the [content] and [title]. Note that the [title] always has a
+ *   [`Bold` weight][androidx.compose.ui.text.font.FontWeight.Bold].
+ * @param content The primary content of the banner, briefly describing the information it conveys.
+ */
+@Composable
+public fun InlineErrorBanner(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: InlineBannerStyle = JewelTheme.inlineBannerStyle.error,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    content: @Composable () -> Unit,
+) {
+    InlineBannerImpl(
+        style = style,
+        textStyle = textStyle,
+        title = title,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
+        content = content,
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun InlineBannerImpl(
+    style: InlineBannerStyle,
+    textStyle: TextStyle,
+    title: String?,
+    modifier: Modifier,
+    icon: @Composable (() -> Unit)?,
+    linkActions: (BannerLinkActionScope.() -> Unit)?,
+    iconActions: (BannerIconActionScope.() -> Unit)?,
+    content: @Composable (() -> Unit),
+) {
+    InlineBannerImpl(
+        style = style,
+        textStyle = textStyle,
+        title = title,
+        icon = icon,
+        modifier = modifier,
+        content = content,
+        actions =
+            if (linkActions != null) {
+                { BannerActionsRow(16.dp, block = linkActions) }
+            } else {
+                null
+            },
+        actionIcons =
+            if (iconActions != null) {
+                { BannerIconActionsRow(iconActions) }
+            } else {
+                null
+            },
     )
 }
 
