@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
@@ -52,7 +52,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   private val pane: JLayeredPane = LoadingDecoratorLayeredPane(if (useMinimumSize) content else null)
   private val loadingLayer: LoadingLayer = LoadingLayer(icon)
-  private val fadeOutAnimator: Animator
+  private val fadeOutAnimator: Animator?
   private var startRequestJob: Job? = null
 
   var loadingText: @Nls String?
@@ -67,18 +67,24 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   init {
     loadingText = CommonBundle.getLoadingTreeNodeText()
-    fadeOutAnimator = LoadingLayerAnimator(
-      setAlpha = { loadingLayer.setAlpha(it) },
-      end = {
-        loadingLayer.setAlpha(0f)
-        hideLoadingLayer()
-        loadingLayer.setAlpha(-1f)
-        pane.repaint()
-      },
-    )
+    fadeOutAnimator = if (GraphicsEnvironment.isHeadless() || ApplicationManager.getApplication()?.isUnitTestMode == true) {
+      null
+    }
+    else {
+      LoadingLayerAnimator(
+        setAlpha = { loadingLayer.setAlpha(it) },
+        end = {
+          loadingLayer.setAlpha(0f)
+          hideLoadingLayer()
+          loadingLayer.setAlpha(-1f)
+          pane.repaint()
+        },
+      )
+    }
+
     pane.add(content, JLayeredPane.DEFAULT_LAYER, 0)
     Disposer.register(parent) {
-      fadeOutAnimator.dispose()
+      fadeOutAnimator?.dispose()
       Disposer.dispose(loadingLayer.progress)
       startRequestJob?.cancel()
     }
@@ -185,7 +191,7 @@ open class LoadingDecorator @JvmOverloads constructor(
       }
 
       _visible = visible
-      fadeOutAnimator.reset()
+      fadeOutAnimator?.reset()
       if (_visible) {
         isVisible = true
         currentAlpha = -1f
@@ -198,12 +204,12 @@ open class LoadingDecorator @JvmOverloads constructor(
           g.dispose()
         }
         progress.resume()
-        fadeOutAnimator.suspend()
+        fadeOutAnimator?.suspend()
       }
       else {
         disposeSnapshot()
         progress.suspend()
-        fadeOutAnimator.resume()
+        fadeOutAnimator?.resume()
       }
     }
 
@@ -266,6 +272,8 @@ private class LoadingLayerAnimator(
 
   override fun paintCycleEnd() {
     // paint with zero alpha before hiding completely
+    // if called from Animator constructor, maybe field not yet initialized
+    setAlpha.accept(0f)
     end()
   }
 }
