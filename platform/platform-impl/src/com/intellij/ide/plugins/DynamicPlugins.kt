@@ -1414,7 +1414,7 @@ private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl,
   pluginDescriptor.findInAnyScope()?.let { return it }
   pluginDescriptor.contentModules.forEach { contentModule ->
     // FIXME incomplete fix for IJPL-190703
-    if (contentModule.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
+    if (contentModule.moduleLoadingRule.required) {
       contentModule.findInAnyScope()?.let { return it }
     }
   }
