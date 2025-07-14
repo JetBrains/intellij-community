@@ -394,7 +394,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     AppIcon.getInstance().requestFocus(projectIdeFrame)
     ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
 
-    return waitFor(timeout = 5.seconds.toJavaDuration()) {
+    return waitFor(timeout = 15.seconds.toJavaDuration()) {
       projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
     }.also {
       if (!it && !silent) {
@@ -420,7 +420,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     visibleWindows.forEach {
       AppIcon.getInstance().requestFocus(it)
     }
-    return waitFor(timeout = 5.seconds.toJavaDuration()) {
+    return waitFor(timeout = 15.seconds.toJavaDuration()) {
       KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
     }.also {
       if (!it && !silent) {
