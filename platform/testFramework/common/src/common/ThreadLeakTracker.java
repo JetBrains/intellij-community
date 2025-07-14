@@ -106,6 +106,10 @@ public final class ThreadLeakTracker {
       // see okhttp3.ConnectionPool: "this pool holds up to 5 idle connections which will be evicted after 5 minutes of inactivity"
       "OkHttp ",
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
+      // com.jetbrains.plugins.webDeployment.connections.RemoteConnectionPool
+      // uses org.apache.commons.vfs2.impl.DefaultFileSystemManager which
+      // starts a long-running thread in org.apache.commons.vfs2.cache.SoftRefFilesCache.startThread:
+      "org.apache.commons.vfs2.cache.SoftRefFilesCache$ReleaseThread",
       "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
       "process reaper", // Thread[#46,process reaper(pid7496),10,InnocuousThreadGroup] (since JDK-8279488 part of InnocuousThreadGroup)
       "qtp", // used in tests for mocking via WireMock in integration testing
