@@ -122,6 +122,8 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/experiment",
     "//platform/project/shared:project",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc",
   ],
   exports = [
     "//platform/lang-api:lang",
