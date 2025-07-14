@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -366,6 +367,7 @@ public value class ComboBoxState(public val state: ULong) : FocusableComponentSt
     }
 }
 
+@InternalJewelApi
 @ApiStatus.Internal
 public suspend fun PointerInputScope.detectPressAndCancel(onPress: () -> Unit, onCancel: () -> Unit) {
     coroutineScope {
