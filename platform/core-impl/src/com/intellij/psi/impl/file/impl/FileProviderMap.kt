@@ -142,16 +142,10 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
 
   override fun removeAllAndSetAny(provider: FileViewProvider) {
     update {
-      newMap(anyContext(), provider)
+      mapOf(anyContext(), provider)
     }
     storeStrongLinkInProvider(provider)
   }
-
-  private fun newMap(
-    context: CodeInsightContext,
-    provider: FileViewProvider,
-  ): ContextMap<FileViewProvider> =
-    emptyContextMap<FileViewProvider>().add(context, provider)
 
   /**
    * Write-only code. Please don't try to amend.
@@ -295,6 +289,12 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
     provider.putUserData(strongLinkToFileProviderMap, this)
   }
 }
+
+private fun mapOf(
+  context: CodeInsightContext,
+  provider: FileViewProvider,
+): ContextMap<FileViewProvider> =
+  emptyContextMap<FileViewProvider>().add(context, provider)
 
 /**
  * An immutable map from contexts to [V].
