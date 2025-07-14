@@ -27,4 +27,13 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run :check task
-        run: ./gradlew :decorated-window:check :detekt-plugin:check :foundation:check :ide-laf-bridge:check :int-ui:int-ui-decorated-window:check :int-ui:int-ui-standalone:check :markdown:core:check :markdown:extensions:autolink:check :markdown:extensions:gfm-alerts:check :markdown:extensions:gfm-strikethrough:check :markdown:extensions:gfm-tables:check :markdown:ide-laf-bridge-styling:check :markdown:int-ui-standalone-styling:check :samples:ide-plugin:ktfmtCheck :samples:showcase:check :samples:standalone:check :ui:check :ui-tests:check --continue --no-daemon
+        # Run checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
+        run: ./gradlew check -x :samples:ide-plugin:check --continue --no-daemon
+
+      - name: Run detektMain and detektTest tasks
+        # Run detekt checks for all modules except the IDE plugin sample, as that is bound to have missing APIs issues
+        run: ./gradlew detektMain detektTest -x :samples:ide-plugin:detektMain -x :samples:ide-plugin:detektTest --continue --no-daemon
+
+      - name: Run ktfmt and ktlint checks on IDE plugin
+        # We can only use static analysis that doesn't depend on compilation in the IDE plugin
+        run: ./gradlew :samples:ide-plugin:ktfmtCheck :samples:ide-plugin:lintKotlinMain --continue --no-daemon
