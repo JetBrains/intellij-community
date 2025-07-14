@@ -155,6 +155,10 @@ public final class org/jetbrains/jewel/ui/component/AutoHideBehavior : java/lang
 }
 
 public final class org/jetbrains/jewel/ui/component/BannerKt {
+	public static final fun DefaultErrorBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultInformationBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultSuccessBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultWarningBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun ErrorDefaultBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun InformationDefaultBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SuccessDefaultBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
@@ -338,25 +342,37 @@ public final class org/jetbrains/jewel/ui/component/ComboBoxState$Companion {
 	public static synthetic fun of-b6bHBqw$default (Lorg/jetbrains/jewel/ui/component/ComboBoxState$Companion;ZZZZZILjava/lang/Object;)J
 }
 
-public final class org/jetbrains/jewel/ui/component/ComposableSingletons$BannerKt {
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$BannerKt;
+public final class org/jetbrains/jewel/ui/component/ComposableSingletons$DefaultBannerKt {
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$DefaultBannerKt;
 	public fun <init> ()V
-	public final fun getLambda$-1598537304$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$-1749954721$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$-1861256637$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$57961071$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1509620682$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-7336010$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-923063987$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1072372818$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1128848239$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1508382630$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$164356774$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$876414154$ui ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$InlineBannerKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$InlineBannerKt;
 	public fun <init> ()V
+	public final fun getLambda$-1538814873$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-1555647357$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-2140712312$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-516555399$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-564250245$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-649449331$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-812795800$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-964818995$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-970574927$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$144215585$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1503990447$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$152227743$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1892680925$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$2043897696$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$328167639$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$423463284$ui ()Lkotlin/jvm/functions/Function2;
 }
 
@@ -574,6 +590,14 @@ public final class org/jetbrains/jewel/ui/component/InlineBannerKt {
 	public static final fun ErrorInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun InformationInlineBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun InformationInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InlineErrorBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InlineErrorBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InlineInformationBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InlineInformationBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InlineSuccessBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InlineSuccessBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InlineWarningBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InlineWarningBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SuccessInlineBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SuccessInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun WarningInlineBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
@@ -1291,6 +1315,24 @@ public final class org/jetbrains/jewel/ui/component/TypographyKt {
 	public static synthetic fun copyWithSize-nfnV_I0$default (Landroidx/compose/ui/text/TextStyle;JLandroidx/compose/ui/graphics/Brush;FLandroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontSynthesis;Landroidx/compose/ui/text/font/FontFamily;Ljava/lang/String;JLandroidx/compose/ui/text/style/BaselineShift;Landroidx/compose/ui/text/style/TextGeometricTransform;Landroidx/compose/ui/text/intl/LocaleList;JLandroidx/compose/ui/text/style/TextDecoration;Landroidx/compose/ui/graphics/Shadow;Landroidx/compose/ui/graphics/drawscope/DrawStyle;IILandroidx/compose/ui/text/style/TextIndent;Landroidx/compose/ui/text/PlatformTextStyle;Landroidx/compose/ui/text/style/LineHeightStyle;IILandroidx/compose/ui/text/style/TextMotion;ILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
 	public static final fun minus-NB67dxo (JJ)J
 	public static final fun plus-NB67dxo (JJ)J
+}
+
+public abstract interface class org/jetbrains/jewel/ui/component/banner/BannerIconActionScope {
+	public abstract fun iconAction (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+}
+
+public final class org/jetbrains/jewel/ui/component/banner/BannerIconActionScope$DefaultImpls {
+	public static synthetic fun iconAction$default (Lorg/jetbrains/jewel/ui/component/banner/BannerIconActionScope;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+}
+
+public abstract interface class org/jetbrains/jewel/ui/component/banner/BannerLinkActionScope {
+	public abstract fun action (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+}
+
+public final class org/jetbrains/jewel/ui/component/banner/ComposableSingletons$BannerLinkActionScopeKt {
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/banner/ComposableSingletons$BannerLinkActionScopeKt;
+	public fun <init> ()V
+	public final fun getLambda$-1363944258$ui ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/BannerColors {
