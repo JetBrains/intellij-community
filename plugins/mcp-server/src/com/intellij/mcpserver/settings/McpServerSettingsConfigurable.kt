@@ -47,6 +47,10 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
   override fun getDisplayName(): String = McpServerBundle.message("configurable.name.mcp.plugin")
 
+  override fun getHelpTopic(): @NonNls String {
+    return "settings.mcp.server"
+  }
+
   override fun createComponent(): JComponent {
     val settings = McpServerSettings.getInstance()
 
