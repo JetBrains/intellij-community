@@ -22,6 +22,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
@@ -68,7 +69,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       myModificationStamp = modificationStamp;
 
       final StubElement<?> stub = getStub();
-      LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(PyFileImpl.this);
+      LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(PyFileImpl.this);
       processDeclarations(PyFileImpl.this, stub, languageLevel, element -> {
         if (element instanceof PsiNamedElement namedElement &&
             !(element instanceof PyKeywordArgument) &&
@@ -767,7 +768,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   private @NotNull <T extends PyElement> List<T> collectChildren(Class<T> type) {
     @Nullable StubElement<?> stub = getGreenStub();
-    @NotNull LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(this);
+    @NotNull LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(this);
     final List<T> result = new ArrayList<>();
     if (stub != null) {
       for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {

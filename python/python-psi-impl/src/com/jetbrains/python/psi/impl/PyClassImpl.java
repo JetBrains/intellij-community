@@ -1032,7 +1032,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     else {
       getStatementList().acceptChildren(
-        new PyVersionAwareTopLevelElementVisitor(PythonLanguageLevelPusher.getLanguageLevelForFile(getContainingFile())) {
+        new PyVersionAwareTopLevelElementVisitor(PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile())) {
           @Override
           protected void checkAddElement(PsiElement psiElement) {
             if (psiElement instanceof PyAssignmentStatement assignmentStatement) {
@@ -1257,7 +1257,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   private @NotNull Iterable<@NotNull StubElement<?>> getVersionSpecificChildrenStubs(@NotNull PyClassStub stub) {
-    return PyVersionSpecificStubBaseKt.getChildrenStubs(stub, PythonLanguageLevelPusher.getLanguageLevelForFile(getContainingFile()));
+    return PyVersionSpecificStubBaseKt.getChildrenStubs(stub, PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile()));
   }
 
   @Override

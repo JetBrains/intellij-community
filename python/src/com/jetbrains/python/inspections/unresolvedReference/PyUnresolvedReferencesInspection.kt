@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils
+import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
 import com.jetbrains.python.inspections.quickfix.*
@@ -34,7 +35,6 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl
 import com.jetbrains.python.psi.impl.PyImportElementImpl
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -50,7 +50,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
     Visitor(holder,
             ignoredIdentifiers,
             PyInspectionVisitor.getContext(session),
-            PythonLanguageLevelPusher.getLanguageLevelForFile(session.file))
+            getEffectiveLanguageLevel(session.file))
 
   override fun getOptionsPane(): OptPane = OptPane.pane(
     OptPane.stringList("ignoredIdentifiers",

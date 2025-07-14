@@ -21,11 +21,11 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix
+import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.inspections.PyInspectionVisitor.getContext
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.psi.impl.stubs.evaluateVersionsForElement
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -39,7 +39,7 @@ class PyUnusedImportsInspection : PyInspection() {
     val visitor = Visitor(holder = holder,
                           myInspection = this,
                           typeEvalContext = getContext(session),
-                          languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(session.file))
+                          languageLevel = getEffectiveLanguageLevel(session.file))
     session.putUserData(KEY, visitor)
     return visitor
   }

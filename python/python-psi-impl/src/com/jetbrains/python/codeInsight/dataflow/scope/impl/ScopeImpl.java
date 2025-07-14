@@ -9,6 +9,7 @@ import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
@@ -16,7 +17,10 @@ import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyVersionAwareElementVisitor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,10 +218,10 @@ public class ScopeImpl implements Scope {
     final List<PyTargetExpression> targetExpressions = new ArrayList<>();
     final LanguageLevel languageLevel;
     if (myFlowOwner instanceof PyFile pyFile) {
-      languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(pyFile);
+      languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(pyFile);
     }
     else if (myFlowOwner instanceof PyClass pyClass) {
-      languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(pyClass.getContainingFile());
+      languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(pyClass.getContainingFile());
     }
     else {
       languageLevel = null;

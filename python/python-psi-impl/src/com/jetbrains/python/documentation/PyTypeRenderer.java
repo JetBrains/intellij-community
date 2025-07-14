@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.PyAstSingleStarParameter;
 import com.jetbrains.python.ast.PyAstSlashParameter;
@@ -17,7 +18,6 @@ import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -211,7 +211,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   protected final boolean isGenericBuiltinsAvailable() {
     PsiFile origin = myTypeEvalContext.getOrigin();
-    return origin == null || PythonLanguageLevelPusher.getLanguageLevelForFile(origin).isAtLeast(LanguageLevel.PYTHON39);
+    return origin == null || PyLanguageFacadeKt.getEffectiveLanguageLevel(origin).isAtLeast(LanguageLevel.PYTHON39);
   }
 
   @Override

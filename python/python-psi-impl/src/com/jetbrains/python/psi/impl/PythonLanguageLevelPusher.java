@@ -22,21 +22,22 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyLanguageFacade;
+import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -289,11 +290,6 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       .map(sdk -> pythonRuntimeService.getLanguageLevelForSdk(sdk))
       .max(LanguageLevel.VERSION_COMPARATOR)
       .orElse(LanguageLevel.getDefault());
-  }
-
-  @ApiStatus.Experimental
-  public static @NotNull LanguageLevel getLanguageLevelForFile(@NotNull PsiFile file) {
-    return PyLanguageFacadeKt.getEffectiveLanguageLevel(file);
   }
 
   /**
