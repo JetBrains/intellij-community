@@ -64,6 +64,7 @@ jvm_library(
     "//java/codeserver/highlighting",
     "//xml/xml-psi-api:psi",
     "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
   ],
   runtime_deps = [":impl_resources"]
 )

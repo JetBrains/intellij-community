@@ -97,6 +97,7 @@
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
   </component>
   <component name="copyright">
     <Base>
