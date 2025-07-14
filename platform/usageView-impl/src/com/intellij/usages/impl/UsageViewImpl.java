@@ -331,6 +331,7 @@ public class UsageViewImpl implements UsageViewEx {
     if (isDisposed()) return;
     myTree = new MyTree(myModel);
     myTree.setName("UsageViewTree");
+    myTree.getAccessibleContext().setAccessibleName(UsageViewBundle.message("usages.tree.accessible.name"));
 
     myRootPanel = new MyPanel(myTree);
     Disposer.register(this, myRootPanel);
