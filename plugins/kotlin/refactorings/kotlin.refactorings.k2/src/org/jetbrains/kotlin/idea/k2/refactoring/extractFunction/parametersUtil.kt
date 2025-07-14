@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -81,6 +82,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 /**
  * Represents a parameter candidate as it's original declaration and a reference in code.
@@ -102,6 +104,7 @@ private class ParameterWithReference(val parameterOrigin: PsiNamedElement, val r
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(KaSession)
 internal fun ExtractionData.inferParametersInfo(
     virtualBlock: KtBlockExpression,
@@ -129,6 +132,34 @@ internal fun ExtractionData.inferParametersInfo(
             false
         )
 
+    }
+
+    val unknownContextParameters = mutableSetOf<KtParameter>()
+    analyze(virtualBlock) {
+        for (referenceExpression in virtualBlock.collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }) {
+            val call = referenceExpression.resolveToCall()
+            if (call is KaErrorCallInfo) {
+                val diagnostic = call.diagnostic
+                if (diagnostic is KaFirDiagnostic.NoContextArgument) {
+                    unknownContextParameters.addIfNotNull((diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter)
+                }
+            }
+        }
+    }
+
+    unknownContextParameters.forEach {
+        val name = it.name ?: "_"
+        val parameter = MutableParameter(
+            name,
+            it.ownerDeclaration as KtNamedDeclaration,
+            false,
+            it.returnType,
+            targetSibling as KtElement,
+            contextParameter = true
+        )
+        parameter.refCount++
+        parameter.currentName = name
+        info.parameters.add(parameter)
     }
 
     val varNameValidator = KotlinDeclarationNameValidator(
@@ -252,7 +283,7 @@ private fun ExtractionData.registerParameter(
         if (extractThis || extractOrdinaryParameter || extractFunctionRef) {
             val parameterExpression = getParameterArgumentExpression(originalRef, receiverToExtract, refInfo.smartCast)
             val parameter = extractedDescriptorToParameter.getOrPut(ParameterWithReference(elementToExtract, originalRef.takeUnless { extractThis })) {
-                var argumentText =
+                val argumentText =
                     calculateArgumentText(
                         hasThisReceiver,
                         extractThis,
@@ -269,7 +300,7 @@ private fun ExtractionData.registerParameter(
                     receiverToExtract
                 )
 
-                MutableParameter(argumentText, elementToExtract, extractThis, originalType, targetSibling as KtElement)
+                MutableParameter(argumentText, elementToExtract, extractThis, originalType, targetSibling as KtElement, contextParameter = false)
             }
 
             // TODO add type predicate based on called functions https://youtrack.jetbrains.com/issue/KTIJ-29166
