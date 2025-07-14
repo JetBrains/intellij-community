@@ -189,7 +189,7 @@ class FrontendXDebuggerSession private constructor(
       }
     }
     cs.launch {
-      XDebugSessionApi.getInstance().sessionTabInfo(id).collectLatest { tabDto ->
+      XDebugSessionTabApi.getInstance().sessionTabInfo(id).collectLatest { tabDto ->
         if (tabDto == null) return@collectLatest
         initTabInfo(tabDto)
         this.cancel() // Only one tab expected
@@ -361,7 +361,7 @@ class FrontendXDebuggerSession private constructor(
 
   override fun onTabInitialized(tab: XDebugSessionTab) {
     cs.launch {
-      XDebugSessionApi.getInstance().onTabInitialized(id, XDebuggerSessionTabInfoCallback(tab))
+      XDebugSessionTabApi.getInstance().onTabInitialized(id, XDebuggerSessionTabInfoCallback(tab))
     }
   }
 

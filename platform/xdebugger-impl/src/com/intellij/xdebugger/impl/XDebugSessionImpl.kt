@@ -486,11 +486,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
       }
     }
     else {
-      if (myTabInitDataFlow.value != null) return
-      val proxy = this.asProxy()
-      val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
-                                        forceNewDebuggerUi, withFramesCustomization)
-      if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit(tab))) {
+      if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit)) {
+        val proxy = this.asProxy()
+        val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
+                                          forceNewDebuggerUi, withFramesCustomization)
         tabInitialized(tab)
         myDebugProcess!!.sessionInitialized()
         if (shouldShowTab) {
