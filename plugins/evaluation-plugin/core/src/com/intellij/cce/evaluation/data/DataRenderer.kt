@@ -118,4 +118,4 @@ interface Range {
   val end: Int
 }
 
-data class NamedRange(override val start: Int, override val end: Int, val text: String, val negativeExample: Boolean = false) : Range
+data class NamedRange(override val start: Int, override val end: Int, val text: String, val negativeExample: Boolean? = null) : Range

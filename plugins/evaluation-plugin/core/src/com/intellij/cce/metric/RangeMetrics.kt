@@ -58,15 +58,15 @@ interface RangeFilter {
   fun filter(ranges: List<NamedRange>): List<NamedRange>
 }
 
-interface PositiveExamplesRangeFilter : RangeFilter {
+interface PositiveOrUnknownExamplesRangeFilter : RangeFilter {
   override fun filter(ranges: List<NamedRange>): List<NamedRange> {
-    return ranges.filter { !it.negativeExample }
+    return ranges.filter { !(it.negativeExample ?: false) }
   }
 }
 
-interface NegativeExamplesRangeFilter : RangeFilter {
+interface NegativeOrUnknownExamplesRangeFilter : RangeFilter {
   override fun filter(ranges: List<NamedRange>): List<NamedRange> {
-    return ranges.filter { it.negativeExample }
+    return ranges.filter { it.negativeExample ?: true }
   }
 }
 
@@ -104,17 +104,17 @@ abstract class RecallRangeMetricBase : PrecisionRangeMetricBase(), Scorer {
 }
 
 
-class PositivePerfectOverlapRecallMetric : RecallRangeMetricBase(), PerfectOverlapScorer, PositiveExamplesRangeFilter {
+class PositivePerfectOverlapRecallMetric : RecallRangeMetricBase(), PerfectOverlapScorer, PositiveOrUnknownExamplesRangeFilter {
   override val name = "Positive Perfect Overlap Recall"
   override val description: String = "Ratio of positive reference ranges that perfectly overlap with predicted ranges"
 }
 
-class PositiveIoURecallMetric : RecallRangeMetricBase(), IOUScorer, PositiveExamplesRangeFilter {
+class PositiveIoURecallMetric : RecallRangeMetricBase(), IOUScorer, PositiveOrUnknownExamplesRangeFilter {
   override val name = "Positive IoU Recall"
   override val description: String = "Sum of IoU between matched predicted & positive reference range divided by total number of positive reference ranges"
 }
 
-class PositivePerfectOverlapMatchedMetric : PrecisionRangeMetricBase(), PerfectOverlapScorer, PositiveExamplesRangeFilter {
+class PositivePerfectOverlapMatchedMetric : PrecisionRangeMetricBase(), PerfectOverlapScorer, PositiveOrUnknownExamplesRangeFilter {
   override val name = "Positive Perfect Overlap Matched"
   override val description: String = "Number of positive reference ranges that perfectly overlap with predicted ranges divided by total number of matched ranges"
 
@@ -123,7 +123,7 @@ class PositivePerfectOverlapMatchedMetric : PrecisionRangeMetricBase(), PerfectO
   }
 }
 
-class PositiveIOUMatchedMetric : PrecisionRangeMetricBase(), IOUScorer, PositiveExamplesRangeFilter {
+class PositiveIOUMatchedMetric : PrecisionRangeMetricBase(), IOUScorer, PositiveOrUnknownExamplesRangeFilter {
   override val name = "Positive IoU Matched"
   override val description: String = "Sum of IoU between matched predicted & positive reference range divided by total number of matched ranges"
 
@@ -132,17 +132,17 @@ class PositiveIOUMatchedMetric : PrecisionRangeMetricBase(), IOUScorer, Positive
   }
 }
 
-class NegativePerfectOverlapRecallMetric : RecallRangeMetricBase(), PerfectOverlapScorer, NegativeExamplesRangeFilter {
+class NegativePerfectOverlapRecallMetric : RecallRangeMetricBase(), PerfectOverlapScorer, NegativeOrUnknownExamplesRangeFilter {
   override val name = "Negative Perfect Overlap Recall"
   override val description: String = "Ratio of negative reference ranges that perfectly overlap with predicted ranges"
 }
 
-class NegativeIOURecallMetric : RecallRangeMetricBase(), IOUScorer, NegativeExamplesRangeFilter {
+class NegativeIOURecallMetric : RecallRangeMetricBase(), IOUScorer, NegativeOrUnknownExamplesRangeFilter {
   override val name = "Negative IoU Recall"
   override val description: String = "Sum of IoU between predicted & negative reference range divided by total number of negative reference ranges"
 }
 
-class PositiveMatchedNumWordsMetric : RangeMetricBase(), PositiveExamplesRangeFilter {
+class PositiveMatchedNumWordsMetric : RangeMetricBase(), PositiveOrUnknownExamplesRangeFilter {
   override val name = "Positive Matched Num Words"
   override val description: String = "Number of words in predicted text within matched predicted & reference ranges"
 
@@ -155,7 +155,7 @@ class PositiveMatchedNumWordsMetric : RangeMetricBase(), PositiveExamplesRangeFi
   }
 }
 
-open class TextSimilarityRangeMetric(val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : RangeMetricBase(), PositiveExamplesRangeFilter {
+open class TextSimilarityRangeMetric(val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : RangeMetricBase(), PositiveOrUnknownExamplesRangeFilter {
   override val name = "Text Similarity for Range"
   override val description: String = "Semantic Similarity between texts of best matched predicted & reference ranges"
 
@@ -179,7 +179,7 @@ open class TextSimilarityRangeMetric(val cloudSemanticSimilarityCalculator: Clou
   }
 }
 
-class OverlapPredictionsTextSimilarityMetric(cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : TextSimilarityRangeMetric(cloudSemanticSimilarityCalculator), PositiveExamplesRangeFilter {
+class OverlapPredictionsTextSimilarityMetric(cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : TextSimilarityRangeMetric(cloudSemanticSimilarityCalculator), PositiveOrUnknownExamplesRangeFilter {
   override val name = "Overlap Predictions Text Similarity"
   override val description: String = "Semantic Similarity between texts of pairs of overlapping predicted ranges"
 
