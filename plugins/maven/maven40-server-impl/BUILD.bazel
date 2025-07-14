@@ -16,7 +16,7 @@ jvm_library(
     "//plugins/maven-server-api:maven-server",
     "//plugins/maven/maven-server-telemetry:server-telemetry",
     "//platform/util/jdom",
-    "@lib//:maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-3-provided",
+    "@lib//:maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-4-provided",
     "@lib//:maven-server-m40-google-inject-guice-6-0-0-provided",
     "@lib//:maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3-provided",
     "@lib//:maven-server-m40-javax-inject-1-provided",
