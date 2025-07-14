@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.InclusionListener;
@@ -164,6 +165,8 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
 
       updateFixedRowHeight();
     }
+
+    getAccessibleContext().setAccessibleName(VcsBundle.message("changes.tree.accessible.name"));
   }
 
   private void updateFixedRowHeight() {
