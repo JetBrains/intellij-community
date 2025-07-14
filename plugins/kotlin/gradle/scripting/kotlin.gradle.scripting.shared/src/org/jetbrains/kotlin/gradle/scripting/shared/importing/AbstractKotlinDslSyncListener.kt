@@ -70,7 +70,7 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
         saveScriptModels(project, sync)
     }
 
-    abstract fun reloadDefinitions(project: Project, sync: KotlinDslGradleBuildSync)
+    protected open fun reloadDefinitions(project: Project, sync: KotlinDslGradleBuildSync): Unit = Unit
 
     override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
         if (!id.isGradleRelatedTask()) return

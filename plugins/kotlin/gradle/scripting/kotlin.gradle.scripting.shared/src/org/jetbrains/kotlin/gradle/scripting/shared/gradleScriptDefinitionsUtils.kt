@@ -3,11 +3,9 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 
 import KotlinGradleScriptingBundle
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.util.EnvironmentUtil
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
@@ -17,8 +15,6 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptCompilationConfiguration
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
@@ -32,15 +28,18 @@ import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 private const val GRADLE_WITH_NEW_SCRIPTING_TEMPLATES = "9.1"
 
-fun loadGradleDefinitions(
-    workingDir: String,
-    gradleHome: String?,
-    javaHome: String?,
-    project: Project,
-    gradleVersion: String? = null,
-): List<ScriptDefinition> {
+class GradleDefinitionsParams(
+    val workingDir: String,
+    val gradleHome: String?,
+    val javaHome: String?, // null due to k1
+    val gradleVersion: String?, // null due to k1
+    val jvmArguments: List<String>,
+    val environment: Map<String, String>,
+)
+
+fun loadGradleDefinitions(project: Project, params: GradleDefinitionsParams): List<ScriptDefinition> {
     val loadedDefinitions = try {
-        val gradleLibDir = gradleHome.toGradleHomePath()
+        val gradleLibDir = params.gradleHome.toGradleHomePath()
 
         val templateClasspath = getFullDefinitionsClasspath(gradleLibDir)
 
@@ -48,7 +47,7 @@ fun loadGradleDefinitions(
 
         val languageVersionCompilerOptions = findStdLibLanguageVersion(kotlinLibsClassPath)
 
-        val templateClasses = if (gradleVersion != null && isGradleAtLeast(gradleVersion, GRADLE_WITH_NEW_SCRIPTING_TEMPLATES)) {
+        val templateClasses = if (params.gradleVersion != null && isGradleAtLeast(params.gradleVersion, GRADLE_WITH_NEW_SCRIPTING_TEMPLATES)) {
             listOf(
                 "org.gradle.kotlin.dsl.KotlinGradleScriptTemplate",
                 "org.gradle.kotlin.dsl.KotlinSettingsScriptTemplate",
@@ -63,13 +62,10 @@ fun loadGradleDefinitions(
         }
 
         loadGradleTemplates(
-            workingDir,
+            params = params,
             templateClasses = templateClasses,
-            gradleHome = gradleHome,
-            javaHome = javaHome,
             templateClasspath = templateClasspath,
             additionalClassPath = kotlinLibsClassPath,
-            project,
             languageVersionCompilerOptions
         ).distinct()
     } catch (t: Throwable) {
@@ -124,22 +120,13 @@ private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<Str
 }
 
 private fun loadGradleTemplates(
-    projectPath: String,
+    params: GradleDefinitionsParams,
     templateClasses: List<String>,
-    gradleHome: String?,
-    javaHome: String?,
     templateClasspath: List<Path>,
     additionalClassPath: List<Path>,
-    project: Project,
     defaultCompilerOptions: List<String>
 ): List<ScriptDefinition> {
-    val gradleExeSettings = ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(
-        project,
-        projectPath,
-        GradleConstants.SYSTEM_ID
-    )
-
-    val hostConfiguration = createHostConfiguration(projectPath, gradleHome, javaHome, gradleExeSettings)
+    val hostConfiguration = createHostConfiguration(params)
 
     return loadDefinitionsFromTemplatesByPaths(
         templateClasses,
@@ -154,40 +141,31 @@ private fun loadGradleTemplates(
                 it.hostConfiguration,
                 it.evaluationConfiguration,
                 it.defaultCompilerOptions,
-                projectPath
+                params.workingDir
             )
         } ?: GradleScriptDefinitionWrapper(
             it.compilationConfiguration,
             it.hostConfiguration,
             it.evaluationConfiguration,
             it.defaultCompilerOptions,
-            projectPath
+            params.workingDir
         )
     }
 }
 
-private fun createHostConfiguration(
-    projectPath: String,
-    gradleHome: String?,
-    javaHome: String?,
-    gradleExeSettings: GradleExecutionSettings
-): ScriptingHostConfiguration {
-    val gradleJvmOptions = gradleExeSettings.jvmArguments
-
-    val environment = mapOf(
-        "gradleHome" to gradleHome?.let(::File),
-        "gradleJavaHome" to javaHome,
-
-        "projectRoot" to projectPath.let(::File),
-
-        "gradleOptions" to emptyList<String>(), // There is no option in UI to set project wide gradleOptions
-        "gradleJvmOptions" to gradleJvmOptions,
-        "gradleEnvironmentVariables" to if (gradleExeSettings.isPassParentEnvs) EnvironmentUtil.getEnvironmentMap() else emptyMap()
-    )
-    return ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
-        getEnvironment { environment }
+private fun createHostConfiguration(params: GradleDefinitionsParams): ScriptingHostConfiguration =
+    ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
+        getEnvironment {
+            mapOf(
+                "gradleHome" to params.gradleHome?.let(::File),
+                "gradleJavaHome" to params.javaHome,
+                "projectRoot" to params.workingDir.let(::File),
+                "gradleOptions" to emptyList<String>(), // There is no option in UI to set project wide gradleOptions
+                "gradleJvmOptions" to params.jvmArguments,
+                "gradleEnvironmentVariables" to params.environment
+            )
+        }
     }
-}
 
 private fun String?.toGradleHomePath(): Path {
     if (this == null) error(KotlinGradleScriptingBundle.message("error.text.unable.to.get.gradle.home.directory"))

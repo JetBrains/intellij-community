@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleDefinitionsParams
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDefinitionWrapper
 import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.core.script.NewScriptFileInfo
@@ -40,36 +41,25 @@ class GradleScriptDefinitionsStorage(val project: Project) :
         synchronized(this) {
             if (initialized.get()) return
 
-            val state = state
-            if (state.workingDir != null) {
-                loadDefinitions(state.workingDir, state.gradleHome, state.javaHome, state.gradleVersion)
+            val params = state.toParams()
+            if (params != null) {
+                loadDefinitions(params)
             }
             initialized.set(true)
         }
     }
 
-    fun loadDefinitions(workingDir: String, gradleHome: String?, javaHome: String?, gradleVersion: String?) {
-        _definitions.set(loadAndWrapDefinitions(workingDir, gradleHome, javaHome, gradleVersion))
+    fun loadDefinitions(params: GradleDefinitionsParams) {
+        _definitions.set(loadAndWrapDefinitions(params))
         initialized.set(true)
         updateState {
-            it.copy(workingDir = workingDir, gradleHome = gradleHome, javaHome = javaHome, gradleVersion = gradleVersion)
+            it.copyFrom(params)
         }
         ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
     }
 
-    private fun loadAndWrapDefinitions(
-        workingDir: String,
-        gradleHome: String?,
-        javaHome: String?,
-        gradleVersion: String?
-    ): List<ScriptDefinition> {
-        val definitions = loadGradleDefinitions(
-            workingDir = workingDir,
-            gradleHome = gradleHome,
-            javaHome = javaHome,
-            gradleVersion = gradleVersion,
-            project = project
-        )
+    private fun loadAndWrapDefinitions(params: GradleDefinitionsParams): List<ScriptDefinition> {
+        val definitions = loadGradleDefinitions(project, params)
         return definitions.map {
             if (it !is GradleScriptDefinitionWrapper) it
             else {
@@ -92,12 +82,37 @@ class GradleScriptDefinitionsStorage(val project: Project) :
         }
     }
 
+
     data class State(
         @Attribute @JvmField val workingDir: String? = null,
         @Attribute @JvmField val gradleHome: String? = null,
         @Attribute @JvmField val javaHome: String? = null,
         @Attribute @JvmField val gradleVersion: String? = null,
-    )
+        @JvmField val jvmArguments: List<String> = emptyList(),
+        @JvmField val environment: Map<String, String> = emptyMap(),
+    ) {
+        fun copyFrom(params: GradleDefinitionsParams): State {
+            return copy(
+                workingDir = params.workingDir,
+                gradleHome = params.gradleHome,
+                javaHome = params.javaHome,
+                gradleVersion = params.gradleVersion,
+                jvmArguments = params.jvmArguments,
+                environment = params.environment
+            )
+        }
+
+        fun toParams(): GradleDefinitionsParams? {
+            return GradleDefinitionsParams(
+                workingDir ?: return null,
+                gradleHome ?: return null,
+                javaHome ?: return null,
+                gradleVersion ?: return null,
+                jvmArguments ?: return null,
+                environment ?: return null
+            )
+        }
+    }
 
     companion object {
         fun getInstance(project: Project): GradleScriptDefinitionsStorage = project.service<GradleScriptDefinitionsStorage>()
