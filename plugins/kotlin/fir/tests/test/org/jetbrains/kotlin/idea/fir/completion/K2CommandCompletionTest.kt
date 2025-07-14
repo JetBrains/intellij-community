@@ -93,7 +93,11 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.doHighlighting()
         myFixture.type(".")
         val elements = myFixture.completeBasic()
-        assertNotNull(elements.firstOrNull() { element -> element.lookupString.contains("rename", ignoreCase = true) })
+        val lookupElement = elements
+            .firstOrNull { element -> element.lookupString.contains("rename", ignoreCase = true) }
+            ?.`as`(CommandCompletionLookupElement::class.java)
+        assertNotNull(lookupElement)
+        assertEquals(TextRange(19, 22), (lookupElement as CommandCompletionLookupElement).highlighting?.range)
     }
 
     fun testRenameMethod2() {
@@ -109,7 +113,69 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.doHighlighting()
         myFixture.type(".")
         val elements = myFixture.completeBasic()
-        assertNotNull(elements.firstOrNull() { element -> element.lookupString.contains("rename", ignoreCase = true) })
+        val lookupElement = elements
+            .firstOrNull { element -> element.lookupString.contains("rename", ignoreCase = true) }
+            ?.`as`(CommandCompletionLookupElement::class.java)
+        assertNotNull(lookupElement)
+        assertEquals(TextRange(19, 22), (lookupElement as CommandCompletionLookupElement).highlighting?.range)
+    }
+
+    fun testRenameMethod3() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+        class A { 
+            fun foo<caret>() {
+            }
+        }
+      """.trimIndent()
+        )
+        myFixture.doHighlighting()
+        myFixture.type(".")
+        val elements = myFixture.completeBasic()
+        val lookupElement = elements
+            .firstOrNull { element -> element.lookupString.contains("rename", ignoreCase = true) }
+            ?.`as`(CommandCompletionLookupElement::class.java)
+        assertNotNull(lookupElement)
+        assertEquals(TextRange(19, 22), (lookupElement as CommandCompletionLookupElement).highlighting?.range)
+    }
+
+    fun testRenameMethod4() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+        class A { 
+            fun foo<caret>(): String  = "1"
+        }
+      """.trimIndent()
+        )
+        myFixture.doHighlighting()
+        myFixture.type(".")
+        val elements = myFixture.completeBasic()
+        val lookupElement = elements
+            .firstOrNull { element -> element.lookupString.contains("rename", ignoreCase = true) }
+            ?.`as`(CommandCompletionLookupElement::class.java)
+        assertNotNull(lookupElement)
+        assertEquals(TextRange(19, 22), (lookupElement as CommandCompletionLookupElement).highlighting?.range)
+    }
+
+    fun testRenameMethod5() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+        class A { 
+            fun foo() <caret>: String  = "1"
+        }
+      """.trimIndent()
+        )
+        myFixture.doHighlighting()
+        myFixture.type(".")
+        val elements = myFixture.completeBasic()
+        val lookupElement = elements
+            .firstOrNull { element -> element.lookupString.contains("rename", ignoreCase = true) }
+            ?.`as`(CommandCompletionLookupElement::class.java)
+        assertNotNull(lookupElement)
+        assertEquals(TextRange(19, 22), (lookupElement as CommandCompletionLookupElement).highlighting?.range)
     }
 
     fun testRenameClass() {
