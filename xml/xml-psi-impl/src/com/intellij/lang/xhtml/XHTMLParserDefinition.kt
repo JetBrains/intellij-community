@@ -7,6 +7,7 @@ import com.intellij.lexer.XHtmlLexer
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.xml.XmlFileImpl
 import com.intellij.psi.xml.XmlElementType
 
 class XHTMLParserDefinition :
@@ -15,6 +16,7 @@ class XHTMLParserDefinition :
   override fun createLexer(project: Project?): Lexer =
     XHtmlLexer()
 
-  override fun createFile(viewProvider: FileViewProvider): PsiFile =
-    elementFactory.createFile(viewProvider, XmlElementType.XHTML_FILE)
+  override fun createFile(viewProvider: FileViewProvider): PsiFile {
+    return XmlFileImpl(viewProvider, XmlElementType.XHTML_FILE)
+  }
 }

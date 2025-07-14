@@ -31,12 +31,8 @@
     <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>
     <lang.parserDefinition language="XHTML" implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
 
-    <applicationService serviceInterface="com.intellij.lang.xml.BasicXmlElementFactory"
-                        serviceImplementation="com.intellij.lang.xml.BackendXmlElementFactory"/>
-    <applicationService serviceInterface="com.intellij.lang.html.BasicHtmlElementFactory"
-                        serviceImplementation="com.intellij.lang.html.BackendHtmlElementFactory"/>
     <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
-                        serviceImplementation="com.intellij.lang.html.BackendHtmlElementFactory"/>
+                        serviceImplementation="com.intellij.lang.html.HtmlRawTextElementFactoryImpl"/>
 
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttributeValue"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator"/>
