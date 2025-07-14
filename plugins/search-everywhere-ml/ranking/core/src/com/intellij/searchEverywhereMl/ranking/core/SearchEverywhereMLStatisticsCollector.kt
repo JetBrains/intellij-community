@@ -33,7 +33,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   internal fun onItemSelected(project: Project?,
                               seSessionId: Int,
                               elementIdProvider: SearchEverywhereMlItemIdProvider,
-                              cache: SearchEverywhereMlSearchState,
+                              searchState: SearchEverywhereMlSearchState,
                               featureCache: SearchEverywhereMlFeaturesCache,
                               selectedIndices: IntArray,
                               selectedItems: List<Any>,
@@ -52,7 +52,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       project = project,
       eventId = SESSION_FINISHED,
       seSessionId = seSessionId,
-      cache = cache,
+      searchState = searchState,
       featureCache = featureCache,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
@@ -65,7 +65,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   internal fun onSearchFinished(project: Project?,
                                 seSessionId: Int,
                                 elementIdProvider: SearchEverywhereMlItemIdProvider,
-                                cache: SearchEverywhereMlSearchState,
+                                searchState: SearchEverywhereMlSearchState,
                                 featureCache: SearchEverywhereMlFeaturesCache,
                                 timeToFirstResult: Int,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
@@ -78,7 +78,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       project = project,
       eventId = SESSION_FINISHED,
       seSessionId = seSessionId,
-      cache = cache,
+      searchState = searchState,
       featureCache = featureCache,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
@@ -91,7 +91,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   internal fun onSearchRestarted(project: Project?, seSessionId: Int,
                                  elementIdProvider: SearchEverywhereMlItemIdProvider,
                                  context: SearchEverywhereMLContextInfo,
-                                 cache: SearchEverywhereMlSearchState,
+                                 searchState: SearchEverywhereMlSearchState,
                                  featureCache: SearchEverywhereMlFeaturesCache,
                                  timeToFirstResult: Int,
                                  mixedListInfo: SearchEverywhereMixedListInfo,
@@ -99,7 +99,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     if (!isLoggingEnabled) return
     val elements = elementsProvider.invoke()
     val additionalEvents = buildList {
-      if (cache.searchStartReason == SearchRestartReason.SEARCH_STARTED) {
+      if (searchState.searchStartReason == SearchRestartReason.SEARCH_STARTED) {
         addAll(
           getSessionLevelEvents(project, context)
         )
@@ -109,7 +109,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       project = project,
       eventId = SEARCH_RESTARTED,
       seSessionId = seSessionId,
-      cache = cache,
+      searchState = searchState,
       featureCache = featureCache,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
@@ -122,7 +122,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private fun reportElements(project: Project?,
                              eventId: VarargEventId,
                              seSessionId: Int,
-                             cache: SearchEverywhereMlSearchState,
+                             searchState: SearchEverywhereMlSearchState,
                              featureCache: SearchEverywhereMlFeaturesCache,
                              timeToFirstResult: Int,
                              mixedListInfo: SearchEverywhereMixedListInfo,
@@ -130,28 +130,28 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
     eventId.log(project) {
-      val tabId = cache.tab.tabId
+      val tabId = searchState.tab.tabId
       addAll(additionalEvents)
 
       addAll(
         getCommonTypeLevelEvents(seSessionId = seSessionId,
                                  tabId = tabId,
                                  elementsSize = elements.size,
-                                 searchStateFeatures = cache.searchStateFeatures,
+                                 searchStateFeatures = searchState.searchStateFeatures,
                                  timeToFirstResult = timeToFirstResult,
-                                 searchIndex = cache.searchIndex,
-                                 searchStartTime = cache.searchStartTime,
-                                 keysTyped = cache.keysTyped,
-                                 backspacesTyped = cache.backspacesTyped,
-                                 searchStartReason = cache.searchStartReason,
+                                 searchIndex = searchState.searchIndex,
+                                 searchStartTime = searchState.searchStartTime,
+                                 keysTyped = searchState.keysTyped,
+                                 backspacesTyped = searchState.backspacesTyped,
+                                 searchStartReason = searchState.searchStartReason,
                                  isMixedList = mixedListInfo.isMixedList,
-                                 orderByMl = cache.orderByMl,
-                                 experimentGroup = cache.experimentGroup)
+                                 orderByMl = searchState.orderByMl,
+                                 experimentGroup = searchState.experimentGroup)
       )
 
       addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
       addAll(getElementsEvents(project, featureCache, elements, mixedListInfo, elementIdProvider,
-                               cache.sessionStartTime))
+                               searchState.sessionStartTime))
     }
   }
 
