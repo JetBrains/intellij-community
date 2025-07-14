@@ -16,14 +16,13 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtUserType
@@ -36,8 +35,8 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                 val isException = analyze(declaration) {
                     val symbol = declaration.symbol as? KaNamedClassSymbol ?: return
                     symbol.superTypes.any {
-                        it.isClassType(exceptionClassId) ||
-                                it.isSubtypeOf(exceptionClassId)
+                        it.isClassType(throwableClassId) ||
+                                it.isSubtypeOf(throwableClassId)
                     }
                 }
 
@@ -100,4 +99,4 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
     }
 }
 
-private val exceptionClassId = ClassId(BUILT_INS_PACKAGE_FQ_NAME , Name.identifier("Exception"))
+private val throwableClassId = ClassId.topLevel( StandardNames.FqNames.throwable)
