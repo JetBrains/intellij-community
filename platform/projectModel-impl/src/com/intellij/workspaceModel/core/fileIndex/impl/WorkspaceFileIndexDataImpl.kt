@@ -320,6 +320,8 @@ internal class WorkspaceFileIndexDataImpl(
                                                                 event: VersionedStorageChange) {
     val removedEntities = LinkedHashSet<E>()
     val addedEntities = LinkedHashSet<E>()
+    val entitiesInStorage = LinkedHashSet<E>()
+    val entitiesNotInStorage = LinkedHashSet<E>()
     for (change in event.getChanges(contributor.entityClass)) {
       change.oldEntity?.let { removedEntities.add(it) }
       change.newEntity?.let { addedEntities.add(it) }
@@ -331,37 +333,78 @@ internal class WorkspaceFileIndexDataImpl(
                                                                                     event, removedEntities, addedEntities)
         is DependencyDescription.OnChild<*, *> -> collectEntitiesWithChangedChild(dependency as DependencyDescription.OnChild<E, *>,
                                                                                   event, removedEntities, addedEntities)
-        is DependencyDescription.OnSibling<*, *> -> collectEntitiesWithChangedSibling(dependency as DependencyDescription.OnSibling<E, *>,
-                                                                                      event, removedEntities, addedEntities)
+        is DependencyDescription.OnRelative<*, *> -> collectEntitiesWithChangedRelative(dependency as DependencyDescription.OnRelative<E, *>,
+                                                                                        event,
+                                                                                        removedEntities,
+                                                                                        addedEntities,
+                                                                                        entitiesInStorage,
+                                                                                        entitiesNotInStorage)
       }
     }
 
     val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for (removed in removedEntities) {
         contributor.registerFileSets(removed, removeRegistrar, event.storageBefore)
       }
+      for (entityInStorage in entitiesInStorage) {
+        contributor.registerFileSets(entityInStorage, storeRegistrar, event.storageAfter)
+      }
     }
-    val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for (added in addedEntities) {
         contributor.registerFileSets(added, storeRegistrar, event.storageAfter)
       }
+      for (entityNotInStorage in entitiesNotInStorage) {
+        contributor.registerFileSets(entityNotInStorage, removeRegistrar, event.storageBefore)
+      }
     }
   }
 
-  private fun <E: WorkspaceEntity, P: WorkspaceEntity> collectEntitiesWithChangedSibling(dependency: DependencyDescription.OnSibling<E, P>,
-                                                                                         event: VersionedStorageChange,
-                                                                                         removedEntities: MutableSet<E>,
-                                                                                         addedEntities: MutableSet<E>) {
-    event.getChanges(dependency.siblingClass).asSequence().forEach { change ->
+  /**
+   * This method searches for entities [E] that were affected by the change of relative [R].
+   *
+   * Example:
+   *
+   * Suppose we have entities A, B, C in [affectedByRemovalEntities] and E, F, G in [affectedByAdditionEntities] and we have B and F actually in storage.
+   * We remove file sets for A, B, C, but we need to register a file set for B, so entity B will be in [entitiesToKeep].
+   * By the same logic we register file sets for E, F, G, but we need to remove file sets for E and G, so they will in [entitiesToRemove].
+   *
+   * [entitiesToRemove] = [affectedByAdditionEntities] - [entitiesInCurrentStorage]
+   *
+   * [entitiesToKeep] = [entitiesInCurrentStorage] intersect [affectedByRemovalEntities]
+   *
+   * Note that this method is only responsible for collecting the affected entities [E] and does not work with file sets.
+   */
+  private fun <E: WorkspaceEntity, R: WorkspaceEntity> collectEntitiesWithChangedRelative(dependency: DependencyDescription.OnRelative<E, R>,
+                                                                                          event: VersionedStorageChange,
+                                                                                          removedEntities: MutableSet<E>,
+                                                                                          addedEntities: MutableSet<E>,
+                                                                                          entitiesToKeep: MutableSet<E>,
+                                                                                          entitiesToRemove: MutableSet<E>) {
+    // file sets will be removed
+    val affectedBySiblingRemoval = mutableSetOf<E>()
+    // file sets will be added
+    val affectedBySiblingAddition = mutableSetOf<E>()
+    event.getChanges(dependency.relativeClass).asSequence().forEach { change ->
       change.oldEntity?.let {
-        dependency.entityGetter(it).toCollection(removedEntities)
+        dependency.entityGetter(it).toCollection(affectedBySiblingRemoval)
       }
       change.newEntity?.let {
-        dependency.entityGetter(it).toCollection(addedEntities)
+        dependency.entityGetter(it).toCollection(affectedBySiblingAddition)
       }
     }
+    val entitiesInCurrentStorage = event.storageAfter.entities(dependency.entityClass).toSet()
+
+    if (affectedBySiblingRemoval.isNotEmpty()) {
+      entitiesToKeep.addAll(affectedBySiblingRemoval.intersect(entitiesInCurrentStorage))
+    }
+    if (affectedBySiblingAddition.isNotEmpty()) {
+      entitiesToRemove.addAll(affectedBySiblingAddition - entitiesInCurrentStorage)
+    }
+    removedEntities.addAll(affectedBySiblingRemoval)
+    addedEntities.addAll(affectedBySiblingAddition)
   }
 
   private fun <E : WorkspaceEntity, P : WorkspaceEntity> collectEntitiesWithChangedParent(dependency: DependencyDescription.OnParent<E, P>,

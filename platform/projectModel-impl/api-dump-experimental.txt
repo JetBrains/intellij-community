@@ -21,16 +21,18 @@
 - f:getChildrenGetter():kotlin.jvm.functions.Function1
 - f:getParentClass():java.lang.Class
 - hashCode():I
-*f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnSibling
+*f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnRelative
 - com.intellij.workspaceModel.core.fileIndex.DependencyDescription
-- <init>(java.lang.Class,kotlin.jvm.functions.Function1):V
+- <init>(java.lang.Class,java.lang.Class,kotlin.jvm.functions.Function1):V
 - f:component1():java.lang.Class
-- f:component2():kotlin.jvm.functions.Function1
-- f:copy(java.lang.Class,kotlin.jvm.functions.Function1):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnSibling
-- bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnSibling,java.lang.Class,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnSibling
+- f:component2():java.lang.Class
+- f:component3():kotlin.jvm.functions.Function1
+- f:copy(java.lang.Class,java.lang.Class,kotlin.jvm.functions.Function1):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnRelative
+- bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnRelative,java.lang.Class,java.lang.Class,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnRelative
 - equals(java.lang.Object):Z
+- f:getEntityClass():java.lang.Class
 - f:getEntityGetter():kotlin.jvm.functions.Function1
-- f:getSiblingClass():java.lang.Class
+- f:getRelativeClass():java.lang.Class
 - hashCode():I
 *e:com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 - java.lang.Enum

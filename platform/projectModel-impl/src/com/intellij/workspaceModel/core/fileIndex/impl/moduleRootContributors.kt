@@ -32,7 +32,7 @@ class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRoo
 
   override val dependenciesOnOtherEntities: List<DependencyDescription<ContentRootEntity>>
     get() = listOf(
-      DependencyDescription.OnSibling(JavaModuleSettingsEntity::class.java) {
+      DependencyDescription.OnRelative(JavaModuleSettingsEntity::class.java, ContentRootEntity::class.java) {
         it.module.contentRoots.asSequence()
       }
     )

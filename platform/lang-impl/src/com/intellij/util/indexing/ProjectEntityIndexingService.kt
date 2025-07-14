@@ -306,7 +306,7 @@ class ProjectEntityIndexingService(
             Change.Removed -> descriptionsBuilder.registerRemovedEntity(oldEntity!!, uncheckedContributor, entityStorage)
           }
         }
-        handleSiblingEntities(entityClass, oldEntity, newEntity, descriptionsBuilder, uncheckedContributor, entityStorage)
+        handleRelativeEntities(entityClass, oldEntity, newEntity, descriptionsBuilder, uncheckedContributor, entityStorage)
         if (change == Change.Replaced) {
           handleDependencies(oldEntity!!, newEntity!!, descriptionsBuilder, entityClass, uncheckedContributor,
                              entityStorage)
@@ -361,7 +361,7 @@ class ProjectEntityIndexingService(
       }
     }
 
-    private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleSiblingEntities(
+    private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleRelativeEntities(
       entityClass: Class<in E>,
       oldEntity: E?,
       newEntity: E?,
@@ -370,11 +370,11 @@ class ProjectEntityIndexingService(
       entityStorage: EntityStorage,
     ) {
       for (dependency in contributor.dependenciesOnOtherEntities) {
-        if (dependency !is DependencyDescription.OnSibling<*, *> || entityClass != dependency.siblingClass) {
-          return
+        if (dependency !is DependencyDescription.OnRelative<*, *> || entityClass != dependency.relativeClass) {
+          continue
         }
         @Suppress("UNCHECKED_CAST")
-        dependency as DependencyDescription.OnSibling<C, E>
+        dependency as DependencyDescription.OnRelative<C, E>
 
         val removedEntities: MutableSet<C> = mutableSetOf()
         val addedEntities: MutableSet<C> = mutableSetOf()
@@ -384,11 +384,27 @@ class ProjectEntityIndexingService(
         newEntity?.let {
           dependency.entityGetter(it).toCollection(addedEntities)
         }
+        val entitiesToKeep = mutableSetOf<C>()
+        val entitiesToRemove = mutableSetOf<C>()
+        val entitiesInCurrentStorage = entityStorage.entities(dependency.entityClass).toSet()
+
+        if (removedEntities.isNotEmpty()) {
+          entitiesToKeep.addAll(entitiesInCurrentStorage.intersect(removedEntities))
+        }
+        if (addedEntities.isNotEmpty()) {
+          entitiesToRemove.addAll(addedEntities - entitiesInCurrentStorage)
+        }
 
         for (element in addedEntities) {
           descriptionsBuilder.registerAddedEntity(element, contributor, entityStorage)
         }
         for (element in removedEntities) {
+          descriptionsBuilder.registerRemovedEntity(element, contributor, entityStorage)
+        }
+        for (element in entitiesToKeep) {
+          descriptionsBuilder.registerAddedEntity(element, contributor, entityStorage)
+        }
+        for (element in entitiesToRemove) {
           descriptionsBuilder.registerRemovedEntity(element, contributor, entityStorage)
         }
       }

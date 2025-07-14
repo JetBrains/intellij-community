@@ -21,6 +21,7 @@ import io.kotest.common.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 
 /**
@@ -94,7 +95,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
   }
 
   @Test
-  fun `child contributor should be called after its sibling update`() = runBlocking {
+  fun `child contributor should be called after its relative update`() = runBlocking {
     val model = WorkspaceModel.getInstance(projectModel.project)
     val siblingEntity = model.currentSnapshot.entities(SiblingEntity::class.java).single()
 
@@ -107,10 +108,53 @@ class WorkspaceFileIndexContributorDependenciesTest {
     assertEquals("new sibling property value", childWorkspaceFileIndexContributor.latestSiblingProperty, "ChildWorkspaceFileIndexContributor should be called")
   }
 
+  @Test
+  fun `child contributor should be called after its relative removed`() = runBlocking {
+    val model = WorkspaceModel.getInstance(projectModel.project)
+    val siblingEntity = model.currentSnapshot.entities(SiblingEntity::class.java).single()
+
+    childWorkspaceFileIndexContributor.numberOfCalls.set(0)
+
+    model.update("Remove sibling") {
+      it.removeEntity(siblingEntity)
+    }
+
+    // call from WorkspaceFileIndexData:
+    // first call changed parent
+    // second call to remove file sets
+    // third call to add file sets back
+
+    // two calls through ProjectEntityIndexingService - removed and added file sets
+    // case with changed parent is not handled through ProjectEntityIndexingService
+    assertEquals(5, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative removed")
+  }
+
+  @Test
+  fun `child contributor should be called after its relative added`() = runBlocking {
+    val model = WorkspaceModel.getInstance(projectModel.project)
+    val newParentEntity = ParentTestEntity("new parent property", NonPersistentEntitySource) {
+      child = ChildTestEntity("new child property", NonPersistentEntitySource)
+    }
+
+    childWorkspaceFileIndexContributor.numberOfCalls.set(0)
+
+    val newSiblingEntity = SiblingEntity("new sibling property", NonPersistentEntitySource) {
+      parent = newParentEntity
+    }
+
+    model.update("Add sibling") {
+      it.addEntity(newSiblingEntity)
+    }
+
+    // one call through WorkspaceFileIndexData and the other through ProjectEntityIndexingService
+    assertEquals(3, childWorkspaceFileIndexContributor.numberOfCalls.get(), "ChildWorkspaceFileIndexContributor should be called after relative added")
+  }
+
   // we need SkipAddingToWatchedRoots to pass filter WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors()
   private class ChildWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<ChildTestEntity>, SkipAddingToWatchedRoots {
     var latestParentProperty: String? = null
     var latestSiblingProperty: String? = null
+    val numberOfCalls = AtomicInteger(0)
 
     override val entityClass: Class<ChildTestEntity>
       get() = ChildTestEntity::class.java
@@ -118,10 +162,11 @@ class WorkspaceFileIndexContributorDependenciesTest {
     override val dependenciesOnOtherEntities: List<DependencyDescription<ChildTestEntity>>
       get() = listOf(
         DependencyDescription.OnParent(ParentTestEntity::class.java) { sequenceOfNotNull(it.child) },
-        DependencyDescription.OnSibling(SiblingEntity::class.java) { sequenceOfNotNull(it.parent.child) }
+        DependencyDescription.OnRelative(SiblingEntity::class.java, ChildTestEntity::class.java) { sequenceOfNotNull(it.parent.child) }
       )
 
     override fun registerFileSets(entity: ChildTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+      numberOfCalls.incrementAndGet()
       latestParentProperty = entity.parent.customParentProperty
       latestSiblingProperty = entity.parent.secondChild?.customSiblingProperty
     }

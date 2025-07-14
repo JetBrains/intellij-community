@@ -71,12 +71,12 @@ final class CustomEntitiesCausingReindexTracker {
     Stream<? extends Class<? extends WorkspaceEntity>> parentDependenciesStream =
       dependencies.stream().filter(description -> description instanceof DependencyDescription.OnParent)
         .map(description -> ((DependencyDescription.OnParent<?, ?>)description).getParentClass());
-    Stream<? extends  Class<? extends WorkspaceEntity>> siblingDependenciesStream =
-      dependencies.stream().filter(description -> description instanceof DependencyDescription.OnSibling)
-        .map(description -> ((DependencyDescription.OnSibling<?, ?>)description).getSiblingClass());
+    Stream<? extends  Class<? extends WorkspaceEntity>> relativeDeps =
+      dependencies.stream().filter(description -> description instanceof DependencyDescription.OnRelative)
+        .map(description -> ((DependencyDescription.OnRelative<?, ?>)description).getRelativeClass());
 
     Stream<Class<? extends WorkspaceEntity>> baseAndParentsDependenciesStream = Stream.concat(baseStream, parentDependenciesStream);
-    return Stream.concat(baseAndParentsDependenciesStream, siblingDependenciesStream);
+    return Stream.concat(baseAndParentsDependenciesStream, relativeDeps);
   }
 
   private static boolean isEntityReindexingCustomised(Class<? extends WorkspaceEntity> entityClass) {
