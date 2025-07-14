@@ -3,7 +3,10 @@ package com.intellij.grazie
 
 import com.intellij.DynamicBundle
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.remote.GrazieRemote
+import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
+import com.intellij.grazie.remote.GrazieRemote.isValidBundleForLanguage
+import com.intellij.grazie.remote.HunspellDescriptor
+import com.intellij.grazie.remote.LanguageToolDescriptor
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
@@ -20,17 +23,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import kotlin.io.path.isRegularFile
 
 @ApiStatus.Internal
 object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
-    val oldFiles = Files.walk(dynamicFolder).filter { file ->
-      file.isRegularFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
-    }
 
-    for (file in oldFiles) {
-      file.delete()
+    for (file in getOldFiles()) {
+      file.delete(true)
     }
 
     ApplicationManager.getApplication().messageBus.connect()
@@ -39,16 +38,26 @@ object GrazieDynamic : DynamicPluginListener {
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
-        .files(collectValidLocalBundles()).get()
+        .files(collectValidLocalBundles())
+        .get()
     )
   }
 
+  /**
+   * Function that collects outdated directories that needs to be deleted.
+   */
+  private fun getOldFiles(): List<Path> {
+    return Files.list(dynamicFolder)
+      .filter { file -> Lang.entries.none { file.fileName.toString() == getStorageDescriptor(it) } }
+      .toList()
+  }
+
   private fun collectValidLocalBundles(): List<Path> {
-    val languages = GrazieRemote.allAvailableLocally()
+    val languages = Lang.entries.filter { isAvailableLocally(it) }
     val bundles = buildSet {
       for (language in languages) {
-        val path = language.remote.file
-        if (language.isEnglish() || GrazieRemote.isValidBundleForLanguage(language, path)) {
+        val path = getLangDynamicFolder(language).resolve(language.ltRemote!!.file)
+        if (language.isEnglish() || isValidBundleForLanguage(language, path)) {
           add(path)
         } else {
           thisLogger().error("""
@@ -80,6 +89,18 @@ object GrazieDynamic : DynamicPluginListener {
     return Paths.get(PathManager.getSystemPath(), "grazie")
   }
 
+  fun getLangDynamicFolder(lang: Lang): Path = dynamicFolder.resolve(getStorageDescriptor(lang))
+
+  /**
+   * Creates a storage descriptor (directory name) for downloader.
+   */
+  private fun getStorageDescriptor(lang: Lang): String {
+    if (lang.hunspellRemote != null) {
+      return "${lang.iso}-LT${GraziePlugin.LanguageTool.version}-HN${GraziePlugin.Hunspell.version}"
+    }
+    return "${lang.iso}-LT${GraziePlugin.LanguageTool.version}"
+  }
+
   val dynamicFolder: Path
     get() {
       val result = getDynamicFolderPath()
@@ -88,7 +109,8 @@ object GrazieDynamic : DynamicPluginListener {
     }
 
   fun loadLang(lang: Lang): Language? {
-    for (className in lang.remote.langsClasses) {
+    val remote = lang.ltRemote ?: return null
+    for (className in remote.langsClasses) {
       try {
         Languages.getOrAddLanguageByClassName("org.languagetool.language.$className")
       }

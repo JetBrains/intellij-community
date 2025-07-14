@@ -10,6 +10,7 @@ import com.intellij.grazie.grammar.grammarRules
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.grazie.text.Rule
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
@@ -80,16 +81,20 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
      * NOTE: By default, availableLanguages are not included into [equals]. Check for it manually.
      */
     val availableLanguages: Set<Lang> by lazy {
-      enabledLanguages.asSequence().filter { lang -> lang.jLanguage != null }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
+      enabledLanguages.asSequence().filter { it.jLanguage != null }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
     }
 
     val missedLanguages: Set<Lang>
-      get() = enabledLanguages.asSequence().filter { it.jLanguage == null }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
+      get() = enabledLanguages.asSequence().filter { isMissingLanguage(it) }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
 
     override fun increment() = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
 
     fun hasMissedLanguages(): Boolean {
-      return enabledLanguages.any { it.jLanguage == null }
+      return enabledLanguages.any { isMissingLanguage(it) }
+    }
+
+    fun isMissingLanguage(lang: Lang): Boolean {
+      return !isAvailableLocally(lang) && lang.jLanguage == null
     }
   }
 

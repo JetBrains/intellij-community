@@ -1711,6 +1711,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "grazie-tests-ai-grazie-spell-hunspell-de",
+  jar = "@hunspell-de-jvm-0_2_281_http//file",
+  source_jar = "@hunspell-de-jvm-0_2_281-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-be",
   exports = [
@@ -4420,8 +4427,8 @@ jvm_import(
 
 jvm_import(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
-  jar = "@hunspell-en-jvm-0_2_278_http//file",
-  source_jar = "@hunspell-en-jvm-0_2_278-sources_http//file",
+  jar = "@hunspell-en-jvm-0_2_281_http//file",
+  source_jar = "@hunspell-en-jvm-0_2_281-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

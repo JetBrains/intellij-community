@@ -2,6 +2,7 @@
 package com.intellij.grazie.ide.msg
 
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -24,6 +25,7 @@ class GrazieInitializerManager {
     val application = ApplicationManager.getApplication()
     val connection = application.messageBus.connect()
     connection.subscribe(CONFIG_STATE_TOPIC, LangTool)
+    connection.subscribe(CONFIG_STATE_TOPIC, GraziePlugin.Hunspell)
   }
 
   fun register(subscriber: GrazieStateLifecycle): MessageBusConnection {

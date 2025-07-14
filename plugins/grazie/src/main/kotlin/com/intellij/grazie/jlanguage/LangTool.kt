@@ -38,7 +38,7 @@ object LangTool : GrazieStateLifecycle {
     Hunspell.setHunspellDictionaryFactory(::LuceneHunspellDictionary)
   }
 
-  internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.remote.iso.name + "."
+  internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.ltRemote!!.iso.name + "."
 
   fun getTool(lang: Lang): JLanguageTool {
     // this is equivalent to computeIfAbsent, but allows multiple threads to create tools concurrently,

@@ -4,61 +4,81 @@ package com.intellij.grazie.jlanguage
 import ai.grazie.nlp.langs.LanguageISO
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.remote.GrazieRemote
+import com.intellij.grazie.remote.HunspellDescriptor
+import com.intellij.grazie.remote.LanguageToolDescriptor
 import com.intellij.grazie.remote.RemoteLangDescriptor
 import com.intellij.openapi.util.NlsSafe
 import org.languagetool.Language
 import org.languagetool.language.English
 import org.languagetool.noop.NoopChunker
 
-enum class Lang(val displayName: String, val className: String, val remote: RemoteLangDescriptor, @NlsSafe val nativeName: String) {
-  BRITISH_ENGLISH("English (GB)", "BritishEnglish", RemoteLangDescriptor.ENGLISH, "English (Great Britain)"),
-  AMERICAN_ENGLISH("English (US)", "AmericanEnglish", RemoteLangDescriptor.ENGLISH, "English (USA)"),
-  CANADIAN_ENGLISH("English (Canadian)", "CanadianEnglish", RemoteLangDescriptor.ENGLISH, "English (Canada)"),
-  ARABIC("Arabic", "Arabic", RemoteLangDescriptor.ARABIC, "العربيةُ"),
-  ASTURIAN("Asturian", "Asturian", RemoteLangDescriptor.ASTURIAN, "Asturianu"),
-  BELARUSIAN("Belarusian", "Belarusian", RemoteLangDescriptor.BELARUSIAN, "Беларуская"),
-  BRETON("Breton", "Breton", RemoteLangDescriptor.BRETON, "Brezhoneg"),
-  CATALAN("Catalan", "Catalan", RemoteLangDescriptor.CATALAN, "Català"),
-  VALENCIAN_CATALAN("Catalan (Valencian)", "ValencianCatalan", RemoteLangDescriptor.CATALAN, "Català (Valencià)"),
-  DANISH("Danish", "Danish", RemoteLangDescriptor.DANISH, "Dansk"),
-  GERMANY_GERMAN("German (Germany)", "GermanyGerman", RemoteLangDescriptor.GERMAN, "Deutsch (Deutschland)"),
-  AUSTRIAN_GERMAN("German (Austria)", "AustrianGerman", RemoteLangDescriptor.GERMAN, "Deutsch (Österreich)"),
-  SWISS_GERMAN("German (Switzerland)", "SwissGerman", RemoteLangDescriptor.GERMAN, "Deutsch (Die Schweiz)"),
-  GREEK("Greek", "Greek", RemoteLangDescriptor.GREEK, "Ελληνικά"),
-  ESPERANTO("Esperanto", "Esperanto", RemoteLangDescriptor.ESPERANTO, "Esperanto"),
-  SPANISH("Spanish", "Spanish", RemoteLangDescriptor.SPANISH, "Español"),
-  PERSIAN("Persian", "Persian", RemoteLangDescriptor.PERSIAN, "فارسی"),
-  FRENCH("French", "French", RemoteLangDescriptor.FRENCH, "Français"),
-  IRISH("Irish", "Irish", RemoteLangDescriptor.IRISH, "Gaeilge"),
-  GALICIAN("Galician", "Galician", RemoteLangDescriptor.GALICIAN, "Galego"),
-  ITALIAN("Italian", "Italian", RemoteLangDescriptor.ITALIAN, "Italiano"),
-  JAPANESE("Japanese", "Japanese", RemoteLangDescriptor.JAPANESE, "日本語"),
-  KHMER("Khmer", "Khmer", RemoteLangDescriptor.KHMER, "ភាសាខ្មែរ"),
-  DUTCH("Dutch", "Dutch", RemoteLangDescriptor.DUTCH, "Nederlands"),
-  POLISH("Polish", "Polish", RemoteLangDescriptor.POLISH, "Polski"),
-  PORTUGAL_PORTUGUESE("Portuguese (Portugal)", "PortugalPortuguese", RemoteLangDescriptor.PORTUGUESE, "Português (Portugal)"),
-  BRAZILIAN_PORTUGUESE("Portuguese (Brazil)", "BrazilianPortuguese", RemoteLangDescriptor.PORTUGUESE, "Português (Brasil)"),
-  ANGOLA_PORTUGUESE("Portuguese (Angola)", "AngolaPortuguese", RemoteLangDescriptor.PORTUGUESE, "Português (Angola)"),
-  MOZAMBIQUE_PORTUGUESE("Portuguese (Mozambique)", "MozambiquePortuguese", RemoteLangDescriptor.PORTUGUESE, "Português (Moçambique)"),
-  ROMANIAN("Romanian", "Romanian", RemoteLangDescriptor.ROMANIAN, "Română"),
-  RUSSIAN("Russian", "Russian", RemoteLangDescriptor.RUSSIAN, "Русский"),
-  SLOVAK("Slovak", "Slovak", RemoteLangDescriptor.SLOVAK, "Slovenčina"),
-  SLOVENIAN("Slovenian", "Slovenian", RemoteLangDescriptor.SLOVENIAN, "Slovenščina"),
-  SWEDISH("Swedish", "Swedish", RemoteLangDescriptor.SWEDISH, "Svenska"),
-  TAMIL("Tamil", "Tamil", RemoteLangDescriptor.TAMIL, "தமிழ்"),
-  TAGALOG("Tagalog", "Tagalog", RemoteLangDescriptor.TAGALOG, "Tagalog"),
-  UKRAINIAN("Ukrainian", "Ukrainian", RemoteLangDescriptor.UKRAINIAN, "Українська"),
-  CHINESE("Chinese", "Chinese", RemoteLangDescriptor.CHINESE, "中文");
+enum class Lang(val displayName: String, val className: String, val iso: LanguageISO, @NlsSafe val nativeName: String) {
+  BRITISH_ENGLISH("English (GB)", "BritishEnglish", LanguageISO.EN, "English (Great Britain)"),
+  AMERICAN_ENGLISH("English (US)", "AmericanEnglish", LanguageISO.EN, "English (USA)"),
+  CANADIAN_ENGLISH("English (Canadian)", "CanadianEnglish", LanguageISO.EN, "English (Canada)"),
+  ARABIC("Arabic", "Arabic", LanguageISO.AR, "العربيةُ"),
+  ASTURIAN("Asturian", "Asturian", LanguageISO.AST, "Asturianu"),
+  BELARUSIAN("Belarusian", "Belarusian", LanguageISO.BE, "Беларуская"),
+  BRETON("Breton", "Breton", LanguageISO.BR, "Brezhoneg"),
+  CATALAN("Catalan", "Catalan", LanguageISO.CA, "Català"),
+  VALENCIAN_CATALAN("Catalan (Valencian)", "ValencianCatalan", LanguageISO.CA, "Català (Valencià)"),
+  DANISH("Danish", "Danish", LanguageISO.DA, "Dansk"),
+  GERMANY_GERMAN("German (Germany)", "GermanyGerman", LanguageISO.DE, "Deutsch (Deutschland)"),
+  AUSTRIAN_GERMAN("German (Austria)", "AustrianGerman", LanguageISO.DE, "Deutsch (Österreich)"),
+  SWISS_GERMAN("German (Switzerland)", "SwissGerman", LanguageISO.DE, "Deutsch (Die Schweiz)"),
+  GREEK("Greek", "Greek", LanguageISO.EL, "Ελληνικά"),
+  ESPERANTO("Esperanto", "Esperanto", LanguageISO.EO, "Esperanto"),
+  SPANISH("Spanish", "Spanish", LanguageISO.ES, "Español"),
+  PERSIAN("Persian", "Persian", LanguageISO.FA, "فارسی"),
+  FRENCH("French", "French", LanguageISO.FR, "Français"),
+  IRISH("Irish", "Irish", LanguageISO.GA, "Gaeilge"),
+  GALICIAN("Galician", "Galician", LanguageISO.GL, "Galego"),
+  ITALIAN("Italian", "Italian", LanguageISO.IT, "Italiano"),
+  JAPANESE("Japanese", "Japanese", LanguageISO.JA, "日本語"),
+  KHMER("Khmer", "Khmer", LanguageISO.KM, "ភាសាខ្មែរ"),
+  DUTCH("Dutch", "Dutch", LanguageISO.NL, "Nederlands"),
+  POLISH("Polish", "Polish", LanguageISO.PL, "Polski"),
+  PORTUGAL_PORTUGUESE("Portuguese (Portugal)", "PortugalPortuguese", LanguageISO.PT, "Português (Portugal)"),
+  BRAZILIAN_PORTUGUESE("Portuguese (Brazil)", "BrazilianPortuguese", LanguageISO.PT, "Português (Brasil)"),
+  ANGOLA_PORTUGUESE("Portuguese (Angola)", "AngolaPortuguese", LanguageISO.PT, "Português (Angola)"),
+  MOZAMBIQUE_PORTUGUESE("Portuguese (Mozambique)", "MozambiquePortuguese", LanguageISO.PT, "Português (Moçambique)"),
+  ROMANIAN("Romanian", "Romanian", LanguageISO.RO, "Română"),
+  RUSSIAN("Russian", "Russian", LanguageISO.RU, "Русский"),
+  SLOVAK("Slovak", "Slovak", LanguageISO.SK, "Slovenčina"),
+  SLOVENIAN("Slovenian", "Slovenian", LanguageISO.SL, "Slovenščina"),
+  SWEDISH("Swedish", "Swedish", LanguageISO.SV, "Svenska"),
+  TAMIL("Tamil", "Tamil", LanguageISO.TA, "தமிழ்"),
+  TAGALOG("Tagalog", "Tagalog", LanguageISO.TL, "Tagalog"),
+  UKRAINIAN("Ukrainian", "Ukrainian", LanguageISO.UK, "Українська"),
+  CHINESE("Chinese", "Chinese", LanguageISO.ZH, "中文");
 
   companion object {
-    fun sortedValues() = values().sortedBy(Lang::nativeName)
+    fun sortedValues(): List<Lang> = entries.sortedBy(Lang::nativeName)
 
     // the chunker can be very memory-, disk- and CPU-expensive
     internal fun shouldDisableChunker(language: Language): Boolean = language is English
   }
 
-  val iso: LanguageISO
-    get() = remote.iso
+  val ltRemote: LanguageToolDescriptor?
+    get() = LanguageToolDescriptor.entries.find { it.iso == iso }
+
+  val hunspellRemote: HunspellDescriptor?
+    get() = HunspellDescriptor.entries.find { it.iso == iso }
+
+  val remoteDescriptors: List<RemoteLangDescriptor>
+    get() = listOfNotNull(ltRemote, hunspellRemote)
+
+  val size: Int
+    get() = (LanguageToolDescriptor.entries.find { it.iso == iso }?.size ?: 0) +
+            (HunspellDescriptor.entries.find { it.iso == iso }?.size ?: 0)
+
+  val shortDisplayName: String
+    get() {
+      if (iso == LanguageISO.DE) return "German"
+      if (iso == LanguageISO.EN) return "English"
+      if (iso == LanguageISO.PT) return "Portuguese"
+      return displayName
+    }
 
   private var _jLanguage: Language? = null
   val jLanguage: Language?
