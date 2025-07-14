@@ -58,9 +58,7 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.Iterators;
 
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -791,7 +789,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     assert counter != null;
 
     counter.down();
-    myTaskRunner.execute(() -> {
+    // in test mode ensure deterministic behavior by processing data in the sequence it arrives
+    Executor taskRunner = Utils.isTestMode(context)? Runnable::run : myTaskRunner;
+    taskRunner.execute(() -> {
       try {
         taskRunnable.run();
       }
@@ -1318,6 +1318,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
     @Override
     public void registerJavacFileData(JavacFileData data) {
+      // Important: must be processed in-place and not postponed or offloaded to a different thread. The JavacFileData is internally backed up by live javac internal data structures,
+      // which can be damaged if accessed later or from a different thread
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
         registrar.registerFile(myContext, data.getFilePath(), Iterators.map(data.getRefs().entrySet(), entry -> entry), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
       }
