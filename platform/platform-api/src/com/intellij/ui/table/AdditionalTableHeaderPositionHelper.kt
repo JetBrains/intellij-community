@@ -14,7 +14,7 @@ import javax.swing.table.JTableHeader
 /**
  * Helper class to locate the additional header on the expected place by the table header
  */
-class AdditionalTableHeaderPositionHelper(var statisticsHeader: AdditionalTableHeader) : PropertyChangeListener {
+class AdditionalTableHeaderPositionHelper(val statisticsHeader: AdditionalTableHeader) : PropertyChangeListener {
   /** This variable defines how to handle the position of the header.  */
   var myLocation: AdditionalTableHeader.Position? = null
 
@@ -130,6 +130,9 @@ class AdditionalTableHeaderPositionHelper(var statisticsHeader: AdditionalTableH
           statisticsHeader.revalidate()
           super.setView(statisticsHeader)
         }
+        else if (view is AdditionalTableHeader) {
+          setView(view.findTableHeader())
+        }
       }
 
       /**
@@ -137,7 +140,7 @@ class AdditionalTableHeaderPositionHelper(var statisticsHeader: AdditionalTableH
        * it. it does nothing if there is no such JTableHeader
        */
       private fun removeTableHeader(): Component? {
-        val tableHeader = findTableHeader()
+        val tableHeader = statisticsHeader.findTableHeader()
         if (tableHeader != null) {
           statisticsHeader.remove(tableHeader)
         }
@@ -165,7 +168,7 @@ class AdditionalTableHeaderPositionHelper(var statisticsHeader: AdditionalTableH
       val parent = currentViewport.parent
       if (parent is JScrollPane) {
         if (parent.columnHeader === currentViewport) {
-          val tableHeader = findTableHeader()
+          val tableHeader = statisticsHeader.findTableHeader()
           val newView = tableHeader?.let { createCleanViewport(it) }
           parent.setColumnHeader(newView)
         }
@@ -181,8 +184,8 @@ class AdditionalTableHeaderPositionHelper(var statisticsHeader: AdditionalTableH
   }
 
   /** Returns the JTableHeader in the filterHeader, if any.  */
-  fun findTableHeader(): Component? {
-    for (component in statisticsHeader.components) {
+  private fun AdditionalTableHeader.findTableHeader(): Component? {
+    for (component in components) {
       // there should be just one (the header's controller)
       // or two components (with the table header)
       if (component is JTableHeader) {
