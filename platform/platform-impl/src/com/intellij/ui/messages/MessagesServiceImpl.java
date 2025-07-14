@@ -48,7 +48,7 @@ public class MessagesServiceImpl implements MessagesService {
                                @Nullable String invocationPlace,
                                ExitActionType @NotNull [] exitActionTypes) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return TestDialogManager.getTestImplementation().show(message);
+      return TestDialogManager.getTestImplementation().show(message, doNotAskOption);
     }
 
     AlertMessagesManager alertMessagesManager = AlertMessagesManager.getInstanceIfPossible();

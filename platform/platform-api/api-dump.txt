@@ -483,6 +483,7 @@ com.intellij.openapi.ui.TestDialog
 - sf:OK:com.intellij.openapi.ui.TestDialog
 - sf:YES:com.intellij.openapi.ui.TestDialog
 - a:show(java.lang.String):I
+- show(java.lang.String,com.intellij.openapi.ui.DoNotAskOption):I
 com.intellij.openapi.ui.TestInputDialog
 - sf:DEFAULT:com.intellij.openapi.ui.TestInputDialog
 - sf:OK:com.intellij.openapi.ui.TestInputDialog
