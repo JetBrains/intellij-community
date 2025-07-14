@@ -15,6 +15,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.content.Content;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +37,8 @@ public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
-  private final MutableReactiveProperty<@TabTitle @Nullable String> myDisplayNameView = new MutableReactiveProperty<>(null);
-  private final MutableReactiveProperty<@Nullable Icon> myIconView = new MutableReactiveProperty<>(null);
+  private final MutableStateFlow<@TabTitle @Nullable String> myDisplayNameView = StateFlowKt.MutableStateFlow(null);
+  private final MutableStateFlow<@Nullable Icon> myIconView = StateFlowKt.MutableStateFlow(null);
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
   private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
@@ -169,7 +172,7 @@ public class RunContentDescriptor implements Disposable {
    * @return the icon property that can be observed for the most recent icon value.
    */
   @ApiStatus.Experimental
-  public ReactiveProperty<Icon> getIconProperty() {
+  public StateFlow<Icon> getIconProperty() {
     return myIconView;
   }
 
@@ -211,7 +214,7 @@ public class RunContentDescriptor implements Disposable {
    * @return the title property that can be observed for the most recent title value.
    */
   @ApiStatus.Experimental
-  public ReactiveProperty<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
+  public StateFlow<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
     return myDisplayNameView;
   }
 

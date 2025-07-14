@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -47,6 +48,9 @@ import com.intellij.util.SmartList
 import com.intellij.util.application
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.KeyboardFocusManager
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -274,9 +278,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     content.putUserData(EXECUTOR_KEY, executor)
     content.displayName = descriptor.displayName
 
-    descriptor.displayNameProperty.afterChange(descriptor) {
-      application.invokeLater {
-        content.displayName = it
+    descriptor.coroutineScope.launch {
+      descriptor.displayNameProperty.collect {
+        withContext(Dispatchers.EDT) {
+          content.displayName = it
+        }
       }
     }
 
@@ -307,9 +313,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
               content.description = ExecutionBundle.message("process.id.tooltip", pid)
             }
           }
-          descriptor.iconProperty.afterChange(descriptor) {
-            UIUtil.invokeLaterIfNeeded {
-              content.icon = getLiveIndicator(it)
+
+          descriptor.coroutineScope.launch {
+            descriptor.iconProperty.collect {
+              withContext(Dispatchers.EDT) {
+                content.icon = getLiveIndicator(it)
+              }
             }
           }
         }
@@ -333,9 +342,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         Disposer.register(disposer, Disposable { processHandler.removeProcessListener(processAdapter) })
       }
     } else {
-      descriptor.iconProperty.afterChange(descriptor) {
-        application.invokeLater {
-          content.icon = it ?: executor.toolWindowIcon
+      descriptor.coroutineScope.launch {
+        descriptor.iconProperty.collect {
+          withContext(Dispatchers.EDT) {
+            content.icon = it ?: executor.toolWindowIcon
+          }
         }
       }
     }
