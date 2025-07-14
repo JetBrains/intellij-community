@@ -40,12 +40,11 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                               closePopup: Boolean,
                               timeToFirstResult: Int,
                               mixedListInfo: SearchEverywhereMixedListInfo,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+                              searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
                               sessionDurationMs: Int) {
     if (!isLoggingEnabled) return
-    val elements = elementsProvider.invoke()
     val additionalEvents = buildList {
-      addAll(getSelectedElementsEvents(selectedIndices, elements, elementIdProvider, selectedItems))
+      addAll(getSelectedElementsEvents(selectedIndices, searchResults, elementIdProvider, selectedItems))
       addAll(getOnFinishEvents(closePopup, sessionDurationMs))
     }
     reportElements(
@@ -56,7 +55,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       featureCache = featureCache,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
-      elements = elements,
+      searchResults = searchResults,
       elementIdProvider = elementIdProvider,
       additionalEvents = additionalEvents
     )
@@ -69,10 +68,9 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                 featureCache: SearchEverywhereMlFeaturesCache,
                                 timeToFirstResult: Int,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
-                                elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+                                searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
                                 sessionDurationMs: Int) {
     if (!isLoggingEnabled) return
-    val elements = elementsProvider.invoke()
     val additionalEvents = getOnFinishEvents(closePopup = true, sessionDurationMs)
     reportElements(
       project = project,
@@ -82,7 +80,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       featureCache = featureCache,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
-      elements = elements,
+      searchResults = searchResults,
       elementIdProvider = elementIdProvider,
       additionalEvents = additionalEvents
     )
@@ -95,9 +93,8 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                  featureCache: SearchEverywhereMlFeaturesCache,
                                  timeToFirstResult: Int,
                                  mixedListInfo: SearchEverywhereMixedListInfo,
-                                 elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+                                 searchResults: List<SearchEverywhereFoundElementInfoWithMl>) {
     if (!isLoggingEnabled) return
-    val elements = elementsProvider.invoke()
     val additionalEvents = buildList {
       if (searchState.searchStartReason == SearchRestartReason.SEARCH_STARTED) {
         addAll(
@@ -113,7 +110,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       featureCache = featureCache,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
-      elements = elements,
+      searchResults = searchResults,
       elementIdProvider = elementIdProvider,
       additionalEvents = additionalEvents
     )
@@ -126,7 +123,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              featureCache: SearchEverywhereMlFeaturesCache,
                              timeToFirstResult: Int,
                              mixedListInfo: SearchEverywhereMixedListInfo,
-                             elements: List<SearchEverywhereFoundElementInfoWithMl>,
+                             searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
     eventId.log(project) {
@@ -136,7 +133,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       addAll(
         getCommonTypeLevelEvents(seSessionId = seSessionId,
                                  tabId = tabId,
-                                 elementsSize = elements.size,
+                                 elementsSize = searchResults.size,
                                  searchStateFeatures = searchState.searchStateFeatures,
                                  timeToFirstResult = timeToFirstResult,
                                  searchIndex = searchState.searchIndex,
@@ -150,7 +147,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       )
 
       addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
-      addAll(getElementsEvents(project, featureCache, elements, mixedListInfo, elementIdProvider,
+      addAll(getElementsEvents(project, featureCache, searchResults, mixedListInfo, elementIdProvider,
                                searchState.sessionStartTime))
     }
   }
@@ -170,7 +167,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   private fun getElementsEvents(project: Project?,
                                 featureCache: SearchEverywhereMlFeaturesCache,
-                                elements: List<SearchEverywhereFoundElementInfoWithMl>,
+                                searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
                                 elementIdProvider: SearchEverywhereMlItemIdProvider,
                                 sessionStartTime: Long): List<EventPair<*>> {
@@ -181,7 +178,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       }
     }
 
-    val updateEvents = featureCache.getUpdateEventsAndCache(project, elements.take(REPORTED_ITEMS_LIMIT),
+    val updateEvents = featureCache.getUpdateEventsAndCache(project, searchResults.take(REPORTED_ITEMS_LIMIT),
                                                             contributorFeaturesProvider, elementIdProvider)
     val events = listOf(
       IS_PROJECT_DISPOSED_KEY.with(updateEvents == null)

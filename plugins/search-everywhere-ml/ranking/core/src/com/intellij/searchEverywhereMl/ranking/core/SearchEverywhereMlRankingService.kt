@@ -104,14 +104,14 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
                                keysTyped: Int,
                                backspacesTyped: Int,
                                searchQuery: String,
-                               previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                               searchResults: List<SearchEverywhereFoundElementInfo>,
                                searchScope: ScopeDescriptor?,
                                isSearchEverywhere: Boolean) {
     if (!isEnabled()) return
 
     val orderByMl = shouldOrderByMlInTab(tabId, searchQuery)
     getCurrentSession()?.onSearchRestart(
-      project, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider),
+      project, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, searchResults.toInternalType(),
       searchScope, isSearchEverywhere
     )
   }
@@ -131,14 +131,14 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
   }
 
   override fun onItemSelected(project: Project?, tabId: String, indexes: IntArray, selectedItems: List<Any>,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                              searchResults: List<SearchEverywhereFoundElementInfo>,
                               closePopup: Boolean,
                               query: String) {
-    getCurrentSession()?.onItemSelected(project, indexes, selectedItems, closePopup, mapElementsProvider(elementsProvider))
+    getCurrentSession()?.onItemSelected(project, indexes, selectedItems, closePopup, searchResults.toInternalType())
   }
 
-  override fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchFinished(project, mapElementsProvider(elementsProvider))
+  override fun onSearchFinished(project: Project?, searchResults: List<SearchEverywhereFoundElementInfo>) {
+    getCurrentSession()?.onSearchFinished(project, searchResults.toInternalType())
   }
 
   override fun notifySearchResultsUpdated() {
@@ -186,11 +186,9 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     }
   }
 
-  private fun mapElementsProvider(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>): () -> List<SearchEverywhereFoundElementInfoWithMl> {
-    return { ->
-      elementsProvider.invoke()
-        .map {
-          SearchEverywhereFoundElementInfoWithMl.from(it) }
+  private fun List<SearchEverywhereFoundElementInfo>.toInternalType(): List<SearchEverywhereFoundElementInfoWithMl> {
+    return this.map {
+      SearchEverywhereFoundElementInfoWithMl.from(it)
     }
   }
 }

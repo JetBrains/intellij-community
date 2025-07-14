@@ -59,7 +59,7 @@ internal class SearchEverywhereMLSearchSession(
     keysTyped: Int,
     backspacesTyped: Int,
     searchQuery: String,
-    previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+    searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
     searchScope: ScopeDescriptor?,
     isSearchEverywhere: Boolean,
   ) {
@@ -85,7 +85,7 @@ internal class SearchEverywhereMLSearchSession(
       logger.onSearchRestarted(
         project, sessionId,
         itemIdProvider, cachedContextInfo, prevState, featureCache,
-        prevTimeToResult, mixedListInfo, previousElementsProvider
+        prevTimeToResult, mixedListInfo, searchResults
       )
     }
   }
@@ -93,7 +93,7 @@ internal class SearchEverywhereMLSearchSession(
   fun onItemSelected(
     project: Project?,
     indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-    elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+    searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
   ) {
     val state = getCurrentSearchState()
     if (state != null && state.tab.isLoggingEnabled()) {
@@ -102,7 +102,7 @@ internal class SearchEverywhereMLSearchSession(
         selectedItems.forEach { statisticianService.increaseUseCount(it) }
 
         if (state.tab == SearchEverywhereTab.All) {
-          elementsProvider.invoke()
+          searchResults
             .slice(indexes.asIterable())
             .forEach { increaseContributorUseCount(it.contributor.searchProviderId) }
         }
@@ -115,7 +115,7 @@ internal class SearchEverywhereMLSearchSession(
         project, sessionId, itemIdProvider,
         state, featureCache, indexes, selectedItems, closePopup,
         performanceTracker.timeElapsed, mixedListInfo,
-        elementsProvider, sessionDuration
+        searchResults, sessionDuration
       )
     }
 
@@ -126,7 +126,7 @@ internal class SearchEverywhereMLSearchSession(
 
   fun onSearchFinished(
     project: Project?,
-    elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+    searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
   ) {
     val state = getCurrentSearchState()
 
@@ -137,7 +137,7 @@ internal class SearchEverywhereMLSearchSession(
       logger.onSearchFinished(
         project, sessionId, itemIdProvider,
         state, featureCache, performanceTracker.timeElapsed, mixedListInfo,
-        elementsProvider, sessionDuration
+        searchResults, sessionDuration
       )
     }
 

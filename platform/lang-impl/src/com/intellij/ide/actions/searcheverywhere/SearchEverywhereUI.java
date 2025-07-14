@@ -857,7 +857,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       myMlService.onSearchRestart(
         myProject, tabId, reason,
         mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, namePattern,
-        () -> myListModel.getFoundElementsInfo(),
+        myListModel.getFoundElementsInfo(),
         getSelectedSearchScope(myHeader.getSelectedTab()), myHeader.isEverywhere()
       );
     }
@@ -1332,7 +1332,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       var tabId = myHeader.getSelectedTab().getID();
       var correctIndexes = hasNotificationElement ? Arrays.stream(indexes).map(i -> (i - 1)).toArray() : indexes;
       myMlService.onItemSelected(
-        myProject, tabId, correctIndexes, selectedItems, () -> myListModel.getFoundElementsInfo(), closePopup, searchText);
+        myProject, tabId, correctIndexes, selectedItems, ContainerUtil.copyList(myListModel.getFoundElementsInfo()), closePopup, searchText);
     }
 
     for (int i : indexes) {
@@ -1392,9 +1392,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   public void sendStatisticsAndClose() {
     if (isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       if (myMlService != null) {
-        myMlService.onSearchFinished(
-          myProject, () -> myListModel.getFoundElementsInfo()
-        );
+        myMlService.onSearchFinished(myProject, ContainerUtil.copyList(myListModel.getFoundElementsInfo()));
       }
     }
     closePopup();

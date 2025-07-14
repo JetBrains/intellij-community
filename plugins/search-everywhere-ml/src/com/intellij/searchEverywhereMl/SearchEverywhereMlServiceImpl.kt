@@ -24,10 +24,10 @@ class SearchEverywhereMlServiceImpl : SearchEverywhereMlService by RANKING_SERVI
                               tabId: String,
                               indexes: IntArray,
                               selectedItems: List<Any>,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                              searchResults: List<SearchEverywhereFoundElementInfo>,
                               closePopup: Boolean,
                               query: String) {
-    RANKING_SERVICE.onItemSelected(project, tabId, indexes, selectedItems, elementsProvider, closePopup, query)
-    ITEM_SELECTED_LISTENERS.forEach { it.onItemSelected(project, tabId, indexes, selectedItems, elementsProvider, closePopup, query) }
+    RANKING_SERVICE.onItemSelected(project, tabId, indexes, selectedItems, searchResults, closePopup, query)
+    ITEM_SELECTED_LISTENERS.forEach { it.onItemSelected(project, tabId, indexes, selectedItems, searchResults, closePopup, query) }
   }
 }

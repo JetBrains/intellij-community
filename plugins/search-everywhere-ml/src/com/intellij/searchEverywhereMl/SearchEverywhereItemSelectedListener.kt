@@ -8,7 +8,7 @@ interface SearchEverywhereItemSelectedListener {
                      tabId: String,
                      indexes: IntArray,
                      selectedItems: List<Any>,
-                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                     searchResults: List<SearchEverywhereFoundElementInfo>,
                      closePopup: Boolean,
                      query: String)
 }

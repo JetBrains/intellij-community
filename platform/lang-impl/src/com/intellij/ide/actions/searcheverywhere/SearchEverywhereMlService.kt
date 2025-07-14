@@ -46,17 +46,17 @@ interface SearchEverywhereMlService {
                                       correction: SearchEverywhereSpellCheckResult): SearchEverywhereFoundElementInfo
 
   fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
-                               keysTyped: Int, backspacesTyped: Int, searchQuery: String,
-                               previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                               searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
+                      keysTyped: Int, backspacesTyped: Int, searchQuery: String,
+                      searchResults: List<SearchEverywhereFoundElementInfo>,
+                      searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
 
   fun onItemSelected(project: Project?, tabId: String,
-                              indexes: IntArray, selectedItems: List<Any>,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                              closePopup: Boolean,
-                              query: String)
+                     indexes: IntArray, selectedItems: List<Any>,
+                     searchResults: List<SearchEverywhereFoundElementInfo>,
+                     closePopup: Boolean,
+                     query: String)
 
-  fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)
+  fun onSearchFinished(project: Project?, searchResults: List<SearchEverywhereFoundElementInfo>)
 
   fun notifySearchResultsUpdated()
 
