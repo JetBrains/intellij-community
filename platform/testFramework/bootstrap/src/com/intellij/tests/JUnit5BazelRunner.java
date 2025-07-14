@@ -46,21 +46,21 @@ public final class JUnit5BazelRunner {
   private static final ClassLoader ourClassLoader = Thread.currentThread().getContextClassLoader();
   private static final Launcher launcher = LauncherFactory.create();
 
-  private LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
+  private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
     return LauncherDiscoveryRequestBuilder.request()
       .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
-      .selectors(this.getTestsSelectors(ourClassLoader))
-      .filters(this.getTestFilters())
+      .selectors(getTestsSelectors(ourClassLoader))
+      .filters(getTestFilters())
       .build();
   }
 
-  public List<? extends DiscoverySelector> getTestSelectorsByClassPathRoots(ClassLoader classLoader) throws Throwable {
+  private static List<? extends DiscoverySelector> getTestSelectorsByClassPathRoots(ClassLoader classLoader) throws Throwable {
     Set<Path> classPathRoots = getClassPathRoots(classLoader);
     return getSelectors(classPathRoots);
   }
 
-  public TestPlan getTestPlan() throws Throwable {
-    LauncherDiscoveryRequest discoveryRequest = this.getDiscoveryRequest();
+  private static TestPlan getTestPlan() throws Throwable {
+    LauncherDiscoveryRequest discoveryRequest = getDiscoveryRequest();
     return launcher.discover(discoveryRequest);
   }
 
@@ -73,10 +73,10 @@ public final class JUnit5BazelRunner {
         throw new RuntimeException("Missing expected env variable in bazel test environment.");
       }
 
-      String bazelTestSelfLocation = System.getenv(bazelEnvSelfLocation);
+      String bazelTestTestSrcDir = System.getenv(bazelEnvTestSrcDir);
 
-      // as intellij.test.jars.location value required not only here (for tests discovery) but also in other parts of the test framework
-      System.setProperty("intellij.test.jars.location", Path.of(bazelTestSelfLocation).getParent().toString());
+      // set intellij.test.jars.location as a temporary workaround for debugger-agent.jar downloading
+      System.setProperty("intellij.test.jars.location", bazelTestTestSrcDir);
 
       if (Boolean.parseBoolean(System.getenv(jbEnvPrintSortedClasspath))) {
         Arrays.stream(System.getProperty("java.class.path")
@@ -143,16 +143,14 @@ public final class JUnit5BazelRunner {
 
       System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
 
-      JUnit5BazelRunner runner = new JUnit5BazelRunner();
-
-      TestPlan testPlan = runner.getTestPlan();
+      TestPlan testPlan = getTestPlan();
       if (!testPlan.containsTests()) {
         //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
         System.err.println("No tests found");
         System.exit(42);
       }
 
-      var testExecutionListener = runner.getTestExecutionListener();
+      var testExecutionListener = getTestExecutionListener();
       launcher.execute(testPlan, testExecutionListener);
 
       if (testExecutionListener instanceof ConsoleTestLogger && ((ConsoleTestLogger)testExecutionListener).hasTestsWithThrowableResults()) {
@@ -172,7 +170,7 @@ public final class JUnit5BazelRunner {
     }
   }
 
-  TestExecutionListener getTestExecutionListener() {
+  private static TestExecutionListener getTestExecutionListener() {
     if (isUnderTeamCity()) {
       return new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener();
     } else {
@@ -180,11 +178,11 @@ public final class JUnit5BazelRunner {
     }
   }
 
-  public Filter<?>[] getTestFilters() {
+  private static Filter<?>[] getTestFilters() {
     return new Filter[0];
   }
 
-  public List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) throws Throwable {
+  private static List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) throws Throwable {
     List<? extends DiscoverySelector> bazelTestClassSelector = getBazelTestClassSelectors(classLoader);
     if (!bazelTestClassSelector.isEmpty()) {
       return bazelTestClassSelector;
@@ -329,23 +327,16 @@ public final class JUnit5BazelRunner {
   }
 
   public static Set<Path> getClassPathRoots(ClassLoader classLoader) throws Throwable {
-    //noinspection unchecked
-    List<Path> paths = (List<Path>)MethodHandles.publicLookup()
-      .findStatic(Class.forName("com.intellij.TestAll", false, classLoader),
-                  "getClassRoots", MethodType.methodType(List.class))
-      .invokeExact();
-    if (paths == null) return null;
+    // scan only relevant jars next to bazelEnvSelfLocation
+    String bazelTestSelfLocation = System.getenv(bazelEnvSelfLocation);
+    Path testJarsRoot = Path.of(bazelTestSelfLocation).getParent();
 
-    // Skip unrelated jars and any other archives, otherwise we will end up with test classes from dependencies.
-    String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
-    return paths.stream().filter(path -> {
-      return Files.isDirectory(path) ||
-             (
-               relevantJarsRoot != null &&
-               path.getFileName().toString().endsWith(".jar") &&
-               path.startsWith(relevantJarsRoot)
-             );
-    }).collect(Collectors.toSet());
+    try (Stream<Path> stream = Files.walk(testJarsRoot)) {
+      return stream
+        .filter(file -> !Files.isDirectory(file))
+        .filter(p -> p.getFileName().toString().endsWith(".jar"))
+        .collect(Collectors.toSet());
+    }
   }
 
   public static List<? extends DiscoverySelector> getSelectors(Set<Path> classPathRoots) {
