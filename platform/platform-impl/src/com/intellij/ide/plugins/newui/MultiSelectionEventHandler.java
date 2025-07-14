@@ -292,7 +292,7 @@ public final class MultiSelectionEventHandler extends EventHandler {
 
   private @NotNull List<ListPluginComponent> getSelectionWithoutEssential() {
     return getSelection().stream()
-      .filter(pluginComponent -> !pluginComponent.isEssential()).toList();
+      .filter(pluginComponent -> pluginComponent.isDisableAllowed()).toList();
   }
 
   @Override
