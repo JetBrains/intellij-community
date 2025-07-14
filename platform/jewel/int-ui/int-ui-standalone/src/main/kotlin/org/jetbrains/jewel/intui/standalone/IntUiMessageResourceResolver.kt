@@ -25,6 +25,7 @@ internal class IntUiMessageResourceResolver : MessageResourceResolver {
         when (key) {
             "action.text.open.link.in.browser" -> "Open Link in Browser"
             "action.text.copy.link.address" -> "Copy Link Address"
+            "action.text.more" -> "More"
             else -> ""
         }
 }
