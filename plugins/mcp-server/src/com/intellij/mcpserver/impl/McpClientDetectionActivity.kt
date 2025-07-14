@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -155,7 +154,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
       .getNotificationGroup("MCP Server")
       .createNotification(
         McpServerBundle.message("mcp.clients.detected.notification.title"),
-        McpServerBundle.message("mcp.clients.detected.notification.message", clientNames, ApplicationNamesInfo.getInstance().fullProductName),
+        McpServerBundle.message("mcp.clients.detected.notification.message", clientNames),
         NotificationType.INFORMATION
       )
       .addAction(ShowSettingsAction(project, McpServerBundle.message("mcp.clients.detected.action.enable")))

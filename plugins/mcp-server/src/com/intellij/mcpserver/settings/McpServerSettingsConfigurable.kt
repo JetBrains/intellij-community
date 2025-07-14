@@ -52,9 +52,6 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
     val panel = panel {
       row {
-        text(McpServerBundle.message("mcp.settings.description"))
-      }
-      row {
         val checkboxWithValidation = CheckboxWithValidation(if (McpServerService.getInstance().isRunning) {
           McpServerBundle.message("enable.mcp.server.when.enabled")
         }
@@ -249,7 +246,10 @@ private class CheckboxWithValidation(@Nls checkboxText: String, var validator: C
 
 private object ConsentValidator : CheckboxValidator {
   override fun isValidNewValue(isSelected: Boolean): Boolean = if (isSelected) {
-    MessageDialogBuilder.yesNo(McpServerBundle.message("dialog.title.mcp.server.consent"), McpServerBundle.message("dialog.message.mcp.server.consent"), Messages.getWarningIcon()).ask(getLastFocusedOrOpenedProject())
+    MessageDialogBuilder.yesNo(McpServerBundle.message("dialog.title.mcp.server.consent"), McpServerBundle.message("dialog.message.mcp.server.consent"), Messages.getWarningIcon())
+      .yesText(McpServerBundle.message("dialog.mcp.server.consent.enable.button"))
+      .noText(McpServerBundle.message("dialog.mcp.server.consent.cancel.button"))
+      .ask(getLastFocusedOrOpenedProject())
   }
   else true
 }
