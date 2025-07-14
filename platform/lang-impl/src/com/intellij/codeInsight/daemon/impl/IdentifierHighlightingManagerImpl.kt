@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl.Companion.EDITOR_IDENT_RESULTS
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
@@ -45,6 +46,12 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class IdentifierHighlightingManagerImpl(private val myProject: Project) : IdentifierHighlightingManager, Disposable {
+  /**
+   * the (fake)pass id needed for [com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil.setHighlightersToSingleEditor]
+   * in [com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted]
+   */
+  @Volatile
+  private var passId:Int = 0
   init {
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
@@ -70,6 +77,25 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
         }
       }
     }, this)
+    setId(myProject)
+  }
+  private fun setId(project: Project): Int {
+    var resultId: Int = passId
+    if (resultId == 0) {
+      val registrar =
+        TextEditorHighlightingPassRegistrar.getInstance(project) as TextEditorHighlightingPassRegistrarImpl
+      synchronized(IdentifierHighlighterUpdater::class.java) {
+        resultId = passId
+        if (resultId == 0) {
+          resultId = registrar.nextAvailableId
+          passId = resultId
+        }
+      }
+    }
+    return resultId
+  }
+  internal fun getPassId() : Int {
+    return passId
   }
 
   private fun clearCache(document: Document) {

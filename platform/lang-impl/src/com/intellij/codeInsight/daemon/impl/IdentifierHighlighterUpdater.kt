@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase
 import com.intellij.codeInsight.multiverse.CodeInsightContext
@@ -21,7 +20,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import kotlin.concurrent.Volatile
 
 /**
  * Repaints/recreates identifier highlighting range highlighters
@@ -35,9 +33,6 @@ class IdentifierHighlighterUpdater(
   val context: CodeInsightContext,
   val hostPsiFile: PsiFile,
 ) {
-  init {
-    setId(myPsiFile.project)
-  }
   @RequiresBackgroundThread
   @ApiStatus.Internal
   suspend fun doCollectInformation(project: Project, visibleRange: ProperTextRange): IdentifierHighlightingResult {
@@ -101,7 +96,8 @@ class IdentifierHighlighterUpdater(
       myEditor.getDocument(), start, false)
     else null
     val unescapedTooltip = if (existingMarkupTooltips.contains(Pair(tooltip, range))) null else tooltip
-    val builder = HighlightInfo.newHighlightInfo(type).range(TextRange.create(range)).group(id)
+    val group = (IdentifierHighlightingManager.getInstance(myPsiFile.project) as IdentifierHighlightingManagerImpl).getPassId()
+    val builder = HighlightInfo.newHighlightInfo(type).range(TextRange.create(range)).group(group)
     if (unescapedTooltip != null) {
       builder.unescapedToolTip(unescapedTooltip)
     }
@@ -121,9 +117,6 @@ class IdentifierHighlighterUpdater(
   }
 
   companion object {
-    @Volatile
-    internal var id = 0
-
     fun clearMyHighlights(document: Document, project: Project) {
       val markupModel = DocumentMarkupModel.forDocument(document, project, true)
       for (highlighter in markupModel.getAllHighlighters()) {
@@ -139,22 +132,6 @@ class IdentifierHighlighterUpdater(
     @ApiStatus.Internal
     fun getCodeBlockMarkerRanges(result: IdentifierHighlightingResult): Collection<Segment> {
       return result.occurrences.mapNotNull { m: IdentifierOccurrence -> if (m.highlightInfoType === HighlightInfoType.ELEMENT_UNDER_CARET_STRUCTURAL) m.range else null }
-    }
-
-    fun setId(project: Project): Int {
-      var resultId: Int = id
-      if (resultId == 0) {
-        val registrar =
-          TextEditorHighlightingPassRegistrar.getInstance(project) as TextEditorHighlightingPassRegistrarImpl
-        synchronized(IdentifierHighlighterUpdater::class.java) {
-          resultId = id
-          if (resultId == 0) {
-            resultId = registrar.nextAvailableId
-            id = resultId
-          }
-        }
-      }
-      return resultId
     }
 
     @ApiStatus.Internal
