@@ -11,6 +11,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -19,12 +20,12 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.ColorMixture.Companion.ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
@@ -257,36 +258,39 @@ internal class UiThemeColorPickerToolWindowFactory : ToolWindowFactory, DumbAwar
     val panel = panel {
       row {
         val canWriteVMOptions = VMOptions.canWriteOptions()
-        val editorRegistry = SystemProperties.getBooleanProperty("editor.color.scheme.mark.colors", false)
-        val mixerRegistry = Registry.get("ide.color.mixture.mark.colors")
+        val editorRegistry = SystemProperties.getBooleanProperty(ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION, false)
+        val mixerRegistry = SystemProperties.getBooleanProperty(ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION, false)
         checkBox("Enable color markers in runtime").applyToComponent {
-          isSelected = editorRegistry && mixerRegistry.asBoolean()
+          isSelected = editorRegistry && mixerRegistry
+          isEnabled = canWriteVMOptions
           toolTipText = "May affect IDE performance and behavior on theme changes"
           addItemListener {
             invokeLater { // swing weirdness
               if (isSelected) {
-                mixerRegistry.setValue(true)
-
                 if (canWriteVMOptions) {
                   logger<UiThemeColorPickerToolWindowFactory>().runAndLogException {
-                    VMOptions.setProperty("editor.color.scheme.mark.colors", "true")
+                    VMOptions.setProperty(ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION, "true")
+                    VMOptions.setProperty(ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION, "true")
                   }
                 }
               }
               else {
-                mixerRegistry.resetToDefault()
-
                 if (canWriteVMOptions) {
                   logger<UiThemeColorPickerToolWindowFactory>().runAndLogException {
-                    VMOptions.setProperty("editor.color.scheme.mark.colors", null)
+                    VMOptions.setProperty(ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION, null)
+                    VMOptions.setProperty(ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION, null)
                   }
                 }
               }
               RegistryBooleanOptionDescriptor.suggestRestartIfNecessary(null)
             }
           }
+        }.comment(if (canWriteVMOptions) null
+                  else "Set '-D${ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION}=true' and \n" +
+                       "'-D${ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION}=true' VMOptions manually.")
+        if (canWriteVMOptions) {
+          comment("Restart required")
         }
-        comment(if (canWriteVMOptions) "Restart required" else "Also set '-Deditor.color.scheme.mark.colors=true' VMOption. Restart required")
       }
       row {
         checkBox("Show on-hover tooltip").applyToComponent {
