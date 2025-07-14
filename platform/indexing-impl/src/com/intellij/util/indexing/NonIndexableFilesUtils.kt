@@ -14,15 +14,11 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.ArrayListSet
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.SmartHashSet
-import com.intellij.util.containers.prefixTree.set.toMutablePrefixTreeSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.annotations.ApiStatus
-import java.util.Collections
 
 @ApiStatus.Internal
 @RequiresBackgroundThread
@@ -31,8 +27,8 @@ fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
   val roots = mutableSetOf<VirtualFile>()
   visitFileSets { fileSet, _ ->
     val root = fileSet.root
-    if (fileSet.kind == WorkspaceFileKind.CONTENT_NON_INDEXABLE && !isIndexable(root)) {
-      roots.add(fileSet.root)
+    if (fileSet.kind == WorkspaceFileKind.CONTENT_NON_INDEXABLE && allFileSets(root, includeContentNonIndexableSets = false).isEmpty()) {
+      roots.add(root)
     }
   }
   return roots
@@ -45,7 +41,11 @@ internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: Virtual
 }
 
 
-private fun WorkspaceFileIndex.allFileSets(root: VirtualFile) = runReadAction { findFileSets(root, true, true, true, true, true, true) }
+private fun WorkspaceFileIndex.allFileSets(root: VirtualFile, includeContentNonIndexableSets: Boolean = true) = runReadAction {
+  findFileSets(root, true, true, includeContentNonIndexableSets, true, true, true).filter { fileSet ->
+    fileSet !is WorkspaceFileSetWithCustomData<*> || fileSet.recursive
+  }
+}
 
 @RequiresBackgroundThread
 private fun WorkspaceFileIndex.iterateNonIndexableFilesImpl(roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
