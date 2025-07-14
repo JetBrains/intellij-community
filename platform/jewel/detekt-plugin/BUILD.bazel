@@ -8,6 +8,12 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_resources(
+  name = "detekt-plugin_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
 jvm_library(
   name = "detekt-plugin",
   module_name = "intellij.platform.jewel.detektPlugin",
@@ -35,8 +41,12 @@ jvm_library(
     "//libraries/junit5",
     "@lib//:assert_j",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
+    "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-core",
   ],
-  runtime_deps = [":detekt-plugin_resources"]
+  runtime_deps = [
+    ":detekt-plugin_resources",
+    ":detekt-plugin_test_resources",
+  ]
 )
 
 jps_test(

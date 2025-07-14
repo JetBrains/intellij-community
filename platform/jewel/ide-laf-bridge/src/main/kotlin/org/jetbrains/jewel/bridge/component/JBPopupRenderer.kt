@@ -115,7 +115,7 @@ private fun JBPopup(
                 content = {
                     ProvideValuesFromOtherContext(compositionLocalContext) {
                         val focusRequester = remember { FocusRequester() }
-                        val popupPositionProvider = currentPopupPositionProvider.value
+                        val positionProvider = currentPopupPositionProvider.value
                         val parentBounds = parentBoundsInRoot.value ?: return@ProvideValuesFromOtherContext
 
                         Layout(
@@ -130,9 +130,9 @@ private fun JBPopup(
                                 }
                             },
                             measurePolicy =
-                                remember(popupPositionProvider, parentBounds) {
+                                remember(positionProvider, parentBounds) {
                                     JBPopupMeasurePolicy(
-                                        popupPositionProvider = popupPositionProvider,
+                                        popupPositionProvider = positionProvider,
                                         screenSize = IntSize.fromScreenSize(owner),
                                         parentBoundsInWindow = parentBounds,
                                         onMeasure = { position, size ->

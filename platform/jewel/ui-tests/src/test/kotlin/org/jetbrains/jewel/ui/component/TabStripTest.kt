@@ -31,6 +31,7 @@ import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.junit.Rule
 import org.junit.Test
 
+@Suppress("ImplicitUnitReturnType")
 @OptIn(ExperimentalTestApi::class)
 class TabStripTest {
     @get:Rule val rule = createComposeRule()
@@ -50,7 +51,7 @@ class TabStripTest {
     fun `on press arrow right, moves focus to next tab`() = runComposeTest {
         onNodeWithText("Test Tab 1").assertIsSelected()
 
-        onRoot().performKeyPress(Key.Companion.DirectionRight)
+        onRoot().performKeyPress(Key.DirectionRight)
 
         onNodeWithText("Test Tab 2").assertIsSelected()
     }
@@ -60,7 +61,7 @@ class TabStripTest {
         runComposeTest(initiallySelectedTabIndex = 11) {
             onNodeWithText("Test Tab 12").assertIsSelected()
 
-            onRoot().performKeyPress(Key.Companion.DirectionRight)
+            onRoot().performKeyPress(Key.DirectionRight)
 
             onNodeWithText("Test Tab 1").assertIsSelected()
         }
@@ -69,7 +70,7 @@ class TabStripTest {
     fun `when keeping arrow right pressed, keeps moving the selected tab`() = runComposeTest {
         onNodeWithText("Test Tab 1").assertIsSelected()
 
-        onRoot().performKeyPress(Key.Companion.DirectionRight, duration = 3_000)
+        onRoot().performKeyPress(Key.DirectionRight, duration = 3_000)
 
         onNodeWithText("Test Tab 5").assertIsSelected()
     }
@@ -79,7 +80,7 @@ class TabStripTest {
         runComposeTest(initiallySelectedTabIndex = 1) {
             onNodeWithText("Test Tab 2").assertIsSelected()
 
-            onRoot().performKeyPress(Key.Companion.DirectionLeft)
+            onRoot().performKeyPress(Key.DirectionLeft)
 
             onNodeWithText("Test Tab 1").assertIsSelected()
         }
@@ -88,7 +89,7 @@ class TabStripTest {
     fun `on press arrow left, in the first tab, moves focus to the last tab`() = runComposeTest {
         onNodeWithText("Test Tab 1").assertIsSelected()
 
-        onRoot().performKeyPress(Key.Companion.DirectionLeft)
+        onRoot().performKeyPress(Key.DirectionLeft)
 
         onNodeWithText("Test Tab 12").assertIsSelected()
     }
@@ -97,7 +98,7 @@ class TabStripTest {
     fun `on press end, moves focus to last tab`() = runComposeTest {
         onNodeWithText("Test Tab 1").assertIsSelected()
 
-        onRoot().performKeyPress(Key.Companion.MoveEnd)
+        onRoot().performKeyPress(Key.MoveEnd)
 
         onNodeWithText("Test Tab 12").assertIsSelected()
     }
@@ -107,7 +108,7 @@ class TabStripTest {
         runComposeTest(initiallySelectedTabIndex = 11) {
             onNodeWithText("Test Tab 12").assertIsSelected()
 
-            onRoot().performKeyPress(Key.Companion.MoveHome)
+            onRoot().performKeyPress(Key.MoveHome)
 
             onNodeWithText("Test Tab 1").assertIsSelected()
         }
@@ -116,7 +117,7 @@ class TabStripTest {
     fun `on scroll to tab, set it in focus`() = runComposeTest {
         onNodeWithText("Test Tab 12").assertIsNotDisplayed()
 
-        onRoot().performKeyPress(Key.Companion.MoveEnd)
+        onRoot().performKeyPress(Key.MoveEnd)
 
         onNodeWithText("Test Tab 12").assertIsDisplayed()
     }
@@ -158,8 +159,8 @@ class TabStripTest {
             IntUiTheme {
                 TabStrip(
                     tabs = tabs,
-                    style = JewelTheme.Companion.defaultTabStyle,
-                    modifier = Modifier.Companion.focusRequester(focusRequester),
+                    style = JewelTheme.defaultTabStyle,
+                    modifier = Modifier.focusRequester(focusRequester),
                 )
             }
 

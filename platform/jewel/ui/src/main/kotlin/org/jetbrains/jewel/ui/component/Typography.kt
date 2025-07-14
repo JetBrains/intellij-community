@@ -1,3 +1,5 @@
+@file:Suppress("RedundantSuppression")
+
 package org.jetbrains.jewel.ui.component
 
 import androidx.annotation.Px
@@ -127,6 +129,7 @@ public object Typography {
  *
  * @see Typography.DefaultLineHeightMultiplier
  */
+@Suppress("DEPRECATION")
 @Deprecated("Use computeLineHeightPx() to set the line height appropriately instead.")
 public fun TextStyle.copyWithSize(
     fontSize: TextUnit,
@@ -185,6 +188,7 @@ public fun TextStyle.copyWithSize(
  *
  * @see Typography.DefaultLineHeightMultiplier
  */
+@Suppress("DEPRECATION")
 @Deprecated("Use computeLineHeightPx() to set the line height appropriately instead.")
 public fun TextStyle.copyWithSize(
     fontSize: TextUnit,
@@ -302,5 +306,5 @@ private fun getDefaultFrc(): FontRenderContext {
             }
         defaultFrc = FontRenderContext(tx, false, false)
     }
-    return defaultFrc!!
+    return checkNotNull(defaultFrc) { "The defaultFrc should never be null" }
 }

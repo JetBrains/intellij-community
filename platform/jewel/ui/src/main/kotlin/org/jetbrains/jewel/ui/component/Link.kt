@@ -263,7 +263,7 @@ private fun ExternalLinkImpl(
     )
 }
 
-private fun openUri(uriHandler: UriHandler, link: String) =
+private fun openUri(uriHandler: UriHandler, link: String) {
     try {
         uriHandler.openUri(link)
     } catch (e: IllegalArgumentException) {
@@ -271,6 +271,7 @@ private fun openUri(uriHandler: UriHandler, link: String) =
     } catch (e: IOException) {
         JewelLogger.getInstance("ExternalLink").error("Unable to open link ($link). Error: $e")
     }
+}
 
 /**
  * A dropdown link that follows the standard visual styling with customizable appearance and menu content.
