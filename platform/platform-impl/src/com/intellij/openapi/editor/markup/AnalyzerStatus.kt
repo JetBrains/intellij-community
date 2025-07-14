@@ -12,7 +12,13 @@ import javax.swing.Icon
  * Instance is created each time <code>ErrorStripeRenderer.getStatus</code> is called.
  */
 @Internal
-class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:Nls val details: String, val controller: UIController) {
+class AnalyzerStatus(
+  val icon: Icon,
+  @Nls @get:Nls val title: String,
+  @Nls @get:Nls val details: String,
+  val controller: UIController,
+) {
+
   @Deprecated("use primary constructor")
   constructor(icon: Icon, @Nls title: String, @Nls details: String, controllerCreator: () -> UIController) : this(icon, title, details, controllerCreator.invoke())
 
