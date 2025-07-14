@@ -838,6 +838,8 @@ com.intellij.ui.components.fields.valueEditors.ValueEditor
 - a:setValueText(java.lang.String):V
 - a:validateContent():V
 - a:valueToString(java.lang.Object):java.lang.String
+pc:com.intellij.ui.components.labels.LinkLabel$AccessibleLinkLabel
+- getAccessibleAction():javax.accessibility.AccessibleAction
 com.intellij.ui.components.labels.LinkListener
 - sf:NULL:com.intellij.ui.components.labels.LinkListener
 - a:linkSelected(com.intellij.ui.components.labels.LinkLabel,java.lang.Object):V
