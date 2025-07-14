@@ -75,7 +75,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -885,10 +884,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       .map(info -> info.getElement())
       .filter(Objects::nonNull)
       .toArray(PsiElement[]::new));
-    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> usages.values().stream()
-      .filter(usage -> usage instanceof UsageInFile)
-      .map(usage -> ((UsageInFile)usage).getFile())
-      .toArray(VirtualFile[]::new));
   }
 
   @Contract("_,!null,_->!null")
