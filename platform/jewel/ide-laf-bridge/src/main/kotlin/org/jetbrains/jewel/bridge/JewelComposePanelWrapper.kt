@@ -74,6 +74,9 @@ public fun JewelToolWindowNoThemeComposePanel(
 }
 
 private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanelWrapper) -> Unit): JewelComposePanelWrapper {
+    if (System.getProperty("skiko.library.path") == null) {
+        System.setProperty("skiko.library.path", PathManager.getLibPath() + "/skiko-awt-runtime-all")
+    }
     if (ApplicationManager.getApplication().isInternal) {
         System.setProperty("compose.swing.render.on.graphics", Registry.stringValue("compose.swing.render.on.graphics"))
     }
