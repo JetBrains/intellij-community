@@ -16,9 +16,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.FoldersComponentTools;
+import com.jetbrains.python.PyLanguageFacade;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -83,7 +83,7 @@ public final class PyNamespacePackagesService implements PersistentStateComponen
     if (myModule == null) return false;
     Project project = myModule.getProject();
 
-    if (PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(project, virtualFile).isOlderThan(LanguageLevel.PYTHON34)) return false;
+    if (PyLanguageFacade.getINSTANCE().getEffectiveLanguageLevel(project, virtualFile).isOlderThan(LanguageLevel.PYTHON34)) return false;
     if (PyUtil.isRoot(virtualFile, project)) return false;
     if (!isInProject(virtualFile, project)) return false;
     PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFile);

@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
   private static final Key<String> PROJECT_LANGUAGE_LEVEL = new Key<>("python.project.language.level");
   private static final FilePropertyKey<LanguageLevel> KEY =
@@ -293,10 +295,9 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   }
 
   /**
-   * Returns Python language level for a virtual file.
-   *
-   * @see LanguageLevel#forElement
+   * @deprecated Use {@link PyLanguageFacade#getEffectiveLanguageLevel(Project, VirtualFile)}
    */
+  @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     return PyLanguageFacade.getINSTANCE().getEffectiveLanguageLevel(project, virtualFile);
   }

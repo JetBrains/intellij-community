@@ -14,13 +14,13 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.PyLanguageFacade
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyStatementList
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import java.awt.Font
 
 open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageConsoleView,
@@ -61,7 +61,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   }
 
   override fun checkSingleLine(text: String): Boolean {
-    val languageLevel = PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(project, myConsoleView.virtualFile)
+    val languageLevel = PyLanguageFacade.INSTANCE.getEffectiveLanguageLevel(project, myConsoleView.virtualFile)
     val pyFile = PyElementGenerator.getInstance(project).createDummyFile(languageLevel, text) as PyFile
     return PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList::class.java) == null && pyFile.statements.size < 2
   }
