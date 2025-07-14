@@ -1,0 +1,33 @@
+{
+  "language": "Another",
+  "projectPath": "../ml-eval/apply-snippet-dataset",
+  "repository": "https://git.jetbrains.team/code-generation-evaluation/apply-snippet-eval-experiment.git",
+  "revision": "6261040e5fc8ff18985816e49a02c7ac81e45eba",
+  "outputDir": "bin/ml-eval-chat-apply-output",
+  "strategy": {
+    "behaviour": "FLASH_SEARCH_REPLACE",
+    "collectContextOnly": false,
+    "responseBehaviour": "USE_STATIC_RESPONSE"
+  },
+  "actions": {
+    "sourceFile": "../ml-eval/apply-snippet-dataset/evaluation/actions.json",
+    "evaluationRoots": [
+      "."
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 5,
+    "filesLimit": 2,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}
