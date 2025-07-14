@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.ComponentUtil.forceMarkAsShowing
@@ -112,6 +113,24 @@ class LaunchOnShowTest {
     }
     yield()
     assertTrue(awaitValue(true) { executed })
+  }
+
+  @Test
+  fun `launch works in a long-running unconfined EDT coroutine`(): Unit = edtTest {
+    var executed = false
+    withContext(Dispatchers.Unconfined) {
+      container.launchOnShow("test") {
+        executed = true
+      }
+      var eventuallyExecuted = false
+      // not using awaitValue because it's important to not let go of this unconfined thing,
+      // and therefore we must not suspend the coroutine
+      repeat(10) {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        eventuallyExecuted = executed
+      }
+      assertTrue(eventuallyExecuted)
+    }
   }
 
   @Test
