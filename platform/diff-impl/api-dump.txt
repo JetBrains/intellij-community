@@ -545,14 +545,14 @@ com.intellij.diff.lang.DiffIgnoredRangeProvider
 com.intellij.diff.lang.DiffLangSpecificProvider
 - sf:Companion:com.intellij.diff.lang.DiffLangSpecificProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- s:findApplicable(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent):com.intellij.diff.lang.DiffLangSpecificProvider
+- s:findApplicable(com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent):com.intellij.diff.lang.DiffLangSpecificProvider
 - a:getDescription():java.lang.String
 - getLineFragments(com.intellij.openapi.project.Project,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.base.IgnorePolicy,com.intellij.diff.tools.util.base.HighlightPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - getPatchedLineFragments(com.intellij.openapi.project.Project,java.util.List,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.base.IgnorePolicy,com.intellij.diff.tools.util.base.HighlightPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - a:getShouldPrecalculateLineFragments():Z
 - a:isApplicable(com.intellij.lang.Language):Z
 f:com.intellij.diff.lang.DiffLangSpecificProvider$Companion
-- f:findApplicable(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent):com.intellij.diff.lang.DiffLangSpecificProvider
+- f:findApplicable(com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent):com.intellij.diff.lang.DiffLangSpecificProvider
 a:com.intellij.diff.lang.LangDiffIgnoredRangeProvider
 - com.intellij.diff.lang.DiffIgnoredRangeProvider
 - <init>():V
@@ -560,15 +560,14 @@ a:com.intellij.diff.lang.LangDiffIgnoredRangeProvider
 - pa:accepts(com.intellij.openapi.project.Project,com.intellij.lang.Language):Z
 - pa:computeIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.lang.Language):java.util.List
 - getIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.diff.contents.DiffContent):java.util.List
-- s:getLanguage(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):com.intellij.lang.Language
 com.intellij.diff.merge.LangSpecificMergeConflictResolver
 - sf:Companion:com.intellij.diff.merge.LangSpecificMergeConflictResolver$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- s:findApplicable(com.intellij.openapi.project.Project,java.util.List):com.intellij.diff.merge.LangSpecificMergeConflictResolver
+- s:findApplicable(java.util.List):com.intellij.diff.merge.LangSpecificMergeConflictResolver
 - a:isApplicable(com.intellij.lang.Language):Z
 - a:tryResolveMergeConflicts(com.intellij.diff.merge.LangSpecificMergeContext,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.diff.merge.LangSpecificMergeConflictResolver$Companion
-- f:findApplicable(com.intellij.openapi.project.Project,java.util.List):com.intellij.diff.merge.LangSpecificMergeConflictResolver
+- f:findApplicable(java.util.List):com.intellij.diff.merge.LangSpecificMergeConflictResolver
 f:com.intellij.diff.merge.LangSpecificMergeContext
 - <init>(com.intellij.openapi.project.Project,java.util.List,java.util.List,java.util.List):V
 - f:file(com.intellij.diff.util.ThreeSide):com.intellij.psi.PsiFile

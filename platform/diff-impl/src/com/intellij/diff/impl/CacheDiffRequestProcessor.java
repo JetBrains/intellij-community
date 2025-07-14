@@ -4,6 +4,7 @@ package com.intellij.diff.impl;
 import com.intellij.CommonBundle;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.lang.DiffLanguage;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffTaskQueue;
@@ -110,6 +111,9 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     myQueue.executeAndTryWait(
       indicator -> {
         final DiffRequest request = doLoadRequest(requestProvider, indicator);
+        if (request instanceof ContentDiffRequest contentDiffRequest) {
+          contentDiffRequest.getContents().forEach(content -> DiffLanguage.computeAndCacheLanguage(content, getProject()));
+        }
         return () -> finishRequestLoading(request, force, scrollToChangePolicy, requestProvider);
       },
       () -> applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy),
