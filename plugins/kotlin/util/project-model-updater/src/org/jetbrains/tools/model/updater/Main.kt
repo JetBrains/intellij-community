@@ -51,7 +51,7 @@ fun main(args: Array<String>) {
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
     communityRoot.resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinCompilerCliVersion.txt")
-        .writeText(preferences.kotlincVersion)
+        .writeText(preferences.kotlincArtifactVersion)
 
     fun processRoot(root: File, isCommunity: Boolean) {
         println("Processing kotlinc libraries in root: $root")
