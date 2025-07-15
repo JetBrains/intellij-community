@@ -337,7 +337,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   private static @Nullable Function1<? super @NotNull OutputFileCollection, @NotNull Unit> createAbiOutputConsumer(@Nullable ZipOutputBuilder abiOutput) {
-    return abiOutput == null || !OutputSinkImpl.USE_KOTLIN_ABI_BYTECODE? null : outputCollection -> {
+    return abiOutput == null? null : outputCollection -> {
       for (OutputFile generatedOutput : outputCollection.asList()) {
         String relativePath = generatedOutput.getRelativePath().replace(File.separatorChar, '/');
         abiOutput.putEntry(relativePath, generatedOutput.asByteArray());

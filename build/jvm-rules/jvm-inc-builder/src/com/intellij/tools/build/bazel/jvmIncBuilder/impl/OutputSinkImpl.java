@@ -21,11 +21,6 @@ import java.util.*;
 
 public class OutputSinkImpl implements OutputSink {
 
-  // Temporary put kotlin-produced bytecode into the ABI output as-is, without any instrumentation,
-  // until the issue "KT-78038 Make ABI compiler plugin output classloader-friendly" is not resolved. As soon as kotlin-produced ABI classes are made compatible with class-loaders, we can switch to using them.
-
-  public static boolean USE_KOTLIN_ABI_BYTECODE = false; // todo
-
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   private final ZipOutputBuilder myOut;
   private @Nullable final ZipOutputBuilder myAbiOut;
@@ -87,13 +82,6 @@ public class OutputSinkImpl implements OutputSink {
     if (origin.getKind() == OutputOrigin.Kind.java && myJavaAbiOut != null) {
       // for kotlin the ABI output is produced separately by the dedicated compiler plugin
       myJavaAbiOut.putEntry(outFile.getPath(), content);
-    }
-
-    if (!USE_KOTLIN_ABI_BYTECODE) {
-      // temporary: include kotlin-produced classes without any instrumentation
-      if (origin.getKind() == OutputOrigin.Kind.kotlin && myAbiOut != null) {
-        myAbiOut.putEntry(outFile.getPath(), content);
-      }
     }
 
     if (outFile.getKind() == OutputFile.Kind.bytecode) {
