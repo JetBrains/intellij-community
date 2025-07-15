@@ -14,6 +14,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.fileTypes.FileTypeEvent
@@ -31,6 +32,9 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isTooLarge
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.project.stateStore
 import com.intellij.psi.*
 import com.intellij.psi.impl.DebugUtil
@@ -578,13 +582,62 @@ class PsiVFSListener internal constructor(private val project: Project) {
   }
 }
 
-internal class PsiVFSModuleRootListener(private val listenerProject: Project) : ModuleRootListener {
+/**
+ * We use [WorkspaceModelChangeListener] in **addition** to [ModuleRootListener], because [ModuleRootListener] may generate events
+ * not sourced by the workspace model (see Javadoc for [ModuleRootListener]).
+ * If the same event should trigger both [WorkspaceModelChangeListener] event and [PsiVFSModuleRootListener], these listener invocations
+ * will be nested and deduplicated inside [PsiVFSModuleRootListenerImpl], so eventually only one [PsiTreeChangeEvent] will be published.
+ *
+ * With this listener, we mostly want to invalidate psi caches when workspace model changes.
+ */
+// @Suppress: Don't use flow instead of [WorkspaceModelChangeListener]. We need to invalidate caches in the same WA as the event.
+@Suppress("UsagesOfObsoleteApi")
+internal class PsiWsmListener(listenerProject: Project) : WorkspaceModelChangeListener {
+  private val service = listenerProject.service<PsiVFSModuleRootListenerImpl>()
+
+  init {
+    if (!Registry.`is`("psi.vfs.listener.over.wsm", true)) {
+      LOG.debug("PsiWsmListener is disabled by registry key")
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  private fun isNotEmptyChange(event: VersionedStorageChange): Boolean {
+    return (event as? VersionedStorageChangeInternal)?.getAllChanges()?.firstOrNull() != null
+  }
+
+  override fun beforeChanged(event: VersionedStorageChange) {
+    if (isNotEmptyChange(event)) {
+      service.beforeRootsChange(false)
+    }
+  }
+
+  override fun changed(event: VersionedStorageChange) {
+    if (isNotEmptyChange(event)) {
+      service.rootsChanged(false)
+    }
+  }
+}
+
+internal class PsiVFSModuleRootListener(listenerProject: Project) : ModuleRootListener {
+  private val service = listenerProject.service<PsiVFSModuleRootListenerImpl>()
+  override fun beforeRootsChange(event: ModuleRootEvent) {
+    service.beforeRootsChange(event.isCausedByFileTypesChange)
+  }
+
+  override fun rootsChanged(event: ModuleRootEvent) {
+    service.rootsChanged(event.isCausedByFileTypesChange)
+  }
+}
+
+@Service(Service.Level.PROJECT)
+private class PsiVFSModuleRootListenerImpl(private val listenerProject: Project) {
   // accessed from within write action only
   private var depthCounter = 0
 
-  override fun beforeRootsChange(event: ModuleRootEvent) {
+  fun beforeRootsChange(isCausedByFileTypesChange: Boolean) {
     LOG.trace  { "beforeRootsChanged call" }
-    if (event.isCausedByFileTypesChange) {
+    if (isCausedByFileTypesChange) {
       return
     }
 
@@ -603,13 +656,13 @@ internal class PsiVFSModuleRootListener(private val listenerProject: Project) : 
     })
   }
 
-  override fun rootsChanged(event: ModuleRootEvent) {
+  fun rootsChanged(isCausedByFileTypesChange: Boolean) {
     LOG.trace { "rootsChanged call" }
     val psiManager = PsiManagerEx.getInstanceEx(listenerProject)
     val fileManager = psiManager.fileManager as FileManagerEx
     fileManager.dispatchPendingEvents()
 
-    if (event.isCausedByFileTypesChange) {
+    if (isCausedByFileTypesChange) {
       return
     }
 
