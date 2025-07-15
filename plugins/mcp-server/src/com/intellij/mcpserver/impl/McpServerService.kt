@@ -2,6 +2,7 @@ package com.intellij.mcpserver.impl
 
 import com.intellij.mcpserver.*
 import com.intellij.mcpserver.impl.util.network.findFirstFreePort
+import com.intellij.mcpserver.impl.util.network.installHostValidation
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
@@ -161,6 +162,7 @@ class McpServerService(val cs: CoroutineScope) {
 
 
     return cs.embeddedServer(CIO, host = "127.0.0.1", port = freePort) {
+      installHostValidation()
       mcp {
         return@mcp mcpServer
       }
