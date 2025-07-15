@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDirectory
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
@@ -100,7 +100,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     assertSources("m3", "user-sources")
     assertSources("m4", "user-sources", "src/main/java")
 
-    val mFour = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ModuleId("m4"))
+    val mFour = project.workspaceModel.currentSnapshot.resolve(ModuleId("m4"))
     assertNotNull(mFour)
     val sourceEntitySource = mFour!!.contentRoots.first().sourceRoots.first { it.url.url.endsWith("java") }.entitySource
     assertTrue(sourceEntitySource is FileInDirectory)
@@ -658,7 +658,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     assertModules("project")
 
-    assertTrue(Files.exists(parentDir))
+    assertTrue("File $parentDir doesn't exist", Files.exists(parentDir))
 
     assertEquals("asm-parent", projectsTree.rootProjects[0].parentId!!.artifactId)
     assertTrue(Files.exists(parentDir.resolve("asm-parent-3.0.pom")))
