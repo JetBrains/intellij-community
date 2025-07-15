@@ -5,7 +5,6 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -57,7 +56,7 @@ private class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderSe
     }
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
-        return ktElement.actionUnderSafeAnalyzeBlock({ ktElement.toLightAnnotation() }, { null })
+        return ktElement.actionUnderSafeAnalyzeBlock({ super.convertToPsiAnnotation(ktElement) }, { null })
     }
 
     override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {

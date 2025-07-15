@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.builtins.createFunctionType
@@ -64,7 +65,15 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         get() = KotlinConverter
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
-        return ktElement.toLightAnnotation()
+        ktElement.toLightAnnotation()?.let { return it }
+        return if (ktElement is KtAnnotationEntry) {
+            KtLightAnnotationForSourceEntry(
+                name = ktElement.shortName?.identifier,
+                lazyQualifiedName = { qualifiedAnnotationName(ktElement) },
+                kotlinOrigin = ktElement,
+                parent = ktElement.parent,
+            )
+        } else null
     }
 
     private fun getResolvedCall(sourcePsi: KtCallElement): ResolvedCall<*>? {

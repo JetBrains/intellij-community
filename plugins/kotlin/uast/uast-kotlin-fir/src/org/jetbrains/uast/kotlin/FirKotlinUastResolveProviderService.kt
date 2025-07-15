@@ -9,6 +9,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
@@ -53,14 +54,36 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     fun isSupportedFile(file: KtFile): Boolean = true
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
+        ktElement.toLightAnnotation()?.let { return it }
         val ktDeclaration = ktElement.getStrictParentOfType<KtModifierList>()?.parent as? KtDeclaration
-        // SLC won't model a declaration with value class in its signature.
-        if (ktDeclaration != null && hasTypeForValueClassInSignature(ktDeclaration)) {
+        return if (ktDeclaration != null) {
             (ktElement as? KtAnnotationEntry)?.let { entry ->
                 analyzeForUast(ktDeclaration) {
-                    val declaration = ktDeclaration.symbol
-                    declaration.annotations.find { it.psi == entry }?.let { annoApp ->
-                        return UastFakeDeserializedSymbolAnnotation(
+                    var declaration: KaDeclarationSymbol
+                    var annoApp: KaAnnotation?
+                    do { // Not a loop; just to provide a go-to point at the end
+                        // Regular declaration, default use-site, etc.
+                        declaration = ktDeclaration.symbol
+                        annoApp  = declaration.annotations.find { it.psi == entry }
+                        if (annoApp != null) break
+
+                        // Maybe property accessors
+                        if (entry.useSiteTarget == null) break
+                        if (declaration !is KaPropertySymbol) break
+                        val propertySymbol = declaration
+                        propertySymbol.getter?.annotations?.find { it.psi == entry }?.let {
+                            declaration = propertySymbol.getter!!
+                            annoApp = it
+                        }
+                        if (annoApp != null) break
+                        propertySymbol.setter?.annotations?.find { it.psi == entry }?.let {
+                            declaration = propertySymbol.setter!!
+                            annoApp = it
+                        }
+                    } while (false)
+
+                    annoApp?.let { annoApp ->
+                        UastFakeDeserializedSymbolAnnotation(
                             declaration.createPointer(),
                             annoApp.classId,
                             ktDeclaration
@@ -68,8 +91,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     }
                 }
             }
-        }
-        return ktElement.toLightAnnotation()
+        } else null
     }
 
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
