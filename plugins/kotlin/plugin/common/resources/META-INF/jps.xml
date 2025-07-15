@@ -61,5 +61,8 @@
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmJsIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind"/>
+
+    <kotlinCompilerVersionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.DefaultKotlinCompilerVersionProvider"
+                                   order="last"/>
   </extensions>
 </idea-plugin>

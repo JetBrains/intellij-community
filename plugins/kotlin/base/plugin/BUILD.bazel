@@ -46,6 +46,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/core-ui",
     "//platform/util",
+    "//platform/lang-core",
   ],
   runtime_deps = [
     ":plugin_resources",
@@ -95,6 +96,7 @@ jvm_library(
     "@lib//:maven-resolver-provider",
     "//platform/util",
     "//platform/build-scripts/downloader",
+    "//platform/lang-core",
   ],
   runtime_deps = [
     ":plugin_resources",

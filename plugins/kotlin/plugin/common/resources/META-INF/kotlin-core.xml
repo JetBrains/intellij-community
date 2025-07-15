@@ -19,6 +19,10 @@
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
             dynamic="true"/>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
+            interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
+            dynamic="true"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.newFileHook"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook"
             dynamic="true"/>

@@ -43,5 +43,6 @@
     <orderEntry type="library" scope="TEST" name="maven-resolver-provider" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
   </component>
 </module>

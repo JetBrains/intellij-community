@@ -115,6 +115,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator"/>
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
+    <kotlinCompilerVersionProvider implementation="org.jetbrains.kotlin.idea.gradleJava.GradleKotlinCompilerVersionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
