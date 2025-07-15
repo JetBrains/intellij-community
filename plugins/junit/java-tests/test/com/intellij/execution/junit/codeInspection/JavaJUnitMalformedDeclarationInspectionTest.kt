@@ -132,6 +132,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed extension subtype highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A {
@@ -151,6 +152,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed nested class highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A {
@@ -170,6 +172,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed nested class quickfix`() {
       myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       class A {
@@ -195,6 +198,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix class signature")
     }
+
     fun `test malformed nested class preview`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class A {
@@ -208,6 +212,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix 'B' class signature", testPreview = true)
     }
+
     fun `test highlighting non executable JUnit 4 nested class`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A { 
@@ -218,6 +223,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }  
     """.trimIndent())
     }
+
     fun `test highlighting executable JUnit 4 static inner class`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A { 
@@ -228,6 +234,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }  
     """.trimIndent())
     }
+
     fun `test quickfix no nested annotation in JUnit 4`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """ 
       class A {
@@ -249,6 +256,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix class signatures", testPreview = true)
     }
+
     fun `test highlighting no nested annotation in JUnit 5`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A {
@@ -259,6 +267,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }  
     """.trimIndent())
     }
+
     fun `test quickfix no nested annotation in JUnit 5`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class A {
@@ -658,7 +667,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
     }
 
     /* Malformed parameterized */
-    fun `test malformed parameterized no highlighting`() {
+    fun `test malformed parameterized @ValueSource no highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       enum TestEnum { FIRST, SECOND, THIRD }
       
@@ -710,7 +719,12 @@ class JavaJUnitMalformedDeclarationInspectionTest {
           public void test(String data) {}
         }
       }
-      
+      """.trimIndent()
+      )
+    }
+
+    fun `test malformed parameterized @MethodSource no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MethodSource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource("stream")
@@ -802,7 +816,12 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       
         public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
       }
-      
+      """.trimIndent()
+      )
+    }
+
+    fun `test malformed parameterized @TestInstance PER_CLASS no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
       @PerClass
       abstract class PerClassBase1 {
         public java.util.stream.Stream getParameters() { return java.util.Arrays.asList( "Another execution", "Last execution").stream(); }
@@ -840,8 +859,12 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
       @org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
       @interface PerClass { }
-      
-            class FieldSource {
+      """.trimIndent())
+    }
+
+    fun `test malformed parameterized @FieldSource no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class FieldSource {
          @org.junit.jupiter.params.ParameterizedTest
          @org.junit.jupiter.params.provider.FieldSource("collection")
          void simpleCollection(int x, int y) { System.out.println(x + ", " + y); }
@@ -854,6 +877,12 @@ class JavaJUnitMalformedDeclarationInspectionTest {
 
          public static final java.util.List<Object> list = null;
       }
+      """.trimIndent())
+    }
+
+    fun `test malformed parameterized @EnumSource no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      enum TestEnum { FIRST, SECOND, THIRD }
       
       class EnumSource { 
         @org.junit.jupiter.params.ParameterizedTest
@@ -876,22 +905,32 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         @org.junit.jupiter.params.provider.EnumSource(TestEnum.class)
         void testWithEnumSourceCorrect(TestEnum value) { }        
       }
-      
+      """.trimIndent())
+    }
+
+    fun `test malformed parameterized @CsvSource no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
       class CsvSource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.CsvSource(value = "src, 1")
         void testWithCsvSource(String first, int second) { }  
       }
-      
+      """.trimIndent()
+      )
+    }
+
+    fun `test malformed parameterized @NullSource no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
       class NullSource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.NullSource
         void testWithNullSrc(Object o) { }      
       }
-    """.trimIndent()
+      """.trimIndent()
       )
     }
-    fun `test malformed parameterized empty source no highlighting`() {
+
+    fun `test malformed parameterized @EmptySource no highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MyTest {
         @org.junit.jupiter.params.ParameterizedTest
@@ -960,6 +999,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }      
     """.trimIndent())
     }
+
     fun `test malformed parameterized empty source map with zero-arg constructor`() {
       myFixture.addClass("""
       import java.util.HashMap;
@@ -976,6 +1016,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized empty source map with single arg constructor`() {
       myFixture.addClass("""
       import java.util.HashMap;
@@ -992,6 +1033,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized empty source collection with private zero-arg constructor`() {
       myFixture.addClass("""
       import java.util.HashSet;
@@ -1008,6 +1050,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized empty source collection with single arg constructor`() {
       myFixture.addClass("""
       import java.util.HashSet;
@@ -1024,6 +1067,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized value source wrong type highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {
@@ -1035,6 +1079,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized enum source wrong type highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       enum TestEnum { FIRST, SECOND, THIRD }
@@ -1045,6 +1090,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed ParameterizedTest inner class should be nested highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class OuterTest {
@@ -1060,6 +1106,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
       """.trimIndent())
     }
+
     fun `test malformed parameterized multiple types highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {
@@ -1071,6 +1118,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized no value defined highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest { 
@@ -1080,6 +1128,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized no argument defined highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest { 
@@ -1089,6 +1138,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized value source multiple parameters highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest { 
@@ -1098,6 +1148,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized and test annotation defined highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest { 
@@ -1108,6 +1159,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized and value source defined highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest { 
@@ -1117,6 +1169,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized no argument source provided highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {       
@@ -1126,6 +1179,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }        
     """.trimIndent())
     }
+
     fun `test malformed parameterized method source should be static highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {       
@@ -1137,6 +1191,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }        
     """.trimIndent())
     }
+
     fun `test malformed parameterized method source should have no parameters highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {       
@@ -1148,6 +1203,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }        
     """.trimIndent())
     }
+
     fun `test malformed parameterized method source wrong return type highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {       
@@ -1159,6 +1215,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }        
     """.trimIndent())
     }
+
     fun `test malformed parameterized method source not found highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {       
@@ -1168,6 +1225,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }        
     """.trimIndent())
     }
+
     fun `test malformed field source should be static highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {       
@@ -1179,6 +1237,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }        
     """.trimIndent())
     }
+
     fun `test malformed field source wrong return type highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {       
@@ -1190,6 +1249,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }        
     """.trimIndent())
     }
+
     fun `test malformed field source not found highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class ValueSourcesTest {       
@@ -1199,6 +1259,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }        
     """.trimIndent())
     }
+
     fun `test malformed parameterized enum source unresolvable entry highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class EnumSourceTest {
@@ -1221,6 +1282,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed parameterized add test instance quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -1254,6 +1316,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Annotate class 'Test' as '@TestInstance'", testPreview = true)
     }
+
     fun `test malformed parameterized introduce method source quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -1282,6 +1345,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Create method 'parameters' in 'Test'", testPreview = true)
     }
+
     fun `test malformed field source should be static quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -1313,6 +1377,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Annotate class 'Test' as '@TestInstance'", testPreview = true)
     }
+
     fun `test malformed introduce field source quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
@@ -1338,6 +1403,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Create constant field 'list' in 'Test'", testPreview = true)
     }
+
     fun `test malformed parameterized create csv source quickfix`() {
       val file = myFixture.addFileToProject("CsvFile.java", """
         class CsvFile {
@@ -1395,6 +1461,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed repeated test combination of @Test and @RepeatedTest highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class WithRepeatedAndTests {
@@ -1404,6 +1471,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }    
     """.trimIndent())
     }
+
     fun `test malformed repeated test with injected RepeatedInfo for @Test method highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class WithRepeatedInfoAndTest {
@@ -1415,6 +1483,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }      
     """.trimIndent())
     }
+
     fun `test malformed repeated test with injected RepetitionInfo for @BeforeAll method highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class WithBeforeEach {
@@ -1423,6 +1492,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed repeated test with non-positive repetitions highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class WithRepeated {
@@ -1444,6 +1514,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed before each highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MainTest {
@@ -1452,6 +1523,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed before change signature quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class MainTest {
@@ -1465,6 +1537,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix 'before' method signature", testPreview = true)
     }
+
     fun `test malformed before remove private quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class MainTest {
@@ -1478,6 +1551,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix 'beforeEach' method signature", testPreview = true)
     }
+
     fun `test malformed before class no highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class BeforeAllStatic {
@@ -1513,6 +1587,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test non-malformed with multiple extensions inside extensions annotation`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
         class TestNonParameterResolver implements org.junit.jupiter.api.extension.Extension { }
@@ -1542,6 +1617,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
 
       """.trimIndent())
     }
+
     fun `test malformed before class highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MainTest {
@@ -1550,6 +1626,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed before all quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class MainTest {
@@ -1563,6 +1640,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix 'beforeAll' method signature", testPreview = true)
     }
+
     fun `test no highlighting when automatic parameter resolver is found`() {
       myFixture.addFileToProject("com/intellij/testframework/ext/AutomaticExtension.java", """
       package com.intellij.testframework.ext;
@@ -1631,6 +1709,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed dataPoint non-static highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test {
@@ -1638,6 +1717,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed dataPoint non-public highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test {
@@ -1645,6 +1725,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed dataPoint field highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test {
@@ -1652,6 +1733,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed datapoint method highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test {
@@ -1659,6 +1741,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed datapoints method highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Test {
@@ -1666,6 +1749,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed dataPoint quickfix make method public and static`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class Test {
@@ -1688,6 +1772,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }  
     """.trimIndent(), "C")
     }
+
     fun `test malformed setup highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class C extends junit.framework.TestCase {
@@ -1695,6 +1780,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }  
     """.trimIndent(), "C")
     }
+
     fun `test malformed setup quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class C extends junit.framework.TestCase {
@@ -1728,6 +1814,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed rule field non TestRule type highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class RuleTest {
@@ -1736,6 +1823,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed rule method static highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class SomeTestRule implements org.junit.rules.TestRule {
@@ -1755,6 +1843,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed class rule field highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class SomeTestRule implements org.junit.rules.TestRule {
@@ -1781,6 +1870,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test malformed rule make field public quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class RuleQfTest {
@@ -1794,6 +1884,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix 'x' field signature", testPreview = true)
     }
+
     fun `test malformed rule make field non-static quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class RuleQfTest {
@@ -1807,6 +1898,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix 'y' method signature", testPreview = true)
     }
+
     fun `test malformed class rule make field public quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class SomeTestRule implements org.junit.rules.TestRule {
@@ -1838,6 +1930,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix 'x' field signature", testPreview = true)
     }
+
     fun `test malformed class rule make field static quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class SomeTestRule implements org.junit.rules.TestRule {
@@ -1869,6 +1962,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Fix 'y' field signature")
     }
+
     fun `test malformed class rule make field public and static quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       class SomeTestRule implements org.junit.rules.TestRule {
@@ -1914,6 +2008,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "JUnit3TestMethodIsPublicVoidNoArg")
     }
+
     fun `test malformed test for JUnit 4 highlighting`() {
       myFixture.addClass("""
       package mockit;
@@ -1930,6 +2025,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "JUnit4TestMethodIsPublicVoidNoArg")
     }
+
     fun `test no highlighting on custom runner`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MyRunner extends org.junit.runner.Runner {
@@ -1947,6 +2043,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test highlighting on predefined runner`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runners.JUnit4.class)
@@ -1956,6 +2053,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test no highlighting malformed test with parameter resolver`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.api.extension.*;
@@ -1997,6 +2095,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test no highlighting malformed test with nested parameter resolver`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.jupiter.api.extension.*;
@@ -2025,6 +2124,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun `test no highlighting for programmatically registered parameter resolver`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
         import org.junit.jupiter.api.extension.*;
@@ -2059,6 +2159,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class Plain { }
     """.trimIndent())
     }
+
     fun testUnconstructableJUnit3TestCase1() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -2071,6 +2172,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
 
     """.trimIndent())
     }
+
     fun testUnconstructableJUnit3TestCase2() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -2083,6 +2185,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
 
     """.trimIndent())
     }
+
     fun testUnconstructableJUnit3TestCase3() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -2095,6 +2198,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
 
     """.trimIndent())
     }
+
     fun testUnconstructableJUnit3TestCase4() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -2106,6 +2210,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun testUnconstructableJUnit3TestCaseLocalClass() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
@@ -2117,6 +2222,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun testUnconstructableJUnit4TestCase1() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Test;
@@ -2131,6 +2237,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun testUnconstructableJUnit4TestCase2() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Test;
@@ -2150,6 +2257,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun testUnconstructableJUnit4TestCase3() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Test;
@@ -2162,6 +2270,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
     fun testConstructableJunit3WithJunit4runner() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.Collection;
