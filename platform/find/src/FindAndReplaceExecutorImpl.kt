@@ -9,10 +9,12 @@ import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
 import com.intellij.find.replaceInProject.ReplaceInProjectManager
 import com.intellij.ide.rpc.ThrottledOneItem
+import com.intellij.ide.rpc.performRpcWithRetries
 import com.intellij.ide.rpc.throttledWithAccumulation
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -22,7 +24,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
-import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -31,6 +32,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
+private val LOG = logger<FindAndReplaceExecutorImpl>()
 @Internal
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
   private var validationJob: Job? = null
@@ -101,11 +103,9 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
       validationJob?.cancel("new validation request is started")
     }
     validationJob = coroutineScope.launch {
-      try {
-        FindRemoteApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) }
-      } catch (_: RpcTimeoutException) {
-        onFinish(false)
-      }
+      LOG.performRpcWithRetries(
+        rpcCall = { FindRemoteApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) } },
+        onRpcTimeout = { onFinish(false) })
     }
   }
 

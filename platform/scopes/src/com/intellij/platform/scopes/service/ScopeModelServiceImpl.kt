@@ -30,14 +30,8 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
   override fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType, onScopesUpdate: suspend (Map<String, ScopeDescriptor>?, selectedScopeId: String?) -> Unit) {
     itemsLoadingJob = coroutineScope.childScope("ScopesStateService.subscribeToScopeStates").launch {
       LOG.performRpcWithRetries {
-        val scopesFlow = try {
+        val scopesFlow =
           ScopeModelApi.getInstance().createModelAndSubscribe(project.projectId(), modelId, filterConditionType)
-        }
-        catch (e: RpcTimeoutException) {
-          LOG.error("Failed to subscribe to model updates for modelId: $modelId", e)
-          onScopesUpdate(null, null)
-          return@performRpcWithRetries
-        }
         if (scopesFlow == null) {
           LOG.error("Failed to subscribe to model updates for modelId: $modelId")
           onScopesUpdate(null, null)
@@ -71,7 +65,7 @@ private class ScopeModelServiceImpl(private val project: Project, private val co
         onFinish(scopeId)
       }
       catch (e: RpcTimeoutException) {
-        LOG.error("Failed to edit scopes", e)
+        LOG.warn("Failed to edit scopes", e)
         onFinish(null)
       }
     }

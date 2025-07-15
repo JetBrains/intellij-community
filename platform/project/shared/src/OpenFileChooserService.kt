@@ -6,11 +6,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<OpenFileChooserService>()
 
@@ -25,14 +25,10 @@ class OpenFileChooserService(val coroutineScope: CoroutineScope) {
         val result = OpenFileChooserApi.getInstance().chooseDirectory(project.projectId(), initialDirectory)
         onResult(result)
       }
-      catch (e: CancellationException) {
-        onResult(null)
-        throw e  // Propagate cancellation
-      }
-      catch (e: Exception) {
+      catch (e: RpcTimeoutException) {
         LOG.warn("Directory selection failed", e)
-        chooseDirectoryJob?.cancel()
         onResult(null)
+        chooseDirectoryJob?.cancel()
       }
     }
   }
