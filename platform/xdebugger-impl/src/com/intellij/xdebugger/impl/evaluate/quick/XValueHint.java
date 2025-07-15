@@ -11,6 +11,8 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -38,7 +40,6 @@ import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler;
-import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
@@ -325,14 +326,20 @@ public class XValueHint extends AbstractValueHint {
     public void errorOccurred(final @NotNull String errorMessage) {
       myShowEvaluating.set(false);
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
-          showHint(HintUtil.createErrorLabel(errorMessage));
-        }
-        else {
-          hideCurrentHint();
-        }
-        if (getType() == ValueHintType.MOUSE_OVER_HINT) {
-          ValueLookupManagerController.getInstance(getProject()).showEditorInfoTooltip(getEditorMouseEvent());
+        switch (getType()) {
+          case MOUSE_CLICK_HINT -> {
+            showHint(HintUtil.createErrorLabel(errorMessage));
+          }
+          case MOUSE_OVER_HINT -> {
+            hideCurrentHint();
+            EditorMouseEvent event = getEditorMouseEvent();
+            if (event != null) {
+              EditorMouseHoverPopupManager.getInstance().showInfoTooltip(event);
+            }
+          }
+          default -> {
+            hideCurrentHint();
+          }
         }
       });
       LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
