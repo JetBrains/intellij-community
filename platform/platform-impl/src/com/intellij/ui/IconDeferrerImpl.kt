@@ -5,6 +5,7 @@ package com.intellij.ui
 
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
@@ -17,6 +18,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
@@ -38,19 +40,19 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
       }
     }
 
-    private val log = logger<IconDeferrerImpl>()
+    private val log: Logger = logger<IconDeferrerImpl>()
   }
 
   // Due to a critical bug (https://youtrack.jetbrains.com/issue/IDEA-320644/Improve-Smart-PSI-pointer-equals-implementation),
   // we are not using "caffeine".
-  private val iconCache = ConcurrentHashMap<Any, Icon>()
+  private val iconCache: ConcurrentMap<Any, Icon> = ConcurrentHashMap<Any, Icon>()
   @Volatile
-  private var mightBePopulated = false // used to avoid multiple calls CHM#clear() which might be expensive, no need to be atomic or something else
-  private val lastClearTimestamp = LongAdder()
+  private var mightBePopulated: Boolean = false // used to avoid multiple calls CHM#clear() which might be expensive, no need to be atomic or something else
+  private val lastClearTimestamp: LongAdder = LongAdder()
 
   // we restrict max cache size for cases when a user reads code only.
-  private val maxCacheSize = SystemProperties.getLongProperty("ide.icons.deferrerCacheSize", 1000)
-  private val deferrerCacheClearingCheckPeriod= SystemProperties.getLongProperty("ide.icons.deferrerCacheClearingCheckPeriod.ms", 30.seconds.toLong(DurationUnit.MILLISECONDS))
+  private val maxCacheSize: Long = SystemProperties.getLongProperty("ide.icons.deferrerCacheSize", 1000)
+  private val deferrerCacheClearingCheckPeriod: Long = SystemProperties.getLongProperty("ide.icons.deferrerCacheClearingCheckPeriod.ms", 30.seconds.toLong(DurationUnit.MILLISECONDS))
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
