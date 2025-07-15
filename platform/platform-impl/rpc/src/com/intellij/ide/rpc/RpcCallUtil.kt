@@ -13,6 +13,18 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 suspend fun <T> Logger.performRpcWithRetries(rpcCall: suspend () -> T): T {
+  return this.performRpcWithRetries(rpcCall) {}
+}
+
+/**
+ * Executes the given RPC call with retries on `RpcTimeoutException`. Logs an error message for each retry attempt.
+ *
+ * @param rpcCall A suspending function representing the RPC call to be executed.
+ * @param onRpcTimeout A function to be executed on each retry attempt failure
+ * @return The result of the RPC call upon successful execution.
+ */
+@ApiStatus.Internal
+suspend fun <T> Logger.performRpcWithRetries(rpcCall: suspend () -> T, onRpcTimeout: () -> Unit = {}): T {
   var attempt = 0
   while (true) {
     try {
@@ -20,7 +32,8 @@ suspend fun <T> Logger.performRpcWithRetries(rpcCall: suspend () -> T): T {
     }
     catch (e: RpcTimeoutException) {
       attempt++
-      this.error("RPC call timed out. (attempt $attempt)", e)
+      this.warn("RPC call timed out. (attempt $attempt)", e)
+      onRpcTimeout()
     }
   }
 }
