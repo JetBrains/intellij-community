@@ -526,7 +526,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
    */
   public MavenExecutionResult executeWithMavenSession(@NotNull MavenExecutionRequest request,
                                                       @NotNull MavenWorkspaceMap workspaceMap,
-                                                      @Nullable MavenServerConsoleIndicatorImpl indicator,
+                                                      @NotNull MavenServerConsoleIndicatorImpl indicator,
                                                       Consumer<MavenSession> runnable) {
     RepositorySystemSessionFactory rsf = getComponent(RepositorySystemSessionFactory.class);
     Maven40RepositorySystemSessionFactory irsf = new Maven40RepositorySystemSessionFactory(
@@ -1058,16 +1058,31 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-
   @Override
-  public @NotNull MavenArtifactResolveResult resolveArtifactsTransitively(
+  @NotNull
+  public MavenServerResponse<@NotNull MavenArtifactResolveResult> resolveArtifactsTransitively(
+    @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull ArrayList<MavenArtifactInfo> artifacts,
     @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
     MavenToken token) {
     MavenServerUtil.checkToken(token);
+    try {
+      String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
+      try (LongRunningTask task = newLongRunningTask(longRunningTaskId, artifacts.size(), myConsoleWrapper)) {
+        MavenArtifactResolveResult result = resolveArtifactsTransitively(task ,artifacts);
+        return new MavenServerResponse<>(result, getLongRunningTaskStatus(longRunningTaskId, token));
+      }
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @NotNull
+  private MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull LongRunningTask task, @NotNull ArrayList<MavenArtifactInfo> artifacts) {
     if (artifacts.isEmpty()) return new MavenArtifactResolveResult(new ArrayList<>(), null);
     try {
-      return resolveArtifactsTransitively(artifacts);
+      return doResolveArtifactsTransitively(task, artifacts);
     }
     catch (Throwable e) {
       MavenServerGlobals.getLogger().error(e);
@@ -1085,14 +1100,15 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull List<MavenArtifactInfo> artifacts) {
+  private MavenArtifactResolveResult doResolveArtifactsTransitively(LongRunningTask task, @NotNull List<MavenArtifactInfo> artifacts) {
     MavenExecutionRequest request = createRequest(null, null, null);
 
     Map<DownloadedArtifact, Path> resolvedArtifactMap = new HashMap<>();
 
-    executeWithMavenSession(request, MavenWorkspaceMap.empty(), null, mavenSession -> {
+    executeWithMavenSession(request, MavenWorkspaceMap.empty(), task.getIndicator(), mavenSession -> {
       Session session = mavenSession.getSession();
       for (MavenArtifactInfo mavenArtifactInfo : artifacts) {
+        if (task.isCanceled()) break;
         ArtifactCoordinates coordinate = session.createArtifactCoordinates(
           mavenArtifactInfo.getGroupId(),
           mavenArtifactInfo.getArtifactId(),
@@ -1132,6 +1148,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         resolvedChildren.getArtifacts().forEach(a -> {
           resolvedArtifactMap.put(a, a.getPath());
         });
+        task.incrementFinishedRequests();
       }
     });
 

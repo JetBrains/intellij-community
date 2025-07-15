@@ -26,10 +26,11 @@ abstract class DummyEmbedder : MavenServerEmbedder {
     return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
-  override fun resolveArtifactsTransitively(artifacts: ArrayList<MavenArtifactInfo>,
+  override fun resolveArtifactsTransitively(longRunningTaskInput: LongRunningTaskInput,
+                                            artifacts: ArrayList<MavenArtifactInfo>,
                                             remoteRepositories: ArrayList<MavenRemoteRepository>,
-                                            token: MavenToken?): MavenArtifactResolveResult {
-    return MavenArtifactResolveResult(emptyList(), null)
+                                            token: MavenToken?): MavenServerResponse<MavenArtifactResolveResult> {
+    return MavenServerResponse(MavenArtifactResolveResult(emptyList(), null), LongRunningTaskStatus.EMPTY)
   }
 
   override fun resolvePlugins(longRunningTaskInput: LongRunningTaskInput,

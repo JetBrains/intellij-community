@@ -825,11 +825,30 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public @NotNull MavenArtifactResolveResult resolveArtifactsTransitively(
-    final @NotNull ArrayList<MavenArtifactInfo> artifacts,
-    final @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
+  @NotNull
+  public MavenServerResponse<@NotNull MavenArtifactResolveResult> resolveArtifactsTransitively(
+    @NotNull LongRunningTaskInput longRunningTaskInput,
+    @NotNull ArrayList<MavenArtifactInfo> artifacts,
+    @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
     MavenToken token) {
     MavenServerUtil.checkToken(token);
+    try {
+      String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
+      try (LongRunningTask task = newLongRunningTask(longRunningTaskId, 1, myConsoleWrapper)) {
+        MavenArtifactResolveResult result = resolveArtifactsTransitively(artifacts, remoteRepositories);
+        task.incrementFinishedRequests();
+        return new MavenServerResponse<>(result, getLongRunningTaskStatus(longRunningTaskId, token));
+      }
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @NotNull
+  private MavenArtifactResolveResult resolveArtifactsTransitively(
+    final @NotNull ArrayList<MavenArtifactInfo> artifacts,
+    final @NotNull ArrayList<MavenRemoteRepository> remoteRepositories) {
     try {
       try {
         MavenExecutionRequest request = createRequest(null, null, null);
