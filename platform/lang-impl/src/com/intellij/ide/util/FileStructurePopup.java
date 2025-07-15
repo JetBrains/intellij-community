@@ -183,6 +183,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
     PopupUtil.applyNewUIBackground(myTree);
+    myTree.getAccessibleContext().setAccessibleName(LangBundle.message("file.structure.tree.accessible.name"));
 
     ModelListener modelListener = () -> rebuild(false);
     myTreeModel.addModelListener(modelListener);
