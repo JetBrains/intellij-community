@@ -2,12 +2,11 @@
 package com.intellij.execution.junit.references
 
 import com.intellij.psi.*
-import org.jetbrains.uast.*
 
 internal class DisabledIfEnabledIfReference(element: PsiLanguageInjectionHost) : JUnitMethodAnnotationReference(element) {
-  override fun hasNoStaticProblem(element: PsiMethod, literalClazz: UClass, literalMethod: UMethod?): Boolean {
-    val uMethodClass = element.containingClass?.toUElement(UClass::class.java) ?: return false
-    val inExternalClazz = literalClazz != uMethodClass
+  override fun hasNoStaticProblem(element: PsiMethod, literalClazz: PsiClass, literalMethod: PsiMethod?): Boolean {
+    val methodClass = element.containingClass ?: return false
+    val inExternalClazz = literalClazz != methodClass
     val atClassLevel = literalMethod == null
     val isStatic = element.hasModifierProperty(PsiModifier.STATIC)
     return !((inExternalClazz || atClassLevel) && !isStatic) && element.parameterList.isEmpty

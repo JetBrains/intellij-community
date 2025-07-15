@@ -62,8 +62,8 @@ abstract class BaseJunitAnnotationReference<Psi : PsiMember, U : UDeclaration>(
     return if (results.size == 1) results[0].element else null
   }
 
-  private fun filteredElements(elements: Array<Psi>, uClass: UClass, testMethod: UMethod?): List<Psi> {
-    val noStaticProblem = elements.filter { hasNoStaticProblem(it, uClass, testMethod) }
+  private fun filteredElements(elements: Array<Psi>, testClass: PsiClass, testMethod: PsiMethod?): List<Psi> {
+    val noStaticProblem = elements.filter { hasNoStaticProblem(it, testClass, testMethod) }
     if (noStaticProblem.isNotEmpty()) return noStaticProblem
     return elements.toList()
   }
@@ -78,7 +78,7 @@ abstract class BaseJunitAnnotationReference<Psi : PsiMember, U : UDeclaration>(
       CommonClassNames.JAVA_LANG_OBJECT != aClass.qualifiedName
       && element.name != current?.name
       && element.name != "Companion"
-      && hasNoStaticProblem(element, containingClass, current)
+      && hasNoStaticProblem(element, containingClass.javaPsi, current?.javaPsi)
     }.map { element ->
       LookupElementBuilder.create(element.name!!).withAutoCompletionPolicy(AutoCompletionPolicy.SETTINGS_DEPENDENT)
     }.toTypedArray()
@@ -105,17 +105,16 @@ abstract class BaseJunitAnnotationReference<Psi : PsiMember, U : UDeclaration>(
     val factoryClass = ClassUtil.findPsiClass(scope.javaPsi.manager, factoryClassName, null, false, scope.javaPsi.resolveScope)
                        ?: return null
     val factoryMethods = getPsiElementsByName(factoryClass, factoryMethodName, false)
-    return filteredElements(factoryMethods, scope, testMethod).firstOrNull()
+    return filteredElements(factoryMethods, scope.javaPsi, testMethod?.javaPsi).firstOrNull()
   }
 
   private fun fastResolveFor(literal: UExpression, scope: UClass, testMethod: UMethod?): Set<PsiElement> {
     val name = literal.evaluate() as String? ?: return setOf()
-    val psiClazz = scope.javaPsi
-    val clazzElements = filteredElements(getPsiElementsByName(psiClazz, name, true), scope, testMethod)
+    val currentTestClass = scope.javaPsi
+    val clazzElements = filteredElements(getPsiElementsByName(currentTestClass, name, true), currentTestClass, testMethod?.javaPsi)
 
-    val elements = ClassInheritorsSearch.search(psiClazz, psiClazz.resolveScope, true)
-      .mapNotNull { aClazz -> aClazz.toUElement(UClass::class.java) }
-      .flatMap { uClazz -> filteredElements(getPsiElementsByName(uClazz.javaPsi, name, true), uClazz, testMethod) }
+    val elements = ClassInheritorsSearch.search(currentTestClass, currentTestClass.resolveScope, true)
+      .flatMap { inheritedTestClass -> filteredElements(getPsiElementsByName(inheritedTestClass, name, true), inheritedTestClass, testMethod?.javaPsi) }
       .toMutableSet()
     elements.addAll(clazzElements)
     return elements
@@ -140,7 +139,7 @@ abstract class BaseJunitAnnotationReference<Psi : PsiMember, U : UDeclaration>(
    * @param literalMethod the JUnit annotated method is null in case the annotation is class-level
    * @return true in case a static check failed
    */
-  protected abstract fun hasNoStaticProblem(element: Psi, literalClazz: UClass, literalMethod: UMethod?): Boolean
+  protected abstract fun hasNoStaticProblem(element: Psi, literalClazz: PsiClass, literalMethod: PsiMethod?): Boolean
   protected abstract fun getPsiElementsByName(directClass: PsiClass, name: String, checkBases: Boolean): Array<Psi>
   protected abstract fun uType(): Class<U>
   protected abstract fun toTypedPsiArray(collection: Collection<Psi>): Array<Psi>
