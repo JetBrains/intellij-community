@@ -9712,7 +9712,114 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver")
+    public static class ConvertFunctionTypeParameterToReceiver extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyHasReceiver.kt")
+        public void testAlreadyHasReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/alreadyHasReceiver.kt");
+        }
+
+        @TestMetadata("cantReplaceWithThis.kt")
+        public void testCantReplaceWithThis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/cantReplaceWithThis.kt");
+        }
+
+        @TestMetadata("firstParameter.kt")
+        public void testFirstParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/firstParameter.kt");
+        }
+
+        @TestMetadata("firstParameterPrimaryConstructor.kt")
+        public void testFirstParameterPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/firstParameterPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("firstParameterSecondaryConstructor.kt")
+        public void testFirstParameterSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/firstParameterSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("firstParameterWithJavaUsages.kt")
+        public void testFirstParameterWithJavaUsages() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/firstParameterWithJavaUsages.kt");
+        }
+
+        @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
+        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("namedLambdaArgumentIsNotMovedOutsideParentheses.kt")
+        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/namedLambdaArgumentIsNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("nonFirstParameter.kt")
+        public void testNonFirstParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/nonFirstParameter.kt");
+        }
+
+        @TestMetadata("nonFirstParameterCallableReferenceUsage.kt")
+        public void testNonFirstParameterCallableReferenceUsage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/nonFirstParameterCallableReferenceUsage.kt");
+        }
+
+        @TestMetadata("nonFirstParameterPrimaryConstructor.kt")
+        public void testNonFirstParameterPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/nonFirstParameterPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("nonFirstParameterSecondaryConstructor.kt")
+        public void testNonFirstParameterSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/nonFirstParameterSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("nonFirstParameterSuperDelegationCall.kt")
+        public void testNonFirstParameterSuperDelegationCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/nonFirstParameterSuperDelegationCall.kt");
+        }
+
+        @TestMetadata("nonFirstParameterThisDelegationCall.kt")
+        public void testNonFirstParameterThisDelegationCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/nonFirstParameterThisDelegationCall.kt");
+        }
+
+        @TestMetadata("nonFirstParameterWithJavaUsages.kt")
+        public void testNonFirstParameterWithJavaUsages() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/nonFirstParameterWithJavaUsages.kt");
+        }
+
+        @TestMetadata("notInFunctionParameter.kt")
+        public void testNotInFunctionParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/notInFunctionParameter.kt");
+        }
+
+        @TestMetadata("notOnFunctionTypeParameter.kt")
+        public void testNotOnFunctionTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/notOnFunctionTypeParameter.kt");
+        }
+
+        @TestMetadata("overrides.kt")
+        public void testOverrides() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/overrides.kt");
+        }
+
+        @TestMetadata("singleExplicitParameter.kt")
+        public void testSingleExplicitParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionTypeParameterToReceiver/singleExplicitParameter.kt");
+        }
+    }
 
 
 

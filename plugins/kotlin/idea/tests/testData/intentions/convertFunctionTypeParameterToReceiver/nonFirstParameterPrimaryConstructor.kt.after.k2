@@ -10,7 +10,7 @@
 // AFTER-WARNING: Parameter 'c' is never used
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Parameter 'i' is never used
-open class Foo(f: <caret>Boolean.(Int) -> String) {
+open class Foo(f: Boolea<caret>n.(Int) -> String) {
     constructor(a: Int, f: (Int, Boolean) -> String) : this({ i -> f(i, this) })
     constructor(a: Int) : this({ i -> (::g)(i, this) })
     constructor(a: Int, b: Int, c: Int) : this({ i -> "${i + 1} $this" })

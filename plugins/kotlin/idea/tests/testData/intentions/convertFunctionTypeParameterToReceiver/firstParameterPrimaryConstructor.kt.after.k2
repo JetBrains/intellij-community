@@ -16,7 +16,7 @@
 // AFTER-WARNING: Parameter 'c' is never used
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Parameter 'i' is never used
-open class Foo(f: <caret>Int.(Boolean) -> String) {
+open class Foo(f: I<caret>nt.(Boolean) -> String) {
     constructor(a: Int, f: (Int, Boolean) -> String) : this(f)
     constructor(a: Int) : this(::g)
     constructor(a: Int, b: Int) : this(lambda())

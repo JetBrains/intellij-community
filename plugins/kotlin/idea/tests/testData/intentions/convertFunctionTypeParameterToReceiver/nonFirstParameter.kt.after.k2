@@ -1,7 +1,7 @@
 // AFTER-WARNING: Parameter 'b' is never used
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Parameter 'i' is never used
-fun foo(f: Boole<caret>an.(i: Int) -> String) {
+fun foo(f: Boole<caret>an.(Int) -> String) {
     false.f(1)
     bar { i, bool -> bool.f(i) }
 }

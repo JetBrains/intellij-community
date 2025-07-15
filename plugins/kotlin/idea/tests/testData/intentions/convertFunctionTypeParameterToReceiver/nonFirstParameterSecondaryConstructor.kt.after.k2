@@ -11,7 +11,7 @@
 // AFTER-WARNING: Parameter 'f' is never used
 // AFTER-WARNING: Parameter 'i' is never used
 open class Foo {
-    constructor(f: <caret>Boolean.(Int) -> String){
+    constructor(f: Boolea<caret>n.(Int) -> String){
         false.f(1)
         bar { i, bool -> bool.f(i) }
     }
