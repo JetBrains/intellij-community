@@ -428,12 +428,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       ioException = e;
     }
     if (!saveNeeded) {
-      if (document instanceof DocumentEx) {
-        ((DocumentEx)document).setModificationStamp(file.getModificationStamp());
+      if (document instanceof DocumentEx docEx) {
+        docEx.setModificationStamp(file.getModificationStamp());
       }
       removeFromUnsaved(document);
       updateModifiedProperty(file);
-      if (ioException instanceof IOException) throw (IOException)ioException;
+      if (ioException instanceof IOException ioe) throw ioe;
       if (ioException != null) throw (RuntimeException)ioException;
       return;
     }
@@ -464,8 +464,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
       for (FileEditor editor : fileEditorManager.getAllEditorList(file)) {
-        if (editor instanceof TextEditorImpl) {
-          ((TextEditorImpl)editor).updateModifiedProperty();
+        if (editor instanceof TextEditorImpl textImpl) {
+          textImpl.updateModifiedProperty();
         }
       }
     }
@@ -496,7 +496,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   private static boolean needsRefresh(@NotNull VirtualFile file) {
     VirtualFileSystem fs = file.getFileSystem();
-    return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
+    return fs instanceof NewVirtualFileSystem newFs && file.getTimeStamp() != newFs.getTimeStamp(file);
   }
 
   public static @NotNull String getLineSeparator(@NotNull Document document, @NotNull VirtualFile virtualFile) {
@@ -677,14 +677,14 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         @Override
         public void afterVfsChange() {
           for (VFileEvent event : events) {
-            if (event instanceof VFileContentChangeEvent && ((VFileContentChangeEvent)event).getFile().isValid()) {
-              myFileDocumentManager.contentsChanged((VFileContentChangeEvent)event);
+            if (event instanceof VFileContentChangeEvent changeEvent && changeEvent.getFile().isValid()) {
+              myFileDocumentManager.contentsChanged(changeEvent);
             }
-            else if (event instanceof VFileDeleteEvent && ((VFileDeleteEvent)event).getFile().isValid()) {
-              myFileDocumentManager.fileDeleted((VFileDeleteEvent)event);
+            else if (event instanceof VFileDeleteEvent deleteEvent && deleteEvent.getFile().isValid()) {
+              myFileDocumentManager.fileDeleted(deleteEvent);
             }
-            else if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getFile().isValid()) {
-              myFileDocumentManager.propertyChanged((VFilePropertyChangeEvent)event);
+            else if (event instanceof VFilePropertyChangeEvent propEvent && propEvent.getFile().isValid()) {
+              myFileDocumentManager.propertyChanged(propEvent);
             }
           }
           Reference.reachabilityFence(strongRefsToDocuments);
@@ -855,8 +855,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
 
     if (manager.isDefaultProjectInitialized()) {
-      FileViewProvider vp = PsiManagerEx.getInstanceEx(manager.getDefaultProject()).getFileManager().findCachedViewProvider(file);
-      if (vp != null) return vp;
+      return PsiManagerEx.getInstanceEx(manager.getDefaultProject()).getFileManager().findCachedViewProvider(file);
     }
 
     return null;
