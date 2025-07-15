@@ -1,5 +1,5 @@
 [versions]
-coil = "3.1.0"
+coil = "3.2.0"
 commonmark = "0.24.0"
 composeDesktop = "1.8.2"
 detekt = "1.23.8"
@@ -18,7 +18,7 @@ kotlinxBinaryCompat = "0.17.0"
 ktfmtGradlePlugin = "0.23.0"
 
 [libraries]
-coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 # network is only needed in a standalone non-ide version
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }

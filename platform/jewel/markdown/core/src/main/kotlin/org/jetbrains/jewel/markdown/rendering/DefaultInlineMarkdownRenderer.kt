@@ -168,7 +168,21 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         currentTextStyle: TextStyle,
     ) {
         // Each image source corresponds to one rendered image.
-        appendInlineContent(node.source, "![${node.title}](${node.source})")
+        appendInlineContent(
+            node.source,
+            buildString {
+                append(" ![")
+                if (node.alt.isNotEmpty()) append(node.alt)
+                append("](")
+                append(node.source)
+                if (!node.title.isNullOrBlank()) {
+                    append(" \"")
+                    append(node.title)
+                    append("\"")
+                }
+                append(") ")
+            },
+        )
     }
 
     // The T type parameter is needed to avoid issues with capturing lambdas

@@ -31,9 +31,9 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
-    "//platform/jewel/markdown/core:jewel-markdown-core",
-    "//libraries/skiko",
+    "//platform/jewel/markdown/core",
     "//libraries/compose-foundation-desktop",
+    "//libraries/skiko",
   ],
   runtime_deps = [":jewel-samples-showcase_resources"],
   plugins = ["@lib//:compose-plugin"]

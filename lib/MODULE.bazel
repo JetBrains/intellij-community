@@ -11760,87 +11760,115 @@ http_file(
 )
 
 http_file(
-  name = "coil-compose-core-jvm-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-core-jvm/3.1.0/coil-compose-core-jvm-3.1.0.jar",
-  sha256 = "8aa1d7ae1d11f969e8cdcc8fee42b7ee6a036e21f70567e3c3486edd9d7dc594",
-  downloaded_file_path = "coil-compose-core-jvm-3.1.0.jar"
+  name = "coil-compose-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-jvm/3.2.0/coil-compose-jvm-3.2.0.jar",
+  sha256 = "b135eafcff7545cba7e39c0c8d4e724c0f42e91050b10df5d635a6c7dfd3fb42",
+  downloaded_file_path = "coil-compose-jvm-3.2.0.jar"
 )
 
 http_file(
-  name = "coil-compose-core-jvm-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-core-jvm/3.1.0/coil-compose-core-jvm-3.1.0-sources.jar",
-  sha256 = "70ae99718a081cb53c353f8f60100960ab27c743465781b96fa2b237aa0f5ed2",
-  downloaded_file_path = "coil-compose-core-jvm-3.1.0-sources.jar"
+  name = "coil-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-jvm/3.2.0/coil-jvm-3.2.0.jar",
+  sha256 = "7d0182c987052d6502135a6a6cc7cc68288ef48f990d75ad4c4ae03e25be786e",
+  downloaded_file_path = "coil-jvm-3.2.0.jar"
 )
 
 http_file(
-  name = "coil-compose-jvm-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-jvm/3.1.0/coil-compose-jvm-3.1.0.jar",
-  sha256 = "d43e0ed4566d30f8ce8e023539240b494be6fa69a1b8c81b4c32f5f465a7cc06",
-  downloaded_file_path = "coil-compose-jvm-3.1.0.jar"
+  name = "coil-core-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0.jar",
+  sha256 = "2c64e5a3be4c59a2bf1ead26891cd9c455c37a2802d258ea50a960e7dd1e121a",
+  downloaded_file_path = "coil-core-jvm-3.2.0.jar"
 )
 
 http_file(
-  name = "coil-compose-jvm-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-jvm/3.1.0/coil-compose-jvm-3.1.0-sources.jar",
+  name = "okio-jvm-3_11_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar",
+  sha256 = "2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022",
+  downloaded_file_path = "okio-jvm-3.11.0.jar"
+)
+
+http_file(
+  name = "coil-compose-core-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0.jar",
+  sha256 = "a74b96cb179fe8f872d4e9f03468e0477d32787e9b6430a9d137aafb76012a60",
+  downloaded_file_path = "coil-compose-core-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "coil-compose-jvm-3_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-jvm/3.2.0/coil-compose-jvm-3.2.0-sources.jar",
   sha256 = "f9f84a9feaff1a4299ce2d4f4ba6d4de9cd36865f10676cdc9e798a58088002f",
-  downloaded_file_path = "coil-compose-jvm-3.1.0-sources.jar"
+  downloaded_file_path = "coil-compose-jvm-3.2.0-sources.jar"
 )
 
 http_file(
-  name = "coil-core-jvm-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.1.0/coil-core-jvm-3.1.0.jar",
-  sha256 = "6d44a11188c53f4eea2e87ebadc6aad90069132c9b029fc1b35aeb0added5ef7",
-  downloaded_file_path = "coil-core-jvm-3.1.0.jar"
+  name = "coil-jvm-3_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-jvm/3.2.0/coil-jvm-3.2.0-sources.jar",
+  sha256 = "bb9cd4ab24eb9b64d5dee84a7733345d9b17fc90b570bea6c175a3a36b71891f",
+  downloaded_file_path = "coil-jvm-3.2.0-sources.jar"
 )
 
 http_file(
-  name = "coil-core-jvm-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.1.0/coil-core-jvm-3.1.0-sources.jar",
-  sha256 = "3a8039b9e8de0755d0889d53816f02d567bd16e6a5548d3a79ead69d9e1e4b50",
-  downloaded_file_path = "coil-core-jvm-3.1.0-sources.jar"
+  name = "coil-core-jvm-3_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-sources.jar",
+  sha256 = "c0086b413bc0abf66c5727adc73ccb8fb0340cd505ef46ec85db5b8b9c7b5958",
+  downloaded_file_path = "coil-core-jvm-3.2.0-sources.jar"
 )
 
 http_file(
-  name = "coil-network-core-jvm-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-network-core-jvm/3.1.0/coil-network-core-jvm-3.1.0.jar",
-  sha256 = "8332e45cf792cd24d9814744db84b0e6d33ec6eaf0724bd07ddc1fce7c55591f",
-  downloaded_file_path = "coil-network-core-jvm-3.1.0.jar"
+  name = "okio-jvm-3_11_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-sources.jar",
+  sha256 = "4cc11c760166d43da9653a5c27ddbf58a510bb8f35ff1aa3a1676206e56a0e4e",
+  downloaded_file_path = "okio-jvm-3.11.0-sources.jar"
 )
 
 http_file(
-  name = "coil-network-core-jvm-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-network-core-jvm/3.1.0/coil-network-core-jvm-3.1.0-sources.jar",
-  sha256 = "b83d0d40b5f9074240a337fd33b42853c2a92049290623ce3b2c1d84fd1499a9",
-  downloaded_file_path = "coil-network-core-jvm-3.1.0-sources.jar"
+  name = "coil-compose-core-jvm-3_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0-sources.jar",
+  sha256 = "c50eaefc0894c2d48f48c111c9cc1db2d642ac16991ffea4400bb9101665c817",
+  downloaded_file_path = "coil-compose-core-jvm-3.2.0-sources.jar"
 )
 
 http_file(
-  name = "coil-network-ktor3-jvm-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-network-ktor3-jvm/3.1.0/coil-network-ktor3-jvm-3.1.0.jar",
-  sha256 = "cc4f9f8d6d447e7559cb9717c3a45dfbd351ddd06a34724001322512160b0215",
-  downloaded_file_path = "coil-network-ktor3-jvm-3.1.0.jar"
+  name = "coil-network-ktor3-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-network-ktor3-jvm/3.2.0/coil-network-ktor3-jvm-3.2.0.jar",
+  sha256 = "377ea37e058df261bcc274ea0c947eccc67fec5a0499bdf646b99c2f34f74a6a",
+  downloaded_file_path = "coil-network-ktor3-jvm-3.2.0.jar"
 )
 
 http_file(
-  name = "coil-network-ktor3-jvm-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-network-ktor3-jvm/3.1.0/coil-network-ktor3-jvm-3.1.0-sources.jar",
+  name = "coil-network-core-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-network-core-jvm/3.2.0/coil-network-core-jvm-3.2.0.jar",
+  sha256 = "54cff2971fbcb1743b6d4cb6fb5bb863b4f6fae37002ec57a2fdf837b0c3242e",
+  downloaded_file_path = "coil-network-core-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "coil-network-ktor3-jvm-3_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-network-ktor3-jvm/3.2.0/coil-network-ktor3-jvm-3.2.0-sources.jar",
   sha256 = "8f1a55a9ed282fe77df261aa7e4d57172508a70843951af422cfcbf97e0ab349",
-  downloaded_file_path = "coil-network-ktor3-jvm-3.1.0-sources.jar"
+  downloaded_file_path = "coil-network-ktor3-jvm-3.2.0-sources.jar"
 )
 
 http_file(
-  name = "coil-svg-jvm-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-svg-jvm/3.1.0/coil-svg-jvm-3.1.0.jar",
-  sha256 = "413a53b4b6e0a40b851d1a99a01a4cd91ac0dc68facefddd7adfdb2d5456588f",
-  downloaded_file_path = "coil-svg-jvm-3.1.0.jar"
+  name = "coil-network-core-jvm-3_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-network-core-jvm/3.2.0/coil-network-core-jvm-3.2.0-sources.jar",
+  sha256 = "b83d0d40b5f9074240a337fd33b42853c2a92049290623ce3b2c1d84fd1499a9",
+  downloaded_file_path = "coil-network-core-jvm-3.2.0-sources.jar"
 )
 
 http_file(
-  name = "coil-svg-jvm-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-svg-jvm/3.1.0/coil-svg-jvm-3.1.0-sources.jar",
+  name = "coil-svg-jvm-3_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-svg-jvm/3.2.0/coil-svg-jvm-3.2.0.jar",
+  sha256 = "e412715d1e447a43331f2ceb406435f28aafd7476a987de3d8222e6d39a8c84b",
+  downloaded_file_path = "coil-svg-jvm-3.2.0.jar"
+)
+
+http_file(
+  name = "coil-svg-jvm-3_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-svg-jvm/3.2.0/coil-svg-jvm-3.2.0-sources.jar",
   sha256 = "b12fe3352673d00d5b10f6585a456e3bb0a2f19aadf5d9efcb42bf97dbeb856f",
-  downloaded_file_path = "coil-svg-jvm-3.1.0-sources.jar"
+  downloaded_file_path = "coil-svg-jvm-3.2.0-sources.jar"
 )
 
 http_file(

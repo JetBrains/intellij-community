@@ -1,19 +1,14 @@
-public final class org/jetbrains/jewel/markdown/extensions/images/Coil3ImagesRendererExtension : org/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension {
+public final class org/jetbrains/jewel/markdown/extensions/images/Coil3ImageRendererExtension : org/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension {
 	public static final field $stable I
-	public static final field Companion Lorg/jetbrains/jewel/markdown/extensions/images/Coil3ImagesRendererExtension$Companion;
+	public static final field Companion Lorg/jetbrains/jewel/markdown/extensions/images/Coil3ImageRendererExtension$Companion;
 	public fun <init> (Lcoil3/ImageLoader;)V
 	public fun getBlockRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension;
 	public fun getDelimitedInlineRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineRendererExtension;
 	public fun getImageRendererExtension ()Lorg/jetbrains/jewel/markdown/extensions/ImageRendererExtension;
 }
 
-public final class org/jetbrains/jewel/markdown/extensions/images/Coil3ImagesRendererExtension$Companion {
-	public final fun withDefaultLoader (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/markdown/extensions/images/Coil3ImagesRendererExtension;
-}
-
-public final class org/jetbrains/jewel/markdown/extensions/images/Coil3ImagesRendererExtensionImpl : org/jetbrains/jewel/markdown/extensions/ImageRendererExtension {
-	public static final field $stable I
-	public fun <init> (Lcoil3/ImageLoader;)V
-	public fun renderImagesContent (Lorg/jetbrains/jewel/markdown/InlineMarkdown$Image;Landroidx/compose/runtime/Composer;I)Landroidx/compose/foundation/text/InlineTextContent;
+public final class org/jetbrains/jewel/markdown/extensions/images/Coil3ImageRendererExtension$Companion {
+	public final fun withDefaultLoader (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/markdown/extensions/images/Coil3ImageRendererExtension;
+	public final fun withDefaultLoader (Lcoil3/PlatformContext;)Lorg/jetbrains/jewel/markdown/extensions/images/Coil3ImageRendererExtension;
 }
 
