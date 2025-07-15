@@ -1145,6 +1145,7 @@
       <action id="DumpPluginDescriptorsAction" internal="true" class="com.intellij.internal.DumpPluginDescriptorsAction"/>
       <action id="DumpRunConfigurationTypesAction" internal="true" class="com.intellij.internal.DumpRunConfigurationTypesAction"/>
       <action id="DumpFormattingModel" class="com.intellij.internal.DumpFormattingModelAction" internal="true"/>
+      <action id="CheckClassLoading" internal="true" class="com.intellij.internal.CheckClassLoadingAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
   </actions>
