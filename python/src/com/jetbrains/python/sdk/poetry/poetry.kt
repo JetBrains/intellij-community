@@ -7,9 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtil
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
@@ -17,6 +15,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -51,18 +50,11 @@ suspend fun setupPoetrySdkUnderProgress(
   installPackages: Boolean,
   poetryPath: String? = null,
 ): PyResult<Sdk> {
-  val projectPath = (newProjectPath ?: module?.basePath ?: project?.basePath)?.let { Path.of(it) }
+  val projectPath = (newProjectPath ?: module?.basePath ?: project?.basePath)?.let { tryResolvePath(it) }
                     ?: return PyResult.localizedError("Can't find path to project or module")
 
-  val actualProject = project ?: module?.project
-  val pythonExecutablePath = if (actualProject != null) {
-    withBackgroundProgress(actualProject, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
-      setUpPoetry(projectPath, python, installPackages, poetryPath)
-    }
-  }
-  else {
-    setUpPoetry(projectPath, python, installPackages, poetryPath)
-  }.getOr { return it }
+  val pythonExecutablePath = setUpPoetry(projectPath, python, installPackages, poetryPath)
+    .getOr { return it }
 
   val result = createSdk(
     sdkHomePath = pythonExecutablePath,

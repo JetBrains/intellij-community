@@ -2,26 +2,25 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.common.PythonPackage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface PythonDependenciesExtractor {
-
-  suspend fun extract(module: Module): List<PythonPackage>
+  suspend fun extract(): List<PythonPackage>
 
   companion object {
-    fun forSdk(sdk: Sdk): PythonDependenciesExtractor? =
-      PythonDependenciesExtractorProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.createExtractor(sdk) }
+    fun forSdk(project: Project, sdk: Sdk): PythonDependenciesExtractor? =
+      PythonDependenciesExtractorProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.createExtractor(project, sdk) }
   }
 }
 
 @ApiStatus.Internal
 interface PythonDependenciesExtractorProvider {
 
-  fun createExtractor(sdk: Sdk): PythonDependenciesExtractor?
+  fun createExtractor(project: Project, sdk: Sdk): PythonDependenciesExtractor?
 
   companion object {
     val EP_NAME: ExtensionPointName<PythonDependenciesExtractorProvider> = ExtensionPointName.create<PythonDependenciesExtractorProvider>("Pythonid.PyProjectDependenciesExtractorProvider")

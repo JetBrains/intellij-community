@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.util.messages.Topic
@@ -24,7 +23,6 @@ import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
 import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
-import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
@@ -215,9 +213,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   @ApiStatus.Internal
   suspend fun reloadDependencies(): List<PythonPackage> {
-    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(sdk) ?: return emptyList()
-    val targetModule = project.modules.find { it.pythonSdk == sdk } ?: return emptyList()
-    dependencies = dependenciesExtractor.extract(targetModule)
+    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(project, sdk) ?: return emptyList()
+    dependencies = dependenciesExtractor.extract()
     return dependencies
   }
 
