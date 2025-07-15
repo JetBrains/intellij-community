@@ -323,7 +323,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private val SE_TAB_ID_KEY = EventFields.String("seTabId", SearchEverywhereTab.allTabs.map { it.tabId })
   private val CLOSE_POPUP_KEY = EventFields.Boolean("closePopup")
   private val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
-  val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
+  internal val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
   private val SESSION_ID_LOG_DATA_KEY = EventFields.Int("sessionId")
   private val SEARCH_INDEX_DATA_KEY = EventFields.Int("searchIndex")
   private val TYPED_SYMBOL_KEYS = EventFields.Int("typedSymbolKeys")
@@ -332,7 +332,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private val SELECTED_INDEXES_DATA_KEY = EventFields.IntList("selectedIndexes")
 
   @VisibleForTesting
-  val SELECTED_ELEMENTS_DATA_KEY = EventFields.IntList("selectedIds")
+  val SELECTED_ELEMENTS_DATA_KEY: IntListEventField = EventFields.IntList("selectedIds")
   private val SELECTED_ELEMENTS_CONSISTENT = EventFields.Boolean("isConsistent")
 
   private val IS_MIXED_LIST = EventFields.Boolean("isMixedList")
@@ -342,16 +342,16 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     ObjectEventField("searchStateFeatures", *SearchEverywhereStateFeaturesProvider.getFeaturesDefinition().toTypedArray())
 
   @VisibleForTesting
-  val ID_KEY = EventFields.Int("id")
+  val ID_KEY: IntEventField = EventFields.Int("id")
 
   @Suppress("DEPRECATION")
-  val ACTION_ID_KEY = ActionsEventLogGroup.ActioID("actionId")
+  internal val ACTION_ID_KEY = ActionsEventLogGroup.ActioID("actionId")
 
   @VisibleForTesting
-  val FEATURES_DATA_KEY = createFeaturesEventObject()
-  val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
-  val PRIORITY_KEY = EventFields.Int("priority", "The final priority used for sorting elements")
-  val ABSENT_FEATURES_KEY = EventFields.StringListValidatedByCustomRule("absentFeatures",
+  val FEATURES_DATA_KEY: ObjectEventField = createFeaturesEventObject()
+  internal val ML_WEIGHT_KEY: DoubleEventField = EventFields.Double("mlWeight")
+  internal val PRIORITY_KEY: IntEventField = EventFields.Int("priority", "The final priority used for sorting elements")
+  internal val ABSENT_FEATURES_KEY: StringListEventField = EventFields.StringListValidatedByCustomRule("absentFeatures",
                                                                         SearchEverywhereMlElementFeatureValidationRule::class.java)
   internal val CONTRIBUTOR_FEATURES_LIST = ObjectListEventField(
     "contributors",
@@ -367,7 +367,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                                         SearchEverywhereContributorFeaturesProvider.SE_CONTRIBUTORS,
                                                         "Contributor name that provided the element")
 
-  val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
+  val COLLECTED_RESULTS_DATA_KEY: ObjectListEventField = ObjectListEventField(
     "collectedItems",
     ID_KEY, ELEMENT_CONTRIBUTOR, ACTION_ID_KEY,
     FEATURES_DATA_KEY, ML_WEIGHT_KEY, PRIORITY_KEY,
@@ -376,8 +376,8 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   // events
   @VisibleForTesting
-  val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP, SESSION_DURATION)
-  val SEARCH_RESTARTED = registerEvent("searchRestarted")
+  val SESSION_FINISHED: VarargEventId = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP, SESSION_DURATION)
+  internal val SEARCH_RESTARTED: VarargEventId = registerEvent("searchRestarted")
 
   private val CLASSES_WITHOUT_KEY_PROVIDERS_FIELD = ClassListEventField("unsupported_classes")
   internal val KEY_NOT_COMPUTED_EVENT = GROUP.registerEvent("key.not.computed",
