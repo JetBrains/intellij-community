@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 
+// AST-based syntax annotator that does not rely on resolve.
+// Planned to move to thin-client (visitors are to be converted to `PyAstElementVisitor`).
 public final class PySyntaxAnnotator extends PyAnnotatorBase implements DumbAware {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull PyAnnotationHolder holder) {
