@@ -98,6 +98,7 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
+    "//android/project-system-gradle:projectSystem-gradle",
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )

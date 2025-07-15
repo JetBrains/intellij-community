@@ -1,0 +1,102 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compose.ide.plugin.resources
+
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.compose.ide.plugin.resources.psi.asUnderscoredIdentifier
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.xml.XmlTag
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.daemon.common.trimQuotes
+import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
+import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Test
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
+import kotlin.test.assertNotNull as kAssertNotNull
+
+private const val TARGET_GRADLE_VERSION = "8.13"
+private const val COMMON_MAIN = "commonMain"
+private const val ANDROID_MAIN = "androidMain"
+private const val IOS_MAIN = "iosMain"
+
+private val SOURCE_SETS = setOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN)
+
+@TestRoot("../../../community/plugins/compose/intellij.compose.ide.plugin.resources/testData")
+@TestMetadata("")
+class ComposeResourcesGotoDeclarationTest : KotlinGradleImportingTestCase() {
+
+  @Parameterized.Parameter(1)
+  lateinit var sourceSetName: String
+
+  private var _codeInsightTestFixture: CodeInsightTestFixture? = null
+
+  private val codeInsightTestFixture: CodeInsightTestFixture
+    get() = kAssertNotNull(_codeInsightTestFixture, "_codeInsightTestFixture was not initialized")
+
+  override fun setUpFixtures() {
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
+    _codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
+    codeInsightTestFixture.setUp()
+    codeInsightTestFixture.testDataPath = PathManagerEx.getCommunityHomePath() + "/plugins/compose/intellij.compose.ide.plugin.resources/testData/"
+  }
+
+  override fun tearDownFixtures() {
+    runAll(
+      { _codeInsightTestFixture?.tearDown() },
+      { _codeInsightTestFixture = null },
+      { myTestFixture = null },
+    )
+  }
+
+  @TargetVersions(TARGET_GRADLE_VERSION)
+  @Test
+  @TestMetadata("ComposeResources")
+  fun `test common composeResources are accessible`() = runBlocking(Dispatchers.EDT) {
+    val files = importProjectFromTestData()
+    files.openInEditor(sourceSetName = sourceSetName)
+
+    doTestNavigation(qualifiedName = "Res.drawable.test", expectedSize = 1, expectedType = ResourceType.DRAWABLE)
+    doTestNavigation(qualifiedName = "Res.drawable.compose_multiplatform", expectedSize = 2, expectedType = ResourceType.DRAWABLE)
+
+    doTestNavigation(qualifiedName = "Res.string.test", expectedSize = 4, expectedType = ResourceType.STRING)
+    doTestNavigation(qualifiedName = "Res.array.test", expectedSize = 1, expectedType = ResourceType.STRING_ARRAY)
+    doTestNavigation(qualifiedName = "Res.plurals.test", expectedSize = 1, expectedType = ResourceType.PLURAL_STRING)
+
+    doTestNavigation(qualifiedName = "Res.font.test", expectedSize = 1, expectedType = ResourceType.FONT)
+  }
+
+  private fun List<VirtualFile>.openInEditor(sourceSetName: String) =
+    codeInsightTestFixture.openFileInEditor(first { it.path.endsWith("composeApp/src/$sourceSetName/kotlin/org/example/project/test.$sourceSetName.kt") })
+
+  private fun doTestNavigation(qualifiedName: String, expectedSize: Int, expectedType: ResourceType) {
+    codeInsightTestFixture.editor.caretModel.moveToOffset(codeInsightTestFixture.file.text.indexOf(qualifiedName) + qualifiedName.length)
+
+    val targetElements = GotoDeclarationAction.findAllTargetElements(project, codeInsightTestFixture.editor, codeInsightTestFixture.caretOffset)
+
+    assertSize(expectedSize, targetElements)
+    targetElements.forEach {
+      val actualName = if (expectedType.isStringType) it.text.trimQuotes() else it.namedUnwrappedElement?.name?.substringBefore('.')?.asUnderscoredIdentifier()
+      assertEquals(qualifiedName.substringAfterLast('.'), actualName)
+
+      val actualTypeName = if (expectedType.isStringType) it.parentOfType<XmlTag>()?.name else it.parent.namedUnwrappedElement?.name?.asUnderscoredIdentifier()
+      assertTrue(actualTypeName?.startsWith(expectedType.typeName) == true)
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    @Suppress("ACCIDENTAL_OVERRIDE")
+    @Parameters(name = "{index}: source set {1} with Gradle-{0}")
+    fun data(): Collection<Any> = SOURCE_SETS.map { arrayOf(TARGET_GRADLE_VERSION, it) }
+  }
+}
