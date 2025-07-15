@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.zombie.SpawnRecipe
@@ -31,7 +30,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -78,10 +76,6 @@ object FUSProjectHotStartUpMeasurer {
 
     @Internal
     fun getFieldName(): String = getField(this).name
-  }
-
-  private suspend fun isProperContext(): Boolean {
-    return currentCoroutineContext().isProperContext()
   }
 
   private fun CoroutineContext.isProperContext(): Boolean {
@@ -148,8 +142,8 @@ object FUSProjectHotStartUpMeasurer {
     return MyMarker
   }
 
-  suspend fun getStartUpContextElementToPass(): CoroutineContext.Element? {
-    return if (isProperContext()) MyMarker else null
+  fun getStartUpContextElementToPass(): CoroutineContext.Element? {
+    return currentThreadContext()[MyMarker]
   }
 
   private fun reportViolation(violation: Violation) {
@@ -161,8 +155,8 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.WelcomeScreenEvent())
   }
 
-  suspend fun reportReopeningProjects(openPaths: List<*>) {
-    if (!isProperContext()) return
+  fun reportReopeningProjects(openPaths: List<*>) {
+    if (!currentThreadContext().isProperContext()) return
     when (openPaths.size) {
       0 -> reportViolation(Violation.NoProjectFound)
       1 -> reportProjectType(ProjectsType.Reopened)
@@ -170,8 +164,8 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  suspend fun reportProjectType(projectsType: ProjectsType) {
-    if (!isProperContext()) return
+  fun reportProjectType(projectsType: ProjectsType) {
+    if (!currentThreadContext().isProperContext()) return
     channel.trySend(Event.ProjectTypeReportEvent(projectsType))
   }
 
@@ -179,23 +173,23 @@ object FUSProjectHotStartUpMeasurer {
    * Reports the existence of project settings to filter cases of importing which may need more resources.
    */
   suspend fun reportProjectPath(projectFile: Path) {
-    if (!isProperContext()) return
+    if (!currentThreadContext().isProperContext()) return
     val hasSettings = ProjectUtil.isValidProjectPath(projectFile)
     channel.trySend(Event.ProjectPathReportEvent(hasSettings))
   }
 
-  suspend fun resetProjectPath() {
-    if (!isProperContext()) return
+  fun resetProjectPath() {
+    if (!currentThreadContext().isProperContext()) return
     channel.trySend(Event.ResetProjectPathEvent)
   }
 
-  suspend fun openingMultipleProjects() {
-    if (!isProperContext()) return
+  fun openingMultipleProjects() {
+    if (!currentThreadContext().isProperContext()) return
     reportViolation(Violation.MultipleProjects)
   }
 
-  suspend fun reportAlreadyOpenedProject() {
-    if (!isProperContext()) return
+  fun reportAlreadyOpenedProject() {
+    if (!currentThreadContext().isProperContext()) return
     reportViolation(Violation.HasOpenedProject)
   }
 
@@ -207,8 +201,8 @@ object FUSProjectHotStartUpMeasurer {
     reportViolation(Violation.MightBeLightEditProject)
   }
 
-  suspend fun reportUriOpening() {
-    if (!isProperContext()) return
+  fun reportUriOpening() {
+    if (!currentThreadContext().isProperContext()) return
     reportViolation(Violation.OpeningURI)
   }
 
@@ -269,18 +263,18 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  suspend fun firstOpenedUnknownEditor(file: VirtualFile, nanoTime: Long) {
-    if (!isProperContext()) return
+  fun firstOpenedUnknownEditor(file: VirtualFile, nanoTime: Long) {
+    if (!currentThreadContext().isProperContext()) return
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime))
     if (ApplicationManagerEx.isInIntegrationTest()) {
-      val project = serviceAsync<ProjectManager>().openProjects[0]
-      val fileEditorManager = project.serviceAsync<FileEditorManager>()
+      val project = ProjectManager.getInstance().openProjects[0]
+      val fileEditorManager = FileEditorManager.getInstance(project)
       checkEditorHasBasicHighlight(file, project, fileEditorManager)
     }
   }
 
-  suspend fun openedReadme(readmeFile: VirtualFile, nanoTime: Long) {
-    if (!isProperContext()) return
+  fun openedReadme(readmeFile: VirtualFile, nanoTime: Long) {
+    if (!currentThreadContext().isProperContext()) return
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime))
     // Do not check highlights here, because the readme file is opened in preview-only mode with
     // `readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)`,
