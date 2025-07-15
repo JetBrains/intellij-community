@@ -123,12 +123,6 @@
       <reference ref="Terminal.NewTab"/>
       <reference ref="Terminal.CloseTab"/>
       <separator/>
-      <reference ref="PreviousTab"/>
-      <reference ref="NextTab"/>
-      <reference ref="Terminal.MoveToolWindowTabRight"/>
-      <reference ref="Terminal.MoveToolWindowTabLeft"/>
-      <reference ref="ShowContent"/>
-      <separator/>
       <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
       <reference ref="Terminal.SelectAll"/>
