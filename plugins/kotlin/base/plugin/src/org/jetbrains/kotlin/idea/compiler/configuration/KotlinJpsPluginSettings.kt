@@ -13,6 +13,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -26,6 +29,10 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_SECTION
 import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
+import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.util.sdk
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings.Companion.getInstance
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings.Companion.readFromKotlincXmlOrIpr
 import java.nio.file.Path
 
 @Service(Service.Level.PROJECT)
@@ -63,6 +70,8 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
     fun dropExplicitVersion(): Unit = setVersion("")
 
     companion object {
+        private val MIN_KOTLIN_VERSION_JDK_25 = IdeKotlinVersion.get("2.1.10").kotlinVersion
+
         // Use bundled by default because this will work even without internet connection
         @JvmStatic
         val rawBundledVersion: String get() = bundledVersion.rawVersion
@@ -100,11 +109,12 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         /**
          * @param jpsVersion version to parse
+         * @param project The project to check for
          * @param fromFile true if [jpsVersion] come from kotlin.xml
          * @return error message if [jpsVersion] is not valid
          */
         @Nls
-        fun checkJpsVersion(jpsVersion: String, fromFile: Boolean = false): UnsupportedJpsVersionError? {
+        fun checkJpsVersion(jpsVersion: String, project: Project, fromFile: Boolean = false): UnsupportedJpsVersionError? {
             val parsedKotlinVersion = IdeKotlinVersion.opt(jpsVersion)?.kotlinVersion
             if (parsedKotlinVersion == null) {
                 return ParsingError(
@@ -141,6 +151,27 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 )
             }
 
+            // There was a major bug because the `JavaVersion` enum was only defined until Java 25 and caused exceptions with
+            // larger versions.
+            // The K1 compiler (and up to Kotlin 2.1.10) uses this enum and will throw a compilation error if used with JDK 25+.
+            // See: KTIJ-34861
+            for (module in project.modules) {
+                // We check each module independently here because different modules can use different Kotlin versions and JDK versions
+                // i.e. there could be a case of a project that uses JDK 25 in some module but only old Kotlin version in others.
+                val jdkVersion = module.sdk?.let { sdk -> JavaSdk.getInstance().getVersion(sdk) } ?: continue
+                val moduleKotlinVersion = KotlinCompilerVersionProvider.getVersion(module)?.kotlinVersion ?: parsedKotlinVersion
+
+                if (jdkVersion.isAtLeast(JavaSdkVersion.JDK_25) && moduleKotlinVersion < MIN_KOTLIN_VERSION_JDK_25) {
+                    return IncompatibleJdkVersion(
+                        KotlinBasePluginBundle.message(
+                            "kotlin.jps.jdk.unsupported.message",
+                            jpsVersion,
+                            MIN_KOTLIN_VERSION_JDK_25.toString(),
+                        )
+                    )
+                }
+            }
+
             return null
         }
 
@@ -171,10 +202,10 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             onUnsupportedVersion: (@Nls(capitalization = Nls.Capitalization.Sentence) String) -> Unit,
         ): String? {
             val version = jpsVersion(project)
-            return when (val error = checkJpsVersion(version, fromFile = true)) {
+            return when (val error = checkJpsVersion(version, project, fromFile = true)) {
                 is OutdatedCompilerVersion -> fallbackVersionForOutdatedCompiler
 
-                is NewCompilerVersion, is ParsingError -> {
+                is NewCompilerVersion, is ParsingError, is IncompatibleJdkVersion -> {
                     onUnsupportedVersion(error.message)
                     null
                 }
@@ -203,10 +234,10 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 return
             }
 
-            val error = checkJpsVersion(rawVersion)
+            val error = checkJpsVersion(rawVersion, project)
             val version = when (error) {
                 is OutdatedCompilerVersion -> fallbackVersionForOutdatedCompiler
-                is NewCompilerVersion, is ParsingError -> rawBundledVersion
+                is NewCompilerVersion, is ParsingError, is IncompatibleJdkVersion -> rawBundledVersion
                 null -> rawVersion
             }
 
@@ -224,6 +255,11 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             when (error) {
                 is ParsingError, is NewCompilerVersion -> {
                     instance.dropExplicitVersion()
+                    return
+                }
+
+                is IncompatibleJdkVersion -> {
+                    showNotificationUnsupportedJdkVersion(project, error.message)
                     return
                 }
 
@@ -301,6 +337,7 @@ sealed class UnsupportedJpsVersionError(val message: @Nls(capitalization = Nls.C
 class ParsingError(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
 class OutdatedCompilerVersion(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
 class NewCompilerVersion(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
+class IncompatibleJdkVersion(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
 
 @get:NlsSafe
 val JpsPluginSettings.versionWithFallback: String get() = version.ifEmpty { KotlinJpsPluginSettings.rawBundledVersion }
@@ -313,6 +350,21 @@ private fun showNotificationUnsupportedJpsPluginVersion(
     NotificationGroupManager.getInstance()
         .getNotificationGroup("Kotlin JPS plugin")
         .createNotification(title, content, NotificationType.WARNING)
+        .setImportant(true)
+        .notify(project)
+}
+
+private fun showNotificationUnsupportedJdkVersion(
+    project: Project,
+    @NlsContexts.NotificationContent content: String,
+) {
+    NotificationGroupManager.getInstance()
+        .getNotificationGroup("Kotlin JPS plugin")
+        .createNotification(
+            KotlinBasePluginBundle.message("kotlin.jps.jdk.unsupported.title"),
+            content,
+            NotificationType.ERROR
+        )
         .setImportant(true)
         .notify(project)
 }
