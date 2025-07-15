@@ -33,7 +33,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.DirectoryContentSpecKt;
 import com.intellij.util.io.TestFileSystemBuilder;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -273,11 +272,11 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
           throw new RuntimeException("timeout");
         }
         if (SwingUtilities.isEventDispatchThread()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
         }
       }
       if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       }
     }
     finally {

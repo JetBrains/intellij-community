@@ -235,7 +235,7 @@ public final class CompilerTester {
     while (!semaphore.waitFor(100)) {
       if (SwingUtilities.isEventDispatchThread()) {
         //noinspection TestOnlyProblems
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       }
     }
 
