@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService.Companion.isDumb
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
@@ -133,6 +134,9 @@ private suspend fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementP
   catch (_: InvalidStackFrameException) {
     null
   }
+  catch (_: IndexNotReadyException) {
+    null
+  }
 
   if (larva == null) return null
   return try {
@@ -154,6 +158,9 @@ private suspend fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementP
     null
   }
   catch (_: InvalidStackFrameException) {
+    null
+  }
+  catch (_: IndexNotReadyException) {
     null
   }
 }
