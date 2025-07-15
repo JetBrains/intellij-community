@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PythonVisitorFilter;
 import com.jetbrains.python.validation.PyDocStringAnnotator;
 import com.jetbrains.python.validation.PyFunctionHighlightingAnnotator;
 import com.jetbrains.python.validation.PyParameterListAnnotatorVisitor;
-import com.jetbrains.python.validation.ReturnAnnotator;
+import com.jetbrains.python.validation.PyReturnYieldAnnotatorVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +35,7 @@ public final class PyDocstringVisitorFilter implements PythonVisitorFilter {
       return false;
     }
     //annotators
-    if (visitorClass == PyDocStringAnnotator.class || visitorClass == PyParameterListAnnotatorVisitor.class || visitorClass == ReturnAnnotator.class || visitorClass == PyFunctionHighlightingAnnotator.class)
+    if (visitorClass == PyDocStringAnnotator.class || visitorClass == PyParameterListAnnotatorVisitor.class || visitorClass == PyReturnYieldAnnotatorVisitor.class || visitorClass == PyFunctionHighlightingAnnotator.class)
       return false;
     // doctest in separate file
     final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);

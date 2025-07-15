@@ -12,10 +12,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Highlights incorrect return statements: 'return' and 'yield' outside functions
  */
-public class ReturnAnnotator extends PyElementVisitor {
+public class PyReturnYieldAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
-  public ReturnAnnotator(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+  PyReturnYieldAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   @Override
   public void visitPyReturnStatement(final @NotNull PyReturnStatement node) {
