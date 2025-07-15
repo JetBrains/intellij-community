@@ -142,6 +142,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
       });
       Disposer.register(myFindPopupPanel.getDisposable(), myScopeCombo);
     }
+    getScopeChooser().getAccessibleContext().setAccessibleName(FindBundle.message("find.scope.combo.accessibleName"));
     getScopeCombo().addActionListener(restartSearchListener);
   }
 
