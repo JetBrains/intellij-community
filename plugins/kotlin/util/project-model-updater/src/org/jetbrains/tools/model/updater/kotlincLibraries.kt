@@ -36,6 +36,9 @@ private val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
 private val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
     get() = ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode)
 
+internal val GeneratorPreferences.kotlincArtifactVersion: String
+    get() = kotlincArtifactCoordinates.version
+
 internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommunity: Boolean): List<JpsLibrary> {
     val kotlincCoordinates = preferences.kotlincArtifactCoordinates
     val jpsPluginCoordinates = preferences.jpsArtifactCoordinates.takeIf { it.version != "dev" } ?: kotlincCoordinates
