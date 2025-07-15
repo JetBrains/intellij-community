@@ -16,6 +16,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
 import kotlin.jvm.optionals.getOrDefault
 
@@ -30,12 +31,12 @@ class MavenHttpProxyServerFixture(
 
   private var proxyUsername: String? = null
   private var proxyPassword: String? = null
-  val requestedFiles: ArrayList<String> = ArrayList<String>()
+  val requestedFiles: MutableList<String> = CopyOnWriteArrayList()
   val port: Int
     get() = serverSocket.localPort
 
   override fun setUp() {
-    serverSocket = ServerSocket(0);
+    serverSocket = ServerSocket(0)
 
     myClient = HttpClient.newBuilder()
       .version(HttpClient.Version.HTTP_1_1)
@@ -162,7 +163,7 @@ class MavenHttpProxyServerFixture(
       .GET()
       .build()
 
-    return myClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+    return myClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
   }
 
   private fun copyHeader(response: HttpResponse<ByteArray>, os: OutputStream, name: String, def: String? = null) {
