@@ -2506,8 +2506,8 @@ jvm_import(
 
 jvm_import(
   name = "java-debugger-agent-holder-debugger-agent",
-  jar = "@debugger-agent-1_71_http//file",
-  source_jar = "@debugger-agent-1_71-sources_http//file",
+  jar = "@debugger-agent-1_79_http//file",
+  source_jar = "@debugger-agent-1_79-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
