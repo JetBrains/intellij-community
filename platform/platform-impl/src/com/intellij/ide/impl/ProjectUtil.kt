@@ -529,11 +529,12 @@ object ProjectUtil {
 
   suspend fun openOrImportFilesAsync(list: List<Path>, location: String, projectToClose: Project? = null): Project? {
     for (file in list) {
-      FUSProjectHotStartUpMeasurer.reportProjectPath(file)
-      openOrImportAsync(file = file, options = OpenProjectTask {
-        this.projectToClose = projectToClose
-        forceOpenInNewFrame = true
-      })?.also {
+      FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
+        openOrImportAsync(file = file, options = OpenProjectTask {
+          this.projectToClose = projectToClose
+          forceOpenInNewFrame = true
+        })
+      }?.also {
         return it
       }
       FUSProjectHotStartUpMeasurer.resetProjectPath()
@@ -546,11 +547,12 @@ object ProjectUtil {
       }
 
       LOG.debug { "$location: open file $file" }
-      FUSProjectHotStartUpMeasurer.reportProjectPath(file)
       if (projectToClose == null) {
         val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
         if (processor != null) {
-          val opened = processor.openProjectAndFile(file = file, tempProject = false)
+          val opened = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
+            processor.openProjectAndFile(file = file, tempProject = false)
+          }
           if (opened != null) {
             if (result == null) {
               result = opened

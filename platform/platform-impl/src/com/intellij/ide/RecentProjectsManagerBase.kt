@@ -404,7 +404,15 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
     }
 
-    FUSProjectHotStartUpMeasurer.reportProjectPath(projectFile)
+    return FUSProjectHotStartUpMeasurer.withProjectContextElement(projectFile) {
+      openProjectWithEffectiveOptions(projectFile, effectiveOptions)
+    }
+  }
+
+  private suspend fun openProjectWithEffectiveOptions(
+    projectFile: Path,
+    effectiveOptions: OpenProjectTask,
+  ): Project? {
     if (ProjectUtil.isValidProjectPath(projectFile)) {
       val projectManager = ProjectManagerEx.getInstanceEx()
       projectManager.openProjects.firstOrNull { isSameProject(projectFile = projectFile, project = it) }?.let { project ->
@@ -678,7 +686,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       val iterator = taskList.iterator()
       while (iterator.hasNext()) {
         val (path, options) = iterator.next()
-        projectManager.openProjectAsync(path, options)
+        FUSProjectHotStartUpMeasurer.withProjectContextElement(path) {
+          projectManager.openProjectAsync(path, options)
+        }
         iterator.remove()
       }
     }

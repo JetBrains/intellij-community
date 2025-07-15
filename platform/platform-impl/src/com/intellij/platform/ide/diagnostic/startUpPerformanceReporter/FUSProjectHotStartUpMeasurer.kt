@@ -30,10 +30,12 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -46,6 +48,11 @@ private var statsIsWritten = false
 @Internal
 object FUSProjectHotStartUpMeasurer {
   private val channel = Channel<Event>(Int.MAX_VALUE)
+  private val counter = AtomicInteger(0)
+
+  private data class ProjectId(private val id: Int) {
+    constructor() : this(counter.incrementAndGet())
+  }
 
   enum class ProjectsType {
     Reopened,
@@ -70,6 +77,7 @@ object FUSProjectHotStartUpMeasurer {
     CODE_VISION,
     DECLARATIVE_HINTS,
     PARAMETER_HINTS,
+
     // this works for internal action ToggleFocusViewModeAction and is not worth testing or reporting FOCUS_MODE,
     DOC_RENDER,
     ;
@@ -80,6 +88,10 @@ object FUSProjectHotStartUpMeasurer {
 
   private fun CoroutineContext.isProperContext(): Boolean {
     return this[MyMarker] != null
+  }
+
+  private fun CoroutineContext.getProjectMarker(): MyProjectMarker? {
+    return this[MyProjectMarker.Key]
   }
 
   private sealed interface Event {
@@ -102,7 +114,7 @@ object FUSProjectHotStartUpMeasurer {
     }
 
     class ProjectTypeReportEvent(val projectsType: ProjectsType) : Event
-    class ProjectPathReportEvent(val hasSettings: Boolean) : Event
+    class ProjectPathReportEvent(val projectId: ProjectId, val hasSettings: Boolean) : Event
     class FrameBecameVisibleEvent : FUSReportableEvent {
       val time: Long = System.nanoTime()
     }
@@ -121,7 +133,7 @@ object FUSProjectHotStartUpMeasurer {
 
     class NoMoreEditorsEvent(val time: Long) : Event
 
-    data object ResetProjectPathEvent : Event
+    data class ResetProjectPathEvent(val projectId: ProjectId) : Event
     data object IdeStarterStartedEvent : Event
   }
 
@@ -142,8 +154,14 @@ object FUSProjectHotStartUpMeasurer {
     return MyMarker
   }
 
-  fun getStartUpContextElementToPass(): CoroutineContext.Element? {
-    return currentThreadContext()[MyMarker]
+  fun getStartUpContextElementToPass(): CoroutineContext? {
+    val threadContext = currentThreadContext()
+    if (!threadContext.isProperContext()) return null
+    val projectMarker = threadContext.getProjectMarker()
+    if (projectMarker == null) {
+      return MyMarker
+    }
+    return MyMarker + projectMarker
   }
 
   private fun reportViolation(violation: Violation) {
@@ -166,21 +184,41 @@ object FUSProjectHotStartUpMeasurer {
 
   fun reportProjectType(projectsType: ProjectsType) {
     if (!currentThreadContext().isProperContext()) return
+    //too early for project distinction
     channel.trySend(Event.ProjectTypeReportEvent(projectsType))
   }
 
   /**
-   * Reports the existence of project settings to filter cases of importing which may need more resources.
+   * Invokes [block] in coroutine context with project marker used in later reporting;
+   * reports the existence of project settings to filter cases of importing which may need more resources.
    */
-  suspend fun reportProjectPath(projectFile: Path) {
-    if (!currentThreadContext().isProperContext()) return
+  suspend fun <T> withProjectContextElement(projectFile: Path, block: suspend () -> T): T {
+    if (!currentThreadContext().isProperContext()) {
+      return block.invoke()
+    }
+    val projectId = ProjectId()
     val hasSettings = ProjectUtil.isValidProjectPath(projectFile)
-    channel.trySend(Event.ProjectPathReportEvent(hasSettings))
+    channel.trySend(Event.ProjectPathReportEvent(projectId, hasSettings))
+    return withContext(MyProjectMarker(projectId)) {
+      block.invoke()
+    }
+  }
+
+  private fun withRequiredProjectMarker(block: (ProjectId) -> Unit) {
+    if (!currentThreadContext().isProperContext()) {
+      return
+    }
+    val projectMarker = currentThreadContext().getProjectMarker()
+    if (projectMarker == null) {
+      throw IllegalStateException("No project marker found")
+    }
+    block.invoke(projectMarker.id)
   }
 
   fun resetProjectPath() {
-    if (!currentThreadContext().isProperContext()) return
-    channel.trySend(Event.ResetProjectPathEvent)
+    withRequiredProjectMarker { id ->
+      channel.trySend(Event.ResetProjectPathEvent(id))
+    }
   }
 
   fun openingMultipleProjects() {
@@ -211,11 +249,11 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   fun frameBecameVisible() {
-    channel.trySend(Event.FrameBecameVisibleEvent())
+    channel.trySend(Event.FrameBecameVisibleEvent()) //todo[lene] handle multiple frames case
   }
 
   fun reportFrameBecameInteractive() {
-    channel.trySend(Event.FrameBecameInteractiveEvent())
+    channel.trySend(Event.FrameBecameInteractiveEvent()) //todo[lene] handle multiple frames case
   }
 
   fun markupRestored(recipe: SpawnRecipe, type: MarkupType) {
@@ -223,13 +261,12 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   fun firstOpenedEditor(file: VirtualFile, project: Project) {
-    if (!currentThreadContext().isProperContext()) {
-      return
-    }
-    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime()))
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      val fileEditorManager = FileEditorManager.getInstance(project)
-      checkEditorHasBasicHighlight(file, project, fileEditorManager)
+    withRequiredProjectMarker {
+      channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime()))
+      if (ApplicationManagerEx.isInIntegrationTest()) {
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        checkEditorHasBasicHighlight(file, project, fileEditorManager)
+      }
     }
   }
 
@@ -264,28 +301,29 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   fun firstOpenedUnknownEditor(file: VirtualFile, nanoTime: Long) {
-    if (!currentThreadContext().isProperContext()) return
-    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime))
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      val project = ProjectManager.getInstance().openProjects[0]
-      val fileEditorManager = FileEditorManager.getInstance(project)
-      checkEditorHasBasicHighlight(file, project, fileEditorManager)
+    withRequiredProjectMarker {
+      channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime))
+      if (ApplicationManagerEx.isInIntegrationTest()) {
+        val project = ProjectManager.getInstance().openProjects[0]
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        checkEditorHasBasicHighlight(file, project, fileEditorManager)
+      }
     }
   }
 
   fun openedReadme(readmeFile: VirtualFile, nanoTime: Long) {
-    if (!currentThreadContext().isProperContext()) return
-    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime))
-    // Do not check highlights here, because the readme file is opened in preview-only mode with
-    // `readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)`,
-    // see the caller
+    withRequiredProjectMarker {
+      channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime))
+      // Do not check highlights here, because the readme file is opened in preview-only mode with
+      // `readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)`,
+      // see the caller
+    }
   }
 
   fun reportNoMoreEditorsOnStartup(nanoTime: Long) {
-    if (!currentThreadContext().isProperContext()) {
-      return
+    withRequiredProjectMarker {
+      channel.trySend(Event.NoMoreEditorsEvent(nanoTime))
     }
-    channel.trySend(Event.NoMoreEditorsEvent(nanoTime))
   }
 
   private data class LastHandledEvent(val event: Event.FUSReportableEvent, val durationReportedToFUS: Duration)
@@ -459,7 +497,7 @@ object FUSProjectHotStartUpMeasurer {
         }
         is Event.MarkupRestoredEvent -> markupResurrectedFileIds.addId(event.fileId, event.markupType)
         is Event.ProjectPathReportEvent -> if (projectPathReportEvent == null) projectPathReportEvent = event
-        Event.ResetProjectPathEvent -> projectPathReportEvent = null
+        is Event.ResetProjectPathEvent -> projectPathReportEvent = null
         is Event.ProjectTypeReportEvent -> if (projectTypeReportEvent == null) projectTypeReportEvent = event
         is Event.ViolationEvent -> reportViolation(event.violation, event.time, ideStarterStartedEvent, lastHandledEvent)
         is Event.FirstEditorEvent -> if (firstEditorEvent == null) firstEditorEvent = event
@@ -495,6 +533,15 @@ object FUSProjectHotStartUpMeasurer {
 
     override val key: CoroutineContext.Key<*>
       get() = this
+  }
+
+  private data class MyProjectMarker(val id: ProjectId) : CoroutineContext.Element, IntelliJContextElement {
+    object Key : CoroutineContext.Key<MyProjectMarker>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
+    override val key: CoroutineContext.Key<*>
+      get() = Key
   }
 
   private fun getDurationFromStart(

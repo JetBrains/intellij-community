@@ -360,9 +360,6 @@ object CommandLineProcessor {
           if (command.lightEditMode) {
             FUSProjectHotStartUpMeasurer.lightEditProjectFound()
           }
-          else {
-            FUSProjectHotStartUpMeasurer.reportProjectPath(command.file)
-          }
         }
         is NoProjectResult -> {
           FUSProjectHotStartUpMeasurer.noProjectFound()
@@ -374,12 +371,14 @@ object CommandLineProcessor {
     for (command in commands) {
         result = when (command) {
           is OpenProjectResult -> {
-            openFileOrProject(file = command.file,
-                              line = command.line,
-                              column = command.column,
-                              tempProject = command.tempProject,
-                              shouldWait = command.shouldWait,
-                              lightEditMode = command.lightEditMode)
+            FUSProjectHotStartUpMeasurer.withProjectContextElement(command.file) {//todo[lene] pass light mode to filter out
+              openFileOrProject(file = command.file,
+                                line = command.line,
+                                column = command.column,
+                                tempProject = command.tempProject,
+                                shouldWait = command.shouldWait,
+                                lightEditMode = command.lightEditMode)
+            }
           }
           is NoProjectResult -> {
             if (command.shouldWait) {
