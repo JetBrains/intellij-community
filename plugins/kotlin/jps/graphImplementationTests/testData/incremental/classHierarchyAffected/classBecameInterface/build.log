@@ -14,7 +14,6 @@ Cleaning output files:
   out/production/module/bar/ImportStarKt.class
   out/production/module/bar/ReferencedByFqNameKt.class
   out/production/module/foo/AChild.class
-  out/production/module/foo/AGrandChild.class
   out/production/module/foo/ATypeParameter.class
   out/production/module/foo/FunctionParameterKt.class
   out/production/module/foo/GetAKt.class
@@ -23,7 +22,6 @@ Cleaning output files:
 End of files
 Compiling files:
   src/AChild.kt
-  src/AGrandChild.kt
   src/ATypeParameter.kt
   src/functionParameter.kt
   src/getA.kt
@@ -35,11 +33,11 @@ End of files
 Exit code: ABORT
 ------------------------------------------
 COMPILATION FAILED
-This class does not have a constructor
-Interface A does not have constructors
-Interface A does not have constructors
-Interface A does not have constructors
-Interface A does not have constructors
+This type does not have a constructor.
+Interface 'interface A : Any' does not have constructors.
+Interface 'interface A : Any' does not have constructors.
+Interface 'interface A : Any' does not have constructors.
+Interface 'interface A : Any' does not have constructors.
 
 ================ Step #2 =================
 
@@ -50,7 +48,6 @@ End of files
 Compiling files:
   src/A.kt
   src/AChild.kt
-  src/AGrandChild.kt
   src/ATypeParameter.kt
   src/functionParameter.kt
   src/getA.kt
@@ -63,9 +60,11 @@ Exit code: OK
 ------------------------------------------
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
+  out/production/module/foo/AGrandChild.class
   out/production/module/foo/ClassLiteralKt.class
 End of files
 Compiling files:
+  src/AGrandChild.kt
   src/classLiteral.kt
   src/importA.kt
 End of files
