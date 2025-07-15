@@ -11,9 +11,9 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.sdk.configurePythonSdk
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -39,7 +39,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
     }
     val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@coroutineScope it }
     sdk.setAssociationToModule(module)
-    module.pythonSdk = sdk
+    configurePythonSdk(project, module, sdk)
     return@coroutineScope com.jetbrains.python.Result.success(Pair(sdk, interpreterStatistics))
   }
 
