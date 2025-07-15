@@ -29,7 +29,7 @@ import com.intellij.util.indexing.IndexUpToDateCheckIn.isUpToDateCheckEnabled
 import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.events.VfsEventsMerger.VfsEventProcessor
 import com.intellij.util.progress.withLockCancellable
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import org.jetbrains.annotations.ApiStatus
@@ -299,7 +299,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
         return
       }
       catch (_: TimeoutCancellationException) {
-        UIUtil.dispatchAllInvocationEvents()
+        EDT.dispatchAllInvocationEvents()
       }
     }
   }
