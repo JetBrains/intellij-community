@@ -19,7 +19,7 @@ class JavaTestRunner : TestRunner {
     params.language == Language.KOTLIN
 
   override suspend fun runTests(request: TestRunRequest): TestRunResult {
-    LOG.info("Running tests: ${request.tests.joinToString()}")
+    LOG.info("Running tests. total ${request.tests.size}. tests: ${request.tests.joinToString()}")
     if (request.tests.isEmpty()) {
       return TestRunResult(0, emptyList(), emptyList(), true, true, "")
     }
