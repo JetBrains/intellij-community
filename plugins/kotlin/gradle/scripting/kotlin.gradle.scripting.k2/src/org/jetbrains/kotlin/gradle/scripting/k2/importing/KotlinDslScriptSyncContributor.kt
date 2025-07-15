@@ -85,6 +85,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
             readAction { PsiManager.getInstance(project).findFile(it.virtualFile) as? KtFile }
         }.toTypedArray()
 
-        DefaultScriptResolutionStrategy.getInstance(project).execute(*ktFiles).join()
+        // Android Studio b/429413519 deadlock
+        DefaultScriptResolutionStrategy.getInstance(project).execute(*ktFiles)
     }
 }
