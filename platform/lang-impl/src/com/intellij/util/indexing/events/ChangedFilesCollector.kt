@@ -234,7 +234,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
       fileBasedIndex.waitUntilIndicesAreInitialized()
       eventMerger.processChanges(object : VfsEventProcessor {
         override fun process(changeInfo: VfsEventsMerger.ChangeInfo): Boolean {
-          fileBasedIndex.myWriteLock.withLock {
+          fileBasedIndex.writeLock.withLock {
             try {
               ProgressManager.getInstance().executeNonCancelableSection(Runnable {
                 processor.process(changeInfo)
@@ -248,7 +248,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
         }
 
         override fun endBatch() {
-          fileBasedIndex.myWriteLock.withLockCancellable {
+          fileBasedIndex.writeLock.withLockCancellable {
             processor.endBatch()
           }
         }

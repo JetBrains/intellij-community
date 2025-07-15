@@ -160,7 +160,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   //TODO RC: this lock is used _only in SingleValueApplier/Remover to update unindexedStateForFile()
   final Lock myReadLock;
-  public final Lock myWriteLock;
+  public final Lock writeLock;
 
   private IndexConfiguration getState() {
     return myRegisteredIndexes.getConfigurationState();
@@ -181,7 +181,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     //TODO RC: better hold a reference to the RRWLock in a field
     ReadWriteLock lock = new ReentrantReadWriteLock();
     myReadLock = lock.readLock();
-    myWriteLock = lock.writeLock();
+    writeLock = lock.writeLock();
 
     // we preload this service, as it may be attempted to initialize latre
     FileTypeManager.getInstance();
