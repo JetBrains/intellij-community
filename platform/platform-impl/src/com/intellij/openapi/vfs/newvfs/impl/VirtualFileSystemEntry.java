@@ -18,10 +18,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,11 +32,18 @@ import static com.intellij.openapi.vfs.InvalidVirtualFileAccessException.getInva
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
-  public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
+  public static final VirtualFileSystemEntry[] EMPTY_ARRAY = {};
+
+  /**
+   * true: use new (recursive) implementation of {@link #computePath(String, String)},
+   * false: use legacy (iterative) implementation
+   */
+  private static final boolean USE_RECURSIVE_PATH_COMPUTE = getBooleanProperty("VirtualFileSystemEntry.USE_RECURSIVE_PATH_COMPUTE", true);
 
   /**
    * If true -- {@link #isValid()} return false for 'alien' vfiles (vfiles created in previous VFS session).
    * If false -- {@link #isValid()} throw AssertionError for 'alien' files (as all other method do)
+   *
    * @see #isValid() comments for details
    */
   private static final boolean TREAT_ALIEN_FILES_AS_INVALID_INSTEAD_OF_CODE_BUG = getBooleanProperty(
@@ -248,7 +252,64 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  private @NotNull String computePath(@NotNull String protocol, @NotNull String protoSeparator) {
+  private @NotNull String computePath(@NotNull String protocol,
+                                      @NotNull String protoSeparator) {
+    if (USE_RECURSIVE_PATH_COMPUTE) {
+      return computePathRecursively(
+        this,
+        protocol, protoSeparator,
+        /* requiredBufferSize: */ 0
+      ).toString();
+    }
+    else {
+      return computePathIteratively(protocol, protoSeparator);
+    }
+  }
+
+  /**
+   * Recursive implementation of {@link #computePathIteratively(String, String)}: avoids allocating ArrayList, and uses
+   * StringBuilder instead of plain char[] -- StringBuilder uses byte[] inside, which may be faster than explicit char[]
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull StringBuilder computePathRecursively(@NotNull VirtualFile file,
+                                                              @NotNull String protocol,
+                                                              @NotNull String protoSeparator,
+                                                              int requiredBufferSize) {
+    VirtualFile parent = file.getParent();
+    if (parent == null) {
+      String rootPath = file.getPath();
+      return new StringBuilder(
+        protocol.length() + protoSeparator.length() + rootPath.length() + requiredBufferSize
+      )
+        .append(protocol)
+        .append(protoSeparator)
+        .append(rootPath);//FSRoot.getPath() must end with '/'
+    }
+
+    String fileName = file.getName();
+
+    StringBuilder pathBuilder = computePathRecursively(
+      parent,
+      protocol, protoSeparator,
+      requiredBufferSize + fileName.length() + 1
+    );
+
+    pathBuilder.append(fileName);
+    if (requiredBufferSize > 0) { // requiredBufferSize=0 is the top calling frame, don't need trailing '/'
+      pathBuilder.append('/');
+    }
+    return pathBuilder;
+  }
+
+  /**
+   * Legacy (iterative) implementation of {@link #computePath(String, String)}: builds the path into a char[], allocates
+   * temporary ArrayList as stack
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull String computePathIteratively(@NotNull String protocol,
+                                                @NotNull String protoSeparator) {
     int length = 0;
     List<CharSequence> names = new ArrayList<>();
     VirtualFileSystemEntry v = this;
@@ -280,8 +341,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       o += nameLength;
       path[o++] = '/';
     }
-    CharSequence name = names.get(0);
-    CharArrayUtil.getChars(name, path, o);
+    if (!names.isEmpty()) {
+      CharSequence name = names.get(0);
+      CharArrayUtil.getChars(name, path, o);
+    }
     return new String(path);
   }
 
