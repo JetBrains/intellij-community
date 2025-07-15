@@ -250,7 +250,7 @@ class TerminalOutputModelImpl(
      * Indexes of the ranges are absolute to support trimming the start of the list
      * without reassigning indexes for the remaining ranges: [removeBefore].
      */
-    private val styleRanges: MutableList<StyleRange> = ArrayList()
+    private val styleRanges: MutableList<StyleRange> = ArrayDeque() // ArrayDeque is used here for fast removeAt(0).
 
     /**
      * Contains sorted ranges of the highlightings that cover all document length.
