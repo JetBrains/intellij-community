@@ -41,10 +41,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
@@ -66,6 +63,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -991,6 +989,37 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       public void run(@NotNull ProgressIndicator indicator) {
         assertFalse(getPsiDocumentManager().isCommitted(document));
         getPsiDocumentManager().commitAndRunReadAction(() -> assertTrue(getPsiDocumentManager().isCommitted(document)));
+      }
+    });
+  }
+
+  public void testHugeAmountOfChangedDocumentsMustNotCauseSynchronousCommitLeadingToUIFreeze() {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, Throwable t) {
+        if (message.contains("Too many uncommitted documents")) {
+          return Action.NONE;
+        }
+        return super.processError(category, message, details, t);
+      }
+    }, () -> {
+      PsiDocumentManagerImpl psiDocumentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
+      psiDocumentManager.myUnitTestMode = false; // test the prod behaviour
+      try {
+        for (int i=0;i<5_000;i++) {
+          PsiFile mainFile = findFile(createFile());
+          Document doc = getDocument(mainFile);
+          psiDocumentManager.addRunOnCommit(doc, d ->{
+            ApplicationManager.getApplication().assertIsNonDispatchThread();
+          });
+          WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+            doc.insertString(0," ");
+          });
+        }
+      }
+      finally {
+        psiDocumentManager.myUnitTestMode = true;
+        psiDocumentManager.clearUncommittedDocuments();
       }
     });
   }

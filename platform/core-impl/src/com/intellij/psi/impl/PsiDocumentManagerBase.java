@@ -78,8 +78,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private final Map<Document, Throwable> myUncommittedDocumentTraces = CollectionFactory.createConcurrentWeakMap();
   private /*non-static*/ final Key<UncommittedInfo> UNCOMMITTED_INFO_KEY = Key.create("UNCOMMITTED_INFO");
 
-  @ApiStatus.Internal
-  protected boolean myStopTrackingDocuments;
   private boolean myPerformBackgroundCommit = true;
 
   @SuppressWarnings("ThreadLocalNotStaticFinal")
@@ -983,7 +981,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
-    if (myStopTrackingDocuments || myProject.isDisposed()) return;
+    if (myProject.isDisposed()) {
+      return;
+    }
 
     Document document = event.getDocument();
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -1026,7 +1026,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    if (myStopTrackingDocuments || myProject.isDisposed()) {
+    if (myProject.isDisposed()) {
       return;
     }
 
@@ -1088,32 +1088,27 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     // optimisation: avoid documents piling up during batch processing
-    if (isUncommited(document) && areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
-      // must not commit during document save
-      if (PomModelImpl.isAllowPsiModification()
-          // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
-          && ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        // commit one document to avoid OOME
-        for (Document uncommitted : myUncommittedDocuments) {
-          if (uncommitted != event.getDocument()) {
-            commitDocument(uncommitted);
-            break;
+    if (myUnitTestMode && isUncommited(document) && areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
+      try {
+        Logger.getInstance(getClass()).error(
+          "Too many uncommitted documents (" +myUncommittedDocuments.size()+"):\n"
+          + StringUtil.join(myUncommittedDocuments, "\n") + myProject);
+        // must not commit during document save
+        if (PomModelImpl.isAllowPsiModification()
+            // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
+            && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+          // commit one document to avoid OOME
+          for (Document uncommitted : myUncommittedDocuments) {
+            if (uncommitted != document) {
+              commitDocument(uncommitted);
+              break;
+            }
           }
         }
       }
-      if (myUnitTestMode) {
-        myStopTrackingDocuments = true;
-        try {
-          //noinspection TestOnlyProblems
-          Logger.getInstance(getClass()).error(
-            "Too many uncommitted documents for " + myProject + "(" +myUncommittedDocuments.size()+")"+
-            ":\n" + StringUtil.join(myUncommittedDocuments, "\n") +
-            myProject);
-        }
-        finally {
-          //noinspection TestOnlyProblems
-          clearUncommittedDocuments();
-        }
+      finally {
+        //noinspection TestOnlyProblems
+        clearUncommittedDocuments();
       }
     }
   }
