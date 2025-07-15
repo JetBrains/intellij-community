@@ -15,29 +15,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.daemon.common.trimQuotes
-import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
-import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameters
 import kotlin.test.assertNotNull as kAssertNotNull
 
-private const val TARGET_GRADLE_VERSION = "8.13"
-private const val COMMON_MAIN = "commonMain"
-private const val ANDROID_MAIN = "androidMain"
-private const val IOS_MAIN = "iosMain"
-
-private val SOURCE_SETS = setOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN)
-
-@TestRoot("../../../community/plugins/compose/intellij.compose.ide.plugin.resources/testData")
-@TestMetadata("")
-class ComposeResourcesGotoDeclarationTest : KotlinGradleImportingTestCase() {
-
-  @Parameterized.Parameter(1)
-  lateinit var sourceSetName: String
-
+class ComposeResourcesGotoDeclarationTest : ComposeResourcesTestCase() {
   private var _codeInsightTestFixture: CodeInsightTestFixture? = null
 
   private val codeInsightTestFixture: CodeInsightTestFixture
@@ -91,12 +74,5 @@ class ComposeResourcesGotoDeclarationTest : KotlinGradleImportingTestCase() {
       val actualTypeName = if (expectedType.isStringType) it.parentOfType<XmlTag>()?.name else it.parent.namedUnwrappedElement?.name?.asUnderscoredIdentifier()
       assertTrue(actualTypeName?.startsWith(expectedType.typeName) == true)
     }
-  }
-
-  companion object {
-    @JvmStatic
-    @Suppress("ACCIDENTAL_OVERRIDE")
-    @Parameters(name = "{index}: source set {1} with Gradle-{0}")
-    fun data(): Collection<Any> = SOURCE_SETS.map { arrayOf(TARGET_GRADLE_VERSION, it) }
   }
 }

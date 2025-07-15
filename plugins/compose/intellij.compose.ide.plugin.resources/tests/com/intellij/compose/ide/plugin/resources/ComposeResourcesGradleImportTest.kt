@@ -9,30 +9,14 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.writeText
-import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.junit.Test
-import org.junit.runners.Parameterized.Parameter
-import org.junit.runners.Parameterized.Parameters
 import kotlin.test.assertEquals as kAssertEquals
 import kotlin.test.assertNotNull as kAssertNotNull
 
-private const val TARGET_GRADLE_VERSION = "8.13"
-private const val COMMON_MAIN = "commonMain"
-private const val ANDROID_MAIN = "androidMain"
-private const val IOS_MAIN = "iosMain"
-
-private val SOURCE_SETS = setOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN)
-
-@TestRoot("../../../community/plugins/compose/intellij.compose.ide.plugin.resources/testData")
-@TestMetadata("")
-class ComposeResourcesGradleImportTest : KotlinGradleImportingTestCase() {
-
-  @Parameter(1)
-  lateinit var sourceSetName: String
+class ComposeResourcesGradleImportTest : ComposeResourcesTestCase() {
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
@@ -110,12 +94,5 @@ class ComposeResourcesGradleImportTest : KotlinGradleImportingTestCase() {
 
   private fun <R> runWriteAction(update: () -> R): R =
     WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
-
-  companion object {
-    @JvmStatic
-    @Suppress("ACCIDENTAL_OVERRIDE")
-    @Parameters(name = "{index}: source set {1} with Gradle-{0}")
-    fun data(): Collection<Any> = SOURCE_SETS.map { arrayOf(TARGET_GRADLE_VERSION, it) }
-  }
 }
 
