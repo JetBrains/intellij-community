@@ -11,8 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal fun isFuzzyFileSearchEnabled(): Boolean {
-  return `is`("search.everywhere.fuzzy.file.search.ab.experiment.enabled", false) &&
-         ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
+  return `is`("search.everywhere.fuzzy.file.search.enabled", false)
 }
 
 @ApiStatus.Internal
