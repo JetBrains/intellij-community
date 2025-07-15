@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -77,6 +77,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // it's required to clear caches manually,
             // otherwise opening file which referred the old builtins would let to PIEAE exceptions
             val jarPath = URLUtil.splitJarUrl(file.path)?.first
+            //MAYBE RC: try (file.fileSystem as ArchiveFileSystem).getLocalByEntry(file) instead of expensive
+            //          file.path building and splitting
             if (jarPath != null && jarPath in builtinsFiles) {
                 runWriteAction {
                     PsiManager.getInstance(project).dropPsiCaches()
