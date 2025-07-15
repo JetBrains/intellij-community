@@ -68,4 +68,5 @@ interface TerminalOutputModel {
   }
 }
 
+@ApiStatus.Internal
 sealed interface TerminalOffset
