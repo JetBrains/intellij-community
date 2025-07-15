@@ -45,6 +45,10 @@ public final class UnInjectLanguageAction implements IntentionAction, LowPriorit
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return isAvailableImpl(project, editor, psiFile);
+  }
+
+  public static boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement element = InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, offset);
     if (element == null) {

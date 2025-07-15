@@ -115,6 +115,10 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
 
   @Override
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return isAvailableImpl(project, editor, psiFile);
+  }
+
+  public static boolean isAvailableImpl(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiLanguageInjectionHost host = findInjectionHost(editor, psiFile);
     if (host == null) return false;
     if (!InjectionUtils.isInjectLanguageActionEnabled(psiFile)) return false;

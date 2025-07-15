@@ -14,6 +14,7 @@ f:org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 - s:invokeImpl(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.injection.Injectable):V
 - s:invokeImpl(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.injection.Injectable,org.intellij.plugins.intelliLang.inject.InjectLanguageAction$FixPresenter):V
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
+- s:isAvailableImpl(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - startInWriteAction():Z
 - s:withFixName(com.intellij.util.Processor,java.lang.String):com.intellij.util.Processor
 org.intellij.plugins.intelliLang.inject.InjectLanguageAction$FixPresenter
@@ -28,4 +29,5 @@ f:org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - s:invokeImpl(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
+- s:isAvailableImpl(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - startInWriteAction():Z
