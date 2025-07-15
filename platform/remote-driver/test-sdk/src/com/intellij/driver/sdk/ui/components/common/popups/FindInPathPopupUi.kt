@@ -55,7 +55,7 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
   val browseButton = x { byTooltip(if (SystemInfoRt.isMac) "⇧⏎" else "Shift+Enter") }
   val searchRecursivelyActionButton = actionButton { byAccessibleName("Search recursively in subdirectories") }
 
-  val scopeChooserComboBox = x { byType("com.intellij.ide.util.scopeChooser.ScopeChooserCombo") }.accessibleComboBox()
+  val scopeChooserComboBox = x { byAccessibleName( "Scope selection") }.accessibleComboBox()
 
   val openResultsInNewTabCheckBox = checkBox { byAccessibleName("Open results in new tab") }
   val openInFindWindowButton = x { byAccessibleName("Open in Find Window") }
@@ -71,6 +71,7 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
     driver.withContext(OnDispatcher.EDT) {
       service(ActionManager::class).tryToExecute(action, null, findPopupPanel.component, null, true)
     }
+
   }
 
   fun showSearchHistoryPopup() {
