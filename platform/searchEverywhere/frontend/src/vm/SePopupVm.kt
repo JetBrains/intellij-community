@@ -37,7 +37,8 @@ class SePopupVm(
   private val historyList: SearchHistoryList,
   private val closePopupHandler: () -> Unit,
 ) {
-  val searchPattern: MutableStateFlow<String> = MutableStateFlow("")
+  private val _searchPattern: MutableStateFlow<String> = MutableStateFlow("")
+  val searchPattern: StateFlow<String> = _searchPattern.asStateFlow()
 
   private val _deferredTabVms = MutableSharedFlow<SeTabVm>(replay = 100)
   val deferredTabVms: SharedFlow<SeTabVm> = _deferredTabVms.asSharedFlow()
@@ -74,7 +75,7 @@ class SePopupVm(
       next
     }
 
-    searchPattern.value = initialSearchPattern ?: run {
+    _searchPattern.value = initialSearchPattern ?: run {
       // History could be suppressed by the user for some reason (creating promo video, conference demo etc.)
       // or could be suppressed just for All tab in the registry.
       val suppressHistory = SystemProperties.getBooleanProperty("idea.searchEverywhere.noHistory", false) ||
@@ -179,6 +180,10 @@ class SePopupVm(
 
   fun getHistoryItems(): List<String> {
     return historyIterator.getList()
+  }
+
+  fun setSearchText(text: String) {
+    _searchPattern.value = text
   }
 
   inner class ShowInFindToolWindowAction(private val onShowFindToolWindow: () -> Unit) : DumbAwareAction(IdeBundle.messagePointer("show.in.find.window.button.name"),

@@ -43,12 +43,10 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.util.bindTextIn
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -144,13 +142,13 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     // hide resultsScrollPane and extendedInfoContainer
     updateViewMode()
 
-    textField.launchOnShow("Search Everywhere text field text binding") {
-      withContext(Dispatchers.EDT) {
-        textField.text = vm.searchPattern.value
-        textField.selectAll()
+    textField.text = vm.searchPattern.value
+    textField.selectAll()
+    textField.document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: javax.swing.event.DocumentEvent) {
+        vm.setSearchText(textField.text)
       }
-      textField.bindTextIn(vm.searchPattern, this)
-    }
+    })
 
     addHistoryExtensionToTextField()
 
