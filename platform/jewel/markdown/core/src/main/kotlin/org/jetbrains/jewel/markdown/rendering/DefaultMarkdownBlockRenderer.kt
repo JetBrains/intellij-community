@@ -534,15 +534,14 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
-    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
-        return rendererExtensions
+    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> =
+        rendererExtensions
             .firstNotNullOfOrNull { it.imageRendererExtension }
             ?.let { imagesRenderer ->
                 getImages(blockInlineContent).associate { image ->
                     image.source to imagesRenderer.renderImagesContent(image)
                 }
             } ?: emptyMap()
-    }
 
     @Composable
     protected fun MaybeScrollingContainer(
@@ -583,8 +582,9 @@ private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = b
                 is WithInlineMarkdown -> {
                     collectImagesRecursively(item.inlineContent)
                 }
-
-                else -> {}
+                else -> {
+                    // Ignored
+                }
             }
         }
     }

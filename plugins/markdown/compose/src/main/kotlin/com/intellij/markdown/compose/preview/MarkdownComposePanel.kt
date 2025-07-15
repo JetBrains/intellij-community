@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.LocalPlatformContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
@@ -46,7 +47,7 @@ import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrike
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
-import org.jetbrains.jewel.markdown.extensions.images.Coil3ImagesRendererExtension
+import org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.scrolling.ScrollSyncMarkdownBlockRenderer
@@ -96,7 +97,9 @@ internal class MarkdownComposePanel(
     val tableRenderer = remember(markdownStyling) {
       GitHubTableRendererExtension(GfmTableStyling.create(), markdownStyling)
     }
-    val allRenderingExtensions = listOf(tableRenderer, GitHubStrikethroughRendererExtension, Coil3ImagesRendererExtension.withDefaultLoader())
+    val coilContext = LocalPlatformContext.current
+    val imageRendererExtension = remember(coilContext) { Coil3ImageRendererExtension.withDefaultLoader(coilContext) }
+    val allRenderingExtensions = listOf(tableRenderer, GitHubStrikethroughRendererExtension, imageRendererExtension)
     val blockRenderer = remember(markdownStyling) {
       ScrollSyncMarkdownBlockRenderer(
         markdownStyling,
