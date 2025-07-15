@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
@@ -31,7 +32,9 @@ internal object SetupPyHelpers {
       it.findChild(SETUP_PY)
     } ?: return null
 
-    return PsiManager.getInstance(module.project).findFile(file) as? PyFile
+    return runReadAction {
+      PsiManager.getInstance(module.project).findFile(file) as? PyFile
+    }
   }
 
   fun parseSetupPy(file: PyFile): List<PyRequirement>? {
