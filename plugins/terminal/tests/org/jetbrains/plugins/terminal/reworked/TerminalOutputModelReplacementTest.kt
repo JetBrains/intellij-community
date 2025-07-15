@@ -218,7 +218,7 @@ internal class TerminalOutputModelReplacementTest : BasePlatformTestCase() {
  * ```
  * [ab<cd|ef>gh](2)
  * ```
- * meaning that "before" will be `[abcdgh](2)` and "after" will be `[ab](2)cd[gh](2)` (because the replacement has no highlighting here).
+ * meaning that "before" will be `[abcdgh](2)` and "after" will be `[ab](2)ef[gh](2)` (because the replacement has no highlighting here).
  * - Style regions in the "after" part can have their own highlighting regions, for example:
  * ```
  * ab<c[d|[gh](2)>ef](1)
