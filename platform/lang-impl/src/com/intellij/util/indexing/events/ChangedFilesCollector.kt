@@ -20,9 +20,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.createBoundedTaskExecutor
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -33,36 +32,35 @@ import com.intellij.util.indexing.events.VfsEventsMerger.VfsEventProcessor
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = Logger.getInstance(ChangedFilesCollector::class.java)
 
-internal class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope) : IndexedFilesListener() {
+@ApiStatus.Internal
+class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope) : IndexedFilesListener() {
   val dirtyFiles: DirtyFiles = DirtyFiles()
 
-  private val myProcessedEventIndex = AtomicInteger()
-  private val myWorkersFinishedSync: Phaser = object : Phaser() {
-    override fun onAdvance(phase: Int, registeredParties: Int): Boolean {
-      return false
-    }
+  private val processedEventIndex = AtomicInteger()
+
+  private val workersFinishedSync: Phaser = object : Phaser() {
+    override fun onAdvance(phase: Int, registeredParties: Int): Boolean = false
   }
 
-  private val vfsEventsExecutor: CoroutineDispatcherBackedExecutor
-  private val myScheduledVfsEventsWorkers = AtomicInteger()
-  private val myFileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-
-  init {
-    vfsEventsExecutor = createBoundedTaskExecutor("FileBasedIndex Vfs Event Processor", coroutineScope)
-  }
+  private val vfsEventsExecutor = createBoundedTaskExecutor("FileBasedIndex Vfs Event Processor", coroutineScope)
+  private val scheduledVfsEventsWorkers = AtomicInteger()
+  private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
 
   override fun iterateIndexableFiles(file: VirtualFile, iterator: ContentIterator) {
-    if (myFileBasedIndex.belongsToIndexableFiles(file)) {
+    if (fileBasedIndex.belongsToIndexableFiles(file)) {
       VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Void?>() {
-        override fun visitFile(file11: VirtualFile): Boolean {
-          if (!myFileBasedIndex.belongsToIndexableFiles(file11)) return false
-          iterator.processFile(file11)
+        override fun visitFile(file: VirtualFile): Boolean {
+          if (!fileBasedIndex.belongsToIndexableFiles(file)) {
+            return false
+          }
+          iterator.processFile(file)
           return true
         }
       })
@@ -71,15 +69,15 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
 
   fun clear() {
     dirtyFiles.clear()
-    ReadAction.run<RuntimeException?>(ThrowableRunnable {
+    ApplicationManager.getApplication().runReadAction {
       if (ApplicationManager.getApplication() == null) {
         // If the application is already disposed (ApplicationManager.getApplication() == null)
         // it means that this method is invoked via ShutDownTracker and the process will be shut down
         // so we don't need to clear collectors.
-        return@ThrowableRunnable
+        return@runReadAction
       }
       processFilesInReadAction(VfsEventProcessor { true })
-    })
+    }
   }
 
   override fun recordFileEvent(fileOrDir: VirtualFile, onlyContentDependent: Boolean) {
@@ -93,28 +91,33 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
   }
 
   private fun addToDirtyFiles(fileOrDir: VirtualFile) {
-    if (fileOrDir !is VirtualFileWithId) return
+    if (fileOrDir !is VirtualFileWithId) {
+      return
+    }
+
     val id = fileOrDir.getId()
-    val projects = myFileBasedIndex.getIndexableFilesFilterHolder().findProjectsForFile(FileBasedIndex.getFileId(fileOrDir))
+    val projects = fileBasedIndex.indexableFilesFilterHolder.findProjectsForFile(FileBasedIndex.getFileId(fileOrDir))
     dirtyFiles.addFile(projects, id)
   }
 
-  override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier {
-    val shouldCleanup = events.any({ event: VFileEvent -> memoryStorageCleaningNeeded(event) })
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier {
+    val shouldCleanup = events.any { event -> memoryStorageCleaningNeeded(event) }
     val superApplier = super.prepareChange(events)
 
     return object : AsyncFileListener.ChangeApplier {
       override fun beforeVfsChange() {
         if (shouldCleanup) {
-          myFileBasedIndex.cleanupMemoryStorage(false)
+          fileBasedIndex.cleanupMemoryStorage(false)
         }
         superApplier.beforeVfsChange()
       }
 
       override fun afterVfsChange() {
         superApplier.afterVfsChange()
-        val registeredIndexes = myFileBasedIndex.getRegisteredIndexes()
-        if (registeredIndexes != null && registeredIndexes.isInitialized()) ensureUpToDateAsync()
+        val registeredIndexes = fileBasedIndex.registeredIndexes
+        if (registeredIndexes != null && registeredIndexes.isInitialized) {
+          ensureUpToDateAsync()
+        }
       }
     }
   }
@@ -123,8 +126,9 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
     if (!isUpToDateCheckEnabled()) {
       return
     }
+
     //assert ApplicationManager.getApplication().isReadAccessAllowed() || ShutDownTracker.isShutdownHookRunning();
-    myFileBasedIndex.waitUntilIndicesAreInitialized()
+    fileBasedIndex.waitUntilIndicesAreInitialized()
 
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       processFilesToUpdateInReadAction()
@@ -135,7 +139,7 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
   }
 
   fun ensureUpToDateAsync() {
-    if (getEventMerger().getApproximateChangesCount() < 20 || !myScheduledVfsEventsWorkers.compareAndSet(0, 1)) {
+    if (eventMerger.approximateChangesCount < 20 || !scheduledVfsEventsWorkers.compareAndSet(0, 1)) {
       return
     }
 
@@ -163,32 +167,41 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
         }
       }
       finally {
-        myScheduledVfsEventsWorkers.decrementAndGet()
+        scheduledVfsEventsWorkers.decrementAndGet()
       }
     })
   }
 
   fun processFilesToUpdateInReadAction() {
     processFilesInReadAction(object : VfsEventProcessor {
-      private val perFileElementTypeUpdateProcessor = (StubIndex.getInstance() as StubIndexImpl).getPerFileElementTypeModificationTrackerUpdateProcessor()
+      private val perFileElementTypeUpdateProcessor = (StubIndex.getInstance() as StubIndexImpl).perFileElementTypeModificationTrackerUpdateProcessor
       override fun process(info: VfsEventsMerger.ChangeInfo): Boolean {
         LOG.debug("Processing ", info)
         try {
           val fileId = info.getFileId()
-          val file = info.getFile()
+          val file = info.file
           val dirtyQueueProjects = dirtyFiles.getProjects(info.getFileId())
-          if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects)
-          if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true, dirtyQueueProjects)
-          if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file, mutableSetOf<Project?>(), dirtyQueueProjects)
-          if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false, dirtyQueueProjects)
+          if (info.isTransientStateChanged) {
+            fileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects)
+          }
+          if (info.isContentChanged) {
+            fileBasedIndex.scheduleFileForIndexing(fileId, file, true, dirtyQueueProjects)
+          }
+          if (info.isFileRemoved) {
+            fileBasedIndex.doInvalidateIndicesForFile(fileId, file, mutableSetOf<Project?>(), dirtyQueueProjects)
+          }
+          if (info.isFileAdded) {
+            fileBasedIndex.scheduleFileForIndexing(fileId, file, false, dirtyQueueProjects)
+          }
           if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector
-          ) {
+            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
             perFileElementTypeUpdateProcessor.processUpdate(file)
           }
         }
         catch (t: Throwable) {
-          if (LOG.isDebugEnabled()) LOG.debug("Exception while processing " + info, t)
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Exception while processing $info", t)
+          }
           throw t
         }
         finally {
@@ -208,21 +221,21 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
   }
 
   private fun processFilesInReadAction(processor: VfsEventProcessor) {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertReadAccess()
 
-    val publishedEventIndex = getEventMerger().getPublishedEventIndex()
-    val processedEventIndex = myProcessedEventIndex.get()
+    val publishedEventIndex = eventMerger.publishedEventIndex
+    val processedEventIndex = processedEventIndex.get()
     if (processedEventIndex == publishedEventIndex) {
       return
     }
 
-    myWorkersFinishedSync.register()
-    val phase = myWorkersFinishedSync.getPhase()
+    workersFinishedSync.register()
+    val phase = workersFinishedSync.phase
     try {
-      myFileBasedIndex.waitUntilIndicesAreInitialized()
-      getEventMerger().processChanges(object : VfsEventProcessor {
+      fileBasedIndex.waitUntilIndicesAreInitialized()
+      eventMerger.processChanges(object : VfsEventProcessor {
         override fun process(changeInfo: VfsEventsMerger.ChangeInfo): Boolean {
-          return ConcurrencyUtil.withLock(myFileBasedIndex.myWriteLock, ThrowableComputable {
+          return ConcurrencyUtil.withLock(fileBasedIndex.myWriteLock, ThrowableComputable {
             try {
               ProgressManager.getInstance().executeNonCancelableSection(Runnable {
                 processor.process(changeInfo)
@@ -236,18 +249,18 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
         }
 
         override fun endBatch() {
-          ConcurrencyUtil.withLock<RuntimeException?>(myFileBasedIndex.myWriteLock, ThrowableRunnable {
+          ConcurrencyUtil.withLock<RuntimeException?>(fileBasedIndex.myWriteLock, ThrowableRunnable {
             processor.endBatch()
           })
         }
       })
     }
     finally {
-      myWorkersFinishedSync.arriveAndDeregister()
+      workersFinishedSync.arriveAndDeregister()
     }
 
     try {
-      awaitWithCheckCancelled(myWorkersFinishedSync, phase)
+      awaitWithCheckCancelled(workersFinishedSync, phase)
     }
     catch (e: RejectedExecutionException) {
       LOG.warn(e)
@@ -258,17 +271,17 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
       throw ProcessCanceledException(e)
     }
 
-    if (getEventMerger().getPublishedEventIndex() == publishedEventIndex) {
-      myProcessedEventIndex.compareAndSet(processedEventIndex, publishedEventIndex)
+    if (eventMerger.publishedEventIndex == publishedEventIndex) {
+      this.processedEventIndex.compareAndSet(processedEventIndex, publishedEventIndex)
     }
   }
 
   private fun processFilesInReadActionWithYieldingToWriteAction() {
-    while (getEventMerger().hasChanges()) {
-      ReadAction.nonBlocking<Void?>(Callable {
+    while (eventMerger.hasChanges()) {
+      ReadAction.nonBlocking(Callable {
         processFilesToUpdateInReadAction()
         null
-      } as Callable<Void?>).executeSynchronously()
+      }).executeSynchronously()
     }
   }
 
@@ -285,21 +298,16 @@ internal class ChangedFilesCollector internal constructor(coroutineScope: Corout
         vfsEventsExecutor.waitAllTasksExecuted(100, TimeUnit.MILLISECONDS)
         return
       }
-      catch (e: TimeoutCancellationException) {
+      catch (_: TimeoutCancellationException) {
         UIUtil.dispatchAllInvocationEvents()
       }
     }
   }
-
-  companion object {
-    val CLEAR_NON_INDEXABLE_FILE_DATA: Boolean = SystemProperties.getBooleanProperty("idea.indexes.clear.non.indexable.file.data", true)
-  }
 }
 
 private fun memoryStorageCleaningNeeded(event: VFileEvent): Boolean {
-  val requestor = event.getRequestor()
-  return requestor is FileDocumentManager ||
-         requestor is PsiManager || requestor === LocalHistory.VFS_EVENT_REQUESTOR
+  val requestor = event.requestor
+  return requestor is FileDocumentManager || requestor is PsiManager || requestor === LocalHistory.VFS_EVENT_REQUESTOR
 }
 
 @Throws(InterruptedException::class)
@@ -310,7 +318,7 @@ private fun awaitWithCheckCancelled(phaser: Phaser, phase: Int) {
       phaser.awaitAdvanceInterruptibly(phase, 100, TimeUnit.MILLISECONDS)
       break
     }
-    catch (ignored: TimeoutException) {
+    catch (_: TimeoutException) {
     }
   }
 }
