@@ -7,6 +7,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.uv.impl.createUvCli
@@ -18,10 +19,19 @@ import kotlin.io.path.pathString
 
 
 internal val Sdk.isUv: Boolean
-  get() = getOrCreateAdditionalData() is UvSdkAdditionalData
+  get() {
+    if (!PythonSdkUtil.isPythonSdk(this)) {
+      return false
+    }
+    return getOrCreateAdditionalData() is UvSdkAdditionalData
+  }
 
 internal val Sdk.uvUsePackageManagement: Boolean
   get() {
+    if (!PythonSdkUtil.isPythonSdk(this)) {
+      return false
+    }
+
     val data = getOrCreateAdditionalData() as? UvSdkAdditionalData ?: return false
     return data.usePip
   }

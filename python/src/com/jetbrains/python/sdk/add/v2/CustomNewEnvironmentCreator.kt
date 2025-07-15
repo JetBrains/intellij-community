@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -80,7 +79,7 @@ internal abstract class CustomNewEnvironmentCreator(
     val newSdk = setupEnvSdk(
       project = moduleOrProject.project,
       module = module,
-      baseSdks = ProjectJdkTable.getInstance().allJdks.asList(),
+      baseSdks = PythonSdkUtil.getAllSdks(),
       projectPath = model.projectPathFlows.projectPathWithDefault.first().toString(),
       homePath = homePath,
       installPackages = false

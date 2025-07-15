@@ -36,6 +36,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import com.jetbrains.python.requirements.RequirementsFileType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
@@ -61,7 +62,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
   override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
 
   private suspend fun createAndAddSdk(module: Module, source: Source): Sdk? {
-    val existingSdks = ProjectJdkTable.getInstance().allJdks.asList()
+    val existingSdks = PythonSdkUtil.getAllSdks()
 
     val data = askForEnvData(module, existingSdks, source) ?: return null
 

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.registry.Registry
@@ -63,7 +62,7 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
       return PyResult.failure(MessageError("Can't determine working dir for the module"))
     }
 
-    val sdk = setupNewUvSdkAndEnv(workingDir, ProjectJdkTable.getInstance().allJdks.toList(), null)
+    val sdk = setupNewUvSdkAndEnv(workingDir, PythonSdkUtil.getAllSdks(), null)
     sdk.onSuccess {
       withContext(Dispatchers.EDT) {
         SdkConfigurationUtil.addSdk(it)

@@ -3,12 +3,12 @@ package com.jetbrains.python.sdk.add.v2.uv
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
@@ -33,7 +33,7 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
     val sdkHomePathString = selectedEnv.get()?.homePath
     val selectedInterpreterPath = tryResolvePath(sdkHomePathString)
                                   ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePathString))
-    val allSdk = ProjectJdkTable.getInstance().allJdks
+    val allSdk = PythonSdkUtil.getAllSdks()
     val existingSdk = allSdk.find { it.homePath == selectedInterpreterPath.pathString }
     val associatedModule = extractModule(moduleOrProject)
     val basePathString = associatedModule?.basePath ?: moduleOrProject.project.basePath
@@ -60,7 +60,7 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
   }
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter> {
-    val existingEnvs = ProjectJdkTable.getInstance().allJdks.filter {
+    val existingEnvs = PythonSdkUtil.getAllSdks().filter {
       it.isUv && (it.associatedModulePath == modulePath.pathString || it.associatedModulePath == null)
     }.mapNotNull { env ->
       env.homePath?.let { path -> DetectedSelectableInterpreter(path, env.version, false) }

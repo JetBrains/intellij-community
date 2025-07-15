@@ -14,6 +14,7 @@ import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -71,7 +72,13 @@ suspend fun setupPoetrySdk(
 }
 
 internal val Sdk.isPoetry: Boolean
-  get() = getOrCreateAdditionalData() is PyPoetrySdkAdditionalData
+  get() {
+    if (!PythonSdkUtil.isPythonSdk(this)) {
+      return false
+    }
+
+    return getOrCreateAdditionalData() is PyPoetrySdkAdditionalData
+  }
 
 internal fun sdkHomes(sdks: List<Sdk>): Set<String> {
   return sdks.mapNotNull { it.homePath }.toSet()

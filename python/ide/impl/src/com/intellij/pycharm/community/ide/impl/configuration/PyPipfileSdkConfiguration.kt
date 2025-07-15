@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
@@ -24,6 +23,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.findAmongRoots
@@ -108,7 +108,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       LOGGER.debug("Setting up associated pipenv environment: $path, $basePath")
 
       val sdk = SdkConfigurationUtil.setupSdk(
-        ProjectJdkTable.getInstance().allJdks,
+        PythonSdkUtil.getAllSdks().toTypedArray(),
         file,
         PythonSdkType.getInstance(),
         PyPipEnvSdkAdditionalData(),

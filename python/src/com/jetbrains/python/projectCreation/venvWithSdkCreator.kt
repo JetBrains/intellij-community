@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.*
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
@@ -22,6 +21,7 @@ import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -168,7 +168,7 @@ private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit
 
 private suspend fun getSdk(pythonPath: PythonBinary, project: Project): Sdk =
   withProgressText(ProjectBundle.message("progress.text.configuring.sdk")) {
-    val allJdks = ProjectJdkTable.getInstance().allJdks
+    val allJdks = PythonSdkUtil.getAllSdks().toTypedArray()
     val currentSdk = allJdks.firstOrNull { sdk -> sdk.homeDirectory?.toNioPath() == pythonPath }
     if (currentSdk != null) return@withProgressText currentSdk
 

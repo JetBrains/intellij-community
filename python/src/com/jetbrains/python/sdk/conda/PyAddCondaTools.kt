@@ -27,6 +27,7 @@ import com.jetbrains.python.onFailure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -258,4 +259,10 @@ internal class IntrospectableCommandExecutor(private val introspectable: Languag
   override fun execute(command: List<String>): CompletableFuture<ProcessOutput> = introspectable.promiseExecuteScript(command)
 }
 
-internal fun Sdk.isConda(): Boolean = getOrCreateAdditionalData().flavorAndData.data is PyCondaFlavorData
+internal fun Sdk.isConda(): Boolean {
+  if (!PythonSdkUtil.isPythonSdk(this)) {
+    return false
+  }
+
+  return getOrCreateAdditionalData().flavorAndData.data is PyCondaFlavorData
+}

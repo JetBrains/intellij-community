@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
@@ -25,7 +26,7 @@ internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddIn
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     val selectedInterpreter = selectedEnv.get()
-    ProjectJdkTable.getInstance().allJdks.find { sdk -> sdk.isPoetry && sdk.homePath == selectedInterpreter?.homePath }?.let { return Result.success(it) }
+    PythonSdkUtil.getAllSdks().find { sdk -> sdk.isPoetry && sdk.homePath == selectedInterpreter?.homePath }?.let { return Result.success(it) }
     val module = when (moduleOrProject) {
       is ModuleOrProject.ModuleAndProject -> {
         moduleOrProject.module

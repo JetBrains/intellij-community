@@ -154,12 +154,22 @@ public final class PythonSdkUtil {
   }
 
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
-    if (module == null || module.isDisposed()) return null;
-    final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk != null && isPythonSdk(sdk)) return sdk;
-    return PyModuleService.getInstance().findPythonSdk(module);
-  }
+    if (module == null || module.isDisposed()) {
+      return null;
+    }
 
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk != null && isPythonSdk(sdk)) {
+      return sdk;
+    }
+
+    sdk = PyModuleService.getInstance().findPythonSdk(module);
+    if (sdk != null && isPythonSdk(sdk)) {
+      return sdk;
+    }
+
+    return null;
+  }
 
   /**
    * Checks if SDK is legacy remote or remote bases on targets.
