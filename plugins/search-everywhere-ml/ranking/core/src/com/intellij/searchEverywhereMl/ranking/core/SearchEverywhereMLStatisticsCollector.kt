@@ -49,7 +49,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       addAll(getSelectedElementsEvents(selectedIndices, searchResults, elementIdProvider, selectedItems))
       addAll(getOnFinishEvents(closePopup, sessionDurationMs))
     }
-    reportElements(
+    logEvent(
       project = project,
       eventId = SESSION_FINISHED,
       seSessionId = seSessionId,
@@ -76,7 +76,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   ) {
     if (!isLoggingEnabled) return
     val additionalEvents = getOnFinishEvents(closePopup = true, sessionDurationMs)
-    reportElements(
+    logEvent(
       project = project,
       eventId = SESSION_FINISHED,
       seSessionId = seSessionId,
@@ -108,7 +108,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         )
       }
     }
-    reportElements(
+    logEvent(
       project = project,
       eventId = SEARCH_RESTARTED,
       seSessionId = seSessionId,
@@ -122,7 +122,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     )
   }
 
-  private fun reportElements(
+  private fun logEvent(
     project: Project?,
     eventId: VarargEventId,
     seSessionId: Int,
