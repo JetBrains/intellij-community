@@ -35,6 +35,7 @@ final class UndoableGroup implements Dumpable {
   private final int commandTimestamp;
   private final boolean isTransparent;
   private final boolean isGlobal;
+  private final boolean isUndoable;
 
   private @Nullable UndoableGroupOriginalContext originalContext;
   private @Nullable EditorAndState stateBefore;
@@ -70,15 +71,11 @@ final class UndoableGroup implements Dumpable {
     this.isGlobal = isGlobal;
     this.isValid = isValid;
     composeStartFinishGroup(stacksHolder);
+    this.isUndoable = ContainerUtil.all(actions, action -> !(action instanceof NonUndoableAction));
   }
 
   boolean isUndoable() {
-    for (UndoableAction action : actions) {
-      if (action instanceof NonUndoableAction) {
-        return false;
-      }
-    }
-    return true;
+    return isUndoable;
   }
 
   void undo() throws UnexpectedUndoException {
@@ -95,14 +92,16 @@ final class UndoableGroup implements Dumpable {
     for (UndoableAction action : actions) {
       if (action instanceof StartMarkAction) {
         startNmb++;
-      } else if (action instanceof FinishMarkAction) {
+      }
+      else if (action instanceof FinishMarkAction) {
         finishNmb++;
       }
     }
     if (startNmb != finishNmb) {
       if (isUndo) {
         return finishNmb > startNmb;
-      } else {
+      }
+      else {
         return startNmb > finishNmb;
       }
     }
