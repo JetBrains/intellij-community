@@ -15,7 +15,6 @@ import com.intellij.python.community.services.internal.impl.VanillaPythonWithLan
 import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
-import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
