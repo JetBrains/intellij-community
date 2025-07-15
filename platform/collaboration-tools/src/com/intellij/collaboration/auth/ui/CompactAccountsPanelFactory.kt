@@ -6,15 +6,21 @@ import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.items
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ClickListener
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuPopupStep
 import com.intellij.util.ui.cloneDialog.AccountsMenuListPopup
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.awaitCancellation
 import java.awt.Component
 import java.awt.event.MouseEvent
 import javax.swing.*
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 class CompactAccountsPanelFactory<A : Account>(
   private val accountsListModel: ListModel<A>
@@ -25,6 +31,10 @@ class CompactAccountsPanelFactory<A : Account>(
              popupConfig: PopupConfig<A>): JComponent {
 
     val iconRenderer = IconCellRenderer(detailsProvider, listAvatarSize)
+
+    fun buildTooltipHtml(): String = HtmlBuilder()
+      .appendWithSeparators(HtmlChunk.br(), accountsListModel.items.map { HtmlChunk.text(it.name) })
+      .toString()
 
     @Suppress("UndesirableClassUsage")
     val accountsList = JList(accountsListModel).apply {
@@ -37,6 +47,24 @@ class CompactAccountsPanelFactory<A : Account>(
       layoutOrientation = JList.HORIZONTAL_WRAP
     }
 
+    accountsList.launchOnShow("AccountsListUpdate") {
+      val listener = object : ListDataListener {
+        override fun contentsChanged(e: ListDataEvent?) = updateAccountsTooltip()
+        override fun intervalAdded(e: ListDataEvent?) = updateAccountsTooltip()
+        override fun intervalRemoved(e: ListDataEvent?) = updateAccountsTooltip()
+        fun updateAccountsTooltip() {
+          accountsList.toolTipText = buildTooltipHtml()
+        }
+      }
+      accountsListModel.addListDataListener(listener)
+      listener.updateAccountsTooltip()
+      try {
+        awaitCancellation()
+      }
+      finally {
+        accountsListModel.removeListDataListener(listener)
+      }
+    }
     PopupMenuListener(accountsListModel, detailsProvider, popupConfig).installOn(accountsList)
     return accountsList
   }
