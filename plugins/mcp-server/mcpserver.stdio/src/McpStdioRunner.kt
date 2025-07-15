@@ -80,7 +80,7 @@ private fun decorateParamsIfNeeded(params: JsonElement, projectPath: String?): J
 
   if (params is JsonObject) {
     val meta = params[metaKey]
-    if (meta is JsonObject) {
+    if (meta is JsonObject?) {
       return buildJsonObject { // params value
         for ((key, value) in params.entries) {
           if (key != metaKey) {
@@ -88,8 +88,10 @@ private fun decorateParamsIfNeeded(params: JsonElement, projectPath: String?): J
           }
           else {
             put(metaKey, buildJsonObject { // _meta value
-              for ((key, value) in meta.jsonObject) { // copy _meta members
-                put(key, value)
+              meta?.jsonObject?.let { metaJson ->
+                for ((key, value) in metaJson) { // copy _meta members
+                  put(key, value)
+                }
               }
               put(IJ_MCP_SERVER_PROJECT_PATH, projectPath)
             })

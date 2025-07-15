@@ -6,13 +6,12 @@ import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
-import com.intellij.openapi.project.guessProjectDir
+import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vfs.toNioPathOrNull
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepositoryManager
-import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.currentCoroutineContext
 import kotlin.io.path.Path
 
 class VcsToolset : McpToolset {
@@ -27,7 +26,7 @@ class VcsToolset : McpToolset {
         @McpDescription("Text or keywords to search for in commit messages")
         text: String
     ): String {
-        val project = coroutineContext.project
+        val project = currentCoroutineContext().project
         val queryText = text
         val matchingCommits = mutableListOf<String>()
 
@@ -78,9 +77,8 @@ class VcsToolset : McpToolset {
         Note: Works with any VCS supported by the IDE, but is most commonly used with Git
     """)
     suspend fun get_project_vcs_status(): String {
-        val project = coroutineContext.project
-        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return "project dir not found"
+        val project = currentCoroutineContext().project
+        val projectDir = project.projectDirectory
 
         val changeListManager = ChangeListManager.getInstance(project)
         val changes = changeListManager.allChanges
