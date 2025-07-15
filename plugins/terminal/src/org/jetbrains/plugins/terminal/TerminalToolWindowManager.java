@@ -13,6 +13,7 @@ import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
@@ -551,24 +552,49 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public boolean canSplit(boolean vertically) {
-        // TODO: delegate to the platform-level tool window split logic
-        return true;
+        var actionId = vertically ? "TW.SplitRight" : "TW.SplitDown";
+        return isActionEnabled(actionId);
       }
 
       @Override
       public void split(boolean vertically) {
-        // TODO: delegate to the platform-level tool window split logic
+        var actionId = vertically ? "TW.SplitRight" : "TW.SplitDown";
+        performAction(actionId);
       }
 
       @Override
       public boolean isGotoNextSplitTerminalAvailable() {
-        // TODO: delegate to the platform-level tool window split logic
-        return false;
+        return isActionEnabled("TW.MoveToNextSplitter");
       }
 
       @Override
       public void gotoNextSplitTerminal(boolean forward) {
-        // TODO: delegate to the platform-level tool window split logic
+        var actionId = forward ? "TW.MoveToNextSplitter" : "TW.MoveToPreviousSplitter";
+        performAction(actionId);
+      }
+
+      private boolean isActionEnabled(@NotNull String actionId) {
+        AnAction action = ActionManager.getInstance().getAction(actionId);
+        if (action == null) return false;
+
+        var event = createActionEvent(action);
+        AnActionResult result = ActionUtil.updateAction(action, event);
+        if (!result.isPerformed()) return false;
+
+        return event.getPresentation().isEnabled();
+      }
+
+      private void performAction(@NotNull String actionId) {
+        AnAction action = ActionManager.getInstance().getAction(actionId);
+        if (action == null) return;
+
+        var event = createActionEvent(action);
+        ActionUtil.performAction(action, event);
+      }
+
+      private @NotNull AnActionEvent createActionEvent(@NotNull AnAction action) {
+        var dataContext = DataManager.getInstance().getDataContext(widget.getComponent());
+        return AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null);
       }
     });
   }

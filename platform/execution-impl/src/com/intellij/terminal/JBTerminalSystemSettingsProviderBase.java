@@ -162,8 +162,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   public @NotNull TerminalAction getGotoNextSplitTerminalAction(@Nullable JBTerminalWidgetListener listener, boolean forward) {
-    // TODO: specify new action IDs for next/prev split actions
-    @Language("devkit-action-id") String actionId = forward ? "Terminal.NextSplitter" : "Terminal.PrevSplitter";
+    @Language("devkit-action-id") String actionId = forward ? "TW.MoveToNextSplitter" : "TW.MoveToPreviousSplitter";
     String text = UIUtil.removeMnemonic(getGotoNextSplitTerminalActionText(forward));
     return new TerminalAction(new TerminalActionPresentation(text, getKeyStrokesByActionId(actionId)), event -> {
       if (listener != null) {
