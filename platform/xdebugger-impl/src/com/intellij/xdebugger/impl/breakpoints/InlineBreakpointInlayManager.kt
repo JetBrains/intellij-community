@@ -27,14 +27,10 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointListener
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -88,15 +84,9 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
         }, project)
       }
 
-      busConnection.subscribe(XBreakpointListener.TOPIC, object : XBreakpointListener<XBreakpoint<*>> {
-        override fun breakpointAdded(breakpoint: XBreakpoint<*>) = changed()
-        override fun breakpointRemoved(breakpoint: XBreakpoint<*>) = changed()
-        override fun breakpointChanged(breakpoint: XBreakpoint<*>) = changed()
-
-        fun changed() {
-          breakpointModificationStamp.incrementAndGet()
-        }
-      })
+      XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).subscribeOnBreakpointsChanges(busConnection) {
+        breakpointModificationStamp.incrementAndGet()
+      }
     }
 
   }
@@ -227,13 +217,13 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
         if (onlyLine != null) {
           if (!DocumentUtil.isValidLine(onlyLine, document)) return@readAndEdtWriteAction value(Unit)
 
-          val breakpoints = allBreakpoints.filter { it.line == onlyLine }
+          val breakpoints = allBreakpoints.filter { it.getLine() == onlyLine }
           if (!breakpoints.isEmpty()) {
             inlays += collectInlayData(document, onlyLine, breakpoints)
           }
         }
         else {
-          for ((line, breakpoints) in allBreakpoints.groupBy { it.line }) {
+          for ((line, breakpoints) in allBreakpoints.groupBy { it.getLine() }) {
             // We could process lines concurrently, but it doesn't seem to be really required.
             inlays += collectInlayData(document, line, breakpoints)
           }
@@ -264,21 +254,23 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
   private fun isSuitableEditor(editor: Editor) =
     !DiffUtil.isDiffEditor(editor)
 
-  private fun allBreakpointsIn(document: Document): Collection<XLineBreakpointImpl<*>> {
-    val lineBreakpointManager = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).lineBreakpointManager
-    return lineBreakpointManager.getDocumentBreakpoints(document)
+  private fun allBreakpointsIn(document: Document): Collection<XLineBreakpointProxy> {
+    val lineBreakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getLineBreakpointManager()
+    return lineBreakpointManager.getDocumentBreakpointProxies(document)
   }
 
   private data class SingleInlayDatum(
-    val breakpoint: XLineBreakpointImpl<*>?,
-    val variant: XLineBreakpointType<*>.XLineBreakpointVariant?,
+    val breakpoint: XLineBreakpointProxy?,
+    val variant: XLineBreakpointInlineVariantProxy?,
     val offset: Int,
   )
 
   @RequiresReadLock
-  private fun collectInlayData(document: Document,
-                               line: Int,
-                               breakpoints: List<XLineBreakpointImpl<*>>): List<SingleInlayDatum> {
+  private fun collectInlayData(
+    document: Document,
+    line: Int,
+    breakpoints: List<XLineBreakpointProxy>,
+  ): List<SingleInlayDatum> {
     if (!DocumentUtil.isValidLine(line, document)) return emptyList()
 
     val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
@@ -287,8 +279,10 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     val variants = try {
       val breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null)
       if (breakpointTypes.isNotEmpty()) {
+        // TODO move it to XDebugManagerProxy
         XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
           .filter { it.shouldUseAsInlineVariant() }
+          .map { it.asProxy() }
       } else {
         emptyList()
       }
@@ -305,7 +299,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     if (!shouldAlwaysShowAllInlays() &&
         breakpoints.size == 1 &&
         (variants.isEmpty() ||
-         variants.size == 1 && areMatching(variants.first(), breakpoints.first()))) {
+         variants.size == 1 && variants.first().isMatching(breakpoints.first()))) {
       // No need to show inline variants when there is only one breakpoint and one matching variant (or no variants at all).
       return emptyList()
     }
@@ -313,7 +307,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     return buildList {
       val remainingBreakpoints = breakpoints.toMutableSmartList()
       for (variant in variants) {
-        val matchingBreakpoints = breakpoints.filter { areMatching(variant, it) }
+        val matchingBreakpoints = breakpoints.filter { variant.isMatching(it) }
         if (matchingBreakpoints.isEmpty()) {
           // Easy case: just draw this inlay as a variant.
           val offset = getBreakpointVariantRangeStartOffset(variant, lineRange)
@@ -352,8 +346,9 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     }
   }
 
-  private fun breakpointHasTheBiggestRange(breakpoint: XLineBreakpointImpl<*>, variants: List<XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant>) : Boolean {
-    val range = breakpoint.highlightRange
+  private fun breakpointHasTheBiggestRange(breakpoint: XLineBreakpointProxy, variants: List<XLineBreakpointInlineVariantProxy>): Boolean {
+    val rangeAvailability = breakpoint.getHighlightRange() as? XLineBreakpointHighlighterRange.Available ?: return false
+    val range = rangeAvailability.range
     if (range == null) {
       return true
     }
@@ -364,24 +359,15 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     }
   }
 
-  @Suppress("UNCHECKED_CAST") // Casts are required for gods of Kotlin-Java type inference.
-  private fun areMatching(variant: XLineBreakpointType<*>.XLineBreakpointVariant,
-                          breakpoint: XLineBreakpointImpl<*>): Boolean {
-    val type = breakpoint.type as XLineBreakpointType<XBreakpointProperties<*>>
-    val b = breakpoint as XLineBreakpointImpl<XBreakpointProperties<*>>
-    val v = variant as XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant
-
-    return type == variant.type && type.variantAndBreakpointMatch(b, v)
-  }
-
-  private fun getBreakpointVariantRangeStartOffset(variant: XLineBreakpointType<*>.XLineBreakpointVariant, lineRange: IntRange): Int {
+  private fun getBreakpointVariantRangeStartOffset(variant: XLineBreakpointInlineVariantProxy, lineRange: IntRange): Int {
     val range = variant.highlightRange
     return getBreakpointRangeStartNormalized(range, lineRange)
   }
 
-  private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointImpl<*>, lineRange: IntRange): Int {
-    val range = breakpoint.highlightRange
-    return getBreakpointRangeStartNormalized(range, lineRange)
+  private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointProxy, lineRange: IntRange): Int {
+    val range = breakpoint.getHighlightRange()
+    if (range !is XLineBreakpointHighlighterRange.Available) return lineRange.first
+    return getBreakpointRangeStartNormalized(range.range, lineRange)
   }
 
   private fun getBreakpointRangeStartNormalized(breakpointRange: TextRange?, lineRange: IntRange): Int {

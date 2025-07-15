@@ -155,8 +155,7 @@ private suspend fun createBreakpoint(
   return breakpointManagerProxy.awaitBreakpointCreation(breakpointDto) as? XLineBreakpointProxy
 }
 
-@ApiStatus.Internal
-class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
+private class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
   override val text: String get() = dto.text
   override val icon: Icon? get() = dto.icon?.icon()
   override val highlightRange: TextRange? get() = dto.highlightRange?.toTextRange()

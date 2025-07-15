@@ -20,17 +20,18 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import java.awt.*
+import java.awt.Cursor
+import java.awt.Graphics
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
-internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakpointImpl<*>?,
-                                             private val variant: XLineBreakpointType<*>.XLineBreakpointVariant?) : EditorCustomElementRenderer, InputHandler {
+internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakpointProxy?,
+                                             private val variant: XLineBreakpointInlineVariantProxy?) : EditorCustomElementRenderer, InputHandler {
   // There could be three states:
   // * not-null breakpoint and not-null variant -- we have a breakpoint and a matching variant (normal case)
   // * null breakpoint and not-null variant -- we have a variant where breakpoint could be set (normal case)
@@ -64,11 +65,11 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
     val baseIcon: Icon
     val alpha: Float
     if (breakpoint != null) {
-      baseIcon = breakpoint.icon
+      baseIcon = breakpoint.getIcon()
       alpha = 1f
     }
     else {
-      baseIcon = variant!!.type.enabledIcon
+      baseIcon = variant!!.icon
       // We use the same transparency as a breakpoint candidate in gutter.
       alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f).coerceIn(0f, 1f)
     }
@@ -149,15 +150,15 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
 
     when (action) {
       ClickAction.SET -> {
-        val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
         val line = editor.document.getLineNumber(offset)
-        XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)
+        variant!!.createBreakpoint(project, file, line)
       }
       ClickAction.ENABLE_DISABLE -> {
-        breakpoint!!.isEnabled = !breakpoint.isEnabled
+        val proxy = breakpoint!!
+        proxy.setEnabled(!proxy.isEnabled())
       }
       ClickAction.REMOVE -> {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint?.asProxy())
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint)
       }
     }
   }
@@ -179,7 +180,7 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
     if (tooltipHint?.isVisible == true) return
     if (!inlay.editor.contentComponent.isShowing) return
 
-    val text = breakpoint?.description ?: variant!!.tooltipDescription
+    val text = breakpoint?.getTooltipDescription() ?: variant!!.tooltipDescription
     val hint = LightweightHint(HintUtil.createInformationLabel(text))
 
     // Location policy: mimic gutter tooltip by pointing it to the center of an icon, but show it above the line.
