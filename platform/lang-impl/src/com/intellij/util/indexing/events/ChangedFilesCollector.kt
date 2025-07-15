@@ -20,7 +20,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.createBoundedTaskExecutor
 import com.intellij.util.indexing.FileBasedIndex
@@ -29,6 +28,7 @@ import com.intellij.util.indexing.FileBasedIndexProjectHandler
 import com.intellij.util.indexing.IndexUpToDateCheckIn.isUpToDateCheckEnabled
 import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.events.VfsEventsMerger.VfsEventProcessor
+import com.intellij.util.progress.withLockCancellable
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
@@ -249,9 +249,9 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
         }
 
         override fun endBatch() {
-          ConcurrencyUtil.withLock<RuntimeException?>(fileBasedIndex.myWriteLock, ThrowableRunnable {
+          fileBasedIndex.myWriteLock.withLockCancellable {
             processor.endBatch()
-          })
+          }
         }
       })
     }
