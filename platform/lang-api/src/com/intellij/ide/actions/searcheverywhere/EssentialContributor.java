@@ -11,12 +11,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface EssentialContributor {
 
-  default boolean isEssential() {
+  default boolean isEssentialByDefault() {
     return true;
   }
 
-  static boolean checkEssentialWithoutMl(SearchEverywhereContributor<?> contributor) {
-    return (contributor instanceof EssentialContributor ic) && ic.isEssential();
+  static boolean checkEssentialByDefault(SearchEverywhereContributor<?> contributor) {
+    return (contributor instanceof EssentialContributor ic) && ic.isEssentialByDefault();
   }
 
   static boolean checkEssential(SearchEverywhereContributor<?> contributor) {
@@ -25,7 +25,7 @@ public interface EssentialContributor {
       return isEssentialByMl;
     }
     else {
-      return checkEssentialWithoutMl(contributor);
+      return checkEssentialByDefault(contributor);
     }
   }
   /**

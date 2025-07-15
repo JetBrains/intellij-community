@@ -8363,7 +8363,7 @@ f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - getSupportedScopes():java.util.List
 - isDumbAware():Z
 - isEmptyPatternSupported():Z
-- isEssential():Z
+- isEssentialByDefault():Z
 - isMultiSelectionSupported():Z
 - isShownInSeparateTab():Z
 - isSlow():Z

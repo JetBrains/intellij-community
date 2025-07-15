@@ -50,7 +50,7 @@ public final class WaitForContributorsListenerWrapper implements SearchListener,
   private void initializeDefaultEssentialContributors(Collection<? extends SearchEverywhereContributor<?>> contributors) {
     if (defaultEssentialContributorsCache.isEmpty()) {
       Map<? extends SearchEverywhereContributor<?>, Boolean> fallbackContributors = contributors.stream()
-        .filter(EssentialContributor::checkEssentialWithoutMl)
+        .filter(EssentialContributor::checkEssentialByDefault)
         .collect(Collectors.toMap(Function.identity(), c -> false));
       defaultEssentialContributorsCache.putAll(fallbackContributors);
     }

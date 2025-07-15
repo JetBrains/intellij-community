@@ -2041,8 +2041,8 @@ c:com.intellij.ide.actions.searcheverywhere.ContributorSearchResult$Builder
 - setHasMore(Z):V
 com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - s:checkEssential(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):Z
-- s:checkEssentialWithoutMl(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):Z
-- isEssential():Z
+- s:checkEssentialByDefault(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):Z
+- isEssentialByDefault():Z
 c:com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - <init>():V
 - <init>(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
