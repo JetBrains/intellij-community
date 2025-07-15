@@ -142,8 +142,6 @@ f:org.jetbrains.jewel.ui.component.TextContextMenu
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.TextContextMenu
 - Area(androidx.compose.foundation.text.TextContextMenu$TextManager,androidx.compose.foundation.ContextMenuState,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
-f:org.jetbrains.jewel.ui.component.TooltipAreaKt
-- sf:TooltipArea(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,I,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V

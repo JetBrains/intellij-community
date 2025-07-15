@@ -10,6 +10,16 @@
   <component name="GitSharedSettings">
     <option name="synchronizeBranchProtectionRules" value="false" />
   </component>
+  <component name="IssueNavigationConfiguration">
+    <option name="links">
+      <list>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="(?x)\b(PRJ_ROAD|CPRTINF|EXPOSED|IDEABKL|MERMAID|SUPPORT|GROOVY|JEWEL|AMPER|BAZEL|IJSDK|IJUCF|JUNIE|RSCPP|RIDER|SKIKO|SPNSR|PSAP|DEXP|AQUA|DCVR|DMRY|DOTP|DTRC|EIJP|GTLB|IDES|IDEA|IJPL|JBAP|JBAI|JPAB|KTIJ|KTLC|KTNB|KTOR|PKGS|PROF|RDCT|RSRP|RSPL|RDOC|RUBY|RUST|TABF|VSAI|VSRS|YTDB|LLM|AIT|AIR|CDC|CPP|CLJ|CWM|RDO|CMP|DBE|DOC|DMU|DPA|EDC|GTW|GRZ|HUB|IFT|VIM|IMP|EDU|JBR|KTI|KMT|MPS|MJP|NIM|PRJ|RCB|BND|SCL|TCC|TBX|WEB|WRS|YTM|OC|AT|CN|DS|FL|GC|GO|IA|OT|KI|KG|KT|KE|LV|MP|MR|WI|PY|QD|RF|RG|RS|TW|XD|JT|R)-\d+\b#YouTrack" />
+          <option name="linkRegexp" value="https://youtrack.jetbrains.com/issue/$0" />
+        </IssueNavigationLink>
+      </list>
+    </option>
+  </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../.." vcs="Git" />

@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 
 /**
@@ -40,14 +39,13 @@ import org.jetbrains.jewel.foundation.JewelFlags
  * @param tooltip Composable content of the tooltip.
  * @param modifier The modifier to be applied to the layout.
  * @param delayMillis Delay in milliseconds.
- * @param tooltipPlacement Defines position of the tooltip.
+ * @param tooltipPlacement Defines the position of the tooltip.
  * @param content Composable content that the current tooltip is set to.
  * @see org.jetbrains.jewel.ui.component.Popup
  * @see androidx.compose.ui.window.Popup
  */
-@ExperimentalJewelApi
 @Composable
-public fun TooltipArea(
+internal fun FlagAwareTooltipArea(
     tooltip: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     delayMillis: Int = 500,
