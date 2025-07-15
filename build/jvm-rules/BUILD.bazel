@@ -40,6 +40,12 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
+# used by _jvm_builder_launcher attribute in jvm_library rule
+exports_files(
+  ["rules/impl/MemoryLauncher.java"],
+  visibility = ["//visibility:private"],
+)
+
 kt_kotlinc_options(
     name = "default-kotlinc-opts-value",
     visibility = ["//visibility:public"],

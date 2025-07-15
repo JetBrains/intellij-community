@@ -104,6 +104,10 @@ common_attr = add_dicts(
         "_jvm_builder_jvm_flags": attr.label(
             default = "//:jvm-builder-jvm_flags",
         ),
+        "_jvm_builder_launcher": attr.label(
+            default = "//:rules/impl/MemoryLauncher.java",
+            allow_single_file = True,
+        ),
         "_reduced_classpath": attr.bool(default = False),
         "_trace": attr.label(default = "//:trace"),
         "_kotlin_inc_threshold": attr.label(default = "//:koltin_inc_threshold"),
