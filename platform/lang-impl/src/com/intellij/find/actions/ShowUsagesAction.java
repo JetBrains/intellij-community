@@ -582,6 +582,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       }
     };
 
+    table.getAccessibleContext().setAccessibleName(UsageViewBundle.message("show.usages.table.accessible.name"));
+
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
     Ref<Long> popupShownTimeRef = new Ref<>();
