@@ -6,7 +6,10 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
+import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -16,6 +19,11 @@ internal class TestPythonRepositoryManager(
 
   private var packageNames: Set<String> = emptySet()
   private var packageDetails: PythonPackageDetails? = null
+
+  override suspend fun findPackageSpecification(name: String, version: String?, relation: PyRequirementRelation, repository: PyPackageRepository?): PythonRepositoryPackageSpecification {
+    return PythonRepositoryPackageSpecification(repository
+                                                ?: PyPIPackageRepository, name, version?.let { pyRequirementVersionSpec(relation, it) })
+  }
 
   fun withPackageNames(packageNames: List<String>): TestPythonRepositoryManager {
     this.packageNames = packageNames.toSet()
@@ -27,13 +35,6 @@ internal class TestPythonRepositoryManager(
     return this
   }
 
-  override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {
-    TODO("Not yet implemented")
-  }
-
-  override fun searchPackages(query: String): Map<PyPackageRepository, List<String>> {
-    TODO("Not yet implemented")
-  }
 
   override val repositories: List<PyPackageRepository>
     get() = listOf(TestPackageRepository(packageNames))
@@ -42,18 +43,23 @@ internal class TestPythonRepositoryManager(
     return packageNames
   }
 
-  override suspend fun getPackageDetails(pkg: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails> {
+  override suspend fun getPackageDetails(spec: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails> {
     return PyResult.success(checkNotNull(packageDetails))
   }
 
-  override suspend fun getLatestVersion(spec: PythonRepositoryPackageSpecification): PyPackageVersion? {
-    TODO("Not yet implemented")
-  }
 
   override suspend fun refreshCaches() {
   }
 
   override suspend fun initCaches() {
+  }
+
+  override suspend fun getVersions(packageName: String, repository: PyPackageRepository?): List<String> {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getLatestVersion(packageName: String, repository: PyPackageRepository?): PyPackageVersion {
+    TODO("Not yet implemented")
   }
 }
 

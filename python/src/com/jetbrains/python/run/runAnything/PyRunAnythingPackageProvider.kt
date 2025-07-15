@@ -12,6 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
 import com.jetbrains.python.sdk.isTargetBased
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
@@ -73,7 +74,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
 
   private fun initCaches(packageManager: PythonPackageManager) {
     if (!cacheInitialized.getAndSet(true)) {
-      runBlockingCancellable { packageManager.repositoryManager.initCaches() }
+      runBlockingCancellable { (packageManager.repositoryManager as? PythonRepositoryManagerBase)?.waitForInit() }
     }
   }
 

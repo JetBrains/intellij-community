@@ -18,7 +18,7 @@ import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 
 internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
-  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val result = if (sdk.uvUsePackageManagement) {

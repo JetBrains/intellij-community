@@ -17,9 +17,9 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.findPackageSpecification
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPackageBackground
@@ -163,13 +163,9 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
     }
   }
 
-  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null) = if (repository != null) {
-    repository.findPackageSpecification(packageName, version)
-    ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repository", packageName, repository.name))
-  }
-  else {
-    manager.findPackageSpecification(packageName, version)
-    ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", packageName))
+  private suspend fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonRepositoryPackageSpecification {
+    return repositoryManager.findPackageSpecification(packageName, version = version, repository = repository)
+           ?: throw IllegalArgumentException(PyBundle.message("python.packaging.error.package.is.not.listed.in.repositories", packageName))
   }
 
   override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)

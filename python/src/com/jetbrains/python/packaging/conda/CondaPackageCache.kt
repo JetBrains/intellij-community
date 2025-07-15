@@ -17,7 +17,6 @@ import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
@@ -42,10 +41,6 @@ internal class CondaPackageCache : PythonPackageCache<String> {
   private val lock = Mutex()
   private var loadInProgress: Boolean = false
 
-  suspend fun forceReloadCache(sdk: Sdk, project: Project) {
-    return reloadCache(sdk, project, true)
-  }
-
   suspend fun reloadCache(sdk: Sdk, project: Project, force: Boolean = false) {
     lock.withLock {
       if ((cache.isNotEmpty() && !force) || loadInProgress) {
@@ -69,8 +64,6 @@ internal class CondaPackageCache : PythonPackageCache<String> {
     withContext(Dispatchers.IO) {
       val pathOnTarget = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
       val targetConfig = sdk.targetEnvConfiguration
-      val targetRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
-      val commandExecutor = TargetEnvironmentRequestCommandExecutor(targetRequest)
       val baseConda = PyCondaEnv.getEnvs(pathOnTarget).getOrThrow()
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 

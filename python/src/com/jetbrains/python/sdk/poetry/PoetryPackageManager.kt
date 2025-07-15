@@ -18,7 +18,7 @@ import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
   override suspend fun syncCommand(): PyResult<Unit> {
     return runPoetryWithSdk(sdk, "install").mapSuccess { }

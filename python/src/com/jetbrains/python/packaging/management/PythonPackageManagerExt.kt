@@ -52,7 +52,7 @@ suspend fun PythonPackageManager.getInstalledPackage(packageName: String, versio
 }
 
 @ApiStatus.Internal
-fun PythonPackageManager.findPackageSpecification(
+suspend fun PythonPackageManager.findPackageSpecification(
   packageName: String,
   version: String? = null,
   relation: PyRequirementRelation = PyRequirementRelation.EQ,

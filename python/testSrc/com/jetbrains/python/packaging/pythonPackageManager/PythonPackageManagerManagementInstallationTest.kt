@@ -19,10 +19,8 @@ import org.junit.Test
 
 
 class PythonPackageManagerManagementInstallationTest : PyEnvTestCase() {
+  private val PKG_TO_INSTALL = PythonRepositoryPackageSpecification(PyPIPackageRepository, "pytest")
 
-  companion object {
-    private val PKG_TO_INSTALL = PyPIPackageRepository.findPackageSpecification("pytest")!!
-  }
 
   @EnvTestTagsRequired(tags = ["python3.8"])
   @Test

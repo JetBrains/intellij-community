@@ -29,9 +29,11 @@ fun completePackageNames(project: Project, sdk: Sdk, result: CompletionResultSet
 fun completeVersions(name: String, project: Project, sdk: Sdk, result: CompletionResultSet, addQuotes: Boolean) {
   val packageManager = PythonPackageManager.forSdk(project, sdk)
   val repositoryManager = packageManager.repositoryManager
-  val packageSpecification = packageManager.findPackageSpecification(name) ?: return
+
   val versions = ApplicationUtil.runWithCheckCanceled({
                                                         runBlockingCancellable {
+                                                          val packageSpecification = packageManager.findPackageSpecification(name)
+                                                                                     ?: return@runBlockingCancellable emptyList()
                                                           repositoryManager.getPackageDetails(packageSpecification).getOrThrow().availableVersions
                                                         }
                                                       }, EmptyProgressIndicator.notNullize(ProgressManager.getInstance().progressIndicator))

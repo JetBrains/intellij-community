@@ -25,6 +25,7 @@ import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
 import com.jetbrains.python.packaging.normalizePackageName
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkType
@@ -42,12 +43,15 @@ import kotlin.coroutines.cancellation.CancellationException
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Disposable.Default {
   private val isInited = AtomicBoolean(false)
-  private val initializationJob by lazy {
+  private val initializationJob = if (!shouldBeInitInstantly()) {
     PyPackageCoroutine.launch(project, start = CoroutineStart.LAZY) {
-      initManager()
+      initInstalledPackages()
     }.also {
       it.cancelOnDispose(this)
     }
+  }
+  else {
+    null
   }
 
 
@@ -71,13 +75,11 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   }
 
   @ApiStatus.Internal
-  fun findPackageSpecificationWithVersionSpec(
+  suspend fun findPackageSpecificationWithVersionSpec(
     packageName: String,
     versionSpec: PyRequirementVersionSpec? = null,
   ): PythonRepositoryPackageSpecification? {
-    return repositoryManager.repositories.firstNotNullOfOrNull {
-      it.findPackageSpecificationWithSpec(packageName, versionSpec)
-    }
+    return repositoryManager.findPackageSpecification(packageName, versionSpec?.version, versionSpec?.relation ?: PyRequirementRelation.EQ)
   }
 
   @ApiStatus.Internal
@@ -216,19 +218,16 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
   @ApiStatus.Internal
   suspend fun waitForInit() {
+    initializationJob?.join()
     if (shouldBeInitInstantly()) {
-      initManager()
-    }
-    else {
-      initializationJob.join()
+      initInstalledPackages()
     }
   }
 
-  private suspend fun initManager() {
+  private suspend fun initInstalledPackages() {
     try {
       if (isInited.getAndSet(true))
         return
-      repositoryManager.initCaches()
       if (installedPackages.isEmpty() && !PythonSdkType.isMock(sdk)) {
         reloadPackages()
       }
@@ -242,7 +241,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   }
 
   //Some test on EDT so need to be inited on first create
-  private fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isUnitTestMode
+  private fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
@@ -252,7 +251,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
       if (manager.shouldBeInitInstantly()) {
         runBlockingMaybeCancellable {
-          manager.initManager()
+          manager.initInstalledPackages()
         }
       }
 

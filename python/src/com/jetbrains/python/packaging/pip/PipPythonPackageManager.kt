@@ -31,7 +31,7 @@ import java.nio.file.Path
 @ApiStatus.Experimental
 @ApiStatus.Internal
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   private val engine = PipPackageManagerEngine(project, sdk)
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = engine.loadOutdatedPackagesCommand()
