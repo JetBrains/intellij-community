@@ -106,6 +106,7 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     }
 
     @Override
+    @NotNull
     public MavenServerConsoleIndicatorImpl getIndicator() {
       return myIndicator;
     }

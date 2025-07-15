@@ -511,13 +511,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public @Nullable String evaluateEffectivePom(@NotNull File file,
-                                               @NotNull ArrayList<String> activeProfiles,
-                                               @NotNull ArrayList<String> inactiveProfiles,
-                                               MavenToken token) {
+  public @NotNull MavenServerResponse<@NotNull String> evaluateEffectivePom(@NotNull LongRunningTaskInput longRunningTaskInput,
+                                                                            @NotNull File file,
+                                                                            @NotNull ArrayList<String> activeProfiles,
+                                                                            @NotNull ArrayList<String> inactiveProfiles,
+                                                                            MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+      String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
+      try (LongRunningTask task = newLongRunningTask(longRunningTaskId, 1, myConsoleWrapper)) {
+        String result = Maven3EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+        task.incrementFinishedRequests();
+        return new MavenServerResponse<>(result, getLongRunningTaskStatus(longRunningTaskId, token));
+      }
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);

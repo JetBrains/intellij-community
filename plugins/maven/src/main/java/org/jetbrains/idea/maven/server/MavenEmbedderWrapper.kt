@@ -126,7 +126,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   suspend fun evaluateEffectivePom(file: File, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
-    return getOrCreateWrappee().evaluateEffectivePom(file, ArrayList(activeProfiles), ArrayList(inactiveProfiles), ourToken)
+    return runLongRunningTask(
+      LongRunningEmbedderTask { embedder, taskInput ->
+        embedder.evaluateEffectivePom(taskInput, file, ArrayList(activeProfiles), ArrayList(inactiveProfiles), ourToken)
+      }, null, MavenLogEventHandler)
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts()}")
