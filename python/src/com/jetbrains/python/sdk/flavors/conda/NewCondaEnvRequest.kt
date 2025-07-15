@@ -49,6 +49,7 @@ sealed class NewCondaEnvRequest {
    * TODO: Support remote env creation
    * @see [LocalEnvByLocalEnvironmentFile]
    */
+  @ApiStatus.Internal
   class LocalEnvByLocalEnvironmentFile(private val environmentYaml: Path, val existingEnvs: List<PyCondaEnv>) : NewCondaEnvRequest() {
     init {
       assert(environmentYaml.exists()) { "$environmentYaml doesn't exist" }
@@ -76,6 +77,7 @@ sealed class NewCondaEnvRequest {
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     private const val DEFAULT_ENV_NAME = "default"
   }
