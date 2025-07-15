@@ -4,19 +4,43 @@
   "outputDir": "bin/ml-eval-insight-java-output",
   "strategy": {
     "collectContextOnly": false,
-    "insightsFilePath": "../mockInsights/insights dataset.csv"
+    "insightsFilePath": "/Users/Petr.Surkov/PycharmProjects/insightsLlmc2markdown/dataset/aggregated.csv"
   },
   "actions": {
     "evaluationRoots": [
-      "community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java"
+      "community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java",
+      "fleet/plugins/run/terminal/frontend/srcCommonMain/fleet/run/terminal/frontend/api/orchestrator/TerminalOrchestrator.kt",
+      "phpstorm/php/src/com/jetbrains/php/PhpWorkaroundUtil.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/inspections/PhpDeprecationInspection.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/inspections/PhpPassByRefInspection.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/psi/resolve/types/PhpTypeInfo.java",
+      "phpstorm/php/src/com/jetbrains/php/mockery/PhpMockeryExpectedMethodReferenceContributor.java",
+      "plugins/async/intellij.performanceTesting.async.core/src/com/jetbrains/performancePlugin/profilers/async/core/AsyncProfilerCommandBuilder.java",
+      "plugins/evaluation-plugin/ijnext/src/com/intellij/evaluationPlugin/ijnext/insight/AIInsightFeatureInvoker.kt",
+      "plugins/evaluation-plugin/ijnext/src/com/intellij/evaluationPlugin/ijnext/insight/InsightFeature.kt",
+      "plugins/full-line/cloud-impl/src/com/intellij/ml/llm/completion/cloud/context/mainEditor/RecentlyViewedContextCollector.kt",
+      "plugins/full-line/core-completion/src/com/intellij/ml/inline/completion/experiment/extendable/ExperimentStatusManager.kt",
+      "plugins/full-line/experiments/src/com/intellij/fullLine/experiments/FullLineExperimentFetcherImpl.kt",
+      "plugins/full-line/markdown/cloud/src/com/intellij/ml/llm/markdown/completion/MarkdownCloudCompletionLanguageKit.kt",
+      "plugins/full-line/sql/cloud/src/com/intellij/ml/llm/sql/completion/cloud/SqlCloudCompletionKit.kt",
+      "plugins/llm/agents/impl/src/com/intellij/ml/llm/agents/impl/chat/mcp/McpToolUseApprovalMessagePartView.kt",
+      "plugins/llm/codeGeneration/src/com/intellij/ml/llm/codeGeneration/multifile/core/part/LlmPatchMessagePartFactory.kt",
+      "plugins/llm/core/src/com/intellij/ml/llm/core/promptLibrary/AIAssistantPromptLibraryStorage.kt",
+      "plugins/llm/core/src/com/intellij/ml/llm/core/chat/ui/chat/AIAssistantChatMessageView.kt",
+      "plugins/llm/core/src/com/intellij/ml/llm/core/chat/ui/chat/AIAssistantChatPanel.kt",
+      "plugins/llm/core/src/com/intellij/ml/llm/core/chat/ui/chat/input/AIAssistantInput.kt",
+      "plugins/llm/daemon/src/com/intellij/ml/llm/daemon/insight/ui/FeedbackPanel.kt",
+      "plugins/llm/riderNext/src/com/intellij/ml/llm/riderNext/latest/miniAiChat/agentOrchestration/MiniChatOrchestrator.kt",
+      "plugins/llm/riderNext/src/com/intellij/ml/llm/riderNext/latest/nextStep/NextStepAgentService.kt",
+      "rustrover/core/src/main/kotlin/org/rust/lang/core/types/infer/TypeInferenceWalker.kt"
     ]
   },
   "interpret": {
     "saveLogs": true,
     "sessionProbability": 1.0,
     "sessionSeed": null,
-    "sessionsLimit": 10,
-    "filesLimit": 5,
+    "sessionsLimit": 1000,
+    "filesLimit": 1000,
     "order": "LINEAR",
     "trainTestSplit": 70,
     "registry": ""
