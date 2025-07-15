@@ -78,7 +78,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.currentTabIndex,
     vm.coroutineScope,
     vm.ShowInFindToolWindowAction(onShowFindToolWindow)
-  )
+  ) { updatePopupWidth() }
 
   private val textField = object : SeTextField() {
     override fun getAccessibleContext(): AccessibleContext {
@@ -667,6 +667,23 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     if (compact == isCompactViewMode) return
     isCompactViewMode = compact
 
+    updatePopupSize()
+  }
+
+  private fun updatePopupWidth() {
+    if (!isShowing) return
+
+    val preferredWidth = if (headerPane.isShowing) headerPane.preferredSize.width else 0
+
+    if (headerPane.width < preferredWidth) {
+      popupExtendedSize?.takeIf { it.width < preferredWidth }?.let {
+        popupExtendedSize?.width = preferredWidth
+      }
+      updatePopupSize()
+    }
+  }
+
+  private fun updatePopupSize() {
     resizePopupHandler(calcPreferredSize(isCompactViewMode))
   }
 
@@ -685,7 +702,9 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     else {
       popupExtendedSize?.height ?: JBUI.CurrentTheme.BigPopup.maxListHeight()
     }
-    return Dimension(popupExtendedSize?.width ?: resultsScrollPane.preferredSize.width, preferredHeight)
+
+    val preferredWidth = popupExtendedSize?.width ?: maxOf(resultsScrollPane.preferredSize.width, headerPane.preferredSize.width)
+    return Dimension(preferredWidth, preferredHeight)
   }
 
   private fun logTabSwitchedEvent(e: AnActionEvent) {
