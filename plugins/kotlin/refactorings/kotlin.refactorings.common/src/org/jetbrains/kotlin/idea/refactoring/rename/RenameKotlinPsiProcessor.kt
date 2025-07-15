@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchPar
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
 
 abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
@@ -68,6 +69,10 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         val references = ReferencesSearch.search(searchParameters).asIterable().toMutableSet()
         if (element is KtNamedFunction || (element is KtProperty && !element.isLocal) || (element is KtParameter && element.hasValOrVar())) {
             element.toLightMethods().flatMapTo(references) { method ->
+                if (element is KtParameter && DataClassResolver.isComponentLike(method.name)) {
+                    // renaming a data class property doesn't change the synthetic component name
+                    return@flatMapTo emptyList()
+                }
                 MethodReferencesSearch.search(
                     KotlinMethodReferencesSearchParameters(
                         method,
