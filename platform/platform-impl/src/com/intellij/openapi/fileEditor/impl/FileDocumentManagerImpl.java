@@ -58,10 +58,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.Processor;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -680,8 +677,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
             if (event instanceof VFileContentChangeEvent changeEvent && changeEvent.getFile().isValid()) {
               myFileDocumentManager.contentsChanged(changeEvent);
             }
-            else if (event instanceof VFileDeleteEvent deleteEvent && deleteEvent.getFile().isValid()) {
-              myFileDocumentManager.fileDeleted(deleteEvent);
+            else if (event instanceof VFileDeleteEvent deleteEvent) {
+              myFileDocumentManager.fileDeleted(deleteEvent.getFile());
             }
             else if (event instanceof VFilePropertyChangeEvent propEvent && propEvent.getFile().isValid()) {
               myFileDocumentManager.propertyChanged(propEvent);
@@ -808,12 +805,16 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     Disposer.register(disposable, () -> myConflictResolver = old);
   }
 
-  private void fileDeleted(@NotNull VFileDeleteEvent event) {
-    VirtualFile virtualFile = event.getFile();
+  // NB: virtualFile might be invalid by now
+  private void fileDeleted(@NotNull VirtualFile virtualFile) {
     Document doc = getCachedDocument(virtualFile);
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
       unbindFileFromDocument(virtualFile, doc);
+      if (doc instanceof DocumentImpl docImpl) {
+        docImpl.incrementModificationSequence(); // make clients listening for the document change notice this event
+        docImpl.setModificationStamp(LocalTimeCounter.currentTime());
+      }
     }
   }
 

@@ -15,9 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -531,12 +529,11 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     assertNotNull(ioFile.getPath(), file);
 
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    Document original = documentManager.getDocument(file);
+    Document original = myDocumentManager.getDocument(file);
     assertNotNull(file.getPath(), original);
 
     rename(file, "test.wtf");
-    Document afterRename = documentManager.getDocument(file);
+    Document afterRename = myDocumentManager.getDocument(file);
     assertSame(afterRename + " != " + original, afterRename, original);
   }
 
@@ -692,19 +689,17 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertOrderedEquals(reallySavedDocuments, document);
   }
 
-  private static void checkDocumentFiles(List<? extends VirtualFile> files) throws Exception {
-    FileDocumentManager fdm = FileDocumentManager.getInstance();
-
+  private void checkDocumentFiles(List<? extends VirtualFile> files) throws Exception {
     List<Future<?>> futures = new ArrayList<>();
     for (VirtualFile file : files) {
-      if (fdm.getCachedDocument(file) != null) {
+      if (myDocumentManager.getCachedDocument(file) != null) {
         MemoryDumpHelper.captureMemoryDumpZipped("fileDocTest.hprof.zip");
         fail("Document not gc-ed: " + file);
       }
       for (int i = 0; i < 2; i++) {
         futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
-          Document document = fdm.getDocument(file);
-          assertEquals(file, fdm.getFile(document));
+          Document document = myDocumentManager.getDocument(file);
+          assertEquals(file, myDocumentManager.getFile(document));
         })));
       }
     }
@@ -725,5 +720,22 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       allFiles.add(new LightVirtualFile("b" + i + ".txt", "b" + i));
     }
     return allFiles;
+  }
+
+  public void testDocumentModificationStampMustChangeBeforeFileDeletion() {
+    File ioFile = IoTestUtil.createTestFile("test.txt", "<html>some text</html>");
+    VirtualFile myVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    assertNotNull(ioFile.getPath(), myVirtualFile);
+
+    DocumentEx document = (DocumentEx)myDocumentManager.getDocument(myVirtualFile);
+    assertNotNull(myVirtualFile.getPath(), document);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1, "y"));
+    long stampBefore = document.getModificationStamp();
+    long sequenceBefore = document.getModificationSequence();
+
+    delete(myVirtualFile);
+    UIUtil.dispatchAllInvocationEvents();
+    assertTrue(document.getModificationStamp() != stampBefore);
+    assertTrue(document.getModificationSequence() > sequenceBefore);
   }
 }

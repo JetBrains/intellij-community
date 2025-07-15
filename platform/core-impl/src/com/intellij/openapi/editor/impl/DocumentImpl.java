@@ -39,10 +39,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -586,8 +583,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     ImmutableCharSequence newText = myText.insert(offset, s);
     ImmutableCharSequence newString = newText.subtext(offset, offset + s.length());
-    updateText(newText, offset, "", newString, false, LocalTimeCounter.currentTime(),
-               offset, 0, offset);
+    updateText(newText, offset, "", newString, false, LocalTimeCounter.currentTime(), offset, 0, offset);
     trimToSize();
   }
 
@@ -861,7 +857,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       ImmutableCharSequence prevText = myText;
       myText = newText;
       // increment sequence before firing events, so that the modification sequence on commit will match this sequence now
-      sequence.incrementAndGet();
+      incrementModificationSequence();
       changedUpdate(event, newModificationStamp, prevText, exceptions);
     }
     finally {
@@ -900,6 +896,10 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public int getModificationSequence() {
     return sequence.get();
+  }
+  @ApiStatus.Internal
+  public void incrementModificationSequence() {
+    sequence.incrementAndGet();
   }
 
   private void beforeChangedUpdate(DocumentEvent event, DelayedExceptions exceptions) {
