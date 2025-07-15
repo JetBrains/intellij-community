@@ -5,6 +5,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.IndentedIcon
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -12,6 +13,8 @@ import java.awt.Cursor
 import java.awt.Insets
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleState
 import kotlin.math.max
 
 // todo move to components package, rename into CollapsibleTitledSeparator, make internal
@@ -33,6 +36,21 @@ class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : Tit
 
   fun onAction(listener: (Boolean) -> Unit) {
     expandedProperty.afterChange(listener)
+  }
+
+  override fun createLabel(): JBLabel = object : JBLabel() {
+    override fun getAccessibleContext(): AccessibleContext? {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleJLabel() {
+          override fun getAccessibleStateSet() =
+            super.getAccessibleStateSet().apply {
+              add(AccessibleState.EXPANDABLE)
+              add(if (expanded) AccessibleState.EXPANDED else AccessibleState.COLLAPSED)
+            }
+        }
+      }
+      return accessibleContext
+    }
   }
 
   private fun updateIcon() {
