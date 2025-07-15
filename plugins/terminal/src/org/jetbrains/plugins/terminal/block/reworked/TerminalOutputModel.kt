@@ -8,6 +8,7 @@ import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.session.TerminalOutputModelState
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 
 /**
@@ -30,6 +31,9 @@ interface TerminalOutputModel {
    * Returns document ranges with corresponding text attributes.
    */
   fun getHighlightings(): TerminalOutputHighlightingsSnapshot
+
+  /** Returns null if there is no specific highlighting range at [documentOffset] */
+  fun getHighlightingAt(documentOffset: Int): HighlightingInfo?
 
   /**
    * Executes the given block with the model in the type-ahead mode.

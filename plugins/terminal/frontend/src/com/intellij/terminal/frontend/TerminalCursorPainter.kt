@@ -268,15 +268,9 @@ internal class TerminalCursorPainter private constructor(
     }
 
     private fun getCursorTextAttributes(offset: Int): TextAttributes {
-      val highlightings = outputModel.getHighlightings()
-      val highlightingIndex = highlightings.findHighlightingIndex(offset)
-      return if (highlightingIndex in 0 until highlightings.size) {
-        highlightings[highlightingIndex].textAttributesProvider.getTextAttributes()
-      }
-      else {
-        // Cursor can be at the end of the document. Use the default attributes in this case.
-        TextAttributes.ERASE_MARKER
-      }
+      val highlighting = outputModel.getHighlightingAt(offset)
+      return highlighting?.textAttributesProvider?.getTextAttributes()
+             ?: TextAttributes.ERASE_MARKER // If there are no specific highlighting, use the default
     }
   }
 
