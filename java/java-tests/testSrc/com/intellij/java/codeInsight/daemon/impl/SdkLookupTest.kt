@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.SystemPropertyRule
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
@@ -618,7 +619,7 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     val th = threadEx { result.set(runCatching { action() }) }
     while (th.isAlive) {
       ProgressManager.checkCanceled()
-      UIUtil.dispatchAllInvocationEvents()
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
       th.join(100)
     }
     return result.get()?.getOrThrow() ?: error("No result was set")
