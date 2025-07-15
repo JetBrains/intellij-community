@@ -6,6 +6,7 @@ import com.intellij.database.run.ui.GridEditGuard;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactory.ValueFormatterResult;
 import com.intellij.database.run.ui.grid.renderers.DefaultTextRendererFactory;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.navigationToolbar.NavBarModelExtension;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.Language;
@@ -126,7 +127,11 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     super.uiDataSnapshot(sink);
-    sink.set(CommonDataKeys.VIRTUAL_FILE, FileDocumentManager.getInstance().getFile(getDocument()));
+    VirtualFile file = FileDocumentManager.getInstance().getFile(getDocument());
+    if (file != null) {
+      file.putUserData(NavBarModelExtension.IGNORE_IN_NAVBAR, true);
+    }
+    sink.set(CommonDataKeys.VIRTUAL_FILE, file);
     Editor editor = getEditor();
     sink.set(CommonDataKeys.EDITOR, editor);
   }
