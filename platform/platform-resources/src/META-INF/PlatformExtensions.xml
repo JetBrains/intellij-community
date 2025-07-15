@@ -688,9 +688,6 @@
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <bundledColorScheme id="High contrast" path="themes/highContrastScheme.xml"/>
 
-    <themeProvider id="One Island Light" path="/themes/islands/OneIslandLight.theme.json" targetUi="island" restartRequired="true"/>
-
-    <themeProvider id="One Island Dark" path="/themes/islands/OneIslandDark.theme.json" targetUi="island" restartRequired="true"/>
     <bundledColorScheme id="Island Dark" path="/themes/islands/IslandSchemeDark.xml"/>
 
     <themeProvider id="Many Islands Dark" path="/themes/islands/ManyIslandsDark.theme.json" targetUi="islands" restartRequired="true"/>

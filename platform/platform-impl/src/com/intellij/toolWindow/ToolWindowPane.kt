@@ -178,9 +178,7 @@ class ToolWindowPane private constructor(
     updateToolStripesVisibility(uiSettings)
 
     // layered pane
-    val splitter = if (isWideScreen) horizontalSplitter else verticalSplitter
-    val customPane = InternalUICustomization.getInstance()?.createToolWindowPaneLayered(splitter, frame)
-    layeredPane = customPane as? FrameLayeredPane ?: FrameLayeredPane(splitter, frame = frame)
+    layeredPane = FrameLayeredPane(if (isWideScreen) horizontalSplitter else verticalSplitter, frame = frame)
 
     // compose layout
     buttonManager.setupToolWindowPane(this)

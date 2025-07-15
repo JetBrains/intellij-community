@@ -48,10 +48,6 @@ private class ThemeListProviderImpl : ThemeListProvider {
       }
     }
     else if (ExperimentalUI.isNewUI()) {
-      uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.ISLAND).forEach { info ->
-        if (!info.isThemeFromPlugin) islandUiThemes.add(info)
-        else customThemes.add(info)
-      }
       uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.ISLANDS).forEach { info ->
         if (!info.isThemeFromPlugin) islandsUiThemes.add(info)
         else customThemes.add(info)
