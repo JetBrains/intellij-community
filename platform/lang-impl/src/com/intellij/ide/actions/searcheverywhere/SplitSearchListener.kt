@@ -28,7 +28,7 @@ interface SplitSearchListener {
     override fun searchStarted(pattern: String, contributors: Collection<SearchEverywhereContributor<*>>) {
       searchStarted(pattern,
                     if (contributors.size > 1) SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
-                    else contributors.first().searchProviderId)
+                    else contributors.firstOrNull()?.searchProviderId ?: "")
     }
 
     override fun searchFinished(items: List<Any?>) {
