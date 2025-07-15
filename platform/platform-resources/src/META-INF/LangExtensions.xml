@@ -189,6 +189,7 @@
 
     <applicationService serviceInterface="com.intellij.find.FindSettings"
                         serviceImplementation="com.intellij.find.impl.LangFindSettingsImpl"/>
+    <applicationInitializedListener implementation="com.intellij.find.impl.FindSettingsInitializer"/>
     <projectService serviceInterface="com.intellij.find.FindInProjectSettings"
                     serviceImplementation="com.intellij.find.impl.FindInProjectRecents"/>
 
