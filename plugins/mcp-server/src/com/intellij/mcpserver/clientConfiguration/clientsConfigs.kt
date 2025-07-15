@@ -53,11 +53,5 @@ data class McpServers(
 @JsonIgnoreUnknownKeys
 @Serializable
 data class VSCodeConfig(
-  val mcp: VSCodeMcp? = null
-)
-
-@JsonIgnoreUnknownKeys
-@Serializable 
-data class VSCodeMcp(
   val servers: Map<String, ExistingConfig>? = null
 )
