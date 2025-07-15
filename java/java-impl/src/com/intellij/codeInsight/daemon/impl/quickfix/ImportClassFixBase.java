@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -91,7 +91,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
     // ok, something did change. but can we still import? (in case of auto-import there maybe multiple fixes wanting to be executed)
     List<? extends PsiClass> classesToImport = getClassesToImport(true);
-    return myContainingPsiFile.isValid() && classesToImport.size() == 1 && !isClassDefinitelyPositivelyImportedAlready(myContainingPsiFile, classesToImport.get(0));
+    return myContainingPsiFile.isValid() && !classesToImport.isEmpty() && 
+           !isClassDefinitelyPositivelyImportedAlready(myContainingPsiFile, classesToImport.get(0));
   }
 
   /**
