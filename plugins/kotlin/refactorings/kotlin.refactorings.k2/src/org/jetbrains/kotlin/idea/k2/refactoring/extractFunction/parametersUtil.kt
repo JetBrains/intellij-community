@@ -80,6 +80,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -447,7 +448,7 @@ private fun getReferencedClassifierSymbol(
 }
 
 context(KaSession)
-@OptIn(KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
 private fun createOriginalType(
     extractFunctionRef: Boolean,
     originalDeclaration: PsiNamedElement,
@@ -474,12 +475,12 @@ private fun createOriginalType(
             append(functionSymbol.returnType.render(position = Variance.INVARIANT))
         }
 
-    // FIXME: KTIJ-34279
-    @OptIn(KaImplementationDetail::class)
-    KaBaseIllegalPsiException.allowIllegalPsiAccess {
-        org.jetbrains.kotlin.psi.KtPsiFactory(originalDeclaration.project).createTypeCodeFragment(typeString, originalDeclaration)
-            .getContentElement()?.type
-    }
+    val contentElement =
+        KtPsiFactory(originalDeclaration.project).createTypeCodeFragment(typeString, originalDeclaration).getContentElement()
+    if (contentElement != null) {
+        analyze(contentElement) { contentElement.type.createPointer() }.restore(this@KaSession)
+    } else null
+
 } else {
     parameterExpression?.expressionType ?: receiverToExtract?.type
 }) ?: builtinTypes.nullableAny
