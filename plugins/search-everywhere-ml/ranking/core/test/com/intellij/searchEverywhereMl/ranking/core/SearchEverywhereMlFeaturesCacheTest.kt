@@ -1,8 +1,10 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereCommonFeaturesProvider
@@ -14,7 +16,10 @@ import com.intellij.searchEverywhereMl.ranking.core.id.SearchEverywhereMlItemIdP
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.Processor
 import junit.framework.TestCase
+import org.jetbrains.annotations.Nls
+import javax.swing.ListCellRenderer
 
 class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
   private class MockElementInfoBuilder {
@@ -141,7 +146,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
                                SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY,
                                SearchEverywhereMLStatisticsCollector.PRIORITY_KEY,
                                SearchEverywhereMLStatisticsCollector.ID_KEY,
-                               SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY)
+                               SearchEverywhereMLStatisticsCollector.ELEMENT_CONTRIBUTOR)
 
     UsefulTestCase.assertOrderedEquals(events?.map {
       it.buildObjectData(MLSE_RECORDER_ID, allowedFields.toTypedArray())["id"]
@@ -163,7 +168,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
                                SearchEverywhereCommonFeaturesProvider.Fields.PRIORITY_DATA_KEY,
                                SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY,
                                SearchEverywhereMLStatisticsCollector.PRIORITY_KEY,
-                               SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY,
+                               SearchEverywhereMLStatisticsCollector.ELEMENT_CONTRIBUTOR,
                                SearchEverywhereMLStatisticsCollector.ID_KEY)
 
     val mappedEvents = events.map {
@@ -216,7 +221,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateFirst = featuresCache.getUpdateEventsAndCache(
       project,
       elementsFirstSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -252,7 +256,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
       elementsSecondSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -284,7 +287,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateFirst = featuresCache.getUpdateEventsAndCache(
       project,
       elementsFirstSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -315,7 +317,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
       elementsSecondSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -339,7 +340,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateThird = featuresCache.getUpdateEventsAndCache(
       project,
       elementsThirdSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -362,7 +362,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateFourth = featuresCache.getUpdateEventsAndCache(
       project,
       elementsFourthSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -399,7 +398,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateFirst = featuresCache.getUpdateEventsAndCache(
       project,
       elementsFirstSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -433,7 +431,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
       elementsSecondSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -470,7 +467,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     featuresCache.getUpdateEventsAndCache(
       project,
       elementsFirstSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -500,7 +496,6 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
       elementsSecondSearch,
-      ::getContributorFeatures,
       idProvider
     )
 
@@ -534,19 +529,11 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
         .build()
     )
 
-    val contributorProvider = { element: SearchEverywhereFoundElementInfoWithMl ->
-      listOf(
-        CONTRIBUTOR_INFO_ID.with(element.contributor.searchProviderId),
-        CONTRIBUTOR_WEIGHT.with(100)
-      )
-    }
-
     elementsFirstSearch.forEach { idProvider.setId(it.element, null) }
 
     featuresCache.getUpdateEventsAndCache(
       project,
       elementsFirstSearch,
-      contributorProvider,
       idProvider
     )
 
@@ -570,98 +557,10 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
     val stateSecond = featuresCache.getUpdateEventsAndCache(
       project,
       elementsSecondSearch,
-      contributorProvider,
       idProvider
     )
 
     assertEventIds(stateSecond, listOf(1, 2), listOf())
-  }
-
-  fun `test different contributors logged twice`() {
-    val featuresCache = SearchEverywhereMlFeaturesCache()
-    val idProvider = MockItemIdProvider()
-
-    val elementsFirstSearch = listOf(
-      MockElementInfoBuilder()
-        .withMlWeight(100.0)
-        .withHeuristicPriority(1000)
-        .withUsage(10)
-        .withContributorId("FileSearchEverywhereContributor")
-        .build(),
-      MockElementInfoBuilder()
-        .withMlWeight(300.0)
-        .withHeuristicPriority(3000)
-        .withUsage(30)
-        .withContributorId("ClassSearchEverywhereContributor")
-        .build()
-    )
-
-    val firstContributorProvider = { element: SearchEverywhereFoundElementInfoWithMl ->
-      listOf(
-        CONTRIBUTOR_INFO_ID.with(element.contributor.searchProviderId),
-        CONTRIBUTOR_WEIGHT.with(100)
-      )
-    }
-
-    val secondContributorProvider = { element: SearchEverywhereFoundElementInfoWithMl ->
-      if (element.contributor.searchProviderId == "FileSearchEverywhereContributor") {
-        firstContributorProvider(element)
-      }
-      else {
-        listOf(
-          CONTRIBUTOR_INFO_ID.with(element.contributor.searchProviderId),
-          CONTRIBUTOR_WEIGHT.with(200)
-        )
-      }
-    }
-
-    elementsFirstSearch.forEach { idProvider.setId(it.element, null) }
-
-    featuresCache.getUpdateEventsAndCache(
-      project,
-      elementsFirstSearch,
-      firstContributorProvider,
-      idProvider
-    )
-
-    val elementsSecondSearch = listOf(
-      MockElementInfoBuilder()
-        .withMlWeight(100.0)
-        .withHeuristicPriority(1000)
-        .withUsage(10)
-        .withContributorId("FileSearchEverywhereContributor")
-        .build(),
-      MockElementInfoBuilder()
-        .withMlWeight(300.0)
-        .withHeuristicPriority(3000)
-        .withUsage(30)
-        .withContributorId("ClassSearchEverywhereContributor")
-        .build()
-    )
-
-    elementsSecondSearch.forEachIndexed { index, it -> idProvider.setId(it.element, index + 1) }
-
-    val stateSecond = featuresCache.getUpdateEventsAndCache(
-      project,
-      elementsSecondSearch,
-      secondContributorProvider,
-      idProvider
-    )
-
-    assertEventIds(stateSecond, listOf(1, 2), listOf(2))
-
-    val updatedContributorEvents = hashMapOf(
-      "contributorId" to "ClassSearchEverywhereContributor",
-      "contributorWeight" to 200
-    )
-
-    stateSecond?.let {
-      assertFeatures(
-        it,
-        listOf(listOf(), listOf("mlWeight" to 300.0, "contributor" to updatedContributorEvents)),
-        listOf(listOf(), listOf("usage" to 30, "heuristicPriority" to 3000))
-      )
-    }
   }
 }
 
@@ -717,7 +616,7 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
   fun `test if contributor changed, all fields logged`() {
     val prevCache = SearchEverywhereMLElementCache(
       id = 10,
-      contributor = SearchEverywhereMlFeaturesCacheTest.getContributorFeatures("ActionSearchEverywhereContributor"),
+      contributor = ActionSearchEverywhereContributor(null, null, null),
       mlWeight = 100.0,
       mlFeatures = listOf(
         SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),
@@ -727,7 +626,25 @@ class SearchEverywhereMLElementCacheTest : BasePlatformTestCase() {
 
     val newCache = SearchEverywhereMLElementCache(
       id = 10,
-      contributor = SearchEverywhereMlFeaturesCacheTest.getContributorFeatures("FilesSearchEverywhereContributor"),
+      contributor = object : SearchEverywhereContributor<Nothing> {
+        override fun getSearchProviderId(): String {
+          return "xD"
+        }
+
+        override fun getGroupName(): @Nls String = ""
+
+        override fun getSortWeight(): Int = 0
+
+        override fun showInFindResults(): Boolean = false
+
+        override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in Nothing>) { }
+
+        override fun processSelectedItem(selected: Nothing, modifiers: Int, searchText: String): Boolean = false
+
+        override fun getElementsRenderer(): ListCellRenderer<in Nothing> {
+          TODO("Not yet implemented")
+        }
+      },
       mlWeight = 100.0,
       mlFeatures = listOf(
         SearchEverywhereCommonFeaturesProvider.Fields.STATISTICIAN_USE_COUNT_DATA_KEY.with(2),

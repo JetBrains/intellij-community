@@ -6,6 +6,9 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.COLLECTED_RESULTS_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_FEATURES_LIST
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ELEMENT_CONTRIBUTOR
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.REBUILD_REASON_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SEARCH_RESTARTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_DURATION
@@ -106,5 +109,50 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
     val lastSessionFinishedEvent = sessionFinishedEvents.last()
     assertTrue("SESSION_FINISHED event that closes a popup should have Search Everywhere session duration",
                SESSION_DURATION.name in lastSessionFinishedEvent.event.data)
+  }
+
+  @Test
+  fun `item has a contributor info`() {
+    val provider = MockSearchEverywhereProvider { project ->
+      SearchEverywhereUI(project, listOf(
+        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, true) { _, _, consumer ->
+          consumer.process("registry")
+        }
+      ))
+    }
+
+    val events = provider.runSearchAndCollectLogEvents {
+      type("reg")
+      selectFirstItem()
+    }
+
+    val lastEventData = events.last().event.data
+    val collectedItems = assertInstanceOf(lastEventData[COLLECTED_RESULTS_DATA_KEY.name], List::class.java)
+    val firstItem = assertInstanceOf(collectedItems.first(), Map::class.java)
+    assertTrue(ELEMENT_CONTRIBUTOR.name in firstItem)
+    assertInstanceOf(firstItem[ELEMENT_CONTRIBUTOR.name], String::class.java)
+  }
+
+  @Test
+  fun `contributor features are in a separate list`() {
+    val provider = MockSearchEverywhereProvider { project ->
+      SearchEverywhereUI(project, listOf(
+        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, true) { _, _, consumer ->
+          consumer.process("registry")
+        }
+      ))
+    }
+
+    val events = provider.runSearchAndCollectLogEvents {
+      type("reg")
+      selectFirstItem()
+    }
+
+    val lastEventData = events.last().event.data
+
+    assertTrue(CONTRIBUTOR_FEATURES_LIST.name in lastEventData)
+
+    val contributorFeatures = assertInstanceOf(lastEventData[CONTRIBUTOR_FEATURES_LIST.name], List::class.java)
+    assertInstanceOf(contributorFeatures.first(), Map::class.java)
   }
 }

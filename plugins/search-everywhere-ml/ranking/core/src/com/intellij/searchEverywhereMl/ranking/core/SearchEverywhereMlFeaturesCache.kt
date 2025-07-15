@@ -2,6 +2,7 @@
 
 package com.intellij.searchEverywhereMl.ranking.core
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
@@ -17,7 +18,6 @@ internal class SearchEverywhereMlFeaturesCache {
 
   fun getUpdateEventsAndCache(project: Project?,
                               elements: List<SearchEverywhereFoundElementInfoWithMl>,
-                              contributorFeaturesProvider: (SearchEverywhereFoundElementInfoWithMl) -> List<EventPair<*>>,
                               elementIdProvider: SearchEverywhereMlItemIdProvider): List<ObjectEventData>? {
     val actionManager = ActionManager.getInstance()
 
@@ -28,7 +28,7 @@ internal class SearchEverywhereMlFeaturesCache {
 
       val elementId = ReadAction.compute<Int?, Nothing> { elementIdProvider.getId(it.element) }
 
-      val elementCache = buildElementCache(it, actionManager, contributorFeaturesProvider(it), elementId)
+      val elementCache = buildElementCache(it, actionManager, elementId)
 
       val diffCache = getDiffCacheAndUpdateStorage(elementCache, elementId)
       ObjectEventData(diffCache.toEvents())
@@ -53,12 +53,11 @@ internal class SearchEverywhereMlFeaturesCache {
 
   private fun buildElementCache(it: SearchEverywhereFoundElementInfoWithMl,
                                 actionManager: ActionManager,
-                                contributorFeatures: List<EventPair<*>>,
                                 elementId: Int?): SearchEverywhereMLElementCache {
     val mlWeight = it.mlWeight ?: -1.0
 
     return SearchEverywhereMLElementCache(
-      contributor = contributorFeatures,
+      contributor = it.contributor,
       id = elementId,
       mlFeatures = it.mlFeatures.ifEmpty { null },
       priority = it.priority,
@@ -85,7 +84,7 @@ internal class SearchEverywhereMlFeaturesCache {
 
 
 internal data class SearchEverywhereMLElementCache(
-  val contributor: List<EventPair<*>>? = null,
+  val contributor: SearchEverywhereContributor<*>? = null,
   val id: Int? = null,
   val mlFeatures: List<EventPair<*>>? = null,
   val mlWeight: Double? = null,
@@ -95,7 +94,7 @@ internal data class SearchEverywhereMLElementCache(
 ) {
   fun toEvents(): List<EventPair<*>> {
     val result = mutableListOf<EventPair<*>>()
-    contributor?.let { result.add(SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY.with(ObjectEventData(it))) }
+    contributor?.let { result.add(SearchEverywhereMLStatisticsCollector.ELEMENT_CONTRIBUTOR.with(contributor.searchProviderId)) }
     id?.let { result.add(SearchEverywhereMLStatisticsCollector.ID_KEY.with(it)) }
     mlWeight?.let { result.add(SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY.with(it)) }
     priority?.let { result.add(SearchEverywhereMLStatisticsCollector.PRIORITY_KEY.with(it))}

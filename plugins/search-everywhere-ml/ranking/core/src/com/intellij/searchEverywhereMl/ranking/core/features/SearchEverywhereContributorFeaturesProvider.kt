@@ -14,7 +14,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.statistician.getCon
 
 internal class SearchEverywhereContributorFeaturesProvider {
   companion object {
-    private val SE_CONTRIBUTORS = listOf(
+    val SE_CONTRIBUTORS = listOf(
       "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
       "FileSearchEverywhereContributor", "RecentFilesSEContributor",
       "SymbolSearchEverywhereContributor", "ActionSearchEverywhereContributor",

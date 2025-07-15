@@ -1,21 +1,15 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.util.use
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.COLLECTED_RESULTS_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ELEMENT_CONTRIBUTOR
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ID_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ML_WEIGHT_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.IS_ACTION_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.TEXT_LENGTH_KEY
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider.Companion.CONTRIBUTOR_INFO_ID
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider.Companion.CONTRIBUTOR_WEIGHT
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.BUFFERED_TIMESTAMP
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_HIGH_PRIORITY
@@ -83,11 +77,7 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
           .assert(IS_ACTION_DATA_KEY, true)
       }
       .assert(ID_KEY, 1)
-      .also {
-        it[CONTRIBUTOR_DATA_KEY]
-          .assert(CONTRIBUTOR_INFO_ID, ActionSearchEverywhereContributor::class.java.simpleName)
-          .assert(CONTRIBUTOR_WEIGHT, 0)
-      }
+      .assert(ELEMENT_CONTRIBUTOR, ActionSearchEverywhereContributor::class.java.simpleName)
   }
 
   private fun checkItemSecondReport(event: LogEvent) {
