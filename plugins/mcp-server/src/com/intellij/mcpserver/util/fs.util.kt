@@ -2,13 +2,13 @@ package com.intellij.mcpserver.util
 
 import com.intellij.mcpserver.mcpFail
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.io.File
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
@@ -19,7 +19,15 @@ import kotlin.io.path.Path
  * If the project directory cannot be determined, an McpExpectedException is thrown.
  */
 val Project.projectDirectory: Path
-  get() = guessProjectDir()?.toNioPathOrNull() ?: mcpFail("The project directory cannot be determined.")
+  get() {
+    return try {
+      // don't use guessProjectDir() here because it may point to some internal directory (e.g. src instead of project root)
+      Path(basePath ?: mcpFail("The project directory cannot be determined."))
+    }
+    catch (e: InvalidPathException) {
+      mcpFail("Project directory is invalid: ${e.message}")
+    }
+  }
 
 /**
  * Resolves a relative path against the project's directory.
