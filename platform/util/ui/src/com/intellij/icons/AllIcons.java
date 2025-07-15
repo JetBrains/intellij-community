@@ -586,7 +586,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ModifiedSelected = load("general/modifiedSelected.svg", 251018616, 0);
     /** 16x16 */ public static final @NotNull Icon MoreTabs = load("general/moreTabs.svg", -82809530, 2);
     /** 16x16 */ public static final @NotNull Icon Mouse = load("general/mouse.svg", 1719479873, 2);
-    /** 38x16 */ public static final @NotNull Icon New_badge = load("general/new_badge.svg", 394698412, 0);
+    /** 38x16 */ public static final @NotNull Icon New_badge = load("general/new_badge.svg", 394698412, 2);
     /** 16x16 */ public static final @NotNull Icon Note = load("expui/status/infoOutline.svg", "general/note.svg", -2137204668, 0);
     /** 24x24 */ public static final @NotNull Icon NotificationError = load("general/notificationError.svg", -172459168, 2);
     /** 24x24 */ public static final @NotNull Icon NotificationInfo = load("general/notificationInfo.svg", -1956337174, 2);
