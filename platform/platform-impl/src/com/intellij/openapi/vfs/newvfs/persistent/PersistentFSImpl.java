@@ -72,6 +72,7 @@ import java.util.function.Function;
 
 import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
 import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
+import static com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.containers.CollectionFactory.*;
@@ -1598,25 +1599,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
       EmptyRunnable.INSTANCE
     );
-  }
-
-  private static void runActionOnEdtRegardlessOfCurrentThread(Runnable action) {
-    if (EDT.isCurrentThreadEdt()) {
-      action.run();
-    }
-    else {
-      Application application = ApplicationManager.getApplication();
-      if (application instanceof ApplicationImpl) {
-        try {
-          InternalThreading.invokeAndWaitWithTransferredWriteAction(action);
-        }
-        catch (Throwable t) {
-          throw new RuntimeException(t);
-        }
-      } else {
-        LOG.warn("Cannot invoke EDT VFS listeners on background");
-      }
-    }
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisherEdt,
