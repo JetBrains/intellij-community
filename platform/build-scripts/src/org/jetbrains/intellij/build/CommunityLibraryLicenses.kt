@@ -234,13 +234,10 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/twxs/vs.language.cmake/blob/master/LICENSE"),
 
     // For loading images in Compose (used in Markdown preview, for example)
-    LibraryLicense("Coil", libraryName = "io.coil.kt.coil3.core.jvm", url = "https://github.com/coil-kt/coil")
+    LibraryLicense("Coil", libraryName = "io.coil.kt.coil3.compose.jvm", url = "https://github.com/coil-kt/coil")
       .additionalLibraryNames(
-        "io.coil.kt.coil3.svg.jvm",
-        "io.coil.kt.coil3.network.core.jvm",
         "io.coil.kt.coil3.network.ktor3.jvm",
-        "io.coil.kt.coil3.compose.jvm",
-        "io.coil.kt.coil3.compose.core.jvm",
+        "io.coil.kt.coil3.svg.jvm",
       )
       .apache("https://github.com/coil-kt/coil/blob/main/README.md#license")
       .copyrightText("Copyright 2025 Coil Contributors"),
