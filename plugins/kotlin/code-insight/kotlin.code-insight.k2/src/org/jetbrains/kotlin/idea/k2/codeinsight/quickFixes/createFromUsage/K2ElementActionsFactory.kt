@@ -68,7 +68,15 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
             ).takeIf { it.isAvailable(project, null, targetKtClass.containingFile) }
         }
 
-        return listOfNotNull(changePrimaryConstructorAction)
+        val needPrimary = !targetKtClass.hasExplicitPrimaryConstructor()
+        val actionText = KotlinBundle.message(
+            "add.0.constructor.to.1",
+            if (needPrimary) KotlinBundle.message("text.primary") else KotlinBundle.message("text.secondary"),
+            targetKtClass.name.toString()
+        )
+        val addConstructorAction = AddConstructorFix(targetKtClass, request, actionText)
+
+        return listOfNotNull(changePrimaryConstructorAction, addConstructorAction)
     }
 
     override fun createChangeOverrideActions(

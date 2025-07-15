@@ -1077,7 +1077,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testAddIntPrimaryConstructor() {
+    fun testAddIntPrimaryConstructor() {
         myFixture.configureByText(
             "foo.kt", """
         |class Foo<caret> {
@@ -1098,7 +1098,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testAddIntSecondaryConstructor() {
+    fun testAddIntSecondaryConstructor() {
         myFixture.configureByText(
             "foo.kt", """
         |class <caret>Foo() {
@@ -1115,7 +1115,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         myFixture.checkResult(
             """
         |class Foo() {
-        |    constructor(param0: Int) {
+        |    constructor(param0: Int) : this() {
         |
         |    }
         |}
