@@ -183,7 +183,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
   @RequiresEdt
   private suspend fun processSavedDocuments() {
     val documentsAndModStamps = filesToProcess.associate { file ->
-      val document = FileDocumentManager.getInstance().getCachedDocument(file)
+      val document = FileDocumentManager.getInstance().getDocument(file)
       document to (document?.modificationStamp ?: -1)
     }
     filesToProcess.clear()
