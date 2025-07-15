@@ -29,10 +29,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-final class PyFStringsAnnotator extends PyElementVisitor {
+final class PyFStringsAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
-  PyFStringsAnnotator(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+  PyFStringsAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   @Override
   public void visitPyFStringFragment(@NotNull PyFStringFragment node) {

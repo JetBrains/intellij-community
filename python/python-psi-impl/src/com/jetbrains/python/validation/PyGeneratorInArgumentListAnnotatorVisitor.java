@@ -25,10 +25,10 @@ import com.jetbrains.python.psi.PyGeneratorExpression;
 import org.jetbrains.annotations.NotNull;
 
 
-final class PyGeneratorInArgumentListAnnotator extends PyElementVisitor {
+final class PyGeneratorInArgumentListAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
-  PyGeneratorInArgumentListAnnotator(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+  PyGeneratorInArgumentListAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   @Override
   public void visitPyArgumentList(@NotNull PyArgumentList node) {

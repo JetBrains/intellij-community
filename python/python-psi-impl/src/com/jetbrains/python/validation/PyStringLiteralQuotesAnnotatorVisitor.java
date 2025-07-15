@@ -18,10 +18,10 @@ import java.util.List;
 /**
  * Looks for well-formedness of string constants.
  */
-final class PyStringLiteralQuotesAnnotator extends PyElementVisitor {
+final class PyStringLiteralQuotesAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
-  PyStringLiteralQuotesAnnotator(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+  PyStringLiteralQuotesAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   private static final String TRIPLE_QUOTES = "\"\"\"";
   private static final String TRIPLE_APOS = "'''";

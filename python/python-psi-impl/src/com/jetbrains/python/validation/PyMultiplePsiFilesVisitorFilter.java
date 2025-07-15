@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public final class PyMultiplePsiFilesVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {
-    if (visitorClass == PyStringLiteralQuotesAnnotator.class &&
+    if (visitorClass == PyStringLiteralQuotesAnnotatorVisitor.class &&
         file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
       return false;
     }

@@ -173,7 +173,7 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     }
 
     PsiElement parent = node.getParent();
-    if (parent instanceof PyAnnotation && PyStarAnnotator.isVariadicArg(parent.getParent())) {
+    if (parent instanceof PyAnnotation && PyStarAnnotatorVisitor.isVariadicArg(parent.getParent())) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311) &&
                                               registerForLanguageLevel(level),
                                      PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.type.annotations"),

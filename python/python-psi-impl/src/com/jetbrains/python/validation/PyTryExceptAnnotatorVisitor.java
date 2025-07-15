@@ -11,10 +11,10 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class PyTryExceptAnnotator extends PyElementVisitor {
+final class PyTryExceptAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
-  PyTryExceptAnnotator(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+  PyTryExceptAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   @Override
   public void visitPyTryExceptStatement(@NotNull PyTryExceptStatement node) {

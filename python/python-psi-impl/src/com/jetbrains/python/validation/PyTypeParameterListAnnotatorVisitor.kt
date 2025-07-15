@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyPsiUtils
 
-class PyTypeParameterListAnnotator(private val holder: PyAnnotationHolder) : PyElementVisitor() {
+class PyTypeParameterListAnnotatorVisitor(private val holder: PyAnnotationHolder) : PyElementVisitor() {
   override fun visitPyTypeParameterList(node: PyTypeParameterList) {
     if (!node.typeParameters.isEmpty()) {
       val namesSet = mutableSetOf<String>()

@@ -22,13 +22,13 @@ public final class PySyntaxAnnotator extends PyAnnotatorBase implements DumbAwar
       new PyImportAnnotatorVisitor(holder),
       new PyAsyncAwaitAnnotatorVisitor(holder),
       new PyAstNumericLiteralAnnotatorVisitor(holder),
-      new PyGeneratorInArgumentListAnnotator(holder),
-      new PyStarAnnotator(holder),
-      new PyStringLiteralQuotesAnnotator(holder),
-      new PyFStringsAnnotator(holder),
-      new PyPatternAnnotator(holder),
-      new PyTryExceptAnnotator(holder),
-      new PyTypeParameterListAnnotator(holder)
+      new PyGeneratorInArgumentListAnnotatorVisitor(holder),
+      new PyStarAnnotatorVisitor(holder),
+      new PyStringLiteralQuotesAnnotatorVisitor(holder),
+      new PyFStringsAnnotatorVisitor(holder),
+      new PyPatternAnnotatorVisitor(holder),
+      new PyTryExceptAnnotatorVisitor(holder),
+      new PyTypeParameterListAnnotatorVisitor(holder)
     );
     for (PsiElementVisitor visitor : visitors) {
       psiElement.accept(visitor);

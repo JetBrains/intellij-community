@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-final class PyStarAnnotator extends PyElementVisitor {
+final class PyStarAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
-  PyStarAnnotator(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+  PyStarAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   @Override
   public void visitPyStarExpression(@NotNull PyStarExpression node) {

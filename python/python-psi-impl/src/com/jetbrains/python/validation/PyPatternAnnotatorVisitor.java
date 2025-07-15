@@ -15,10 +15,10 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-final class PyPatternAnnotator extends PyElementVisitor {
+final class PyPatternAnnotatorVisitor extends PyElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
-  PyPatternAnnotator(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
+  PyPatternAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   @Override
   public void visitPySingleStarPattern(@NotNull PySingleStarPattern starPattern) {
