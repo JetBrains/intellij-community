@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.vcs.github.ultimatePromo` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ultimate-promo_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ultimate-promo",
+  module_name = "intellij.vcs.github.ultimatePromo",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//plugins/github/github-core:vcs-github",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  runtime_deps = [":ultimate-promo_resources"]
+)
+### auto-generated section `build intellij.vcs.github.ultimatePromo` end

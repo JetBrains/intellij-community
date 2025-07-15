@@ -106,7 +106,6 @@ jvm_library(
     "//plugins/evaluation-plugin",
     "//plugins/evaluation-plugin/languages/python",
     "//platform/new-ui-onboarding",
-    "//plugins/github/community",
     "//python/intellij.python.ml.features:ml-features",
   ]
 )
@@ -165,7 +164,6 @@ jvm_library(
     "//plugins/evaluation-plugin",
     "//plugins/evaluation-plugin/languages/python",
     "//platform/new-ui-onboarding",
-    "//plugins/github/community",
     "//python/intellij.python.ml.features:ml-features",
   ]
 )
