@@ -1,3 +1,6 @@
+- name: lib/modules/intellij.vcs.github.git.jar
+  contentModules:
+  - name: intellij.vcs.github.git
 - name: lib/modules/intellij.vcs.github.json.jar
   contentModules:
   - name: intellij.vcs.github.json
