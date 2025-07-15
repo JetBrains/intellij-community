@@ -221,41 +221,23 @@ class VSCodeClient(configPath: Path) : McpClient(MCPClientNames.VS_CODE_GLOBAL, 
     val sse = isSSEConfigured() ?: return null
     return stdio || sse
   }
-  override fun mcpServersKey(): String = "mcp"
   override fun getSSEConfig(): ServerConfig = VSCodeSSEConfig(url = sseUrl, type = "sse")
   
   override fun readMcpServers(): Map<String, ExistingConfig>? {
     return runCatching {
       if (!configPath.exists()) return null
-      json.decodeFromStream<VSCodeConfig>(configPath.inputStream()).mcp?.servers ?: emptyMap()
+      json.decodeFromStream<VSCodeConfig>(configPath.inputStream()).servers ?: emptyMap()
     }.getOrNull()
   }
   
   override fun buildUpdatedConfig(existingConfig: JsonObject, serverEntry: ServerConfig): JsonObject {
-    val existingMcp = existingConfig[mcpServersKey()]?.jsonObject ?: buildJsonObject {}
-    val existingServers = existingMcp["servers"]?.jsonObject ?: buildJsonObject {}
-
-    val updatedServers = buildJsonObject {
-      existingServers.forEach { (key, value) -> put(key, value) }
-      put(JETBRAINS_SERVER_KEY, json.encodeToJsonElement(serverEntry))
-    }
-
-    val updatedMcp = buildJsonObject {
-      existingMcp.forEach { (key, value) ->
-        if (key != "servers") {
-          put(key, value)
-        }
-      }
-      put("servers", updatedServers)
-    }
+    val existingServers = existingConfig["servers"]?.jsonObject ?: buildJsonObject {}
 
     return buildJsonObject {
-      existingConfig.forEach { (key, value) ->
-        if (key != mcpServersKey()) {
-          put(key, value)
-        }
-      }
-      put(mcpServersKey(), updatedMcp)
+      put("servers", buildJsonObject {
+        existingServers.forEach { (key, value) -> put(key, value) }
+        put(JETBRAINS_SERVER_KEY, json.encodeToJsonElement<ServerConfig>(serverEntry))
+      })
     }
   }
 }
