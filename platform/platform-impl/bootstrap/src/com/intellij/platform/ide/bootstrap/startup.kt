@@ -549,7 +549,7 @@ private fun setupLogger(scope: CoroutineScope, consoleLoggerJob: Job, checkSyste
 fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
   val buildTimeString = DateTimeFormatter.RFC_1123_DATE_TIME.format(appInfo.buildTime)
   log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, $buildTimeString)")
-  log.info("OS: ${OS.CURRENT.name} (${OS.CURRENT.version})")
+  log.info("OS: ${OS.CURRENT.name} (${OS.CURRENT.version()})")
   log.info("JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
   log.info("JVM: ${System.getProperty("java.vm.version", "-")} (${System.getProperty("java.vm.name", "-")})")
   log.info("PID: ${ProcessHandle.current().pid()}")
@@ -601,25 +601,19 @@ private fun logPath(path: String): String {
 }
 
 private fun shouldLoadShellEnv(log: Logger): Boolean {
-  if (OS.CURRENT != OS.macOS) {
+  if (OS.CURRENT == OS.Windows) {
     return false
   }
 
-  if (!System.getProperty(LOAD_SHELL_ENV_PROPERTY, "true").toBoolean()) {
-    log.info("loading shell env is turned off")
+  val default = if (OS.CURRENT == OS.macOS) "true" else "false"
+  if (!System.getProperty(LOAD_SHELL_ENV_PROPERTY, default).toBoolean()) {
+    log.info("loading shell environment is turned off")
     return false
   }
 
-  // On macOS, a login shell session is not run when a user logs in, so 'SHLVL > 0' likely means that the IDE is started from a terminal.
   val shLvl = System.getenv("SHLVL")
-  try {
-    if (shLvl != null && shLvl.toInt() > 0) {
-      log.info("loading shell env is skipped: IDE has been launched from a terminal (SHLVL=${shLvl})")
-      return false
-    }
-  }
-  catch (_: NumberFormatException) {
-    log.info("loading shell env is skipped: IDE has been launched with malformed SHLVL=${shLvl}")
+  if (shLvl != null && (shLvl.toIntOrNull() ?: 1) > 0) {
+    log.info("skipping shell environment: the IDE is likely launched from a terminal (SHLVL=${shLvl})")
     return false
   }
 

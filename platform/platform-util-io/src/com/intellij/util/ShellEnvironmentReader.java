@@ -242,7 +242,7 @@ public final class ShellEnvironmentReader {
       if ("zsh".equals(Path.of(command.command().get(0)).getFileName().toString())) {
         env.remove(DISABLE_OMZ_AUTO_UPDATE);
       }
-      LOG.info("shell environment loaded (" + env.size() + " vars)");
+      LOG.info("shell environment loaded (" + command.command().get(0) + ", " + env.size() + " vars)");
       return new Pair<>(env, log);
     }
     finally {
