@@ -32,8 +32,8 @@ jvm_library(
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//platform/jewel/markdown/core",
-    "//libraries/skiko",
     "//libraries/compose-foundation-desktop",
+    "//libraries/skiko",
   ],
   runtime_deps = [":showcase_resources"],
   plugins = ["@lib//:compose-plugin"]
