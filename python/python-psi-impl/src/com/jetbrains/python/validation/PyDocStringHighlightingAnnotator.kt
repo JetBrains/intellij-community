@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.*
 /**
  * Highlights doc strings in classes, functions, and files.
  */
-class PyDocStringAnnotator : PyAnnotatorBase() {
+class PyDocStringHighlightingAnnotator : PyAnnotatorBase() {
   override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
     element.accept(PyDocStringAnnotatorVisitor(holder))
   }

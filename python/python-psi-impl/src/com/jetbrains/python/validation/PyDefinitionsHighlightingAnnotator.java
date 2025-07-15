@@ -29,7 +29,7 @@ import java.util.Objects;
 /**
  * Highlights class definitions, function definitions, and decorators.
  */
-public final class PyDefinitionsAnnotator extends PyAnnotatorBase {
+public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
     element.accept(new MyVisitor(holder));

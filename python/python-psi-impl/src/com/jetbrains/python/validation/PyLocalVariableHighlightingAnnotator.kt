@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 
-class PyLocalVariableAnnotator : PyAnnotatorBase() {
+class PyLocalVariableHighlightingAnnotator : PyAnnotatorBase() {
   override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
     element.accept(PyLocalVariableAnnotatorVisitor(holder))
   }
