@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
@@ -51,8 +50,7 @@ object PyProjectSdkConfiguration {
   }
 
   suspend fun setSdkUsingExtension(module: Module, extension: PyProjectSdkConfigurationExtension, supplier: suspend () -> Sdk?): Boolean {
-    ProgressManager.progress("")
-    PyProjectSdkConfiguration.thisLogger().debug("Configuring sdk with ${extension.javaClass.canonicalName} extension")
+    thisLogger().debug("Configuring sdk with ${extension.javaClass.canonicalName} extension")
 
     val sdk = supplier() ?: return false
     // TODO Move this to PyUvSdkConfiguration, show better notification

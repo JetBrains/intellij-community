@@ -15,11 +15,8 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
-import com.intellij.webcore.packaging.PackageManagementService
-import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -27,13 +24,13 @@ import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
-import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
@@ -124,54 +121,21 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
   }
 
   private suspend fun createCondaEnv(project: Project, condaExecutable: String, environmentYml: String): Sdk? {
-    val condaEnvironmentsBefore = safelyListCondaEnvironments(project, condaExecutable) ?: return null
+    val existingEnvs = PyCondaEnv.getEnvs(condaExecutable).getOrNull() ?: emptyList()
 
     val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
-    val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(Path.of(environmentYml))
+    val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(Path.of(environmentYml),
+                                                                            existingEnvs)
     val sdk = PyCondaCommand(condaExecutable, null)
       .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, Dispatchers.EDT, existingSdks.toList(), project).getOr {
         PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
         thisLogger().warn("Exception during creating conda environment $it")
-        val message = PackageManagementService.ErrorDescription.fromMessage(it.error.message)
-        message?.let { description ->
-          withContext(Dispatchers.EDT) {
-            PackagesNotificationPanel.showError(
-              PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.exception.dialog.title"),
-              description
-            )
-          }
-        }
+
+        ShowingMessageErrorSync.emit(it.error)
         return null
       }
 
-    val condaEnvironmentsAfter = safelyListCondaEnvironments(project, condaExecutable) ?: return null
-    val difference = condaEnvironmentsAfter - condaEnvironmentsBefore.toSet()
-    difference.singleOrNull().also {
-      if (it == null) {
-        PySdkConfigurationCollector.logCondaEnv(
-          project,
-          if (difference.isEmpty()) CondaEnvResult.NO_LISTING_DIFFERENCE else CondaEnvResult.AMBIGUOUS_LISTING_DIFFERENCE
-        )
-
-        thisLogger().warn(
-          """
-          Several or none conda envs found:
-          Before: $condaEnvironmentsBefore
-          After: $condaEnvironmentsAfter
-          """.trimIndent()
-        )
-      }
-    }
+    PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATED)
     return sdk
-
-  }
-
-  private suspend fun safelyListCondaEnvironments(project: Project, condaExecutable: String): List<String>? {
-    val listEnvs = CondaExecutor.listEnvs(Path.of(condaExecutable)).onFailure {
-      PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.LISTING_FAILURE)
-      it.addMessage(PyCharmCommunityCustomizationBundle.message("sdk.detect.condaenv.exception.dialog.title"))
-      ShowingMessageErrorSync.emit(it)
-    }
-    return listEnvs.getOrNull()?.envs?.toList()
   }
 }

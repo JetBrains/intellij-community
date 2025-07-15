@@ -37,7 +37,7 @@ class PyPIPackageRanking {
       val newRanked = array.asSequence()
         .map { Pair(it[0].lowercase(), it[1].toInt()) }
         .toMap(LinkedHashMap())
-      withContext(Dispatchers.Main) {
+      withContext(Dispatchers.Default) {
         myPackageRank = Collections.unmodifiableMap(newRanked)
       }
     }

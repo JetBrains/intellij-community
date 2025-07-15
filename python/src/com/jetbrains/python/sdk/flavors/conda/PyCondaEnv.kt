@@ -4,22 +4,16 @@ package com.jetbrains.python.sdk.flavors.conda
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv.Companion.getEnvs
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.Path
-import kotlin.io.path.exists
 import kotlin.io.path.name
 
 /**
@@ -99,62 +93,4 @@ data class PyCondaEnv(
   }
 
   override fun toString(): String = "$envIdentity@$fullCondaPathOnTarget"
-}
-
-
-/**
- * Request to create new conda environment.
- */
-sealed class NewCondaEnvRequest {
-  abstract val envName: @NonNls String
-
-  @ApiStatus.Internal
-  abstract suspend fun create(condaPath: Path): PyResult<Unit>
-
-  /**
-   * Create empty environment with [langLevel]
-   */
-  class EmptyNamedEnv(private val langLevel: LanguageLevel, @get:NonNls override val envName: String) : NewCondaEnvRequest() {
-
-    @ApiStatus.Internal
-    override suspend fun create(condaPath: Path): PyResult<Unit> {
-      return CondaExecutor.createNamedEnv(condaPath, envName, langLevel.toPythonVersion())
-    }
-  }
-
-  /**
-   * Create empty environment with [langLevel] in a specific directory
-   */
-  class EmptyUnnamedEnv(private val langLevel: LanguageLevel, private val envPrefix: String) : NewCondaEnvRequest() {
-    override val envName: String get() = envPrefix
-
-    @ApiStatus.Internal
-    override suspend fun create(condaPath: Path): PyResult<Unit> {
-      return CondaExecutor.createUnnamedEnv(condaPath, envPrefix, langLevel.toPythonVersion())
-    }
-  }
-
-  /**
-   * Create env based om [environmentYaml].
-   * Only local target is supported since we do not have an API to read remote file (yet)
-   * TODO: Support remote env creation
-   * @see [LocalEnvByLocalEnvironmentFile]
-   */
-  class LocalEnvByLocalEnvironmentFile(private val environmentYaml: Path) : NewCondaEnvRequest() {
-    init {
-      assert(environmentYaml.exists()) { "$environmentYaml doesn't exist" }
-    }
-
-    override val envName: String = readEnvName()
-
-    @ApiStatus.Internal
-    override suspend fun create(condaPath: Path): PyResult<Unit> {
-      return CondaExecutor.createFileEnv(condaPath, environmentYaml)
-    }
-
-    private fun readEnvName(): String = runReadAction {
-      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(environmentYaml) ?: return@runReadAction "default"
-      CondaEnvironmentYmlParser.readNameFromFile(virtualFile) ?: "default"
-    }
-  }
 }

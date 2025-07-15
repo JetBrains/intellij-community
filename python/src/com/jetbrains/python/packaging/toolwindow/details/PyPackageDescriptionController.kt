@@ -89,7 +89,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     selectedPackageDetails.afterChange { packageDetails ->
       packageDetails ?: return@afterChange
 
-      PyPackageCoroutine.launch(project, Dispatchers.Main) {
+      PyPackageCoroutine.launch(project, Dispatchers.Default) {
         val render = PyPackageDetailsHtmlRender(project, service.currentSdk)
         val html = render.getHtml(packageDetails)
         panel.setHtml(html)

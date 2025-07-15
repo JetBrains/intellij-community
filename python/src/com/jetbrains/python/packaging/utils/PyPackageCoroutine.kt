@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
 class PyPackageCoroutine(val project: Project, val coroutineScope: CoroutineScope) : Disposable.Default {
   companion object {
     fun getInstance(project: Project): PyPackageCoroutine = project.service<PyPackageCoroutine>()
-    fun launch(project: Project?, context: CoroutineContext = Dispatchers.Main, start: CoroutineStart = CoroutineStart.DEFAULT, body: suspend CoroutineScope.() -> Unit): Job {
+    fun launch(project: Project?, context: CoroutineContext = Dispatchers.Default, start: CoroutineStart = CoroutineStart.DEFAULT, body: suspend CoroutineScope.() -> Unit): Job {
       return project?.service<PyPackageCoroutine>()?.coroutineScope?.launch(context, block = body, start = start)
              ?: ApplicationManager.getApplication().service<PyAppCoroutine>().coroutineScope.launch(context, block = body, start = start)
     }

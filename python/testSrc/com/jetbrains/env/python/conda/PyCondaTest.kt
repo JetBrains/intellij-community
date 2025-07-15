@@ -86,7 +86,7 @@ internal class PyCondaTest {
   @Test
   fun testCondaCreateByYaml() =  timeoutRunBlocking(60.seconds) {
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)).getOrThrow()
+                         LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath, emptyList())).getOrThrow()
     val condaEnv = PyCondaEnv.getEnvs(condaRule.condaPathOnTarget)
       .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
 
