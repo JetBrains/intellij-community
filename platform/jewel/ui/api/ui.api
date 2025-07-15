@@ -1261,10 +1261,6 @@ public final class org/jetbrains/jewel/ui/component/ToggleableIconButtonState$Co
 	public static synthetic fun of-CAf7mdk$default (Lorg/jetbrains/jewel/ui/component/ToggleableIconButtonState$Companion;ZLandroidx/compose/ui/state/ToggleableState;ZZZZILjava/lang/Object;)J
 }
 
-public final class org/jetbrains/jewel/ui/component/TooltipAreaKt {
-	public static final fun TooltipArea (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ILandroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-}
-
 public final class org/jetbrains/jewel/ui/component/TooltipKt {
 	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Lorg/jetbrains/jewel/ui/component/AutoHideBehavior;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V

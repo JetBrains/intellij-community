@@ -74,7 +74,7 @@ public fun Tooltip(
     autoHideBehavior: AutoHideBehavior = AutoHideBehavior.Normal,
     content: @Composable () -> Unit,
 ) {
-    TooltipArea(
+    FlagAwareTooltipArea(
         tooltip = {
             TooltipImpl(
                 enabled = enabled,
@@ -127,7 +127,7 @@ public fun Tooltip(
     tooltipPlacement: TooltipPlacement = style.metrics.placement,
     content: @Composable () -> Unit,
 ) {
-    TooltipArea(
+    FlagAwareTooltipArea(
         tooltip = { TooltipImpl(enabled, style, tooltip = tooltip) },
         modifier = modifier,
         delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
