@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
- * Highlights class definitions, functrion definitions, and decorators.
+ * Highlights class definitions, function definitions, and decorators.
  */
 public final class PyDefinitionsAnnotator extends PyAnnotatorBase {
   @Override
