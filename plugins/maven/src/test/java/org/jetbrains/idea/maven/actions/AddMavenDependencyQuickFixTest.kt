@@ -20,6 +20,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.IndexingTestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -113,6 +114,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
         }
       }
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
