@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -224,9 +225,12 @@ open class MavenModuleBuilderHelper(
       return
     }
 
+    val mavenVersion = MavenUtil.getMavenVersion(project)
+    val archetypePluginVersion = if (StringUtil.compareVersionNumbers(mavenVersion, "3.6.3") >= 0) "RELEASE" else "3.1.2"
+
     val params = MavenRunnerParameters(
       false, workingDir.pathString, null as String?,
-      listOf("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
+      listOf("org.apache.maven.plugins:maven-archetype-plugin:$archetypePluginVersion:generate"),
       emptyList())
 
     val runner = MavenRunner.getInstance(project)

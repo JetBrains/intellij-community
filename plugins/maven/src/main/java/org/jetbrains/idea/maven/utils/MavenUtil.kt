@@ -1051,10 +1051,15 @@ object MavenUtil {
     return getMavenVersion(Path.of(mavenHome))
   }
 
-
   @JvmStatic
   fun getMavenVersion(mavenHomeType: StaticResolvedMavenHomeType): String? {
     return getMavenVersion(getMavenHomePath(mavenHomeType))
+  }
+
+  @JvmStatic
+  fun getMavenVersion(project: Project): String? {
+    val mavenHome = MavenDistributionsCache.getInstance(project).getSettingsDistribution().mavenHome
+    return getMavenVersion(mavenHome)
   }
 
   @JvmStatic
