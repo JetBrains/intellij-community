@@ -102,7 +102,7 @@ public final class ClassPath {
     }
   }
 
-  synchronized List<Path> getFiles() {
+  public synchronized List<Path> getFiles() {
     return Arrays.asList(files);
   }
 

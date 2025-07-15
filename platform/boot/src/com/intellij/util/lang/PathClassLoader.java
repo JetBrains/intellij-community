@@ -1,15 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * This classloader implementation is separate from {@link UrlClassLoader}
@@ -18,6 +26,9 @@ import java.util.function.Function;
  */
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
+  @VisibleForTesting
+  public static final String RESET_CLASSPATH_FROM_MANIFEST_PROPERTY = "idea.reset.classpath.from.manifest";
+
   static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY;
 
   static {
@@ -42,6 +53,8 @@ public final class PathClassLoader extends UrlClassLoader {
 
   public PathClassLoader(@NotNull UrlClassLoader.Builder builder) {
     super(builder, RESOURCE_FILE_FACTORY, isParallelCapable);
+
+    parseManifestAndResetClassPath(classPath);
   }
 
   public void reset(Collection<Path> newClassPath) {
@@ -74,6 +87,7 @@ public final class PathClassLoader extends UrlClassLoader {
 
     transformer = null;
     registerInClassLoaderValueMap(parent, this);
+    parseManifestAndResetClassPath(classPath);
   }
 
   @Override
@@ -97,5 +111,41 @@ public final class PathClassLoader extends UrlClassLoader {
       }
     }
     return super.consumeClassData(name, data);
+  }
+
+  @SuppressWarnings("IO_FILE_USAGE")
+  private static void parseManifestAndResetClassPath(@NotNull ClassPath classPath) {
+    String systemProp = System.getProperty(RESET_CLASSPATH_FROM_MANIFEST_PROPERTY);
+    if (systemProp == null || classPath.getFiles().size() != 1) {
+      return;
+    }
+
+    try {
+      Path jarPath = classPath.getFiles().get(0);
+      try (JarFile zipFile = new JarFile(jarPath.toFile())) {
+        Manifest manifest = zipFile.getManifest();
+        if (manifest == null) {
+          return;
+        }
+
+        String classPathAttr = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+        if (classPathAttr == null) {
+          return;
+        }
+
+        String[] paths = classPathAttr.split(" ");
+        List<Path> newPaths = new ArrayList<>(paths.length);
+        for (String path : paths) {
+          if (!path.startsWith("file:")) {
+            throw new IllegalArgumentException("Classpath entry must be a file: URL: " + path);
+          }
+          newPaths.add(Paths.get(urlToFilePath(path)));
+        }
+        classPath.reset(newPaths);
+      }
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }
