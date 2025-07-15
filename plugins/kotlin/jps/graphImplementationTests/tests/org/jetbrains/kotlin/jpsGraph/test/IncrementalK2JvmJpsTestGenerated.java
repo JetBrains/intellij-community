@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @TestRoot("jps/graphImplementationTests/testData/incremental")
 public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJpsTest {
     static void setUpTests() {
-        File kotlincFolder = getKotlincFolder("2.1.10");
+        File kotlincFolder = getKotlincFolder("2.2.0");
         System.setProperty("jps.kotlin.home", kotlincFolder.getAbsolutePath());
 
         // enable graph implementation
