@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
@@ -195,10 +196,9 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
         }
 
         private fun KtTypeProjection.removeQuestionMark() {
-            val initialNullableType = this.typeReference?.typeElement as? KtNullableType ?: return
-            val deepestNullableType = getDeepestNullableType(initialNullableType)
-            val innerType = deepestNullableType.innerType ?: return
-            innerType.let { initialNullableType.replace(innerType) }
+            val typeElement = this.typeReference?.typeElement
+            val unwrappedTypeElement = typeElement?.unwrapNullability() ?: return
+            typeElement.replace(unwrappedTypeElement)
         }
 
         private fun KtTypeProjection.makeDefinitelyNonNullable() {
@@ -300,11 +300,7 @@ private fun KtElement.getTypeArguments(): List<KtTypeProjection>? {
     return when (this) {
         is KtTypeReference -> {
             val typeElement = this.typeElement
-            val userType = if (typeElement is KtNullableType) {
-                getDeepestNullableType(typeElement).innerType
-            } else {
-                typeElement
-            } as? KtUserType
+            val userType = typeElement?.unwrapNullability() as? KtUserType
             userType?.typeArguments.orEmpty()
         }
 
@@ -314,8 +310,4 @@ private fun KtElement.getTypeArguments(): List<KtTypeProjection>? {
 
         else -> null
     }
-}
-
-private fun getDeepestNullableType(initialNullableType: KtNullableType): KtNullableType {
-    return generateSequence(initialNullableType) { it.innerType as? KtNullableType }.last()
 }
