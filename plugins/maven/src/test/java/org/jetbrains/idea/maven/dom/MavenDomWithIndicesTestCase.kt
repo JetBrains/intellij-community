@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchService
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -54,7 +55,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
                       """.trimIndent())
     }
     else {
-      MavenSettingsCache.getInstance(project).reloadAsync();
+      MavenSettingsCache.getInstance(project).reloadAsync()
     }
     withContext(Dispatchers.EDT) { myIndicesFixture!!.setUpAfterImport() }
   }
@@ -113,9 +114,10 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     val groupFolder = expectedGroupId.replace('.', '/')
     val actualEvents: MutableSet<String> = ConcurrentHashMap.newKeySet()
     val downloadListener = MavenServerDownloadListener { _, relativePath ->
-      if (relativePath.startsWith(groupFolder)) {
+      if (relativePath.startsWith(groupFolder) && relativePath.endsWith("jar")) {
         val artifactId = relativePath.substring(groupFolder.length).split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1]
         if (expectedArtifactIds.contains(artifactId)) {
+          MavenLog.LOG.warn("Artifact $artifactId is downloaded")
           actualEvents.add(artifactId)
         }
       }
@@ -128,7 +130,11 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
 
     awaitConfiguration()
 
-    assertUnorderedElementsAreEqual(actualEvents, expectedArtifactIds)
+    val extraDownloaded = actualEvents - expectedArtifactIds
+    assertEmpty("Unexpected artifacts downloaded", extraDownloaded)
+
+    val notDownloaded = expectedArtifactIds - actualEvents
+    assertEmpty("Artifacts not downloaded", notDownloaded)
   }
 
   override suspend fun checkHighlighting() {
