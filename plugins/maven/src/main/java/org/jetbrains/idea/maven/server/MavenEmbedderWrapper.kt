@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -337,8 +338,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       getOrCreateWrappee()
     }
 
-
-
     return coroutineScope {
       val progressIndication = launch {
         tracer.spanBuilder("waitForLongRunningTask").useWithScope { span ->
@@ -355,6 +354,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
               processImportEvents(status)
               eventHandler.handleConsoleEvents(status.consoleEvents())
               eventHandler.handleDownloadEvents(status.downloadEvents())
+              handleDownloadArtifactEvents(status)
             }
             catch (e: Throwable) {
               if (isActive) {
@@ -385,6 +385,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
             processImportEvents(status)
             eventHandler.handleConsoleEvents(status.consoleEvents())
             eventHandler.handleDownloadEvents(status.downloadEvents())
+            handleDownloadArtifactEvents(status)
             response.result
           }
         }
@@ -392,6 +393,14 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       finally {
         progressIndication.cancelAndJoin()
       }
+    }
+  }
+
+  private fun handleDownloadArtifactEvents(status: LongRunningTaskStatus) {
+    val artifactEvents = status.downloadArtifactEvents()
+    for (e in artifactEvents) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC).artifactDownloaded(
+        File(e.file), e.path)
     }
   }
 

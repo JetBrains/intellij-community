@@ -16,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.idea.maven.utils.MavenLog
-import java.io.File
 import java.rmi.RemoteException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -89,7 +88,6 @@ open class MavenServerConnectorImpl(project: Project,
         project!!.service<CoroutineService>().coroutineScope.async(context = Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
           runCatching {
             val server = mySupport!!.acquire(this, "", indicator)
-            startPullingDownloadListener(server)
             startPullingLogger(server)
             myServerPromise.setResult(server)
           }
@@ -104,34 +102,6 @@ open class MavenServerConnectorImpl(project: Project,
       }
     }
   }
-
-  @Throws(RemoteException::class)
-  private fun startPullingDownloadListener(server: MavenServer) {
-    val listener = server.createPullDownloadListener(MavenRemoteObjectWrapper.ourToken)
-    if (listener == null) return
-    myPullingDownloadFuture = myExecutor.scheduleWithFixedDelay(
-      {
-        try {
-          val artifactEvents = listener.pull()
-          for (e in artifactEvents) {
-            ApplicationManager.getApplication().messageBus.syncPublisher(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC).artifactDownloaded(
-              File(e.file), e.path)
-          }
-          myDownloadConnectFailedCount.set(0)
-        }
-        catch (e: RemoteException) {
-          if (!Thread.currentThread().isInterrupted) {
-            myDownloadConnectFailedCount.incrementAndGet()
-          }
-          MavenLog.LOG.warn("Maven pulling download listener stopped", e)
-          myPullingDownloadFuture!!.cancel(true)
-        }
-      },
-      500,
-      500,
-      TimeUnit.MILLISECONDS)
-  }
-
 
   @Throws(RemoteException::class)
   private fun startPullingLogger(server: MavenServer) {
