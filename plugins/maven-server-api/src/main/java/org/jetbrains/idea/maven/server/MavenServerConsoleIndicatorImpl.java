@@ -91,7 +91,7 @@ public class MavenServerConsoleIndicatorImpl implements MavenServerConsoleIndica
     printMessage(MavenServerConsoleIndicator.LEVEL_ERROR, message);
   }
 
-  public void artifactDownloaded(File file, String relativePath) {
-    myDowLoadArtifactEventsQueue.add(new DownloadArtifactEvent(file.getAbsolutePath(), relativePath));
+  public void artifactDownloaded(File file) {
+    myDowLoadArtifactEventsQueue.add(new DownloadArtifactEvent(file.getAbsolutePath()));
   }
 }

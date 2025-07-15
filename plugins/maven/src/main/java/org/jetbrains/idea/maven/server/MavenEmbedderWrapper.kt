@@ -400,7 +400,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     val artifactEvents = status.downloadArtifactEvents()
     for (e in artifactEvents) {
       ApplicationManager.getApplication().messageBus.syncPublisher(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC).artifactDownloaded(
-        File(e.file), e.path)
+        File(e.file))
     }
   }
 

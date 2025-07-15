@@ -71,7 +71,7 @@ public class Maven40TransferListenerAdapter implements TransferListener {
   @Override
   public void transferSucceeded(TransferEvent event) {
     myIndicator.debug("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
-    myIndicator.artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
+    myIndicator.artifactDownloaded(event.getResource().getPath().toFile());
   }
 
   @Override
