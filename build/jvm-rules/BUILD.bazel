@@ -40,7 +40,7 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
-# used by _jvm_builder_launcher attribute in jvm_library rule
+# used by _jvm_builder_launcher attribute in jvm_library rule and _worker_launcher attribute in jvm_resources rule
 exports_files(
   ["rules/impl/MemoryLauncher.java"],
   visibility = ["//visibility:private"],

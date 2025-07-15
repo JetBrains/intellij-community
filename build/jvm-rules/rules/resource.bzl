@@ -21,13 +21,13 @@ def _jvm_resources_impl(ctx):
         inputs = ctx.files.files,
         # avoid creating small files on disk – trick Bazel using this workaround
         arguments = ctx.attr._worker_jvm_flags[BuildSettingInfo].value + [
-            "-jar",
+            ctx.file._worker_launcher.path,
             ctx.file._worker.path,
             "--flagfile=|jar|" + resultJar.path + "|" + ctx.attr.add_prefix + "|" + strip_prefix,
         ],
         #         arguments = [args],
         outputs = [resultJar],
-        tools = [ctx.file._worker],
+        tools = [ctx.file._worker_launcher, ctx.file._worker],
         executable = java_runtime.java_executable_exec_path,
         execution_requirements = {
             "supports-workers": "1",
@@ -78,6 +78,10 @@ jvm_resources = rule(
         ),
         "_worker_jvm_flags": attr.label(
             default = "//:resource-packager-jvm_flags",
+        ),
+        "_worker_launcher": attr.label(
+            default = "//:rules/impl/MemoryLauncher.java",
+            allow_single_file = True,
         ),
         "_tool_java_runtime": attr.label(
             default = "@bazel_tools//tools/jdk:current_java_runtime",
