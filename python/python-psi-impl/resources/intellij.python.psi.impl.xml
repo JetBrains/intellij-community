@@ -170,14 +170,7 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PySyntaxAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDocStringAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyGeneratorInArgumentListAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyStarAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyStringLiteralQuotesAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyFStringsAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyPatternAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyFunctionHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyBuiltinAnnotator"/>

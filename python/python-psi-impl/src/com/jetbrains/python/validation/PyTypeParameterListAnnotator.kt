@@ -1,7 +1,6 @@
 package com.jetbrains.python.validation
 
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstTypeParameter.Kind.TypeVar
 import com.jetbrains.python.psi.PyElementVisitor
@@ -10,13 +9,7 @@ import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyPsiUtils
 
-class PyTypeParameterListAnnotator : PyAnnotatorBase() {
-  override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
-    element.accept(PyTypeParameterListAnnotatorVisitor(holder))
-  }
-}
-
-private class PyTypeParameterListAnnotatorVisitor(private val holder: PyAnnotationHolder) : PyElementVisitor() {
+class PyTypeParameterListAnnotator(private val holder: PyAnnotationHolder) : PyElementVisitor() {
   override fun visitPyTypeParameterList(node: PyTypeParameterList) {
     if (!node.typeParameters.isEmpty()) {
       val namesSet = mutableSetOf<String>()
