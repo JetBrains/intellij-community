@@ -12,14 +12,12 @@ import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiManager
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.createBoundedTaskExecutor
 import com.intellij.util.indexing.FileBasedIndex
@@ -36,6 +34,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.withLock
 
 private val LOG = Logger.getInstance(ChangedFilesCollector::class.java)
 
@@ -235,7 +234,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
       fileBasedIndex.waitUntilIndicesAreInitialized()
       eventMerger.processChanges(object : VfsEventProcessor {
         override fun process(changeInfo: VfsEventsMerger.ChangeInfo): Boolean {
-          return ConcurrencyUtil.withLock(fileBasedIndex.myWriteLock, ThrowableComputable {
+          fileBasedIndex.myWriteLock.withLock {
             try {
               ProgressManager.getInstance().executeNonCancelableSection(Runnable {
                 processor.process(changeInfo)
@@ -244,8 +243,8 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
             finally {
               IndexingStamp.flushCache(changeInfo.getFileId())
             }
-            true
-          })
+          }
+          return true
         }
 
         override fun endBatch() {
