@@ -49,4 +49,6 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
   val sampleCodeLabel = checkBox { byText("Add sample code") }
   val multiModuleLabel = checkBox { byText("Generate multi-module build") }
   val compactStructureLabel = checkBox { byText("Use compact project structure") }
+  val createMainPyCheckbox = checkBox { byText("Create a welcome script") }
+  val installMinicondaLink = x("//div[@text='Install Miniconda']")
 }
