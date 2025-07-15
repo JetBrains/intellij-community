@@ -1,22 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ScanResult;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.Filter;
+import org.junit.platform.engine.FilterResult;
 import org.junit.platform.engine.TestEngine;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.engine.discovery.MethodSelector;
 import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -24,7 +22,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -47,10 +44,11 @@ public final class JUnit5BazelRunner {
   private static final Launcher launcher = LauncherFactory.create();
 
   private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
+    List<? extends DiscoverySelector> bazelTestSelectors = getTestsSelectors(ourClassLoader);
     return LauncherDiscoveryRequestBuilder.request()
       .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
-      .selectors(getTestsSelectors(ourClassLoader))
-      .filters(getTestFilters())
+      .selectors(bazelTestSelectors)
+      .filters(getTestFilters(bazelTestSelectors))
       .build();
   }
 
@@ -178,12 +176,31 @@ public final class JUnit5BazelRunner {
     }
   }
 
-  private static Filter<?>[] getTestFilters() {
-    return new Filter[0];
+  private static Filter<?>[] getTestFilters(List<? extends DiscoverySelector> bazelTestSelectors) {
+    // value of --test_filter, if specified
+    // https://bazel.build/reference/test-encyclopedia
+    String testFilter = System.getenv(bazelEnvTestBridgeTestOnly);
+    if (testFilter == null || testFilter.isBlank()) {
+      return new Filter[0];
+    }
+
+    // in case when we already have precise method selectors, so we aren't going to filter by test class name
+    if (bazelTestSelectors.stream().allMatch(selector -> selector instanceof MethodSelector)) {
+      return new Filter[0];
+    }
+
+    String[] parts = testFilter.split("#", 2);
+    if (parts.length == 2) {
+      throw new IllegalStateException("Method filters are not expected in name-based test filter");
+    }
+    String classNamePart = parts[0];
+    ClassNameFilter classNameFilter = getClassNameFilter(classNamePart);
+
+    return new Filter[]{classNameFilter};
   }
 
   private static List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) throws Throwable {
-    List<? extends DiscoverySelector> bazelTestClassSelector = getBazelTestClassSelectors(classLoader);
+    List<? extends DiscoverySelector> bazelTestClassSelector = getBazelTestMethodSelectors(classLoader);
     if (!bazelTestClassSelector.isEmpty()) {
       return bazelTestClassSelector;
     }
@@ -198,7 +215,7 @@ public final class JUnit5BazelRunner {
 
   // bazel-specific
 
-  private static List<DiscoverySelector> getBazelTestClassSelectors(ClassLoader classLoader) {
+  private static List<MethodSelector> getBazelTestMethodSelectors(ClassLoader classLoader) {
     // value of --test_filter, if specified
     // https://bazel.build/reference/test-encyclopedia
     String testFilter = System.getenv(bazelEnvTestBridgeTestOnly);
@@ -209,44 +226,62 @@ public final class JUnit5BazelRunner {
     System.err.println("Test filter: " + testFilter);
 
     String[] parts = testFilter.split("#", 2);
-    String classNamePart = parts[0];
-    String className;
-    if (!classNamePart.contains(".")) {
-      className = findFullyQualifiedName(classNamePart, classLoader);
-      if (className == null) {
-        // TODO Add optional classpath info?
-        throw new RuntimeException("Cannot find class by simple name: " + classNamePart);
-      }
-    }
-    else {
-      className = classNamePart;
-    }
 
+    // build only method selectors, as filtering by class name only has to be done separately
     if (parts.length == 2) {
+      String className = parts[0];
       String methodName = parts[1];
+      //let's be strict here and force user to specify fully qualified class name
+      if (!className.contains(".")) {
+        throw new IllegalArgumentException("Class name should contain package when filtering with method name: " + className);
+      }
       System.err.println("Selecting class: " + className);
       System.err.println("Selecting method: " + methodName);
       return List.of(selectMethod(classLoader, className, methodName));
-    }
-    else {
-      System.err.println("Selecting class: " + className);
-      return List.of(selectClass(classLoader, className));
+    } else {
+      return Collections.emptyList();
     }
   }
 
-  private static String findFullyQualifiedName(String simpleClassName, ClassLoader classLoader) {
-    try (ScanResult scanResult = new ClassGraph()
-      .enableClassInfo()
-      .ignoreClassVisibility()
-      .addClassLoader(classLoader)
-      .scan()
-    ) {
-      return scanResult.getAllClasses().stream()
-        .filter(classInfo -> classInfo.getSimpleName().equals(simpleClassName))
-        .map(classInfo -> classInfo.getName())
-        .findFirst()
-        .orElse(null);
+  private static ClassNameFilter getClassNameFilter(String filterClassName) {
+    String filterClassNameSimpleName;
+    String filterClassNameFQN;
+    int lastFilterClassNamePartDotIndex = filterClassName.lastIndexOf('.');
+    if (lastFilterClassNamePartDotIndex < 0) {
+      filterClassNameSimpleName = filterClassName;
+      filterClassNameFQN = null;
+    } else {
+      filterClassNameSimpleName = filterClassName.substring(lastFilterClassNamePartDotIndex + 1);
+      filterClassNameFQN = filterClassName;
     }
+
+    if (!Character.isUpperCase(filterClassNameSimpleName.charAt(0))) {
+      throw new IllegalArgumentException("Class name should start with uppercase letter: " + filterClassNameSimpleName);
+    }
+
+    return new ClassNameFilter() {
+      @Override
+      public FilterResult apply(String className) {
+        if (filterClassNameFQN == null) {
+          int lastClassNamePartDotIndex = className.lastIndexOf('.');
+          String classNameSimpleName = className.substring(lastClassNamePartDotIndex + 1);
+          if (classNameSimpleName.startsWith(filterClassNameSimpleName)) {
+            return FilterResult.included(null);
+          }
+          else {
+            return FilterResult.excluded(null);
+          }
+        }
+        else {
+          if (className.startsWith(filterClassNameFQN)) {
+            return FilterResult.included(null);
+          }
+          else {
+            return FilterResult.excluded(null);
+          }
+        }
+      }
+    };
   }
 
   private static Path getBazelTempDir() throws IOException {
