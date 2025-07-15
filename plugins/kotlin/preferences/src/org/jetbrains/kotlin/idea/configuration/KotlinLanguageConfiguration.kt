@@ -2,19 +2,15 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.ex.Settings
-import com.intellij.ui.dsl.builder.*
-import com.intellij.util.ui.JBFont
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinPluginKindSwitcherController
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
-import java.awt.Component
 import javax.swing.JComponent
 
 internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScroll {
@@ -65,29 +61,6 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
                 separator()
                     .topGap(TopGap.SMALL)
                     .bottomGap(BottomGap.SMALL)
-
-            }
-
-            row {
-                icon(AllIcons.General.Information).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
-                panel {
-                    row {
-                        text(
-                            text = KotlinPreferencesBundle.message(
-                                "kotlin.plugin.is.no.longer.updated.separately.from.the.0",
-                                ApplicationNamesInfo.getInstance().fullProductName,
-                            ),
-                            maxLineLength = DEFAULT_COMMENT_WIDTH,
-                        ).applyToComponent { font = JBFont.medium() }
-                    }
-                    row {
-                        text(
-                            text = KotlinPreferencesBundle.message("check.for.ide.updates"),
-                            maxLineLength = DEFAULT_COMMENT_WIDTH,
-                            action = { selectUpdatesConfigurable(it.inputEvent?.component) },
-                        ).applyToComponent { font = JBFont.medium() }
-                    }
-                }
             }
 
             experimentalFeaturesPanel?.let { experimentalFeaturesPanel ->
@@ -99,16 +72,7 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
             }
         }
     }
-
-    private fun selectUpdatesConfigurable(component: Component?) {
-        if (component != null) {
-            Settings.KEY.getData(DataManager.getInstance().getDataContext(component))?.let { settings ->
-                settings.select(settings.find("preferences.updates"))
-            }
-        }
-    }
 }
-
 
 class KotlinPluginSwitchSearchOptionContributor : SearchableOptionContributor() {
     override fun processOptions(processor: SearchableOptionProcessor) {
