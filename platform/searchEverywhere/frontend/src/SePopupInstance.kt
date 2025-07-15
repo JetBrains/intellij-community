@@ -21,7 +21,7 @@ class SePopupInstance(private val popupVm: SePopupVm,
   override fun getSearchText(): String = popupVm.searchPattern.value
 
   override fun setSearchText(searchText: String?) {
-    popupVm.searchPattern.value = searchText ?: ""
+    popupVm.setSearchText(searchText ?: "")
   }
 
   override fun getSearchFieldDocument(): Document = popupContentPane.searchFieldDocument
