@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -48,6 +49,7 @@ import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMeth
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
+import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
@@ -326,7 +328,9 @@ internal class ReworkedTerminalView(
 
     editor.highlighter = TerminalTextHighlighter { model.getHighlightings() }
 
-    TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
+    if (!isSplitHyperlinksSupportEnabled()) {
+      TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
+    }
 
     val cursorPainter = TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
     if (fusCursorPainterListener != null) {

@@ -73,6 +73,8 @@
     <registryKey key="terminal.generic.hyperlinks" defaultValue="false"
                  description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
                   Open a new terminal after enabling this option to take effect."/>
+    <registryKey key="terminal.split.hyperlinks" defaultValue="false"
+                 description="Hyperlink support split between the frontend and the backend. Only affects new sessions."/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
