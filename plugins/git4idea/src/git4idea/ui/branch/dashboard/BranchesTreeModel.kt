@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ThreeState
-import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
-import com.intellij.vcs.git.shared.ui.getText
+import com.intellij.vcs.git.branch.GitInOutCountersInProject
+import com.intellij.vcs.git.ui.getText
 import git4idea.*
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitRefType

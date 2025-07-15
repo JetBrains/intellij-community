@@ -16,8 +16,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.vcs.git.shared.rpc.GitWidgetApi
-import com.intellij.vcs.git.shared.rpc.GitWidgetState
+import com.intellij.vcs.git.rpc.GitWidgetApi
+import com.intellij.vcs.git.rpc.GitWidgetState
 import git4idea.GitDisposable
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager

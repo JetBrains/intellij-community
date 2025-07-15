@@ -32,11 +32,11 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
-import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
-import com.intellij.vcs.git.shared.branch.calcTooltip
-import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil
-import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
-import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
+import com.intellij.vcs.git.branch.GitBranchesMatcherWrapper
+import com.intellij.vcs.git.branch.calcTooltip
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil
+import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
+import com.intellij.vcs.git.ui.GitIncomingOutgoingUi
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository

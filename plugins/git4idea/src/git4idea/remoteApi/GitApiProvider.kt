@@ -4,7 +4,7 @@ package git4idea.remoteApi
 import com.intellij.openapi.client.currentSession
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.util.application
-import com.intellij.vcs.git.shared.rpc.*
+import com.intellij.vcs.git.rpc.*
 import fleet.rpc.remoteApiDescriptor
 
 internal class GitApiProvider : RemoteApiProvider {

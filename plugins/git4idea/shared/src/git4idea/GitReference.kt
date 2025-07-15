@@ -4,7 +4,7 @@ package git4idea
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.containers.HashingStrategy
-import com.intellij.vcs.git.shared.CaseSensitivityInfoHolder
+import com.intellij.vcs.git.CaseSensitivityInfoHolder
 import org.jetbrains.annotations.ApiStatus
 
 /**

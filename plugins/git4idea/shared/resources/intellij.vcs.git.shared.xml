@@ -11,23 +11,23 @@
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
 
-    <action id="git.branches.show.tags" class="com.intellij.vcs.git.shared.actions.GitBranchesTreeShowTagsAction"/>
+    <action id="git.branches.show.tags" class="com.intellij.vcs.git.actions.GitBranchesTreeShowTagsAction"/>
 
     <group id="Git.Branches.Popup.SpeedSearch">
       <reference ref="EditorCut"/>
       <reference ref="EditorPaste"/>
     </group>
 
-    <group id="Git.Branches.Popup.Settings" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
-      <group id="git.branches.popup.filter.by.separator" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
-      <action id="git.branches.popup.filter.by.action" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupFilterByAction"/>
-      <action id="git.branches.popup.filter.by.repository" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupFilterByRepository"/>
+    <group id="Git.Branches.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+      <group id="git.branches.popup.filter.by.separator" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
+      <action id="git.branches.popup.filter.by.action" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterByAction"/>
+      <action id="git.branches.popup.filter.by.repository" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterByRepository"/>
       <separator/>
-      <action id="git.branches.group.by.prefix" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
-      <action class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
-      <action id="git.branches.show.recent" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
+      <action id="git.branches.group.by.prefix" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
+      <action class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
+      <action id="git.branches.show.recent" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
       <reference ref="git.branches.show.tags"/>
-      <action id="git.branches.popup.resize" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupResizeAction"/>
+      <action id="git.branches.popup.resize" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupResizeAction"/>
     </group>
 
   </actions>
@@ -38,12 +38,12 @@
 
     <rdct.remoteSettingProvider implementation="git4idea.config.GitRemoteSettingsInfoProvider"/>
 
-    <postStartupActivity implementation="com.intellij.vcs.git.shared.GitDataHoldersInitializer"/>
+    <postStartupActivity implementation="com.intellij.vcs.git.GitDataHoldersInitializer"/>
   </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="Git4Idea.gitRepoIconProvider"
-                    interface="com.intellij.vcs.git.shared.ui.GitRepoIconProvider"
+                    interface="com.intellij.vcs.git.ui.GitRepoIconProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -19,10 +19,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.RowIcon
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopup
-import com.intellij.vcs.git.shared.isCodeWithMe
-import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
-import com.intellij.vcs.git.shared.rpc.GitWidgetState
+import com.intellij.vcs.git.branch.popup.GitBranchesPopup
+import com.intellij.vcs.git.isCodeWithMe
+import com.intellij.vcs.git.repo.GitRepositoriesHolder
+import com.intellij.vcs.git.rpc.GitWidgetState
 import git4idea.i18n.GitBundle
 import icons.DvcsImplIcons
 import java.awt.Dimension

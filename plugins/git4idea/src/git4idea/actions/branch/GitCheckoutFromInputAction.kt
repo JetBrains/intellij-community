@@ -5,7 +5,7 @@ import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupActions
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupActions
 import git4idea.actions.branch.GitBranchActionsUtil.getRepositoriesForTopLevelActions
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle

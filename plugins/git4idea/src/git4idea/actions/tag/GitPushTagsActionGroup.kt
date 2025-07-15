@@ -2,7 +2,7 @@
 package git4idea.actions.tag
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.vcs.git.shared.actions.GitSingleRefActions
+import com.intellij.vcs.git.actions.GitSingleRefActions
 import git4idea.GitTag
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle

@@ -2,7 +2,7 @@
 package git4idea.branch
 
 import com.intellij.dvcs.branch.BranchType
-import com.intellij.vcs.git.shared.ref.GitReferenceName
+import com.intellij.vcs.git.ref.GitReferenceName
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.GitTag

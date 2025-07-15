@@ -110,7 +110,7 @@ public final class GitBranchUtil {
   }
 
   public static @NlsSafe @NotNull String stripRefsPrefix(@NotNull @NonNls String branchName) {
-    return com.intellij.vcs.git.shared.ref.GitRefUtil.stripRefsPrefix(branchName);
+    return com.intellij.vcs.git.ref.GitRefUtil.stripRefsPrefix(branchName);
   }
 
   /**

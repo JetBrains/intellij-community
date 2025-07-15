@@ -6,7 +6,7 @@ import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getRepository
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import com.intellij.vcs.git.shared.ui.GitRepoIconProvider
+import com.intellij.vcs.git.ui.GitRepoIconProvider
 import git4idea.repo.GitRepositoryIdCache
 import javax.swing.Icon
 

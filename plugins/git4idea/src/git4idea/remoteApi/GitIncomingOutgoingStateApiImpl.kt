@@ -5,8 +5,8 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.vcs.git.shared.branch.GitInOutProjectState
-import com.intellij.vcs.git.shared.rpc.GitIncomingOutgoingStateApi
+import com.intellij.vcs.git.branch.GitInOutProjectState
+import com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi
 import git4idea.GitDisposable
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import kotlinx.coroutines.FlowPreview

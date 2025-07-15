@@ -8,8 +8,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectIdOrNull
-import com.intellij.vcs.git.shared.rpc.GitWidgetApi
-import com.intellij.vcs.git.shared.rpc.GitWidgetState
+import com.intellij.vcs.git.rpc.GitWidgetApi
+import com.intellij.vcs.git.rpc.GitWidgetState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*

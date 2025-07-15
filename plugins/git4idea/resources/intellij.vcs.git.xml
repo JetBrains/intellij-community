@@ -193,7 +193,7 @@
       <reference ref="Git.Rebase.Skip"/>
     </group>
 
-    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
       <reference ref="git.branches.group.by.prefix"/>
       <reference ref="git.branches.show.recent"/>
       <reference ref="git.branches.show.tags"/>

@@ -1,9 +1,9 @@
-f:com.intellij.vcs.git.shared.GitDisplayName
-- sf:INSTANCE:com.intellij.vcs.git.shared.GitDisplayName
+f:com.intellij.vcs.git.GitDisplayName
+- sf:INSTANCE:com.intellij.vcs.git.GitDisplayName
 - sf:NAME:java.lang.String
 - sf:POINTER:java.util.function.Supplier
-f:com.intellij.vcs.git.shared.ref.GitRefUtil
-- sf:INSTANCE:com.intellij.vcs.git.shared.ref.GitRefUtil
+f:com.intellij.vcs.git.ref.GitRefUtil
+- sf:INSTANCE:com.intellij.vcs.git.ref.GitRefUtil
 - f:getCommonCurrentBranch(java.util.Collection):git4idea.GitStandardLocalBranch
 - f:getCommonLocalBranches(java.util.Collection):java.util.Collection
 - f:getCommonRemoteBranches(java.util.Collection):java.util.Collection

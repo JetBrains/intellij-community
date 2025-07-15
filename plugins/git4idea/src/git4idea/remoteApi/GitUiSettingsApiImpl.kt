@@ -7,7 +7,7 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
+import com.intellij.vcs.git.rpc.GitUiSettingsApi
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepositoryManager
 

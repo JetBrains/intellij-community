@@ -4,8 +4,8 @@ package git4idea.actions.branch
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.vcs.git.shared.actions.GitSingleRefActions
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupKeys
+import com.intellij.vcs.git.actions.GitSingleRefActions
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys
 import git4idea.GitStandardLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.actions.ref.GitSingleRefAction

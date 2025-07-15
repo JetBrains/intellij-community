@@ -12,11 +12,11 @@ import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupStepBase
-import com.intellij.vcs.git.shared.branch.popup.GitDefaultBranchesPopupStep
-import com.intellij.vcs.git.shared.branch.popup.GitDefaultBranchesTreeRenderer
-import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeRenderer
-import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupStepBase
+import com.intellij.vcs.git.branch.popup.GitDefaultBranchesPopupStep
+import com.intellij.vcs.git.branch.popup.GitDefaultBranchesTreeRenderer
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeRenderer
+import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository

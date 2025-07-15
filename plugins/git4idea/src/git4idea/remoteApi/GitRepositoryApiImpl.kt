@@ -10,10 +10,10 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
-import com.intellij.vcs.git.shared.ref.GitReferenceName
-import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
-import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
+import com.intellij.vcs.git.ref.GitFavoriteRefs
+import com.intellij.vcs.git.ref.GitReferenceName
+import com.intellij.vcs.git.rpc.GitRepositoryApi
+import com.intellij.vcs.git.rpc.GitRepositoryEvent
 import git4idea.GitDisposable
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
@@ -29,7 +29,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
-private typealias SharedRefUtil = com.intellij.vcs.git.shared.ref.GitRefUtil
+private typealias SharedRefUtil = com.intellij.vcs.git.ref.GitRefUtil
 
 class GitRepositoryApiImpl : GitRepositoryApi {
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
