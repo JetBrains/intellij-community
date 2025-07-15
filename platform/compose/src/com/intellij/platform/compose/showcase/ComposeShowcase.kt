@@ -2,12 +2,29 @@
 package com.intellij.platform.compose.showcase
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -31,14 +48,26 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import org.jetbrains.jewel.ui.component.TooltipArea
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.Outline
-import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.component.CheckboxRow
+import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.Divider
+import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.Link
+import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.RadioButtonRow
+import org.jetbrains.jewel.ui.component.TabData
+import org.jetbrains.jewel.ui.component.TabStrip
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.Tooltip
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
@@ -81,8 +110,10 @@ internal fun ComposeShowcase() {
 
 @Composable
 private fun Title() {
-  Text("Showcase of Jewel components", fontSize = 15.sp)
-  Divider(orientation = Orientation.Horizontal, modifier = Modifier.fillMaxWidth())
+  Column {
+    Text("Showcase of Jewel components", fontSize = 15.sp)
+    Divider(orientation = Orientation.Horizontal, modifier = Modifier.fillMaxWidth())
+  }
 }
 
 @Composable
@@ -106,7 +137,7 @@ private fun CheckBox() {
 
 @Composable
 private fun RadioButton() {
-  var selectedRadioButton by remember { mutableStateOf(1) }
+  var selectedRadioButton by remember { mutableIntStateOf(1) }
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -158,14 +189,14 @@ private fun Buttons() {
     horizontalArrangement = Arrangement.spacedBy(20.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    var state1 by remember { mutableStateOf(0) }
+    var state1 by remember { mutableIntStateOf(0) }
     OutlinedButton(onClick = {
       state1++
     }) {
       Text("Click me #$state1")
     }
 
-    var state2 by remember { mutableStateOf(0) }
+    var state2 by remember { mutableIntStateOf(0) }
     DefaultButton(onClick = {
       state2++
     }) {
@@ -173,7 +204,7 @@ private fun Buttons() {
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-      var state3 by remember { mutableStateOf(0) }
+      var state3 by remember { mutableIntStateOf(0) }
       var focused by remember { mutableStateOf(false) }
       IconButton(
         onClick = { state3++ },
@@ -191,19 +222,21 @@ private fun Buttons() {
 
 @Composable
 private fun Tabs() {
-  var selectedTabIndex by remember { mutableStateOf(0) }
+  var selectedTabIndex by remember { mutableIntStateOf(0) }
   val tabIds by remember { mutableStateOf((1..12).toList()) }
 
-  val tabs by derivedStateOf {
-    tabIds.mapIndexed { index, id ->
-      TabData.Default(
-        selected = index == selectedTabIndex,
-        content = {
-          Text("Tab $id")
-        },
-        closable = false,
-        onClick = { selectedTabIndex = index },
-      )
+  val tabs by remember {
+    derivedStateOf {
+      tabIds.mapIndexed { index, id ->
+        TabData.Default(
+          selected = index == selectedTabIndex,
+          content = {
+            Text("Tab $id")
+          },
+          closable = false,
+          onClick = { selectedTabIndex = index },
+        )
+      }
     }
   }
 
@@ -285,7 +318,7 @@ private fun TextFieldWithButton() {
         )
       },
       trailingIcon = {
-        TooltipArea(
+        Tooltip(
           tooltip = { TooltipSimple { Text(openFileChooserHint, color = JewelTheme.tooltipStyle.colors.content) } }
         ) {
           IconButton({ chooseFile() }, Modifier.size(18.dp).pointerHoverIcon(PointerIcon.Hand).focusProperties { canFocus = false }) {
