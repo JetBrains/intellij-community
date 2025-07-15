@@ -15,8 +15,16 @@ data class LogTraceParams(
     val verbose: String?
 )
 
+@Serializable
+data class SetTraceParams(
+  /**
+   * The new value that should be assigned to the trace setting.
+   */
+  val value: TraceValue,
+)
+
 val LogTraceNotificationType: NotificationType<LogTraceParams> =
     NotificationType("\$/logTrace", LogTraceParams.serializer())
 
-val SetTraceNotificationType: NotificationType<TraceValue> =
-    NotificationType("\$/setTrace", TraceValue.serializer())
+val SetTraceNotificationType: NotificationType<SetTraceParams> =
+    NotificationType("\$/setTrace", SetTraceParams.serializer())
