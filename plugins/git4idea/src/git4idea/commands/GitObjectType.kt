@@ -1,6 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.commands;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.commands
 
-public enum  GitObjectType {
-  COMMIT, BLOB, TREE
+import org.jetbrains.annotations.NonNls
+
+@NonNls
+enum class GitObjectType(val tag: String) {
+  COMMIT("commit"), BLOB("blob"), TREE("tree");
+
+  companion object {
+    fun fromTag(tag: String): GitObjectType? {
+      return entries.find { it.tag == tag }
+    }
+  }
 }

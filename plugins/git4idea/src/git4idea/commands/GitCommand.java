@@ -31,6 +31,7 @@ public final class GitCommand {
   public static final GitCommand CHECK_ATTR = read("check-attr");
   public static final GitCommand CHECK_IGNORE = read("check-ignore");
   public static final GitCommand COMMIT = write("commit");
+  public static final GitCommand COMMIT_TREE = write("commit-tree");
   public static final GitCommand CONFIG = read("config");
   public static final GitCommand CHERRY = read("cherry");
   public static final GitCommand CHERRY_PICK = write("cherry-pick");
