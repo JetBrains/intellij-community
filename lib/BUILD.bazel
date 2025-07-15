@@ -3725,8 +3725,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlinc-kotlin-dist",
-  jar = "@kotlin-dist-for-ide-2_1_21_http//file",
-  source_jar = "@kotlin-dist-for-ide-2_1_21-sources_http//file",
+  jar = "@kotlin-dist-for-ide-2_2_0_http//file",
+  source_jar = "@kotlin-dist-for-ide-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3767,8 +3767,8 @@ java_library(
 
 jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath",
-  jar = "@kotlin-jps-plugin-classpath-2_1_21_http//file",
-  source_jar = "@kotlin-jps-plugin-classpath-2_1_21-sources_http//file",
+  jar = "@kotlin-jps-plugin-classpath-2_2_0_http//file",
+  source_jar = "@kotlin-jps-plugin-classpath-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3788,8 +3788,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlinc-kotlin-jps-plugin-tests",
-  jar = "@kotlin-jps-plugin-tests-for-ide-2_1_21_http//file",
-  source_jar = "@kotlin-jps-plugin-tests-for-ide-2_1_21-sources_http//file",
+  jar = "@kotlin-jps-plugin-tests-for-ide-2_2_0_http//file",
+  source_jar = "@kotlin-jps-plugin-tests-for-ide-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -16,12 +16,6 @@ private val INTELLIJ_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
     "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies",
 )
 
-// This is the old repository which artifacts BEFORE `2.2.20-dev-2414` were published to.
-private val KOTLIN_IDE_DEPS_REPOSITORY = JpsRemoteRepository(
-    "kotlin-ide-plugin-deps",
-    "https://cache-redirector.jetbrains.com/intellij-dependencies"
-)
-
 private class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode) {
     val version: String
         get() = when (mode) {
@@ -86,9 +80,9 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincCoordinates, transitive = true)
 
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates, repository = KOTLIN_IDE_DEPS_REPOSITORY)
-        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide", repository = KOTLIN_IDE_DEPS_REPOSITORY)
-        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates, repository = KOTLIN_IDE_DEPS_REPOSITORY)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
+        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide", repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
+        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
 
         // TODO: KTIJ-32993
         kotlincWithStandardNaming("kotlinc.kotlin-dist", kotlincCoordinates, postfix = "-for-ide", jpsLibraryName = "kotlinc.kotlin-ide-dist")
