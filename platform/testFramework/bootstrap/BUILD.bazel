@@ -15,7 +15,6 @@ jvm_library(
     "@lib//:junit5Jupiter-provided",
     "@lib//:opentest4j",
     "//platform/core-nio-fs",
-    "@lib//:classgraph",
   ],
   runtime_deps = ["//platform/boot"]
 )
