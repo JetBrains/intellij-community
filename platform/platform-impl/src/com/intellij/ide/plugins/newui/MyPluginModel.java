@@ -99,7 +99,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                   getStatusBar(window.getOwner());
     myPluginManagerCustomizer = PluginManagerCustomizer.getInstance();
 
-    updatePluginDependencies(null);
+    updatePluginDependencies();
   }
 
   @ApiStatus.Internal
@@ -1099,8 +1099,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return Collections.unmodifiableList(errors);
   }
 
-  @Override
-  protected void updatePluginDependencies(@Nullable Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+  protected void updatePluginDependencies() {
     Set<PluginId> pluginsToEnable = UiPluginManager.getInstance().updatePluginDependencies(mySessionId.toString());
     setStatesByIds(pluginsToEnable, true);
   }

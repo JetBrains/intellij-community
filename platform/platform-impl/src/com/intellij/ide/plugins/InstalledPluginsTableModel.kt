@@ -11,25 +11,26 @@ import com.intellij.openapi.util.Pair
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
-import java.util.function.BiConsumer
 
-open class InstalledPluginsTableModel @ApiStatus.Internal constructor(
+@ApiStatus.Internal
+open class InstalledPluginsTableModel @JvmOverloads constructor(
   protected val project: Project?,
-  initSessionResult: InitSessionResult?,
-  @JvmField val mySessionId: UUID
+  initSessionResult: InitSessionResult? = null,
+  @JvmField val mySessionId: UUID = UUID.randomUUID()
 ) {
   @JvmField
-  protected val view: MutableList<PluginUiModel?> = ArrayList<PluginUiModel?>()
-  protected val enabledMap: MutableMap<PluginId?, PluginEnabledState?> = HashMap<PluginId?, PluginEnabledState?>()
-
-  constructor(project: Project?) : this(project, null, UUID.randomUUID())
+  protected val view: MutableList<PluginUiModel> = mutableListOf()
+  protected val enabledMap: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
 
   init {
-    val session = if (initSessionResult == null) getInstance().initSession(mySessionId) else initSessionResult
+    val session = initSessionResult ?: getInstance().initSession(mySessionId)
     view.addAll(session.getVisiblePluginsList())
-    session.pluginStates.forEach { (pluginId: PluginId?, pluginState: Boolean?) ->
-      enabledMap.put(pluginId,
-                     if (pluginState != null) (if (pluginState) PluginEnabledState.ENABLED else PluginEnabledState.DISABLED) else null)
+    session.pluginStates.forEach { (pluginId, pluginState) ->
+      enabledMap[pluginId] = when (pluginState) {
+        true -> PluginEnabledState.ENABLED
+        false -> PluginEnabledState.DISABLED
+        null -> null
+      }
     }
   }
 
@@ -49,71 +50,36 @@ open class InstalledPluginsTableModel @ApiStatus.Internal constructor(
     pluginId: PluginId,
     enabled: PluginEnabledState?
   ) {
-    enabledMap.put(pluginId, enabled)
-  }
-
-  protected open fun updatePluginDependencies(pluginIdMap: MutableMap<PluginId?, IdeaPluginDescriptorImpl?>?) {
-  }
-
-
-  protected fun handleBeforeChangeEnableState(
-    descriptor: IdeaPluginDescriptor,
-    pair: Pair<PluginEnableDisableAction?, PluginEnabledState?>
-  ) {
+    enabledMap[pluginId] = enabled
   }
 
   companion object {
     @ApiStatus.Internal
     val HIDE_IMPLEMENTATION_DETAILS: Boolean = !ApplicationManagerEx.isInIntegrationTest()
 
-    private fun findByPluginId(
-      pluginId: PluginId,
-      pluginIdMap: MutableMap<PluginId?, IdeaPluginDescriptorImpl?>
-    ): IdeaPluginDescriptorImpl {
-      return Objects.requireNonNull<IdeaPluginDescriptorImpl>(pluginIdMap.get(pluginId),
-                                                              "'" + pluginId + "' not found")
-    }
-
-    private fun setNewEnabled(
-      descriptors: MutableCollection<PluginUiModel>,
-      enabledMap: MutableMap<PluginId?, PluginEnabledState?>,
-      action: PluginEnableDisableAction,
-      beforeHandler: BiConsumer<PluginUiModel?, in Pair<PluginEnableDisableAction?, PluginEnabledState?>>
-    ) {
-      for (descriptor in descriptors) {
-        val pluginId = descriptor.pluginId
-        val oldState = enabledMap.get(pluginId)
-
-        val newState = if (oldState == null) PluginEnabledState.DISABLED else action.apply(oldState)
-        if (newState != null) {
-          beforeHandler.accept(descriptor, Pair.create<PluginEnableDisableAction?, PluginEnabledState?>(action, newState))
-          enabledMap.put(pluginId, newState)
-        }
-      }
-    }
-
+    @JvmStatic
     protected fun isEnabled(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId?, PluginEnabledState?>
+      enabledMap: MutableMap<PluginId, PluginEnabledState?>
     ): Boolean {
-      val state = enabledMap.get(pluginId)
-      return state == null || state.isEnabled()
+      val state = enabledMap[pluginId]
+      return state?.isEnabled != false
     }
 
     @ApiStatus.Internal
     fun isDisabled(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId?, PluginEnabledState?>
+      enabledMap: MutableMap<PluginId, PluginEnabledState?>
     ): Boolean {
-      val state = enabledMap.get(pluginId)
-      return state == null || state.isDisabled()
+      val state = enabledMap[pluginId]
+      return state?.isDisabled() ?: true
     }
 
     protected fun isLoaded(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId?, PluginEnabledState?>
+      enabledMap: MutableMap<PluginId, PluginEnabledState?>
     ): Boolean {
-      return enabledMap.get(pluginId) != null
+      return pluginId in enabledMap
     }
 
     @JvmStatic
@@ -123,7 +89,7 @@ open class InstalledPluginsTableModel @ApiStatus.Internal constructor(
 
     @ApiStatus.Internal
     fun isHiddenImplementationDetail(descriptor: IdeaPluginDescriptor): Boolean {
-      return HIDE_IMPLEMENTATION_DETAILS && descriptor.isImplementationDetail()
+      return HIDE_IMPLEMENTATION_DETAILS && descriptor.isImplementationDetail
     }
 
     @ApiStatus.Internal
@@ -137,7 +103,7 @@ open class InstalledPluginsTableModel @ApiStatus.Internal constructor(
       pluginId: PluginId,
       descriptor: IdeaPluginDescriptor?
     ): @NonNls String {
-      return if (descriptor != null) descriptor.getName() else pluginId.idString
+      return descriptor?.name ?: pluginId.idString
     }
   }
 }
