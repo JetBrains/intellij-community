@@ -6,7 +6,14 @@ import kotlin.io.path.createLinkPointingTo
 import kotlin.io.path.exists
 
 plugins {
+  id("java")
   id("com.jetbrains.python.envs") version "0.0.33"
+}
+
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(17))
+  }
 }
 
 enum class PythonType { PYTHON, CONDA }
@@ -75,7 +82,7 @@ tasks.register<Exec>("kill_python_processes") {
   commandLine("powershell", """"Get-Process | where {${'$'}_.Name -ieq \"python\"} | Stop-Process"""")
 }
 
-tasks.register<Delete>("clean") {
+tasks.named<Delete>("clean") {
   dependsOn("kill_python_processes")
 
   delete(project.layout.buildDirectory)
@@ -83,7 +90,7 @@ tasks.register<Delete>("clean") {
   delete(venvsDirectory)
 }
 
-tasks.register("build") {
+tasks.named("build") {
   dependsOn(tasks.matching { it.name.startsWith("setup_") || it.name == "updateConda" }, "clean", "copy_buildserver_win_fix")
 }
 
