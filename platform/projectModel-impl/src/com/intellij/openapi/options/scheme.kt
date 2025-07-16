@@ -18,8 +18,11 @@ interface ExternalizableScheme : Scheme {
 
 abstract class SchemeManagerFactory(protected open val project: Project? = null) {
   companion object {
-    @JvmStatic fun getInstance(): SchemeManagerFactory = service<SchemeManagerFactory>()
-    @JvmStatic fun getInstance(project: Project): SchemeManagerFactory = project.service<SchemeManagerFactory>()
+    @JvmStatic
+    fun getInstance(): SchemeManagerFactory = service<SchemeManagerFactory>()
+
+    @JvmStatic
+    fun getInstance(project: Project): SchemeManagerFactory = project.service<SchemeManagerFactory>()
   }
 
   /**
@@ -32,8 +35,16 @@ abstract class SchemeManagerFactory(protected open val project: Project? = null)
     presentableName: String? = null,
     directoryPath: Path? = null,
     settingsCategory: SettingsCategory = SettingsCategory.OTHER,
-  ): SchemeManager<SCHEME> =
-    create(directoryName, processor, presentableName, RoamingType.DEFAULT, directoryPath = directoryPath, settingsCategory = settingsCategory)
+  ): SchemeManager<SCHEME> {
+    return create(
+      directoryName = directoryName,
+      processor = processor,
+      presentableName = presentableName,
+      roamingType = RoamingType.DEFAULT,
+      directoryPath = directoryPath,
+      settingsCategory = settingsCategory,
+    )
+  }
 
   @ApiStatus.Internal
   abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
@@ -48,7 +59,7 @@ abstract class SchemeManagerFactory(protected open val project: Project? = null)
     settingsCategory: SettingsCategory = SettingsCategory.OTHER
   ): SchemeManager<SCHEME>
 
-  open fun dispose(schemeManager: SchemeManager<*>) { }
+  open fun dispose(schemeManager: SchemeManager<*>) {}
 }
 
 enum class SchemeState {

@@ -16424,7 +16424,6 @@ a:com.intellij.tools.BaseToolManager
 - getTools(java.lang.String):java.util.List
 - pf:registerActions(com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar):V
 - setTools(java.util.List):V
-- p:unregisterActions(com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar):V
 a:com.intellij.tools.BaseToolSelectComboBox
 - com.intellij.ui.ComboboxWithBrowseButton
 - sf:NONE_TOOL:java.lang.Object
