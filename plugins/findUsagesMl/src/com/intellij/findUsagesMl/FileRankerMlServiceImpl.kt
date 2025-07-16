@@ -79,17 +79,19 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
 
       val allSamples = usageSamples + nonUsageSamples
 
-      allSamples.forEach {
-        logFeatures(file = it,
-                    queryNames = finishedSessionData.queryNames,
-                    queryFiles = queryFiles,
-                    isUsage = foundUsageFiles.contains(it),
-                    recentFilesList = recentFilesList,
-                    timeStamp = timeStamp,
-                    sessionId = sessionId,
-                    isSearchValid = true,
-                    numberOfUsageFiles = candidatesWithUsage.size,
-                    numberOfCandidates = candidateFiles.size)
+      allSamples.forEachIndexed { index, it ->
+          logFeatures(file = it,
+                      queryNames = finishedSessionData.queryNames,
+                      queryFiles = queryFiles,
+                      isUsage = foundUsageFiles.contains(it),
+                      recentFilesList = recentFilesList,
+                      timeStamp = timeStamp,
+                      sessionId = sessionId,
+                      isSearchValid = true,
+                      numberOfUsageFiles = candidatesWithUsage.size,
+                      numberOfCandidates = candidateFiles.size,
+                      indexInOriginalOrder = index,
+                      projectPath = project?.basePath ?: "")
       }
     }
   }
@@ -108,7 +110,9 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
                           isSearchValid: Boolean,
                           activeSessionId: Long? = null,
                           numberOfUsageFiles: Int? = null,
-                          numberOfCandidates: Int? = null) {
+                          numberOfCandidates: Int? = null,
+                          indexInOriginalOrder: Int? = null,
+                          projectPath: String) {
     val tree = MLLogsTree(
       analysis = analysisProvider.provideAnalysisTargets(
         info = FindUsagesFileRankingAnalysisInfo(isUsage = isUsage,
@@ -116,6 +120,7 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
                                                  isSearchValid = isSearchValid,
                                                  numberOfUsageFiles = numberOfUsageFiles,
                                                  numberOfCandidates = numberOfCandidates,
+                                                 indexInOriginalOrder = indexInOriginalOrder,
                                                  activeSessionId = activeSessionId,
                                                  finishSessionId = sessionId))  ,
       features = featureProvider.provideFeatures(
@@ -123,7 +128,8 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
                                              queryFiles = queryFiles,
                                              candidateFile = file,
                                              recentFilesList = recentFilesList,
-                                             timeStamp = timeStamp),
+                                             timeStamp = timeStamp,
+                                             projectPath = projectPath),
         requiredOutput = FeatureSet.ALL
       ),
     )
@@ -140,7 +146,8 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
                 timeStamp = System.currentTimeMillis(),
                 sessionId = finishedSessionId,
                 isSearchValid = false,
-                activeSessionId = activeSessionId)
+                activeSessionId = activeSessionId,
+                projectPath = "")
   }
 
   private fun setFiles(queryNames: List<String>,
