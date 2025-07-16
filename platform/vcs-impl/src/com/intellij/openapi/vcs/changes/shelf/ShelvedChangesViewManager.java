@@ -710,6 +710,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myTree.setEditable(true);
       myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
       myTree.setCellEditor(new ShelveRenameTreeCellEditor());
+      myTree.getAccessibleContext().setAccessibleName(VcsBundle.message("shelve.tree.accessible.name"));
 
       final AnAction showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
       showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);
