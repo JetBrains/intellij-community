@@ -80,8 +80,6 @@ internal val moduleWithForm: Set<String> = setOf(
   "intellij.sass",
   "intellij.javascript.langInjection",
   "intellij.flex",
-  "intellij.javascript.debugger",
-  "intellij.nodeJS",
   "intellij.gwt",
   "intellij.properties.resource.bundle.editor",
   "intellij.tasks.core",
