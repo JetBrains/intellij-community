@@ -99,9 +99,6 @@ public sealed class TypeEvalContext {
    * the analyzed code was called or may be called. Since this is basically guesswork, the results should be used only for code completion.
    */
   public static @NotNull TypeEvalContext codeCompletion(final @NotNull Project project, final @Nullable PsiFile origin) {
-    if (Registry.is("python.use.separated.libraries.type.cache")) {
-      return new LibraryLongLiveTypeEvalContext(true, true, true, origin);
-    }
     return getContextFromCache(project, new TypeEvalContext(true, true, true, origin));
   }
 
@@ -113,9 +110,6 @@ public sealed class TypeEvalContext {
    * For code completion see {@link TypeEvalContext#codeCompletion(Project, PsiFile)}.
    */
   public static TypeEvalContext userInitiated(final @NotNull Project project, final @Nullable PsiFile origin) {
-    if (Registry.is("python.use.separated.libraries.type.cache")) {
-      return new LibraryLongLiveTypeEvalContext(true, true, false, origin);
-    }
     return getContextFromCache(project, new TypeEvalContext(true, true, false, origin));
   }
 
@@ -248,7 +242,28 @@ public sealed class TypeEvalContext {
     return null;
   }
 
+  private static boolean isLibraryElement(@NotNull PsiElement element) {
+    VirtualFile vFile = element.getContainingFile().getOriginalFile().getVirtualFile();
+    return vFile != null && ("pyi".equals(vFile.getExtension()) || ProjectFileIndex.getInstance(element.getProject()).isInLibrary(vFile));
+  }
+
+  private @NotNull TypeEvalContext getLibraryContext(@NotNull Project project) {
+    return project.getService(TypeEvalContextCache.class).getLibraryContext(new LibraryTypeEvalContext(getConstraints()));
+  }
+
+  /**
+   * If true the element's type will be calculated and stored in the long-life context bounded to the PyLibraryModificationTracker.
+   */
+  protected boolean canDelegateToLibraryContext(PyTypedElement element) {
+    return Registry.is("python.use.separated.libraries.type.cache") && isLibraryElement(element);
+  }
+
   public @Nullable PyType getType(final @NotNull PyTypedElement element) {
+    if (canDelegateToLibraryContext(element)) {
+      var context = getLibraryContext(element.getProject());
+      return context.getType(element);
+    }
+
     final PyType knownType = getKnownType(element);
     if (knownType != null) {
       return knownType == PyNullType.INSTANCE ? null : knownType;
@@ -266,6 +281,11 @@ public sealed class TypeEvalContext {
   }
 
   public @Nullable PyType getReturnType(final @NotNull PyCallable callable) {
+    if (canDelegateToLibraryContext(callable)) {
+      var context = getLibraryContext(callable.getProject());
+      return context.getReturnType(callable);
+    }
+
     final PyType knownReturnType = getKnownReturnType(callable);
     if (knownReturnType != null) {
       return knownReturnType == PyNullType.INSTANCE ? null : knownReturnType;
@@ -432,57 +452,15 @@ public sealed class TypeEvalContext {
     }
   }
 
-  final static class LibraryLongLiveTypeEvalContext extends TypeEvalContext {
-    private LibraryLongLiveTypeEvalContext(boolean allowDataFlow,
-                                           boolean allowStubToAST,
-                                           boolean allowCallContext,
-                                           @Nullable PsiFile origin) {
-      super(allowDataFlow, allowStubToAST, allowCallContext, origin);
-    }
-
-    private static boolean isInLibrary(@NotNull PsiElement element) {
-      VirtualFile vFile = element.getContainingFile().getOriginalFile().getVirtualFile();
-      return vFile != null && ("pyi".equals(vFile.getExtension()) || ProjectFileIndex.getInstance(element.getProject()).isInLibrary(vFile));
-    }
-
-    private @NotNull TypeEvalContext getLibraryContext(@NotNull Project project) {
-      return project.getService(TypeEvalContextCache.class).getLibraryContext(new TypeEvalContext(getConstraints()));
+  final static class LibraryTypeEvalContext extends TypeEvalContext {
+    private LibraryTypeEvalContext(@NotNull TypeEvalConstraints constraints) {
+      super(constraints);
     }
 
     @Override
-    protected @Nullable PyType getKnownType(@NotNull PyTypedElement element) {
-      if (!isInLibrary(element)) {
-        return super.getKnownType(element);
-      }
-      var context = getLibraryContext(element.getProject());
-      return context.getKnownType(element);
-    }
-
-    @Override
-    protected @Nullable PyType getKnownReturnType(@NotNull PyCallable callable) {
-      if (!isInLibrary(callable)) {
-        return super.getKnownReturnType(callable);
-      }
-      var context = getLibraryContext(callable.getProject());
-      return context.getKnownReturnType(callable);
-    }
-
-    @Override
-    public @Nullable PyType getType(@NotNull PyTypedElement element) {
-      if (!isInLibrary(element)) {
-        return super.getType(element);
-      }
-      var context = getLibraryContext(element.getProject());
-      return context.getType(element);
-    }
-
-    @Override
-    public @Nullable PyType getReturnType(@NotNull PyCallable callable) {
-      if (!isInLibrary(callable)) {
-        return super.getReturnType(callable);
-      }
-      var context = getLibraryContext(callable.getProject());
-      return context.getReturnType(callable);
+    protected boolean canDelegateToLibraryContext(PyTypedElement element) {
+      // It's already the library-context.
+      return false;
     }
   }
 
