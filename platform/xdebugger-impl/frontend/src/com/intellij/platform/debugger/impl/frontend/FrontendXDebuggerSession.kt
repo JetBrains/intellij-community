@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandler
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
@@ -43,6 +42,7 @@ import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
+import com.intellij.xdebugger.impl.util.MonolithUtils
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -325,7 +325,9 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun createTabLayouter(): XDebugTabLayouter {
-    return object : XDebugTabLayouter() {} // TODO
+    // Additional tabs are not supported in RemDev
+    val monolithLayouter = MonolithUtils.findSessionById(id)?.debugProcess?.createTabLayouter()
+    return monolithLayouter ?: object : XDebugTabLayouter() {} // TODO support additional tabs in RemDev
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {
