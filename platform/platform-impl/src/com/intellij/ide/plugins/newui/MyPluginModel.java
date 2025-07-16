@@ -81,7 +81,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   private Runnable myInvalidFixCallback;
   private Consumer<PluginUiModel> myCancelInstallCallback;
-  private CoroutineScope myCoroutineScope;
 
   private final Map<PluginId, Boolean> myRequiredPluginsForProject = new HashMap<>();
   private final Set<PluginId> myUninstalled = new HashSet<>();
@@ -92,7 +91,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   public MyPluginModel(@Nullable Project project) {
     super(project);
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
-    myCoroutineScope = ApplicationManager.getApplication().getService(FrontendRpcCoroutineContext.class).getCoroutineScope();
     StatusBarEx statusBar = getStatusBar(window);
     myStatusBar = statusBar != null || window == null ?
                   statusBar :
@@ -105,10 +103,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   @ApiStatus.Internal
   public void setInstallSource(@Nullable FUSEventSource source) {
     this.myInstallSource = source;
-  }
-
-  public void setCoroutineScope(CoroutineScope scope) {
-    myCoroutineScope = scope;
   }
 
   private static @Nullable StatusBarEx getStatusBar(@Nullable Window frame) {
@@ -818,7 +812,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   public boolean setEnabledStateAsync(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                  @NotNull PluginEnableDisableAction action) {
     List<PluginId> pluginIds = ContainerUtil.map(descriptors, it -> it.getPluginId());
-    PluginModelAsyncOperationsExecutor.INSTANCE.enablePlugins(myCoroutineScope, mySessionId.toString(), pluginIds, action.isEnable(),
+    PluginModelAsyncOperationsExecutor.INSTANCE.enablePlugins(getCoroutineScope(), mySessionId.toString(), pluginIds, action.isEnable(),
                                                               getProject(), result -> {
         if (result.getPluginNamesToSwitch().isEmpty()) {
           applyChangedStates(result.getChangedStates());
@@ -991,7 +985,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   @ApiStatus.Internal
   public void uninstallAndUpdateUi(@NotNull PluginUiModel descriptor, UiPluginManagerController controller) {
-    CoroutineScope scope = CoroutineScopeKt.childScope(myCoroutineScope, getClass().getName(), Dispatchers.getIO(), true);
+    CoroutineScope scope = CoroutineScopeKt.childScope(getCoroutineScope(), getClass().getName(), Dispatchers.getIO(), true);
     myTopController.showProgress(true);
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.getDescriptorForActions() == descriptor) {

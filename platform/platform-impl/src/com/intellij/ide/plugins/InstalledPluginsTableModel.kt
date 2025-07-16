@@ -2,12 +2,15 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.InitSessionResult
+import com.intellij.ide.plugins.newui.FrontendRpcCoroutineContext
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager.Companion.getInstance
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
@@ -16,11 +19,12 @@ import java.util.*
 open class InstalledPluginsTableModel @JvmOverloads constructor(
   protected val project: Project?,
   initSessionResult: InitSessionResult? = null,
-  @JvmField val mySessionId: UUID = UUID.randomUUID()
+  @JvmField val mySessionId: UUID = UUID.randomUUID(),
 ) {
   @JvmField
   protected val view: MutableList<PluginUiModel> = mutableListOf()
   protected val enabledMap: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
+  var coroutineScope: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope
 
   init {
     val session = initSessionResult ?: getInstance().initSession(mySessionId)
@@ -48,7 +52,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   @ApiStatus.NonExtendable
   protected open fun setEnabled(
     pluginId: PluginId,
-    enabled: PluginEnabledState?
+    enabled: PluginEnabledState?,
   ) {
     enabledMap[pluginId] = enabled
   }
@@ -60,7 +64,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     @JvmStatic
     protected fun isEnabled(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId, PluginEnabledState?>
+      enabledMap: MutableMap<PluginId, PluginEnabledState?>,
     ): Boolean {
       val state = enabledMap[pluginId]
       return state?.isEnabled != false
@@ -69,7 +73,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     @ApiStatus.Internal
     fun isDisabled(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId, PluginEnabledState?>
+      enabledMap: MutableMap<PluginId, PluginEnabledState?>,
     ): Boolean {
       val state = enabledMap[pluginId]
       return state?.isDisabled() ?: true
@@ -77,7 +81,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
 
     protected fun isLoaded(
       pluginId: PluginId,
-      enabledMap: MutableMap<PluginId, PluginEnabledState?>
+      enabledMap: MutableMap<PluginId, PluginEnabledState?>,
     ): Boolean {
       return pluginId in enabledMap
     }
@@ -101,7 +105,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
     @ApiStatus.Internal
     fun getPluginNameOrId(
       pluginId: PluginId,
-      descriptor: IdeaPluginDescriptor?
+      descriptor: IdeaPluginDescriptor?,
     ): @NonNls String {
       return descriptor?.name ?: pluginId.idString
     }
