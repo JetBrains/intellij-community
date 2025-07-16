@@ -49,6 +49,7 @@ jvm_library(
     "//java/java-impl-inspections:impl-inspections",
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/codeserver/highlighting",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [":lombok_resources"]
 )
@@ -91,6 +92,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//java/java-tests:tests_test_lib",
     "//java/codeserver/highlighting",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [
     ":lombok_resources",

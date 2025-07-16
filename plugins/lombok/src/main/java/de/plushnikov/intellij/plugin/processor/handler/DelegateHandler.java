@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
@@ -89,7 +90,7 @@ public final class DelegateHandler {
 
         if (!invalidMethodSignature.isEmpty()) {
           final String invalidMethodNames =
-            invalidMethodSignature.stream().map(MethodSignatureBackedByPsiMethod::getName).collect(Collectors.joining(", "));
+            invalidMethodSignature.stream().map(MethodSignatureBackedByPsiMethod::getName).collect(NlsMessages.joiningAnd());
 
           @SuppressWarnings("unchecked")
           final Supplier<LocalQuickFix>[] fixes = invalidMethodSignature.stream().map(MethodSignatureBackedByPsiMethod::getMethod)
