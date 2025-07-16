@@ -42,6 +42,7 @@ import java.awt.event.*
 import java.util.*
 import javax.swing.*
 import javax.swing.text.html.HTMLEditorKit
+import kotlin.coroutines.EmptyCoroutineContext
 
 class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEventDispatcher {
   private val mouseListeners = ArrayList<EventListener>()
@@ -549,8 +550,9 @@ private class IdePaneLoadingLayer(pane: JComponent,
     icon.isOpaque = false
     pane.add(icon)
 
+    val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
     loadingState.done.invokeOnCompletion {
-      coroutineScope.launch(RawSwingDispatcher) {
+      coroutineScope.launch(RawSwingDispatcher + startUpContextElementToPass) {
         try {
           removeIcon(pane)
         }

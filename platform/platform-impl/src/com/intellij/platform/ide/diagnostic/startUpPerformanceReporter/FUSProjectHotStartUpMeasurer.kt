@@ -115,11 +115,11 @@ object FUSProjectHotStartUpMeasurer {
 
     class ProjectTypeReportEvent(val projectsType: ProjectsType) : Event
     class ProjectPathReportEvent(val projectId: ProjectId, val hasSettings: Boolean) : Event
-    class FrameBecameVisibleEvent : FUSReportableEvent {
+    class FrameBecameVisibleEvent(val projectId: ProjectId) : FUSReportableEvent {
       val time: Long = System.nanoTime()
     }
 
-    class FrameBecameInteractiveEvent : FUSReportableEvent {
+    class FrameBecameInteractiveEvent(projectId: ProjectId) : FUSReportableEvent {
       val time: Long = System.nanoTime()
     }
 
@@ -249,11 +249,15 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   fun frameBecameVisible() {
-    channel.trySend(Event.FrameBecameVisibleEvent()) //todo[lene] handle multiple frames case
+    withRequiredProjectMarker { projectId ->
+      channel.trySend(Event.FrameBecameVisibleEvent(projectId)) //todo[lene] handle multiple frames case
+    }
   }
 
   fun reportFrameBecameInteractive() {
-    channel.trySend(Event.FrameBecameInteractiveEvent()) //todo[lene] handle multiple frames case
+    withRequiredProjectMarker { projectId ->
+      channel.trySend(Event.FrameBecameInteractiveEvent(projectId)) //todo[lene] handle multiple frames case
+    }
   }
 
   fun markupRestored(recipe: SpawnRecipe, type: MarkupType) {
