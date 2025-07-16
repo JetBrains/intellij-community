@@ -109,6 +109,7 @@ public class AddLineBreakpointAction extends DumbAwareAction implements ActionRe
     protected boolean editBreakpointSettings(XLineBreakpointProxy bp, @Nullable String editorSelection) {
       bp.setSuspendPolicy(SuspendPolicy.NONE);
       if (editorSelection != null) {
+        bp.setLogExpressionEnabled(true);
         bp.setLogExpressionObject(XExpressionImpl.fromText(editorSelection));
       }
       else {
