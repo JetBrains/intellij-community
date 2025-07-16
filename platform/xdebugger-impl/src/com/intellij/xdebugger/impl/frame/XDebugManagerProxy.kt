@@ -32,6 +32,10 @@ interface XDebugManagerProxy {
 
   fun canUpdateInlineDebuggerFrames(): Boolean
 
+  fun findSessionProxy(project: Project, sessionId: XDebugSessionId): XDebugSessionProxy? {
+    return getSessions(project).firstOrNull { it.id == sessionId }
+  }
+
   companion object {
     private val EP_NAME = ExtensionPointName.create<XDebugManagerProxy>("com.intellij.xdebugger.managerProxy")
 

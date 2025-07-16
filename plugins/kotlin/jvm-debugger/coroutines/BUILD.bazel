@@ -60,6 +60,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//java/java-impl:impl",
     "//java/debugger/shared",
+    "//platform/xdebugger-impl/shared",
   ],
   runtime_deps = [":coroutines_resources"]
 )
