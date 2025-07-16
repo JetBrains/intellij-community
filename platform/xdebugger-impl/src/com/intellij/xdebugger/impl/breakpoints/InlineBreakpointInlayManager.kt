@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
@@ -255,8 +256,9 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     !DiffUtil.isDiffEditor(editor)
 
   private fun allBreakpointsIn(document: Document): Collection<XLineBreakpointProxy> {
-    val lineBreakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getLineBreakpointManager()
-    return lineBreakpointManager.getDocumentBreakpointProxies(document)
+    // TODO use frontend proxies when XLineBreakpointInlineVariantProxy.isMatching is implemented
+    val lineBreakpointManager = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).lineBreakpointManager
+    return lineBreakpointManager.getDocumentBreakpoints(document).map { it.asProxy() }
   }
 
   private data class SingleInlayDatum(
