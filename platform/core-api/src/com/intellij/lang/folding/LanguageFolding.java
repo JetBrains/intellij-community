@@ -41,7 +41,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
 
   @Override
   protected FoldingBuilder findForLanguage(@NotNull Language l) {
-    List<FoldingBuilder> extensions = allForLanguage(l);
+    List<FoldingBuilder> extensions = allForLanguageOrAny(l);
     if (extensions.isEmpty()) {
       return null;
     }
