@@ -130,6 +130,7 @@ internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFi
       val app = ApplicationManager.getApplication()
       if (app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
         LOG.debug { "async for ${file.name}" }
+        job?.cancel()
         job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch {
           readAction {
             computeSettings()
