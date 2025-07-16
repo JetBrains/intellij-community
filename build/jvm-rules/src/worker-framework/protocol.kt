@@ -76,7 +76,7 @@ fun doReadWorkRequestFromStream(
         2 -> {
           val messageSize = codedInputStream.readRawVarint32()
           val limit = codedInputStream.pushLimit(messageSize)
-          inputs.add(readInput(codedInputStream, shouldReadDigest))
+          readInput(codedInputStream, shouldReadDigest)?.let(inputs::add)
           codedInputStream.popLimit(limit)
         }
 
@@ -102,11 +102,39 @@ fun doReadWorkRequestFromStream(
   }
 }
 
+// ctx.file._jvm_builder_launcher and ctx.file._jvm_builder are declared as tools in jvm_library rule (see `isTool` in the action's inputs):
+// {
+//   "path": "external/rules_jvm+/rules/impl/MemoryLauncher.java",
+//   "digest": {
+//     "hash": "d5d7b879e969a2e8f9c293a2fcca83636bab22fbfe26e4834242fe3b25287392",
+//     "sizeBytes": "3598",
+//     "hashFunctionName": "SHA-256"
+//   },
+//   "isTool": true,
+//   "symlinkTargetPath": ""
+// }
+// but the worker request's Input message does not include any `is_tool` field (https://github.com/bazelbuild/bazel/blob/8.2.1/src/main/protobuf/worker_protocol.proto#L22)
+// and these tools are read as ordinary inputs that the worker then tries to compile, etc.
+//
+// Same for ctx.file._worker_launcher and ctx.file._worker in jvm_resources rule.
+private val KnownInputsThatAreTools = setOf(
+  // _jvm_builder attribute in jvm_library rule
+  "bazel-out/scrubbed_host-fastbuild/bin/external/community+/monorepo-jvm-builder_deploy.jar",
+  "bazel-out/scrubbed_host-fastbuild/bin/external/rules_jvm+/jvm-inc-builder/jvm-inc-builder_deploy.jar",
+  "bazel-out/scrubbed_host-fastbuild/bin/external/rules_jvm+/src/jvm-builder/jvm-builder_deploy.jar",
+
+  // _worker attribute in jvm_resources rule
+  "bazel-out/scrubbed_host-fastbuild/bin/external/rules_jvm+/src/misc/worker-jvm_deploy.jar",
+
+  // _jvm_builder_launcher attribute in jvm_library rule and _worker_launcher attribute in jvm_resources rule
+  "external/rules_jvm+/rules/impl/MemoryLauncher.java",
+)
+
 @PublishedApi
 internal fun readInput(
   codedInputStream: CodedInputStream,
   shouldReadDigest: Boolean,
-): Input {
+): Input? {
   var path: String? = null
   var digest: ByteArray? = null
 
@@ -131,6 +159,9 @@ internal fun readInput(
     }
   }
 
+  if (path in KnownInputsThatAreTools) {
+    return null  // ignore
+  }
   return Input(path!!, digest)
 }
 
