@@ -34,7 +34,7 @@ object AssetsJava {
   fun getJavaSampleTemplateName(projectWizardStep: AssetsNewProjectWizardStep?): String {
     val intent = projectWizardStep?.javaData?.jdkIntent
     val minimumLevel = JavaFeature.JAVA_LANG_IO.minimumLevel
-    if (intent != null && intent.isAtLeast(minimumLevel.feature())) {
+    if (intent != null && intent.isAtLeast(minimumLevel.feature(), true)) {
       //use compact source file
       return when (shouldRenderOnboardingTips()) {
         true -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN
