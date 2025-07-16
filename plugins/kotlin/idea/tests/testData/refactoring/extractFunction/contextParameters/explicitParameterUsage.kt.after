@@ -1,0 +1,14 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+context(a: String)
+fun bar(p: Int) {}
+
+context(a: String, b: Int)
+fun m() {
+    __dummyTestFun__()
+}
+
+context(b: Int, a: String) private fun __dummyTestFun__() {
+    bar(b)
+}
+
+// IGNORE_K1

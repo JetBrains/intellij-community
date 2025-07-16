@@ -14,8 +14,8 @@ class Foo {
         }
     }
 
-    private fun string(string: String, string0: String, string1: String): String =
-        string + string0 + string1 + string + this@Foo.toString()
+    private fun string(string: String, string2: String, string3: String): String =
+        string + string2 + string3 + string + this@Foo.toString()
 }
 
 private inline fun <T> block(t: T, block: T.() -> Unit) {

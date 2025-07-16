@@ -356,6 +356,7 @@ private fun ExtractableCodeDescriptor.validateTempResult(
 
     val namedFunction = result.declaration as? KtNamedFunction
     val valueParameterList = namedFunction?.valueParameterList
+    val contextReceiverList = namedFunction?.contextReceiverList
     val typeParameterList = namedFunction?.typeParameterList
 
     fun processReference(currentRefExpr: KtSimpleNameExpression) {
@@ -366,6 +367,7 @@ private fun ExtractableCodeDescriptor.validateTempResult(
 
         val currentDescriptor = currentRefExpr.mainReference.resolve()
         if (currentDescriptor is KtParameter && currentDescriptor.parent == valueParameterList) return
+        if (currentDescriptor is KtParameter && currentDescriptor.isContextParameter && currentDescriptor.parent == contextReceiverList) return
         if (currentDescriptor is KtTypeParameter && currentDescriptor.parent == typeParameterList) return
         if (currentDescriptor is KtProperty && currentDescriptor.isLocal
             && parameters.any { it.mirrorVarName == currentDescriptor.name }

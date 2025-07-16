@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -135,32 +135,22 @@ internal fun ExtractionData.inferParametersInfo(
 
     }
 
-    val unknownContextParameters = mutableSetOf<KtParameter>()
-    analyze(virtualBlock) {
+    val unknownContextParameters = analyze(virtualBlock) {
+        val parameters = mutableSetOf<KtParameter>()
         for (referenceExpression in virtualBlock.collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }) {
             val call = referenceExpression.resolveToCall()
             if (call is KaErrorCallInfo) {
                 val diagnostic = call.diagnostic
                 if (diagnostic is KaFirDiagnostic.NoContextArgument) {
-                    unknownContextParameters.addIfNotNull((diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter)
+                    val contextParameterSymbol = diagnostic.symbol as? KaContextParameterSymbol
+                    if (contextParameterSymbol != null &&
+                        extractedDescriptorToParameter.none { it.value.contextParameter && (it.value.originalDescriptor as? KtParameter)?.returnType?.isSubtypeOf(contextParameterSymbol.returnType) == true }) {
+                        parameters.addIfNotNull(contextParameterSymbol.psi as? KtParameter)
+                    }
                 }
             }
         }
-    }
-
-    unknownContextParameters.forEach {
-        val name = it.name ?: "_"
-        val parameter = MutableParameter(
-            name,
-            it.ownerDeclaration as KtNamedDeclaration,
-            false,
-            it.returnType,
-            targetSibling as KtElement,
-            contextParameter = true
-        )
-        parameter.refCount++
-        parameter.currentName = name
-        info.parameters.add(parameter)
+        parameters.distinctBy { it.returnType }
     }
 
     val varNameValidator = KotlinDeclarationNameValidator(
@@ -169,7 +159,7 @@ internal fun ExtractionData.inferParametersInfo(
         KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
     )
 
-    val existingParameterNames = hashSetOf<String>()
+    val nameGenerator = UniqueNameGenerator()
     val generateArguments: (KaType) -> List<KaType> =
         { ktType -> (ktType as? KaClassType)?.typeArguments?.mapNotNull { it.type } ?: emptyList() }
     for ((namedElement, parameter) in extractedDescriptorToParameter) {
@@ -197,14 +187,7 @@ internal fun ExtractionData.inferParametersInfo(
             require(currentName != null || parameter.receiverCandidate)
 
             if (currentName != null) {
-                if ("$currentName" in existingParameterNames) {
-                    var index = 0
-                    while ("$currentName$index" in existingParameterNames) {
-                        index++
-                    }
-                    currentName = "$currentName$index"
-                }
-                currentName?.let { existingParameterNames += it }
+                currentName = nameGenerator.generateUniqueName(currentName!!)
             } else {
                 currentName = "receiver"
             }
@@ -214,6 +197,21 @@ internal fun ExtractionData.inferParametersInfo(
             ) { varNameValidator.validate(it) } else null
             info.parameters.add(this)
         }
+    }
+
+    unknownContextParameters.forEach { contextParam ->
+        val name = contextParam.name ?: "_"
+        val parameter = MutableParameter(
+            name,
+            contextParam.ownerDeclaration as KtNamedDeclaration,
+            false,
+            contextParam.returnType,
+            targetSibling as KtElement,
+            contextParameter = true
+        )
+        parameter.refCount++
+        parameter.currentName = name.takeIf { it == "_" } ?: nameGenerator.generateUniqueName(name)
+        info.parameters.add(parameter)
     }
 
     for (typeToCheck in info.typeParameters.flatMap { it.collectReferencedTypes() }.map { it.type }) {
@@ -301,7 +299,8 @@ private fun ExtractionData.registerParameter(
                     receiverToExtract
                 )
 
-                MutableParameter(argumentText, elementToExtract, extractThis, originalType, targetSibling as KtElement, contextParameter = false)
+                val asContextParameter = originalDeclaration is KtParameter && originalDeclaration.isContextParameter
+                MutableParameter(argumentText, elementToExtract, extractThis, originalType, targetSibling as KtElement, contextParameter = asContextParameter)
             }
 
             // TODO add type predicate based on called functions https://youtrack.jetbrains.com/issue/KTIJ-29166

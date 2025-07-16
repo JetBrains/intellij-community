@@ -1,0 +1,23 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+interface A
+interface B: A
+
+context(a: A)
+fun foo() {}
+
+context(b: B)
+fun bar() {}
+
+context(b: B)
+fun baz() {
+    __dummyTestFun__()
+}
+
+context(b: B) private fun __dummyTestFun__() {
+    if (b != null) {
+        foo()
+        bar()
+    }
+}
+
+// IGNORE_K1

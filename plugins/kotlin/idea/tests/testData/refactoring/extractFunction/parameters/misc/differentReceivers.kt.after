@@ -6,9 +6,9 @@ fun foo(x: X, y: X) {
     }
 }
 
-private fun __dummyTestFun__(field: Any, field0: Any) {
+private fun __dummyTestFun__(field: Any, field2: Any) {
     println(field.hashCode())
     println(field.hashCode())
-    println(field0.hashCode())
+    println(field2.hashCode())
 }
 // IGNORE_K1
