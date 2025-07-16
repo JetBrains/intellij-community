@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.system.OS;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
@@ -15,6 +17,7 @@ import java.nio.file.Path;
 public enum ExternalUpdateManager {
   TOOLBOX("Toolbox App"),
   SNAP("Snap"),
+  BREW("Homebrew"),
   UNKNOWN(null);
 
   public final @NlsSafe String toolName;
@@ -40,14 +43,17 @@ public enum ExternalUpdateManager {
     var toolboxV2Path = System.getProperty("ide.managed.by.toolbox");
     if (home.contains("/apps/") && home.contains("/ch-")) ACTUAL = TOOLBOX;
     else if (toolboxV2Path != null && Files.exists(Path.of(toolboxV2Path)))ACTUAL = TOOLBOX;
-    else if (SystemInfo.isLinux && (home.startsWith("/snap/") || home.startsWith("/var/lib/snapd/snap/"))) ACTUAL = SNAP;
+    else if (OS.CURRENT == OS.Linux && (home.startsWith("/snap/") || home.startsWith("/var/lib/snapd/snap/"))) ACTUAL = SNAP;
+    else if (OS.CURRENT != OS.Windows && home.contains("/homebrew/")) ACTUAL = BREW;
     else if (System.getProperty("ide.no.platform.update") != null) ACTUAL = UNKNOWN;
     else ACTUAL = null;
+    Logger.getInstance(ExternalUpdateManager.class).info("update manager: " + (ACTUAL == null ? "-" : ACTUAL.toolName));
   }
 
   /**
    * Returns {@code true} when the update manager takes care of creating XDG desktop entries.
    */
+  @ApiStatus.Internal
   public static boolean isCreatingDesktopEntries() {
     return ACTUAL == TOOLBOX || ACTUAL == SNAP;
   }

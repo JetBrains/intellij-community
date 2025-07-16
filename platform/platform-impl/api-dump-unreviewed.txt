@@ -9414,16 +9414,6 @@ e:com.intellij.openapi.updateSettings.impl.ChannelStatus
 - getDisplayName():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.ChannelStatus
 - s:values():com.intellij.openapi.updateSettings.impl.ChannelStatus[]
-e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
-- java.lang.Enum
-- sf:ACTUAL:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
-- sf:SNAP:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
-- sf:TOOLBOX:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
-- sf:UNKNOWN:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
-- f:toolName:java.lang.String
-- s:isCreatingDesktopEntries():Z
-- s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
-- s:values():com.intellij.openapi.updateSettings.impl.ExternalUpdateManager[]
 f:com.intellij.openapi.updateSettings.impl.IdeRestartKt
 - sf:restartOrNotify(com.intellij.openapi.project.Project,Z,java.lang.String,kotlin.jvm.functions.Function0):V
 - bs:restartOrNotify$default(com.intellij.openapi.project.Project,Z,java.lang.String,kotlin.jvm.functions.Function0,I,java.lang.Object):V
