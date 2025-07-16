@@ -56,25 +56,24 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val session = getCurrentSession() ?: return foundElementInfoWithoutMl
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
 
-    val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
-    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.cachedContextInfo, correction)
+    val contributorFeatures = state.getContributorFeatures(contributor)
+    val elementFeatures = state.getElementFeatures(element, contributor, contributorFeatures, priority, session.cachedContextInfo, correction)
 
-    val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) {
-      contributor.getEffectiveContributor()
-    } else {
-      contributor
-    }
+    val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) contributor.getEffectiveContributor() else contributor
+
     val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) {
-      state.getMLWeight(session.cachedContextInfo, mlElementInfo)
+      state.getMLWeight(session.cachedContextInfo, elementFeatures, contributorFeatures)
     } else {
       null
     }
 
+    val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
+
     return if (isShowDiff()) {
-      SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
+      SearchEverywhereFoundElementInfoBeforeDiff(element, elementId, priority, contributor, mlWeight, elementFeatures, correction)
     }
     else {
-      SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
+      SearchEverywhereFoundElementInfoWithMl(element, elementId, priority, contributor, mlWeight, elementFeatures, correction)
     }
   }
 

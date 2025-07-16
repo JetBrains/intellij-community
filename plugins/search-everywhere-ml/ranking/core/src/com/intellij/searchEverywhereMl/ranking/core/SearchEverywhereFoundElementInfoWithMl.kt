@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Contract
 
 internal open class SearchEverywhereFoundElementInfoWithMl(
   element: Any,
+  val elementId: Int?,
   val heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   val mlWeight: Double?,
@@ -32,13 +33,14 @@ internal open class SearchEverywhereFoundElementInfoWithMl(
                   priority: Int,
                   contributor: SearchEverywhereContributor<*>,
                   correction: SearchEverywhereSpellCheckResult)
-                  = SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, null, emptyList(), correction)
+                  = SearchEverywhereFoundElementInfoWithMl(element, null,priority, contributor, null, emptyList(), correction)
 
     fun from(info: SearchEverywhereFoundElementInfo): SearchEverywhereFoundElementInfoWithMl {
       return when (info) {
         is SearchEverywhereFoundElementInfoWithMl -> info
         is SearchEverywhereFoundElementInfoBeforeDiff -> SearchEverywhereFoundElementInfoWithMl(
           element = info.element,
+          elementId = info.elementId,
           heuristicPriority = info.heuristicPriority,
           contributor = info.contributor,
           mlWeight = info.mlWeight,

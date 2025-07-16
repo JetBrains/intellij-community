@@ -38,7 +38,6 @@ internal class SearchEverywhereMLSearchSession(
   val sessionStartTime: Long = System.currentTimeMillis()
   private val providersCache = FeaturesProviderCacheDataProvider().getDataToCache(project)
   private val modelProviderWithCache: SearchEverywhereModelProvider = SearchEverywhereModelProvider()
-  private val featureCache = SearchEverywhereMlFeaturesCache()
   private val embeddingCache = ConcurrentCollectionFactory.createConcurrentMap<String, FloatTextEmbedding>()
 
   // context features are calculated once per Search Everywhere session
@@ -84,7 +83,7 @@ internal class SearchEverywhereMLSearchSession(
     if (prevState != null && prevState.tab.isLoggingEnabled()) {
       logger.onSearchRestarted(
         project, sessionId,
-        itemIdProvider, cachedContextInfo, prevState, featureCache,
+        cachedContextInfo, prevState,
         prevTimeToResult, mixedListInfo, searchResults
       )
     }
@@ -113,7 +112,7 @@ internal class SearchEverywhereMLSearchSession(
 
       logger.onItemSelected(
         project, sessionId, itemIdProvider,
-        state, featureCache, indexes, selectedItems, closePopup,
+        state, indexes, selectedItems, closePopup,
         performanceTracker.timeElapsed, mixedListInfo,
         searchResults, sessionDuration
       )
@@ -135,8 +134,8 @@ internal class SearchEverywhereMLSearchSession(
 
     if (state != null && state.tab.isLoggingEnabled()) {
       logger.onSearchFinished(
-        project, sessionId, itemIdProvider,
-        state, featureCache, performanceTracker.timeElapsed, mixedListInfo,
+        project, sessionId,
+        state, performanceTracker.timeElapsed, mixedListInfo,
         searchResults, sessionDuration
       )
     }

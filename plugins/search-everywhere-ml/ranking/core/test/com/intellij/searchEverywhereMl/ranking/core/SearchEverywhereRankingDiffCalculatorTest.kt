@@ -4,8 +4,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import junit.framework.TestCase
-
 
 class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
 
@@ -24,6 +22,7 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
 
         SearchEverywhereFoundElementInfoBeforeDiff(
           element = Any(),
+          elementId = null,
           heuristicPriority = sePriority,
           contributor = MockSearchEverywhereContributor(),
           mlWeight = mlWeight,
@@ -39,6 +38,7 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
                                       mlFeatures: List<EventPair<*>> = emptyList()): SearchEverywhereFoundElementInfoWithMl {
       return SearchEverywhereFoundElementInfoWithMl(
         element = element,
+        elementId = null,
         heuristicPriority = sePriority,
         contributor = contributor,
         mlWeight = mlWeight,
@@ -53,6 +53,7 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
                                           mlFeatures: List<EventPair<*>> = emptyList()): SearchEverywhereFoundElementInfoBeforeDiff {
       return SearchEverywhereFoundElementInfoBeforeDiff(
         element = element,
+        elementId = null,
         heuristicPriority = sePriority,
         contributor = contributor,
         mlWeight = mlWeight,
@@ -94,10 +95,10 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
 
     val updatedElements = SearchEverywhereRankingDiffCalculator.calculateDiffIfApplicable(elements)
 
-    TestCase.assertNotNull(updatedElements)
+    assertNotNull(updatedElements)
 
     updatedElements?.zip(resultClasses)?.map { (element, className) ->
-      TestCase.assertTrue(className.isInstance(element))
+      assertTrue(className.isInstance(element))
     }
 
   }
@@ -112,7 +113,7 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
       mockElementInfoWithMl(),
     )
 
-    TestCase.assertNull(SearchEverywhereRankingDiffCalculator.calculateDiffIfApplicable(elements))
+    assertNull(SearchEverywhereRankingDiffCalculator.calculateDiffIfApplicable(elements))
   }
 
   fun `test calculate diff equal ranking`() {

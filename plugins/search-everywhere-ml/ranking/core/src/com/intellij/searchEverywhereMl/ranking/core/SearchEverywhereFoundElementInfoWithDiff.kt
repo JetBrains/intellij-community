@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
  */
 internal open class SearchEverywhereFoundElementInfoBeforeDiff(
   element: Any,
+  val elementId: Int?,
   val heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   val mlWeight: Double?,
@@ -25,6 +26,7 @@ internal open class SearchEverywhereFoundElementInfoBeforeDiff(
  */
 internal open class SearchEverywhereFoundElementInfoAfterDiff(
   element: Any,
+  elementId: Int?,
   heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   mlWeight: Double?,
@@ -32,4 +34,4 @@ internal open class SearchEverywhereFoundElementInfoAfterDiff(
   correction: SearchEverywhereSpellCheckResult = SearchEverywhereSpellCheckResult.NoCorrection,
   val orderingDiff: Int,
   val seSearchPosition: Int
-) : SearchEverywhereFoundElementInfoWithMl(element, heuristicPriority, contributor, mlWeight, mlFeatures, correction)
+) : SearchEverywhereFoundElementInfoWithMl(element, elementId, heuristicPriority, contributor, mlWeight, mlFeatures, correction)
