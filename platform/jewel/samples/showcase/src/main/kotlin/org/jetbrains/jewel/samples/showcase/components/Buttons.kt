@@ -41,11 +41,12 @@ import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 import org.jetbrains.jewel.ui.painter.hints.Badge
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.hints.Stroke
+import org.jetbrains.jewel.ui.theme.transparentIconButtonStyle
 import org.jetbrains.jewel.ui.typography
 
 @Composable
 public fun Buttons() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         NormalButtons()
 
         var selectedIndex by remember { mutableIntStateOf(0) }
@@ -77,174 +78,196 @@ private fun NormalButtons() {
 
 @Composable
 private fun IconButtons(selected: Boolean, onSelectableClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("IconButton", style = JewelTheme.typography.h4TextStyle)
 
-        Text("Focusable:")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Focusable:")
 
-        IconButton(onClick = {}) { Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton") }
+            IconButton(onClick = {}) { Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton") }
 
-        Text("Not focusable:")
+            Text("Not focusable:")
 
-        IconButton(onClick = {}, focusable = false) {
-            Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton")
+            IconButton(onClick = {}, focusable = false) {
+                Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton")
+            }
+
+            Text("Selectable:")
+
+            SelectableIconButton(onClick = onSelectableClick, selected = selected) { state ->
+                val tint by LocalIconButtonStyle.current.colors.selectableForegroundFor(state)
+                Icon(
+                    key = AllIconsKeys.Actions.MatchCase,
+                    contentDescription = "SelectableIconButton",
+                    hints = arrayOf(Selected(selected), Stroke(tint)),
+                )
+            }
+
+            Text("Toggleable:")
+
+            var checked by remember { mutableStateOf(false) }
+            ToggleableIconButton(onValueChange = { checked = !checked }, value = checked) { state ->
+                val tint by LocalIconButtonStyle.current.colors.toggleableForegroundFor(state)
+                Icon(
+                    key = AllIconsKeys.Actions.MatchCase,
+                    contentDescription = "ToggleableIconButton",
+                    hints = arrayOf(Selected(checked), Stroke(tint)),
+                )
+            }
         }
 
-        Text("Selectable:")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Without background:")
 
-        SelectableIconButton(onClick = onSelectableClick, selected = selected) { state ->
-            val tint by LocalIconButtonStyle.current.colors.selectableForegroundFor(state)
-            Icon(
-                key = AllIconsKeys.Actions.MatchCase,
-                contentDescription = "SelectableIconButton",
-                hints = arrayOf(Selected(selected), Stroke(tint)),
-            )
-        }
-
-        Text("Toggleable:")
-
-        var checked by remember { mutableStateOf(false) }
-        ToggleableIconButton(onValueChange = { checked = !checked }, value = checked) { state ->
-            val tint by LocalIconButtonStyle.current.colors.toggleableForegroundFor(state)
-            Icon(
-                key = AllIconsKeys.Actions.MatchCase,
-                contentDescription = "ToggleableIconButton",
-                hints = arrayOf(Selected(checked), Stroke(tint)),
-            )
+            IconButton(style = JewelTheme.transparentIconButtonStyle, onClick = {}) {
+                Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton")
+            }
         }
     }
 }
 
 @Composable
 private fun IconActionButtons(selected: Boolean, onSelectableClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("IconActionButton", style = JewelTheme.typography.h4TextStyle)
 
-        Text("With tooltip:")
-        IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {}) {
-            Text("I am a tooltip")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("With tooltip:")
+            IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {}) {
+                Text("I am a tooltip")
+            }
+
+            Text("Without tooltip:")
+            IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {})
+
+            Text("Selectable:")
+            SelectableIconActionButton(
+                key = AllIconsKeys.Actions.Copy,
+                contentDescription = "SelectableIconActionButton",
+                selected = selected,
+                onClick = onSelectableClick,
+            )
+
+            Text("Toggleable:")
+            var checked by remember { mutableStateOf(false) }
+            ToggleableIconActionButton(
+                key = AllIconsKeys.Actions.Copy,
+                contentDescription = "SelectableIconActionButton",
+                value = checked,
+                onValueChange = { checked = it },
+            )
         }
-
-        Text("Without tooltip:")
-        IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {})
-
-        Text("Selectable:")
-        SelectableIconActionButton(
-            key = AllIconsKeys.Actions.Copy,
-            contentDescription = "SelectableIconActionButton",
-            selected = selected,
-            onClick = onSelectableClick,
-        )
-
-        Text("Toggleable:")
-        var checked by remember { mutableStateOf(false) }
-        ToggleableIconActionButton(
-            key = AllIconsKeys.Actions.Copy,
-            contentDescription = "SelectableIconActionButton",
-            value = checked,
-            onValueChange = { checked = it },
-        )
     }
 }
 
 @Composable
 private fun ActionButtons() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("ActionButton", style = JewelTheme.typography.h4TextStyle)
 
-        Text("With tooltip:")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("With tooltip:")
 
-        ActionButton(onClick = {}, tooltip = { Text("I am a tooltip") }) { Text("Hover me!") }
+            ActionButton(onClick = {}, tooltip = { Text("I am a tooltip") }) { Text("Hover me!") }
 
-        Text("Without tooltip:")
+            Text("Without tooltip:")
 
-        ActionButton(onClick = {}) { Text("Do something") }
+            ActionButton(onClick = {}) { Text("Do something") }
+        }
     }
 }
 
 @Composable
 private fun SplitButtons() {
-    val items = remember { listOf("This is", "---", "A menu", "---", "Item 3") }
-    var selected by remember { mutableStateOf(items.first()) }
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("SplitButton", style = JewelTheme.typography.h4TextStyle)
 
-    Row(Modifier.height(150.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        OutlinedSplitButton(
-            onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
-            secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
-            content = { Text("Split button") },
-            menuContent = {
-                items.forEach {
-                    if (it == "---") {
-                        separator()
-                    } else {
-                        selectableItem(
-                            selected = selected == it,
-                            onClick = {
-                                selected = it
-                                JewelLogger.getInstance("Jewel").warn("Item clicked: $it")
-                            },
-                        ) {
-                            Text(it)
+        val items = remember { listOf("This is", "---", "A menu", "---", "Item 3") }
+        var selected by remember { mutableStateOf(items.first()) }
+
+        Row(Modifier.height(150.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            OutlinedSplitButton(
+                onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+                secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+                content = { Text("Split button") },
+                menuContent = {
+                    items.forEach {
+                        if (it == "---") {
+                            separator()
+                        } else {
+                            selectableItem(
+                                selected = selected == it,
+                                onClick = {
+                                    selected = it
+                                    JewelLogger.getInstance("Jewel").warn("Item clicked: $it")
+                                },
+                            ) {
+                                Text(it)
+                            }
                         }
                     }
-                }
-            },
-        )
-        OutlinedSplitButton(
-            onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
-            secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
-            content = { Text("Split button") },
-            popupContainer = {
-                Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Generic popup content")
-                    Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-                        Icon(
-                            key = AllIconsKeys.Nodes.ConfigFolder,
-                            contentDescription = "taskGroup",
-                            hint = Badge(Color.Red, DotBadgeShape.Default),
-                        )
+                },
+            )
+            OutlinedSplitButton(
+                onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+                secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+                content = { Text("Split button") },
+                popupContainer = {
+                    Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Generic popup content")
+                        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                            Icon(
+                                key = AllIconsKeys.Nodes.ConfigFolder,
+                                contentDescription = "taskGroup",
+                                hint = Badge(Color.Red, DotBadgeShape.Default),
+                            )
+                        }
                     }
-                }
-            },
-        )
-        OutlinedSplitButton(
-            enabled = false,
-            onClick = {},
-            secondaryOnClick = {},
-            content = { Text("Disabled button") },
-            menuContent = {},
-        )
-        DefaultSplitButton(
-            onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
-            secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
-            content = { Text("Split button") },
-            menuContent = {
-                items(
-                    items = listOf("Item 1", "Item 2", "Item 3"),
-                    isSelected = { false },
-                    onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
-                    content = { Text(it) },
-                )
-            },
-        )
-        DefaultSplitButton(
-            enabled = false,
-            onClick = {},
-            secondaryOnClick = {},
-            content = { Text("Disabled button") },
-            menuContent = {},
-        )
+                },
+            )
+            OutlinedSplitButton(
+                enabled = false,
+                onClick = {},
+                secondaryOnClick = {},
+                content = { Text("Disabled button") },
+                menuContent = {},
+            )
+            DefaultSplitButton(
+                onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+                secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+                content = { Text("Split button") },
+                menuContent = {
+                    items(
+                        items = listOf("Item 1", "Item 2", "Item 3"),
+                        isSelected = { false },
+                        onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
+                        content = { Text(it) },
+                    )
+                },
+            )
+            DefaultSplitButton(
+                enabled = false,
+                onClick = {},
+                secondaryOnClick = {},
+                content = { Text("Disabled button") },
+                menuContent = {},
+            )
+        }
     }
 }

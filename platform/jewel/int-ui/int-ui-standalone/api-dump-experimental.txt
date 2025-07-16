@@ -1,2 +1,11 @@
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonStylingKt
+- *sf:darkTransparentBackground(org.jetbrains.jewel.ui.component.styling.IconButtonStyle$Companion,org.jetbrains.jewel.ui.component.styling.IconButtonColors,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+- *bs:darkTransparentBackground$default(org.jetbrains.jewel.ui.component.styling.IconButtonStyle$Companion,org.jetbrains.jewel.ui.component.styling.IconButtonColors,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+- *sf:darkTransparentBackground-4WTKRHQ(org.jetbrains.jewel.ui.component.styling.IconButtonColors$Companion,J):org.jetbrains.jewel.ui.component.styling.IconButtonColors
+- *bs:darkTransparentBackground-4WTKRHQ$default(org.jetbrains.jewel.ui.component.styling.IconButtonColors$Companion,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.IconButtonColors
+- *sf:lightTransparentBackground(org.jetbrains.jewel.ui.component.styling.IconButtonStyle$Companion,org.jetbrains.jewel.ui.component.styling.IconButtonColors,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+- *bs:lightTransparentBackground$default(org.jetbrains.jewel.ui.component.styling.IconButtonStyle$Companion,org.jetbrains.jewel.ui.component.styling.IconButtonColors,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+- *sf:lightTransparentBackground-4WTKRHQ(org.jetbrains.jewel.ui.component.styling.IconButtonColors$Companion,J):org.jetbrains.jewel.ui.component.styling.IconButtonColors
+- *bs:lightTransparentBackground-4WTKRHQ$default(org.jetbrains.jewel.ui.component.styling.IconButtonColors$Companion,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.IconButtonColors
 f:org.jetbrains.jewel.intui.standalone.theme.TextStylesKt
 - *sf:EditorLineHeightMultiplier:F
