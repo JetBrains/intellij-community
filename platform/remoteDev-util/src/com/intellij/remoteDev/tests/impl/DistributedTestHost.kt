@@ -393,14 +393,16 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     AppIcon.getInstance().requestFocus(projectIdeFrame)
     ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
 
-    return waitSuspending(logPrefix, timeout = 5.seconds, failMessageProducer = {
-      if (silent) ""
-      else "Couldn't wait for focus," +
-           "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
-           "\n" + getFocusStateDescription()
+    return withContext(Dispatchers.IO) {
+      waitSuspending(logPrefix, timeout = 5.seconds, failMessageProducer = {
+        if (silent) ""
+        else "Couldn't wait for focus," +
+             "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
+             "\n" + getFocusStateDescription()
 
-    }) {
-      projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
+      }) {
+        projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
+      }
     }
   }
 
@@ -415,11 +417,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     visibleWindows.forEach {
       AppIcon.getInstance().requestFocus(it)
     }
-    return waitSuspending(logPrefix, timeout = 5.seconds, failMessageProducer = {
-      if (silent) ""
-      else "Couldn't wait for focus" + "\n" + getFocusStateDescription()
-    }) {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
+    return withContext(Dispatchers.IO) {
+      waitSuspending(logPrefix, timeout = 5.seconds, failMessageProducer = {
+        if (silent) ""
+        else "Couldn't wait for focus" + "\n" + getFocusStateDescription()
+      }) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
+      }
     }
   }
 
