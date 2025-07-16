@@ -199,10 +199,9 @@ private val quotedLiteralPattern = Regex("['\"]\\S+['\"]")
 
 internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
   return tool.allRules.asSequence()
-    .distinctBy { it.id }
-    .filter { r -> !r.isDictionaryBasedSpellingRule }
-    .map { LanguageToolRule(lang, it) }
-    .toList()
+    .filter { !it.isDictionaryBasedSpellingRule }
+    .groupBy { it.id }
+    .map { (_, rules) -> LanguageToolRule(lang, rules.first(), rules) }
 }
 
 /**

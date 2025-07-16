@@ -17,12 +17,12 @@ import java.util.*
 
 // ltRule used in ReSharper
 class LanguageToolRule(
-  private val lang: Lang, val ltRule: org.languagetool.rules.Rule
+  private val lang: Lang, val ltRule: org.languagetool.rules.Rule, private val similarLtRules: List<org.languagetool.rules.Rule> = emptyList(),
 ) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, categories(ltRule, lang)) {
 
   override fun isEnabledByDefault(): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id)
 
-  override fun getUrl(): URL? = ltRule.url
+  override fun getUrl(): URL? = similarLtRules.map { it.url }.toSet().singleOrNull()
 
   override fun getDescription(): String = html {
     table {
