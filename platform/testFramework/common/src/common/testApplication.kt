@@ -62,6 +62,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.UITestUtil
+import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.PlatformUtils
@@ -371,7 +372,9 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
   require(!application.isDisposed)
 
   val index = application.serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl
-  index?.changedFilesCollector?.waitForVfsEventsExecuted(timeout, timeUnit)
+  index?.changedFilesCollector?.waitForVfsEventsExecuted(timeout, timeUnit) {
+    dispatchAllEventsInIdeEventQueue()
+  }
 
   val commitThread = application.serviceIfCreated<DocumentCommitProcessor>() as? DocumentCommitThread
   commitThread?.waitForAllCommits(timeout, timeUnit)

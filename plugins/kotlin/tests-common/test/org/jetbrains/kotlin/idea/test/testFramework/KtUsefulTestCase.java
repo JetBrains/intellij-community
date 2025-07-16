@@ -21,12 +21,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -40,6 +40,7 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
+import static com.intellij.testFramework.EdtTestUtilKt.dispatchAllEventsInIdeEventQueue;
 import static com.intellij.testFramework.common.Cleanup.cleanupSwingDataStructures;
 
 @SuppressWarnings("ALL")
@@ -1094,7 +1096,10 @@ public abstract class KtUsefulTestCase extends TestCase {
                 if (app != null && !app.isDisposed()) {
                     FileBasedIndexImpl index = (FileBasedIndexImpl)app.getServiceIfCreated(FileBasedIndex.class);
                     if (index != null) {
-                        index.getChangedFilesCollector().waitForVfsEventsExecuted(timeout, timeUnit);
+                        index.getChangedFilesCollector().waitForVfsEventsExecuted(timeout, timeUnit, () -> {
+                            dispatchAllEventsInIdeEventQueue();
+                            return Unit.INSTANCE;
+                        });
                     }
 
                     DocumentCommitThread commitThread = (DocumentCommitThread)app.getServiceIfCreated(DocumentCommitProcessor.class);

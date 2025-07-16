@@ -519,33 +519,14 @@ public final class PlatformTestUtil {
    * Dispatch all pending events (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
   public static void dispatchAllEventsInIdeEventQueue() {
-    assertEventQueueDispatchThread();
-    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-      while (true) {
-        try {
-          if (dispatchNextEventIfAny() == null) break;
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
-      return Unit.INSTANCE;
-    });
+    EdtTestUtilKt.dispatchAllEventsInIdeEventQueue();
   }
 
   /**
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
   public static AWTEvent dispatchNextEventIfAny() throws InterruptedException {
-    return ThreadContext.resetThreadContext(() -> {
-      assertEventQueueDispatchThread();
-      IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) return null;
-      AWTEvent event1 = eventQueue.getNextEvent();
-      eventQueue.dispatchEvent(event1);
-      return event1;
-    });
+    return EdtTestUtilKt.dispatchNextEventIfAny();
   }
 
   public static @NotNull StringBuilder print(@NotNull AbstractTreeStructure structure,
