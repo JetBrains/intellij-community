@@ -5,6 +5,9 @@ org.jetbrains.jewel.ui.ComponentStyling
 - a:styles(androidx.compose.runtime.Composer,I):androidx.compose.runtime.ProvidedValue[]
 - with(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
 - with(org.jetbrains.jewel.ui.ComponentStyling):org.jetbrains.jewel.ui.ComponentStyling
+f:org.jetbrains.jewel.ui.DefaultComponentStyling
+- <init>(org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyles,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle):V
+- f:getTransparentIconButtonStyle():org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 f:org.jetbrains.jewel.ui.DisabledAppearanceKt
 - sf:disabledAppearance(androidx.compose.ui.Modifier,I,I,I,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.ui.DisabledColorFilterKt
@@ -88,6 +91,7 @@ f:org.jetbrains.jewel.ui.component.DefaultMenuController
 - onHoveredChange(Z):V
 - registerShortcutAction(javax.swing.KeyStroke,kotlin.jvm.functions.Function0):V
 - submenuController(kotlin.jvm.functions.Function1):org.jetbrains.jewel.ui.component.DefaultMenuController
+f:org.jetbrains.jewel.ui.component.IconButtonKt
 f:org.jetbrains.jewel.ui.component.LinkKt
 - sf:ExternalLink-kye4rC8(java.lang.String,java.lang.String,androidx.compose.ui.Modifier,Z,androidx.compose.ui.text.TextStyle,I,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.LinkStyle,androidx.compose.runtime.Composer,I,I):V
 org.jetbrains.jewel.ui.component.MenuController
@@ -150,6 +154,8 @@ f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:rememberPopupPositionProviderAtFixedPosition-7KAyTs4(J,J,androidx.compose.ui.Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.window.PopupPositionProvider
 f:org.jetbrains.jewel.ui.component.TypographyKt
 - sf:computeLineHeightPx(java.awt.Font):I
+f:org.jetbrains.jewel.ui.component.styling.IconButtonStylingKt
+- sf:getLocalTransparentIconButtonStyle():androidx.compose.runtime.ProvidableCompositionLocal
 org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - a:getExpandAnimationDuration-UwyO8pc():J
 - a:getLingerDuration-UwyO8pc():J
@@ -374,6 +380,8 @@ org.jetbrains.jewel.ui.painter.PainterProviderScope
 org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
 - org.jetbrains.jewel.ui.painter.PainterProviderScope
 - a:getClassLoaders():java.util.Set
+f:org.jetbrains.jewel.ui.theme.JewelThemeKt
+- sf:getTransparentIconButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 org.jetbrains.jewel.ui.util.MessageResourceResolver
 - a:resolveIdeBundleMessage(java.lang.String):java.lang.String
 f:org.jetbrains.jewel.ui.util.MessageResourceResolverKt
