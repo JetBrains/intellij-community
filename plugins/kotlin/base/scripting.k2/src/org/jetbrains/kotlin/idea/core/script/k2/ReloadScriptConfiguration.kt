@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationService.Companion.TOPIC
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptModuleManager.Companion.removeScriptModules
 import org.jetbrains.kotlin.idea.core.script.scriptDiagnostics
@@ -113,6 +114,7 @@ class ReloadScriptConfigurationService(private val project: Project, private val
         scope.launch {
             definition.getConfigurationResolver(project).remove(virtualFile)
             project.removeScriptModules(listOf(virtualFile))
+            ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
             DefaultScriptResolutionStrategy.getInstance(project).execute(ktFile).join()
 
             ktFile.putUserData(SHOW_NOTIFICATION, false)
