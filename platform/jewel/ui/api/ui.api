@@ -3158,6 +3158,11 @@ public final class org/jetbrains/jewel/ui/component/styling/TrackClickBehavior :
 	public static fun values ()[Lorg/jetbrains/jewel/ui/component/styling/TrackClickBehavior;
 }
 
+public final class org/jetbrains/jewel/ui/graphics/CssLinearGradientBrushKt {
+	public static final fun cssLinearGradient-2FSbUU4 (Landroidx/compose/ui/graphics/Brush$Companion;DLjava/util/List;Ljava/util/List;FFJ)Landroidx/compose/ui/graphics/Brush;
+	public static synthetic fun cssLinearGradient-2FSbUU4$default (Landroidx/compose/ui/graphics/Brush$Companion;DLjava/util/List;Ljava/util/List;FFJILjava/lang/Object;)Landroidx/compose/ui/graphics/Brush;
+}
+
 public abstract interface class org/jetbrains/jewel/ui/icon/IconKey {
 	public abstract fun getIconClass ()Ljava/lang/Class;
 	public abstract fun path (Z)Ljava/lang/String;
@@ -5087,10 +5092,20 @@ public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
 }
 
 public final class org/jetbrains/jewel/ui/util/ColorExtensionsKt {
+	public static final fun fromArgbHexStringOrNull (Landroidx/compose/ui/graphics/Color$Companion;Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public static final fun fromRGBAHexStringOrNull (Landroidx/compose/ui/graphics/Color$Companion;Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
+	public static final fun fromRgbaHexStringOrNull (Landroidx/compose/ui/graphics/Color$Companion;Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public static final fun isDark-8_81llA (J)Z
+	public static final fun toArgbHexString (Ljava/awt/Color;ZZ)Ljava/lang/String;
+	public static synthetic fun toArgbHexString$default (Ljava/awt/Color;ZZILjava/lang/Object;)Ljava/lang/String;
+	public static final fun toArgbHexString-ek8zF_U (JZZ)Ljava/lang/String;
+	public static synthetic fun toArgbHexString-ek8zF_U$default (JZZILjava/lang/Object;)Ljava/lang/String;
 	public static final fun toRgbaHexString (Ljava/awt/Color;)Ljava/lang/String;
+	public static final fun toRgbaHexString (Ljava/awt/Color;ZZ)Ljava/lang/String;
+	public static synthetic fun toRgbaHexString$default (Ljava/awt/Color;ZZILjava/lang/Object;)Ljava/lang/String;
 	public static final fun toRgbaHexString-8_81llA (J)Ljava/lang/String;
+	public static final fun toRgbaHexString-ek8zF_U (JZZ)Ljava/lang/String;
+	public static synthetic fun toRgbaHexString-ek8zF_U$default (JZZILjava/lang/Object;)Ljava/lang/String;
 }
 
 public abstract interface class org/jetbrains/jewel/ui/util/MessageResourceResolver {
