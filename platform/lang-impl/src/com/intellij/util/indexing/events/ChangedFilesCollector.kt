@@ -26,7 +26,6 @@ import com.intellij.util.indexing.FileBasedIndexProjectHandler
 import com.intellij.util.indexing.IndexUpToDateCheckIn.isUpToDateCheckEnabled
 import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.events.VfsEventsMerger.VfsEventProcessor
-import com.intellij.util.progress.withLockCancellable
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
@@ -34,6 +33,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.Lock
 import kotlin.concurrent.withLock
 
 private val LOG = Logger.getInstance(ChangedFilesCollector::class.java)
@@ -234,7 +234,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
       fileBasedIndex.waitUntilIndicesAreInitialized()
       eventMerger.processChanges(object : VfsEventProcessor {
         override fun process(changeInfo: VfsEventsMerger.ChangeInfo): Boolean {
-          fileBasedIndex.writeLock.withLock {
+          withLock(fileBasedIndex.writeLock) {
             try {
               ProgressManager.getInstance().executeNonCancelableSection(Runnable {
                 processor.process(changeInfo)
@@ -248,7 +248,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
         }
 
         override fun endBatch() {
-          fileBasedIndex.writeLock.withLockCancellable {
+          withLock(fileBasedIndex.writeLock) {
             processor.endBatch()
           }
         }
@@ -302,6 +302,11 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
       }
     }
   }
+}
+
+// we want to see method in stack traces
+private fun withLock(lock: Lock, runnable: () -> Unit) {
+  lock.withLock { runnable() }
 }
 
 private fun memoryStorageCleaningNeeded(event: VFileEvent): Boolean {
