@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.mcpserver">
+<idea-plugin package="com.intellij.mcpserver" allow-bundled-update="true">
   <name>MCP Server</name>
   <id>com.intellij.mcpServer</id>
   <category>AI-Powered</category>
