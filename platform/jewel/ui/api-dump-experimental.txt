@@ -36,3 +36,7 @@ f:org.jetbrains.jewel.ui.component.TooltipKt
 - *sf:rememberPopupPositionProviderAtFixedPosition-7KAyTs4(J,J,androidx.compose.ui.Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.window.PopupPositionProvider
 f:org.jetbrains.jewel.ui.component.TypographyKt
 - *sf:computeLineHeightPx(java.awt.Font):I
+f:org.jetbrains.jewel.ui.component.styling.IconButtonStylingKt
+- *sf:getLocalTransparentIconButtonStyle():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.ui.theme.JewelThemeKt
+- *sf:getTransparentIconButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
