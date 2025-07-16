@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
@@ -120,6 +121,7 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
   ) : DumbAwareAction(presentableName, null, icon) {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
+      val contentManager = e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY)
 
       val tabState = TerminalTabState()
       tabState.myTabName = templateText
@@ -128,7 +130,8 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
       TerminalToolWindowManager.getInstance(project).createNewTab(
         TerminalOptionsProvider.instance.terminalEngine,
         startupFusInfo,
-        tabState
+        tabState,
+        contentManager,
       )
     }
   }

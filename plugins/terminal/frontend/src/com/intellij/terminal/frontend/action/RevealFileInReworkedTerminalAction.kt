@@ -32,7 +32,8 @@ internal class RevealFileInReworkedTerminalAction : DumbAwareAction(), ActionRem
     TerminalToolWindowManager.getInstance(project).createNewTab(
       TerminalEngine.REWORKED,
       null,
-      tabState
+      tabState,
+      null,
     )
   }
 

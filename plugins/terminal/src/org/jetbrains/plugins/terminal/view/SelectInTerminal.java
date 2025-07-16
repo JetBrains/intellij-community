@@ -35,7 +35,8 @@ public final class SelectInTerminal implements SelectInTarget, DumbAware {
     TerminalToolWindowManager.getInstance(project).createNewTab(
       TerminalOptionsProvider.getInstance().getTerminalEngine(),
       null,
-      tabState
+      tabState,
+      null
     );
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
 import org.jetbrains.plugins.terminal.TerminalEngine
@@ -36,7 +37,8 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       TerminalToolWindowManager.getInstance(project).createNewTab(
         TerminalOptionsProvider.instance.terminalEngine,
         startupFusInfo,
-        null
+        null,
+        e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY)
       )
     }
   }
