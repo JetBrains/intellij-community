@@ -64,10 +64,17 @@ class IjentWslNioFileSystemProvider(
   internal fun toIjentNioPath(path: Path): IjentNioPath = path.toIjentPath()
 
   private fun Path.toIjentPath(): IjentNioPath =
-    when (this) {
-      is IjentNioPath -> this
-      is IjentWslNioPath -> presentablePath.toIjentPath()
-      else -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart -> nioPath.resolve(newPart.toString()) })
+    when {
+      this is IjentNioPath -> this
+      this is IjentWslNioPath -> presentablePath.toIjentPath()
+
+      isAbsolute ->
+        fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart -> nioPath.resolve(newPart.toString()) })
+
+      else -> {
+        val ijentNioFs = ijentFsProvider.getFileSystem(ijentFsUri)
+        ijentNioFs.getPath(toString().replace("\\", ijentNioFs.separator)) as IjentNioPath
+      }
     }
 
   internal fun toOriginalPath(path: Path, notation: String): Path = path.toOriginalPath(notation)
@@ -148,7 +155,7 @@ class IjentWslNioFileSystemProvider(
     originalFsProvider.newAsynchronousFileChannel(path.toOriginalPathWithSameNotation(), options, executor, *attrs)
 
   override fun createSymbolicLink(link: Path, target: Path, vararg attrs: FileAttribute<*>?) {
-    ijentFsProvider.createSymbolicLink(link.toOriginalPathWithSameNotation(), target.toOriginalPathWithSameNotation(), *attrs)
+    ijentFsProvider.createSymbolicLink(link.toIjentPath(), target.toIjentPath(), *attrs)
   }
 
   override fun createLink(link: Path, existing: Path) {

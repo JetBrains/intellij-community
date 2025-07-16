@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.directorySeparators
@@ -86,6 +86,15 @@ class IjentNioFileSystem internal constructor(
   override fun newWatchService(): WatchService {
     TODO("Not yet implemented")
   }
+
+  override fun equals(other: Any?): Boolean =
+    other is IjentNioFileSystem && other.uri == uri && other.fsProvider == fsProvider
+
+  override fun hashCode(): Int =
+    fsProvider.hashCode() * 31 + uri.hashCode()
+
+  override fun toString(): String =
+    "IjentNioFileSystem(uri=$uri)"
 
   private fun EelPath.toNioPath(): IjentNioPath =
     AbsoluteIjentNioPath(

@@ -562,7 +562,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
 
     val fs = ensureAbsoluteIjentNioPath(link).nioFs
-    ensureIjentNioPath(target)
+
+    val target: IjentNioPath =
+      if (target.isAbsolute || target.fileSystem == fs) {
+        ensureIjentNioPath(target)
+      }
+      else {
+        fs.getPath(target.toString().replace(target.fileSystem.separator, fs.separator))
+      }
+
     val eelTarget = when (target) {
       is AbsoluteIjentNioPath -> EelFileSystemPosixApi.SymbolicLinkTarget.Absolute(target.eelPath)
       is RelativeIjentNioPath -> EelFileSystemPosixApi.SymbolicLinkTarget.Relative(target.segments)
