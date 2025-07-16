@@ -36,15 +36,23 @@ class SeSimpleItemPresentation(
   val textChunk: SerializableTextChunk? = null,
   val selectedTextChunk: SerializableTextChunk? = null,
   val description: @NlsSafe String? = null,
+  val accessibleAdditionToText: @NlsSafe String? = null,
   override val extendedDescription: String? = null,
 ) : SeItemPresentation {
   override val text: @Nls String get() = textChunk?.text ?: ""
 
-  constructor(iconId: IconId? = null, text: @NlsSafe String? = null, description: @NlsSafe String? = null, extendedDescription: String? = null) : this(
+  constructor(
+    iconId: IconId? = null,
+    text: @NlsSafe String? = null,
+    description: @NlsSafe String? = null,
+    accessibleAdditionToText: @NlsSafe String? = null,
+    extendedDescription: String? = null,
+  ) : this(
     iconId,
     text?.let { SerializableTextChunk(it) },
     null,
     description,
+    accessibleAdditionToText,
     extendedDescription)
 }
 
