@@ -49,7 +49,6 @@ import java.awt.event.KeyEvent.KEY_LOCATION_STANDARD
 import java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN
 import java.awt.event.KeyEvent.KEY_PRESSED
 import java.awt.event.KeyEvent.KEY_RELEASED
-import java.awt.event.MouseEvent
 import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
 import org.jetbrains.jewel.bridge.LocalComponent
 import org.jetbrains.jewel.bridge.compose
@@ -158,9 +157,9 @@ private fun JBPopup(
                 val composeEvent = event.toComposeKeyEvent()
                 onPreviewKeyEvent?.invoke(composeEvent) == true || onKeyEvent?.invoke(composeEvent) == true
             }
-            .setCancelOnMouseOutCallback {
-                if (it.button != MouseEvent.NOBUTTON) onDismissRequest?.invoke()
-                false
+            .setCancelCallback {
+                onDismissRequest?.invoke()
+                true
             }
             .createPopup()
     }
@@ -172,7 +171,7 @@ private fun JBPopup(
     }
 
     DisposableEffect(Unit) {
-        // Showing on the top-left corner of the owner component so we can measure and show it correctly
+        // Showing in the top-left corner of the owner component so we can measure and show it correctly
         popup.showInScreenCoordinates(owner, Point(0, 0))
         onDispose { popup.cancel() }
     }
