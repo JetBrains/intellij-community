@@ -14,6 +14,10 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.ui
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -55,6 +59,8 @@ import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -323,6 +329,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter<SwitcherVirtualFile>(maybeSearchableModel, null)
       files.visibleRowCount = files.itemsCount
 
+      val selectedValueFlow = MutableStateFlow<SwitcherListItem?>(null)
       val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
           LOG.debug("Switcher value changed: $e")
@@ -332,9 +339,20 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
           }
 
           updatePathLabel()
-          val hint = hint
-          val popupUpdater = if (hint == null || !hint.isVisible) null else hint.getUserData(PopupUpdateProcessorBase::class.java)
-          popupUpdater?.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this@SwitcherPanel)))
+          selectedValueFlow.value = selectedList?.selectedValue
+        }
+      }
+      uiUpdateScope.launch(CoroutineName("Switcher hint popup updater")) {
+        selectedValueFlow.collectLatest { selectedValue ->
+          withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) { // can't use STRICT because updatePopup needs a WIRA
+            val hint = hint
+            val popupUpdater = if (hint == null || !hint.isVisible) null else hint.getUserData(PopupUpdateProcessorBase::class.java)
+            if (selectedValue != null && popupUpdater != null) {
+              writeIntentReadAction {
+                popupUpdater.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this@SwitcherPanel)))
+              }
+            }
+          }
         }
       }
       toolWindows.selectionModel.addListSelectionListener(filesSelectionListener)
