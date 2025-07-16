@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.enableInspectionTool
-import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.tools.projectWizard.cli.BuildSystem
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.junit.Test

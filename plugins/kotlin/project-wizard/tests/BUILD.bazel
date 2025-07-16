@@ -84,6 +84,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ],
   runtime_deps = ["//plugins/kotlin/plugin/k1"]
 )

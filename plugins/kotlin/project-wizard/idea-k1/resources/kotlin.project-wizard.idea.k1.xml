@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.tools.projectWizard.k1">
   <dependencies>
     <module name="kotlin.project-wizard.idea"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

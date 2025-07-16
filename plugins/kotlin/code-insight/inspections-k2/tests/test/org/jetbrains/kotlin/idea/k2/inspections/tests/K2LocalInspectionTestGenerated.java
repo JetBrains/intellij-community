@@ -17443,6 +17443,50 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil")
+    public static class ReplaceUntilWithRangeUntil extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("minusXxCompilerFlag.kt")
+        public void testMinusXxCompilerFlag() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/minusXxCompilerFlag.kt");
+        }
+
+        @TestMetadata("noOptIn.kt")
+        public void testNoOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/noOptIn.kt");
+        }
+
+        @TestMetadata("optInIsNotRequired.kt")
+        public void testOptInIsNotRequired() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/optInIsNotRequired.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/simple.kt");
+        }
+
+        @TestMetadata("tooOldCompilerVersion.kt")
+        public void testTooOldCompilerVersion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/tooOldCompilerVersion.kt");
+        }
+
+        @TestMetadata("tooOldLanguageVersion.kt")
+        public void testTooOldLanguageVersion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/tooOldLanguageVersion.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override

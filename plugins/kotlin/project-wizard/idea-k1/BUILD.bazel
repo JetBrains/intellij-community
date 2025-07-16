@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/kotlin/code-insight/api",
     "//platform/lang-impl",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ],
   runtime_deps = [":kotlin-project-wizard-idea-k1_resources"]
 )
