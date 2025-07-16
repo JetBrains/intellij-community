@@ -53,6 +53,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalUndecoratedDropdownStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
@@ -86,6 +87,7 @@ public class DefaultComponentStyling(
     public val groupHeaderStyle: GroupHeaderStyle,
     public val horizontalProgressBarStyle: HorizontalProgressBarStyle,
     public val iconButtonStyle: IconButtonStyle,
+    public val transparentIconButtonStyle: IconButtonStyle,
     public val inlineBannerStyle: InlineBannerStyles,
     public val lazyTreeStyle: LazyTreeStyle,
     public val linkStyle: LinkStyle,
@@ -124,6 +126,7 @@ public class DefaultComponentStyling(
             LocalGroupHeaderStyle provides groupHeaderStyle,
             LocalHorizontalProgressBarStyle provides horizontalProgressBarStyle,
             LocalIconButtonStyle provides iconButtonStyle,
+            LocalTransparentIconButtonStyle provides transparentIconButtonStyle,
             LocalInlineBannerStyle provides inlineBannerStyle,
             LocalLazyTreeStyle provides lazyTreeStyle,
             LocalLinkStyle provides linkStyle,
@@ -164,6 +167,7 @@ public class DefaultComponentStyling(
         if (groupHeaderStyle != other.groupHeaderStyle) return false
         if (horizontalProgressBarStyle != other.horizontalProgressBarStyle) return false
         if (iconButtonStyle != other.iconButtonStyle) return false
+        if (transparentIconButtonStyle != other.transparentIconButtonStyle) return false
         if (inlineBannerStyle != other.inlineBannerStyle) return false
         if (lazyTreeStyle != other.lazyTreeStyle) return false
         if (linkStyle != other.linkStyle) return false
@@ -201,6 +205,7 @@ public class DefaultComponentStyling(
         result = 31 * result + groupHeaderStyle.hashCode()
         result = 31 * result + horizontalProgressBarStyle.hashCode()
         result = 31 * result + iconButtonStyle.hashCode()
+        result = 31 * result + transparentIconButtonStyle.hashCode()
         result = 31 * result + inlineBannerStyle.hashCode()
         result = 31 * result + lazyTreeStyle.hashCode()
         result = 31 * result + linkStyle.hashCode()
@@ -238,6 +243,7 @@ public class DefaultComponentStyling(
             "groupHeaderStyle=$groupHeaderStyle, " +
             "horizontalProgressBarStyle=$horizontalProgressBarStyle, " +
             "iconButtonStyle=$iconButtonStyle, " +
+            "transparentIconButtonStyle=$transparentIconButtonStyle, " +
             "inlineBannerStyle=$inlineBannerStyle, " +
             "lazyTreeStyle=$lazyTreeStyle, " +
             "linkStyle=$linkStyle, " +
