@@ -153,7 +153,7 @@ public class FoldingDescriptor {
   public FoldingDescriptor(@NotNull ASTNode node,
                            @NotNull TextRange range,
                            @Nullable FoldingGroup group,
-                           @NotNull String placeholderText,
+                           @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
                            @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault,
                            @NotNull Set<Object> dependencies) {
     this(node, range, group, dependencies, false, placeholderText, collapsedByDefault);
