@@ -72,10 +72,5 @@ public interface StickyLinesModel {
      * Called when a batch of sticky lines is added or removed
      */
     void linesUpdated();
-
-    /**
-     * Called when all sticky lines are removed
-     */
-    void linesRemoved();
   }
 }

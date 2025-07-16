@@ -189,9 +189,6 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
     for (StickyLine line : getAllStickyLines()) {
       removeStickyLine(line);
     }
-    for (Listener listener : myListeners) {
-      listener.linesRemoved();
-    }
     if (project != null) {
       restartStickyLinesPass(project);
     }

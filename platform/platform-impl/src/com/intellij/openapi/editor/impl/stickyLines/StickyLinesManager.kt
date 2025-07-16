@@ -107,9 +107,6 @@ internal class StickyLinesManager(
     recalculateAndRepaintLines()
   }
 
-  override fun linesRemoved() {
-  }
-
   override fun dispose() {
     stickyModel.removeListener(this)
   }
