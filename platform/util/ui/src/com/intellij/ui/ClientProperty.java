@@ -116,6 +116,24 @@ public final class ClientProperty {
     }
   }
 
+  @ApiStatus.Internal
+  public static <T> void removeRecursive(@NotNull JComponent component, @NotNull Key<T> key) {
+    Map<Key<?>, ContainerListener> listeners = get(component, RECURSIVE_LISTENERS);
+
+    if (listeners != null) {
+      ContainerListener existingListener = listeners.remove(key);
+      if (existingListener != null) {
+        component.removeContainerListener(existingListener);
+
+        if (listeners.isEmpty()) {
+          put(component, RECURSIVE_LISTENERS, null);
+        }
+      }
+    }
+
+    put(component, key, null);
+  }
+
   @Contract("null -> null")
   private static @Nullable JComponent getPropertiesHolder(@Nullable Component component) {
     if (component instanceof JComponent) return (JComponent)component;

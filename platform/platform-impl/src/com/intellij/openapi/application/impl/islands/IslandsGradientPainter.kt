@@ -18,7 +18,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.JBUI
 import java.awt.*
 
-internal class IslandsGradientPainter(private val frame: IdeFrame, private val mainColor: Color) : AbstractPainter() {
+internal class IslandsGradientPainter(private val frame: IdeFrame, private val mainColor: Color, private val enabled: () -> Boolean) : AbstractPainter() {
   private val leftGradientCache: GradientTextureCache = GradientTextureCache()
   private val rightGradientCache: GradientTextureCache = GradientTextureCache()
 
@@ -26,7 +26,7 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
 
   private var doPaint = true
 
-  override fun needsRepaint(): Boolean = true
+  override fun needsRepaint(): Boolean = enabled()
 
   override fun executePaint(component: Component, g: Graphics2D) {
     if (doPaint) {

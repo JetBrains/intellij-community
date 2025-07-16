@@ -486,6 +486,8 @@ internal class ToolWindowImpl(
     toolWindowManager.stretchHeight(this, value)
   }
 
+  internal fun getNullableDecorator() = decorator
+
   override fun getDecorator(): InternalDecoratorImpl = decorator!!
 
   override fun setAdditionalGearActions(value: ActionGroup?) {

@@ -64,7 +64,6 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
-import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -499,7 +498,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> {
+    val themeManager = UiThemeProviderListManager.getInstance()
+    val islandThemes = themeManager.getBundledThemeListForTargetUI(TargetUIType.ISLANDS)
     val welcomeMode = WelcomeFrame.getInstance() != null
+
     return listCellRenderer {
       toolTipText = null
       text(value.name)
@@ -520,6 +522,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
             else if (!welcomeMode && value.themeId != currentTheme?.id && currentTheme?.isRestartRequired() == true) {
               icon(getDisabledIcon(AllIcons.Actions.Restart, null))
               toolTipText = IdeBundle.message("ide.restart.required.comment")
+            }
+            else if (islandThemes.contains(theme)) {
+              icon(AllIcons.General.Beta)
             }
             break
           }

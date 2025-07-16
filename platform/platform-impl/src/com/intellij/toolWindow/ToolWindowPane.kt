@@ -617,7 +617,7 @@ class ToolWindowPane private constructor(
       }
 
       override fun createDivider(): Divider {
-        return InternalUICustomization.getInstance()?.createCustomDivider(isVisible, this)
+        return InternalUICustomization.getInstance()?.createCustomDivider(isVertical, this)
                ?: super.createDivider().also { it.background = JBUI.CurrentTheme.ToolWindow.mainBorderColor() }
       }
 

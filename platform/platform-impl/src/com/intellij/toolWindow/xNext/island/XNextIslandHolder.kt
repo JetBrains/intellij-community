@@ -48,6 +48,10 @@ class XNextIslandHolder : JPanel() {
     super.setBorder(border)
   }
 
+  fun setSuperBorder(border: Border?) {
+    super.setBorder(border)
+  }
+
   override fun isOpaque(): Boolean {
     return true
   }
