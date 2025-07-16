@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -117,7 +118,7 @@ internal class EditExternallyAction : DumbAwareAction() {
   private fun performActionWithBackingFile(e: AnActionEvent, imageFile: VirtualFile) {
     try {
       val disposable = e.getDisposable()
-      disposable.launch {
+      currentThreadCoroutineScope().launch {
         try {
           val backingFile = imageFile.copyToBackingFile(disposable)
           actionPerformed(e, backingFile)
@@ -138,7 +139,7 @@ internal class EditExternallyAction : DumbAwareAction() {
 }
 
 private fun VirtualFile.copyToBackingFile(disposable: Disposable): VirtualFile {
-  val filePath = Files.createTempFile("EditExternallyAction", name)
+  val filePath = Files.createTempFile("EditExternallyAction (copy)", name)
   Disposer.register(disposable, Disposable {
     filePath.safeDelete()
   })
@@ -160,17 +161,6 @@ private fun Path.safeDelete() {
   }
   catch (ignore: IOException) {
   }
-}
-
-private fun Disposable.launch(block: suspend CoroutineScope.() -> Unit) {
-  val job = SupervisorJob()
-  @Suppress("SSBasedInspection")
-  CoroutineScope(job + Dispatchers.IO).launch {
-    block()
-  }
-  Disposer.register(this, Disposable {
-    job.cancel()
-  })
 }
 
 /**
