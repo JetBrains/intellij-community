@@ -5,10 +5,12 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
@@ -87,12 +89,28 @@ public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Se
     try {
       long length = lob.length();
       int subLength = maxLobLength < length ? maxLobLength : (int)length;
-      return new BlobInfo(length, length != subLength && subLength <= 0 ? null :
-                                  subLength > 0 ? lob.getBytes(1, subLength) : ArrayUtilRt.EMPTY_BYTE_ARRAY);
+      return new BlobInfo(length, getLob(lob, length, subLength));
     }
     finally {
       freeLob(lob);
     }
+  }
+
+  private static byte @Nullable [] getLob(Blob lob, long length, int subLength) throws SQLException, IOException {
+    if (length != subLength && subLength <= 0) {
+      return null;
+    }
+    if (subLength <= 0) {
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    }
+    if (length >= Integer.MAX_VALUE) {
+      // for oracle driver we can't get data from lob.getBytes because of overflow of some integer variable,
+      // so we try to read it as stream to array
+      try (InputStream input = lob.getBinaryStream()) {
+        return loadBytes(input, subLength);
+      }
+    }
+    return lob.getBytes(1, subLength);
   }
 
   private static byte[] loadBytes(@NotNull InputStream o, int maxLength) throws IOException {
