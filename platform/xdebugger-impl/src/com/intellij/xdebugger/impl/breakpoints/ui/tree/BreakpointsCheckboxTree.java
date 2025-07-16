@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 
 public class BreakpointsCheckboxTree extends CheckboxTree {
@@ -40,6 +41,7 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
 
   public BreakpointsCheckboxTree(Project project, BreakpointItemsTreeController model) {
     super(new BreakpointsTreeCellRenderer.BreakpointsCheckboxTreeCellRenderer(project), model.getRoot());
+    getAccessibleContext().setAccessibleName(XDebuggerBundle.message("breakpoints.tree.accessible.name"));
   }
 
   @Override
