@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.actions.MavenAction
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
@@ -37,7 +38,10 @@ class AddManagedFilesAction : MavenAction() {
       FileChooser.chooseFiles(singlePomSelection, project, fileToSelect)
     }
 
-    if (files.size != 1) return
+    if (files.size != 1)  {
+      MavenLog.LOG.warn("Expected exactly one file but selected: $files")
+      return
+    }
 
     val projectFile = files[0]
     val selectedFiles = if (projectFile.isDirectory) projectFile.children else files
