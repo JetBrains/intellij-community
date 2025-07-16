@@ -1696,7 +1696,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public @Nullable ReferenceType findLoadedClass(@Nullable SuspendContext suspendContext,
                                                  String className,
                                                  ClassLoaderReference classLoader) {
-    List<ReferenceType> types = ContainerUtil.filter(getCurrentVm(suspendContext).classesByName(className), ReferenceType::isPrepared);
+    List<ReferenceType> types = findLoadedClasses(suspendContext, className);
     // first try to quickly find the equal classloader only
     ReferenceType result = ContainerUtil.find(types, refType -> Objects.equals(classLoader, refType.classLoader()));
     // now do the full visibility check
@@ -1704,6 +1704,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       result = ContainerUtil.find(types, refType -> isVisibleFromClassLoader(classLoader, refType));
     }
     return result;
+  }
+
+  public @NotNull List<ReferenceType> findLoadedClasses(@Nullable SuspendContext suspendContext, String className) {
+    return ContainerUtil.filter(getCurrentVm(suspendContext).classesByName(className), ReferenceType::isPrepared);
   }
 
   private VirtualMachineProxyImpl getCurrentVm(@Nullable SuspendContext suspendContext) {
