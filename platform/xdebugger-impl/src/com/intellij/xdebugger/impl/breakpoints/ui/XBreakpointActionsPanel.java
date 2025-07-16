@@ -83,7 +83,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
 
   @Override
   public boolean lightVariant(boolean showAllOptions) {
-    if (!showAllOptions && !myBreakpoint.isLogMessage() && !myBreakpoint.isLogStack() && myBreakpoint.getLogExpression() == null &&
+    if (!showAllOptions && !myBreakpoint.isLogMessage() && !myBreakpoint.isLogStack() && myBreakpoint.getLogExpressionObjectInt() == null &&
         (!(myBreakpoint instanceof XLineBreakpointProxy) || !((XLineBreakpointProxy)myBreakpoint).isTemporary())) {
       myMainPanel.setVisible(false);
       return true;

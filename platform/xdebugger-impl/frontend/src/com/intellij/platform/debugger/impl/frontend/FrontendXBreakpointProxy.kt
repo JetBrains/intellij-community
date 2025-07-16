@@ -196,65 +196,12 @@ internal open class FrontendXBreakpointProxy(
   override fun getTimestamp(): Long = currentState.timestamp
 
   override fun isLogMessage(): Boolean = currentState.logMessage
-
   override fun isLogStack(): Boolean = currentState.logStack
+  override fun isLogExpressionEnabled(): Boolean = currentState.isLogExpressionEnabled
+  override fun getLogExpressionObjectInt(): XExpression? = currentState.logExpression?.xExpression()
 
-  override fun isConditionEnabled(): Boolean {
-    return currentState.isConditionEnabled
-  }
-
-  override fun setConditionEnabled(enabled: Boolean) {
-    updateStateIfNeeded(newValue = enabled,
-                        getter = { it.isConditionEnabled },
-                        copy = { it.copy(isConditionEnabled = enabled) }) { requestId ->
-      XBreakpointApi.getInstance().setConditionEnabled(id, requestId, enabled)
-    }
-  }
-
-  override fun getLogExpressionObject(): XExpression? = currentState.logExpressionObject?.xExpression()
-
-  override fun getConditionExpression(): XExpression? = currentState.conditionExpression?.xExpression()
-
-  override fun setConditionExpression(condition: XExpression?) {
-    val conditionDto = condition?.toRpc()
-    updateStateIfNeeded(newValue = conditionDto,
-                        getter = { it.conditionExpression },
-                        copy = { it.copy(conditionExpression = conditionDto) }) { requestId ->
-      XBreakpointApi.getInstance().setConditionExpression(id, requestId, conditionDto)
-    }
-  }
-
-  override fun getConditionExpressionInt(): XExpression? {
-    return currentState.conditionExpressionInt?.xExpression()
-  }
-
-  override fun getGeneralDescription(): String {
-    return currentState.generalDescription
-  }
-
-  override fun getTooltipDescription(): @NlsSafe String {
-    return currentState.tooltipDescription
-  }
-
-  override fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean {
-    if (other !is FrontendXBreakpointProxy) {
-      return false
-    }
-
-    // TODO: support timestamp
-    return currentState == other.currentState
-  }
-
-  override fun isLogExpressionEnabled(): Boolean {
-    return currentState.isLogExpressionEnabled
-  }
-
-  override fun getLogExpression(): String? {
-    return currentState.logExpression
-  }
-
-  override fun getLogExpressionObjectInt(): XExpression? {
-    return currentState.logExpressionObjectInt?.xExpression()
+  override fun getLogExpressionObject(): XExpression? {
+    return if (isLogExpressionEnabled()) getLogExpressionObjectInt() else null
   }
 
   override fun setLogMessage(enabled: Boolean) {
@@ -284,10 +231,51 @@ internal open class FrontendXBreakpointProxy(
   override fun setLogExpressionObject(logExpression: XExpression?) {
     val logExpressionDto = logExpression?.toRpc()
     updateStateIfNeeded(newValue = logExpressionDto,
-                        getter = { it.logExpressionObject },
-                        copy = { it.copy(logExpressionObject = logExpressionDto) }) { requestId ->
+                        getter = { it.logExpression },
+                        copy = { it.copy(logExpression = logExpressionDto) }) { requestId ->
       XBreakpointApi.getInstance().setLogExpressionObject(id, requestId, logExpressionDto)
     }
+  }
+
+  override fun isConditionEnabled(): Boolean = currentState.isConditionEnabled
+  override fun getConditionExpressionInt(): XExpression? = currentState.conditionExpression?.xExpression()
+
+  override fun getConditionExpression(): XExpression? {
+    return if (isConditionEnabled()) getConditionExpressionInt() else null
+  }
+
+  override fun setConditionEnabled(enabled: Boolean) {
+    updateStateIfNeeded(newValue = enabled,
+                        getter = { it.isConditionEnabled },
+                        copy = { it.copy(isConditionEnabled = enabled) }) { requestId ->
+      XBreakpointApi.getInstance().setConditionEnabled(id, requestId, enabled)
+    }
+  }
+
+  override fun setConditionExpression(condition: XExpression?) {
+    val conditionDto = condition?.toRpc()
+    updateStateIfNeeded(newValue = conditionDto,
+                        getter = { it.conditionExpression },
+                        copy = { it.copy(conditionExpression = conditionDto) }) { requestId ->
+      XBreakpointApi.getInstance().setConditionExpression(id, requestId, conditionDto)
+    }
+  }
+
+  override fun getGeneralDescription(): String {
+    return currentState.generalDescription
+  }
+
+  override fun getTooltipDescription(): @NlsSafe String {
+    return currentState.tooltipDescription
+  }
+
+  override fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean {
+    if (other !is FrontendXBreakpointProxy) {
+      return false
+    }
+
+    // TODO: support timestamp
+    return currentState == other.currentState
   }
 
   override fun getEditorsProvider(): XDebuggerEditorsProvider? {
