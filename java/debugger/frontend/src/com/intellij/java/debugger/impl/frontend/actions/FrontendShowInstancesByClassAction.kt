@@ -10,8 +10,9 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.CoroutineScope
@@ -35,21 +36,25 @@ private class FrontendShowInstancesByClassAction : XDebuggerTreeActionBase(), Ac
   }
 
   override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
-    val xValue = node.valueContainer as? FrontendXValue ?: return false
-    val descriptor = (xValue.descriptor as? JavaValueDescriptor) ?: return false
+    if (DebuggerUIUtil.getSessionProxy(e) == null) return false
+    val xValue = node.valueContainer
+    val descriptor = xValue.xValueDescriptorAsync?.getNow(null) as? JavaValueDescriptor ?: return false
     val objectReferenceInfo = descriptor.objectReferenceInfo ?: return false
 
     val visibleTypeName = StringUtil.getShortName(objectReferenceInfo.typeName)
     e.presentation.setText(JavaDebuggerImplFrontendBundle.message("action.show.objects.text", visibleTypeName))
 
-    return true
+    return objectReferenceInfo.canGetInstanceInfo
   }
 
 
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
-    val xValue = node.valueContainer as? FrontendXValue ?: return
+    val xValue = node.valueContainer
+    val session = DebuggerUIUtil.getSessionProxy(e) ?: return
     service<FrontendShowInstancesByClassActionCoroutineScope>().cs.launch {
-      JavaDebuggerLuxActionsApi.getInstance().showInstancesDialog(xValue.xValueDto.id)
+      XDebugManagerProxy.getInstance().withId(xValue, session) { xValueId ->
+        JavaDebuggerLuxActionsApi.getInstance().showInstancesDialog(xValueId)
+      }
     }
   }
 }

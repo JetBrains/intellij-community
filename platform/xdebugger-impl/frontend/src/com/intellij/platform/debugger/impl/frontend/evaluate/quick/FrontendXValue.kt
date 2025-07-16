@@ -25,6 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.concurrency.asPromise
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class FrontendXValue private constructor(
@@ -42,8 +43,6 @@ class FrontendXValue private constructor(
 
   @Volatile
   private var canNavigateToTypeSource = false
-
-  var descriptor: XValueDescriptor? = null
 
   private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
     XValueApi.getInstance().computeChildren(xValueDto.id)
@@ -88,14 +87,14 @@ class FrontendXValue private constructor(
     cs.launch {
       canNavigateToTypeSource = xValueDto.canNavigateToTypeSource.await()
     }
-
-    cs.launch {
-      descriptor = xValueDto.descriptor?.await()
-    }
   }
 
   override fun canNavigateToSource(): Boolean {
     return xValueDto.canNavigateToSource
+  }
+
+  override fun getXValueDescriptorAsync(): CompletableFuture<XValueDescriptor?>? {
+    return xValueDto.descriptor?.asCompletableFuture()
   }
 
   override fun canNavigateToTypeSource(): Boolean {
