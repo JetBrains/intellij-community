@@ -17,6 +17,8 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
@@ -221,6 +223,32 @@ public final class WideSelectionListUI extends BasicListUI {
         }
       }
     }
+  }
+
+  @Override
+  protected FocusListener createFocusListener() {
+    var superFocusListener = super.createFocusListener();
+
+    // Support selected items background while changing focus
+    return new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (list.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
+          superFocusListener.focusGained(e);
+        } else {
+          list.repaint();
+        }
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        if (list.getSelectionMode() == ListSelectionModel.SINGLE_SELECTION) {
+          superFocusListener.focusLost(e);
+        } else {
+          list.repaint();
+        }
+      }
+    };
   }
 
   /** @noinspection MethodOverridesStaticMethodOfSuperclass, unused */
