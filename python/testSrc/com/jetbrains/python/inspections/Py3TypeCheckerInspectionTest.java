@@ -3007,4 +3007,19 @@ def foo(param: str | int) -> TypeGuard[str]:
                    Test2.<warning descr="Access to generic instance variables via class is ambiguous">attr</warning>
                    """);
   }
+
+  // PY-76818
+  public void testMatchModuleWithProtocolNumOfAttrs() {
+    doMultiFileTest();
+  }
+
+  // PY-76818
+  public void testMatchProtocolWithModuleCallables() {
+    doMultiFileTest();
+  }
+
+  // PY-76818
+  public void testMatchGenericProtocolWithModule() {
+    doMultiFileTest();
+  }
 }

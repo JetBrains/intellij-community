@@ -48,7 +48,6 @@ protocols_class_objects.py
 protocols_definition.py
 protocols_explicit.py
 protocols_generic.py
-protocols_modules.py
 protocols_recursive.py
 protocols_runtime_checkable.py
 protocols_subtyping.py

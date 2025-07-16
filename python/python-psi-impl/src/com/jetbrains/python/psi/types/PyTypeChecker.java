@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyNamesKt;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -210,8 +211,11 @@ public final class PyTypeChecker {
       return Optional.of(actual instanceof PyModuleType && ((PyModuleType)expected).getModule() == ((PyModuleType)actual).getModule());
     }
 
-    if (expected instanceof PyClassType && actual instanceof PyModuleType) {
-      return match(expected, ((PyModuleType)actual).getModuleClassType(), context);
+    if (expected instanceof PyClassType classType && actual instanceof PyModuleType moduleType) {
+      if (PyProtocolsKt.isProtocol(classType, context.context)) {
+        return Optional.of(match(classType, moduleType, context));
+      }
+      return match(expected, moduleType.getModuleClassType(), context);
     }
 
     return Optional.of(matchNumericTypes(expected, actual));
@@ -585,6 +589,40 @@ public final class PyTypeChecker {
       }
     }
 
+    return true;
+  }
+
+  private static boolean match(PyClassType expectedProtocol, PyModuleType actualModule, MatchContext matchContext) {
+    PyFile module = actualModule.getModule();
+
+    Map<String, PyTypedElement> moduleElements = StreamEx.of(ContainerUtil.concat(module.getTopLevelAttributes(), module.getTopLevelFunctions()))
+      .filter(e -> {
+        var name = ((PyQualifiedNameOwner)e).getName();
+        return name != null && !PyNamesKt.isPrivate(name) && !PyNamesKt.isProtected(name);
+      })
+      .toMap(PyTypedElement::getName, v -> v);
+
+    var protocolElements = PyProtocolsKt.inspectProtocolSubclass(expectedProtocol, expectedProtocol, matchContext.context);
+
+    if (protocolElements.size() != moduleElements.size()) return false;
+
+    GenericSubstitutions substitutions = collectTypeSubstitutions(expectedProtocol, matchContext.context);
+    for (kotlin.Pair<PyTypedElement, List<PyTypedResolveResult>> pair : protocolElements) {
+      PyTypedElement protocolMember = pair.getFirst();
+      String name = protocolMember.getName();
+      PyTypedElement moduleElement = moduleElements.get(name);
+      if (moduleElement != null) {
+        PyType expectedProtocolMemberType =
+          substitute(dropSelfIfNeeded(expectedProtocol, matchContext.context.getType(pair.getFirst()), matchContext.context), substitutions,
+                     matchContext.context);
+        PyType actualModuleElementType = matchContext.context.getType(moduleElement);
+        if (!match(expectedProtocolMemberType, actualModuleElementType, matchContext.context)) {
+          return false;
+        }
+        continue;
+      }
+      return false;
+    }
     return true;
   }
 
