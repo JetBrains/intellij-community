@@ -267,7 +267,9 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private static boolean requiresTypeSpecialization(@Nullable PyType type) {
-      if (type instanceof PyTypeParameterType && !(type instanceof PySelfType)) return true;
+      if (type instanceof PyTypeParameterType typeParameterType &&
+          typeParameterType.getDefaultType() == null &&
+          !(type instanceof PySelfType)) return true;
       return type instanceof PyCollectionType collectionType &&
              exists(collectionType.getElementTypes(), Visitor::requiresTypeSpecialization);
     }
