@@ -21,7 +21,7 @@
                         serviceImplementation="com.intellij.findUsagesMl.FileRankerMlServiceImpl"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.findUsagesMl.FindUsagesFileRankerFeatureCollector"/>
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="When false, all functionality from the findUsagesMl plugin will be disabled."
                  key="find.usages.ml.ranker.isEnabled"/>
     <registryKey defaultValue="true"
