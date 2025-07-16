@@ -725,6 +725,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
 
     if (document == null || isBinaryWithDecompiler(virtualFile)) {
+      //TODO RC: pass event.path also -- it will most likely be useful inside (virtualFile.getPath() is not cheap!)
       myMultiCaster.fileWithNoDocumentChanged(virtualFile); // This will generate PSI event at FileManagerImpl
     }
 

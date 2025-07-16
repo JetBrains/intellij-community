@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.execution.wsl.WslPath
@@ -48,8 +48,12 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
   internal fun <T> registerListener(disposable: Disposable, configProvider: ExternalJavaConfigurationProvider<T>) {
     project.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
+        //TODO: getConfigurationFile(project) create a File with a fixed name, only to extract this name back here
+        //      much better would be to provide .getConfigurationFileName() method, OR just cache the file created
+        //      inside getConfigurationFile()
+        val configFileName = configProvider.getConfigurationFile(project).name
         for (event in events) {
-          if (!event.path.endsWith(configProvider.getConfigurationFile(project).name)) continue
+          if (!event.path.endsWith(configFileName)) continue
           if (event !is VFileContentChangeEvent && event !is VFileCreateEvent) continue
 
           updateJdkFromConfig(configProvider)
