@@ -9,6 +9,7 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
+import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.presentation.TargetPresentation
@@ -109,6 +110,7 @@ class SeTargetItemPresentation(
   val presentableTextMatchedRanges: List<SerializableRange>? = null,
   private val presentableTextFgColorId: ColorId? = null,
   val presentableTextErrorHighlight: Boolean = false,
+  val presentableTextStrikethrough: Boolean = false,
   val containerText: @NlsSafe String? = null,
   val containerTextMatchedRanges: List<SerializableRange>? = null,
   val locationText: @NlsSafe String? = null,
@@ -139,7 +141,11 @@ class SeTargetItemPresentation(
                                presentableTextErrorHighlight = tp.presentableTextAttributes?.let { attrs ->
                                  val simpleAttrs = SimpleTextAttributes.fromTextAttributes(attrs)
                                  simpleAttrs.isWaved && attrs.effectColor == JBColor.RED
-                               } ?: false,
+                               } == true,
+                               presentableTextStrikethrough = tp.presentableTextAttributes?.let { attrs ->
+                                 SimpleTextAttributes.fromTextAttributes(attrs).isStrikeout ||
+                                 attrs.additionalEffects?.contains(EffectType.STRIKEOUT) == true
+                               } == true,
                                containerText = tp.containerText,
                                containerTextMatchedRanges = matchers?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
