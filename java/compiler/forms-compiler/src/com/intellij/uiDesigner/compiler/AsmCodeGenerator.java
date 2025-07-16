@@ -120,18 +120,13 @@ public final class AsmCodeGenerator {
       return;
     }
 
-    FileInputStream fis;
     try {
       byte[] patchedData;
-      fis = new FileInputStream(classFile);
-      try {
+      try(FileInputStream fis = new FileInputStream(classFile)) {
         patchedData = patchClass(fis);
         if (patchedData == null) {
           return;
         }
-      }
-      finally {
-        fis.close();
       }
 
       try (FileOutputStream fos = new FileOutputStream(classFile)) {
