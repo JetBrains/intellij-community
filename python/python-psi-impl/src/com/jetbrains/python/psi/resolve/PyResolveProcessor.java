@@ -8,10 +8,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyImportedNameDefiner;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +24,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
   private final @NotNull Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
   private final @NotNull Map<PsiElement, PyImportedNameDefiner> myImplicitlyImportedResults = Maps.newLinkedHashMap();
   protected @Nullable ScopeOwner myOwner;
+  private boolean myTypeParameterScope;
 
   public PyResolveProcessor(@NotNull String name) {
     this(name, false);
@@ -79,6 +77,10 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return myOwner;
   }
 
+  public boolean isTypeParameterScope() {
+    return myTypeParameterScope;
+  }
+
   private @NotNull List<RatedResolveResult> resolveInImportedNameDefiner(@NotNull PyImportedNameDefiner definer) {
     if (myLocalResolve) {
       final PyImportElement importElement = PyUtil.as(definer, PyImportElement.class);
@@ -96,8 +98,9 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(definer != null ? definer : element);
     if (myOwner == null) {
       myOwner = owner;
+      myTypeParameterScope = element instanceof PyTypeParameter;
     }
-    final boolean sameScope = owner == myOwner;
+    final boolean sameScope = owner == myOwner && (element instanceof PyTypeParameter) == myTypeParameterScope;
     if (sameScope) {
       addResult(element, definer);
     }

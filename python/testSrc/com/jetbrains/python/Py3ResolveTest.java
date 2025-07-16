@@ -895,6 +895,16 @@ public class Py3ResolveTest extends PyResolveTestCase {
     assertResolvesToItself();
   }
 
+  // PY-82699
+  public void testTypeParameterRebindToLocalVariableInEnclosingScope() {
+    assertResolvesTo(PyTargetExpression.class, "T");
+  }
+
+  // PY-82699
+  public void testTypeParameterRebindToLocalVariableInSameScope() {
+    assertUnresolved();
+  }
+
   private void assertResolvesToItself() {
     PsiElement resolved = doResolve();
     PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());

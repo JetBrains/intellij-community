@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -117,7 +118,10 @@ public final class PyResolveUtil {
       else {
         namedElements = scope.getNamedElements();
       }
-      for (PsiElement element : ContainerUtil.concat(namedElements, scope.getImportedNameDefiners())) {
+      Iterable<PsiElement> elements = Iterables.concat(Iterables.filter(namedElements, t -> !(t instanceof PyTypeParameter)),
+                                                       scope.getImportedNameDefiners(),
+                                                       Iterables.filter(namedElements, PyTypeParameter.class));
+      for (PsiElement element : elements) {
         if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
         if (!processor.execute(element, ResolveState.initial())) {
           return;

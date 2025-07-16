@@ -1050,6 +1050,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.addNodeAndCheckPending(instruction);
   }
 
+  @Override
+  public void visitPyTypeParameterList(@NotNull PyTypeParameterList node) { }
+
   private void visitCondition(@NotNull PyExpression expression, @NotNull Instruction trueNode, @NotNull Instruction falseNode) {
     TrueFalseNodes prevTrueFalseNodes = myTrueFalseNodes;
     myTrueFalseNodes = new TrueFalseNodes(trueNode, falseNode);

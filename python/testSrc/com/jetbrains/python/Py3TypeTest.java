@@ -3933,6 +3933,17 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-82699
+  public void testTypeParameterRebind() {
+    doTest("int", """
+      def outer[T]() -> None:
+          def inner() -> None:
+              expr = T
+
+          T = -1
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

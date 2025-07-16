@@ -97,8 +97,15 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private void collectAllWrites(ScopeOwner owner) {
-    final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     Set<PsiElement> scopeWrites = new HashSet<>();
+    // type parameter list is not included in CFG
+    if (owner instanceof PyTypeParameterListOwner typeParameterListOwner) {
+      PyTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
+      if (typeParameterList != null) {
+        scopeWrites.addAll(typeParameterList.getTypeParameters());
+      }
+    }
+    final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (Instruction instruction : instructions) {
       final PsiElement element = instruction.getElement();
       if (element instanceof PyFunction && owner instanceof PyFunction) {

@@ -464,4 +464,16 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     );
   }
 
+  // PY-82699
+  public void testTypeParameterRebind() {
+    doTestByText("""
+                   def outer1[T]() -> None:
+                       print(<error descr="Unresolved reference 'T'">T</error>)
+                       T = 1
+                   
+                   def outer2[T]() -> None:
+                       print(T)
+                   """);
+  }
+
 }

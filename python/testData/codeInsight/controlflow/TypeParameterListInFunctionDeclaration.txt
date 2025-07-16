@@ -1,11 +1,7 @@
 0(1) element: null
-1(2) element: PyTypeParameter
-2(3) WRITE ACCESS: T
-3(4) element: PyTypeParameter
-4(5) WRITE ACCESS: U
-5(6) READ ACCESS: T
-6(7) WRITE ACCESS: a
-7(8) READ ACCESS: U
-8(9) WRITE ACCESS: b
-9(10) element: PyPassStatement
-10() element: null
+1(2) READ ACCESS: T
+2(3) WRITE ACCESS: a
+3(4) READ ACCESS: U
+4(5) WRITE ACCESS: b
+5(6) element: PyPassStatement
+6() element: null
