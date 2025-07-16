@@ -332,42 +332,6 @@ object FUSProjectHotStartUpMeasurer {
 
   private data class LastHandledEvent(val event: Event.FUSReportableEvent, val durationReportedToFUS: Duration)
 
-  private fun applyFrameVisibleEventIfPossible(
-    afterSplash: Boolean,
-    splashBecameVisibleEvent: Event.SplashBecameVisibleEvent?,
-    frameBecameVisibleEvent: Event.FrameBecameVisibleEvent?,
-    projectTypeReportEvent: Event.ProjectTypeReportEvent?,
-    projectPathReportEvent: Event.ProjectPathReportEvent?,
-    ideStarterStartedEvent: Event.IdeStarterStartedEvent?,
-    lastHandledEvent: LastHandledEvent?,
-  ): LastHandledEvent? {
-    if (!afterSplash && splashBecameVisibleEvent != null &&
-        (frameBecameVisibleEvent == null || splashBecameVisibleEvent.time <= frameBecameVisibleEvent.time)) {
-      val durationFromStart = getDurationFromStart(splashBecameVisibleEvent.time, lastHandledEvent)
-      FIRST_UI_SHOWN_EVENT.log(durationFromStart, UIResponseType.Splash)
-      return LastHandledEvent(splashBecameVisibleEvent, durationFromStart)
-    }
-
-    if (frameBecameVisibleEvent != null) {
-      if (ideStarterStartedEvent == null) throw CancellationException()
-      val durationFromStart = getDurationFromStart(frameBecameVisibleEvent.time, lastHandledEvent)
-      if (!afterSplash) {
-        FIRST_UI_SHOWN_EVENT.log(durationFromStart, UIResponseType.Frame)
-      }
-      val projectsType = projectTypeReportEvent?.projectsType ?: ProjectsType.Unknown
-      val settingsExist = projectPathReportEvent?.hasSettings
-      if (settingsExist == null) {
-        FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationFromStart), PROJECTS_TYPE.with(projectsType))
-      }
-      else {
-        FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationFromStart), PROJECTS_TYPE.with(projectsType),
-                                       HAS_SETTINGS.with(settingsExist))
-      }
-      return LastHandledEvent(frameBecameVisibleEvent, durationFromStart)
-    }
-    return null
-  }
-
   private fun reportViolation(
     violation: Violation,
     time: Long,
@@ -381,58 +345,6 @@ object FUSProjectHotStartUpMeasurer {
       }
       FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(duration), VIOLATION.with(violation))
     }
-    throw CancellationException()
-  }
-
-  private fun applyFrameInteractiveEventIfPossible(
-    frameBecameInteractiveEvent: Event.FrameBecameInteractiveEvent?,
-    lastHandledEvent: LastHandledEvent,
-  ): LastHandledEvent? {
-    if (frameBecameInteractiveEvent != null) {
-      val durationFromStart = getDurationFromStart(frameBecameInteractiveEvent.time, lastHandledEvent)
-      FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart)
-      return LastHandledEvent(frameBecameInteractiveEvent, durationFromStart)
-    }
-    return null
-  }
-
-  private suspend fun applyEditorEventIfPossible(
-    firstEditorEvent: Event.FirstEditorEvent?,
-    noEditorEvent: Event.NoMoreEditorsEvent?,
-    markupResurrectedFileIds: MarkupResurrectedFileIds,
-    projectPathReportEvent: Event.ProjectPathReportEvent?,
-    lastHandledEvent: LastHandledEvent,
-  ) {
-    if (firstEditorEvent == null && noEditorEvent == null) {
-      return
-    }
-
-    val data: MutableList<EventPair<*>> = if (projectPathReportEvent != null) {
-      mutableListOf(HAS_SETTINGS.with(projectPathReportEvent.hasSettings))
-    }
-    else {
-      mutableListOf()
-    }
-
-    if (firstEditorEvent != null && (noEditorEvent == null || firstEditorEvent.time <= noEditorEvent.time)) {
-      val file = firstEditorEvent.file
-      val fileType = readAction { file.fileType }
-      ContainerUtil.addAll(data,
-                           DURATION.with(getDurationFromStart(firstEditorEvent.time, lastHandledEvent)),
-                           EventFields.FileType.with(fileType),
-                           NO_EDITORS_TO_OPEN_FIELD.with(false),
-                           SOURCE_OF_SELECTED_EDITOR_FIELD.with(firstEditorEvent.sourceOfSelectedEditor))
-      for (type in MarkupType.entries) {
-        data.add(getField(type).with(markupResurrectedFileIds.contains(file, type)))
-      }
-    }
-    else if (noEditorEvent != null) {
-      ContainerUtil.addAll(data,
-                           DURATION.with(getDurationFromStart(noEditorEvent.time, lastHandledEvent)),
-                           NO_EDITORS_TO_OPEN_FIELD.with(true))
-    }
-
-    CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data)
     throw CancellationException()
   }
 
@@ -466,7 +378,6 @@ object FUSProjectHotStartUpMeasurer {
 
   private suspend fun handleStatisticEvents() {
     val markupResurrectedFileIds = MarkupResurrectedFileIds()
-    var lastHandledEvent: LastHandledEvent? = null
     var ideStarterStartedEvent: Event.IdeStarterStartedEvent? = null
     var splashBecameVisibleEvent: Event.SplashBecameVisibleEvent? = null
     var frameBecameVisibleEvent: Event.FrameBecameVisibleEvent? = null
@@ -475,6 +386,17 @@ object FUSProjectHotStartUpMeasurer {
     var projectTypeReportEvent: Event.ProjectTypeReportEvent? = null
     var firstEditorEvent: Event.FirstEditorEvent? = null
     var noEditorEvent: Event.NoMoreEditorsEvent? = null
+
+    var reportedFirstUiShownEvent: LastHandledEvent? = null
+    var reportedFrameBecameVisibleEvent: LastHandledEvent? = null
+    var reportedFrameBecameInteractiveEvent: LastHandledEvent? = null
+
+    fun getLastHandledEvent(): LastHandledEvent? {
+      if (reportedFirstUiShownEvent == null) return null
+      if (reportedFrameBecameVisibleEvent == null) return reportedFirstUiShownEvent
+      if (reportedFrameBecameInteractiveEvent == null) return reportedFrameBecameVisibleEvent
+      return reportedFrameBecameInteractiveEvent
+    }
 
     for (event in channel) {
       yield()
@@ -485,16 +407,16 @@ object FUSProjectHotStartUpMeasurer {
           frameBecameVisibleEvent = event
         }
         is Event.WelcomeScreenEvent -> {
-          val welcomeScreedDurationForFUS = getDurationFromStart(event.time, lastHandledEvent)
+          val welcomeScreedDurationForFUS = getDurationFromStart(event.time, getLastHandledEvent())
           if (splashBecameVisibleEvent == null) {
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(false))
           }
           else {
-            val splashScreenFUSDuration = getDurationFromStart(splashBecameVisibleEvent.time, lastHandledEvent)
+            val splashScreenFUSDuration = getDurationFromStart(splashBecameVisibleEvent.time, getLastHandledEvent())
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(true),
                                      SPLASH_SCREEN_VISIBLE_DURATION.with(splashScreenFUSDuration))
           }
-          reportViolation(Violation.WelcomeScreenShown, event.time, ideStarterStartedEvent, lastHandledEvent)
+          reportViolation(Violation.WelcomeScreenShown, event.time, ideStarterStartedEvent, getLastHandledEvent())
         }
         is Event.FrameBecameInteractiveEvent -> {
           frameBecameInteractiveEvent = event
@@ -503,31 +425,91 @@ object FUSProjectHotStartUpMeasurer {
         is Event.ProjectPathReportEvent -> if (projectPathReportEvent == null) projectPathReportEvent = event
         is Event.ResetProjectPathEvent -> projectPathReportEvent = null
         is Event.ProjectTypeReportEvent -> if (projectTypeReportEvent == null) projectTypeReportEvent = event
-        is Event.ViolationEvent -> reportViolation(event.violation, event.time, ideStarterStartedEvent, lastHandledEvent)
+        is Event.ViolationEvent -> reportViolation(event.violation, event.time, ideStarterStartedEvent, getLastHandledEvent())
         is Event.FirstEditorEvent -> if (firstEditorEvent == null) firstEditorEvent = event
         is Event.NoMoreEditorsEvent -> if (noEditorEvent == null) noEditorEvent = event
       }
 
       while (true) {
-        val newLastHandledEvent: LastHandledEvent? = when (lastHandledEvent?.event) {
-          null ->
-            applyFrameVisibleEventIfPossible(false, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
-                                             projectPathReportEvent, ideStarterStartedEvent, lastHandledEvent = null)
-          is Event.SplashBecameVisibleEvent ->
-            applyFrameVisibleEventIfPossible(true, splashBecameVisibleEvent, frameBecameVisibleEvent, projectTypeReportEvent,
-                                             projectPathReportEvent, ideStarterStartedEvent, lastHandledEvent)
-          is Event.FrameBecameVisibleEvent -> applyFrameInteractiveEventIfPossible(frameBecameInteractiveEvent, lastHandledEvent)
-          is Event.FrameBecameInteractiveEvent -> {
-            applyEditorEventIfPossible(firstEditorEvent, noEditorEvent, markupResurrectedFileIds, projectPathReportEvent, lastHandledEvent)
+        if (reportedFirstUiShownEvent == null) {
+          if (splashBecameVisibleEvent != null) {
+            val durationFromStart = getDurationFromStart(splashBecameVisibleEvent.time, null)
+            FIRST_UI_SHOWN_EVENT.log(durationFromStart, UIResponseType.Splash)
+            reportedFirstUiShownEvent = LastHandledEvent(splashBecameVisibleEvent, durationFromStart)
+          }
+          else if (frameBecameVisibleEvent != null) {
+            val durationFromStart = getDurationFromStart(frameBecameVisibleEvent.time, null)
+            FIRST_UI_SHOWN_EVENT.log(durationFromStart, UIResponseType.Frame)
+            reportedFirstUiShownEvent = LastHandledEvent(frameBecameVisibleEvent, durationFromStart)
+          }
+          else {
             break
           }
         }
-        if (newLastHandledEvent != null) {
-          lastHandledEvent = newLastHandledEvent
+
+        if (reportedFrameBecameVisibleEvent == null) {
+          if (frameBecameVisibleEvent != null) {
+            if (ideStarterStartedEvent == null) throw CancellationException()
+            val durationFromStart = getDurationFromStart(frameBecameVisibleEvent.time, reportedFirstUiShownEvent)
+            val projectsType = projectTypeReportEvent?.projectsType ?: ProjectsType.Unknown
+            val settingsExist = projectPathReportEvent?.hasSettings
+            if (settingsExist == null) {
+              FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationFromStart), PROJECTS_TYPE.with(projectsType))
+            }
+            else {
+              FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationFromStart), PROJECTS_TYPE.with(projectsType),
+                                             HAS_SETTINGS.with(settingsExist))
+            }
+            reportedFrameBecameVisibleEvent = LastHandledEvent(frameBecameVisibleEvent, durationFromStart)
+          }
+          else {
+            break
+          }
         }
-        else {
+
+        if (reportedFrameBecameInteractiveEvent == null) {
+          if (frameBecameInteractiveEvent != null) {
+            val durationFromStart = getDurationFromStart(frameBecameInteractiveEvent.time, reportedFrameBecameVisibleEvent)
+            FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart)
+            reportedFrameBecameInteractiveEvent = LastHandledEvent(frameBecameInteractiveEvent, durationFromStart)
+          }
+          else {
+            break
+          }
+        }
+
+        // only the first editor is left to be reported
+        if (firstEditorEvent == null && noEditorEvent == null) {
           break
         }
+
+        val data: MutableList<EventPair<*>> = if (projectPathReportEvent != null) {
+          mutableListOf(HAS_SETTINGS.with(projectPathReportEvent.hasSettings))
+        }
+        else {
+          mutableListOf()
+        }
+
+        if (firstEditorEvent != null && (noEditorEvent == null || firstEditorEvent.time <= noEditorEvent.time)) {
+          val file = firstEditorEvent.file
+          val fileType = readAction { file.fileType }
+          ContainerUtil.addAll(data,
+                               DURATION.with(getDurationFromStart(firstEditorEvent.time, reportedFrameBecameInteractiveEvent)),
+                               EventFields.FileType.with(fileType),
+                               NO_EDITORS_TO_OPEN_FIELD.with(false),
+                               SOURCE_OF_SELECTED_EDITOR_FIELD.with(firstEditorEvent.sourceOfSelectedEditor))
+          for (type in MarkupType.entries) {
+            data.add(getField(type).with(markupResurrectedFileIds.contains(file, type)))
+          }
+        }
+        else if (noEditorEvent != null) {
+          ContainerUtil.addAll(data,
+                               DURATION.with(getDurationFromStart(noEditorEvent.time, reportedFrameBecameInteractiveEvent)),
+                               NO_EDITORS_TO_OPEN_FIELD.with(true))
+        }
+
+        CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT.log(data)
+        throw CancellationException()
       }
     }
   }
