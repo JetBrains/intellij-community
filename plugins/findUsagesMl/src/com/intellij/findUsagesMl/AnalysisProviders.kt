@@ -13,15 +13,17 @@ data class FindUsagesFileRankingAnalysisInfo(
   val isSearchValid: Boolean = true,
   val numberOfUsageFiles: Int = -1,
   val numberOfCandidates: Int = -1,
+  val indexInOriginalOrder: Int = -1,
   val activeSessionId: Long = -1,
   val finishSessionId: Long = -1,
 ) {
-  constructor(isUsage: Boolean, timestamp: Long, isSearchValid: Boolean, numberOfUsageFiles: Int?, numberOfCandidates: Int?, activeSessionId: Long?, finishSessionId: Long?)
+  constructor(isUsage: Boolean, timestamp: Long, isSearchValid: Boolean, numberOfUsageFiles: Int?, numberOfCandidates: Int?, indexInOriginalOrder: Int?, activeSessionId: Long?, finishSessionId: Long?)
     : this(isUsage,
            timestamp,
            isSearchValid,
            numberOfUsageFiles ?: -1,
            numberOfCandidates ?: -1,
+           indexInOriginalOrder ?: -1,
            activeSessionId ?: -1,
            finishSessionId ?: -1)
 }
@@ -33,6 +35,7 @@ object FindUsagesFileRankerAnalysisTargets {
 
   val NUMBER_OF_USAGE_FILES: IntEventField = IntEventField(name = "number_of_usage_files", lazyDescription = { "Number of files containing a usage" })
   val NUMBER_OF_CANDIDATES: IntEventField = IntEventField(name = "number_of_candidates", lazyDescription = { "Number of candidates" })
+  val INDEX_IN_ORIGINAL_ORDER: IntEventField = IntEventField(name = "index_in_original_order", lazyDescription = { "Index in original order" })
 
   val ACTIVE_SESSION: LongEventField = LongEventField(name = "active_session", lazyDescription = { "Id of last active (started) session" })
   val FINISH_SESSION: LongEventField = LongEventField(name = "finish_session", lazyDescription = { "Id of finishing session" })
@@ -57,7 +60,8 @@ class FindUsagesFileRankerAnalysisProvider {
       FindUsagesFileRankerAnalysisTargets.IS_USAGE with info.isUsage,
       FindUsagesFileRankerAnalysisTargets.SEARCH_TIMESTAMP with info.timestamp,
       FindUsagesFileRankerAnalysisTargets.NUMBER_OF_USAGE_FILES with info.numberOfUsageFiles,
-      FindUsagesFileRankerAnalysisTargets.NUMBER_OF_CANDIDATES with info.numberOfCandidates
+      FindUsagesFileRankerAnalysisTargets.NUMBER_OF_CANDIDATES with info.numberOfCandidates,
+      FindUsagesFileRankerAnalysisTargets.INDEX_IN_ORIGINAL_ORDER with info.indexInOriginalOrder
     )
   }
 }
