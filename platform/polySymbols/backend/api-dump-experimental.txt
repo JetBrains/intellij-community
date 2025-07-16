@@ -69,6 +69,11 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.polySymbols.references.PolySymbolReferenceProblem$ProblemKind
 - s:values():com.intellij.polySymbols.references.PolySymbolReferenceProblem$ProblemKind[]
+*:com.intellij.polySymbols.references.PsiPolySymbolReferenceCacheInfoProvider
+- *sf:Companion:com.intellij.polySymbols.references.PsiPolySymbolReferenceCacheInfoProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getCacheKey(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.Symbol):java.lang.Object
+*f:com.intellij.polySymbols.references.PsiPolySymbolReferenceCacheInfoProvider$Companion
 *:com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 - *sf:Companion:com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider$Companion
 - getOffsetsToReferencedSymbols(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Map

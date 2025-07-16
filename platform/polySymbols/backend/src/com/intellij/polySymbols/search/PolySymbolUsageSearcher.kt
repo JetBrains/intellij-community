@@ -111,7 +111,7 @@ object PolySymbolUsageQueries {
     }
 }
 
-internal class PolySymbolReferenceHints(private val symbol: Symbol, private val offsetInElement: Int) : PsiSymbolReferenceHints {
+internal class PolySymbolReferenceHints(private val symbol: Symbol? = null, private val offsetInElement: Int = -1) : PsiSymbolReferenceHints {
   override fun getOffsetInElement(): Int {
     return offsetInElement
   }
@@ -120,7 +120,7 @@ internal class PolySymbolReferenceHints(private val symbol: Symbol, private val 
     return PolySymbolReference::class.java
   }
 
-  override fun getTarget(): Symbol {
+  override fun getTarget(): Symbol? {
     return symbol
   }
 
