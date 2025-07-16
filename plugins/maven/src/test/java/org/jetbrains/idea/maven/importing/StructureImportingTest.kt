@@ -637,11 +637,33 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testParentInRemoteRepository() = runBlocking {
-    val pathToJUnit = "asm/asm-parent/3.0"
-    val parentDir = repositoryPath.resolve(pathToJUnit)
+  fun testParentInRemoteRepository() = runBlocking {///Users/dk/.m2/repository
+    val defaultRepositoryPath = repositoryPath
+    repositoryPath = dir.resolve("repo")
+    updateSettingsXml("""
+      <profiles>
+        <profile>
+          <id>custom-repos</id>
+          <pluginRepositories>
+            <pluginRepository>
+              <id>local-file-repo</id>
+              <url>file://$defaultRepositoryPath</url>
+            </pluginRepository>
+            <pluginRepository>
+              <id>central</id>
+              <url>https://cache-redirector.jetbrains.com/repo1.maven.org/maven2</url>
+            </pluginRepository>
+          </pluginRepositories>
+        </profile>
+      </profiles>
+      <activeProfiles>
+        <activeProfile>custom-repos</activeProfile>
+      </activeProfiles>
+      
+      <localRepository>${repositoryPath}</localRepository>
+    """.trimIndent())
 
-    removeFromLocalRepository(pathToJUnit)
+    val parentDir = repositoryPath.resolve("asm/asm-parent/3.0")
     assertFalse(Files.exists(parentDir))
 
     createProjectPom("""
