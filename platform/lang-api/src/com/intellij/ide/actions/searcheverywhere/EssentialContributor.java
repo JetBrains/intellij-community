@@ -11,6 +11,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface EssentialContributor {
 
+  /**
+   * Defines whether the contributor should be considered essential by default.
+   * This behavior may be altered by a machine learning model (the non-default behavior).
+   *
+   * @see EssentialContributor#checkEssential(SearchEverywhereContributor)
+   */
   default boolean isEssentialByDefault() {
     return true;
   }
