@@ -53,7 +53,7 @@ interface UiPluginManagerController {
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
   fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
-  fun isPluginRequiresUltimateButItIsDisabled(pluginId: PluginId): Boolean
+  fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
   fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean
   fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   fun getCustomRepoPlugins(): List<PluginUiModel>
