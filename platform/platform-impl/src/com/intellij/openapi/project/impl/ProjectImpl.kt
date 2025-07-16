@@ -223,6 +223,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   final override fun getProjectFilePath(): String = componentStore.projectFilePath.invariantSeparatorsPathString
 
   final override fun getProjectFile(): VirtualFile? {
+    //MAYBE RC: cache result same way as in getWorkspaceFile()?
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
   }
 
@@ -238,8 +239,27 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   override fun getLocationHash(): String = componentStore.locationHash
 
+
+  /** Caches [Path] -(via [LocalFileSystem.findFileByNioFile])-> [VirtualFile]  resolution result */
+  private class CachedVirtualFile(val path: Path){
+    val resolvedVirtualFile: VirtualFile? = LocalFileSystem.getInstance().findFileByNioFile(path)
+  }
+
+  /** Cache last resolved [getWorkspaceFile]: [LocalFileSystem.findFileByNioFile] call is not cheap, and workspacePath is rarely changed */
+  @Volatile
+  private var cachedWorkspaceFile: CachedVirtualFile? = null
+
   final override fun getWorkspaceFile(): VirtualFile? {
-    return LocalFileSystem.getInstance().findFileByNioFile(componentStore.workspacePath)
+    val workspacePath = componentStore.workspacePath
+
+    val cached = this.cachedWorkspaceFile
+    if (cached?.path == workspacePath) {
+      return cached.resolvedVirtualFile
+    }
+    val cachedVirtualFile = CachedVirtualFile(workspacePath)
+    this.cachedWorkspaceFile = cachedVirtualFile
+
+    return cachedVirtualFile.resolvedVirtualFile
   }
 
   final override fun isLight(): Boolean = isLight
