@@ -50,6 +50,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     "VirtualFileSystemEntry.TREAT_ALIEN_FILES_AS_INVALID_INSTEAD_OF_CODE_BUG", true
   );
 
+  /**
+   * Max file-tree depth to switch from recursive to iterative path computation -- to avoid potential StackOverflowException.
+   * Specific value is severely on a safe side, but intentionally so, since the path computation could be invoked with stack
+   * already deep enough -- and we have very deep stacktraces in our code
+   */
+  private static final int MAX_DEPTH_FOR_RECURSIVE_PATH_COMPUTATION = 64;
+
   @ApiStatus.Internal
   static final class VfsDataFlags {
     static final int IS_WRITABLE_FLAG = 0x0100_0000;
@@ -255,36 +262,50 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private @NotNull String computePath(@NotNull String protocol,
                                       @NotNull String protoSeparator) {
     if (USE_RECURSIVE_PATH_COMPUTE) {
-      return computePathRecursively(
-        this,
-        protocol, protoSeparator,
-        /* requiredBufferSize: */ 0
-      ).toString();
+      return computePathRecursively(this, protocol, protoSeparator).toString();
     }
     else {
-      return computePathIteratively(protocol, protoSeparator);
+      return computePathIteratively(this, protocol, protoSeparator);
     }
   }
 
   /**
-   * Recursive implementation of {@link #computePathIteratively(String, String)}: avoids allocating ArrayList, and uses
-   * StringBuilder instead of plain char[] -- StringBuilder uses byte[] inside, which may be faster than explicit char[]
+   * Recursive implementation of {@link #computePathIteratively(VirtualFile, String, String)}: avoids allocating ArrayList,
+   * and uses StringBuilder instead of plain char[] -- StringBuilder uses byte[] inside, which may be faster than explicit char[]
    */
   @VisibleForTesting
   @ApiStatus.Internal
   public static @NotNull StringBuilder computePathRecursively(@NotNull VirtualFile file,
                                                               @NotNull String protocol,
-                                                              @NotNull String protoSeparator,
-                                                              int requiredBufferSize) {
+                                                              @NotNull String protoSeparator) {
+    return computePathRecursively(file, protocol, protoSeparator, /*requiredBufferSize: */ 0, /*depth: */ 0);
+  }
+
+  private static @NotNull StringBuilder computePathRecursively(@NotNull VirtualFile file,
+                                                               @NotNull String protocol,
+                                                               @NotNull String protoSeparator,
+                                                               int requiredBufferSize,
+                                                               int depth) {
     VirtualFile parent = file.getParent();
-    if (parent == null) {
+    if (parent == null) {// <=> (file instanceof FsRoot)
       String rootPath = file.getPath();
       return new StringBuilder(
         protocol.length() + protoSeparator.length() + rootPath.length() + requiredBufferSize
       )
         .append(protocol)
         .append(protoSeparator)
-        .append(rootPath);//FSRoot.getPath() must end with '/'
+        .append(rootPath);//FsRoot.getPath() intentionally ends with '/'
+    }
+    else if (depth > MAX_DEPTH_FOR_RECURSIVE_PATH_COMPUTATION) {
+      //For very deep file-trees StackOverflow might happen (EA-823363), so if depth is large enough
+      //  it's better to switch to non-recursive method:
+      String pathPrefix = computePathIteratively(file, protocol, protoSeparator);
+      StringBuilder pathBuilder = new StringBuilder(pathPrefix.length() + 1 + requiredBufferSize)
+        .append(pathPrefix);
+      if (!pathPrefix.endsWith("/")) {
+        pathBuilder.append('/');//must end with '/'
+      }
+      return pathBuilder;
     }
 
     String fileName = file.getName();
@@ -292,7 +313,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     StringBuilder pathBuilder = computePathRecursively(
       parent,
       protocol, protoSeparator,
-      requiredBufferSize + fileName.length() + 1
+      requiredBufferSize + fileName.length() + 1,
+      depth + 1
     );
 
     pathBuilder.append(fileName);
@@ -304,21 +326,25 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   /**
    * Legacy (iterative) implementation of {@link #computePath(String, String)}: builds the path into a char[], allocates
-   * temporary ArrayList as stack
+   * temporary ArrayList as stack.
+   * Currently used as a fallback for very long paths there recursive method may exceed the stack
    */
   @VisibleForTesting
   @ApiStatus.Internal
-  public @NotNull String computePathIteratively(@NotNull String protocol,
-                                                @NotNull String protoSeparator) {
+  public static @NotNull String computePathIteratively(@NotNull VirtualFile file,
+                                                       @NotNull String protocol,
+                                                       @NotNull String protoSeparator) {
+    //TODO RC: seems like StringBuilder would work same, if not better, than char[] -- because internally SB uses
+    //         byte[] for ASCII (which is a majority of paths) -- and SB makes code much easier to read.
+    VirtualFile v = file;
     int length = 0;
-    List<CharSequence> names = new ArrayList<>();
-    VirtualFileSystemEntry v = this;
+    List<String> names = new ArrayList<>();
     for (; ; ) {
-      VirtualDirectoryImpl parent = v.getParent();
+      VirtualFile parent = v.getParent();
       if (parent == null) {
         break;
       }
-      CharSequence name = v.getNameSequence();
+      String name = v.getName();
       if (length != 0) length++;
       length += name.length();
       names.add(name);
@@ -335,14 +361,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     CharArrayUtil.getChars(rootPath, path, o, rootPathLength);
     o += rootPathLength;
     for (int i = names.size() - 1; i >= 1; i--) {
-      CharSequence name = names.get(i);
+      String name = names.get(i);
       int nameLength = name.length();
       CharArrayUtil.getChars(name, path, o, nameLength);
       o += nameLength;
       path[o++] = '/';
     }
     if (!names.isEmpty()) {
-      CharSequence name = names.get(0);
+      String name = names.get(0);
       CharArrayUtil.getChars(name, path, o);
     }
     return new String(path);

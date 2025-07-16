@@ -24,7 +24,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Benchmarks cost of different ways to compute a path of VirtualFile
- *
+ * <p>
  * Results: iterative is slightly worse than recursive, but not much
  */
 @BenchmarkMode({Mode.AverageTime/*, Mode.SampleTime*/})
@@ -115,6 +115,18 @@ public class VFSComputePathBenchmark {
     String path = computePathIteratively(vfs, fileId, mainContext.rootFolderId);
     return path;
   }
+
+  @Benchmark
+  public String computePathIterativelyWithStringBuilder(Context mainContext,
+                                                        FSRecordsContext vfsContext) {
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    FSRecordsImpl vfs = vfsContext.vfs();
+
+    int fileId = mainContext.randomFileId(rnd);
+    String path = computePathIterativelyWithStringBuilder(vfs, fileId, mainContext.rootFolderId);
+    return path;
+  }
+
 
   @Benchmark
   public String computePathRecursively(Context mainContext,
@@ -222,6 +234,41 @@ public class VFSComputePathBenchmark {
     return new String(path);
   }
 
+  private static String computePathIterativelyWithStringBuilder(FSRecordsImpl vfs,
+                                                                int fileId,
+                                                                int rootFolderId) {
+    int length = 0;
+    List<String> names = new ArrayList<>();
+    for (; ; ) {
+      int parentId = vfs.getParent(fileId);
+      if (parentId == rootFolderId) {
+        break;
+      }
+
+      String name = vfs.getName(fileId);
+      if (length != 0) length++;
+      length += name.length();
+      names.add(name);
+
+      fileId = parentId;
+    }
+
+    String rootPath = "/root/";
+    length += rootPath.length();
+
+    StringBuilder path = new StringBuilder(length);
+    path.append(rootPath);
+    for (int i = names.size() - 1; i >= 1; i--) {
+      String name = names.get(i);
+      path.append(name).append('/');
+    }
+    if (!names.isEmpty()) {
+      String name = names.get(0);
+      path.append(name);
+    }
+    return path.toString();
+  }
+
 
   public static void main(final String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
@@ -229,7 +276,7 @@ public class VFSComputePathBenchmark {
         "-Dvfs.name-cache.check-names=false",
         "-Dvfs.name-cache.track-stats=false"
       )
-      //.threads(1)
+      .threads(1)
       //.forks(0)
       //.mode(Mode.SingleShotTime)
       //.warmupIterations(1000)

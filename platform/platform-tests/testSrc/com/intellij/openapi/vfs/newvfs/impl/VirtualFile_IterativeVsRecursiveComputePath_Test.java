@@ -23,8 +23,8 @@ public class VirtualFile_IterativeVsRecursiveComputePath_Test {
     forManyVirtualFilesFromVFS(
       PersistentFS.getInstance(),
       file -> {
-        String iterativePath = ((VirtualFileSystemEntry)file).computePathIteratively("", "");
-        String recursivePath = VirtualFileSystemEntry.computePathRecursively(file, "", "", 0).toString();
+        String iterativePath = VirtualFileSystemEntry.computePathIteratively(file, "", "");
+        String recursivePath = VirtualFileSystemEntry.computePathRecursively(file, "", "").toString();
         assertThat(iterativePath)
           .describedAs("file(" + file + ")")
           .isEqualTo(recursivePath);
@@ -39,8 +39,8 @@ public class VirtualFile_IterativeVsRecursiveComputePath_Test {
       file -> {
         String protocol = file.getFileSystem().getProtocol();
 
-        String iterativeUrl = ((VirtualFileSystemEntry)file).computePathIteratively(protocol, protoSeparator);
-        String recursiveUrl = VirtualFileSystemEntry.computePathRecursively(file, protocol, protoSeparator, 0).toString();
+        String iterativeUrl = VirtualFileSystemEntry.computePathIteratively(file, protocol, protoSeparator);
+        String recursiveUrl = VirtualFileSystemEntry.computePathRecursively(file, protocol, protoSeparator).toString();
         assertThat(iterativeUrl)
           .describedAs("file(" + file + ")")
           .isEqualTo(recursiveUrl);
