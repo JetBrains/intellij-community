@@ -58,7 +58,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
     return XBreakpointManagerProxy.Monolith(XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl)
   }
 
-  override fun canUpdateInlineDebuggerFrames(): Boolean {
+  override fun canShowInlineDebuggerData(xValue: XValue): Boolean {
     return true
   }
 }

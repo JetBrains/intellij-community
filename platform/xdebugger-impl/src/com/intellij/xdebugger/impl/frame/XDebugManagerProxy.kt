@@ -30,7 +30,7 @@ interface XDebugManagerProxy {
 
   fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy
 
-  fun canUpdateInlineDebuggerFrames(): Boolean
+  fun canShowInlineDebuggerData(xValue: XValue): Boolean
 
   fun findSessionProxy(project: Project, sessionId: XDebugSessionId): XDebugSessionProxy? {
     return getSessions(project).firstOrNull { it.id == sessionId }

@@ -90,7 +90,7 @@ private class FrontendDebuggerActionProjectCoroutineScope(val project: Project, 
 
 internal fun updateInlineDebuggerData(session: XDebugSessionProxy, xValue: XValue, callback: XInlineDebuggerDataCallback) {
   val manager = XDebugManagerProxy.getInstance()
-  if (!manager.canUpdateInlineDebuggerFrames()) {
+  if (!manager.canShowInlineDebuggerData(xValue)) {
     return
   }
 
