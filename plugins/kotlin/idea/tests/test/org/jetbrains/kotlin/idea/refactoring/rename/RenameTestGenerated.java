@@ -230,6 +230,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/dataClassPropertyWithJava/dataClassPropertyWithJava.test");
     }
 
+    @TestMetadata("dataClassValuePropertyWithJava/dataClassPropertyWithJava.test")
+    public void testDataClassValuePropertyWithJava_DataClassPropertyWithJava() throws Exception {
+        runTest("testData/refactoring/rename/dataClassValuePropertyWithJava/dataClassPropertyWithJava.test");
+    }
+
     @TestMetadata("enumGetEntriesFromJava/enumValueOf.test")
     public void testEnumGetEntriesFromJava_EnumValueOf() throws Exception {
         runTest("testData/refactoring/rename/enumGetEntriesFromJava/enumValueOf.test");

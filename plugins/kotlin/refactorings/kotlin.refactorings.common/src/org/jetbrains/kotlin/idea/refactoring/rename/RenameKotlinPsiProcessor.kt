@@ -67,18 +67,20 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         searchParameters: KotlinReferencesSearchParameters
     ): Collection<PsiReference> {
         val references = ReferencesSearch.search(searchParameters).asIterable().toMutableSet()
-        if (element is KtNamedFunction || (element is KtProperty && !element.isLocal) || (element is KtParameter && element.hasValOrVar())) {
+        if (element is KtNamedFunction || (element is KtProperty && !element.isLocal)) {
+            // property accessors for parameters should be covered by KotlinReferencesSearcher.QueryProcessor.searchMethodAware
             element.toLightMethods().flatMapTo(references) { method ->
-                if (element is KtParameter && DataClassResolver.isComponentLike(method.name)) {
-                    // renaming a data class property doesn't change the synthetic component name
-                    return@flatMapTo emptyList()
-                }
                 MethodReferencesSearch.search(
+                    // ReferenceSearch, called MethodUsagesSearcher#processQuery would still start operator conventions search
+                    // because kotlinOptions are lost during the call
                     KotlinMethodReferencesSearchParameters(
                         method,
                         kotlinOptions = KotlinReferencesSearchOptions(
-                            acceptImportAlias = false
-                        )
+                            acceptImportAlias = false,
+                            searchForComponentConventions = false,
+                            searchForOperatorConventions = false,
+                        ),
+                        scope = searchParameters.effectiveSearchScope,
                     )
                 ).asIterable()
             }

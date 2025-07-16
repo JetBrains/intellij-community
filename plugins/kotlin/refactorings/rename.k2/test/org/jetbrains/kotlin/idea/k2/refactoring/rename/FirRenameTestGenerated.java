@@ -230,6 +230,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/dataClassPropertyWithJava/dataClassPropertyWithJava.test");
     }
 
+    @TestMetadata("dataClassValuePropertyWithJava/dataClassPropertyWithJava.test")
+    public void testDataClassValuePropertyWithJava_DataClassPropertyWithJava() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/dataClassValuePropertyWithJava/dataClassPropertyWithJava.test");
+    }
+
     @TestMetadata("enumGetEntriesFromJava/enumValueOf.test")
     public void testEnumGetEntriesFromJava_EnumValueOf() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/enumGetEntriesFromJava/enumValueOf.test");
