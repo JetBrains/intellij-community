@@ -37,7 +37,7 @@ class FindUsagesFileRankerFeatureProviderTest {
     override fun getLength() = 100L
     override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {}
     override fun getInputStream() = throw UnsupportedOperationException()
-    override fun getFileType() = PlainTextFileType.INSTANCE
+    override fun getFileType(): PlainTextFileType = PlainTextFileType.INSTANCE
     override fun getNameWithoutExtension(): String = name.substringBeforeLast(".")
   }
 
@@ -100,53 +100,68 @@ class FindUsagesFileRankerFeatureProviderTest {
   @Test
   fun testDirectoryDistance() {
     // Create test files with specific directory structures
-    val queryFile1 = TestVirtualFile("file1.txt", directoryPath = "/dir1/subdir1/")
-    val queryFile2 = TestVirtualFile("file2.txt", directoryPath = "/dir1/subdir2/")
+    val queryFile1 = TestVirtualFile("file1.txt", directoryPath = "root/dir1/subdir1/")
+    val queryFile2 = TestVirtualFile("file2.txt", directoryPath = "root/dir1/subdir2/")
 
-    val candidateFile1 = TestVirtualFile("candidateFile1.txt", directoryPath = "/dir1/subdir1/")
-    val candidateFile2 = TestVirtualFile("candidateFile2.txt", directoryPath = "/dir1/subdir2/")
-    val candidateFile3 = TestVirtualFile("candidateFile3.txt", directoryPath = "/dir3/subdir3/")
+    val candidateFile1 = TestVirtualFile("candidateFile1.txt", directoryPath = "root/dir1/subdir1/")
+    val candidateFile2 = TestVirtualFile("candidateFile2.txt", directoryPath = "root/dir1/subdir2/")
+    val candidateFile3 = TestVirtualFile("candidateFile3.txt", directoryPath = "root/dir3/subdir3/")
 
-    // Test case 1: Same directory - distance should be 0
+    // Test case 1: Same directory, same file
     val fileInfo1 = FindUsagesRankingFileInfo(
       queryNames = listOf("query"),
       queryFiles = listOf(queryFile1),
-      candidateFile = candidateFile1,
-      timeStamp = System.currentTimeMillis()
+      candidateFile = queryFile1,
+      timeStamp = System.currentTimeMillis(),
+      projectPath = "root"
     )
     val distanceValue1 = findFeature(computeFeatures(fileInfo1), FindUsagesFileRankerFeatures.DIRECTORY_DISTANCE)!!.asDoubleFeature.doubleValue
-    assertEquals(0.25, distanceValue1, 0.001, "DIRECTORY_DISTANCE should be 0 for files in the same directory")
+    assertEquals(0.0, distanceValue1, 0.001, "DIRECTORY_DISTANCE should be 0 for the same file")
 
-    // Test case 2: Different subdirectories but same parent - distance should be moderate
+    // Test case 2: Same directory, different file
     val fileInfo2 = FindUsagesRankingFileInfo(
       queryNames = listOf("query"),
       queryFiles = listOf(queryFile1),
-      candidateFile = candidateFile2,
-      timeStamp = System.currentTimeMillis()
+      candidateFile = candidateFile1,
+      timeStamp = System.currentTimeMillis(),
+      projectPath = "root"
     )
     val distanceValue2 = findFeature(computeFeatures(fileInfo2), FindUsagesFileRankerFeatures.DIRECTORY_DISTANCE)!!.asDoubleFeature.doubleValue
-    assertEquals(0.5, distanceValue2, 0.001, "DIRECTORY_DISTANCE should be moderate for files in different subdirectories")
+    assertEquals(2 / 6.0, distanceValue2, 0.001, "DIRECTORY_DISTANCE should be low for files in the same directory")
 
-    // Test case 3: Completely different directories - distance should be higher
+    // Test case 3: Different subdirectories but same parent directory
     val fileInfo3 = FindUsagesRankingFileInfo(
       queryNames = listOf("query"),
       queryFiles = listOf(queryFile1),
-      candidateFile = candidateFile3,
-      timeStamp = System.currentTimeMillis()
+      candidateFile = candidateFile2,
+      timeStamp = System.currentTimeMillis(),
+      projectPath = "root"
     )
     val distanceValue3 = findFeature(computeFeatures(fileInfo3), FindUsagesFileRankerFeatures.DIRECTORY_DISTANCE)!!.asDoubleFeature.doubleValue
-    assertEquals(0.75, distanceValue3, 0.001, "DIRECTORY_DISTANCE should be higher for files in completely different directories")
+    assertEquals(4 / 6.0, distanceValue3, 0.001, "DIRECTORY_DISTANCE should be moderate for files in different subdirectories")
 
-    // Test case 4: Multiple query files - should take the minimum distance
+    // Test case 4: Completely different directories
     val fileInfo4 = FindUsagesRankingFileInfo(
+      queryNames = listOf("query"),
+      queryFiles = listOf(queryFile1),
+      candidateFile = candidateFile3,
+      timeStamp = System.currentTimeMillis(),
+      projectPath = "root"
+    )
+    val distanceValue4 = findFeature(computeFeatures(fileInfo4), FindUsagesFileRankerFeatures.DIRECTORY_DISTANCE)!!.asDoubleFeature.doubleValue
+    assertEquals(1.0, distanceValue4, 0.001, "DIRECTORY_DISTANCE should be 1.0 for files in completely different directories")
+
+    // Test case 5: Multiple query files - should take the minimum distance
+    val fileInfo5 = FindUsagesRankingFileInfo(
       queryNames = listOf("query"),
       queryFiles = listOf(queryFile1, queryFile2),
       candidateFile = candidateFile2,
-      timeStamp = System.currentTimeMillis()
+      timeStamp = System.currentTimeMillis(),
+      projectPath = "root"
     )
 
-    val distanceValue4 = findFeature(computeFeatures(fileInfo4), FindUsagesFileRankerFeatures.DIRECTORY_DISTANCE)!!.asDoubleFeature.doubleValue
-    assertEquals(0.25,distanceValue4, 0.001, "DIRECTORY_DISTANCE should take the minimum distance from multiple query files")
+    val distanceValue5 = findFeature(computeFeatures(fileInfo5), FindUsagesFileRankerFeatures.DIRECTORY_DISTANCE)!!.asDoubleFeature.doubleValue
+    assertEquals(2 / 6.0, distanceValue5, 0.001, "DIRECTORY_DISTANCE should take the minimum distance from multiple query files")
   }
 
   private fun findFeature(features: List<Feature>, declaration: FeatureDeclaration<*>): Feature? {
@@ -159,7 +174,8 @@ class FindUsagesFileRankerFeatureProviderTest {
       queryFiles = listOf(queryFileFurther, queryFileCloser),
       candidateFile = inputCandidateFile,
       recentFilesList = listOf(TestVirtualFile("RecentFile.txt"), candidateFile), // this.candidateFile used specifically for the testRecentFilesIndex test
-      timeStamp = System.currentTimeMillis()
+      timeStamp = System.currentTimeMillis(),
+      projectPath = ""
     )
   }
 }
