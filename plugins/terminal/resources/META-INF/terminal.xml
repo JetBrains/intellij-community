@@ -70,8 +70,8 @@
                   For WSL environments, the shell process in WSL will be launched via IJEnt instead of using wsl.exe."/>
     <registryKey key="terminal.new.ui.completion.popup" defaultValue="false"
                  description="Disabled completion popUp for reworked terminal for development time"/>
-    <registryKey key="terminal.type.ahead" defaultValue="false"
-                 description="Early prototype of type-ahead for the reworked terminal"/>
+    <registryKey key="terminal.type.ahead" defaultValue="true"
+                 description="Whether terminal should predict how shell handles typing to minimize the typing latency. Monolith-only at the moment"/>
     <registryKey key="terminal.generic.hyperlinks" defaultValue="false"
                  description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
                   Open a new terminal after enabling this option to take effect."/>
