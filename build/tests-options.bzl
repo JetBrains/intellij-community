@@ -50,6 +50,8 @@ JAVA_TEST_FLAGS = [
     "-Djava.awt.headless=true",
     "-Djunit.jupiter.extensions.autodetection.enabled=true",
     "-Didea.force.use.core.classloader=true",
+    "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+    "-Didea.reset.classpath.from.manifest=true",
     "-Dintellij.build.use.compiled.classes=false",
 ]
 

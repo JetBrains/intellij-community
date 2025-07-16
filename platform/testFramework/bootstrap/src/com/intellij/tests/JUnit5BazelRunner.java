@@ -15,6 +15,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -362,16 +363,19 @@ public final class JUnit5BazelRunner {
   }
 
   public static Set<Path> getClassPathRoots(ClassLoader classLoader) throws Throwable {
-    // scan only relevant jars next to bazelEnvSelfLocation
-    String bazelTestSelfLocation = System.getenv(bazelEnvSelfLocation);
-    Path testJarsRoot = Path.of(bazelTestSelfLocation).getParent();
+    // to get relevant jars for the current test target, we do the following:
+    // - get the list of all the paths in classpath by getBaseUrls() using reflection
+    // - get from this list only those paths, that located next to env.SELF_LOCATION
+    // where SELF_LOCATION is the path to the test executable/script and set by Bazel automatically
+    Method getBaseUrls = classLoader.getClass().getMethod("getBaseUrls");
+    //noinspection unchecked
+    List<Path> paths = (List<Path>)getBaseUrls.invoke(classLoader);
 
-    try (Stream<Path> stream = Files.walk(testJarsRoot)) {
-      return stream
-        .filter(file -> !Files.isDirectory(file))
-        .filter(p -> p.getFileName().toString().endsWith(".jar"))
-        .collect(Collectors.toSet());
-    }
+    String bazelTestSelfLocation = System.getenv(bazelEnvSelfLocation);
+    Path bazelTestSelfLocationDir = Path.of(bazelTestSelfLocation).getParent().toAbsolutePath();
+    return paths.stream()
+      .filter(p -> bazelTestSelfLocationDir.equals(p.toAbsolutePath().getParent()))
+      .collect(Collectors.toSet());
   }
 
   public static List<? extends DiscoverySelector> getSelectors(Set<Path> classPathRoots) {
