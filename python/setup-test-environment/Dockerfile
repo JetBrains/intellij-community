@@ -40,6 +40,10 @@ ENV LC_ALL=en_US.UTF-8
 ENV PYCHARM_PYTHONS=/pythons/
 ENV CONDA_PATH=/pythons/conda/bin/conda
 
+# don't ask the user to accept conda TOS
+# see PCQA-1152 and https://github.com/anaconda/conda-anaconda-tos?tab=readme-ov-file#cicd-environments
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
+
 COPY --from=builder /pythons/ /pythons
 
 # To make sure all pythons are executable
