@@ -3,22 +3,20 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.testFramework.ProjectExtension
-import org.junit.jupiter.api.extension.RegisterExtension
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
+@TestApplication
 class ToolWindowManagerTest {
-  companion object {
-    @JvmField
-    @RegisterExtension
-    val projectRule = ProjectExtension(runPostStartUpActivities = false, preloadServices = false)
-  }
+  val project by projectFixture()
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun `default layout`(isNewUi: Boolean) {
-    testDefaultLayout(isNewUi = isNewUi, project = projectRule.project)
+  fun `default layout`(isNewUi: Boolean) = runBlocking {
+    testDefaultLayout(isNewUi = isNewUi, project = project)
   }
 
   @ParameterizedTest
@@ -30,12 +28,12 @@ class ToolWindowManagerTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `remove button on setting an available property to false`(isNewUi: Boolean) {
-    ToolWindowManagerTestHelper.available(isNewUi = isNewUi, project = projectRule.project)
+    ToolWindowManagerTestHelper.available(isNewUi = isNewUi, project = project)
   }
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `show tool window if it was visible last session but became available only after initial registration`(isNewUi: Boolean) {
-    ToolWindowManagerTestHelper.showOnAvailable(isNewUi = isNewUi, project = projectRule.project)
+    ToolWindowManagerTestHelper.showOnAvailable(isNewUi = isNewUi, project = project)
   }
 }
