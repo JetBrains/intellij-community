@@ -5,7 +5,6 @@ import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -19,11 +18,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
-import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
-import com.intellij.openapi.observable.operation.core.MutableOperationTrace
-import com.intellij.openapi.observable.operation.core.isOperationInProgress
-import com.intellij.openapi.observable.operation.core.whenOperationFinished
-import com.intellij.openapi.observable.operation.core.whenOperationStarted
+import com.intellij.openapi.observable.operation.core.*
 import com.intellij.openapi.observable.properties.*
 import com.intellij.openapi.observable.util.setObservableProperty
 import com.intellij.openapi.observable.util.whenDisposed
@@ -42,8 +37,6 @@ import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -257,7 +250,7 @@ class AutoImportProjectTracker(
   private fun isDisabledAutoReload(projectData: ProjectData, context: ExternalSystemProjectReloadContext): Boolean {
     val projectId = projectData.projectAware.projectId
 
-    if (!isEnableAutoReload) {
+    if (!isEnabledAutoReload) {
       LOG.debug("$projectId: Disabled auto-reload (global property)")
       return true
     }
@@ -489,38 +482,51 @@ class AutoImportProjectTracker(
       return ExternalSystemProjectTracker.getInstance(project) as AutoImportProjectTracker
     }
 
-    private val onceIgnoreDisableAutoReloadRegistryProperty = AtomicBooleanProperty(false)
+    private val onceIgnoreDisableReloadRegistryProperty = AtomicBooleanProperty(false)
 
-    private val enableAutoReloadProperty = AtomicBooleanProperty(
-      !ApplicationManager.getApplication().isUnitTestMode
-    )
+    private val enableReloadProperty = AtomicBooleanProperty(!application.isUnitTestMode)
+
+    private val enableAutoReloadProperty = AtomicBooleanProperty(!application.isUnitTestMode)
 
     private val asyncChangesProcessingProperty = AtomicBooleanProperty(
-      !ApplicationManager.getApplication().isHeadlessEnvironment
+      !application.isHeadlessEnvironment
       || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
       || java.lang.Boolean.getBoolean("external.system.auto.import.headless.async")
     )
 
     private val isEnabledReload: Boolean
-      get() = onceIgnoreDisableAutoReloadRegistryProperty.getAndSet(false) ||
-              !Registry.`is`("external.system.auto.import.disabled")
+      get() = enableReloadProperty.get() &&
+              (onceIgnoreDisableReloadRegistryProperty.getAndSet(false) ||
+               !Registry.`is`("external.system.auto.import.disabled"))
 
-    private val isEnableAutoReload: Boolean by enableAutoReloadProperty
+    private val isEnabledAutoReload: Boolean
+      get() = isEnabledReload && enableAutoReloadProperty.get()
 
     val isAsyncChangesProcessing: Boolean by asyncChangesProcessingProperty
 
     /**
-     * Enables auto-import in tests
-     * Note: project tracker automatically enabled out of tests
+     * In tests, enables only manual syncs executed using the [ExternalSystemProjectTracker] API.
+     *
+     * Note: auto-sync still will be disabled.
+     */
+    @TestOnly
+    fun enableReloadInTests(parentDisposable: Disposable) {
+      setObservableProperty(enableReloadProperty, true, parentDisposable)
+    }
+
+    /**
+     * In tests, enables all syncs executed using the [ExternalSystemProjectTracker] API.
+     *
+     * Note: manual syncs will be also enabled.
      */
     @TestOnly
     fun enableAutoReloadInTests(parentDisposable: Disposable) {
+      setObservableProperty(enableReloadProperty, true, parentDisposable)
       setObservableProperty(enableAutoReloadProperty, true, parentDisposable)
     }
 
     /**
-     * Enables async auto-reload processing in tests
-     * Note: async processing enabled out of tests
+     * In tests, enables async project status processing.
      */
     @TestOnly
     fun enableAsyncAutoReloadInTests(parentDisposable: Disposable) {
@@ -533,7 +539,7 @@ class AutoImportProjectTracker(
      */
     @ApiStatus.Internal
     fun onceIgnoreDisableAutoReloadRegistry() {
-      onceIgnoreDisableAutoReloadRegistryProperty.set(true)
+      onceIgnoreDisableReloadRegistryProperty.set(true)
     }
   }
 }
