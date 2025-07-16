@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -16,11 +16,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -29,7 +25,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.psi.psiUtil.unwrapParenthesesLabelsAndAnnotations
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.yieldIfNotNull
@@ -53,41 +48,33 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     fun isSupportedFile(file: KtFile): Boolean = true
 
+    context(KaSession)
+    private fun KaAnnotation.toFakeDeserializedSymbol(
+        parent: KtDeclaration,
+        symbol: KaDeclarationSymbol
+    ): UastFakeDeserializedSymbolAnnotation {
+        return UastFakeDeserializedSymbolAnnotation(symbol.createPointer(), classId, parent)
+    }
+
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
         ktElement.toLightAnnotation()?.let { return it }
-        val ktDeclaration = ktElement.getStrictParentOfType<KtModifierList>()?.parent as? KtDeclaration
-        return if (ktDeclaration != null) {
+        val declaration = ktElement.getStrictParentOfType<KtModifierList>()?.parent as? KtDeclaration
+        return if (declaration != null) {
             (ktElement as? KtAnnotationEntry)?.let { entry ->
-                analyzeForUast(ktDeclaration) {
-                    var declaration: KaDeclarationSymbol
-                    var annoApp: KaAnnotation?
-                    do { // Not a loop; just to provide a go-to point at the end
-                        // Regular declaration, default use-site, etc.
-                        declaration = ktDeclaration.symbol
-                        annoApp  = declaration.annotations.find { it.psi == entry }
-                        if (annoApp != null) break
+                analyzeForUast(declaration) {
+                    val declarationSymbol = declaration.symbol
+                    declaration.symbol.annotations.firstOrNull { it.psi == entry }?.let { annotation ->
+                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol)
+                    }
 
-                        // Maybe property accessors
-                        if (entry.useSiteTarget == null) break
-                        if (declaration !is KaPropertySymbol) break
-                        val propertySymbol = declaration
-                        propertySymbol.getter?.annotations?.find { it.psi == entry }?.let {
-                            declaration = propertySymbol.getter!!
-                            annoApp = it
-                        }
-                        if (annoApp != null) break
-                        propertySymbol.setter?.annotations?.find { it.psi == entry }?.let {
-                            declaration = propertySymbol.setter!!
-                            annoApp = it
-                        }
-                    } while (false)
+                    if (entry.useSiteTarget == null || declarationSymbol !is KaPropertySymbol) return null
 
-                    annoApp?.let { annoApp ->
-                        UastFakeDeserializedSymbolAnnotation(
-                            declaration.createPointer(),
-                            annoApp.classId,
-                            ktDeclaration
-                        )
+                    declarationSymbol.getter?.annotations?.firstOrNull { it.psi == entry }?.let { annotation ->
+                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol.getter!!)
+                    }
+
+                    declarationSymbol.setter?.annotations?.firstOrNull { it.psi == entry }?.let { annotation ->
+                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol.setter!!)
                     }
                 }
             }
