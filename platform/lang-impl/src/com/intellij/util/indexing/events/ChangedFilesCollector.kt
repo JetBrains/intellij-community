@@ -4,15 +4,14 @@ package com.intellij.util.indexing.events
 import com.intellij.history.LocalHistory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiManager
@@ -36,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Lock
 import kotlin.concurrent.withLock
 
-private val LOG = Logger.getInstance(ChangedFilesCollector::class.java)
+private val LOG = logger<ChangedFilesCollector>()
 
 @ApiStatus.Internal
 class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope) : IndexedFilesListener() {
@@ -152,7 +151,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
         processFilesInReadActionWithYieldingToWriteAction()
 
         @Suppress("IncorrectCancellationExceptionHandling")
-        if (`is`("try.starting.dumb.mode.where.many.files.changed")) {
+        if (Registry.`is`("try.starting.dumb.mode.where.many.files.changed")) {
           for (project in ProjectManager.getInstance().getOpenProjects()) {
             try {
               FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project)
@@ -173,7 +172,9 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
 
   fun processFilesToUpdateInReadAction() {
     processFilesInReadAction(object : VfsEventProcessor {
-      private val perFileElementTypeUpdateProcessor = (StubIndex.getInstance() as StubIndexImpl).perFileElementTypeModificationTrackerUpdateProcessor
+      private val perFileElementTypeUpdateProcessor = (StubIndex.getInstance() as StubIndexImpl)
+        .perFileElementTypeModificationTrackerUpdateProcessor
+
       override fun process(info: VfsEventsMerger.ChangeInfo): Boolean {
         LOG.debug("Processing ", info)
         try {
@@ -187,7 +188,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
             fileBasedIndex.scheduleFileForIndexing(fileId, file, true, dirtyQueueProjects)
           }
           if (info.isFileRemoved) {
-            fileBasedIndex.doInvalidateIndicesForFile(fileId, file, mutableSetOf<Project?>(), dirtyQueueProjects)
+            fileBasedIndex.doInvalidateIndicesForFile(fileId, file, emptySet(), dirtyQueueProjects)
           }
           if (info.isFileAdded) {
             fileBasedIndex.scheduleFileForIndexing(fileId, file, false, dirtyQueueProjects)
@@ -211,8 +212,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
 
       override fun endBatch() {
         if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-          StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector
-        ) {
+          StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
           perFileElementTypeUpdateProcessor.endUpdatesBatch()
         }
       }

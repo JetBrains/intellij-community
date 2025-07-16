@@ -1895,7 +1895,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void doInvalidateIndicesForFile(int fileId,
                                          @NotNull VirtualFile file,
-                                         @NotNull Set<Project> containingProjects,
+                                         @NotNull @Unmodifiable Set<Project> containingProjects,
                                          @NotNull List<Project> dirtyQueueProjects) {
     myIndexableFilesFilterHolder.removeFile(fileId);
     if (containingProjects.isEmpty() && canBeIndexed(file)) {
