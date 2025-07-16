@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization
 
+import com.intellij.notebooks.visualization.NotebookCellLines.Companion.get
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
@@ -56,19 +57,24 @@ fun Document.getLineText(line: Int): String =
   getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
 
 fun Editor.getCell(line: Int): NotebookCellLines.Interval =
-  NotebookCellLines.get(this).intervalsIterator(line).next()
+  get(this).intervalsIterator(line).next()
 
 fun Editor.getCells(lines: IntRange): List<NotebookCellLines.Interval> =
-  NotebookCellLines.get(this).getCells(lines).toList()
+  get(this).getCells(lines).toList()
 
 fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
-  NotebookCellLines.get(this).intervals[ordinal]
+  get(this).intervals[ordinal]
 
 fun Editor.safeGetCellByOrdinal(ordinal: Int): NotebookCellLines.Interval? =
-  NotebookCellLines.get(this).intervals.getOrNull(ordinal)
+  get(this).intervals.getOrNull(ordinal)
 
 fun Editor.getCellByOffset(offset: Int): NotebookCellLines.Interval =
   getCell(line = document.getLineNumber(offset))
+
+fun Editor.isEmpty(): Boolean {
+  val intervals = get(this).intervals
+  return intervals.size == 1 && intervals.first().getContentText(this).isEmpty()
+}
 
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }

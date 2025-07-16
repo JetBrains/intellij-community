@@ -161,6 +161,6 @@ interface NotebookCellLines {
     fun hasSupport(editor: Editor): Boolean =
       hasSupport(editor.document)
 
-    val INTERVAL_LANGUAGE_KEY = Key.create<Language>("com.intellij.notebooks.visualization.NotebookCellLines.Interval.language")
+    val INTERVAL_LANGUAGE_KEY: Key<Language?> = Key.create<Language>("com.intellij.notebooks.visualization.NotebookCellLines.Interval.language")
   }
 }

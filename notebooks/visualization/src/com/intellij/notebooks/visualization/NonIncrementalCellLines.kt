@@ -22,7 +22,8 @@ class NonIncrementalCellLines private constructor(
 
   private val documentListener = createDocumentListener()
 
-  override val intervalListeners = EventDispatcher.create(NotebookCellLines.IntervalListener::class.java)
+  override val intervalListeners: EventDispatcher<NotebookCellLines.IntervalListener> =
+    EventDispatcher.create(NotebookCellLines.IntervalListener::class.java)
 
   override var modificationStamp: Long = 0
 
