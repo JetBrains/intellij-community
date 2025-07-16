@@ -6,7 +6,7 @@ import kotlin.io.path.createLinkPointingTo
 import kotlin.io.path.exists
 
 plugins {
-  id("com.jetbrains.python.envs") version "0.0.31"
+  id("com.jetbrains.python.envs") version "0.0.33"
 }
 
 enum class PythonType { PYTHON, CONDA }
