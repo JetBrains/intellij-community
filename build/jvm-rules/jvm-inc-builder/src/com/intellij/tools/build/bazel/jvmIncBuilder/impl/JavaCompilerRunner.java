@@ -98,6 +98,9 @@ public class JavaCompilerRunner implements CompilerRunner {
 
   @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnosticSink, OutputSink outSink) throws Exception {
+    if (isEmpty(sources)) {
+      return ExitCode.OK;
+    }
     NodeSourcePathMapper pathMapper = myContext.getPathMapper();
     OutputCollector outCollector = new OutputCollector(this, pathMapper, diagnosticSink, outSink);
     JavacCompilerTool javacTool = new JavacCompilerTool();
