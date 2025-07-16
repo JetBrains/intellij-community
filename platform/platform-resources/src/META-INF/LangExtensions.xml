@@ -113,7 +113,7 @@
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
 
-    <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
+    <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManagerActionTuner"/>
 
     <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
                     serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
