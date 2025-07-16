@@ -32,7 +32,8 @@
       "plugins/llm/daemon/src/com/intellij/ml/llm/daemon/insight/ui/FeedbackPanel.kt",
       "plugins/llm/riderNext/src/com/intellij/ml/llm/riderNext/latest/miniAiChat/agentOrchestration/MiniChatOrchestrator.kt",
       "plugins/llm/riderNext/src/com/intellij/ml/llm/riderNext/latest/nextStep/NextStepAgentService.kt",
-      "rustrover/core/src/main/kotlin/org/rust/lang/core/types/infer/TypeInferenceWalker.kt"
+      "rustrover/core/src/main/kotlin/org/rust/lang/core/types/infer/TypeInferenceWalker.kt",
+      "plugins/JavaScriptLanguage/src/com/intellij/lang/javascript/linter/jshint/JSHintUtil.java"
     ]
   },
   "interpret": {
