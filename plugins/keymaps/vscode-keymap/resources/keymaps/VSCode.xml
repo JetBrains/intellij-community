@@ -150,6 +150,10 @@
   <action id="EditorDeleteLine">
     <keyboard-shortcut first-keystroke="shift ctrl k" />
   </action>
+  <action id="EditorDownWithSelection">
+    <keyboard-shortcut first-keystroke="shift down" />
+    <keyboard-shortcut first-keystroke="shift ctrl down" />
+  </action>
   <action id="EditorDuplicate">
     <keyboard-shortcut first-keystroke="shift alt down" />
   </action>
@@ -197,6 +201,10 @@
   <action id="EditorUnindentSelection">
     <keyboard-shortcut first-keystroke="ctrl open_bracket" />
     <keyboard-shortcut first-keystroke="shift tab" />
+  </action>
+  <action id="EditorUpWithSelection">
+    <keyboard-shortcut first-keystroke="shift up" />
+    <keyboard-shortcut first-keystroke="shift ctrl up" />
   </action>
   <action id="EvaluateExpression" />
   <action id="ExpandAll">

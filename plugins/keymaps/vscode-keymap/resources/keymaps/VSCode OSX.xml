@@ -181,6 +181,10 @@
     <action id="EditorDeleteLine">
         <keyboard-shortcut first-keystroke="shift meta k" />
     </action>
+    <action id="EditorDownWithSelection">
+        <keyboard-shortcut first-keystroke="shift down" />
+        <keyboard-shortcut first-keystroke="shift ctrl down" />
+    </action>
     <action id="EditorDeleteToLineEnd">
         <keyboard-shortcut first-keystroke="ctrl k" />
         <keyboard-shortcut first-keystroke="meta delete" />
@@ -262,6 +266,10 @@
     <action id="EditorUnindentSelection">
         <keyboard-shortcut first-keystroke="meta open_bracket" />
         <keyboard-shortcut first-keystroke="shift tab" />
+    </action>
+    <action id="EditorUpWithSelection">
+        <keyboard-shortcut first-keystroke="shift up" />
+        <keyboard-shortcut first-keystroke="shift ctrl up" />
     </action>
     <action id="ExpandAll">
         <keyboard-shortcut first-keystroke="meta add" />
