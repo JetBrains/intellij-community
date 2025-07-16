@@ -27,6 +27,7 @@ class SeDefaultListItemRenderer {
               (presentation.selectedTextChunk ?: presentation.textChunk)?.let { selectedTextChunk ->
                 text(selectedTextChunk.text) {
                   attributes = SimpleTextAttributes(selectedTextChunk.fontType, selectedTextChunk.foregroundColorId?.color())
+                  accessibleName = selectedTextChunk.text.withAccessibleAddition(presentation.accessibleAdditionToText)
                 }
               }
             }
@@ -34,6 +35,7 @@ class SeDefaultListItemRenderer {
               presentation.textChunk?.let { textChunk ->
                 text(textChunk.text) {
                   attributes = SimpleTextAttributes(textChunk.fontType, textChunk.foregroundColorId?.color())
+                  accessibleName = textChunk.text.withAccessibleAddition(presentation.accessibleAdditionToText)
                 }
               }
             }
@@ -53,3 +55,5 @@ class SeDefaultListItemRenderer {
     }
   }
 }
+
+private fun String.withAccessibleAddition(s: String?) = if (s?.isNotEmpty() == true) "$this, $s" else this
