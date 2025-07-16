@@ -9,6 +9,7 @@ import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.SetupSdkPreferences
 import com.intellij.cce.evaluation.SetupSdkStepFactory
 import com.intellij.cce.evaluation.step.CheckProjectSdkStep
+import com.intellij.cce.evaluation.step.DropProjectSdkStep
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.report.BasicFileReportGenerator
@@ -90,7 +91,8 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
 }
 
 fun defaultSetupSteps(project: Project, language: Language, preferences: SetupSdkPreferences): List<EvaluationStep> {
+  val dropStep = listOf(DropProjectSdkStep(project)).filter { System.getenv("EVALUATION_PROJECT_SDK_DROP") == "true" }
   val setupSteps = SetupSdkStepFactory.forLanguage(project, language)?.steps(preferences) ?: emptyList()
   val checkStep = CheckProjectSdkStep(project, language.displayName).takeUnless { Registry.`is`("evaluation.plugin.disable.sdk.check") }
-  return setupSteps + listOfNotNull(checkStep)
+  return dropStep + setupSteps + listOfNotNull(checkStep)
 }
