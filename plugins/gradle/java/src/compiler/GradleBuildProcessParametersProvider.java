@@ -17,7 +17,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Adds Gradle build dependencies to the project build process' classpath.
@@ -51,10 +50,6 @@ public final class GradleBuildProcessParametersProvider extends BuildProcessPara
       String gradleToolingApiJarPath = PathUtil.getJarPathForClass(ProjectConnection.class);
       if (!StringUtil.isEmpty(gradleToolingApiJarPath)) {
         myGradleClasspath.add(gradleToolingApiJarPath);
-      }
-      String gradleToolingApiImplDepJarPath = PathUtil.getJarPathForClass(Optional.class);
-      if (!StringUtil.isEmpty(gradleToolingApiImplDepJarPath)) {
-        myGradleClasspath.add(gradleToolingApiImplDepJarPath);
       }
     }
     classpath.addAll(myGradleClasspath);
