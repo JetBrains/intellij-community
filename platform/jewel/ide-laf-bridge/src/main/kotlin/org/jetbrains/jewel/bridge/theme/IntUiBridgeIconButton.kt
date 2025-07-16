@@ -8,9 +8,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.safeValue
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
@@ -41,5 +43,36 @@ internal fun readIconButtonStyle(): IconButtonStyle =
                 borderFocused = Color.Unspecified,
                 borderPressed = retrieveColorOrUnspecified("ActionButton.pressedBorderColor"),
                 borderHovered = retrieveColorOrUnspecified("ActionButton.hoverBorderColor"),
+            ),
+    )
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+internal fun readTransparentIconButton(): IconButtonStyle =
+    IconButtonStyle(
+        metrics =
+            IconButtonMetrics(
+                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp.safeValue() / 2),
+                borderWidth = 1.dp,
+                padding = PaddingValues(0.dp),
+                minSize = DpSize(24.dp, 24.dp),
+            ),
+        colors =
+            IconButtonColors(
+                foregroundSelectedActivated = retrieveColorOrUnspecified("ToolWindow.Button.selectedForeground"),
+                background = Color.Transparent,
+                backgroundDisabled = Color.Transparent,
+                backgroundSelected = Color.Transparent,
+                backgroundSelectedActivated = Color.Transparent,
+                backgroundPressed = Color.Transparent,
+                backgroundHovered = Color.Transparent,
+                backgroundFocused = Color.Transparent,
+                border = Color.Transparent,
+                borderDisabled = Color.Transparent,
+                borderSelected = Color.Transparent,
+                borderSelectedActivated = Color.Transparent,
+                borderFocused = Color.Unspecified,
+                borderPressed = Color.Transparent,
+                borderHovered = Color.Transparent,
             ),
     )
