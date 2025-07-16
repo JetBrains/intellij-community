@@ -574,6 +574,7 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   @Suppress("SystemGetProperty")
   log.info(
     """locale=${Locale.getDefault()} JNU=${System.getProperty("sun.jnu.encoding")} file.encoding=${System.getProperty("file.encoding")}
+    ${PathManager.PROPERTY_HOME_PATH}=${logPath(PathManager.getHomePath())}
     ${PathManager.PROPERTY_CONFIG_PATH}=${logPath(PathManager.getConfigPath())}
     ${PathManager.PROPERTY_SYSTEM_PATH}=${logPath(PathManager.getSystemPath())}
     ${PathManager.PROPERTY_PLUGINS_PATH}=${logPath(PathManager.getPluginsPath())}
