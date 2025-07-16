@@ -4,7 +4,7 @@ package com.intellij.application.options;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
-import com.intellij.xml.XmlCoreBundle;
+import com.intellij.xml.XmlUiBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,7 +16,7 @@ public class HtmlIndentOptionsEditor extends SmartIndentOptionsEditor {
   @Override
   protected void addComponents() {
     super.addComponents();
-    myUniformIndentCheckBox = new JCheckBox(XmlCoreBundle.message("checkbox.uniform.indent"));
+    myUniformIndentCheckBox = new JCheckBox(XmlUiBundle.message("checkbox.uniform.indent"));
     add(myUniformIndentCheckBox);
   }
 

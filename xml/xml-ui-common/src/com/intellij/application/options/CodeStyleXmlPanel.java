@@ -13,7 +13,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.xml.XmlCoreBundle;
+import com.intellij.xml.XmlUiBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,9 +48,9 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     fillWrappingCombo(myWrapAttributes);
     addPanelToWatch(myPanel);
     myWhiteSpaceAroundCDATA.setModel(new CollectionComboBoxModel<@Nls String>(
-      Arrays.asList(XmlCoreBundle.message("preserve"),
-                    XmlCoreBundle.message("remove.keep.with.tags"),
-                    XmlCoreBundle.message("add.new.lines"))));
+      Arrays.asList(XmlUiBundle.message("preserve"),
+                    XmlUiBundle.message("remove.keep.with.tags"),
+                    XmlUiBundle.message("add.new.lines"))));
   }
 
   @Override

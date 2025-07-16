@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PlatformUtils;
-import com.intellij.xml.XmlCoreBundle;
+import com.intellij.xml.XmlUiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,6 +118,6 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   }
 
   public static @ConfigurableName String getConfigurableDisplayNameText() {
-    return XmlCoreBundle.message("title.xml");
+    return XmlUiBundle.message("title.xml");
   }
 }
