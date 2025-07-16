@@ -6,11 +6,12 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProviderFactory
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeActionsProviderFactory : SeWrappedLegacyContributorItemsProviderFactory {
+class SeActionsProviderFactory : SeWrappedLegacyContributorItemsProviderFactory, SeFrontendOnlyItemsProviderFactory {
   override val id: String
     get() = SeProviderIdUtils.ACTIONS_ID
 

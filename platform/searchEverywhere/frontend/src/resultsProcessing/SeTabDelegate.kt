@@ -12,6 +12,7 @@ import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
@@ -230,12 +231,20 @@ class SeTabDelegate(
 
       val hasWildcard = providerIds.any { it.isWildcard }
 
-      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, sessionRef, dataContextId) else emptyMap()
-      val essentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.ESSENTIAL_KEY]?.toSet() ?: emptySet()
-      val nonEssentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.NON_ESSENTIAL_KEY]?.toSet() ?: emptySet()
-      val remoteProviderIds = essentialRemoteProviderIds.union(nonEssentialRemoteProviderIds).filter { hasWildcard || providerIds.contains(it) }
-
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
+      val frontendOnlyIds = localFactories.filter { it.value is SeFrontendOnlyItemsProviderFactory }.map { it.key }.toSet()
+
+      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, sessionRef, dataContextId) else emptyMap()
+
+      val essentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.ESSENTIAL_KEY]?.filter {
+        !frontendOnlyIds.contains(it)
+      }?.toSet() ?: emptySet()
+
+      val nonEssentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.NON_ESSENTIAL_KEY]?.filter {
+        !frontendOnlyIds.contains(it)
+      }?.toSet() ?: emptySet()
+
+      val remoteProviderIds = essentialRemoteProviderIds.union(nonEssentialRemoteProviderIds).filter { hasWildcard || providerIds.contains(it) }.toSet()
 
       // If we have it on BE, we use the BE provider.
       // This is needed because extensions are available on both sides in the monolith (BE and FE)
