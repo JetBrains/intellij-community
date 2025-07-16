@@ -4,6 +4,7 @@
 package com.intellij.spellchecker.grazie
 
 import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.phonetics.metaphone.DoubleMetaphone
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
@@ -13,12 +14,10 @@ import ai.grazie.spell.dictionary.RuleDictionary
 import ai.grazie.spell.dictionary.rule.IgnoreRuleDictionary
 import ai.grazie.spell.language.LanguageModel
 import ai.grazie.spell.lists.WordListWithFrequency
-import ai.grazie.spell.lists.hunspell.HunspellWordList
 import ai.grazie.spell.suggestion.filter.feature.RadiusSuggestionFilter
 import ai.grazie.spell.suggestion.ranker.*
 import ai.grazie.spell.utils.DictionaryResources
 import ai.grazie.utils.mpp.FromResourcesDataLoader
-import ai.grazie.utils.mpp.Resources
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -26,7 +25,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
@@ -41,15 +39,30 @@ import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import com.intellij.spellchecker.grazie.ranker.DiacriticSuggestionRanker
+import com.intellij.spellchecker.hunspell.HunspellDictionary
 import kotlinx.coroutines.*
 
 private const val MAX_WORD_LENGTH = 32
 
 @Service(Service.Level.PROJECT)
-internal class GrazieSpellCheckerEngine(
+class GrazieSpellCheckerEngine(
   project: Project,
   private val coroutineScope: CoroutineScope
 ): SpellCheckerEngine, Disposable {
+
+  companion object {
+    val enDictionary: HunspellDictionary by lazy {
+      val classLoader = HunspellDictionary::class.java.classLoader
+      val dicContent = classLoader.getResourceAsStream("dictionary/en.dic")!!.bufferedReader().readText()
+      val affContent = classLoader.getResourceAsStream("dictionary/en.aff")!!.bufferedReader().readText()
+      val trigramsContent = classLoader.getResourceAsStream("dictionary/en.trigrams.txt")?.bufferedReader()?.readLines()
+
+      HunspellDictionary(
+        dicContent, affContent, trigramsContent, "dictionary/en.dic", LanguageISO.EN
+      )
+    }
+  }
+
   override fun getTransformation(): Transformation = Transformation()
 
   private val loader = WordListLoader(project, coroutineScope)
@@ -105,15 +118,7 @@ internal class GrazieSpellCheckerEngine(
   }
 
   private suspend fun createSpellerConfig(): GrazieSpeller.UserConfig {
-    val path = "/dictionary/en"
-    val wordList = ExtendedWordListWithFrequency(
-      HunspellWordList.create(
-        Resources.text("$path.aff"),
-        Resources.text("$path.dic"),
-        checkCanceled = { ProgressManager.checkCanceled() }
-      ),
-      adapter
-    )
+    val wordList = ExtendedWordListWithFrequency(enDictionary.dict, adapter)
     return GrazieSpeller.UserConfig(model = buildModel(Language.ENGLISH, wordList))
   }
 

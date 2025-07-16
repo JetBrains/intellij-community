@@ -33,13 +33,11 @@ public interface SpellCheckerEngine {
 
   boolean isCorrect(@NotNull String word);
 
-
   @NotNull
   List<String> getSuggestions(@NotNull String word, int threshold, int quality);
 
   @NotNull
   List<String> getVariants(@NotNull String prefix);
-
 
   void reset();
 

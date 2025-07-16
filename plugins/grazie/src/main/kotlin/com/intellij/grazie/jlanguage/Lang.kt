@@ -3,11 +3,14 @@ package com.intellij.grazie.jlanguage
 
 import ai.grazie.nlp.langs.LanguageISO
 import com.intellij.grazie.GrazieDynamic
+import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.HunspellDescriptor
 import com.intellij.grazie.remote.LanguageToolDescriptor
 import com.intellij.grazie.remote.RemoteLangDescriptor
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
+import com.intellij.spellchecker.hunspell.HunspellDictionary
 import org.languagetool.Language
 import org.languagetool.language.English
 import org.languagetool.noop.NoopChunker
@@ -64,6 +67,15 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
 
   val hunspellRemote: HunspellDescriptor?
     get() = HunspellDescriptor.entries.find { it.iso == iso }
+
+  val dictionary: HunspellDictionary? by lazy {
+    if (isEnglish()) {
+      return@lazy GrazieSpellCheckerEngine.enDictionary
+    }
+    if (hunspellRemote == null) return@lazy null
+    val dicPath = getLangDynamicFolder(this).resolve(hunspellRemote!!.file).toString()
+    HunspellDictionary(dicPath, language = iso)
+  }
 
   val remoteDescriptors: List<RemoteLangDescriptor>
     get() = listOfNotNull(ltRemote, hunspellRemote)

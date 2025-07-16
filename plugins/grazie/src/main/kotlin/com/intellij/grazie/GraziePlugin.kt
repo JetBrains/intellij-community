@@ -38,7 +38,7 @@ object GraziePlugin {
           newLanguages.forEach { new ->
             val dicPath = getLangDynamicFolder(new).resolve(new.hunspellRemote!!.file).toString()
             if (!manager.isDictionaryLoad(dicPath)) {
-              manager.loadDictionary(dicPath)
+              manager.spellChecker!!.addDictionary(new.dictionary!!)
             }
           }
           prevLanguages.forEach { prev ->
