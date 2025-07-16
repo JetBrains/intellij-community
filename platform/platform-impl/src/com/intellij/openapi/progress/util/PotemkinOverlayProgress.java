@@ -151,6 +151,10 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     return myEventStealer.drainUndispatchedInputEvents();
   }
 
+  public void dispatchAllInvocationEvents() {
+    myEventStealer.dispatchAllExistingEvents();
+  }
+
   private void paintProgress() {
     paintOverlayProgress(SwingUtilities.getRootPane(myComponent), myCreatedAt, myCancellable);
   }

@@ -186,6 +186,11 @@ object SuvorovProgress {
       progress.start()
       try {
         do {
+          if (progress is PotemkinProgress) {
+            progress.dispatchAllInvocationEvents()
+          } else if (progress is PotemkinOverlayProgress) {
+            progress.dispatchAllInvocationEvents()
+          }
           progress.interact()
           sleep() // avoid touching the progress too much
         }
@@ -349,6 +354,10 @@ private value class TransferredWriteActionWrapper(val event: InternalThreading.T
 private fun repostAllEvents() {
   val queue = IdeEventQueue.getInstance()
   val events = ArrayList<AWTEvent>()
+  val topEvent = IdeEventQueue.getInstance().trueCurrentEvent
+  if (EventStealer.isUrgentInvocationEvent(topEvent)) {
+    events.add(IdeEventQueue.getInstance().trueCurrentEvent)
+  }
   while (true) {
     queue.peekEvent() ?: break
     val actualEvent = queue.nextEvent

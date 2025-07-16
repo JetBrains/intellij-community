@@ -191,4 +191,9 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private List<InputEvent> drainUndispatchedInputEvents() {
     return myEventStealer.drainUndispatchedInputEvents();
   }
+
+  @ApiStatus.Internal
+  public void dispatchAllInvocationEvents() {
+    myEventStealer.dispatchAllExistingEvents();
+  }
 }
