@@ -33,6 +33,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.event.HyperlinkListener
 
@@ -54,6 +55,7 @@ interface XDebugSessionProxy {
   val editorsProvider: XDebuggerEditorsProvider
   val valueMarkers: XValueMarkers<*, *>?
   val sessionTab: XDebugSessionTab?
+  val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
   val isStopped: Boolean
   val isPaused: Boolean
   val isSuspended: Boolean
@@ -142,6 +144,8 @@ interface XDebugSessionProxy {
       get() = (session as XDebugSessionImpl).valueMarkers
     override val sessionTab: XDebugSessionTab?
       get() = (session as? XDebugSessionImpl)?.sessionTab
+    override val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
+      get() = (session as XDebugSessionImpl).sessionTabDeferred
     override val isPaused: Boolean
       get() = session.isPaused
     override val environmentProxy: ExecutionEnvironmentProxy?

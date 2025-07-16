@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
-import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.configurations.JavaParameters
@@ -12,6 +11,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
@@ -24,6 +24,8 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.util.MonolithUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineView
@@ -61,7 +63,8 @@ class DebuggerConnection(
     override fun sessionStarted(session: XDebugSessionProxy) {
         // Coroutines view is only supported in monolith
         val monolithSession = MonolithUtils.findSessionById(session.id) ?: return
-        DebuggerInvocationUtil.invokeLaterAnyModality(project) {
+        session.coroutineScope.launch(Dispatchers.EDT) {
+            session.sessionTabWhenInitialized.await()
             val debugProcess = monolithSession.debugProcess
             if (debugProcess is JavaDebugProcess &&
                 !isDisposed &&
@@ -69,7 +72,7 @@ class DebuggerConnection(
                 !coroutinePanelIsRegistered(session)
             ) {
                 registerXCoroutinesPanel(session, debugProcess, monolithSession)?.let {
-                    Disposer.register(this, it)
+                    Disposer.register(this@DebuggerConnection, it)
                 }
             }
         }
@@ -90,9 +93,11 @@ class DebuggerConnection(
         }
     }
 
-    private fun registerXCoroutinesPanel(sessionProxy: XDebugSessionProxy,
-                                         javaDebugProcess: JavaDebugProcess,
-                                         monolithSession: XDebugSession): Disposable? {
+    private fun registerXCoroutinesPanel(
+        sessionProxy: XDebugSessionProxy,
+        javaDebugProcess: JavaDebugProcess,
+        monolithSession: XDebugSession
+    ): Disposable? {
         val ui = sessionProxy.sessionTab?.ui ?: return null
         val coroutineThreadView = CoroutineView(project, javaDebugProcess)
         val framesContent: Content = createContent(ui, coroutineThreadView)

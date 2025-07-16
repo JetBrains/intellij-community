@@ -129,9 +129,14 @@ class FrontendXDebuggerSession private constructor(
 
   override val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 
-  private var _sessionTab: XDebugSessionTab? = null
+  private val sessionTabDeferred = CompletableDeferred<XDebugSessionTab>()
+
+  @OptIn(ExperimentalCoroutinesApi::class)
   override val sessionTab: XDebugSessionTab?
-    get() = _sessionTab
+    get() = if (sessionTabDeferred.isCompleted) sessionTabDeferred.getCompleted() else null
+
+  override val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
+    get() = sessionTabDeferred
 
   // TODO all of the methods below
   // TODO pass in DTO?
@@ -263,7 +268,7 @@ class FrontendXDebuggerSession private constructor(
       withContext(Dispatchers.EDT) {
         XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, cs), tabInfo.contentToReuse,
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
-          _sessionTab = this
+          sessionTabDeferred.complete(this)
           proxy.onTabInitialized(this)
           showTab()
           runContentDescriptor?.coroutineScope?.awaitCancellationAndInvoke {

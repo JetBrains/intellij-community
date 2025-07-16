@@ -122,7 +122,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myPaused = MutableStateFlow<Boolean>(false)
   private var myValueMarkers: XValueMarkers<*, *>? = null
   private val mySessionName: @Nls String = sessionName
-  private var mySessionTab: XDebugSessionTab? = null
+  private val mySessionTab = CompletableDeferred<XDebugSessionTab>()
   private var myRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
   private val myActiveNonLineBreakpointAndPositionFlow = MutableStateFlow<Pair<XBreakpoint<*>, XSourcePosition?>?>(null)
@@ -223,7 +223,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   private val isTabInitialized: Boolean
-    get() = myTabInitDataFlow.value != null && (useFeProxy() || mySessionTab != null)
+    get() = myTabInitDataFlow.value != null && (useFeProxy() || mySessionTab.isCompleted)
 
   private fun assertSessionTabInitialized() {
     if (myShowToolWindowOnSuspendOnly && !this.isTabInitialized) {
@@ -425,14 +425,19 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return myConsoleView
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   val sessionTab: XDebugSessionTab?
     get() {
       if (useFeProxy() && showFeWarnings()) {
         // See "TODO [Debugger.sessionTab]" to see usages which are not yet properly migrated.
         LOG.error("Debug tab should not be used in split mode from XDebugSession")
       }
-      return mySessionTab
+      return if (mySessionTab.isCompleted) mySessionTab.getCompleted() else null
     }
+
+  val sessionTabDeferred: Deferred<XDebugSessionTab>
+    @ApiStatus.Internal
+    get() = mySessionTab
 
   override fun getUI(): RunnerLayoutUi? {
     return if (useFeProxy()) {
@@ -501,7 +506,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   @ApiStatus.Internal
   fun tabInitialized(sessionTab: XDebugSessionTab) {
-    mySessionTab = sessionTab
+    mySessionTab.complete(sessionTab)
     myRunContentDescriptor = sessionTab.runContentDescriptor
   }
 
@@ -1033,7 +1038,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         }
         else {
           // We have to keep this code because Code with Me expects BE to work with tab similar to monolith
-          mySessionTab!!.onPause(attract, topFrameIsAbsent)
+          sessionTab?.onPause(attract, topFrameIsAbsent)
         }
       })
     }
