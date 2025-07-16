@@ -21,8 +21,8 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
   private var myMockery: Mockery? = null
 
-  private val contributor1 = createDumbContributor("Test1", essential = true)
-  private val contributor2 = createDumbContributor("Test2", essential = true)
+  private val contributor1 = createDumbContributor("Test1", essentialByDefault = true)
+  private val contributor2 = createDumbContributor("Test2", essentialByDefault = true)
   private val contributor3 = createDumbContributor("Test3(slow)")
 
   private val c1_e1 = SearchEverywhereFoundElementInfoTest("c1_e1", contributor1)
