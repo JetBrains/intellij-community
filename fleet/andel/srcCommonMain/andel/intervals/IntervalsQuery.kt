@@ -6,8 +6,6 @@ import andel.operation.Operation
 import andel.operation.Sticky
 import andel.operation.invert
 import andel.operation.transformOnto
-import kotlin.math.max
-import kotlin.math.min
 
 interface IntervalsQuery<K, T> {
   companion object {
@@ -60,12 +58,11 @@ fun <K, T> IntervalsQuery<K, T>.adjust(operation: Operation): IntervalsQuery<K, 
     val adjustedStart = start.transformOnto(invertedOperation, Sticky.LEFT)
     val adjustedEnd = end.transformOnto(invertedOperation, Sticky.RIGHT)
 
-    this.query(adjustedStart, adjustedEnd).mapNotNull { interval ->
+    this.query(adjustedStart, adjustedEnd).map { interval ->
       val newFrom = interval.from.transformOnto(operation, if (interval.greedyLeft) Sticky.LEFT else Sticky.RIGHT)
-      val newTo = interval.to.transformOnto(operation, if (interval.greedyRight) Sticky.RIGHT else Sticky.LEFT)
-      if (newTo >= newFrom) {
-        interval.copy(from = newFrom, to = newTo)
-      } else null
+      // this asymmetry is aligned with andel.intervals.impl.IntervalsImpl.edit (see andel.intervals.impl.Impl.expand)
+      val newTo = maxOf(newFrom, interval.to.transformOnto(operation, if (interval.greedyRight) Sticky.RIGHT else Sticky.LEFT))
+      interval.copy(from = newFrom, to = newTo)
     }
   }
 }
