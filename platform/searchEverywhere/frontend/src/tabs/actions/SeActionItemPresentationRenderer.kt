@@ -82,6 +82,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
         text(name) {
           font = listFont
           foreground = GotoActionModel.defaultActionForeground(selected, hasFocus, presentation.isEnabled)
+          accessibleName = presentation.shortcut?.takeIf { it.isNotEmpty() }?.let { "$name $it" } ?: name
 
           // TODO: Should we handle HTML? (see: appendWithColoredMatches(nameComponent, presentation.text, pattern, fg, selected))
           speedSearchRange(name, pattern, selected)?.let {
