@@ -5,8 +5,10 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 val coroutineDumpPrefix: String = "CoroutineDump:"
@@ -50,4 +52,31 @@ suspend fun <T> withTimeoutDumping(
   }.also {
     outerScope.cancel()
   }
+}
+
+@TestOnly
+@ApiStatus.Internal
+internal suspend fun waitSuspending(
+  subjectOfWaiting: String,
+  timeout: Duration,
+  delay: Duration = 500.milliseconds,
+  failMessageProducer: (() -> String),
+  checker: suspend () -> Boolean,
+): Boolean {
+  return runCatching {
+    runLogged("$subjectOfWaiting with $timeout timeout") {
+      withTimeoutDumping(
+        title = subjectOfWaiting,
+        timeout = timeout,
+        action = {
+          while (!checker()) {
+            delay(delay)
+          }
+        },
+        failMessageProducer = { failMessageProducer() }
+      )
+    }
+  }
+    .onFailure { LOG.error(it.message) }
+    .isSuccess
 }

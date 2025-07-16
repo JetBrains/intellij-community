@@ -11,7 +11,7 @@ import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
 
 // it is easier to sort out logs from just testFramework
-private val LOG = Logger.getInstance(RdctTestFrameworkLoggerCategory.category)
+internal val LOG = Logger.getInstance(RdctTestFrameworkLoggerCategory.category)
 
 @TestOnly
 @ApiStatus.Internal

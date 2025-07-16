@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.modelGenerated.*
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
@@ -35,7 +36,6 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
-import com.jetbrains.rd.util.threading.coroutines.waitFor
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -54,7 +54,6 @@ import kotlin.reflect.full.createInstance
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 @Suppress("NonDefaultConstructor")
 @TestOnly
@@ -394,18 +393,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     AppIcon.getInstance().requestFocus(projectIdeFrame)
     ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
 
-    return waitFor(timeout = 5.seconds.toJavaDuration()) {
+    return waitSuspending(logPrefix, timeout = 5.seconds, failMessageProducer = {
+      if (silent) ""
+      else "Couldn't wait for focus," +
+           "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
+           "\n" + getFocusStateDescription()
+
+    }) {
       projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
-    }.also {
-      if (!it && !silent) {
-        LOG.error("$logPrefix: Couldn't wait for focus," +
-                  "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
-                  "\n" + getFocusStateDescription()
-        )
-      }
-      else {
-        LOG.info("$logPrefix is successful: $it")
-      }
     }
   }
 
@@ -420,16 +415,11 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     visibleWindows.forEach {
       AppIcon.getInstance().requestFocus(it)
     }
-    return waitFor(timeout = 5.seconds.toJavaDuration()) {
+    return waitSuspending(logPrefix, timeout = 5.seconds, failMessageProducer = {
+      if (silent) ""
+      else "Couldn't wait for focus" + "\n" + getFocusStateDescription()
+    }) {
       KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
-    }.also {
-      if (!it && !silent) {
-        LOG.error("$logPrefix: Couldn't wait for focus" +
-                  "\n" + getFocusStateDescription())
-      }
-      else {
-        LOG.info("$logPrefix is successful: $it")
-      }
     }
   }
 
