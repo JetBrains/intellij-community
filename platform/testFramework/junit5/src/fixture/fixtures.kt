@@ -116,7 +116,9 @@ fun TestFixture<Project>.moduleFixture(
   }
   if (addPathToSourceRoot) {
     val pathVfs = withContext(Dispatchers.IO) {
-      VirtualFileManager.getInstance().findFileByNioPath(path)!!
+      requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)) {
+        "Path provided by pathFixture should exist: $path"
+      }
     }
 
     edtWriteAction {
