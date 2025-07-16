@@ -260,7 +260,17 @@ final class ConstructorBodyProcessor {
 
       @Override
       public void visitClass(PsiClass aClass) {
-        // Empty on purpose.
+        if (aClass instanceof PsiAnonymousClass anonymousClass) {
+          PsiExpressionList arguments = anonymousClass.getArgumentList();
+          if (arguments != null) {
+            for (PsiExpression expression : arguments.getExpressions()) {
+              if (hasReferenceToContainingClass(containingClass, expression)) {
+                markInvalid();
+                return;
+              }
+            }
+          }
+        }
       }
 
       @Override
