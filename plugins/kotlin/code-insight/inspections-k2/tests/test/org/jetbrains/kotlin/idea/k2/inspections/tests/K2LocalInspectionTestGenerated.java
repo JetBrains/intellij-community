@@ -17455,6 +17455,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("byte.kt")
+        public void testByte() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/byte.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/char.kt");
+        }
+
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/long.kt");
+        }
+
         @TestMetadata("minusXxCompilerFlag.kt")
         public void testMinusXxCompilerFlag() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/minusXxCompilerFlag.kt");
@@ -17470,6 +17485,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/optInIsNotRequired.kt");
         }
 
+        @TestMetadata("short.kt")
+        public void testShort() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/short.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/simple.kt");
@@ -17483,6 +17503,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("tooOldLanguageVersion.kt")
         public void testTooOldLanguageVersion() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/tooOldLanguageVersion.kt");
+        }
+
+        @TestMetadata("uInt.kt")
+        public void testUInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/uInt.kt");
+        }
+
+        @TestMetadata("uLong.kt")
+        public void testULong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceUntilWithRangeUntil/uLong.kt");
         }
     }
 

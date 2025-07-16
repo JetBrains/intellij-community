@@ -14644,6 +14644,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("byte.kt")
+        public void testByte() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/byte.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/char.kt");
+        }
+
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/long.kt");
+        }
+
         @TestMetadata("minusXxCompilerFlag.kt")
         public void testMinusXxCompilerFlag() throws Exception {
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/minusXxCompilerFlag.kt");
@@ -14659,6 +14674,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/optInIsNotRequired.kt");
         }
 
+        @TestMetadata("short.kt")
+        public void testShort() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/short.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/simple.kt");
@@ -14672,6 +14692,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("tooOldLanguageVersion.kt")
         public void testTooOldLanguageVersion() throws Exception {
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/tooOldLanguageVersion.kt");
+        }
+
+        @TestMetadata("uInt.kt")
+        public void testUInt() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/uInt.kt");
+        }
+
+        @TestMetadata("uLong.kt")
+        public void testULong() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/uLong.kt");
         }
     }
 
