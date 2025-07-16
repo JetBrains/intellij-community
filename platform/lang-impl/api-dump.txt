@@ -1009,6 +1009,11 @@ com.intellij.slicer.SliceLanguageSupportProvider
 - a:startAnalyzeLeafValues(com.intellij.ide.util.treeView.AbstractTreeStructure,java.lang.Runnable):V
 - a:startAnalyzeNullness(com.intellij.ide.util.treeView.AbstractTreeStructure,java.lang.Runnable):V
 - supportValueFilters(com.intellij.psi.PsiElement):Z
+f:com.intellij.tools.ToolManager
+- sf:Companion:com.intellij.tools.ToolManager$Companion
+- sf:getInstance():com.intellij.tools.ToolManager
+f:com.intellij.tools.ToolManager$Companion
+- f:getInstance():com.intellij.tools.ToolManager
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 - a:createConsoleComponent(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.DefaultActionGroup):javax.swing.JComponent
 com.intellij.util.indexing.UnindexedFilesUpdaterListener

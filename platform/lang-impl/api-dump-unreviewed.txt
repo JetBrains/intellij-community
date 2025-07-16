@@ -16551,7 +16551,6 @@ c:com.intellij.tools.ToolEditorDialog
 f:com.intellij.tools.ToolManager
 - com.intellij.tools.BaseToolManager
 - <init>():V
-- s:getInstance():com.intellij.tools.ToolManager
 f:com.intellij.tools.ToolProcessAdapter
 - com.intellij.execution.process.ProcessAdapter
 - <init>(com.intellij.openapi.project.Project,Z,java.lang.String):V

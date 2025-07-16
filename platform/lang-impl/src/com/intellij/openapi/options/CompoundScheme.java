@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -16,7 +16,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
   protected String myName;
   protected final ArrayList<E> myElements = new ArrayList<>();
 
-  public CompoundScheme(final String name) {
+  public CompoundScheme(@NotNull String name) {
     setName(name);
   }
 
@@ -37,7 +37,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
   }
 
   @Override
-  public final void setName(final @NotNull String name) {
+  public final void setName(@NotNull String name) {
     myName = name;
     for (E template : myElements) {
       template.setGroupName(name);

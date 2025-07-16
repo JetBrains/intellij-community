@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.tools.ToolManager.Companion.getInstance
+import org.jetbrains.annotations.ApiStatus
 
 @Service
 class ToolManager : BaseToolManager<Tool>(SchemeManagerFactory.getInstance(), "tools", ToolsBundle.message("tools.settings")) {
@@ -17,16 +18,18 @@ class ToolManager : BaseToolManager<Tool>(SchemeManagerFactory.getInstance(), "t
     fun getInstance(): ToolManager = service<ToolManager>()
   }
 
-  override fun createProcessor(): SchemeProcessor<ToolsGroup<Tool?>, ToolsGroup<Tool?>> {
-    return object : ToolsProcessor<Tool?>() {
-      override fun createToolsGroup(groupName: String?) = ToolsGroup<Tool?>(groupName)
+  override fun createProcessor(): SchemeProcessor<ToolsGroup<Tool>, ToolsGroup<Tool>> {
+    return object : ToolsProcessor<Tool>() {
+      override fun createToolsGroup(groupName: String) = ToolsGroup<Tool>(groupName)
 
       override fun createTool(): Tool = Tool()
     }
   }
 
+  @ApiStatus.Internal
   override fun getActionIdPrefix(): String = Tool.ACTION_ID_PREFIX
 
+  @ApiStatus.Internal
   public override fun getGroupIdPrefix(): String = "Tools_"
 }
 
