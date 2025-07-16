@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
-import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.name.Name
@@ -26,8 +25,9 @@ internal object ClassLookupElementFactory {
     fun createLookup(
         symbol: KaClassLikeSymbol,
         importingStrategy: ImportStrategy,
+        aliasName: Name? = null,
     ): LookupElementBuilder {
-        val name = symbol.nameOrAnonymous
+        val name = aliasName ?: symbol.nameOrAnonymous
         return LookupElementBuilder.create(ClassifierLookupObject(name, importingStrategy), name.asString())
             .withInsertHandler(ClassifierInsertionHandler)
             .withTailText(TailTextProvider.getTailText(symbol))
@@ -40,8 +40,9 @@ internal object ClassLookupElementFactory {
         containingSymbol: KaNamedClassSymbol,
         constructorSymbols: List<KaConstructorSymbol>,
         importingStrategy: ImportStrategy,
+        aliasName: Name? = null,
     ): LookupElementBuilder {
-        val name = containingSymbol.nameOrAnonymous
+        val name = aliasName ?: containingSymbol.nameOrAnonymous
         val singleConstructor = constructorSymbols.singleOrNull()
         val valueParameters = singleConstructor?.valueParameters?.map { it.asSignature() }
 

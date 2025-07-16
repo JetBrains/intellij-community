@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.RegistryManager
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -130,6 +129,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         scopeKind: KaScopeKind? = null,
         presentableText: @NlsSafe String? = null, // TODO decompose
         withTrailingLambda: Boolean = false, // TODO find a better solution
+        aliasName: Name? = null
     ): Sequence<LookupElementBuilder> {
         val callableSymbol = signature.symbol
         val namedSymbol = when (callableSymbol) {
@@ -147,6 +147,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                 signature = signature,
                 options = options,
                 expectedType = context.expectedType,
+                aliasName = aliasName,
             ).let { yield(it) }
 
             if (withTrailingLambda && signature is KaFunctionSignature<*>) {

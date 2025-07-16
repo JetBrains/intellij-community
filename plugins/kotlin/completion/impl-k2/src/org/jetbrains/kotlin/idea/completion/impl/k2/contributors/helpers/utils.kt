@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -231,3 +232,22 @@ private fun LanguageVersionSettings.excludeSyntheticJavaProperties(
     positionContext: KotlinNameReferencePositionContext,
 ): Boolean = positionContext is KDocNameReferencePositionContext
         || positionContext is KotlinCallableReferencePositionContext && !supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
+
+/**
+ * Checks if the scope contains an alias for the [symbol] and returns the name of the alias.
+ * TODO: Currently, this only works if the import alias is the only declaration in the scope.
+ * See: KT-79285
+ */
+internal fun KaScopeWithKind.getAliasNameIfExists(symbol: KaSymbol): Name? {
+    if (kind !is KaScopeKind.ExplicitSimpleImportingScope) return null
+    val symbolName = symbol.name
+    // Importing scopes with an alias contain exactly two names, the name of the original symbol and the alias.
+    // This is technically an implementation detail, but the analysis API does not yet support an API to retrieve aliases otherwise.
+    val allNames = scope.getAllPossibleNames().takeIf { it.size == 2 } ?: return null
+    // This method only works if there is exactly one declaration in this scope and it is the aliased one.
+    // Otherwise, there is currently no way to distinguish between imports that are aliased or not.
+    // Note that a constructor and classifier share the same name but are distinct symbols, so we only count distinct names.
+    // See: KT-79285
+    if (scope.declarations.distinctBy { it.name }.count() > 1) return null
+    return allNames.singleOrNull { it != symbolName }
+}

@@ -7,4 +7,3 @@ fun test() {
 }
 
 // EXIST: barFun
-// IGNORE_K2

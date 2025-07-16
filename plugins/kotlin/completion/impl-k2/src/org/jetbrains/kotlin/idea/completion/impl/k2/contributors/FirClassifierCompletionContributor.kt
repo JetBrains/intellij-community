@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.getAliasNameIfExists
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
@@ -41,7 +43,7 @@ internal open class FirClassifierCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(sink, priority),
-    ChainCompletionContributor{
+    ChainCompletionContributor {
 
     context(KaSession)
     protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
@@ -113,17 +115,25 @@ internal open class FirClassifierCompletionContributor(
 
         val scopeClassifiers = scopesToCheck
             .asSequence()
-            .flatMap { it.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker) }
-            .filter { filterClassifiers(it.symbol) }
-            .flatMap { symbolWithOrigin ->
+            .flatMap { scope ->
+                scope.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker).map { classifier -> scope to classifier }
+            }
+            .filter { (_, classifier) -> filterClassifiers(classifier.symbol) }
+            .flatMap { (scope, symbolWithOrigin) ->
+                val aliasName = scope.getAliasNameIfExists(symbolWithOrigin.symbol)
+
                 val classifierSymbol = symbolWithOrigin.symbol
-                availableFromScope += classifierSymbol
+                if (aliasName == null) {
+                    // For import aliases, we should still show the original symbol from the index.
+                    availableFromScope += classifierSymbol
+                }
 
                 createClassifierLookupElement(
                     classifierSymbol = classifierSymbol,
                     expectedType = weighingContext.expectedType,
                     importingStrategy = getImportingStrategy(classifierSymbol),
                     positionContext = positionContext,
+                    aliasName = aliasName,
                 ).map {
                     it.applyWeighs(context, symbolWithOrigin)
                 }
@@ -189,6 +199,7 @@ internal open class FirClassifierCompletionContributor(
         classifierSymbol: KaClassifierSymbol,
         positionContext: KotlinRawPositionContext,
         expectedType: KaType? = null,
+        aliasName: Name? = null,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
     ): Sequence<LookupElementBuilder> = sequence {
         if (classifierSymbol is KaNamedClassSymbol &&
@@ -201,10 +212,17 @@ internal open class FirClassifierCompletionContributor(
                 .filter { visibilityChecker.isVisible(it, positionContext) }
                 .toList()
 
-            yieldIfNotNull(KotlinFirLookupElementFactory.createConstructorCallLookupElement(classifierSymbol, constructorSymbols, importingStrategy))
+            yieldIfNotNull(
+                KotlinFirLookupElementFactory.createConstructorCallLookupElement(
+                    containingSymbol = classifierSymbol,
+                    visibleConstructorSymbols = constructorSymbols,
+                    importingStrategy = importingStrategy,
+                    aliasName = aliasName
+                )
+            )
         }
 
-        yieldIfNotNull(KotlinFirLookupElementFactory.createClassifierLookupElement(classifierSymbol, importingStrategy))
+        yieldIfNotNull(KotlinFirLookupElementFactory.createClassifierLookupElement(classifierSymbol, importingStrategy, aliasName))
     }.map { builder ->
         when (importingStrategy) {
             is ImportStrategy.InsertFqNameAndShorten -> {

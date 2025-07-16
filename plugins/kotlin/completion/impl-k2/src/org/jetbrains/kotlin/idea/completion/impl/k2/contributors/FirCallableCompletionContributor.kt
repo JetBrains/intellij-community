@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
@@ -100,6 +101,7 @@ internal open class FirCallableCompletionContributor(
         val scopeKind: KaScopeKind? = null, // index
         val showReceiver: Boolean = false, // todo extract; only used for objects/enums/static members
         private val _explicitReceiverTypeHint: KaType? = null, // todo extract; only used for smart casts
+        val aliasName: Name? = null
     ) : KaLifetimeOwner {
         override val token: KaLifetimeToken
             get() = _signature.token
@@ -157,6 +159,7 @@ internal open class FirCallableCompletionContributor(
                     scopeKind = callableWithMetadata.scopeKind,
                     presentableText = callableWithMetadata.itemText,
                     withTrailingLambda = withTrailingLambda,
+                    aliasName = callableWithMetadata.aliasName,
                 ).map { builder ->
                     receiver ?: return@map builder
 
@@ -253,8 +256,9 @@ internal open class FirCallableCompletionContributor(
                     visibilityChecker = visibilityChecker,
                     scopeNameFilter = scopeNameFilter,
                     symbolFilter = { filter(it) },
-                ).map {
-                    it.createCallableWithMetadata(scopeWithKind.kind)
+                ).map { signature ->
+                    val aliasName = scopeWithKind.getAliasNameIfExists(signature.symbol)
+                    signature.createCallableWithMetadata(scopeWithKind.kind, aliasName = aliasName)
                 }
             }
 
@@ -602,10 +606,12 @@ internal open class FirCallableCompletionContributor(
 
                 ShadowedCallablesFilter.sortExtensions(suitableExtensions, receiverTypes)
                     .map { extension ->
+                        val aliasName = scopeWithKind.getAliasNameIfExists(extension.signature.symbol)
                         CallableWithMetadataForCompletion(
                             _signature = extension.signature,
                             options = extension.insertionOptions,
                             scopeKind = scopeWithKind.kind,
+                            aliasName = aliasName,
                         )
                     }
             }
@@ -695,6 +701,7 @@ internal open class FirCallableCompletionContributor(
         scopeKind: KaScopeKind,
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(this, isImportDefinitelyNotRequired),
+        aliasName: Name? = null,
     ): CallableWithMetadataForCompletion {
         val javaGetterIfNotProperty = this.getJavaGetterSignatureIfNotProperty()
         val optionsToUse = if (javaGetterIfNotProperty != null && options.insertionStrategy == CallableInsertionStrategy.AsIdentifier) {
@@ -706,6 +713,7 @@ internal open class FirCallableCompletionContributor(
             _signature = javaGetterIfNotProperty ?: this,
             options = optionsToUse,
             scopeKind = scopeKind,
+            aliasName = aliasName
         )
     }
 

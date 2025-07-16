@@ -33,9 +33,10 @@ internal object VariableLookupElementFactory {
     fun createLookup(
         signature: KaVariableSignature<*>,
         options: CallableInsertionOptions,
+        aliasName: Name? = null,
     ): LookupElementBuilder {
         val rendered = renderVariable(signature)
-        var builder = createLookupElementBuilder(options, signature, rendered)
+        var builder = createLookupElementBuilder(options, signature, rendered, aliasName = aliasName)
 
         val symbol = signature.symbol
         if (symbol is KaPropertySymbol) {
@@ -52,8 +53,9 @@ internal object VariableLookupElementFactory {
         signature: KaVariableSignature<*>,
         rendered: String,
         insertionStrategy: CallableInsertionStrategy = options.insertionStrategy,
+        aliasName: Name? = null,
     ): LookupElementBuilder {
-        val name = signature.symbol.name
+        val name = aliasName ?: signature.symbol.name
         val lookupString = name.asString()
 
         return when (insertionStrategy) {

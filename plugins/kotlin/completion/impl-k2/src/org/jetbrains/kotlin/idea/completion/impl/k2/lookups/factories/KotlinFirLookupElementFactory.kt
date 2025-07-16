@@ -33,18 +33,20 @@ object KotlinFirLookupElementFactory {
         containingSymbol: KaNamedClassSymbol,
         visibleConstructorSymbols: List<KaConstructorSymbol>,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+        aliasName: Name? = null,
     ): LookupElementBuilder? {
         if (visibleConstructorSymbols.isEmpty()) return null
-        return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy)
+        return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy, aliasName)
     }
 
     context(KaSession)
     fun createClassifierLookupElement(
         symbol: KaClassifierSymbol,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+        aliasName: Name? = null,
     ): LookupElementBuilder? = when (symbol) {
         is KaClassLikeSymbol ->
-            if (symbol is KaNamedSymbol) ClassLookupElementFactory.createLookup(symbol, importingStrategy)
+            if (symbol is KaNamedSymbol) ClassLookupElementFactory.createLookup(symbol, importingStrategy, aliasName)
             else null
 
         is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(symbol)
@@ -75,9 +77,10 @@ object KotlinFirLookupElementFactory {
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
+        aliasName: Name? = null,
     ): LookupElementBuilder = when (signature) {
-        is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType)
-        is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options)
+        is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType, aliasName)
+        is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options, aliasName)
     }
 
     context(KaSession)

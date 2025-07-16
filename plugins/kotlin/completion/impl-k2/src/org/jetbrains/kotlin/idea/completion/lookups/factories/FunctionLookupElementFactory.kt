@@ -51,12 +51,13 @@ internal object FunctionLookupElementFactory {
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
+        aliasName: Name? = null,
     ): LookupElementBuilder {
         val valueParameters = signature.valueParameters
 
         val symbol = signature.symbol
         val lookupObject = FunctionCallLookupObject(
-            shortName = shortName,
+            shortName = aliasName ?: shortName,
             options = options,
             renderedDeclaration = CompletionShortNamesRenderer.renderFunctionParameters(valueParameters),
             hasReceiver = signature.hasReceiver,

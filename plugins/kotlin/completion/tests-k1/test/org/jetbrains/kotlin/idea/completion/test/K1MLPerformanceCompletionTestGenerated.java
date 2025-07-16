@@ -1573,6 +1573,16 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             public void testImportAliasMethod() throws Exception {
                 runTest("../testData/basic/common/importAliases/ImportAliasMethod.kt");
             }
+
+            @TestMetadata("ImportAliasMultipleInScope.kt")
+            public void testImportAliasMultipleInScope() throws Exception {
+                runTest("../testData/basic/common/importAliases/ImportAliasMultipleInScope.kt");
+            }
+
+            @TestMetadata("ImportAliasShowOriginal.kt")
+            public void testImportAliasShowOriginal() throws Exception {
+                runTest("../testData/basic/common/importAliases/ImportAliasShowOriginal.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

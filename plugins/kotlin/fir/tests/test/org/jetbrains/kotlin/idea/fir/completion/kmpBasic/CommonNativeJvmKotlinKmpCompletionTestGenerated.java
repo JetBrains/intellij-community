@@ -1657,6 +1657,16 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         public void testImportAliasMethod() throws Exception {
             runTest("../../completion/testData/basic/common/importAliases/ImportAliasMethod.kt");
         }
+
+        @TestMetadata("ImportAliasMultipleInScope.kt")
+        public void testImportAliasMultipleInScope() throws Exception {
+            runTest("../../completion/testData/basic/common/importAliases/ImportAliasMultipleInScope.kt");
+        }
+
+        @TestMetadata("ImportAliasShowOriginal.kt")
+        public void testImportAliasShowOriginal() throws Exception {
+            runTest("../../completion/testData/basic/common/importAliases/ImportAliasShowOriginal.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
