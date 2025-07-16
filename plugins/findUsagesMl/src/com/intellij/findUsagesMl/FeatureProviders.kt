@@ -11,6 +11,7 @@ data class FindUsagesRankingFileInfo(
   val candidateFile: VirtualFile?,
   val recentFilesList: List<VirtualFile> = listOf(),
   val timeStamp: Long,
+  val projectPath: String,
 )
 
 object FindUsagesFileRankerFeatures {
@@ -52,13 +53,13 @@ class FindUsagesFileRankerFeatureProvider : FeatureProvider<FindUsagesRankingFil
       add(FindUsagesFileRankerFeatures.TIME_MODIFIED_DIFFERENCE_MS) { instance.queryFiles.minOf { it.timeStamp - instance.candidateFile.timeStamp } }
       add(FindUsagesFileRankerFeatures.TIME_SINCE_LAST_MODIFIED_MS) { instance.timeStamp - instance.candidateFile.timeStamp }
       add(FindUsagesFileRankerFeatures.RECENT_FILES_INDEX) { getRecentFilesIndex(instance.recentFilesList, instance.candidateFile) }
-      add(FindUsagesFileRankerFeatures.DIRECTORY_DISTANCE) { calculateDirectoryDistance(instance.queryFiles, instance.candidateFile) }
+      add(FindUsagesFileRankerFeatures.DIRECTORY_DISTANCE) { calculateDirectoryDistance(instance.queryFiles, instance.candidateFile, instance.projectPath) }
     }
   }
 
-  private fun calculateDirectoryDistance(queryFiles: List<VirtualFile>, candidateFile: VirtualFile): Double {
+  private fun calculateDirectoryDistance(queryFiles: List<VirtualFile>, candidateFile: VirtualFile, projectPath: String = ""): Double {
     // use the minimum of query files
-    return queryFiles.minOfOrNull { queryFile -> computeNormalizedDistance(queryFile, candidateFile) } ?: 1.0
+    return queryFiles.minOfOrNull { queryFile -> computeNormalizedDistance(queryFile, candidateFile, projectPath) } ?: 1.0
   }
 
   /**
@@ -68,23 +69,22 @@ class FindUsagesFileRankerFeatureProvider : FeatureProvider<FindUsagesRankingFil
    * The distance is normalized to the range [0, 1], where 0 means the files are the same,
    * and 1 means they are in completely different directories.
    */
-  private fun computeNormalizedDistance(queryFile: VirtualFile, candidateFile: VirtualFile): Double {
-    val queryPath = queryFile.path
-    val candidatePath = candidateFile.path
+  private fun computeNormalizedDistance(queryFile: VirtualFile, candidateFile: VirtualFile, projectPath: String): Double {
+    val queryPath = queryFile.path.removePrefix(projectPath).removePrefix("/")
+    val candidatePath = candidateFile.path.removePrefix(projectPath).removePrefix("/")
 
     // split path to components, VirtualFile uses '/' internally
     val queryPathComponents = queryPath.split('/')
     val candidatePathComponents = candidatePath.split('/')
 
-    // common prefix length
+    val maxDistance = queryPathComponents.size + candidatePathComponents.size
+
     val commonPrefixLength = queryPathComponents.zip(candidatePathComponents)
       .takeWhile { (a, b) -> a == b }
       .count()
 
-    val totalLength = queryPathComponents.size + candidatePathComponents.size - 2 * commonPrefixLength
-
-    // normalize the distance, 0 is the same directory, 1 is completely different
-    return if (totalLength == 0) 0.0 else 1.0 - (2.0 * commonPrefixLength) / (queryPathComponents.size + candidatePathComponents.size)
+    val distance = maxDistance - 2 * commonPrefixLength
+    return if (maxDistance != 0) (distance.toDouble() / maxDistance) else 0.0
   }
 
   private fun getRecentFilesIndex(recentFilesList: List<VirtualFile>, candidateFile: VirtualFile): Int {
