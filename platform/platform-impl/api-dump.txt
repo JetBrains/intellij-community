@@ -672,6 +672,16 @@ com.intellij.openapi.ui.playback.PlaybackCommand
 - a:canGoFurther():Z
 - a:execute(com.intellij.openapi.ui.playback.PlaybackContext):java.util.concurrent.CompletableFuture
 - getScriptDir():java.io.File
+e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- java.lang.Enum
+- sf:ACTUAL:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- sf:BREW:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- sf:SNAP:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- sf:TOOLBOX:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- sf:UNKNOWN:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- f:toolName:java.lang.String
+- s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
+- s:values():com.intellij.openapi.updateSettings.impl.ExternalUpdateManager[]
 com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 - a:getPluginRepositories():java.util.List
 com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider
