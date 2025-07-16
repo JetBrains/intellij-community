@@ -4051,6 +4051,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
                 runTest("../testData/intentions/unfolding/returnToIf/ifWithNothing.kt");
             }
 
+            @TestMetadata("ifWithNullableNothing.kt")
+            public void testIfWithNullableNothing() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/ifWithNullableNothing.kt");
+            }
+
             @TestMetadata("ifWithThrow.kt")
             public void testIfWithThrow() throws Exception {
                 runTest("../testData/intentions/unfolding/returnToIf/ifWithThrow.kt");

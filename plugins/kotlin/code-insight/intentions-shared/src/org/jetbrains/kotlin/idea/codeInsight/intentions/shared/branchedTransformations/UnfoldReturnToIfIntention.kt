@@ -43,12 +43,12 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
         element.replace(newIfExpression)
     }
 
-    override fun getApplicableRanges(returnExpression: KtReturnExpression): List<TextRange> {
-        val ifExpression = returnExpression.returnedExpression as? KtIfExpression ?: return emptyList()
+    override fun getApplicableRanges(element: KtReturnExpression): List<TextRange> {
+        val ifExpression = element.returnedExpression as? KtIfExpression ?: return emptyList()
         if (ifExpression.then == null) return emptyList()
 
-        val returnKeywordRange = returnExpression.returnKeyword.textRangeIn(returnExpression)
-        val ifKeywordRange = ifExpression.ifKeyword.textRangeIn(returnExpression)
+        val returnKeywordRange = element.returnKeyword.textRangeIn(element)
+        val ifKeywordRange = ifExpression.ifKeyword.textRangeIn(element)
 
         return listOf(
             returnKeywordRange.union(ifKeywordRange)
