@@ -64,24 +64,16 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   
   private void doCustomNotNullAnnotations() {
     NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(getProject());
-    String defaultNotNull = nullableNotNullManager.getDefaultNotNull();
     List<String> notNulls = nullableNotNullManager.getNotNulls();
-    String defaultNullable = nullableNotNullManager.getDefaultNullable();
     List<String> nullables = nullableNotNullManager.getNullables();
 
     try {
-      nullableNotNullManager.setNotNulls(ArrayUtil.append(ArrayUtil.toStringArray(notNulls),"p.NN"));
-      nullableNotNullManager.setDefaultNotNull("p.NN");
-      
-      nullableNotNullManager.setNullables(ArrayUtil.append(ArrayUtil.toStringArray(nullables),"p.N"));
-      nullableNotNullManager.setDefaultNullable("p.N");
+      nullableNotNullManager.setNotNulls(ArrayUtil.prepend("p.NN",ArrayUtil.toStringArray(notNulls)));
+      nullableNotNullManager.setNullables(ArrayUtil.prepend("p.N",ArrayUtil.toStringArray(nullables)));
       doTest(true, true);
     }
     finally {
-      nullableNotNullManager.setDefaultNotNull(defaultNotNull);
       nullableNotNullManager.setNotNulls(ArrayUtil.toStringArray(notNulls));
-      
-      nullableNotNullManager.setDefaultNullable(defaultNullable);
       nullableNotNullManager.setNullables(ArrayUtil.toStringArray(nullables));
     }
   }

@@ -3,15 +3,19 @@ package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.ContextNullabilityInfo;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Support for custom annotation packages
+ * Support for custom annotation packages.
+ * The registration order of extension matters, as the annotations returned from the first {@link #getNullabilityAnnotations(Nullability)}
+ * will be preferred by default.
  */
 public interface AnnotationPackageSupport {
   ExtensionPointName<AnnotationPackageSupport> EP_NAME = ExtensionPointName.create("com.intellij.lang.jvm.annotationPackageSupport");
@@ -32,7 +36,9 @@ public interface AnnotationPackageSupport {
 
   /**
    * @param nullability desired nullability
-   * @return list of explicit annotations which denote given nullability (and may denote additional semantics)
+   * @return list of explicit annotations which denote given nullability (and may denote additional semantics). 
+   * The annotation returned first will be preferred by default
+   * in {@link NullableNotNullManager#getDefaultAnnotation(Nullability, PsiElement)}. 
    */
   default @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return Collections.emptyList();

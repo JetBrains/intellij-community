@@ -3,6 +3,7 @@
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -630,7 +631,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiModifierList modifierList = field.getModifierList();
       LOG.assertTrue(modifierList != null);
       if (NullableNotNullManager.isNullable(parameter)) {
-        final String annotationName = NullableNotNullManager.getInstance(myProject).getDefaultNullable();
+        final String annotationName = NullableNotNullManager.getInstance(myProject).getDefaultAnnotation(Nullability.NULLABLE, field);
         modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + annotationName, field), null);
       }
       modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);

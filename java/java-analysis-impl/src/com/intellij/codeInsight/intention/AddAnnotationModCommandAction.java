@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
 import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -188,7 +189,7 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
    */
   public static @Nullable ModCommandAction createAddNullableFix(PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-    return createAddNullableNotNullFix(owner, manager.getDefaultNullable(), manager.getNotNulls());
+    return createAddNullableNotNullFix(owner, manager.getDefaultAnnotation(Nullability.NULLABLE, owner), manager.getNotNulls());
   }
 
   /**
@@ -199,7 +200,7 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
    */
   public static @Nullable ModCommandAction createAddNotNullFix(PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-    return createAddNullableNotNullFix(owner, manager.getDefaultNotNull(), manager.getNullables());
+    return createAddNullableNotNullFix(owner, manager.getDefaultAnnotation(Nullability.NOT_NULL, owner), manager.getNullables());
   }
 
   private static @Nullable ModCommandAction createAddNullableNotNullFix(PsiModifierListOwner owner, String annotationToAdd,

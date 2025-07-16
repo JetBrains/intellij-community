@@ -38,7 +38,7 @@ public class AnnotateMethodInGeneratedFilesTest extends LightJavaCodeInsightFixt
   }
 
   public void testAnnotateOverriddenMethod() {
-    doTest("Annotate overriding methods");
+    doTest("Add missing nullability annotation");
   }
 
   public void testAnnotateOverriddenParameters() {

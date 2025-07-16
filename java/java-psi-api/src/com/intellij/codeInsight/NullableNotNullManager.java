@@ -57,11 +57,44 @@ public abstract class NullableNotNullManager {
 
   public abstract void setNullables(String @NotNull ... annotations);
 
+  /**
+   * @param nullability wanted nullability
+   * @param context PSI context
+   * @return the best suitable annotation to insert in a specified context
+   */
+  public abstract @NotNull String getDefaultAnnotation(@NotNull Nullability nullability, @NotNull PsiElement context);
+
+  /**
+   * @return default nullable annotation, 
+   * used for external and inferred annotations, or as a fallback when no other annotation is available
+   * @see #getDefaultAnnotation(Nullability, PsiElement)
+   */
   public abstract @NotNull String getDefaultNullable();
 
+  /**
+   * Sets the default nullable annotation, used for external and inferred annotations, 
+   * or as a fallback when no other annotation is available.
+   * 
+   * @param defaultNullable new default nullable annotation
+   * @see #getDefaultNullable() 
+   */
   public abstract void setDefaultNullable(@NotNull String defaultNullable);
 
+  /**
+   * @return default not-null annotation, 
+   * used for external and inferred annotations, or as a fallback when no other annotation is available
+   * @see #getDefaultAnnotation(Nullability, PsiElement) 
+   */
   public abstract @NotNull String getDefaultNotNull();
+
+  /**
+   * Sets the default not-null annotation, used for external and inferred annotations, 
+   * or as a fallback when no other annotation is available.
+   *
+   * @param defaultNotNull new default nullable annotation
+   * @see #getDefaultNotNull()
+   */
+  public abstract void setDefaultNotNull(@NotNull String defaultNotNull);
 
   public void copyNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
     NullabilityAnnotationInfo info = findOwnNullabilityInfo(original);
@@ -109,8 +142,6 @@ public abstract class NullableNotNullManager {
 
     return null;
   }
-
-  public abstract void setDefaultNotNull(@NotNull String defaultNotNull);
 
   /**
    * Returns own nullability annotation info for given element. Returned annotation is not inherited and

@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtilRt;
@@ -15,7 +16,7 @@ import java.util.List;
 @Deprecated(forRemoval = true)
 public class AddNullableAnnotationFix extends AddNullableNotNullAnnotationFix {
   public AddNullableAnnotationFix(@NotNull PsiModifierListOwner owner) {
-    super(NullableNotNullManager.getInstance(owner.getProject()).getDefaultNullable(),
+    super(NullableNotNullManager.getInstance(owner.getProject()).getDefaultAnnotation(Nullability.NOT_NULL, owner),
           owner,
           getNotNulls(owner));
   }

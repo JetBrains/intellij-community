@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -58,7 +59,7 @@ public final class AssignmentToNullInspection extends BaseInspection {
       return null;
     }
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(target.getProject());
-    String annotation = manager.getDefaultNullable();
+    String annotation = manager.getDefaultAnnotation(Nullability.NULLABLE, variable);
     if (JavaPsiFacade.getInstance(variable.getProject()).findClass(annotation, variable.getResolveScope()) == null) {
       return null;
     }

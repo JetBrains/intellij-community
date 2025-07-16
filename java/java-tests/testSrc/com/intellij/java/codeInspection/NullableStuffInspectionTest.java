@@ -384,15 +384,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testQuickFixOnTypeArgument() {
     setupTypeUseAnnotations("typeUse", myFixture);
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
-    String oldDefault = manager.getDefaultNotNull();
-    try {
-      manager.setDefaultNotNull("typeUse.NotNull");
-      doTestWithFix("Annotate as '@NotNull'");
-    }
-    finally {
-      manager.setDefaultNotNull(oldDefault);
-    }
+    doTestWithFix("Annotate as '@NotNull'");
   }
 
   public void testRemoveAnnotationWithImportQuickFix() {
@@ -401,15 +393,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testQuickFixOnTypeArgumentNullable() {
     setupTypeUseAnnotations("typeUse", myFixture);
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
-    String oldDefault = manager.getDefaultNotNull();
-    try {
-      manager.setDefaultNotNull("typeUse.NotNull");
-      doTestWithFix("Annotate as '@NotNull'");
-    }
-    finally {
-      manager.setDefaultNotNull(oldDefault);
-    }
+    doTestWithFix("Annotate as '@NotNull'");
   }
 
   public void testCheckerDefaultTypeUseRecursiveGeneric() {
@@ -463,10 +447,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
   
   public void testIncompatibleConstructors() {
-    final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
-    String nullable = nnnManager.getDefaultNullable();
-    nnnManager.setDefaultNullable("org.jspecify.annotations.Nullable");
-    Disposer.register(myFixture.getTestRootDisposable(), () -> nnnManager.setDefaultNullable(nullable));
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();

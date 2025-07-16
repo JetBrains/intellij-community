@@ -1,9 +1,12 @@
+import org.jetbrains.annotations.NotNull;
+
 interface TweetParser {
     static String getTweetMessageFrom(String fullTweet) {
         String fieldName = "\"text\":\"";
         return newMethod(fullTweet, fieldName);
     }
 
+    @NotNull
     static String newMethod(String fullTweet, String fieldName) {
         int indexOfField = fullTweet.indexOf(fieldName) + fieldName.length();
         int indexOfEndOfField = fullTweet.indexOf("\"", indexOfField);

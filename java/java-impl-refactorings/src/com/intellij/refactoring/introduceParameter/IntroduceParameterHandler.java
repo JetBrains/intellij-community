@@ -33,6 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -561,6 +562,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     else {
       final PsiFile copy = PsiFileFactory.getInstance(project)
         .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+      ((PsiFileImpl)copy).setOriginalFile(file);
       final TextRange range = new TextRange(elements[0].getTextRange().getStartOffset(),
                                             elements[elements.length - 1].getTextRange().getEndOffset());
       final PsiExpression exprInRange = CodeInsightUtil.findExpressionInRange(copy, range.getStartOffset(), range.getEndOffset());

@@ -382,10 +382,6 @@ public class AnnotationUtil {
     return false;
   }
 
-  public static boolean isAnnotatingApplicable(@NotNull PsiElement elt) {
-    return isAnnotatingApplicable(elt, NullableNotNullManager.getInstance(elt.getProject()).getDefaultNullable());
-  }
-
   public static boolean isAnnotatingApplicable(@NotNull PsiElement elt, @NotNull String annotationFQN) {
     final Project project = elt.getProject();
     return PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, elt) &&

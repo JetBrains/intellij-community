@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -109,7 +110,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       if (ref != null && !(ref instanceof PsiReferenceExpression) &&
           !ref.textContains('@') && !(ref.getParent() instanceof PsiAnnotation)) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-        String annoName = c == '!' ? manager.getDefaultNotNull() : manager.getDefaultNullable();
+        String annoName = manager.getDefaultAnnotation(c == '!' ? Nullability.NOT_NULL : Nullability.NULLABLE, ref);
         PsiClass cls = JavaPsiFacade.getInstance(project).findClass(annoName, file.getResolveScope());
         if (cls != null) {
           PsiJavaCodeReferenceElement newRef =

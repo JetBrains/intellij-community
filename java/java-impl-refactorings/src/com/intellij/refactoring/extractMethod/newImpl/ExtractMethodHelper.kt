@@ -55,8 +55,9 @@ object ExtractMethodHelper {
 
   fun isNullabilityAvailable(extractOptions: ExtractOptions): Boolean {
     val project = extractOptions.project
-    val scope = extractOptions.elements.first().resolveScope
-    val defaultNullable = NullableNotNullManager.getInstance(project).defaultNullable
+    val element = extractOptions.elements.first()
+    val scope = element.resolveScope
+    val defaultNullable = NullableNotNullManager.getInstance(project).getDefaultAnnotation(Nullability.NULLABLE, element)
     val annotationClass = JavaPsiFacade.getInstance(project).findClass(defaultNullable, scope)
     return annotationClass != null
   }
@@ -119,12 +120,9 @@ object ExtractMethodHelper {
 
   fun addNullabilityAnnotation(typeElement: PsiTypeElement?, nullability: Nullability) {
     if (typeElement == null) return
+    if (nullability == Nullability.UNKNOWN) return
     val nullabilityManager = NullableNotNullManager.getInstance(typeElement.project)
-    val annotation = when (nullability) {
-      Nullability.NOT_NULL -> nullabilityManager.defaultNotNull
-      Nullability.NULLABLE -> nullabilityManager.defaultNullable
-      else -> return
-    }
+    val annotation = nullabilityManager.getDefaultAnnotation(nullability, typeElement)
     val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, typeElement)
     if (annotationElement != null) {
       JavaCodeStyleManager.getInstance(typeElement.project).shortenClassReferences(annotationElement)

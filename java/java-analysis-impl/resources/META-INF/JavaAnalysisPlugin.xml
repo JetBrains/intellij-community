@@ -337,14 +337,14 @@
                  description="Assume any implementation of methods like Object.toString() or Iterable.iterator() to be pure during bytecode inference. This assumption might lead to false-positives in some inspections, though it's believed to uncover more bugs."/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaFutureKeywordUseFixProvider"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.SealedClassUnresolvedReferenceFixProvider"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JSpecifyAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JetBrainsAnnotationSupport"/>
-    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.FindBugsAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.AndroidAnnotationSupport"/>
-    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JakartaAnnotationSupport"/>
-    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.Jsr305Support"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.CheckerFrameworkSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.EclipseAnnotationSupport"/>
-    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JSpecifyAnnotationSupport"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.FindBugsAnnotationSupport"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JakartaAnnotationSupport" id="jakarta"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.Jsr305Support"/>
     <notificationGroup id="FileSystemIssue" displayType="BALLOON" bundle="messages.JavaAnalysisBundle" key="notification.file.system.issue"/>
 
     <projectService serviceInterface="com.intellij.java.analysis.OuterModelsModificationTrackerManager"

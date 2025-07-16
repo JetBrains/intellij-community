@@ -711,8 +711,9 @@ public class ExtractMethodProcessor implements MatchProvider {
   private Nullability initNullability() {
     if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+    String defaultAnnotation = manager.getDefaultAnnotation(Nullability.NULLABLE, myElements[0]);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
-      .findClass(manager.getDefaultNullable(), myElements[0].getResolveScope());
+      .findClass(defaultAnnotation, myElements[0].getResolveScope());
     if (nullableAnnotationClass != null) {
       final PsiElement elementInCopy = myTargetClass.getContainingFile().copy().findElementAt(myTargetClass.getTextOffset());
       final PsiClass classCopy = PsiTreeUtil.getParentOfType(elementInCopy, PsiClass.class);
@@ -1076,9 +1077,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       switch (myNullability) {
         case NOT_NULL ->
-          updateAnnotations(newMethod, nullManager.getNullables(), nullManager.getDefaultNotNull(), nullManager.getNotNulls());
+          updateAnnotations(newMethod, nullManager.getNullables(), nullManager.getDefaultAnnotation(myNullability, myTargetClass), nullManager.getNotNulls());
         case NULLABLE ->
-          updateAnnotations(newMethod, nullManager.getNotNulls(), nullManager.getDefaultNullable(), nullManager.getNullables());
+          updateAnnotations(newMethod, nullManager.getNotNulls(), nullManager.getDefaultAnnotation(myNullability, myTargetClass), nullManager.getNullables());
         default -> { }
       }
     }
@@ -1691,7 +1692,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         boolean isNotNull = nullability == Nullability.NOT_NULL;
         final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
         final List<String> toRemove = isNotNull ? nullableAnnotations : notNullAnnotations;
-        final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
+        final String toAdd = nullabilityManager.getDefaultAnnotation(nullability, parm);
         updateAnnotations(parm, toRemove, toAdd, toKeep);
       }
     }

@@ -50,9 +50,8 @@ private class JavaCoverageOptions(private val project: Project) : UiDslUnnamedCo
       }
       row {
         val excludeAnnotationsPanel = object : AnnotationsPanel(
-          project, "Exclude", "",
-          coverageOptionsProvider.excludeAnnotationPatterns,
-          JavaCoverageOptionsProvider.defaultExcludeAnnotationPatterns, emptySet(), false, false
+          project, "Exclude", coverageOptionsProvider.excludeAnnotationPatterns,
+          JavaCoverageOptionsProvider.defaultExcludeAnnotationPatterns
         ) {
           override fun isAnnotationAccepted(annotation: PsiClass): Boolean {
             return annotation.containingClass == null

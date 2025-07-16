@@ -1,6 +1,5 @@
 package com.intellij.java.codeInsight;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -50,7 +49,6 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
   public void test_custom_notNull() {
     myFixture.addClass("package foo; public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
-    NullableNotNullManager.getInstance(getProject()).setDefaultNotNull("foo.MyNotNull");
 
     myFixture.configureByText("a.java", """
       class Foo {
@@ -75,7 +73,6 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
   public void test_type_use() {
     myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
-    NullableNotNullManager.getInstance(getProject()).setDefaultNotNull("foo.MyNotNull");
     myFixture.configureByText("a.java", """
       class Foo {
         static void foo(String[] ar<caret>ray) {
@@ -96,7 +93,6 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
   public void test_type_use_qualified_type() {
     myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
-    NullableNotNullManager.getInstance(getProject()).setDefaultNotNull("foo.MyNotNull");
     myFixture.configureByText("a.java", """
       import org.jetbrains.annotations.Contract;
       import foo.MyNotNull;
@@ -125,7 +121,6 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
   protected void tearDown() throws Exception {
     try {
       NullableNotNullManager.getInstance(getProject()).setNotNulls(ArrayUtil.EMPTY_STRING_ARRAY);
-      NullableNotNullManager.getInstance(getProject()).setDefaultNotNull(AnnotationUtil.NOT_NULL);
     }
     catch (Throwable e) {
       addSuppressedException(e);
