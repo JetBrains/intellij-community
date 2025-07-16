@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.ui.component.styling.IconButtonColors
@@ -19,6 +21,20 @@ public fun IconButtonStyle.Companion.light(
 
 public fun IconButtonStyle.Companion.dark(
     colors: IconButtonColors = IconButtonColors.dark(),
+    metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
+): IconButtonStyle = IconButtonStyle(colors, metrics)
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+public fun IconButtonStyle.Companion.lightTransparentBackground(
+    colors: IconButtonColors = IconButtonColors.lightTransparentBackground(),
+    metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
+): IconButtonStyle = IconButtonStyle(colors, metrics)
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+public fun IconButtonStyle.Companion.darkTransparentBackground(
+    colors: IconButtonColors = IconButtonColors.darkTransparentBackground(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
 ): IconButtonStyle = IconButtonStyle(colors, metrics)
 
@@ -57,6 +73,29 @@ public fun IconButtonColors.Companion.light(
         borderHovered = borderHovered,
     )
 
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+public fun IconButtonColors.Companion.lightTransparentBackground(
+    foregroundSelectedActivated: Color = IntUiLightTheme.colors.gray(14)
+): IconButtonColors =
+    IconButtonColors(
+        foregroundSelectedActivated = foregroundSelectedActivated,
+        border = Color.Transparent,
+        borderDisabled = Color.Transparent,
+        borderSelected = Color.Transparent,
+        borderSelectedActivated = Color.Transparent,
+        background = Color.Transparent,
+        backgroundDisabled = Color.Transparent,
+        backgroundSelected = Color.Transparent,
+        backgroundSelectedActivated = Color.Transparent,
+        backgroundFocused = Color.Transparent,
+        backgroundPressed = Color.Transparent,
+        backgroundHovered = Color.Transparent,
+        borderFocused = Color.Transparent,
+        borderPressed = Color.Transparent,
+        borderHovered = Color.Transparent,
+    )
+
 public fun IconButtonColors.Companion.dark(
     foregroundSelectedActivated: Color = IntUiDarkTheme.colors.gray(14),
     background: Color = Color.Unspecified,
@@ -90,6 +129,29 @@ public fun IconButtonColors.Companion.dark(
         borderFocused = borderFocused,
         borderPressed = borderPressed,
         borderHovered = borderHovered,
+    )
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+public fun IconButtonColors.Companion.darkTransparentBackground(
+    foregroundSelectedActivated: Color = IntUiDarkTheme.colors.gray(14)
+): IconButtonColors =
+    IconButtonColors(
+        foregroundSelectedActivated = foregroundSelectedActivated,
+        background = Color.Transparent,
+        backgroundDisabled = Color.Transparent,
+        backgroundSelected = Color.Transparent,
+        backgroundSelectedActivated = Color.Transparent,
+        backgroundFocused = Color.Transparent,
+        backgroundPressed = Color.Transparent,
+        backgroundHovered = Color.Transparent,
+        border = Color.Transparent,
+        borderDisabled = Color.Transparent,
+        borderSelected = Color.Transparent,
+        borderSelectedActivated = Color.Transparent,
+        borderFocused = Color.Transparent,
+        borderPressed = Color.Transparent,
+        borderHovered = Color.Transparent,
     )
 
 public fun IconButtonMetrics.Companion.defaults(

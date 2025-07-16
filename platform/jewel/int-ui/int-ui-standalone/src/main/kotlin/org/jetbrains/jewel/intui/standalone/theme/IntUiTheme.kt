@@ -25,7 +25,9 @@ import org.jetbrains.jewel.intui.standalone.styling.Editor
 import org.jetbrains.jewel.intui.standalone.styling.Outlined
 import org.jetbrains.jewel.intui.standalone.styling.Undecorated
 import org.jetbrains.jewel.intui.standalone.styling.dark
+import org.jetbrains.jewel.intui.standalone.styling.darkTransparentBackground
 import org.jetbrains.jewel.intui.standalone.styling.light
+import org.jetbrains.jewel.intui.standalone.styling.lightTransparentBackground
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.DefaultComponentStyling
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
@@ -162,6 +164,7 @@ public fun ComponentStyling.dark(
     groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.dark(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.dark(),
     iconButtonStyle: IconButtonStyle = IconButtonStyle.dark(),
+    transparentIconButtonStyle: IconButtonStyle = IconButtonStyle.darkTransparentBackground(),
     inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.dark(),
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.dark(),
     linkStyle: LinkStyle = LinkStyle.dark(),
@@ -197,6 +200,7 @@ public fun ComponentStyling.dark(
             groupHeaderStyle = groupHeaderStyle,
             horizontalProgressBarStyle = horizontalProgressBarStyle,
             iconButtonStyle = iconButtonStyle,
+            transparentIconButtonStyle = transparentIconButtonStyle,
             inlineBannerStyle = inlineBannerStyle,
             lazyTreeStyle = lazyTreeStyle,
             linkStyle = linkStyle,
@@ -233,6 +237,7 @@ public fun ComponentStyling.light(
     groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.light(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.light(),
     iconButtonStyle: IconButtonStyle = IconButtonStyle.light(),
+    transparentIconButtonStyle: IconButtonStyle = IconButtonStyle.lightTransparentBackground(),
     inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.light(),
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
     linkStyle: LinkStyle = LinkStyle.light(),
@@ -268,6 +273,7 @@ public fun ComponentStyling.light(
             groupHeaderStyle = groupHeaderStyle,
             horizontalProgressBarStyle = horizontalProgressBarStyle,
             iconButtonStyle = iconButtonStyle,
+            transparentIconButtonStyle = transparentIconButtonStyle,
             inlineBannerStyle = inlineBannerStyle,
             lazyTreeStyle = lazyTreeStyle,
             linkStyle = linkStyle,
