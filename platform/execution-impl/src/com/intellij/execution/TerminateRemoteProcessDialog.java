@@ -11,6 +11,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ProcessCloseConfirmation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public final class TerminateRemoteProcessDialog {
       options.add(ExecutionBundle.message("button.disconnect"));
     }
     options.add(CommonBundle.getCancelButtonText());
-    DialogWrapper.DoNotAskOption.Adapter doNotAskOption = new DialogWrapper.DoNotAskOption.Adapter() {
+    DoNotAskOption.Adapter doNotAskOption = new DoNotAskOption.Adapter() {
       @Override
       public void rememberChoice(boolean isSelected, int exitCode) {
         if (isSelected) {

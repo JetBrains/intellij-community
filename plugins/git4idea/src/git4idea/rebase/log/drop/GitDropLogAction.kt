@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -64,7 +65,7 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
         GitBundle.message("rebase.log.drop.action.confirmation.message", commitsCount, branchPresentation)
       )
       .asWarning()
-      .doNotAsk(object : com.intellij.openapi.ui.DoNotAskOption.Adapter() {
+      .doNotAsk(object : DoNotAskOption.Adapter() {
         override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
           service<GitVcsApplicationSettings>().isShowDropCommitDialog = !isSelected
         }

@@ -102,7 +102,7 @@ class AlertDialog(project: Project?,
                   val myDefaultOptionIndex: Int,
                   val myFocusedOptionIndex: Int,
                   icon: Icon,
-                  doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
+                  doNotAskOption: DoNotAskOption?,
                   val myHelpId: String?,
                   invocationPlace: String? = null,
                   val exitActionTypes: Array<ExitActionType> = emptyArray()) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {

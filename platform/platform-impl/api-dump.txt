@@ -164,6 +164,8 @@ com.intellij.ide.actions.CloseAction$CloseTarget
 - a:close():V
 c:com.intellij.ide.actions.OpenFileAction
 - p:doOpenFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.ide.actions.RevealFileAction
+- s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.io.File,com.intellij.openapi.ui.DoNotAskOption):V
 com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getLastActions(com.intellij.openapi.actionSystem.DataContext):java.util.Collection
@@ -200,6 +202,8 @@ com.intellij.ide.file.BatchFileChangeListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - batchChangeCompleted(com.intellij.openapi.project.Project):V
 - batchChangeStarted(com.intellij.openapi.project.Project,java.lang.String):V
+f:com.intellij.ide.impl.ProjectNewWindowDoNotAskOption
+- com.intellij.openapi.ui.DoNotAskOption
 com.intellij.ide.navigationToolbar.NavBarModelExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:additionalRoots(com.intellij.openapi.project.Project):java.util.Collection

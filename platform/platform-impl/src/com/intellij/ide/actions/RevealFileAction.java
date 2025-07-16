@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
@@ -369,7 +370,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     @NlsContexts.DialogMessage String message,
     @NlsContexts.DialogTitle String title,
     @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"}) @NotNull java.io.File file,
-    @SuppressWarnings("removal") @Nullable DialogWrapper.DoNotAskOption option
+    @Nullable DoNotAskOption option
   ) {
     if (MessageDialogBuilder.okCancel(title, message)
       .yesText(getActionName(null))

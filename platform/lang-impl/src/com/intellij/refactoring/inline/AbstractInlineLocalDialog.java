@@ -3,6 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.ui.UIBundle;

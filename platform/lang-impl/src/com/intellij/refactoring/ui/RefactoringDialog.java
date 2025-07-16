@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.SystemInfo;

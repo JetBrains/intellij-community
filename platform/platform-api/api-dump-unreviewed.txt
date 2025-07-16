@@ -3057,7 +3057,6 @@ a:com.intellij.openapi.ui.DialogWrapper
 - pf:setButtonsAlignment(I):V
 - pf:setCancelButtonText(java.lang.String):V
 - f:setCrossClosesWindow(Z):V
-- setDoNotAskOption(com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):V
 - setDoNotAskOption(com.intellij.openapi.ui.DoNotAskOption):V
 - pf:setErrorHtml(com.intellij.openapi.util.text.HtmlChunk):V
 - pf:setErrorHtml(com.intellij.openapi.util.text.HtmlChunk,javax.swing.JComponent):V
@@ -3113,10 +3112,6 @@ pc:com.intellij.openapi.ui.DialogWrapper$DialogWrapperExitAction
 - pf:myExitCode:I
 - <init>(com.intellij.openapi.ui.DialogWrapper,java.lang.String,I):V
 - p:doAction(java.awt.event.ActionEvent):V
-a:com.intellij.openapi.ui.DialogWrapper$DoNotAskOption$Adapter
-- com.intellij.openapi.ui.DoNotAskOption$Adapter
-- com.intellij.openapi.ui.DialogWrapper$DoNotAskOption
-- <init>():V
 f:com.intellij.openapi.ui.DialogWrapper$HelpAction
 - javax.swing.AbstractAction
 - <init>(java.lang.Runnable):V
@@ -3428,8 +3423,6 @@ c:com.intellij.openapi.ui.MessageMultilineInputDialog
 - p:createScrollableTextComponent():javax.swing.JComponent
 - p:createTextFieldComponent():javax.swing.text.JTextComponent
 f:com.intellij.openapi.ui.MessageUtil
-- sf:showOkCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption,com.intellij.openapi.project.Project):I
-- bs:showOkCancelDialog$default(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption,com.intellij.openapi.project.Project,I,java.lang.Object):I
 - sf:showOkNoDialog(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon):Z
 - bs:showOkNoDialog$default(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,I,java.lang.Object):Z
 - sf:showYesNoDialog(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon):Z
@@ -3464,18 +3457,13 @@ Fc:com.intellij.openapi.ui.Messages
 - s:showConfirmationDialog(javax.swing.JComponent,java.lang.String,java.lang.String,java.lang.String,java.lang.String):I
 - s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon):I
 - s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon):I
-- s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showDialog(java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon):I
-- s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
-- s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption,java.lang.String):I
 - s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon):I
-- s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showEditableChooseDialog(java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String[],java.lang.String,com.intellij.openapi.ui.InputValidator):java.lang.String
 - s:showErrorDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
 - s:showErrorDialog(java.awt.Component,java.lang.String):V
 - s:showErrorDialog(java.awt.Component,java.lang.String,java.lang.String):V
 - s:showErrorDialog(java.lang.String,java.lang.String):V
-- s:showIdeaMessageDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showInfoMessage(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
 - s:showInfoMessage(java.awt.Component,java.lang.String,java.lang.String):V
 - s:showInfoMessage(java.lang.String,java.lang.String):V
@@ -3493,12 +3481,10 @@ Fc:com.intellij.openapi.ui.Messages
 - s:showMessageDialog(java.lang.String,java.lang.String,javax.swing.Icon):V
 - s:showMultilineInputDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.InputValidator):java.lang.String
 - s:showOkCancelDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):I
-- s:showOkCancelDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showOkCancelDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:showOkCancelDialog(java.awt.Component,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:showOkCancelDialog(java.awt.Component,java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:showOkCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):I
-- s:showOkCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showOkCancelDialog(java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:showPasswordDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon):java.lang.String
 - s:showPasswordDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.InputValidator):java.lang.String
@@ -3514,15 +3500,11 @@ Fc:com.intellij.openapi.ui.Messages
 - s:showYesNoCancelDialog(java.awt.Component,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:showYesNoCancelDialog(java.awt.Component,java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:showYesNoCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):I
-- s:showYesNoCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showYesNoCancelDialog(java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:showYesNoDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):I
-- s:showYesNoDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showYesNoDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon):I
-- s:showYesNoDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showYesNoDialog(java.awt.Component,java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:showYesNoDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):I
-- s:showYesNoDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showYesNoDialog(java.lang.String,java.lang.String,javax.swing.Icon):I
 - s:wrapToScrollPaneIfNeeded(javax.swing.JComponent,I,I):javax.swing.JComponent
 - s:wrapToScrollPaneIfNeeded(javax.swing.JComponent,I,I,I):javax.swing.JComponent

@@ -2016,7 +2016,6 @@ c:com.intellij.ide.actions.RevealFileAction
 - s:openDirectory(java.nio.file.Path):V
 - s:openFile(java.io.File):V
 - s:openFile(java.nio.file.Path):V
-- s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.io.File,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 Fc:com.intellij.ide.actions.SaveAllAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -2994,7 +2993,6 @@ f:com.intellij.ide.impl.PatchProjectUtil
 - s:patchProject(com.intellij.openapi.project.Project,java.util.Map,java.util.Map):V
 - s:processIncluded(com.intellij.openapi.roots.ContentEntry,java.util.Set):V
 f:com.intellij.ide.impl.ProjectNewWindowDoNotAskOption
-- com.intellij.openapi.ui.DialogWrapper$DoNotAskOption
 - <init>():V
 - canBeHidden():Z
 - getDoNotShowMessage():java.lang.String

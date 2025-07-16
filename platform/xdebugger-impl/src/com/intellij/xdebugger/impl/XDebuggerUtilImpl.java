@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -655,7 +656,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                       CommonBundle.message("button.remove"),
                                       Messages.getCancelButton(),
                                       Messages.getQuestionIcon(),
-                                      new DialogWrapper.DoNotAskOption.Adapter() {
+                                      new DoNotAskOption.Adapter() {
                                         @Override
                                         public void rememberChoice(boolean isSelected, int exitCode) {
                                           if (isSelected) {
