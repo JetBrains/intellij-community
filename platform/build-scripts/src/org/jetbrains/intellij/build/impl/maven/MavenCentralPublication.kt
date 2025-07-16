@@ -26,6 +26,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -61,11 +62,11 @@ import kotlin.time.Duration.Companion.minutes
 class MavenCentralPublication(
   private val context: BuildContext,
   private val workDir: Path,
-  private val type: PublishingType = PublishingType.AUTOMATIC,
   private val userName: String? = null,
   private val token: String? = null,
-  private val dryRun: Boolean = context.options.isInDevelopmentMode || System.getenv("BUILD_IS_PERSONAL") == "true",
-  private val sign: Boolean = !dryRun,
+  private val dryRun: Boolean = context.options.isInDevelopmentMode || TeamCityHelper.isPersonalBuild,
+  private val type: PublishingType = if (dryRun) PublishingType.USER_MANAGED else PublishingType.AUTOMATIC,
+  private val sign: Boolean = context.proprietaryBuildTools.signTool != ProprietaryBuildTools.DUMMY,
 ) {
   companion object {
     /**
@@ -128,8 +129,8 @@ class MavenCentralPublication(
       get() = distributionFiles.asSequence()
         .map { it.resolveSibling("${it.fileName}.asc") }
         .onEach {
-          check(sign || dryRun || it.exists()) {
-            "Signature file $it is expected to present"
+          check(sign || it.exists()) {
+            "Signature file $it is expected to be present"
           }
         }.filter {
           it.exists()
@@ -295,9 +296,12 @@ class MavenCentralPublication(
 
   private suspend fun publish(bundle: Path): String? {
     return spanBuilder("publishing").setAttribute("bundle", "$bundle").use { span ->
-      if (dryRun) {
+      if (dryRun && userName == null && token == null) {
         span.addEvent("skipped in the dryRun mode")
         return@use null
+      }
+      check(!dryRun || type == PublishingType.USER_MANAGED) {
+        "Automatic publishing is not supported in the dryRun mode"
       }
       val deploymentName = "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
       val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publishingType=$type"
