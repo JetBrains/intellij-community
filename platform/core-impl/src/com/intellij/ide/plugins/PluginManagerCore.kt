@@ -978,6 +978,14 @@ fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId): Boolean {
 }
 
 @ApiStatus.Internal
+fun pluginRequiresUltimatePluginButItsDisabled(rootPlugin: IdeaPluginDescriptorImpl, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+                                               contentModuleIdMap: Map<String, ContentModuleDescriptor>): Boolean {
+  if (!isDisabled(ULTIMATE_PLUGIN_ID)) return false
+  return pluginRequiresUltimatePlugin(rootPlugin, pluginMap, contentModuleIdMap)
+}
+
+
+@ApiStatus.Internal
 fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
                                                contentModuleIdMap: Map<String, ContentModuleDescriptor>): Boolean {
   if (!isDisabled(ULTIMATE_PLUGIN_ID)) return false
@@ -991,6 +999,14 @@ fun pluginRequiresUltimatePlugin(plugin: PluginId,
 ): Boolean {
   val rootDescriptor = pluginMap[plugin]
   if (rootDescriptor == null) return false
+  return pluginRequiresUltimatePlugin(rootDescriptor, pluginMap, contentModuleMap)
+}
+
+@ApiStatus.Internal
+fun pluginRequiresUltimatePlugin(rootDescriptor: IdeaPluginDescriptorImpl,
+                                 pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+                                 contentModuleMap: Map<String, ContentModuleDescriptor>,
+): Boolean {
   return !processAllNonOptionalDependencies(rootDescriptor, pluginMap, contentModuleMap) { descriptorImpl ->
     when (descriptorImpl.pluginId) {
       ULTIMATE_PLUGIN_ID -> FileVisitResult.TERMINATE

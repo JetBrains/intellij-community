@@ -478,10 +478,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return pluginIds.any { !pluginRequiresUltimatePluginButItsDisabled(it, idMap, contentModuleIdMap) }
   }
 
-  override fun isPluginRequiresUltimateButItIsDisabled(pluginId: PluginId): Boolean {
+  override fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {
     val idMap = buildPluginIdMap()
     val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
-    return pluginRequiresUltimatePluginButItsDisabled(pluginId, idMap, contentModuleIdMap)
+    val rootDescriptor = idMap[pluginId] ?: findSession(sessionId)?.dynamicPluginsToInstall[pluginId]?.pluginDescriptor ?: return false
+    return pluginRequiresUltimatePluginButItsDisabled(rootDescriptor, idMap, contentModuleIdMap)
   }
 
   override fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean {

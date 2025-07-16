@@ -114,7 +114,8 @@ public final class ListPluginComponent extends JPanel {
     boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
     myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
-    myIsNotFreeInFreeMode = UiPluginManager.getInstance().isPluginRequiresUltimateButItIsDisabled(pluginUiModel.getPluginId());
+    myIsNotFreeInFreeMode = UiPluginManager.getInstance()
+      .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().getSessionId(), pluginUiModel.getPluginId());
     pluginModelFacade.addComponent(this);
     myCustomizer = Registry.is("reworked.plugin.manager.enabled", false) ? PluginManagerCustomizer.getInstance() : null;
     setOpaque(true);

@@ -105,8 +105,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().enablePlugins(sessionId, descriptorIds, enable, project?.projectId()) }
   }
 
-  override fun isPluginRequiresUltimateButItIsDisabled(pluginId: PluginId): Boolean {
-    return awaitForResult { PluginManagerApi.getInstance().isPluginRequiresUltimateButItIsDisabled(pluginId) }
+  override fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {
+    return awaitForResult { PluginManagerApi.getInstance().isPluginRequiresUltimateButItIsDisabled(sessionId, pluginId) }
   }
 
   override fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {

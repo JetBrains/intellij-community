@@ -42,7 +42,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun setEnabledState(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   suspend fun enablePlugins(sessionId: String, ids: List<PluginId>, bool: Boolean, id: ProjectId?): SetEnabledStateResult
   suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
-  suspend fun isPluginRequiresUltimateButItIsDisabled(pluginId: PluginId): Boolean
+  suspend fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
   suspend fun hasPluginRequiresUltimateButItsDisabled(ids: List<PluginId>): Boolean
   suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   suspend fun getCustomRepoPlugins(): List<PluginDto>

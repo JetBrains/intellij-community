@@ -15,13 +15,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
@@ -141,8 +139,8 @@ class UiPluginManager {
     return getController().isBundledUpdate(pluginIds)
   }
 
-  fun isPluginRequiresUltimateButItIsDisabled(pluginId: PluginId): Boolean {
-    return getController().isPluginRequiresUltimateButItIsDisabled(pluginId)
+  fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {
+    return getController().isPluginRequiresUltimateButItIsDisabled(sessionId, pluginId)
   }
 
   fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean {
