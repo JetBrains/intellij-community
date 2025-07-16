@@ -255,10 +255,11 @@ public class StringUtil {
   @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String html, @Nullable String breaks) {
     if (breaks != null) {
-      html = html.replaceAll("<br/?>", breaks);
+      html = html.replaceAll("(?><[bB][rR](?>\\s*)/?\\s*>)", breaks);
     }
 
-    return html.replaceAll("<(.|\n)*?>", "");
+    // "(?>" removes backtraces; this is not just important for matching speed, but also to stop stack overflows
+    return html.replaceAll("(?><[^>]*>)", "");
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
