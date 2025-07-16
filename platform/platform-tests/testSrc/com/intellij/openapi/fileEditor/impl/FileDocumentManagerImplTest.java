@@ -58,7 +58,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     FileDocumentManagerImpl impl = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
     impl.setAskReloadFromDisk(getTestRootDisposable(), new MemoryDiskConflictResolver() {
       @Override
-      protected boolean askReloadFromDisk(VirtualFile file, Document document) {
+      protected boolean askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
         if (myAskReloadFromDiskResult == null) {
           fail();
           return false;
