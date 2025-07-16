@@ -94,8 +94,6 @@
                      key="inspection.remote.dev.rpc.interface.does.not.extend.remote.api.name"/>
 
     <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
-
-    <annotator language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.compose.ComposeColorAnnotator"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
