@@ -11,7 +11,7 @@ import java.io.File
 import java.io.Writer
 import java.nio.file.Path
 
-object JvmWorker : WorkRequestExecutor<WorkRequest> {
+object JvmWorker : WorkRequestExecutor {
   @JvmStatic
   fun main(startupArgs: Array<String>) {
     processRequests(
@@ -40,8 +40,8 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
       "jar" -> {
         val addPrefix = command[3]
         var stripPrefix = command[4]
-        if (stripPrefix == "" && request.inputPaths.isNotEmpty()) {
-          val p = request.inputPaths.first()
+        if (stripPrefix == "" && request.inputs.isNotEmpty()) {
+          val p = request.inputs.first().path
           stripPrefix = command[5]
           val index = p.indexOf(stripPrefix)
           require(index != -1)
@@ -49,7 +49,7 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
         }
         createZip(
           outJar = baseDir.resolve(output),
-          inputs = request.inputPaths,
+          inputs = request.inputs,
           baseDir = baseDir,
           addPrefix = addPrefix,
           stripPrefix = stripPrefix,
@@ -66,7 +66,7 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
   }
 }
 
-private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path, addPrefix: String, stripPrefix: String) {
+private suspend fun createZip(outJar: Path, inputs: Array<Input>, baseDir: Path, addPrefix: String, stripPrefix: String) {
   //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), stripPrefix + "\n" + inputs.joinToString("\n") { it.toString() })
 
   require(!addPrefix.endsWith('/')) {
@@ -77,12 +77,12 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
   val stripPrefixWithSlash = stripPrefix.let { if (it.isEmpty()) "" else "$it/" }
   val files = ArrayList<String>(inputs.size)
   for (input in inputs) {
-    if (!input.startsWith(stripPrefixWithSlash)) {
+    if (!input.path.startsWith(stripPrefixWithSlash)) {
       // input can contain our jar in the end
       continue
     }
 
-    files.add(input.substring(stripPrefixWithSlash.length).replace(File.separatorChar, '/'))
+    files.add(input.path.substring(stripPrefixWithSlash.length).replace(File.separatorChar, '/'))
   }
 
   files.sort()

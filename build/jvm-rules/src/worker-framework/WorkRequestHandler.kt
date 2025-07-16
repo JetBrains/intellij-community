@@ -45,8 +45,8 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.system.exitProcess
 
-fun interface WorkRequestExecutor<T : WorkRequest> {
-  suspend fun execute(request: T, writer: Writer, baseDir: Path, tracer: Tracer): Int
+fun interface WorkRequestExecutor {
+  suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracer: Tracer): Int
 }
 
 @Suppress("SpellCheckingInspection")
@@ -83,11 +83,11 @@ fun configureOpenTelemetry(@Suppress("unused") out: OutputStream, serviceName: S
 
 private val noopTracer = OpenTelemetry.noop().getTracer("noop")
 
-fun <T : WorkRequest> processRequests(
+fun processRequests(
   startupArgs: Array<String>,
   serviceName: String?,
-  reader: WorkRequestReader<T>,
-  executorFactory: (Tracer, CoroutineScope) -> WorkRequestExecutor<T>,
+  reader: WorkRequestReader,
+  executorFactory: (Tracer, CoroutineScope) -> WorkRequestExecutor,
 ) {
   if (!startupArgs.contains("--persistent_worker")) {
     System.err.println("Only persistent worker mode is supported")
@@ -134,8 +134,8 @@ fun <T : WorkRequest> processRequests(
   exitProcess(exitCode)
 }
 
-private class RequestState<T : WorkRequest>(
-  @JvmField val request: T,
+private class RequestState(
+  @JvmField val request: WorkRequest,
   @JvmField val job: Job,
 ) {
   @JvmField
@@ -151,11 +151,11 @@ internal enum class WorkRequestState {
  * A helper class that handles [WorkRequests](https://bazel.build/docs/persistent-workers), including
  * [multiplex workers](https://bazel.build/docs/multiplex-worker).
  */
-internal class WorkRequestHandler<T : WorkRequest> internal constructor(
+internal class WorkRequestHandler internal constructor(
   /**
    * The function to be called after each [WorkRequest] is read.
    */
-  private val requestExecutor: WorkRequestExecutor<T>,
+  private val requestExecutor: WorkRequestExecutor,
 
   private val out: OutputStream,
 
@@ -170,10 +170,10 @@ internal class WorkRequestHandler<T : WorkRequest> internal constructor(
   /**
    * Requests that are currently being processed.
    */
-  private val activeRequests = ConcurrentHashMap<Int, RequestState<T>>()
+  private val activeRequests = ConcurrentHashMap<Int, RequestState>()
 
   @OptIn(DelicateCoroutinesApi::class)
-  internal suspend fun processRequests(reader: WorkRequestReader<T>) {
+  internal suspend fun processRequests(reader: WorkRequestReader) {
     try {
       val isTracingEnabled = tracer != noopTracer
       // Bazel already ensures that tasks are submitted at a manageable rate (ensures the system isn’t overwhelmed),
@@ -271,7 +271,7 @@ internal class WorkRequestHandler<T : WorkRequest> internal constructor(
     }
   }
 
-  private suspend fun checkStateAndExecuteRequest(stateRef: AtomicReference<WorkRequestState>, request: T) {
+  private suspend fun checkStateAndExecuteRequest(stateRef: AtomicReference<WorkRequestState>, request: WorkRequest) {
     if (stateRef.compareAndSet(NOT_STARTED, STARTED)) {
       if (request.verbosity == 0) {
         executeRequest(request = request, requestState = stateRef, parentSpan = null, tracer = noopTracer)
@@ -354,7 +354,7 @@ internal class WorkRequestHandler<T : WorkRequest> internal constructor(
   }
 
   internal suspend fun executeRequest(
-    request: T,
+    request: WorkRequest,
     requestState: AtomicReference<WorkRequestState>,
     parentSpan: Span?,
     tracer: Tracer,
@@ -404,7 +404,7 @@ internal class WorkRequestHandler<T : WorkRequest> internal constructor(
     }
   }
 
-  private suspend fun cancelRequestOnShutdown(item: RequestState<T>, span: Span) {
+  private suspend fun cancelRequestOnShutdown(item: RequestState, span: Span) {
     val stateRef = item.state
     val requestId = item.request.requestId
     if (stateRef.compareAndSet(NOT_STARTED, FINISHED) || stateRef.compareAndSet(STARTED, FINISHED)) {

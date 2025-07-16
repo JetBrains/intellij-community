@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.kotlin.IncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
@@ -54,7 +55,7 @@ import java.util.concurrent.CancellationException
 import kotlin.coroutines.coroutineContext
 
 internal suspend fun incrementalBuild(
-  request: WorkRequestWithDigests,
+  request: WorkRequest,
   baseDir: Path,
   tracer: Tracer,
   writer: Writer,
@@ -62,27 +63,27 @@ internal suspend fun incrementalBuild(
   dependencyAnalyzer: DependencyAnalyzer,
 ): Int {
   val dependencyFileToDigest = MutableScatterMap<Path, ByteArray>()
-  val sourceFileToDigest = MutableScatterMap<Path, ByteArray>(request.inputPaths.size)
+  val sourceFileToDigest = MutableScatterMap<Path, ByteArray>(request.inputs.size)
   val sources = ArrayList<Path>()
   val isDebugEnabled = request.verbosity > 0
   val sourceFileToDigestDebugString = if (isDebugEnabled) StringBuilder() else null
   val dependencyFileToDigestDebugString = if (isDebugEnabled) StringBuilder() else null
-  for ((index, input) in request.inputPaths.withIndex()) {
-    val digest = request.inputDigests.get(index)
-    if (input.endsWith(".kt") || input.endsWith(".java")) {
-      val file = baseDir.resolve(input).normalize()
+  for (input in request.inputs) {
+    val digest = input.digest!!
+    if (input.path.endsWith(".kt") || input.path.endsWith(".java")) {
+      val file = baseDir.resolve(input.path).normalize()
       sources.add(file)
       sourceFileToDigest.put(file, digest)
 
       if (sourceFileToDigestDebugString != null) {
-        appendDebug(sourceFileToDigestDebugString, input, digest)
+        appendDebug(sourceFileToDigestDebugString, input.path, digest)
       }
     }
-    else if (input.endsWith(".jar")) {
+    else if (input.path.endsWith(".jar")) {
       if (dependencyFileToDigestDebugString != null) {
-        appendDebug(dependencyFileToDigestDebugString, input, digest)
+        appendDebug(dependencyFileToDigestDebugString, input.path, digest)
       }
-      dependencyFileToDigest.put(baseDir.resolve(input).normalize(), digest)
+      dependencyFileToDigest.put(baseDir.resolve(input.path).normalize(), digest)
     }
   }
 

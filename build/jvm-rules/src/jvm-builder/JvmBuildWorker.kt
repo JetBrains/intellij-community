@@ -8,6 +8,7 @@ import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.apache.arrow.memory.RootAllocator
+import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
@@ -38,7 +39,7 @@ fun configureGlobalJps(tracer: Tracer, scope: CoroutineScope) {
 internal class JvmBuildWorker private constructor(
   private val allocator: RootAllocator,
   coroutineScope: CoroutineScope,
-) : WorkRequestExecutor<WorkRequestWithDigests> {
+) : WorkRequestExecutor {
   private val dependencyAnalyzer = DependencyAnalyzer(coroutineScope)
 
   companion object {
@@ -58,7 +59,7 @@ internal class JvmBuildWorker private constructor(
     }
   }
 
-  override suspend fun execute(request: WorkRequestWithDigests, writer: Writer, baseDir: Path, tracer: Tracer): Int {
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracer: Tracer): Int {
     return incrementalBuild(
       request = request,
       baseDir = baseDir,

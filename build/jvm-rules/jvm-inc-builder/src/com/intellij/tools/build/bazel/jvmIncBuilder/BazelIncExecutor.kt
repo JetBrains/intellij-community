@@ -20,7 +20,7 @@ import java.util.logging.Level
 import java.util.logging.LogManager
 import java.util.regex.Pattern
 
-internal class BazelIncExecutor : WorkRequestExecutor<WorkRequestWithDigests> {
+internal class BazelIncExecutor : WorkRequestExecutor {
   private val FLAG_FILE_RE: Regex = Pattern.compile("""^--flagfile=((.*)-(\d+).params)$""").toRegex()
 
   companion object {
@@ -64,7 +64,7 @@ internal class BazelIncExecutor : WorkRequestExecutor<WorkRequestWithDigests> {
     }
   }
 
-  override suspend fun execute(request: WorkRequestWithDigests, writer: Writer, baseDir: Path, tracer: Tracer): Int {
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracer: Tracer): Int {
     val args: ArgMap<CLFlags> = parseArgs(request.arguments)
     val flagsMap = EnumMap<CLFlags, List<String>>(CLFlags::class.java)
     for (flag in CLFlags.entries) {
@@ -72,7 +72,7 @@ internal class BazelIncExecutor : WorkRequestExecutor<WorkRequestWithDigests> {
     }
 
     val exitCode = BazelIncBuilder().build(
-      BuildContextImpl(baseDir, request.inputPaths.asIterable(), request.inputDigests.asIterable(), flagsMap, writer)
+      BuildContextImpl(baseDir, request.inputs.asIterable(), flagsMap, writer)
     )
     if (exitCode == ExitCode.CANCEL) {
       throw CancellationException()
@@ -94,61 +94,14 @@ internal class BazelIncExecutor : WorkRequestExecutor<WorkRequestWithDigests> {
   }
 }
 
-
-internal class WorkRequestWithDigests(
-  arguments: Array<String>,
-  inputPaths: Array<String>,
-  requestId: Int,
-  cancel: Boolean,
-  verbosity: Int,
-  sandboxDir: String?,
-  @JvmField val inputDigests: Array<ByteArray>,
-) : WorkRequest(
-  arguments = arguments,
-  inputPaths = inputPaths,
-  requestId = requestId,
-  cancel = cancel,
-  verbosity = verbosity,
-  sandboxDir = sandboxDir,
-)
-
-
 internal open class WorkRequestWithDigestReader(
   //private val allocator: BufferAllocator,
   private val input: InputStream,
-) : WorkRequestReader<WorkRequestWithDigests> {
-  private val inputPathsToReuse = ArrayList<String>()
-  private val inputDigestToReuse = ArrayList<ByteArray>()
-  private val argListToReuse = ArrayList<String>()
-
-  override fun readWorkRequestFromStream(): WorkRequestWithDigests? {
-    val inputDigestToReuse = inputDigestToReuse
-    inputDigestToReuse.clear()
-    val result = doReadWorkRequestFromStream(
+) : WorkRequestReader {
+  override fun readWorkRequestFromStream(): WorkRequest? {
+    return doReadWorkRequestFromStream(
       input = input,
-      inputPathsToReuse = inputPathsToReuse,
-      argListToReuse = argListToReuse,
-      readDigest = { codedInputStream, tag ->
-        val digest = codedInputStream.readByteArray()
-        //inputDigestToReuse.setSafe(counter++, digest)
-        inputDigestToReuse.add(digest)
-      },
-      requestCreator = { argListToReuse, inputPathsToReuse, requestId, cancel, verbosity, sandboxDir ->
-        //digests.setValueCount(counter)
-        //counter = -1
-        WorkRequestWithDigests(
-          arguments = argListToReuse,
-          inputPaths = inputPathsToReuse,
-          requestId = requestId,
-          cancel = cancel,
-          verbosity = verbosity,
-          sandboxDir = sandboxDir,
-          inputDigests = inputDigestToReuse.toTypedArray(),
-        )
-      },
+      shouldReadDigest = true,
     )
-    return result
   }
-
 }
-

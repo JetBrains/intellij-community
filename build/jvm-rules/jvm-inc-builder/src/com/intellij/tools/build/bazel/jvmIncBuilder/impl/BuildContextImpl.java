@@ -4,6 +4,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.bazel.jvm.Input;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.impl.PathSourceMapper;
@@ -37,7 +38,7 @@ public class BuildContextImpl implements BuildContext {
 
   private volatile boolean myHasErrors;
 
-  public BuildContextImpl(Path baseDir, Iterable<String> inputs, Iterable<byte[]> inputDigests, Map<CLFlags, List<String>> flags, Appendable messageSink) {
+  public BuildContextImpl(Path baseDir, Iterable<Input> inputs, Map<CLFlags, List<String>> flags, Appendable messageSink) {
     myFlags = Map.copyOf(flags);
     myTargetName = CLFlags.TARGET_LABEL.getMandatoryScalarValue(flags);
     myAllowWarnings = !"off".equals(CLFlags.WARN.getOptionalScalarValue(flags));
@@ -65,9 +66,9 @@ public class BuildContextImpl implements BuildContext {
     Map<NodeSource, String> sourcesMap = new HashMap<>();
     Map<Path, String> otherInputsMap = new HashMap<>();
     Base64.Encoder base64 = Base64.getEncoder().withoutPadding();
-    Iterator<String> digestsIterator = map(inputDigests, base64::encodeToString).iterator();
-    for (Path inputPath : map(inputs, input -> baseDir.resolve(input).normalize())) {
-      String inputDigest = digestsIterator.hasNext()? digestsIterator.next() : "";
+    for (Input input : inputs) {
+      Path inputPath = baseDir.resolve(input.path).normalize();
+      String inputDigest = base64.encodeToString(input.digest);
       if (isSourceDependency(inputPath)) {
         sourcesMap.put(myPathMapper.toNodeSource(inputPath), inputDigest);
       }
