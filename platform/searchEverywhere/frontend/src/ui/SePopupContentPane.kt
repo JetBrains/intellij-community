@@ -187,6 +187,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               if (!resultListModel.isValid || resultListModel.isEmpty) {
                 if (!textField.text.isEmpty() &&
                     (vm.currentTab.getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(true) ?: false) {
+                  headerPane.updateActionsAsync()
                   return@withContext
                 }
               }
