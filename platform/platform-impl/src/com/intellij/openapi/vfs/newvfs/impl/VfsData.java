@@ -174,8 +174,7 @@ public final class VfsData {
     return segment != null && segment.objectFieldsArray.get(objectOffsetInSegment(id)) != null;
   }
 
-  @NotNull
-  CharSequence getNameByFileId(int fileId) {
+  @NotNull String getNameByFileId(int fileId) {
     return owningPersistentFS.peer().getName(fileId);
   }
 

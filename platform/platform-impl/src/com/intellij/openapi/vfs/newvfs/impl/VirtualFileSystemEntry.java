@@ -167,16 +167,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NotNull String getName() {
-    return getNameSequence().toString();
-  }
-
-  @Override
-  public @NotNull CharSequence getNameSequence() {
     PersistentFSImpl pfs = owningPersistentFS();
     if (pfs == null) {
       return "<FS-is-disposed>";//shutdown-safe
     }
     return pfs.getName(myId);
+  }
+
+  @Override
+  public @NotNull CharSequence getNameSequence() {
+    return getName();
   }
 
   public final int getNameId() {
