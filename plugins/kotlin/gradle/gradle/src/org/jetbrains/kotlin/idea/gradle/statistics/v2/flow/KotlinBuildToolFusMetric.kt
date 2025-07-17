@@ -174,6 +174,19 @@ internal class OverrideRegexStringFusMetric(metric: String, regex: String) :
     RegexStringFusMetric(metric, regex, OverrideValueAggregationStep())
 
 /**
+ * Special FUS metric for file and directory paths.
+ * Uses EventFields.AnonymizedPath to provide anonymization for user paths.
+ *
+ * @param metric The name of the metric
+ */
+internal class PathFusMetric(metric: String) : KotlinBuildToolFusMetric<String>(
+    metric,
+    EventFields.AnonymizedPath as EventField<String>,
+    validationStep = KotlinBuildToolStringFLowValidationStep,
+    aggregationStep = OverrideValueAggregationStep()
+)
+
+/**
  * Special FUS metric for build IDs.
  * Validates that the build ID contains only alphanumeric characters, underscores, and hyphens.
  */

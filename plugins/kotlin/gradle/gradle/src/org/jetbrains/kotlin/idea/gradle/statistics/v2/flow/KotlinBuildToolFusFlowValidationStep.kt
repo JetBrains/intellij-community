@@ -70,3 +70,13 @@ class FilteredKotlinBuildToolFusFlowValidationStep<T: Any>(val validationStep: K
         return validationStep.process(values)?.filter(filter)
     }
 }
+
+/**
+ * Basic validation and transformation step of FUS value processing for string values.
+ * All input values are included in the result as-is.
+ */
+object KotlinBuildToolStringFLowValidationStep: KotlinBuildToolFusFlowValidationStep<String> {
+    override fun process(values: List<RawFusValue>): List<String> {
+        return values.map { it.value }
+    }
+}

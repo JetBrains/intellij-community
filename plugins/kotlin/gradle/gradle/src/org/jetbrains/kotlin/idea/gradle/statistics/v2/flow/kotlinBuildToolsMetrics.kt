@@ -155,7 +155,7 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     BUILD_FINISH_TIME(KotlinBuildToolLongSumFusMetric("BUILD_FINISH_TIME")),
     // User environment
     GRADLE_VERSION(VersionStringFusMetric("GRADLE_VERSION")),
-    PROJECT_PATH(OverrideRegexStringFusMetric("PROJECT_PATH","([0-9A-Fa-f]{40,64})|undefined")),
+    PROJECT_PATH(PathFusMetric("PROJECT_PATH")),
 
     OS_TYPE(OverrideRegexStringFusMetric("OS_TYPE","(Windows|Windows |Windows Server |Mac|Linux|FreeBSD|Solaris|Other|Mac OS X)\\d*")),
 
