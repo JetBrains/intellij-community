@@ -622,10 +622,7 @@
 
     <notificationGroup id="Black Formatter Integration" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="black.configurable.name"/>
-
     <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
-    <lookup.usageDetails implementation="com.jetbrains.python.statistics.PyCompletionStatisticLogger"/>
-    <statistics.collectorExtension implementation="com.jetbrains.python.statistics.PyCompletionUsageExtension"/>
 
     <!-- Parameter Info -->
     <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
