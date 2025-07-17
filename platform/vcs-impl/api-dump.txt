@@ -2124,7 +2124,6 @@ c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 - sf:SHELVED_RECYCLED_CHANGELIST_KEY:com.intellij.openapi.actionSystem.DataKey
 - p:activateContent():V
 - activateView(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList):V
-- p:addContent(com.intellij.ui.content.Content):V
 - s:deleteShelves(com.intellij.openapi.project.Project,java.util.List):V
 - dispose():V
 - s:getBinaryShelveChanges(com.intellij.openapi.actionSystem.DataContext):java.util.List
@@ -2133,7 +2132,6 @@ c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 - s:getSelectedShelvedChangeNames(com.intellij.openapi.actionSystem.DataContext):java.util.List
 - s:getShelveChanges(com.intellij.openapi.actionSystem.DataContext):java.util.List
 - s:getShelvedLists(com.intellij.openapi.actionSystem.DataContext):java.util.List
-- p:removeContent(com.intellij.ui.content.Content):V
 - selectShelvedList(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList):V
 - startEditing(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList):V
 - updateOnVcsMappingsChanged():V

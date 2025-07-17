@@ -208,17 +208,6 @@ public class ShelvedChangesViewManager implements Disposable {
     return singleVcs.isWithCustomShelves();
   }
 
-  protected void removeContent(Content content) {
-    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-    contentManager.removeContent(content);
-    contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
-  }
-
-  protected void addContent(Content content) {
-    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-    contentManager.addContent(content);
-  }
-
   protected void activateContent() {
     ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
     contentManager.selectContent(SHELF);
