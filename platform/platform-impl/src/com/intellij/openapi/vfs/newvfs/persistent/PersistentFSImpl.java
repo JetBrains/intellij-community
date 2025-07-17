@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordForRead;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordReader;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.OptimizedCaseInsensitiveStringHashing;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
@@ -44,7 +45,9 @@ import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.*;
 
@@ -63,8 +66,6 @@ import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WR
 import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
-import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
-import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -80,6 +81,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final int READ_ACCESS_CHECK_REQUIRE_RA_HARD = 2;
   private static final int READ_ACCESS_CHECK_REQUIRE_NO_RA = 3;
   private static final int READ_ACCESS_CHECK_KIND = getIntProperty("vfs.read-access-check-kind", READ_ACCESS_CHECK_NONE);
+
+  private static final boolean USE_OPTIMIZED_HASHING_STRATEGY = getBooleanProperty("PersistentFSImpl.USE_OPTIMIZED_HASHING_STRATEGY", true);
 
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
@@ -1471,7 +1474,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     List<Runnable> applyActions = new ArrayList<>(cappedInitialSize);
     // even in the unlikely case when case-insensitive maps falsely detect conflicts of case-sensitive paths,
     // the worst outcome will be one extra event batch, which is acceptable
-    MostlySingularMultiMap<String, VFileEvent> files = new MostlySingularMultiMap<>(CollectionFactory.createFilePathMap(cappedInitialSize));
+    MostlySingularMultiMap<String, VFileEvent> files = new MostlySingularMultiMap<>(createFilePathMap(cappedInitialSize));
     Set<String> middleDirs = createFilePathSet(cappedInitialSize);
 
     List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
@@ -1623,10 +1626,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     childrenAdded.sort(ChildInfo.BY_ID);
     boolean caseSensitive = parent.isCaseSensitive();
-    vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive), /*setAllChildrenCached: */
-                   false);
-    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> {
-    });
+    vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive), /*setAllChildrenCached: */ false);
+    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> { });
 
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
   }
@@ -2640,21 +2641,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                         invertedFileNameIndexRequestsCount);
   }
 
-  private static final Hash.Strategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new Hash.Strategy<>() {
-    @Override
-    public int hashCode(@Nullable VFileCreateEvent object) {
-      return object == null ? 0 : Strings.stringHashCodeInsensitive(object.getChildName());
-    }
-
-    @Override
-    public boolean equals(VFileCreateEvent o1, VFileCreateEvent o2) {
-      if (o1 == o2) {
-        return true;
-      }
-      return o2 != null && o1.getChildName().equalsIgnoreCase(o2.getChildName());
-    }
-  };
-
   private static class LengthAndContentIdReader implements RecordReader<LengthAndContentIdReader> {
     private long length;
     private int contentRecordId;
@@ -2675,6 +2661,67 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         contentRecordId = record.getContentRecordId();
       }
       return this;
+    }
+  }
+
+  //===== utilities to use OptimizedCaseInsensitiveStringHashing instead of the standard one:  ====================
+
+  private static final Hash.Strategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new Hash.Strategy<>() {
+    @Override
+    public int hashCode(@Nullable VFileCreateEvent object) {
+      return object == null ? 0 : OptimizedCaseInsensitiveStringHashing.caseInsensitiveHashCode(object.getChildName());
+    }
+
+    @Override
+    public boolean equals(VFileCreateEvent o1, VFileCreateEvent o2) {
+      if (o1 == o2) {
+        return true;
+      }
+      return o2 != null && o1.getChildName().equalsIgnoreCase(o2.getChildName());
+    }
+  };
+
+  private static @NotNull <V> Map<String, V> createFilePathMap(int cappedInitialSize) {
+    return createFilePathMap(cappedInitialSize, SystemInfoRt.isFileSystemCaseSensitive);
+  }
+
+  private static @NotNull <V> Map<String, V> createFilePathMap(int cappedInitialSize, boolean caseSensitive) {
+    if (!USE_OPTIMIZED_HASHING_STRATEGY) {
+      return CollectionFactory.createFilePathMap(cappedInitialSize, caseSensitive);
+    }
+    else if (caseSensitive) {
+      return CollectionFactory.createFilePathMap(cappedInitialSize, true);
+    }
+    else {
+      return new Object2ObjectOpenCustomHashMap<>(cappedInitialSize, OptimizedCaseInsensitiveStringHashing.instance());
+    }
+  }
+
+  private static @NotNull Set<String> createFilePathSet(int cappedInitialSize) {
+    return createFilePathSet(cappedInitialSize, SystemInfoRt.isFileSystemCaseSensitive);
+  }
+
+  private static @NotNull Set<String> createFilePathSet(int cappedInitialSize, boolean caseSensitive) {
+    if (!USE_OPTIMIZED_HASHING_STRATEGY) {
+      return CollectionFactory.createFilePathSet(cappedInitialSize, caseSensitive);
+    }
+    else if (caseSensitive) {
+      return CollectionFactory.createFilePathSet(cappedInitialSize, true);
+    }
+    else {
+      return new ObjectOpenCustomHashSet<>(cappedInitialSize, OptimizedCaseInsensitiveStringHashing.instance());
+    }
+  }
+
+  private static @NotNull Set<String> createFilePathSet(@NotNull String[] values, boolean caseSensitive) {
+    if (!USE_OPTIMIZED_HASHING_STRATEGY) {
+      return CollectionFactory.createFilePathSet(values, caseSensitive);
+    }
+    else if (caseSensitive) {
+      return CollectionFactory.createFilePathSet(values, true);
+    }
+    else {
+      return new ObjectOpenCustomHashSet<>(values, OptimizedCaseInsensitiveStringHashing.instance());
     }
   }
 }
