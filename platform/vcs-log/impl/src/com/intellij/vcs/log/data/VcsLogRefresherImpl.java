@@ -226,10 +226,6 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     myTopCommitsDetailsCache.storeDetails(metadatas);
   }
 
-  public @NotNull VcsLogProgress getProgress() {
-    return myProgress;
-  }
-
   @Override
   public void dispose() {
   }

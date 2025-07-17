@@ -70,6 +70,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private final @NotNull String myStorageId;
   private final @NotNull VcsLogStorage myStorage;
   private final @NotNull ContainingBranchesGetter myContainingBranchesGetter;
+  private final @NotNull VcsLogProgress myProgress;
   private final @NotNull VcsLogRefresherImpl myRefresher;
   private final @NotNull List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -90,14 +91,14 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     myUserRegistry = (VcsUserRegistryImpl)project.getService(VcsUserRegistry.class);
     myErrorHandler = errorHandler;
 
-    VcsLogProgress progress = new VcsLogProgress(this);
+    myProgress = new VcsLogProgress(this);
 
     myStorageLocker = VcsLogStorageLocker.Companion.getInstance();
     myStorageId = PersistentUtil.calcLogId(myProject, myLogProviders);
     // storage can not be opened twice, so we have to wait for other clients (previously opened/closed project) to close it first
     myStorageLocker.acquireLock(myStorageId);
     try {
-      Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(progress, isIndexEnabled);
+      Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(myProgress, isIndexEnabled);
       myStorage = storageAndIndex.first;
       myIndex = storageAndIndex.second;
     }
@@ -110,7 +111,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
     myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, this);
 
-    myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
+    myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, myProgress, myTopCommitsDetailsCache,
                                           this::fireDataPackChangeEvent, getRecentCommitsCount());
     Disposer.register(this, myRefresher);
 
@@ -243,7 +244,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
           }
         };
         CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
-        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator(DATA_PACK_REFRESH);
+        ProgressIndicator indicator = myProgress.createProgressIndicator(DATA_PACK_REFRESH);
         Future<?> future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
         myInitialization = new SingleTaskController.SingleTaskImpl(future, indicator);
       }
@@ -421,7 +422,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   public @NotNull VcsLogProgress getProgress() {
-    return myRefresher.getProgress();
+    return myProgress;
   }
 
   public @NotNull TopCommitsCache getTopCommitsCache() {
