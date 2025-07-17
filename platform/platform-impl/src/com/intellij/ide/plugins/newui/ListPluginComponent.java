@@ -66,6 +66,7 @@ public final class ListPluginComponent extends JPanel {
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
   private final boolean myIsAvailable;
+  /** FIXME value logic is duplicated with {@link com.intellij.ide.plugins.newui.PluginDetailsPageComponent} */
   private final boolean myIsDisableAllowed;
   private final boolean myIsNotFreeInFreeMode;
   private @NotNull PluginUiModel myPlugin;

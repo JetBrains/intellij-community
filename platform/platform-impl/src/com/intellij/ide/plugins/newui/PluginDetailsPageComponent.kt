@@ -19,7 +19,10 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginWrite
 import com.intellij.ide.plugins.newui.PluginsViewCustomizer.PluginDetailsCustomizer
 import com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction.OptionButtonController
 import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -63,6 +66,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.lang.Runnable
+import java.lang.System
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -1347,11 +1351,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         enableDisableController!!.update()
       }
       val bundled = plugin!!.isBundled
-      val isEssential = ApplicationInfo.getInstance().isEssentialPlugin(
-        plugin!!.pluginId)
+      /** FIXME duplicated with [ListPluginComponent] */
+      val isDisableAllowed = UiPluginManager.getInstance().isDisableAllowed(plugin!!.pluginId)
       gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
       myEnableDisableButton!!.isVisible = bundled
-      myEnableDisableButton!!.isEnabled = !isEssential && showComponent?.isNotFreeInFreeMode != true
+      myEnableDisableButton!!.isEnabled = isDisableAllowed && showComponent?.isNotFreeInFreeMode != true
       myUninstallButton?.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode == true
 
       updateEnableForNameAndIcon()
