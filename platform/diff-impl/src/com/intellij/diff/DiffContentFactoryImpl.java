@@ -11,6 +11,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.transformer.TextPresentationTransformer;
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
@@ -395,14 +397,21 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (project == null || project.isDefault()) return null;
     if (fileType != null && fileType.isBinary()) return null;
 
-    // Here we need a dummy originalFile to pass it to [TextPresentationTransformers.fromPersistent]
-    LightVirtualFile originalFile = new MyLightVirtualFile(lightFilePath, fileType, content);
-    String convertedText = TextPresentationTransformers.fromPersistent(content, originalFile).toString();
-    LightVirtualFile file = new MyLightVirtualFile(lightFilePath, fileType, convertedText);
+    LightVirtualFile file = new MyLightVirtualFile(lightFilePath, fileType, content);
+
+    TextPresentationTransformers transformersManager = ApplicationManager.getApplication().getService(TextPresentationTransformers.class);
+    TextPresentationTransformer transformer = transformersManager.forFileType(file.getFileType());
+    //noinspection ConstantValue
+    if (transformer != null) {
+      String convertedText = transformer.fromPersistent(content, file).toString();
+      file = new MyLightVirtualFile(lightFilePath, fileType, convertedText);
+    }
+
     file.setWritable(!readOnly);
 
+    LightVirtualFile finalFile = file;
     return ReadAction.compute(() -> {
-      Document document = FileDocumentManager.getInstance().getDocument(file, project);
+      Document document = FileDocumentManager.getInstance().getDocument(finalFile, project);
       if (document == null) {
         return null;
       }
