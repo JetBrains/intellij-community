@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.groovy">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.groovy" allow-bundled-update="true">
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
   <category>Languages</category>

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.byteCodeViewer">
+<idea-plugin package="com.intellij.byteCodeViewer" allow-bundled-update="true">
   <name>Bytecode Viewer</name>
   <id>ByteCodeViewer</id>
   <category>JVM Tools</category>

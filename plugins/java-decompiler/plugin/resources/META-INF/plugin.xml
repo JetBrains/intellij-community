@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>org.jetbrains.java.decompiler</id>
   <name>Java Bytecode Decompiler</name>
   <category>JVM Tools</category>
