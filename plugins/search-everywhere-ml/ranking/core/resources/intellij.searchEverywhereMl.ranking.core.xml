@@ -7,8 +7,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
-    <rankingService implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlRankingService"/>
-
     <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.ActionKeyProvider"/>
     <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.PsiElementKeyProvider"/>
     <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.RunConfigurationsKeyProvider"/>
@@ -58,6 +56,8 @@
 
     <searchEverywhereEssentialContributorsMarker
       implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker"/>
+
+    <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlRankingService"/>
   </extensions>
 
   <extensionPoints>
