@@ -132,8 +132,8 @@ class SwitcherVirtualFile : SwitcherListItem, BackgroundSupplier {
     editorWindow = null
   }
 
-  constructor(localFile: VirtualFile, localIcon: Icon) {
-    mainText = localFile.name
+  constructor(localFile: VirtualFile, fileName: String, localIcon: Icon) {
+    mainText = fileName
     statusText = ""
     pathText = ""
     mnemonic = null
