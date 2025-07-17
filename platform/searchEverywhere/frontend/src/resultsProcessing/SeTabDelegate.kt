@@ -46,6 +46,7 @@ class SeTabDelegate(
 
   fun getItems(params: SeParams, disabledProviders: List<SeProviderId>? = null): Flow<SeResultEvent> {
     val accumulator = SeResultsAccumulator(providersAndLimits)
+    val disabledProviders = fixDisabledProviders(disabledProviders)
 
     return flow {
       disabledProviders?.forEach {
@@ -201,6 +202,20 @@ class SeTabDelegate(
                              ?: emptyList()
       return localProviders.toList() + frontedProviders
     }
+  }
+
+  // Workaround for: IJPL-188383 Search Everywhere, All tab: 'Top Hit' filter is duplicated
+  // Add/remove Top Hit (On Client) according to the presence of Top Hit provider
+  private fun fixDisabledProviders(disabledProviders: List<SeProviderId>?): List<SeProviderId>? {
+    val all = disabledProviders?.toMutableSet() ?: return null
+
+    val topHitClientId = SeProviderIdUtils.TOP_HIT_ID.toProviderId()
+    if (all.contains(SeProviderIdUtils.TOP_HIT_HOST_ID.toProviderId())) {
+      all.add(topHitClientId)
+    }
+    else all.remove(topHitClientId)
+
+    return all.toList()
   }
 
   companion object {
