@@ -1331,7 +1331,10 @@ fun <T : CommandChain> T.assertProblemViewCount(expectedProblemCount: Int): T = 
   addCommand("${CMD_PREFIX}assertProblemsViewCount $expectedProblemCount")
 }
 
-/** @see com.jetbrains.performancePlugin.commands.DetectProjectLeaksCommand */
+fun <T : CommandChain> T.waitForReOpenedFile(relativePath: String): T = apply {
+  addCommand("${CMD_PREFIX}waitForReOpenedFile -file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
+}
+
 @Suppress("KDocUnresolvedReference")
 fun <T : CommandChain> T.detectProjectLeaks(): T = apply {
   addCommand("${CMD_PREFIX}detectProjectLeaks")
