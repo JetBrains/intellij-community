@@ -230,6 +230,13 @@ com.intellij.psi.search.ProjectAwareVirtualFile
 com.intellij.psi.search.PsiFileSystemItemProcessor
 - com.intellij.psi.search.PsiElementProcessor
 - a:acceptItem(java.lang.String,Z):Z
+f:com.intellij.psi.stubs.DefaultFileStubSerializer
+- com.intellij.psi.stubs.StubSerializer
+- <init>():V
+- deserialize(com.intellij.psi.stubs.StubInputStream,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.PsiFileStub
+- getExternalId():java.lang.String
+- indexStub(com.intellij.psi.stubs.PsiFileStub,com.intellij.psi.stubs.IndexSink):V
+- serialize(com.intellij.psi.stubs.PsiFileStub,com.intellij.psi.stubs.StubOutputStream):V
 com.intellij.psi.tree.RoleFinder
 - a:findChild(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 com.intellij.psi.util.PsiAwareObject
