@@ -41,10 +41,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -412,8 +409,16 @@ public final class PluginInstaller {
       return false;
     }
 
+    var pluginSet = PluginManagerCore.getPluginSet();
+    var contentModuleIdMap = pluginSet.buildContentModuleIdMap();
+    var pluginMap = pluginSet.buildPluginIdMap();
+
+    if (PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled(targetDescriptor, pluginMap, contentModuleIdMap)) {
+      LOG.warn("Plugin " + targetPluginId + " requires Ultimate plugin, but it's disabled");
+      return false;
+    }
+
     if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
-      var pluginSet = PluginManagerCore.getPluginSet();
       var wasInstalledBefore = pluginSet.isPluginInstalled(targetPluginId);
       if (!wasInstalledBefore) {
         // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
