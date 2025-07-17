@@ -628,7 +628,7 @@ public final class TerminalToolWindowManager implements Disposable {
                               @NotNull Content content) {
     TerminalTitle title = widget.getTerminalTitle();
     String titleString = title.buildTitle();
-    List<String> tabs = Arrays.stream(toolWindow.getContentManager().getContents())
+    List<String> tabs = toolWindow.getContentManager().getContentsRecursively().stream()
       .filter(c -> c != content)
       .map(c -> c.getDisplayName()).toList();
     String generatedName = generateUniqueName(titleString, tabs);
