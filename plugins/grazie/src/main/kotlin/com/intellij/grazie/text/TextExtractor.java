@@ -198,7 +198,7 @@ public abstract class TextExtractor {
   }
 
   private static boolean isSuppressionComment(TextContent content) {
-    return content.getDomain() == TextContent.TextDomain.COMMENTS && SUPPRESSION.matcher(content).matches();
+    return content.getDomain() == TextContent.TextDomain.COMMENTS && SUPPRESSION.matcher(content).lookingAt();
   }
 
   /**
