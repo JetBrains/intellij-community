@@ -257,7 +257,7 @@ internal open class FirCallableCompletionContributor(
                     scopeNameFilter = scopeNameFilter,
                     symbolFilter = { filter(it) },
                 ).map { signature ->
-                    val aliasName = scopeWithKind.getAliasNameIfExists(signature.symbol)
+                    val aliasName = parameters.completionFile.getAliasNameIfExists(signature.symbol)
                     signature.createCallableWithMetadata(scopeWithKind.kind, aliasName = aliasName)
                 }
             }
@@ -606,7 +606,7 @@ internal open class FirCallableCompletionContributor(
 
                 ShadowedCallablesFilter.sortExtensions(suitableExtensions, receiverTypes)
                     .map { extension ->
-                        val aliasName = scopeWithKind.getAliasNameIfExists(extension.signature.symbol)
+                        val aliasName = parameters.completionFile.getAliasNameIfExists(extension.signature.symbol)
                         CallableWithMetadataForCompletion(
                             _signature = extension.signature,
                             options = extension.insertionOptions,
@@ -987,8 +987,9 @@ internal class FirKDocCallableCompletionContributor(
             for (callableSymbol in scopeWithKind.scope.callables(scopeNameFilter)) {
                 if (callableSymbol is KaSyntheticJavaPropertySymbol) continue
 
+                val aliasName = parameters.completionFile.getAliasNameIfExists(callableSymbol)
                 val value = callableSymbol.asSignature()
-                    .createCallableWithMetadata(scopeWithKind.kind, isImportDefinitelyNotRequired = true)
+                    .createCallableWithMetadata(scopeWithKind.kind, isImportDefinitelyNotRequired = true, aliasName = aliasName)
                 yield(value)
             }
         }

@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
-import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
@@ -65,7 +64,7 @@ internal object FunctionLookupElementFactory {
             inputTypeArgumentsAreRequired = !FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(symbol, expectedType),
         )
 
-        return createLookupElement(signature, lookupObject)
+        return createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null)
     }
 
     context(KaSession)
@@ -125,6 +124,7 @@ internal object FunctionLookupElementFactory {
         shortName: Name,
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
+        aliasName: Name?,
     ): LookupElementBuilder? {
         val trailingFunctionSignature = getTrailingFunctionSignature(signature)
             ?: return null
@@ -134,14 +134,14 @@ internal object FunctionLookupElementFactory {
             ?: return null
 
         val lookupObject = FunctionCallLookupObject(
-            shortName = shortName,
+            shortName = aliasName ?: shortName,
             options = options,
             renderedDeclaration = CompletionShortNamesRenderer.renderTrailingFunction(trailingFunctionSignature, trailingFunctionType),
             hasReceiver = signature.hasReceiver,
             inputTrailingLambdaIsRequired = true,
         )
 
-        return createLookupElement(signature, lookupObject).apply {
+        return createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null).apply {
             hasTrailingLambda = true
         }
     }
@@ -150,11 +150,12 @@ internal object FunctionLookupElementFactory {
     private fun createLookupElement(
         signature: KaFunctionSignature<*>,
         lookupObject: FunctionCallLookupObject,
+        useFqNameInTailText: Boolean = false,
     ): LookupElementBuilder = LookupElementBuilder.create(
         /* lookupObject = */ lookupObject,
         /* lookupString = */ lookupObject.shortName.asString(),
     ).appendTailText(lookupObject.renderedDeclaration, true)
-        .appendTailText(TailTextProvider.getTailText(signature), true)
+        .appendTailText(TailTextProvider.getTailText(signature, useFqName = useFqNameInTailText), true)
         .let { withCallableSignatureInfo(signature, it) }
         .also { it.acceptOpeningBrace = true }
         .let { builder ->

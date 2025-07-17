@@ -1547,45 +1547,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../completion/testData/basic/common/importAliases")
-        public static class ImportAliases extends AbstractK2JsBasicCompletionLegacyStdlibTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
-            }
-
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("ImportAliasClass.kt")
-            public void testImportAliasClass() throws Exception {
-                runTest("../../completion/testData/basic/common/importAliases/ImportAliasClass.kt");
-            }
-
-            @TestMetadata("ImportAliasExtension.kt")
-            public void testImportAliasExtension() throws Exception {
-                runTest("../../completion/testData/basic/common/importAliases/ImportAliasExtension.kt");
-            }
-
-            @TestMetadata("ImportAliasMethod.kt")
-            public void testImportAliasMethod() throws Exception {
-                runTest("../../completion/testData/basic/common/importAliases/ImportAliasMethod.kt");
-            }
-
-            @TestMetadata("ImportAliasMultipleInScope.kt")
-            public void testImportAliasMultipleInScope() throws Exception {
-                runTest("../../completion/testData/basic/common/importAliases/ImportAliasMultipleInScope.kt");
-            }
-
-            @TestMetadata("ImportAliasShowOriginal.kt")
-            public void testImportAliasShowOriginal() throws Exception {
-                runTest("../../completion/testData/basic/common/importAliases/ImportAliasShowOriginal.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/inInitBlock")
         public static class InInitBlock extends AbstractK2JsBasicCompletionLegacyStdlibTest {
             @java.lang.Override

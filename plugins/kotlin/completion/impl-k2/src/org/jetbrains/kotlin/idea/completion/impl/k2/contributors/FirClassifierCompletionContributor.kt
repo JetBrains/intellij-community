@@ -116,11 +116,11 @@ internal open class FirClassifierCompletionContributor(
         val scopeClassifiers = scopesToCheck
             .asSequence()
             .flatMap { scope ->
-                scope.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker).map { classifier -> scope to classifier }
+                scope.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker)
             }
-            .filter { (_, classifier) -> filterClassifiers(classifier.symbol) }
-            .flatMap { (scope, symbolWithOrigin) ->
-                val aliasName = scope.getAliasNameIfExists(symbolWithOrigin.symbol)
+            .filter { classifier -> filterClassifiers(classifier.symbol) }
+            .flatMap {  symbolWithOrigin ->
+                val aliasName = parameters.completionFile.getAliasNameIfExists(symbolWithOrigin.symbol)
 
                 val classifierSymbol = symbolWithOrigin.symbol
                 if (aliasName == null) {

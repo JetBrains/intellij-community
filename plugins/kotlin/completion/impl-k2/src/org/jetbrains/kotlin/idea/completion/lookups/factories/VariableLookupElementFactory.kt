@@ -70,7 +70,7 @@ internal object VariableLookupElementFactory {
                 )
 
                 // todo reuse rendered/renderedDeclaration
-                val tailText = getTailTextForVariableCall(functionalType, signature)
+                val tailText = getTailTextForVariableCall(functionalType, signature, useFqName = aliasName != null)
 
                 LookupElementBuilder.create(lookupObject, lookupString)
                     .withTailText(tailText, true)
@@ -86,7 +86,7 @@ internal object VariableLookupElementFactory {
                 val lookupObject = VariableLookupObject(name, options, rendered)
                 markIfSyntheticJavaProperty(
                     LookupElementBuilder.create(lookupObject, lookupString)
-                        .withTailText(getTailText(signature), true), signature.symbol
+                        .withTailText(getTailText(signature, useFqName = aliasName != null), true), signature.symbol
                 ).withInsertHandler(VariableInsertionHandler)
             }
         }

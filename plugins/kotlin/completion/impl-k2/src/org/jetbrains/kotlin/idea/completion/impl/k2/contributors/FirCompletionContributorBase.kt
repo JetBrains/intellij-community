@@ -155,6 +155,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                     shortName = shortName,
                     signature = signature,
                     options = options,
+                    aliasName = aliasName,
                 )?.let { yield(it) }
             }
 

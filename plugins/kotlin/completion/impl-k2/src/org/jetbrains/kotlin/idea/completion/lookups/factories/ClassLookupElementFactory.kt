@@ -30,7 +30,7 @@ internal object ClassLookupElementFactory {
         val name = aliasName ?: symbol.nameOrAnonymous
         return LookupElementBuilder.create(ClassifierLookupObject(name, importingStrategy), name.asString())
             .withInsertHandler(ClassifierInsertionHandler)
-            .withTailText(TailTextProvider.getTailText(symbol))
+            .withTailText(TailTextProvider.getTailText(symbol, useFqnAsTailText = aliasName != null), true)
             .let { withClassifierSymbolInfo(symbol, it) }
     }
 
