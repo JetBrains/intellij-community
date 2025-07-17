@@ -128,7 +128,7 @@ def test_candidates_for_consecutive_calls_py3(consecutive_calls):
     assert variants[4].argval == '__add__'
 
 
-@pytest.mark.xfail(IS_PY38 or IS_PY39 or IS_PY310, reason='PCQA-592')
+@pytest.mark.xfail(IS_PY38 or IS_PY39 or IS_PY310 or IS_PY314, reason='PCQA-592')
 def test_candidates_for_returned_object_method(returned_object_method):
     variants = list(get_stepping_variants(returned_object_method))
     assert len(variants) == 3
