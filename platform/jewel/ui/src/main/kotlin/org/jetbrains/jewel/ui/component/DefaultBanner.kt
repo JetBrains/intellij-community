@@ -164,6 +164,66 @@ public fun DefaultInformationBanner(
 }
 
 /**
+ * Displays an informational editor banner providing a context-aware message to the user, styled with the default
+ * "information" theme.
+ *
+ * The banner includes an optional icon, customizable actions, and a text message. Its primary purpose is to provide
+ * non-intrusive, informative feedback in the editor area.
+ *
+ * @param modifier a [Modifier] for customizing the layout and appearance of the banner.
+ * @param icon a composable representing an optional icon displayed on the left side of the banner, by default it shows
+ *   the general "information" icon, in a 16x16 dp [Box]. Pass `null` to hide the icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style defines the visual styling of the banner, adapting to the default "information" theme of the IJ UI. You
+ *   can override it if needed by providing a custom [DefaultBannerStyle].
+ * @param content The primary content of the banner, briefly describing the information it conveys.
+ *
+ * This banner is primarily used to display persistent messages without interrupting the workflow.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html)
+ *
+ * **Swing equivalent:**
+ * [`EditorNotificationProvider `](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/EditorNotificationProvider.java)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * Example usage:
+ * ```
+ * DefaultInformationBanner(
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * ) {
+ *     Markdown("Project index **up to date**.")
+ * }
+ * ```
+ */
+@Composable
+public fun DefaultInformationBanner(
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: DefaultBannerStyle = JewelTheme.defaultBannerStyle.information,
+    content: @Composable () -> Unit,
+) {
+    DefaultBannerImpl(
+        style = style,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
+        content = content,
+    )
+}
+
+/**
  * Displays a success editor banner signaling a successful action, state, or process completion.
  *
  * The banner includes an optional icon, customizable actions, and a text message styled with the default "success"
@@ -290,6 +350,65 @@ public fun DefaultSuccessBanner(
         linkActions = linkActions,
         iconActions = iconActions,
         modifier = modifier,
+    )
+}
+
+/**
+ * Displays a success editor banner signaling a successful action, state, or process completion.
+ *
+ * The banner includes an optional icon, customizable actions, and a text message styled with the default "success"
+ * theme.
+ *
+ * @param modifier a [Modifier] for customizing the layout and appearance of the banner.
+ * @param icon a composable representing an optional icon displayed on the left of the banner, by default it shows the
+ *   "success" icon, in a 16x16 dp [Box]. Pass `null` to hide the icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style defines the banner's appearance following the "success" theme of the Jewel UI, but can be overridden
+ *   with custom styling.
+ * @param content The primary content of the banner, briefly describing the information it conveys.
+ *
+ * Use this banner to provide clear, visual feedback of a completed or successful action.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html)
+ *
+ * **Swing equivalent:**
+ * [`EditorNotificationProvider `](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/EditorNotificationProvider.java)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * Example usage:
+ * ```
+ * DefaultSuccessBanner(
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * ) {
+ *     Markdown("Project indexed **successfully**.")
+ * }
+ * ```
+ */
+@Composable
+public fun DefaultSuccessBanner(
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Debugger.ThreadStates.Idle, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: DefaultBannerStyle = JewelTheme.defaultBannerStyle.success,
+    content: @Composable () -> Unit,
+) {
+    DefaultBannerImpl(
+        style = style,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
+        content = content,
     )
 }
 
@@ -422,6 +541,64 @@ public fun DefaultWarningBanner(
 }
 
 /**
+ * Displays a warning editor banner highlighting potential issues or a need for user attention.
+ *
+ * This banner visually distinguishes itself using the default "warning" theme, including optional icons and user
+ * actions.
+ *
+ * @param modifier a [Modifier] for customizing the layout and appearance of the banner.
+ * @param icon a composable representing an icon displayed on the left of the banner, by default it shows a "warning"
+ *   icon. Pass `null` to omit the icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style defines the banner's appearance under the "warning" theme, or a custom [DefaultBannerStyle].
+ * @param content The primary content of the banner, briefly describing the information it conveys.
+ *
+ * Use this banner to make users aware of potential issues without stopping their flow.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html)
+ *
+ * **Swing equivalent:**
+ * [`EditorNotificationProvider `](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/EditorNotificationProvider.java)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * Example usage:
+ * ```
+ * DefaultWarningBanner(
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * ) {
+ *     Markdown("Project indexed **with warnings**.")
+ * }
+ * ```
+ */
+@Composable
+public fun DefaultWarningBanner(
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: DefaultBannerStyle = JewelTheme.defaultBannerStyle.warning,
+    content: @Composable () -> Unit,
+) {
+    DefaultBannerImpl(
+        style = style,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
+        content = content,
+    )
+}
+
+/**
  * Displays an error editor banner indicating critical issues or failures that require user awareness.
  *
  * This banner draws attention using the default "error" theme and can optionally include user actions or icons.
@@ -547,6 +724,63 @@ public fun DefaultErrorBanner(
     )
 }
 
+/**
+ * Displays an error editor banner indicating critical issues or failures that require user awareness.
+ *
+ * This banner draws attention using the default "error" theme and can optionally include user actions or icons.
+ *
+ * @param modifier a [Modifier] for customizing the layout and appearance of the banner.
+ * @param icon a composable representing an error icon to display on the left of the banner, by default it shows the
+ *   "error" icon. Pass `null` to omit the icon.
+ * @param linkActions A block within the [BannerLinkActionScope] to define optional action items for the banner. If not
+ *   provided, no actions will be rendered. Please note that this block will automatically fold the actions into a
+ *   "More" dropdown menu if there are more than 3 actions.
+ * @param iconActions A block within the [BannerIconActionScope] to define optional icon actions, such as closing the
+ *   banner. Shows at the top right of the banner. If not provided, no icon actions will be rendered.
+ * @param style the default "error" theme styling for the banner, or a custom one via [DefaultBannerStyle].
+ * @param content The primary content of the banner, briefly describing the information it conveys.
+ *
+ * Use this banner to provide high-visibility error messages requiring immediate user attention.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/banner.html)
+ *
+ * **Swing equivalent:**
+ * [`EditorNotificationProvider `](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/EditorNotificationProvider.java)
+ *
+ * **Usage example:**
+ * [`Banners.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Banners.kt)
+ *
+ * Example usage:
+ * ```
+ * DefaultErrorBanner(
+ *     actionsContent = {
+ *         action("Dismiss", onClick = { /* Handle dismiss action */ })
+ *         iconAction(AllIconsKeys.General.Close, "Close button", null, onClick = {  })
+ *     }
+ * ) {
+ *     Markdown("Project index **failed**.")
+ * }
+ * ```
+ */
+@Composable
+public fun DefaultErrorBanner(
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
+    linkActions: (BannerLinkActionScope.() -> Unit)? = null,
+    iconActions: (BannerIconActionScope.() -> Unit)? = null,
+    style: DefaultBannerStyle = JewelTheme.defaultBannerStyle.error,
+    content: @Composable () -> Unit,
+) {
+    DefaultBannerImpl(
+        style = style,
+        icon = icon,
+        linkActions = linkActions,
+        iconActions = iconActions,
+        modifier = modifier,
+        content = content,
+    )
+}
+
 @Composable
 private fun DefaultBannerImpl(
     text: String,
@@ -562,16 +796,26 @@ private fun DefaultBannerImpl(
         style = style,
         textStyle = textStyle,
         icon = icon,
-        actions =
-            if (linkActions != null || iconActions != null) {
-                {
-                    BannerActionsRow(8.dp, block = linkActions)
-                    BannerIconActionsRow(iconActions)
-                }
-            } else {
-                null
-            },
+        actions = buildDefaultBannerActions(linkActions, iconActions),
         modifier = modifier,
+    )
+}
+
+@Composable
+private fun DefaultBannerImpl(
+    style: DefaultBannerStyle,
+    icon: (@Composable () -> Unit)?,
+    content: @Composable () -> Unit,
+    linkActions: (BannerLinkActionScope.() -> Unit)?,
+    iconActions: (BannerIconActionScope.() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    DefaultBannerImpl(
+        style = style,
+        icon = icon,
+        actions = buildDefaultBannerActions(linkActions, iconActions),
+        modifier = modifier,
+        content = content,
     )
 }
 
@@ -584,6 +828,19 @@ private fun DefaultBannerImpl(
     actions: (@Composable RowScope.() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    DefaultBannerImpl(style, modifier, icon, actions) {
+        Text(text = text, style = textStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
+private fun DefaultBannerImpl(
+    style: DefaultBannerStyle,
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)?,
+    actions: (@Composable RowScope.() -> Unit)?,
+    content: @Composable (() -> Unit),
+) {
     Column(modifier = modifier) {
         Divider(orientation = Orientation.Horizontal, color = style.colors.border, modifier = Modifier.fillMaxWidth())
         Row(
@@ -595,13 +852,7 @@ private fun DefaultBannerImpl(
                 Spacer(modifier = Modifier.width(8.dp))
             }
 
-            Text(
-                text = text,
-                modifier = Modifier.weight(1f),
-                style = textStyle,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Box(Modifier.weight(1f)) { content() }
 
             if (actions != null) {
                 Spacer(Modifier.width(8.dp))
@@ -617,3 +868,16 @@ private fun DefaultBannerImpl(
         Divider(orientation = Orientation.Horizontal, color = style.colors.border, modifier = Modifier.fillMaxWidth())
     }
 }
+
+private fun buildDefaultBannerActions(
+    linkActions: (BannerLinkActionScope.() -> Unit)?,
+    iconActions: (BannerIconActionScope.() -> Unit)?,
+): (@Composable RowScope.() -> Unit)? =
+    if (linkActions != null || iconActions != null) {
+        {
+            BannerActionsRow(8.dp, block = linkActions)
+            BannerIconActionsRow(iconActions)
+        }
+    } else {
+        null
+    }
