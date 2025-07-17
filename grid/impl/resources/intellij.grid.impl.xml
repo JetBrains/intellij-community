@@ -327,8 +327,13 @@
       <reference ref="Console.TableResult.Group.Common"/>
       <action id="Console.TableResult.FindInGrid" class="com.intellij.database.run.actions.FindInGridAction"
               icon="AllIcons.Actions.Find"  use-shortcut-of="Find"/>
-      <action id="Console.TableResult.ColumnLocalFilterToggle" class="com.intellij.database.run.actions.ColumnLocalFilterToggleAction"
-              icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.ColumnFilter" />
+      <group id="Console.TableResult.ColumnLocalFilterGroup" icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.ColumnFilter" popup="true">
+        <action id="Console.TableResult.ColumnLocalFilterToggle" class="com.intellij.database.run.actions.ColumnLocalFilterToggleAction"/>
+        <separator/>
+        <action id="Console.TableResult.ColumnLocalFilterClearAll"
+                class="com.intellij.database.run.actions.ColumnLocalFilterClearAllAction"
+                icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.ClearOutputs"/>
+      </group>
       <action id="Console.TableResult.ToggleRecordView" class="com.intellij.database.actions.ToggleEditMaximizedViewAction"
               icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.SingleRecordView"/>
       <group id="TableViewColoringGroup" icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.TableHeatmap" popup="true">
@@ -421,7 +426,5 @@
     <action id="Console.TableResult.ColumnLocalFilterWithCell"
             class="com.intellij.database.run.actions.ColumnLocalFilterWithCellAction"/>
     <group id="Console.TableResult.AggregatorViewGroup"/>
-    <action id="Console.TableResult.ColumnLocalFilterClearAll"
-            class="com.intellij.database.run.actions.ColumnLocalFilterClearAllAction"/>
   </actions>
 </idea-plugin>
