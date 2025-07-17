@@ -53,6 +53,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
@@ -72,12 +73,14 @@ import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -838,6 +841,9 @@ public final class TerminalToolWindowManager implements Disposable {
    * For example, from Project View.
    */
   private void installDirectoryDnD(@NotNull ToolWindow window) {
+    var toolWindowEx = window instanceof ToolWindowEx ? (ToolWindowEx)window : null;
+    if (toolWindowEx == null) return;
+
     DnDDropHandler handler = new DnDDropHandler() {
       @Override
       public void drop(DnDEvent event) {
@@ -845,14 +851,29 @@ public final class TerminalToolWindowManager implements Disposable {
         if (tw != null) {
           PsiDirectory dir = getDirectory(ArrayUtil.getFirstElement(tw.getPsiElements()));
           if (dir != null && tw.getPsiElements().length == 1) {
+            // Find the right split to create the new tab in
+            var nearestManager = findNearestContentManager(event);
+
             TerminalTabState state = new TerminalTabState();
             state.myWorkingDirectory = dir.getVirtualFile().getPath();
-            createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), null, state, null);
+            createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), null, state, nearestManager);
           }
         }
       }
     };
-    DnDSupport.createBuilder(window.getComponent()).setDropHandler(handler).install();
+    DnDSupport.createBuilder(toolWindowEx.getDecorator()).setDropHandler(handler).install();
+  }
+
+  private static @Nullable ContentManager findNearestContentManager(@NotNull DnDEvent event) {
+    Component handlerComponent = event.getHandlerComponent();
+    Point point = event.getPoint();
+    if (handlerComponent == null || point == null) return null;
+
+    Component deepestComponent = UIUtil.getDeepestComponentAt(handlerComponent, point.x, point.y);
+    if (deepestComponent == null) return null;
+
+    var dataContext = DataManager.getInstance().getDataContext(deepestComponent);
+    return dataContext.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY);
   }
 
   private static @Nullable PsiDirectory getDirectory(@Nullable PsiElement item) {
