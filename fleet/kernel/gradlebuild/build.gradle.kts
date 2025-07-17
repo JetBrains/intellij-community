@@ -34,6 +34,7 @@ kotlin {
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    "-Xcontext-parameters",
   )
   jvm {}
   wasmJs {

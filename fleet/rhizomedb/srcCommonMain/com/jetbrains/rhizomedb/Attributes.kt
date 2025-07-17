@@ -365,8 +365,9 @@ internal fun<E: Entity> merge(attrs: List<Attributes<in E>>): Map<String, Entity
     }
   }
 
-internal fun ChangeScope.registerAttributes(attributes: Attributes<*>): Unit =
-  context.run {
+context(cs: ChangeScope)
+internal fun registerAttributes(attributes: Attributes<*>): Unit =
+  cs.context.run {
     attributes.entityAttributes.forEach { (attrIdent, entityAttribute) ->
       if (entity(entityAttribute.attr.eid) == null) {
         mutate(CreateEntity(
