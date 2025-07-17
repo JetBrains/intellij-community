@@ -5,8 +5,10 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
+import org.intellij.plugins.markdown.settings.MarkdownGitHubStyles
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
+import org.intellij.plugins.markdown.settings.MarkdownStyle
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
@@ -24,7 +26,23 @@ internal class BaseStylesExtension(private val project: Project?) : MarkdownBrow
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
     if (resourceName == COLORS_CSS_FILENAME) {
-      return ResourceProvider.Resource(PreviewLAFThemeStyles.createStylesheet().toByteArray())
+      var css = PreviewLAFThemeStyles.createStylesheet()
+      val settings = project?.let(MarkdownSettings::getInstance)
+
+      if (settings?.style != MarkdownStyle.JETBRAINS) {
+        if (settings?.isDark() == true) {
+          css += MarkdownGitHubStyles.GITHUB_DARK_CSS + MarkdownGitHubStyles.GITHUB_COMMON_CSS
+        }
+        else {
+          css += MarkdownGitHubStyles.GITHUB_LIGHT_CSS + MarkdownGitHubStyles.GITHUB_COMMON_CSS
+        }
+
+        if (settings?.useGitHubSyntaxColors == true) {
+          css += MarkdownGitHubStyles.GITHUB_SYNTAX_COLOR_CSS_CLASSES
+        }
+      }
+
+      return ResourceProvider.Resource(css.toByteArray())
     }
     val customStylesheet = project?.let(this::tryToLoadCustomStylesheet)
     if (customStylesheet != null) {

@@ -23,7 +23,7 @@ public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable
   /**
    * Updates current HTML content with the new one.
    * <br/>
-   * Note: If you want local paths inside the html to be correctly resolved, use {@link #setHtml(String, int, Path)} instead.
+   * Note: If you want local paths inside the HTML to be correctly resolved, use {@link #setHtml(String, int, Path)} instead.
    *
    * @param html new HTML content.
    * @param initialScrollOffset Offset in the original document which will be used to initially position preview content.
@@ -72,22 +72,28 @@ public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable
 
   void reloadWithOffset(int offset);
 
+  default void ensureMarkdownSrcOffsetIsVisible(int offset) {}
+
    /**
    * @deprecated implement {@code scrollTo(editor, line, $completion)} instead
    */
   @Deprecated
-  default void scrollToMarkdownSrcOffset(int offset, boolean smooth) {}
+  default void scrollToMarkdownSrcOffset(int offset, boolean ignoredSmooth) {
+    ensureMarkdownSrcOffsetIsVisible(offset);
+  }
 
   @Override
   @Nullable
   default Object scrollTo(@NotNull Editor editor, int line, @NotNull Continuation<? super @NotNull Unit> $completion) {
-    scrollToMarkdownSrcOffset(EditorUtil.getVisualLineEndOffset(editor, line), true);
+    ensureMarkdownSrcOffsetIsVisible(EditorUtil.getVisualLineEndOffset(editor, line));
     return null;
   }
 
   interface ScrollListener extends EventListener {
+    @SuppressWarnings("unused")
     void onScroll(int offset);
   }
+
   @SuppressWarnings("unused")
   void addScrollListener(ScrollListener listener);
 
