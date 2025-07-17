@@ -87,7 +87,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           child.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
         }
         else {
-          border = originalBorderBuilder()
+          setSuperBorder(originalBorderBuilder())
         }
       }
     }
