@@ -155,9 +155,13 @@ public final class org/jetbrains/jewel/ui/component/AutoHideBehavior : java/lang
 }
 
 public final class org/jetbrains/jewel/ui/component/BannerKt {
+	public static final fun DefaultErrorBanner (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DefaultErrorBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultInformationBanner (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DefaultInformationBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultSuccessBanner (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DefaultSuccessBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultWarningBanner (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DefaultWarningBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun ErrorDefaultBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun InformationDefaultBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
@@ -346,12 +350,16 @@ public final class org/jetbrains/jewel/ui/component/ComposableSingletons$Default
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$DefaultBannerKt;
 	public fun <init> ()V
 	public final fun getLambda$-1509620682$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-359753452$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-7336010$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-923063987$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1072372818$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1128848239$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1148953220$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1508382630$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1580094635$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$164356774$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1804003696$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$876414154$ui ()Lkotlin/jvm/functions/Function2;
 }
 
