@@ -9,6 +9,7 @@ import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereState
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider
+import com.intellij.searchEverywhereMl.isTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCache
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
@@ -28,7 +29,6 @@ internal class SearchEverywhereMlSearchState(
   override val keysTyped: Int,
   override val backspacesTyped: Int,
   override val query: String,
-  val orderByMl: Boolean,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
   private val mixedListInfo: SearchEverywhereMixedListInfo,
@@ -38,6 +38,19 @@ internal class SearchEverywhereMlSearchState(
   override val experimentGroup: Int = SearchEverywhereMlExperiment.experimentGroup
 
   val searchStateFeatures = SearchEverywhereStateFeaturesProvider.getFeatures(this)
+
+  val orderByMl: Boolean
+    get() {
+      if (!tab.isTabWithMlRanking()) {
+        return false
+      }
+
+      if (tab == SearchEverywhereTab.All && query.isEmpty()) {
+        return false
+      }
+
+      return tab.isMlRankingEnabled
+    }
 
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 

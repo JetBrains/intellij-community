@@ -53,7 +53,6 @@ internal class SearchEverywhereMLSearchSession(
     project: Project?,
     reason: SearchRestartReason,
     tabId: String,
-    orderByMl: Boolean,
     keysTyped: Int,
     backspacesTyped: Int,
     searchQuery: String,
@@ -71,7 +70,7 @@ internal class SearchEverywhereMLSearchSession(
 
       SearchEverywhereMlSearchState(
         project, nextSearchIndex, tab, searchScope, isSearchEverywhere, sessionStartTime, searchReason,
-        keysTyped, backspacesTyped, searchQuery, orderByMl, modelProviderWithCache, providersCache, mixedListInfo
+        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache, mixedListInfo
       )
     }
 

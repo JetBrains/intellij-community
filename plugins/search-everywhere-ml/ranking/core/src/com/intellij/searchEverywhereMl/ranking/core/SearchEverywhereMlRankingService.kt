@@ -107,25 +107,10 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
                                isSearchEverywhere: Boolean) {
     if (!isEnabled()) return
 
-    val orderByMl = shouldOrderByMlInTab(tabId, searchQuery)
     getCurrentSession()?.onSearchRestart(
-      project, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, searchResults.toInternalType(),
+      project, reason, tabId, keysTyped, backspacesTyped, searchQuery, searchResults.toInternalType(),
       searchScope, isSearchEverywhere
     )
-  }
-
-  private fun shouldOrderByMlInTab(tabId: String, searchQuery: String): Boolean {
-    val tab = SearchEverywhereTab.findById(tabId) ?: return false // Tab does not support ML ordering
-
-    if (!tab.isTabWithMlRanking()) {
-      return false
-    }
-
-    if (tab == SearchEverywhereTab.All && searchQuery.isEmpty()) {
-      return false
-    }
-
-    return tab.isMlRankingEnabled
   }
 
   override fun onItemSelected(project: Project?, tabId: String, indexes: IntArray, selectedItems: List<Any>,
