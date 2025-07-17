@@ -68,6 +68,21 @@ public fun Banners() {
 
                 DefaultInformationBanner(
                     style = JewelTheme.defaultBannerStyle.information,
+                    iconActions = {
+                        iconAction(
+                            AllIconsKeys.General.Close,
+                            "Close",
+                            null,
+                            onClick = { clickLabel = "Banner 'close' icon action clicked" },
+                        )
+                    },
+                    content = {
+                        Markdown("This is a **Markdown** banner — [watch](https://youtu.be/dQw4w9WgXcQ) `this` out ;)")
+                    },
+                )
+
+                DefaultInformationBanner(
+                    style = JewelTheme.defaultBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     icon = null,
                     linkActions = {
