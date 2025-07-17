@@ -430,11 +430,13 @@ f:com.intellij.ui.icons.TextIcon
 - <init>(java.lang.String,java.awt.Component,F):V
 - equals(java.lang.Object):Z
 - f:getFontSize():F
+- f:getHighlight():Z
 - getIconHeight():I
 - getIconWidth():I
 - f:getText():java.lang.String
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- f:setHighlight(Z):V
 f:com.intellij.util.IconUtil
 - sf:INSTANCE:com.intellij.util.IconUtil
 - sf:addText(javax.swing.Icon,java.lang.String):javax.swing.Icon
