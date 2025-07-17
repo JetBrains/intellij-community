@@ -4,6 +4,7 @@ package com.intellij.internal
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginSetBuilder
+import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleName
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -25,17 +26,24 @@ internal class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"),
     
     val classLoadingMap = buildClassLoadingMap(className)
 
-    fun PluginModuleDescriptor.id() = buildString {
-      append(pluginId)
-      if (contentModuleName != null) append(":$contentModuleName")
-    }
-
-    val columns = arrayOf("Module", "Class")
+    val columns = arrayOf("Module", "Class Loader", "Loading")
     val data = classLoadingMap.map { (module, clazz) -> // keep topological order
-      arrayOf(module.id(), if (clazz != null) "Loaded @${System.identityHashCode(clazz).toString(16)}" else "null")
+      val classLoaderDesc = when (clazz) {
+        null -> "null"
+        else -> when (val cl = clazz.classLoader) {
+          is PluginClassLoader -> (cl.pluginDescriptor as? PluginModuleDescriptor)?.let { " (${it.fullId})" } ?: ""
+          else -> ""
+        }
+      }
+      arrayOf(
+        module.fullId,
+        module.pluginClassLoader?.addressTag ?: "null",
+        if (clazz != null) "Instance ${clazz.addressTag} loaded by ${clazz.classLoader.addressTag}$classLoaderDesc" else "null"
+      )
     }.toTypedArray()
 
     val model = DefaultTableModel(columns, 0)
+    model.addRow(columns) // FIXME idk how to enable header
     for (row in data) {
       model.addRow(row)
     }
@@ -43,8 +51,9 @@ internal class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"),
       override fun isCellEditable(row: Int, column: Int): Boolean = false
     }
     TableSpeedSearch.installOn(table)
-    table.columnModel.getColumn(0).preferredWidth = 400
-    table.columnModel.getColumn(1).preferredWidth = 200
+    table.columnModel.getColumn(0).preferredWidth = 370
+    table.columnModel.getColumn(1).preferredWidth = 90
+    table.columnModel.getColumn(2).preferredWidth = 670
 
     val distinct = classLoadingMap.entries.groupBy { it.value }
       .mapValues { it.value.map { it.key } }
@@ -61,7 +70,7 @@ internal class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"),
           icon = if (distinctCount != 1) Messages.getWarningIcon() else null
         }
       }
-      row { text(distinct.values.joinToString("<br>") { it[0].id() }) }
+      row { text(distinct.values.joinToString("<br>") { it[0].fullId }) }
       row { label("Modules are in topological order.") }
       row { cell(table).align(Align.FILL) }
     }
@@ -70,12 +79,19 @@ internal class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"),
     DialogBuilder(e.project).apply {
       setTitle("Class Loading Report")
       val scrollPane = JBScrollPane(panel)
-      scrollPane.preferredSize = Dimension(650, 600)
+      scrollPane.preferredSize = Dimension(1200, 650)
       setCenterPanel(scrollPane)
       addOkAction()
       show()
     }
   }
+
+  private val PluginModuleDescriptor.fullId: String get() = buildString {
+    append(pluginId)
+    if (contentModuleName != null) append(":$contentModuleName")
+  }
+
+  private val Any.addressTag: String get() = "@" + System.identityHashCode(this).toString(16)
 
   private fun PluginModuleDescriptor.tryLoadClass(className: String): Class<*>? {
     if (pluginClassLoader == null) return null
@@ -97,13 +113,13 @@ internal class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"),
         loadingResults[module] = module.tryLoadClass(className)
       }
     }
-    return loadingResults.entries.sortedWith { (k1, v1), (k2, v2) ->
-      when {
-        // nulls to the end
-        v1 != null && v2 == null -> -1
-        v1 == null && v2 != null -> 1
-        else -> topologicalComparator.compare(k1, k2)
+    return loadingResults.entries
+      .sortedWith { (module1, _), (module2, _) ->
+        val cl1 = module1.pluginClassLoader as? PluginClassLoader
+        val cl2 = module2.pluginClassLoader as? PluginClassLoader
+        topologicalComparator.compare(cl1?.pluginDescriptor as? PluginModuleDescriptor ?: module1,
+                                      cl2?.pluginDescriptor as? PluginModuleDescriptor ?: module2)
       }
-    }.associateTo(LinkedHashMap()) { it.key to it.value }
+      .associateTo(LinkedHashMap()) { it.key to it.value }
   }
 }
