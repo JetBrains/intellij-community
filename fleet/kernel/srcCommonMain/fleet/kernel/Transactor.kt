@@ -84,20 +84,8 @@ interface Transactor : CoroutineContext.Element {
   }
 }
 
-internal suspend fun waitForDbSourceToCatchUpWithTimestamp(timestamp: Long) {
-  val dbContext = DbContext.threadBound
-  val dbSource = currentCoroutineContext().dbSource
-  if (dbContext.poison == null) {
-    if (dbContext.impl.timestamp < timestamp || dbSource.latest.timestamp < timestamp) {
-      val dbAfterTimestamp = currentCoroutineContext().dbSource.flow.first { db ->
-        db.timestamp >= timestamp
-      }
-      yield()
-      if (DbContext.threadBound.poison == null) {
-        DbContext.threadBound.set(dbAfterTimestamp)
-      }
-    }
-  }
+suspend fun waitForDbSourceToCatchUpWithTimestamp(timestamp: Long) {
+  currentCoroutineContext().dbSource.catchUp(timestamp)
 }
 
 /**
