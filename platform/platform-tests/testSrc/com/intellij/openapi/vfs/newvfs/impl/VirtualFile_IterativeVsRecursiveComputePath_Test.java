@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -49,7 +48,7 @@ public class VirtualFile_IterativeVsRecursiveComputePath_Test {
 
 
   private static void forManyVirtualFilesFromVFS(@NotNull PersistentFS pFS,
-                                                 @NotNull Consumer<VirtualFile> consumer) {
+                                                 @NotNull Consumer<VirtualFileSystemEntry> consumer) {
     int maxFileId = ((PersistentFSImpl)pFS).peer().connection().records().maxAllocatedID();
     if (maxFileId <= MIN_REGULAR_FILE_ID) {
       return;//nothing to iterate
@@ -58,7 +57,7 @@ public class VirtualFile_IterativeVsRecursiveComputePath_Test {
     int totalFilesToTest = Math.min(MAX_FILES_TO_TEST, maxFileId);
     for (int i = 0; i < totalFilesToTest; i++) {
       int fileId = MIN_REGULAR_FILE_ID + Math.abs(i * step) % (maxFileId - MIN_REGULAR_FILE_ID);
-      VirtualFile file = pFS.findFileById(fileId);
+      VirtualFileSystemEntry file = (VirtualFileSystemEntry)pFS.findFileById(fileId);
       if (file == null) continue;
 
       consumer.accept(file);
