@@ -49,7 +49,6 @@ interface UiPluginManagerController {
   fun performInstallOperation(installPluginRequest: InstallPluginRequest, parentComponent: JComponent?, modalityState: ModalityState?, progressIndicator: ProgressIndicator?, pluginEnabler: PluginEnabler, installCallback: (InstallPluginResult) -> Unit)
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult
   fun updatePluginDependencies(sessionId: String): Set<PluginId>
-  fun isModified(sessionId: String): Boolean
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
   fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
@@ -81,6 +80,7 @@ interface UiPluginManagerController {
   fun getApplyError(sessionId: String): String?
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
+  suspend fun isModified(sessionId: String): Boolean
 
   suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean

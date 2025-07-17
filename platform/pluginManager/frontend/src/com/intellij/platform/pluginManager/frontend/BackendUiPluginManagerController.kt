@@ -97,8 +97,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     }
   }
 
-  override fun isModified(sessionId: String): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().isModified(sessionId) }
+  override suspend fun isModified(sessionId: String): Boolean {
+    return PluginInstallerApi.getInstance().isModified(sessionId)
   }
 
   override fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult {

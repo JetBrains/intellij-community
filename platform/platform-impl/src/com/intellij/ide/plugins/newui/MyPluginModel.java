@@ -111,8 +111,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
            null;
   }
 
+  @Override
   public boolean isModified() {
-    return needRestart || !myInstallingInfos.isEmpty() || UiPluginManager.getInstance().isModified(mySessionId.toString());
+    return needRestart || !myInstallingInfos.isEmpty() || super.isModified();
   }
 
   /**

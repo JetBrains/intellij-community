@@ -123,7 +123,7 @@ class UiPluginManager {
     return getController().updatePluginDependencies(sessionId)
   }
 
-  fun isModified(sessionId: String): Boolean {
+  suspend fun isModified(sessionId: String): Boolean {
     return getController().isModified(sessionId)
   }
 

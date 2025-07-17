@@ -132,7 +132,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     PluginManagerSessionService.getInstance().removeSession(sessionId)
   }
 
-  override fun isModified(sessionId: String): Boolean {
+  override suspend fun isModified(sessionId: String): Boolean {
     val session = findSession(sessionId) ?: return false
     return session.dynamicPluginsToInstall.isNotEmpty() ||
            session.dynamicPluginsToUninstall.isNotEmpty() ||
