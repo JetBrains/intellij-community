@@ -2685,8 +2685,8 @@ jvm_import(
 
 jvm_import(
   name = "jbr-api",
-  jar = "@jbr-api-1_5_0_http//file",
-  source_jar = "@jbr-api-1_5_0-sources_http//file",
+  jar = "@jbr-api-1_6_0_http//file",
+  source_jar = "@jbr-api-1_6_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

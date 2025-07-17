@@ -1,18 +1,20 @@
 <component name="libraryTable">
   <library name="jbr-api" type="repository">
-    <properties maven-id="com.jetbrains:jbr-api:1.5.0">
+    <properties maven-id="org.jetbrains.runtime:jbr-api:1.6.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/1.5.0/jbr-api-1.5.0.jar">
-          <sha256sum>657ede7d7f8e175c909b23caa10fcd4d4a511304fd938aa9cc8457b4378950d5</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.6.0/jbr-api-1.6.0.jar">
+          <sha256sum>0ef4d299ddca95aab7a41799693781175bdca348864fa912eb21eab0d9bb0d2d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/1.5.0/jbr-api-1.5.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.6.0/jbr-api-1.6.0.jar!/" />
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.6.0/jbr-api-1.6.0-javadoc.jar!/" />
+    </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jbr-api/1.5.0/jbr-api-1.5.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.6.0/jbr-api-1.6.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
