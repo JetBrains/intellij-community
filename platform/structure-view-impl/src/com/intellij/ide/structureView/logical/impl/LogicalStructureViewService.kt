@@ -24,7 +24,7 @@ class LogicalStructureViewService(
     if (!psiFile.isValid) return null
     val assembledModel = LogicalStructureAssembledModel.getInstance(project, psiFile)
     try {
-      if (assembledModel.getChildren().isEmpty()) return null
+      if (!assembledModel.hasChildren()) return null
     } catch (e: Throwable) {
       if (e is ProcessCanceledException) throw e
       return null
