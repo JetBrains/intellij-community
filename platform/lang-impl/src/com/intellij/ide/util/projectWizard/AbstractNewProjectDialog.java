@@ -72,7 +72,6 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     UiNotifyConnector.doWhenFirstShown(myPair.second, () -> ScrollingUtil.ensureSelectionExists(myPair.second));
 
     ActionGroupPanelWrapper.installQuickSearch(pair.second);
-    pair.second.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     return component;
   }
 

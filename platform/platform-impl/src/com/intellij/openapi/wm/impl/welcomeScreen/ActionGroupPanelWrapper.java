@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.Collapsed
 import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedButtonKt;
 import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.ListListenerCollapsedActionGroupExpander;
 import com.intellij.ui.*;
+import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -80,6 +81,7 @@ public final class ActionGroupPanelWrapper {
     actionsListPanel.setBackground(getProjectsBackground());
     DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
     JBList<AnAction> list = new JBList<>(model);
+    list.setSelectionModel(new SingleSelectionModel());
     ListListenerCollapsedActionGroupExpander.expandCollapsableGroupsOnSelection(list, model, parentDisposable);
     for (AnAction group : groups) {
       if (group instanceof Disposable) {
