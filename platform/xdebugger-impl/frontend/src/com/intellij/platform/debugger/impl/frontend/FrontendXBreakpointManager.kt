@@ -287,10 +287,16 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
     log.info("Breakpoint removal request from frontend: ${breakpoint.id}")
-    removeBreakpointLocally(breakpoint.id)
-    breakpointsChanged.tryEmit(Unit)
-    cs.launch {
-      XBreakpointTypeApi.getInstance().removeBreakpoint(breakpoint.id)
+    if (breakpoint.isDefaultBreakpoint()) {
+      // removing default breakpoint should just disable it
+      breakpoint.setEnabled(false);
+    }
+    else {
+      removeBreakpointLocally(breakpoint.id)
+      breakpointsChanged.tryEmit(Unit)
+      cs.launch {
+        XBreakpointTypeApi.getInstance().removeBreakpoint(breakpoint.id)
+      }
     }
   }
 
