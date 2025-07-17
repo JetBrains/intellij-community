@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -77,7 +77,8 @@ final class FastUtilCaseInsensitiveStringHashingStrategy implements Hash.Strateg
 
   @Override
   public boolean equals(String s1, String s2) {
-    return Strings.areSameInstance(s1, s2) || (s1 != null && s1.equalsIgnoreCase(s2));
+    // s1==s2 is exessive here: equalsIgnoreCase checks instance equality by itself
+    return (s1 != null && s1.equalsIgnoreCase(s2));
   }
 }
 
