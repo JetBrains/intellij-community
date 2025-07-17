@@ -13853,8 +13853,6 @@ a:com.intellij.ui.layout.Cell
 - a:component(javax.swing.JComponent):com.intellij.ui.layout.CellBuilder
 - bf:getGrow():com.intellij.ui.layout.CCFlags
 - bf:getGrowX():com.intellij.ui.layout.CCFlags
-- bf:label(java.lang.String,com.intellij.util.ui.JBFont,com.intellij.util.ui.UIUtil$FontColor):com.intellij.ui.layout.CellBuilder
-- bs:label$default(com.intellij.ui.layout.Cell,java.lang.String,com.intellij.util.ui.JBFont,com.intellij.util.ui.UIUtil$FontColor,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bf:link(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - bs:link$default(com.intellij.ui.layout.Cell,java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 f:com.intellij.ui.layout.CellBuilder$DefaultImpls
@@ -13890,7 +13888,6 @@ c:com.intellij.ui.layout.LayoutBuilder
 - <init>(com.intellij.ui.layout.LayoutBuilderImpl):V
 - createChildRow(javax.swing.JLabel,Z,Z,java.lang.String):com.intellij.ui.layout.Row
 - f:getBuilder():com.intellij.ui.layout.LayoutBuilderImpl
-- b:onGlobalApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - b:titledRow(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
@@ -13927,7 +13924,6 @@ f:com.intellij.ui.layout.RowBuilderWithButtonGroupProperty
 - com.intellij.ui.layout.RowBuilder
 - b:<init>(com.intellij.ui.layout.RowBuilder,com.intellij.ui.layout.PropertyBinding):V
 - createChildRow(javax.swing.JLabel,Z,Z,java.lang.String):com.intellij.ui.layout.Row
-- b:onGlobalApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - b:titledRow(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
