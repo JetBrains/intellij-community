@@ -10,9 +10,23 @@ import java.util.concurrent.CompletableFuture;
 @ApiStatus.Internal
 public interface BlockingProgressIndicator extends ProgressIndicator {
   /**
+   * @param isSynchronousHeadlessExecution indicates that this progress is starts for a backgroundable task in synchronous mode on EDT.
+   *                                       These conditions should not lead to an honest initialization of modal progresses.
+   *
    * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager} or {@link ProgressRunner}
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition);
+  default void startBlocking(@NotNull Runnable init, boolean isSynchronousHeadlessExecution, @NotNull CompletableFuture<?> stopCondition) {
+    startBlocking(init, stopCondition);
+  }
+
+  /**
+   * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager} or {@link ProgressRunner}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  default void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
+    throw new UnsupportedOperationException();
+  }
 }

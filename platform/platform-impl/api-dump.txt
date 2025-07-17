@@ -666,6 +666,8 @@ com.intellij.openapi.progress.util.ProgressIndicatorListener
 - onFractionChanged(D):V
 - stopped():V
 - s:whenProgressFractionChanged(com.intellij.openapi.progress.ProgressIndicator,java.util.function.Consumer):V
+c:com.intellij.openapi.progress.util.ProgressWindow
+- startBlocking(java.lang.Runnable,Z,java.util.concurrent.CompletableFuture):V
 com.intellij.openapi.progress.util.ProgressWindow$Listener
 - a:progressWindowCreated(com.intellij.openapi.progress.util.ProgressWindow):V
 com.intellij.openapi.project.configuration.ConfigurationResult

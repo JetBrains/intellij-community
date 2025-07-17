@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalContextProjectLocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
@@ -32,6 +33,7 @@ import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
@@ -212,7 +214,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
+  public void startBlocking(@NotNull Runnable init, boolean isSynchronousHeadlessExecution, @NotNull CompletableFuture<?> stopCondition) {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     ThreadingAssertions.assertEventDispatchThread();
     synchronized (getLock()) {
@@ -223,7 +225,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     try {
       executeInModalContext(() -> {
         init.run();
-        app.runUnlockingIntendedWrite(() -> {
+        Runnable r = () -> {
           initializeOnEdtIfNeeded();
           // guarantee AWT event after the future is done will be pumped and loop exited
           stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
@@ -232,8 +234,15 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
               cancel();
             }
           });
-          return null;
-        });
+        };
+        if (isSynchronousHeadlessExecution) {
+          TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+            r.run();
+            return Unit.INSTANCE;
+          });
+        } else {
+          r.run();
+        }
       });
     }
     finally {

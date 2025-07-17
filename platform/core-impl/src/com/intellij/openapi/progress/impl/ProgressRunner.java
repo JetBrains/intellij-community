@@ -73,6 +73,7 @@ public final class ProgressRunner<R> {
   private final boolean isSync;
 
   private final boolean isModal;
+  private final boolean isFakeModal;
 
   private final ThreadToUse myThreadToUse;
   private final @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> myProgressIndicatorFuture;
@@ -117,17 +118,19 @@ public final class ProgressRunner<R> {
    * @param computation runnable to be executed under progress
    */
   public ProgressRunner(@NotNull Function<? super @NotNull ProgressIndicator, ? extends R> computation) {
-    this(computation, false, false, ThreadToUse.POOLED, CompletableFuture.completedFuture(new EmptyProgressIndicator()));
+    this(computation, false, false, false, ThreadToUse.POOLED, CompletableFuture.completedFuture(new EmptyProgressIndicator()));
   }
 
   private ProgressRunner(@NotNull Function<? super @NotNull ProgressIndicator, ? extends R> computation,
                          boolean sync,
                          boolean modal,
+                         boolean fakeModal,
                          @NotNull ThreadToUse threadToUse,
                          @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     myComputation = ClientId.decorateFunction(computation);
     isSync = sync;
     isModal = modal;
+    isFakeModal = fakeModal;
     myThreadToUse = threadToUse;
     myProgressIndicatorFuture = progressIndicatorFuture;
   }
@@ -135,13 +138,26 @@ public final class ProgressRunner<R> {
   // to avoid abandoning the result
   @Contract(pure = true)
   public @NotNull ProgressRunner<R> sync() {
-    return isSync ? this : new ProgressRunner<>(myComputation, true, isModal, myThreadToUse, myProgressIndicatorFuture);
+    return isSync ? this : new ProgressRunner<>(myComputation, true, isModal, isFakeModal, myThreadToUse, myProgressIndicatorFuture);
   }
 
   // to avoid abandoning the result
   @Contract(pure = true)
   public @NotNull ProgressRunner<R> modal() {
-    return isModal ? this : new ProgressRunner<>(myComputation, isSync, true, myThreadToUse, myProgressIndicatorFuture);
+    return isModal ? this : new ProgressRunner<>(myComputation, isSync, true, isFakeModal, myThreadToUse, myProgressIndicatorFuture);
+  }
+
+  /**
+   * In headless/test mode, background tasks can be executed from EDT synchronously without an explicit modality.
+   * This breaks a set of contracts in the platform, like parallelization of a lock
+   * {@code isFakeModal} here means that progress runner corresponds to the aforementioned situation with the BG task running on EDT synchronously,
+   * and it is necessary to skip some of the platform checks for modal progress.
+   */
+  // to avoid abandoning the result
+  @Contract(pure = true)
+  @ApiStatus.Internal
+  public @NotNull ProgressRunner<R> fakeModal() {
+    return isFakeModal ? this : new ProgressRunner<>(myComputation, isSync, isModal, true, myThreadToUse, myProgressIndicatorFuture);
   }
 
   /**
@@ -152,7 +168,7 @@ public final class ProgressRunner<R> {
   // to avoid abandoning the result
   @Contract(pure = true)
   public @NotNull ProgressRunner<R> onThread(@NotNull ThreadToUse thread) {
-    return thread == myThreadToUse ? this : new ProgressRunner<>(myComputation, isSync, isModal, thread, myProgressIndicatorFuture);
+    return thread == myThreadToUse ? this : new ProgressRunner<>(myComputation, isSync, isModal, isFakeModal, thread, myProgressIndicatorFuture);
   }
 
   /**
@@ -172,7 +188,7 @@ public final class ProgressRunner<R> {
     }
     return progressIndicator.equals(myIndicator)
            ? this
-           : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
+           : new ProgressRunner<>(myComputation, isSync, isModal, isFakeModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
   }
 
   /**
@@ -184,7 +200,7 @@ public final class ProgressRunner<R> {
   // to avoid abandoning the result
   @Contract(pure = true)
   public @NotNull ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
-    return myProgressIndicatorFuture == progressIndicatorFuture ? this : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
+    return myProgressIndicatorFuture == progressIndicatorFuture ? this : new ProgressRunner<>(myComputation, isSync, isModal, isFakeModal, myThreadToUse, progressIndicatorFuture);
   }
 
   /**
@@ -304,7 +320,7 @@ public final class ProgressRunner<R> {
                                                     @NotNull Semaphore modalityEntered,
                                                     @NotNull Function<ProgressIndicator, R> onThreadCallable) {
     final Pair<CoroutineContext, AccessToken> sharedPermit =
-      isModal && isSync ? getLockPermitContext(true) : new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
+      isModal && isSync && !isFakeModal ? getLockPermitContext(true) : new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
     CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture, sharedPermit.getFirst());
     CompletableFuture<R> resultFuture;
 
@@ -317,7 +333,7 @@ public final class ProgressRunner<R> {
       CompletableFuture<Void> blockingRunFuture = progressFuture.thenAccept(progressIndicator -> {
         if (progressIndicator instanceof BlockingProgressIndicator) {
           //noinspection deprecation
-          ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up, taskFuture);
+          ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up, isFakeModal, taskFuture);
         }
         else {
           Logger.getInstance(ProgressRunner.class).warn("Can't go modal without BlockingProgressIndicator");

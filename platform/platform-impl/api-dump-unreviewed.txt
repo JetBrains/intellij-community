@@ -8935,7 +8935,6 @@ c:com.intellij.openapi.progress.util.ProgressWindow
 - setTitle(java.lang.String):V
 - p:showDialog():V
 - start():V
-- startBlocking(java.lang.Runnable,java.util.concurrent.CompletableFuture):V
 - stop():V
 f:com.intellij.openapi.progress.util.SmoothProgressAdapter
 - com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase

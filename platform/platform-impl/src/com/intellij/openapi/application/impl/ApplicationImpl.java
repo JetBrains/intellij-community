@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressResult;
 import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.PotemkinProgress;
@@ -509,6 +510,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       .onThread(ProgressRunner.ThreadToUse.POOLED)
       .modal()
       .withProgress(progress);
+    progressRunner = !shouldShowModalWindow && isHeadlessEnvironment() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+                     ? progressRunner.fakeModal()
+                     : progressRunner;
 
     ProgressResult<?> result = progressRunner.submitAndGet();
 
