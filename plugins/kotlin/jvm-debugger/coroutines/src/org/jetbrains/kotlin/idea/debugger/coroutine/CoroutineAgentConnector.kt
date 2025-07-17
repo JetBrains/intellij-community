@@ -60,7 +60,12 @@ internal object CoroutineAgentConnector {
 
         return if (configuration != null && configuration is ModuleBasedConfiguration<*, *>) {
             configuration.modules.flatMap { module ->
-                val moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
+                val moduleScope = GlobalSearchScope.union(
+                    listOf(
+                        GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
+                        module.getModuleRuntimeScope(true),
+                    )
+                )
                 coroutinesPsiPackage.getDirectories(moduleScope).mapNotNull {
                     JarFileSystem.getInstance().getVirtualFileForJar(it.virtualFile)?.path
                 }
