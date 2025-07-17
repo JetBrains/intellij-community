@@ -41,9 +41,13 @@ e:org.jetbrains.jewel.ui.component.AutoHideBehavior
 - s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.AutoHideBehavior
 - s:values():org.jetbrains.jewel.ui.component.AutoHideBehavior[]
 f:org.jetbrains.jewel.ui.component.BannerKt
+- sf:DefaultErrorBanner(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:DefaultErrorBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
+- sf:DefaultInformationBanner(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:DefaultInformationBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
+- sf:DefaultSuccessBanner(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:DefaultSuccessBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
+- sf:DefaultWarningBanner(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:DefaultWarningBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 - sf:ErrorDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 - sf:InformationDefaultBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
@@ -53,12 +57,16 @@ f:org.jetbrains.jewel.ui.component.ComposableSingletons$DefaultBannerKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$DefaultBannerKt
 - <init>():V
 - f:getLambda$-1509620682$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-359753452$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda$-7336010$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda$-923063987$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda$1072372818$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda$1128848239$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$1148953220$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda$1508382630$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$1580094635$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda$164356774$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$1804003696$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda$876414154$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - f:getLambda$-1538814873$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
