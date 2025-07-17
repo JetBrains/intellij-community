@@ -192,7 +192,8 @@
     <action id="EditorDeleteToLineStart">
         <keyboard-shortcut first-keystroke="meta back_space" />
     </action>
-    <action id="EditorDuplicate">
+    <action id="EditorDuplicate" />
+    <action id="EditorDuplicateLines">
         <keyboard-shortcut first-keystroke="shift alt down" />
     </action>
     <action id="EditorIndentLineOrSelection">
