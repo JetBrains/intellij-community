@@ -92,7 +92,7 @@ public final class TerminalToolWindowManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(TerminalToolWindowManager.class);
   private static final Key<AbstractTerminalRunner<?>> RUNNER_KEY = Key.create("RUNNER_KEY");
 
-  private ToolWindow myToolWindow;
+  private ToolWindowEx myToolWindow;
   private final Project myProject;
   private final AbstractTerminalRunner<?> myTerminalRunner;
   private TerminalDockContainer myDockContainer;
@@ -817,8 +817,10 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   public void detachWidgetAndRemoveContent(@NotNull Content content) {
-    ContentManager contentManager = myToolWindow.getContentManager();
-    LOG.assertTrue(contentManager.getIndexOfContent(content) >= 0, "Not a terminal content");
+    ContentManager contentManager = content.getManager();
+    if (contentManager == null) {
+      throw new IllegalStateException("Content manager is null for " + content);
+    }
     TerminalTabCloseListener.Companion.executeContentOperationSilently(content, () -> {
       contentManager.removeContent(content, true);
       return Unit.INSTANCE;
@@ -870,9 +872,12 @@ public final class TerminalToolWindowManager implements Disposable {
     if (handlerComponent == null || point == null) return null;
 
     Component deepestComponent = UIUtil.getDeepestComponentAt(handlerComponent, point.x, point.y);
-    if (deepestComponent == null) return null;
+    return findNearestContentManager(deepestComponent);
+  }
 
-    var dataContext = DataManager.getInstance().getDataContext(deepestComponent);
+  private static @Nullable ContentManager findNearestContentManager(@Nullable Component component) {
+    if (component == null) return null;
+    var dataContext = DataManager.getInstance().getDataContext(component);
     return dataContext.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY);
   }
 
@@ -891,7 +896,7 @@ public final class TerminalToolWindowManager implements Disposable {
   private final class TerminalDockContainer implements DockContainer {
     @Override
     public @NotNull RelativeRectangle getAcceptArea() {
-      return new RelativeRectangle(myToolWindow.getComponent());
+      return new RelativeRectangle(myToolWindow.getDecorator());
     }
 
     @Override
@@ -901,16 +906,24 @@ public final class TerminalToolWindowManager implements Disposable {
 
     @Override
     public @NotNull JComponent getContainerComponent() {
-      return myToolWindow.getComponent();
+      return myToolWindow.getDecorator();
     }
 
     @Override
     public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
+      if (dropTarget == null) return;
       if (isTerminalSessionContent(content)) {
+        // Find the right split to create the new tab in
+        Component component = dropTarget.getOriginalComponent();
+        Point point = dropTarget.getOriginalPoint();
+        Component deepestComponent = UIUtil.getDeepestComponentAt(component, point.x, point.y);
+        ContentManager nearestManager = findNearestContentManager(deepestComponent);
+
         TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
-        String name = terminalFile.getName();
-        Content newContent = newTab(myToolWindow, terminalFile.getTerminalWidget());
-        newContent.setDisplayName(name);
+        var engine = TerminalEngine.CLASSIC; // Engine doesn't matter here because we will reuse the existing terminal widget.
+        Content newContent = createNewTab(nearestManager, terminalFile.getTerminalWidget(), myTerminalRunner, engine,
+                                          null, null, null, true, true);
+        newContent.setDisplayName(terminalFile.getName());
       }
     }
 
