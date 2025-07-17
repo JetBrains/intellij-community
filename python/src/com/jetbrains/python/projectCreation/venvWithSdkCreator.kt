@@ -122,7 +122,7 @@ private suspend fun getSystemPython(
 
 
   // First, find the latest python according to strategy
-  var systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
+  var systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).firstOrNull()
 
   // No python found?
   if (systemPythonBinary == null) {
