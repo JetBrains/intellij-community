@@ -2,17 +2,11 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ExceptionUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedCommitParser
 import com.intellij.vcs.log.TimedVcsCommit
-import com.intellij.vcs.log.data.SingleTaskController.SingleTask
-import com.intellij.vcs.log.data.SingleTaskController.SingleTaskImpl
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.test.VcsPlatformTest
@@ -162,7 +156,18 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     private val project = logData.project
 
     val dataWaiter = DataWaiter()
-    internal val loader = createLoader(logData, recentCommitsCount, dataWaiter)
+    internal val loader = VcsLogRefresherImpl(project, logData.storage, logData.logProviders, logData.userRegistry,
+                                              logData.modifiableIndex,
+                                              VcsLogProgress(logData),
+                                              logData.topCommitsCache, dataWaiter, recentCommitsCount
+    ).apply {
+      taskInterceptor = {
+        startedTasks.add(it)
+        LOG.debug(startedTasks.size.toString() + " started tasks")
+      }
+    }.also {
+      Disposer.register(logData, it)
+    }
 
     private val startedTasks = Collections.synchronizedList(ArrayList<Future<*>>())
 
@@ -209,27 +214,6 @@ class VcsLogRefresherTest : VcsPlatformTest() {
       }
     }
 
-    private fun createLoader(
-      logData: VcsLogData, recentCommitsCount: Int,
-      dataPackConsumer: Consumer<DataPack>,
-    ): VcsLogRefresherImpl {
-      val refresher: VcsLogRefresherImpl =
-        object : VcsLogRefresherImpl(project, logData.storage, logData.logProviders, logData.userRegistry,
-                                     logData.modifiableIndex,
-                                     VcsLogProgress(logData),
-                                     logData.topCommitsCache, dataPackConsumer, recentCommitsCount
-        ) {
-          override fun startNewBackgroundTask(refreshTask: Task.Backgroundable): SingleTask {
-            LOG.debug("Starting a background task...")
-            val future = (ProgressManager.getInstance() as ProgressManagerImpl).runProcessWithProgressAsynchronously(refreshTask)
-            startedTasks.add(future)
-            LOG.debug(startedTasks.size.toString() + " started tasks")
-            return SingleTaskImpl(future, EmptyProgressIndicator())
-          }
-        }
-      Disposer.register(logData, refresher)
-      return refresher
-    }
   }
 
   private fun assertDataPack(expectedLog: List<TimedVcsCommit>, actualLog: List<GraphCommit<Int>>) {

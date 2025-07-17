@@ -27,13 +27,15 @@ import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
 
 private val LOG = Logger.getInstance(VcsLogRefresherImpl::class.java)
 
-internal open class VcsLogRefresherImpl(
+internal class VcsLogRefresherImpl(
   private val project: Project,
   private val storage: VcsLogStorage,
   private val providers: Map<VirtualFile, VcsLogProvider>,
@@ -45,10 +47,12 @@ internal open class VcsLogRefresherImpl(
   private val recentCommitCount: Int,
 ) : VcsLogRefresher, Disposable {
   private val singleTaskController: SingleTaskController<RefreshRequest, DataPack>
+  @TestOnly
+  var taskInterceptor: ((Future<*>) -> Unit)? = null
   private val initialized = AtomicBoolean()
 
   @Volatile
-  final override var currentDataPack: DataPack = DataPack.EMPTY
+  override var currentDataPack: DataPack = DataPack.EMPTY
     private set
 
   private val tracer = TelemetryManager.getInstance().getTracer(VcsScope)
@@ -69,11 +73,12 @@ internal open class VcsLogRefresherImpl(
     }
   }
 
-  protected open fun startNewBackgroundTask(refreshTask: Task.Backgroundable): SingleTask {
+  private fun startNewBackgroundTask(refreshTask: Task.Backgroundable): SingleTask {
     LOG.debug("Starting a background task...")
     val indicator = progress.createProgressIndicator(VcsLogData.DATA_PACK_REFRESH)
     val future = (ProgressManager.getInstance() as CoreProgressManager)
       .runProcessWithProgressAsynchronously(refreshTask, indicator, null)
+    taskInterceptor?.invoke(future)
     return SingleTaskImpl(future, indicator)
   }
 
