@@ -18,6 +18,7 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BannersKt
 - <init>():V
 - f:getLambda$-336793573$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
 - f:getLambda$-45649343$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+- f:getLambda$1472560159$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$999604259$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BordersKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BordersKt
