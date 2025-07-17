@@ -3,16 +3,13 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabsShortcutsUtils
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionToolbarListener
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.frontend.vm.SeTabVm
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -40,14 +37,12 @@ class SePopupHeaderPane(
   selectedTabState: MutableStateFlow<Int>,
   coroutineScope: CoroutineScope,
   private val showInFindToolWindowAction: AnAction,
-  private val resizeIfNecessary: () -> Unit
 ): NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
   private val tabInfos = mutableListOf<Tab>().apply { addAll(tabs) }
   private val tabShortcuts = SearchEverywhereTabsShortcutsUtils.createShortcutsMap()
   private val panel: DialogPanel
-  private var toolbarListenerDisposable: Disposable? = null
-
+  private var toolbar: ActionToolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", DefaultActionGroup(), true)
   private val tabFilterContainer: JPanel = object : JPanel() {
     override fun getPreferredSize(): Dimension {
       val dimension = components.firstOrNull()?.preferredSize ?: Dimension(0, 0)
@@ -103,10 +98,6 @@ class SePopupHeaderPane(
   }
 
   fun setFilterActions(actions: List<AnAction>) {
-    toolbarListenerDisposable?.let { Disposer.dispose(it) }
-    val toolbarListenerDisposable = Disposer.newDisposable()
-    this.toolbarListenerDisposable = toolbarListenerDisposable
-
     val actionGroup = DefaultActionGroup(actions)
     actionGroup.add(showInFindToolWindowAction)
     val toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
@@ -117,15 +108,6 @@ class SePopupHeaderPane(
     toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9))
 
     setFilterComponent(toolbarComponent)
-    toolbar.addListener(object : ActionToolbarListener {
-      override fun actionsUpdated() {
-        ApplicationManager.getApplication().invokeLater {
-          resizeIfNecessary()
-        }
-      }
-    }, toolbarListenerDisposable)
-
-    resizeIfNecessary()
   }
 
   fun addTab(tab: Tab) {
