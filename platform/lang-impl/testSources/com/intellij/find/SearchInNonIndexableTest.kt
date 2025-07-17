@@ -3,7 +3,6 @@ package com.intellij.find
 
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindInProjectUtil.FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE
-import com.intellij.find.impl.nonIndexableFiles
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,10 +17,13 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
+import com.intellij.util.indexing.FilesDeque
 import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.util.indexing.testEntities.NonRecursiveFileSetContributor
+import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
@@ -30,6 +32,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.*
 
+/**
+ * Run with `-cp intellij.idea.ultimate.test.main`
+ */
 @TestApplication
 class SearchInNonIndexableTest() {
   @RegisterExtension
@@ -47,6 +52,7 @@ class SearchInNonIndexableTest() {
   fun setup(): Unit = runBlocking {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
 
     project.putUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE, true)
 
@@ -58,9 +64,13 @@ class SearchInNonIndexableTest() {
     val indexable = baseDir.newVirtualDirectory("indexable").toVirtualFileUrl(urlManager)
     baseDir.newVirtualFile("indexable/infile1", "this is a file with some data and indexes".toByteArray())
 
+    val indexableNonRecursive = baseDir.newVirtualDirectory("non-indexable/indexable-non-recursive").toVirtualFileUrl(urlManager)
+    baseDir.newVirtualFile("non-indexable/indexable-non-recursive/non-indexable-beats-non-recursive-content", "this is a file with some data".toByteArray())
+
     project.workspaceModel.update("add non-indexable root") { storage ->
       storage.addEntity(NonIndexableTestEntity(nonIndexable, NonPersistentEntitySource))
       storage.addEntity(IndexingTestEntity(listOf(indexable), emptyList(), NonPersistentEntitySource))
+      storage.addEntity(NonRecursiveTestEntity(indexableNonRecursive, NonPersistentEntitySource))
     }
     VfsTestUtil.syncRefresh()
     waitUntilIndexesAreReady(project)
@@ -68,14 +78,14 @@ class SearchInNonIndexableTest() {
 
   @Test
   fun `non-indexable files deque`(): Unit = runBlocking {
-    val deque = readAction {nonIndexableFiles(project)}
+    val deque = readAction { FilesDeque.nonIndexableDequeue((project))}
     val files = mutableListOf<VirtualFile>()
     while (true) {
       val file = readAction { deque.computeNext() } ?: break
       files.add(file)
     }
     val names = files.map { it.name }
-    assertThat(names).containsExactlyInAnyOrder("non-indexable", "file1", "file2")
+    assertThat(names).containsExactlyInAnyOrder("non-indexable", "file1", "file2", "non-indexable-beats-non-recursive-content")
   }
 
   @Test
@@ -88,7 +98,7 @@ class SearchInNonIndexableTest() {
 
     FindInProjectUtil.findUsages(model, project, consumer, presentation)
     val fileNames = usages.map { it!!.virtualFile!!.name }
-    assertThat(fileNames).containsExactlyInAnyOrder("file1", "infile1")
+    assertThat(fileNames).containsExactlyInAnyOrder("file1", "infile1", "non-indexable-beats-non-recursive-content")
   }
 
 
