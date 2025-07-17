@@ -440,6 +440,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
   
+  public void testRedundantNotNull2() {
+    doTest();
+  }
+  
   public void testNoNotNullWarningIfIndirectSuperMethodIsAnnotated() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
