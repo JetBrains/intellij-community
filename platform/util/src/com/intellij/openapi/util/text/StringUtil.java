@@ -50,6 +50,9 @@ public class StringUtil {
   public static final String THREE_DOTS = "...";
   public static final String NON_BREAK_SPACE = "\u00A0";
 
+  // "(?>" removes backtraces; this is not just important for matching speed, but also to stop stack overflows
+  private static final Pattern HTML_PATTERN = Pattern.compile("(?><[^>]*>)", Pattern.MULTILINE);
+
   private static final class Splitters {
     private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
     private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
@@ -258,8 +261,7 @@ public class StringUtil {
       html = html.replaceAll("(?><[bB][rR](?>\\s*)/?\\s*>)", breaks);
     }
 
-    // "(?>" removes backtraces; this is not just important for matching speed, but also to stop stack overflows
-    return html.replaceAll("(?><[^>]*>)", "");
+    return HTML_PATTERN.matcher(html).replaceAll("");
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)

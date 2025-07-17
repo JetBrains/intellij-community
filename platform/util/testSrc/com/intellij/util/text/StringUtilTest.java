@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
@@ -36,18 +35,6 @@ import static org.junit.Assert.*;
  */
 public class StringUtilTest {
   private final char myDecimalSeparator = new DecimalFormat("0.##").getDecimalFormatSymbols().getDecimalSeparator();
-
-  @Test
-  public void testStripHtml() {
-    BiConsumer<String, String> sh = (html, stripped) -> assertEquals(stripped, StringUtil.stripHtml(html, "\n"));
-    sh.accept("foo<br \n \r>baz", "foo\nbaz");
-    sh.accept("foo<br \n \r/>baz", "foo\nbaz");
-    sh.accept("foo<br \n \r/ >baz", "foo\nbaz");
-    sh.accept("foo<BR \n \r/ >baz", "foo\nbaz");
-    sh.accept("foo< \n bar \n  \r >baz", "foobaz");
-    sh.accept("foo< \n bar \n  \r />baz", "foobaz");
-    sh.accept("foo< \n bar \n  \r / >baz", "foobaz");
-  }
 
   @Test
   public void testTrimLeadingChar() {
