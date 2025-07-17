@@ -500,7 +500,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
 
     exitInstructions.add(myBuilder.prevInstruction);
-    myBuilder.prevInstruction = addTransparentInstruction();
+    myBuilder.prevInstruction = addTransparentInstruction(node);
 
     for (Instruction exitInstruction : Lists.reverse(exitInstructions)) {
       myBuilder.addEdge(exitInstruction, myBuilder.prevInstruction);
