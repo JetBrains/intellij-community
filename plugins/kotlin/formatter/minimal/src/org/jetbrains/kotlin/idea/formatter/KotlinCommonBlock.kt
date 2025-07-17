@@ -668,6 +668,10 @@ abstract class KotlinCommonBlock(
                         return@wrap it
                     }
 
+                    getWrapAfterContextParameters(childElement, settings.kotlinCustomSettings.FUNCTION_CONTEXT_PARAMETERS_WRAP)?.let {
+                        return@wrap it
+                    }
+
                     if (getSiblingWithoutWhitespaceAndComments(childElement)?.elementType == EQ) {
                         Wrap.createWrap(settings.kotlinCustomSettings.WRAP_EXPRESSION_BODY_FUNCTIONS, true)
                     } else {
@@ -679,6 +683,10 @@ abstract class KotlinCommonBlock(
                 return wrap@{ childElement ->
                     val wrapSetting = if (nodePsi.isLocal) commonSettings.VARIABLE_ANNOTATION_WRAP else commonSettings.FIELD_ANNOTATION_WRAP
                     getWrapAfterAnnotation(childElement, wrapSetting)?.let {
+                        return@wrap it
+                    }
+
+                    getWrapAfterContextParameters(childElement, settings.kotlinCustomSettings.PROPERTY_CONTEXT_PARAMETERS_WRAP)?.let {
                         return@wrap it
                     }
 
@@ -864,16 +872,22 @@ private fun ASTNode.isFirstParameter(): Boolean = treePrev?.elementType == LPAR
 private fun wrapAfterAnnotation(wrapType: Int): WrappingStrategy = { childElement -> getWrapAfterAnnotation(childElement, wrapType) }
 
 private fun getWrapAfterAnnotation(childElement: ASTNode, wrapType: Int): Wrap? {
+    return getWrapAfterElementInModifierList(childElement, wrapType) { it?.elementType in ANNOTATIONS }
+}
+
+private fun getWrapAfterContextParameters(childElement: ASTNode, wrapType: Int): Wrap? {
+    return getWrapAfterElementInModifierList(childElement, wrapType) { it?.elementType == CONTEXT_RECEIVER_LIST }
+}
+
+private fun getWrapAfterElementInModifierList(childElement: ASTNode, wrapType: Int, acceptLastChildNode: (ASTNode?) -> Boolean): Wrap? {
     if (childElement.elementType in COMMENTS) return null
     var prevLeaf = childElement.treePrev
     while (prevLeaf?.elementType == TokenType.WHITE_SPACE) {
         prevLeaf = prevLeaf.treePrev
     }
 
-    if (prevLeaf?.elementType == MODIFIER_LIST) {
-        if (prevLeaf?.lastChildNode?.elementType in ANNOTATIONS) {
-            return Wrap.createWrap(wrapType, true)
-        }
+    if (prevLeaf?.elementType == MODIFIER_LIST && acceptLastChildNode(prevLeaf?.lastChildNode)) {
+        return Wrap.createWrap(wrapType, true)
     }
 
     return null

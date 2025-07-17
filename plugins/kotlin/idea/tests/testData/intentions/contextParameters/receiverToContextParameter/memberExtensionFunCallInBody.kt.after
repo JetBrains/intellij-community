@@ -2,7 +2,8 @@
 // K2_AFTER_ERROR: Unresolved reference 'bar'.
 /* KTIJ-34522 */
 
-context(bar: Bar) fun foo() {
+context(bar: Bar)
+fun foo() {
     "foo".bar()
 }
 

@@ -1,7 +1,8 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 
 interface IFace {
-    context(string: String) fun foo()
+    context(string: String)
+    fun foo()
 
     private fun usage1(s: String) {
         with(s) {

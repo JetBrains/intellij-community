@@ -22,7 +22,8 @@ class MyClass {
     }
 }
 
-context(param1: String) fun MyClass.doSomething() {
+context(param1: String)
+fun MyClass.doSomething() {
     println("Value: $value, Param: $param1")
 }
 

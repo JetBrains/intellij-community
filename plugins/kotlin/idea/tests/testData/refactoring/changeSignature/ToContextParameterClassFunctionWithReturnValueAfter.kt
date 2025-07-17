@@ -3,7 +3,8 @@
 class MyClass {
     val value: Int = 42
 
-    context(param: String) fun getLength(): Int = param.length
+    context(param: String)
+    fun getLength(): Int = param.length
 
     fun inside(param: Int = with("abc") {
         getLength()
