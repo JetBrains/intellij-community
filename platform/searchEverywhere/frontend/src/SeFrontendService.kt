@@ -33,6 +33,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import fleet.kernel.DurableRef
@@ -41,6 +42,7 @@ import fleet.kernel.shared
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.util.concurrent.atomic.AtomicBoolean
@@ -150,7 +152,15 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     val completable = CompletableDeferred<Unit>()
     withContext(Dispatchers.EDT) {
-      val contentPane = SePopupContentPane(project, popupVm, { size -> popup?.let { it.size = size } }, getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY)) {
+      val contentPane = SePopupContentPane(project,
+                                           popupVm,
+                                           resizePopupHandler = { size ->
+                                             popup?.let { popup ->
+                                               popup.setMinimumSize(popup.content.minimumSize)
+                                               popup.size = size
+                                             }
+                                           },
+                                           getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY)) {
         popupScope.launch(NonCancellable) {
           removeSessionRef.set(false)
           try {
@@ -203,6 +213,17 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       .createPopup()
 
     popup.size = panel.preferredSize
+    popup.setMinimumSize(panel.getMinimumSize(true))
+
+    (popup as? AbstractPopup)?.let { popup ->
+      popup.addResizeListener({
+        if (panel.isCompactViewMode) {
+          panel.popupExtendedSize = Dimension(popup.size.width,
+                                              panel.popupExtendedSize?.height ?: panel.getExpandedSize().height)
+        }
+        else panel.popupExtendedSize = popup.size
+      }, popup)
+    }
 
     Disposer.register(popup) {
       getStateService().putSize(POPUP_LOCATION_SETTINGS_KEY, panel.popupExtendedSize)

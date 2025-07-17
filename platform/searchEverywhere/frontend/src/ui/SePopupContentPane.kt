@@ -103,6 +103,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     private set
   var popupExtendedSize: Dimension? = initPopupExtendedSize
 
+  private val minWidth = Registry.intValue("search.everywhere.new.minimum.width", 700)
+
   init {
     layout = GridLayout()
 
@@ -275,14 +277,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
 
     WindowMoveListener(this).installTo(headerPane)
-    addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        if (project != null && !isCompactViewMode) {
-          popupExtendedSize = size
-          updateFrozenCount()
-        }
-      }
-    })
 
     DumbAwareAction.create { vm.getHistoryItem(true)?.let { textField.text = it; textField.selectAll() } }
       .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, this)
@@ -312,7 +306,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     resultsScroll.background = JBUI.CurrentTheme.Popup.BACKGROUND
     resultList.background = JBUI.CurrentTheme.Popup.BACKGROUND
 
-    resultsScroll.preferredSize = JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight())
+    resultsScroll.preferredSize = JBUI.size(minWidth, JBUI.CurrentTheme.BigPopup.maxListHeight())
 
     initActions()
 
@@ -676,6 +670,14 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   override fun getPreferredSize(): Dimension {
     return calcPreferredSize(isCompactViewMode)
+  }
+
+  override fun getMinimumSize(): Dimension = getMinimumSize(isCompactViewMode)
+
+  fun getMinimumSize(isCompact: Boolean): Dimension {
+    val compactHeight = calcPreferredSize(true).height
+    val minimumHeight = if (isCompact) compactHeight else compactHeight + scale(100)
+    return Dimension(JBUI.scale(minWidth), minimumHeight)
   }
 
   private fun calcPreferredSize(compact: Boolean): Dimension {
