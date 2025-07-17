@@ -271,8 +271,8 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - a:isValid():Z
 *f:com.intellij.collaboration.ui.AccountSelectorComponentFactory
 - <init>(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.MutableStateFlow):V
-- f:create(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.icon.IconsProvider,I,I,java.lang.String,kotlinx.coroutines.flow.StateFlow):javax.swing.JComponent
-- bs:create$default(com.intellij.collaboration.ui.AccountSelectorComponentFactory,kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.icon.IconsProvider,I,I,java.lang.String,kotlinx.coroutines.flow.StateFlow,I,java.lang.Object):javax.swing.JComponent
+- f:create(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.auth.DefaultAccountHolder,com.intellij.collaboration.ui.icon.IconsProvider,I,I,java.lang.String,kotlinx.coroutines.flow.StateFlow):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.AccountSelectorComponentFactory,kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.auth.DefaultAccountHolder,com.intellij.collaboration.ui.icon.IconsProvider,I,I,java.lang.String,kotlinx.coroutines.flow.StateFlow,I,java.lang.Object):javax.swing.JComponent
 *f:com.intellij.collaboration.ui.CollaborationToolsUIUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.CollaborationToolsUIUtil
 - f:asObservableIn(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope):com.intellij.openapi.observable.properties.AbstractObservableProperty

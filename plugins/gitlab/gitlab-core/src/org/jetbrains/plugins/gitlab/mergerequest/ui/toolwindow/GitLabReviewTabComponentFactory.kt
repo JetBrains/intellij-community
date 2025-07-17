@@ -65,7 +65,7 @@ internal class GitLabReviewTabComponentFactory(
       launchOnShow("SelectorsComponent") {
         bindChildIn(this, vm.selectorVm, BorderLayout.NORTH) { selectorVm ->
           if (selectorVm == null) return@bindChildIn null
-          GitLabMergeRequestSelectorsComponentFactory.createSelectorsComponent(this, selectorVm, GitLabLoginSource.MR_TW)
+          GitLabMergeRequestSelectorsComponentFactory.createSelectorsComponent(this, project, selectorVm, GitLabLoginSource.MR_TW)
         }
       }
     }

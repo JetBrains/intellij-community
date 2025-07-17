@@ -88,6 +88,9 @@ internal fun <T> ComboBoxWithActionsModel<T>.bindIn(
   scope.launchNow {
     items.collect {
       this@bindIn.items = it.sortedWith(sortComparator)
+      if (!it.contains(selectedItem?.wrappee)) {
+        selectedItem = it.firstOrNull()?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
+      }
     }
   }
   addSelectionChangeListenerIn(scope) {
@@ -99,6 +102,9 @@ internal fun <T> ComboBoxWithActionsModel<T>.bindIn(
         selectedItem = item?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
       }
     }
+  }
+  if (selectedItem == null) {
+    selectedItem = selectionState.value?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
   }
 }
 
