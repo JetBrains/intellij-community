@@ -24,6 +24,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
+    "//plugins/stream-debugger-core/intellij.debugger.streams.shared:debugger-streams-shared",
   ],
   runtime_deps = [":debugger-streams-core_resources"]
 )

@@ -1238,6 +1238,8 @@ plugins/space/jps-plugin
 plugins/stats-collector
 plugins/stream-debugger
 plugins/stream-debugger-core
+plugins/stream-debugger-core/intellij.debugger.streams.backend
+plugins/stream-debugger-core/intellij.debugger.streams.shared
 plugins/stream-debugger-core/testFramework
 plugins/svn4idea
 plugins/tasks/tasks-api

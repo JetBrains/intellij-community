@@ -1,20 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.streams.core.action
+package com.intellij.debugger.streams.shared
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import kotlinx.coroutines.launch
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class TraceStreamAction : AnAction() {
+open class TraceStreamAction : AnAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    val chainStatus = TraceStreamRunner.getInstance(project).getChainStatus(DebuggerUIUtil.getSession(e))
     val presentation = e.presentation
+    val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: run {
+      presentation.setEnabledAndVisible(false)
+      return
+    }
+    val chainStatus = StreamDebuggerManager.getInstance(project).getChainStatus(sessionProxy.id)
     when (chainStatus) {
+      null -> presentation.setEnabledAndVisible(false)
       ChainStatus.LANGUAGE_NOT_SUPPORTED -> presentation.setEnabledAndVisible(false)
       ChainStatus.COMPUTING -> {
         presentation.setVisible(true)
@@ -33,7 +39,9 @@ open class TraceStreamAction : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    TraceStreamRunner.getInstance(project).actionPerformed(DebuggerUIUtil.getSession(e))
+    val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
+    sessionProxy.coroutineScope.launch {
+      StreamDebuggerApi.getInstance().showTraceDebuggerDialog(sessionProxy.id)
+    }
   }
 }
