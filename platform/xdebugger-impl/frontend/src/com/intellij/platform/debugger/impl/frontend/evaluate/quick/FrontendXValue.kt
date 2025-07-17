@@ -18,6 +18,7 @@ import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
+import com.intellij.xdebugger.impl.util.MonolithUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -189,6 +190,11 @@ class FrontendXValue private constructor(
       XValueApi.getInstance().computeExpression(xValueDto.id)?.xExpression()
     }
     return deferred.asCompletableFuture().asPromise()
+  }
+
+  override fun getReferrersProvider(): XReferrersProvider? {
+    // TODO referrersProvider is only supported in monolith
+    return MonolithUtils.findXValueById(xValueDto.id)?.referrersProvider
   }
 
   override fun toString(): String {
