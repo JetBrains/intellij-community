@@ -121,7 +121,7 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
      * Parses the output of `pipenv graph --json` into a list of GraphEntries.
      */
     fun parsePipEnvGraph(input: String): List<GraphEntry> = try {
-        Gson().fromJson(input, Array<GraphEntry>::class.java).toList()
+        Gson().fromJson(input, Array<GraphEntry>::class.java)?.toList() ?: emptyList()
       }
       catch (e: JsonSyntaxException) {
         // TODO: Log errors
