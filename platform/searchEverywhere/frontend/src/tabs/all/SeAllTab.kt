@@ -103,7 +103,13 @@ private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String
   }
 
   private fun getFilterTypesAction(providersIdToName: Map<SeProviderId, @Nls String>): AnAction {
-    val namesMap = providersIdToName.map { it.key.value to it.value }.toMap()
+    val namesMap = providersIdToName.mapNotNull {
+      // Workaround for: IJPL-188383 Search Everywhere, All tab: 'Top Hit' filter is duplicated
+      // Don't add 'Top Hit (On Client)' to the list of providers
+      if (it.key.value == SeProviderIdUtils.TOP_HIT_ID) return@mapNotNull null
+
+      it.key.value to it.value
+    }.toMap()
 
     val configuration = SearchEverywhereConfiguration.getInstance()
     val persistentFilter =
