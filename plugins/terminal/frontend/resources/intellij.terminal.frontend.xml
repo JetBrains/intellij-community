@@ -46,6 +46,7 @@
   <actions resource-bundle="messages.TerminalBundle">
     <action id="Terminal.InsertInlineCompletion" class="com.intellij.terminal.frontend.action.TerminalInsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
+      <override-text place="GoToAction"/>
     </action>
     <action id="Terminal.ClearBuffer" class="com.intellij.terminal.frontend.action.TerminalClearAction">
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
