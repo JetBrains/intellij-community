@@ -4,7 +4,6 @@ package com.intellij.vcs.git.branch.tree
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorGeneratorFactory
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleColoredComponent
@@ -42,8 +41,6 @@ abstract class GitBranchesTreeRenderer(
   private val favoriteToggleOnClickSupported: Boolean = true,
 ) : TreeCellRenderer {
   private val updateScaleHelper = UpdateScaleHelper()
-
-  private val repoColorGenerator = RepositoryColorGeneratorFactory.create(treePopupStep.repositories.map { it.repositoryId })
 
   private fun getBranchNameClipper(treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? =
     GitBranchesTreeRendererClipper.create(treePopupStep.project, treeNode)
