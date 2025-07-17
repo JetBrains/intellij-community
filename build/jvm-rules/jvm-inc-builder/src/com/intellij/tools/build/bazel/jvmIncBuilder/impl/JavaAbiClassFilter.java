@@ -110,14 +110,19 @@ public class JavaAbiClassFilter extends ClassVisitor {
   }
 
   private static final class AbiMethod extends MethodNode {
-    private static final InsnNode NOP_INSTRUCTION = new InsnNode(Opcodes.NOP);
+    private static final List<InsnNode> ourBodyInstructions = List.of(
+      new InsnNode(Opcodes.ACONST_NULL),
+      new InsnNode(Opcodes.ATHROW)
+    );
 
     AbiMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
       super(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions);
 
       if ((access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
         // in a valid bytecode, non-abstract and non-native methods must have a code attribute
-        instructions.add(NOP_INSTRUCTION);
+        for (InsnNode insn : ourBodyInstructions) {
+          instructions.add(insn);
+        }
       }
     }
   }
