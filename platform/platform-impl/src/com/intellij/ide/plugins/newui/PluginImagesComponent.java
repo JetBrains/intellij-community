@@ -3,9 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -27,17 +25,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -60,7 +54,7 @@ public final class PluginImagesComponent extends JPanel {
   private final Object myLock = new Object();
   private JComponent myParent;
   private final boolean myShowFullContent;
-  private List<BufferedImage> myImages;
+  private List<Image> myImages;
   private int myCurrentImage;
   private boolean myHovered;
   private Object myLoadingState;
@@ -97,7 +91,7 @@ public final class PluginImagesComponent extends JPanel {
     addMouseMotionListener(listener);
   }
 
-  private PluginImagesComponent(@NotNull List<BufferedImage> images, int currentImage) {
+  private PluginImagesComponent(@NotNull List<Image> images, int currentImage) {
     myShowFullContent = true;
     myHovered = true;
     myImages = images;
@@ -136,7 +130,7 @@ public final class PluginImagesComponent extends JPanel {
     fullRepaint();
   }
 
-  private void handleImages(@NotNull Object state, @Nullable List<BufferedImage> images) {
+  private void handleImages(@NotNull Object state, @Nullable List<Image> images) {
     synchronized (myLock) {
       if (myLoadingState != state) {
         return;
@@ -180,15 +174,12 @@ public final class PluginImagesComponent extends JPanel {
     }
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
-      List<BufferedImage> images = new ArrayList<>();
+      List<Image> images = new ArrayList<>();
       File parentDir = new File(PathManager.getPluginTempPath(), "imageCache/" + model.getExternalPluginIdForScreenShots());
 
       for (String screenShot : screenShots) {
         try {
           String name = Objects.requireNonNull(StringUtil.substringAfterLast(screenShot, "/"));
-          if (!name.contains(".")) {
-            name += ".png";
-          }
           File imageFile = new File(parentDir, name);
           if (ApplicationManager.getApplication().isDisposed()) {
             return;
@@ -197,20 +188,14 @@ public final class PluginImagesComponent extends JPanel {
             IOUtil.closeSafe(Logger.getInstance(PluginImagesComponent.class), stream);
             return new Object();
           });
-          try (InputStream stream = new FileInputStream(imageFile)) {
-            BufferedImage image = ImageIO.read(stream);
-            if (image == null) {
-              Logger.getInstance(PluginImagesComponent.class)
-                .info("=== Plugin: " + model.getPluginId() + " screenshot: " + name + " not loaded ===");
-            }
-            else {
-              images.add(image);
-              if (images.size() >= 10) break;
-            }
+          Image image = Toolkit.getDefaultToolkit().getImage(imageFile.getAbsolutePath());
+          if (image == null) {
+            Logger.getInstance(PluginImagesComponent.class)
+              .info("=== Plugin: " + model.getPluginId() + " screenshot: " + name + " not loaded ===");
           }
-          catch (IOException e) {
-            throw new IOException("Unable to read image for plugin " + model.getExternalPluginIdForScreenShots()
-                                  + " file " + imageFile.getAbsolutePath(), e);
+          else {
+            images.add(image);
+            if (images.size() >= 10) break;
           }
         }
         catch (IOException e) {
@@ -353,7 +338,7 @@ public final class PluginImagesComponent extends JPanel {
       return;
     }
 
-    List<BufferedImage> images;
+    List<Image> images;
     int current;
     Object showState;
     synchronized (myLock) {
@@ -447,7 +432,7 @@ public final class PluginImagesComponent extends JPanel {
   protected void paintComponent(Graphics g) {
     int count;
     int current;
-    BufferedImage image;
+    Image image;
 
     synchronized (myLock) {
       if (myImages == null) {
@@ -475,26 +460,26 @@ public final class PluginImagesComponent extends JPanel {
 
     int imageX = insets.left + offset;
     int imageY = insets.top;
-    int imageWidth = image.getWidth();
-    int imageHeight = image.getHeight();
+    int imageWidth = image.getWidth(this);
+    int imageHeight = image.getHeight(this);
     int paintWidth = width - 2 * offset;
     int paintHeight = height - offset;
 
     if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
-      StartupUiUtil.drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, null);
+      StartupUiUtil.drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, this);
     }
     else {
       int zoomedHeight = imageHeight * paintWidth / imageWidth;
       int zoomedWidth = imageWidth * paintHeight / imageHeight;
 
       if (zoomedWidth <= paintWidth) {
-        StartupUiUtil.drawImage(g, image, new Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), null);
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), this);
       }
       else if (zoomedHeight <= paintHeight) {
-        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), null);
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), this);
       }
       else {
-        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY, paintWidth, paintHeight), null);
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY, paintWidth, paintHeight), this);
       }
     }
 
