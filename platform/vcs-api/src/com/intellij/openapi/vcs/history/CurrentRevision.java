@@ -15,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Date;
 
+/**
+ * This is a synthetic revision representing the current state of the file in the working copy
+ */
 public class CurrentRevision implements VcsFileRevision {
   private static final Logger LOG = Logger.getInstance(CurrentRevision.class);
 

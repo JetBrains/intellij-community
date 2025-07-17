@@ -465,11 +465,13 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements UiD
     sink.set(CommonDataKeys.PROJECT, myProject);
     sink.set(VcsDataKeys.VCS_VIRTUAL_FILE, myFile);
 
+    VcsFileRevision localRevision = myBlockLoader.getLocalRevision();
     VcsFileRevision selectedObject = myList.getSelectedObject();
-    sink.set(VcsDataKeys.VCS_FILE_REVISION, selectedObject instanceof CurrentRevision o ? o : null);
+    if (!localRevision.equals(selectedObject)) {
+      sink.set(VcsDataKeys.VCS_FILE_REVISION, selectedObject);
+    }
     List<VcsFileRevision> selectedObjects = myList.getSelectedObjects();
-    sink.set(VcsDataKeys.VCS_FILE_REVISIONS, ContainerUtil.filter(
-      selectedObjects, Conditions.notEqualTo(myBlockLoader.getLocalRevision()))
+    sink.set(VcsDataKeys.VCS_FILE_REVISIONS, ContainerUtil.filter(selectedObjects, Conditions.notEqualTo(localRevision))
       .toArray(new VcsFileRevision[0]));
 
     sink.set(VcsDataKeys.VCS, myActiveVcs.getKeyInstanceMethod());
