@@ -30,9 +30,12 @@ suspend fun main() {
     install(SSE)
   }
 
-  val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/")
-
   val projectPath = System.getenv(IJ_MCP_SERVER_PROJECT_PATH)
+  val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/") {
+    if (projectPath != null) {
+      headers[IJ_MCP_SERVER_PROJECT_PATH] = projectPath
+    }
+  }
 
   stdioServerTransport.onMessage {
     val updatedRequest = when {

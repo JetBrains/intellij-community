@@ -3,6 +3,7 @@ package com.intellij.mcpserver
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.asTool
+import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
@@ -11,6 +12,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.application
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
+import io.ktor.client.request.header
 import io.ktor.utils.io.streams.asInput
 import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.client.Client
@@ -23,7 +25,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.io.asSink
 import kotlinx.io.buffered
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -58,7 +59,6 @@ class TransportTest {
   fun tool_call_has_project_stdio() = tool_call_has_project(StdioTransportHolder(project))
 
   @Test
-  @Disabled("Headers passing should be implemented in kotlin mcp server sdk")
   fun tool_call_has_project_sse() = tool_call_has_project(StdioTransportHolder(project))
 
   fun tool_call_has_project(transport: TransportHolder) = transportTest(transport) { client ->
@@ -132,7 +132,9 @@ class SseTransportHolder(project: Project) : TransportHolder() {
   override val transport: AbstractTransport by lazy {
     SseClientTransport(HttpClient {
       install(SSE)
-    }, "http://localhost:${McpServerService.getInstance().port}/")
+    }, "http://localhost:${McpServerService.getInstance().port}/") {
+      header(IJ_MCP_SERVER_PROJECT_PATH, project.basePath)
+    }
   }
 
   override fun toString(): String {

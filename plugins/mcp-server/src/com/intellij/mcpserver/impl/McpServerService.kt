@@ -1,8 +1,7 @@
 package com.intellij.mcpserver.impl
 
 import com.intellij.mcpserver.*
-import com.intellij.mcpserver.impl.util.network.findFirstFreePort
-import com.intellij.mcpserver.impl.util.network.installHostValidation
+import com.intellij.mcpserver.impl.util.network.*
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
@@ -39,14 +38,10 @@ import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
-import io.modelcontextprotocol.kotlin.sdk.server.mcp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -136,35 +131,39 @@ class McpServerService(val cs: CoroutineScope) {
       }
     })
 
-    val mcpServer = Server(
-      Implementation(
-        name = "${ApplicationNamesInfo.getInstance().fullProductName} MCP Server",
-        version = ApplicationInfo.getInstance().fullVersion
-      ),
-      ServerOptions(
-        capabilities = ServerCapabilities(
-          //prompts = ServerCapabilities.Prompts(listChanged = true),
-          //resources = ServerCapabilities.Resources(subscribe = true, listChanged = true),
-          tools = ServerCapabilities.Tools(listChanged = true),
-        )
-      )
-    )
-    cs.launch {
-      var previousTools: List<RegisteredTool>? = null
-      mcpTools.collectLatest { updatedTools ->
-        previousTools?.forEach { previousTool ->
-          mcpServer.removeTool(previousTool.tool.name)
-        }
-        mcpServer.addTools(updatedTools)
-        previousTools = updatedTools
-      }
-    }
+
 
 
     return cs.embeddedServer(CIO, host = "127.0.0.1", port = freePort) {
       installHostValidation()
-      mcp {
-        return@mcp mcpServer
+      installHttpRequestPropagation()
+      mcpPatched {
+        // this is added because now Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
+        val projectPath = call.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
+        val mcpServer = Server(
+          Implementation(
+            name = "${ApplicationNamesInfo.getInstance().fullProductName} MCP Server",
+            version = ApplicationInfo.getInstance().fullVersion
+          ),
+          ServerOptions(
+            capabilities = ServerCapabilities(
+              //prompts = ServerCapabilities.Prompts(listChanged = true),
+              //resources = ServerCapabilities.Resources(subscribe = true, listChanged = true),
+              tools = ServerCapabilities.Tools(listChanged = true),
+            )
+          )
+        )
+        launch {
+          var previousTools: List<McpTool>? = null
+          mcpTools.collectLatest { updatedTools ->
+            previousTools?.forEach { previousTool ->
+              mcpServer.removeTool(previousTool.descriptor.name)
+            }
+            mcpServer.addTools(updatedTools.map { it.mcpToolToRegisteredTool(mcpServer, projectPath) })
+            previousTools = updatedTools
+          }
+        }
+        return@mcpPatched mcpServer
       }
     }.start(wait = false)
   }
@@ -177,16 +176,17 @@ class McpServerService(val cs: CoroutineScope) {
       logger.error("Cannot load tools for $it", e)
       emptyList()
     }
-  }.map { it.mcpToolToRegisteredTool() }
+  }
 
-private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
+private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromInitialRequest: String?): RegisteredTool {
   val tool = Tool(name = descriptor.name,
                   description = descriptor.description,
                   inputSchema = Tool.Input(
                     properties = descriptor.inputSchema.properties,
                     required = descriptor.inputSchema.requiredParameters.toList()))
   return RegisteredTool(tool) { request ->
-    val projectPath = (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content
+    val httpRequest = currentCoroutineContext().httpRequestOrNull
+    val projectPath = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
     val project = if (!projectPath.isNullOrBlank()) {
       ProjectManager.getInstance().openProjects.find { it.basePath == projectPath }
       }
@@ -221,7 +221,13 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
           application.messageBus.syncPublisher(ToolCallListener.TOPIC).beforeMcpToolCall(this@mcpToolToRegisteredTool.descriptor)
 
           logger.trace { "Start calling tool '${this@mcpToolToRegisteredTool.descriptor.name}'. Arguments: ${request.arguments}" }
-          val result = withContext(ProjectContextElement(project) + McpToolDescriptorElement(this@mcpToolToRegisteredTool.descriptor)) {
+          val clientVersion = server.clientVersion ?: Implementation("Unknown client", "Unknown version")
+
+          val result = withContext(
+            ProjectContextElement(project) +
+            McpToolDescriptorElement(descriptor) +
+            ClientInfoElement(ClientInfo(clientVersion.name, clientVersion.version))
+            ) {
             this@mcpToolToRegisteredTool.call(request.arguments)
           }
 
