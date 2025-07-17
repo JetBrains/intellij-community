@@ -140,7 +140,6 @@ object FUSProjectHotStartUpMeasurer {
 
     class NoMoreEditorsEvent(val time: Long, override val projectId: ProjectId) : FUSReportableEvent, ProjectDependentEvent
 
-    data class ResetProjectPathEvent(val projectId: ProjectId) : Event
     data object IdeStarterStartedEvent : Event
     data object MultipleProjectsEvent : FUSReportableEvent {
       val time: Long = System.nanoTime()
@@ -227,12 +226,6 @@ object FUSProjectHotStartUpMeasurer {
       throw IllegalStateException("No project marker found")
     }
     block.invoke(projectMarker.id)
-  }
-
-  fun resetProjectPath() {
-    withRequiredProjectMarker { id ->
-      channel.trySend(Event.ResetProjectPathEvent(id))
-    }
   }
 
   fun openingMultipleProjects() {
@@ -442,7 +435,6 @@ object FUSProjectHotStartUpMeasurer {
         }
         is Event.MarkupRestoredEvent -> markupResurrectedFileIds.addId(event.fileId, event.markupType)
         is Event.ProjectPathReportEvent -> projectPathReportEvents.putIfAbsent(event)
-        is Event.ResetProjectPathEvent -> {} //todo[lene] remove   projectPathReportEvent = null
         is Event.ProjectTypeReportEvent -> if (projectTypeReportEvent == null) projectTypeReportEvent = event
         is Event.ViolationEvent -> {
           reportViolation(event.violation, event.time, ideStarterStartedEvent, reportedFirstUiShownEvent)

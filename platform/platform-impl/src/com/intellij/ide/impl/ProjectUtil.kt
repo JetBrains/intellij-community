@@ -537,7 +537,6 @@ object ProjectUtil {
       }?.also {
         return it
       }
-      FUSProjectHotStartUpMeasurer.resetProjectPath()
     }
 
     var result: Project? = null
