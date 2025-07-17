@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.git.branch.tree.GitBranchesTreeUpdater
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeUpdatesService
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.config.GitVcsSettings
 
@@ -38,7 +38,7 @@ internal abstract class GitBranchesPopupSettingsToggleAction(
     val project = e.project ?: return
     operation(GitVcsSettings.getInstance(project))
     saveSettingsForRemoteDevelopment(project)
-    GitBranchesTreeUpdater.getInstance(project).refresh()
+    GitBranchesTreeUpdatesService.getInstance(project).refresh()
   }
 
   internal companion object {

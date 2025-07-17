@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":shared_resources"]
 )

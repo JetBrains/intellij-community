@@ -701,7 +701,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
   private fun subscribeOnUpdates(scope: CoroutineScope, project: Project, step: T) {
     scope.launch(context = Dispatchers.EDT) {
-      GitBranchesTreeUpdater.getInstance(project).updates.collect {
+      GitBranchesTreeUpdatesService.getInstance(project).updates.collect {
         when (it) {
           GitBranchesTreeUpdate.REFRESH_TAGS -> runPreservingTreeState {
             step.treeModel.updateTags()
