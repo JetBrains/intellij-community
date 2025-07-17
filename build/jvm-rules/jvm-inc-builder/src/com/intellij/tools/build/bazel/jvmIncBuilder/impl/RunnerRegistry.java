@@ -1,6 +1,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.instrumentation.BytecodeInstrumentationRunner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.Runner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.RunnerFactory;

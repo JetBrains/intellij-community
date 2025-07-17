@@ -3,6 +3,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildContextImpl
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.instrumentation.*
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +48,10 @@ internal class BazelIncExecutor : WorkRequestExecutor {
       System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
       System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JS_PROPERTY, "true")
       System.setProperty("kotlin.jps.dumb.mode", "true")
+
+      // TMH assertions
+      System.setProperty(ThreadingModelInstrumenter.INSTRUMENT_ANNOTATIONS_PROPERTY, "true")
+      System.setProperty(ThreadingModelInstrumenter.GENERATE_LINE_NUMBERS_PROPERTY, "true")
     }
 
     @JvmStatic

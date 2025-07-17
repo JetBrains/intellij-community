@@ -1,10 +1,13 @@
-package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
+package com.intellij.tools.build.bazel.jvmIncBuilder.impl.instrumentation;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumenterClassWriter;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.*;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputFile;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
@@ -19,7 +22,7 @@ public class BytecodeInstrumentationRunner implements CompilerRunner {
   private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.impl.InstrumenterRunner");
 
   private static final List<BytecodeInstrumenter> ourInstrumenters = List.of(
-    new NotNullInstrumenter()
+    new ThreadingModelInstrumenter(), new NotNullInstrumenter()
   );
 
   private final StorageManager myStorageManager;
