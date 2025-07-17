@@ -205,6 +205,7 @@ object CommunityRepositoryModules {
     },
     pluginAuto(listOf("intellij.performanceTesting")),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
+    pluginAuto(listOf("intellij.vcs.github")),
     gitlabPlugin("intellij.vcs.gitlab.community", productCode = "IC"),
     pluginAuto(listOf("intellij.compilation.charts")) { spec ->
       spec.withModule("intellij.compilation.charts.jps")
