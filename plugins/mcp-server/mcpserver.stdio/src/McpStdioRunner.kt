@@ -2,18 +2,19 @@ package com.intellij.mcpserver.stdio
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
+import io.ktor.client.request.header
 import io.ktor.utils.io.streams.asInput
-import io.modelcontextprotocol.kotlin.sdk.JSONRPCRequest
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.asSink
 import kotlinx.io.buffered
-import kotlinx.serialization.json.*
 
+private const val IJ_MCP_PREFIX = "IJ_MCP_"
 val IJ_MCP_SERVER_PORT: String = ::IJ_MCP_SERVER_PORT.name
 val IJ_MCP_SERVER_PROJECT_PATH: String = ::IJ_MCP_SERVER_PROJECT_PATH.name
+
 
 suspend fun main() {
   val inputStream = System.`in`
@@ -30,23 +31,13 @@ suspend fun main() {
     install(SSE)
   }
 
-  val projectPath = System.getenv(IJ_MCP_SERVER_PROJECT_PATH)
+  val envsToPass = System.getenv().filter { (key, _) -> key.startsWith(IJ_MCP_PREFIX) }
   val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/") {
-    if (projectPath != null) {
-      headers[IJ_MCP_SERVER_PROJECT_PATH] = projectPath
-    }
+    envsToPass.forEach { (key, value) -> header(key, value)}
   }
 
   stdioServerTransport.onMessage {
-    val updatedRequest = when {
-      it is JSONRPCRequest && projectPath != null -> {
-        JSONRPCRequest(it.id, it.method,decorateParamsIfNeeded (it.params, projectPath))
-      }
-      else -> {
-        it
-      }
-    }
-    sseClientTransport.send(updatedRequest)
+    sseClientTransport.send(it)
   }
 
   sseClientTransport.onMessage {
@@ -74,36 +65,6 @@ suspend fun main() {
   stdioServerTransport.onClose { finished.complete(Unit) }
 
   finished.await()
-}
-
-private const val metaKey = "_meta"
-
-private fun decorateParamsIfNeeded(params: JsonElement, projectPath: String?): JsonElement {
-  if (projectPath == null) return params
-
-  if (params is JsonObject) {
-    val meta = params[metaKey]
-    if (meta is JsonObject?) {
-      return buildJsonObject { // params value
-        for ((key, value) in params.entries) {
-          if (key != metaKey) {
-            put(key, value)
-          }
-          else {
-            put(metaKey, buildJsonObject { // _meta value
-              meta?.jsonObject?.let { metaJson ->
-                for ((key, value) in metaJson) { // copy _meta members
-                  put(key, value)
-                }
-              }
-              put(IJ_MCP_SERVER_PROJECT_PATH, projectPath)
-            })
-          }
-        }
-      }
-    }
-  }
-  return params
 }
 
 object ClassPathMarker
