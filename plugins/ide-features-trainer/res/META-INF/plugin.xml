@@ -1,4 +1,4 @@
-<idea-plugin package="training">
+<idea-plugin package="training" allow-bundled-update="true">
   <id>training</id>
   <name>IDE Features Trainer</name>
   <vendor>JetBrains</vendor>
