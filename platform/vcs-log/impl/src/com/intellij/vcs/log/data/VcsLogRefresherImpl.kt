@@ -82,24 +82,6 @@ internal class VcsLogRefresherImpl(
     return SingleTaskImpl(future, indicator)
   }
 
-  private fun loadRecentData(requirements: Map<VirtualFile, VcsLogProvider.Requirements>): LogInfo {
-    return trace(ReadingRecentCommits) {
-      val logInfo = LogInfo(storage)
-      for ((root, requirements) in requirements) {
-        val provider = requireNotNull(providers[root]) { "Cannot find provider for root $root" }
-        trace(ReadingRecentCommitsInRoot) {
-          val data = provider.readFirstBlock(root, requirements)
-          logInfo.put(root, compactCommits(data.getCommits(), root))
-          logInfo.put(root, data.getRefs())
-          storeUsersAndDetails(data.getCommits())
-        }
-      }
-      userRegistry.flush()
-      index.scheduleIndex(false)
-      logInfo
-    }
-  }
-
   override fun initialize() {
     if (initialized.get()) return
     singleTaskController.request(RefreshRequest.INITIALIZE)
@@ -111,31 +93,203 @@ internal class VcsLogRefresherImpl(
     }
   }
 
-  private fun compactCommits(commits: List<TimedVcsCommit>, root: VirtualFile): List<GraphCommit<Int>> {
-    return trace(CompactingCommits) {
-      commits.map {
-        compactCommit(it, root)
+  private fun loadFirstBlock(): DataPack {
+    try {
+      return trace(Initializing) {
+        val commitCountRequirements = CommitCountRequirements(recentCommitCount)
+        val data = loadRecentData(providers.keys.associateWith { commitCountRequirements })
+        val compoundList = multiRepoJoin(data.getCommits()).take(recentCommitCount)
+        DataPack.build(compoundList, data.getRefs(), providers, storage, false)
+      }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.info(e)
+      return ErrorDataPack(e)
+    }
+  }
+
+  private fun loadUpdatedDataPack(dataPack: DataPack, loadedInfo: LogInfo, roots: Collection<VirtualFile>): DataPack? =
+    try {
+      trace(Refreshing) {
+        val permanentGraph = dataPack.permanentGraph
+        val currentRefs = dataPack.refsModel.allRefsByRoot
+        var commitCount = recentCommitCount
+        repeat(2) {
+          val requirements = prepareRequirements(roots, commitCount, currentRefs)
+          val logInfo = loadRecentData(requirements)
+          for (root in roots) {
+            loadedInfo.put(root, logInfo.getCommits(root)!!)
+            loadedInfo.put(root, logInfo.getRefs(root)!!)
+          }
+
+          val compoundLog = multiRepoJoin(loadedInfo.getCommits())
+          val allNewRefs = currentRefs.toMutableMap().apply {
+            replaceAll { root, refs ->
+              loadedInfo.getRefs(root) ?: refs
+            }
+          }
+          val joinedFullLog = join(permanentGraph.allCommits.toList(), compoundLog, currentRefs, allNewRefs)
+          if (joinedFullLog != null) {
+            return@trace DataPack.build(joinedFullLog, allNewRefs, providers, storage, true)
+          }
+          commitCount *= 5
+        }
+        // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
+        LOG.info("Couldn't join ${commitCount / 5} recent commits to the log (${permanentGraph.allCommits.size} commits)")
+        return@trace null
+      }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.info(e)
+      ErrorDataPack(e)
+    }
+
+  private fun loadFullLog(): DataPack =
+    try {
+      trace(LoadingFullLog) {
+        val logInfo = readFullLogFromVcs()
+        val graphCommits = multiRepoJoin(logInfo.getCommits())
+        DataPack.build(graphCommits, logInfo.getRefs(), providers, storage, true)
+      }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.info(e)
+      ErrorDataPack(e)
+    }
+
+  private fun loadSmallDataPack(): DataPack =
+    trace(PartialRefreshing) {
+      LOG.debug("Building a small datapack for $smallDataPackCommitsCount commits")
+      try {
+        val commitCount = smallDataPackCommitsCount
+        val requirements = prepareRequirements(providers.keys, commitCount, null)
+        val data = loadRecentData(requirements)
+        val compoundList = multiRepoJoin(data.getCommits()).take(commitCount)
+        SmallDataPack.build(compoundList, data.getRefs(), providers, storage)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Exception) {
+        LOG.info(e)
+      }
+      DataPack.EMPTY
+    }
+
+  private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, CompressedRefs>?) =
+    roots.associateWith { root ->
+      val refs = prevRefs?.get(root)?.refs
+      if (refs == null) {
+        RequirementsImpl(commitCount, true, listOf<VcsRef>(), false)
+      }
+      else {
+        RequirementsImpl(commitCount, true, refs)
+      }
+    }
+
+  private fun loadRecentData(requirements: Map<VirtualFile, VcsLogProvider.Requirements>): LogInfo {
+    return trace(ReadingRecentCommits) {
+      val logInfo = LogInfo(storage)
+      for ((root, requirements) in requirements) {
+        val provider = requireNotNull(providers[root]) { "Cannot find provider for root $root" }
+        trace(ReadingRecentCommitsInRoot) {
+          val data = provider.readFirstBlock(root, requirements)
+          val commits = trace(CompactingCommits) {
+            data.getCommits().map {
+              compactCommit(it, root)
+            }
+          }
+          logInfo.put(root, commits)
+          logInfo.put(root, data.getRefs())
+
+          commits.forEach {
+            index.markForIndexing(it.id, root)
+          }
+          val metadatas = data.getCommits()
+          for (detail in metadatas) {
+            userRegistry.addUser(detail.getAuthor())
+            userRegistry.addUser(detail.getCommitter())
+          }
+          topCommitsDetailsCache.storeDetails(metadatas)
+        }
+      }
+      userRegistry.flush()
+      index.scheduleIndex(false)
+      logInfo
+    }
+  }
+
+  private fun readFullLogFromVcs(): LogInfo =
+    trace(ReadingAllCommits) {
+      val logInfo = LogInfo(storage)
+      for ((root, provider) in providers.entries) {
+        trace(ReadingAllCommitsInRoot) { span ->
+          span.setAttribute("rootName", root.getName())
+          val graphCommits = mutableListOf<GraphCommit<Int>>()
+          val data = provider.readAllHashes(root) {
+            graphCommits.add(compactCommit(it, root))
+          }
+          logInfo.put(root, graphCommits)
+          logInfo.put(root, data.getRefs())
+
+          graphCommits.forEach {
+            index.markForIndexing(it.id, root)
+          }
+          userRegistry.addUsers(data.getUsers())
+        }
+      }
+      userRegistry.flush()
+      index.scheduleIndex(true)
+      logInfo
+    }
+
+  private fun compactCommit(commit: TimedVcsCommit, root: VirtualFile): GraphCommit<Int> {
+    val commitIdx = storage.getCommitIndex(commit.getId(), root)
+    val parents = commit.getParents().map { storage.getCommitIndex(it, root) }
+    return GraphCommitImpl.createIntCommit(commitIdx, parents, commit.getTimestamp())
+  }
+
+  private fun join(
+    fullLog: List<GraphCommit<Int>>,
+    recentCommits: List<GraphCommit<Int>>,
+    previousRefs: Map<VirtualFile, CompressedRefs>,
+    newRefs: Map<VirtualFile, CompressedRefs>,
+  ): List<GraphCommit<Int>>? {
+    if (fullLog.isEmpty()) return recentCommits
+
+    return trace(JoiningNewAndOldCommits) {
+      val prevRefIndices = previousRefs.values.flatMapTo(mutableSetOf()) { it.getCommits() }
+      val newRefIndices = newRefs.values.flatMapTo(mutableSetOf()) { it.getCommits() }
+
+      try {
+        VcsLogJoiner<Int, GraphCommit<Int>>().addCommits(fullLog, prevRefIndices, recentCommits, newRefIndices).first
+      }
+      catch (e: VcsLogRefreshNotEnoughDataException) {
+        // valid case: e.g. another developer merged a long-developed branch, or we just didn't pull for a long time
+        LOG.info(e)
+        null
+      }
+      catch (e: IllegalStateException) {
+        // it happens from time to time, but we don't know why, and can hardly debug it.
+        LOG.info(e)
+        null
       }
     }
   }
 
-  private fun compactCommit(commit: TimedVcsCommit, root: VirtualFile): GraphCommit<Int> {
-    val parents = commit.getParents().map {
-      storage.getCommitIndex(it, root)
+  private fun <T : GraphCommit<Int>> multiRepoJoin(commits: Collection<List<T>>): List<T> =
+    trace(JoiningMultiRepoCommits) {
+      VcsLogMultiRepoJoiner<Int, T>().join(commits)
     }
-
-    val commitIdx = storage.getCommitIndex(commit.getId(), root)
-    index.markForIndexing(commitIdx, root)
-    return GraphCommitImpl.createIntCommit(commitIdx, parents, commit.getTimestamp())
-  }
-
-  private fun storeUsersAndDetails(metadatas: List<VcsCommitMetadata>) {
-    for (detail in metadatas) {
-      userRegistry.addUser(detail.getAuthor())
-      userRegistry.addUser(detail.getCommitter())
-    }
-    topCommitsDetailsCache.storeDetails(metadatas)
-  }
 
   override fun dispose() {
   }
@@ -145,34 +299,16 @@ internal class VcsLogRefresherImpl(
     override fun run(indicator: ProgressIndicator) {
       singleTaskController.removeRequests(listOf(RefreshRequest.INITIALIZE))
       try {
-        val result = readFirstBlock()
+        val result = loadFirstBlock()
+        if (result !is ErrorDataPack) {
+          singleTaskController.request(RefreshRequest.RELOAD_ALL) // build/rebuild the full log in background
+        }
         singleTaskController.taskCompleted(result)
       }
       catch (e: ProcessCanceledException) {
+        initialized.compareAndSet(true, false)
         singleTaskController.taskCompleted(null)
         throw e
-      }
-    }
-
-    private fun readFirstBlock(): DataPack {
-      try {
-        val dataPack = trace(Initializing) {
-          val commitCountRequirements = CommitCountRequirements(recentCommitCount)
-          val data = loadRecentData(providers.keys.associateWith { commitCountRequirements })
-          val compoundList = multiRepoJoin(data.getCommits()).take(recentCommitCount)
-          DataPack.build(compoundList, data.getRefs(), providers, storage, false)
-        }
-
-        singleTaskController.request(RefreshRequest.RELOAD_ALL) // build/rebuild the full log in background
-        return dataPack
-      }
-      catch (e: ProcessCanceledException) {
-        initialized.compareAndSet(true, false)
-        throw e
-      }
-      catch (e: Exception) {
-        LOG.info(e)
-        return ErrorDataPack(e)
       }
     }
   }
@@ -213,13 +349,19 @@ internal class VcsLogRefresherImpl(
           val supportsIncrementalRefresh = providers.all(VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH::getOrDefault)
 
           if (optimize && supportsIncrementalRefresh && isSmallDataPackEnabled) {
-            val smallDataPack = buildSmallDataPack()
+            val smallDataPack = loadSmallDataPack()
             if (smallDataPack !== DataPack.EMPTY) {
               dataPackUpdateHandler.accept(smallDataPack)
             }
           }
 
-          dataPack = doRefresh(dataPack, loadedInfo, rootsToRefresh, supportsIncrementalRefresh)
+          if (!dataPack.isFull || !supportsIncrementalRefresh) {
+            dataPack = loadFullLog()
+          }
+          else {
+            dataPack = loadUpdatedDataPack(dataPack, loadedInfo, rootsToRefresh)
+                       ?: loadFullLog()
+          }
         }
         catch (e: ProcessCanceledException) {
           singleTaskController.taskCompleted(null)
@@ -227,142 +369,7 @@ internal class VcsLogRefresherImpl(
         }
       }
     }
-
-    private fun doRefresh(
-      dataPack: DataPack, loadedInfo: LogInfo,
-      roots: Collection<VirtualFile>, supportsIncrementalRefresh: Boolean,
-    ): DataPack {
-      try {
-        val permanentGraph = if (dataPack.isFull) dataPack.permanentGraph else null
-        if (permanentGraph == null || !supportsIncrementalRefresh) return loadFullLog()
-
-        return trace(Refreshing) {
-          val currentRefs = dataPack.refsModel.allRefsByRoot
-          var commitCount = recentCommitCount
-          repeat(2) {
-            val requirements = prepareRequirements(roots, commitCount, currentRefs)
-            val logInfo = loadRecentData(requirements)
-            for (root in roots) {
-              loadedInfo.put(root, logInfo.getCommits(root)!!)
-              loadedInfo.put(root, logInfo.getRefs(root)!!)
-            }
-
-            val compoundLog = multiRepoJoin(loadedInfo.getCommits())
-            val allNewRefs = currentRefs.toMutableMap().apply {
-              replaceAll { root, refs ->
-                loadedInfo.getRefs(root) ?: refs
-              }
-            }
-            val joinedFullLog = join(permanentGraph.allCommits.toList(), compoundLog, currentRefs, allNewRefs)
-            if (joinedFullLog != null) {
-              return@trace DataPack.build(joinedFullLog, allNewRefs, providers, storage, true)
-            }
-            commitCount *= 5
-          }
-          // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
-          LOG.info("Couldn't join ${commitCount / 5} recent commits to the log (${permanentGraph.allCommits.size} commits)")
-          loadFullLog()
-        }
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Exception) {
-        LOG.info(e)
-        return ErrorDataPack(e)
-      }
-    }
-
-    private fun join(
-      fullLog: List<GraphCommit<Int>>,
-      recentCommits: List<GraphCommit<Int>>,
-      previousRefs: Map<VirtualFile, CompressedRefs>,
-      newRefs: Map<VirtualFile, CompressedRefs>,
-    ): List<GraphCommit<Int>>? {
-      if (fullLog.isEmpty()) return recentCommits
-
-      return trace(JoiningNewAndOldCommits) {
-        val prevRefIndices = previousRefs.values.flatMapTo(mutableSetOf()) { it.getCommits() }
-        val newRefIndices = newRefs.values.flatMapTo(mutableSetOf()) { it.getCommits() }
-
-        try {
-          VcsLogJoiner<Int, GraphCommit<Int>>().addCommits(fullLog, prevRefIndices, recentCommits, newRefIndices).first
-        }
-        catch (e: VcsLogRefreshNotEnoughDataException) {
-          // valid case: e.g. another developer merged a long-developed branch, or we just didn't pull for a long time
-          LOG.info(e)
-          null
-        }
-        catch (e: IllegalStateException) {
-          // it happens from time to time, but we don't know why, and can hardly debug it.
-          LOG.info(e)
-          null
-        }
-      }
-    }
-
-    private fun loadFullLog(): DataPack =
-      trace(LoadingFullLog) {
-        val logInfo = readFullLogFromVcs()
-        val graphCommits = multiRepoJoin(logInfo.getCommits())
-        DataPack.build(graphCommits, logInfo.getRefs(), providers, storage, true)
-      }
-
-    private fun readFullLogFromVcs(): LogInfo =
-      trace(ReadingAllCommits) {
-        val logInfo = LogInfo(storage)
-        for ((root, provider) in providers.entries) {
-          trace(ReadingAllCommitsInRoot) { span ->
-            span.setAttribute("rootName", root.getName())
-            val graphCommits = mutableListOf<GraphCommit<Int>>()
-            val data = provider.readAllHashes(root) {
-              graphCommits.add(compactCommit(it, root))
-            }
-            logInfo.put(root, graphCommits)
-            logInfo.put(root, data.getRefs())
-            userRegistry.addUsers(data.getUsers())
-          }
-        }
-        userRegistry.flush()
-        index.scheduleIndex(true)
-        logInfo
-      }
-
-    private fun buildSmallDataPack(): DataPack =
-      trace(PartialRefreshing) {
-        LOG.debug("Building a small datapack for $smallDataPackCommitsCount commits")
-        try {
-          val commitCount = smallDataPackCommitsCount
-          val requirements = prepareRequirements(providers.keys, commitCount, null)
-          val data = loadRecentData(requirements)
-          val compoundList = multiRepoJoin(data.getCommits()).take(commitCount)
-          SmallDataPack.build(compoundList, data.getRefs(), providers, storage)
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: Exception) {
-          LOG.info(e)
-        }
-        DataPack.EMPTY
-      }
-
-    private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, CompressedRefs>?) =
-      roots.associateWith { root ->
-        val refs = prevRefs?.get(root)?.refs
-        if (refs == null) {
-          RequirementsImpl(commitCount, true, listOf<VcsRef>(), false)
-        }
-        else {
-          RequirementsImpl(commitCount, true, refs)
-        }
-      }
   }
-
-  private fun <T : GraphCommit<Int>> multiRepoJoin(commits: Collection<List<T>>): List<T> =
-    trace(JoiningMultiRepoCommits) {
-      VcsLogMultiRepoJoiner<Int, T>().join(commits)
-    }
 
   private inline fun <T> trace(span: VcsTelemetrySpan, operation: (Span) -> T): T = tracer.spanBuilder(span.getName()).use(operation)
 }
