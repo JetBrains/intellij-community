@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.EditorTextField
@@ -27,7 +26,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
-import org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletion
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.block.history.CommandSearchPresenter
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController.PromptStateListener
@@ -200,9 +198,6 @@ class TerminalPromptView(
     FileDocumentManager.getInstance().getFile(editor.document)?.let {
       editor.setFile(it)
       it.putUserData(NavBarModelExtension.IGNORE_IN_NAVBAR, true)
-    }
-    if (Registry.`is`("terminal.new.ui.inline.completion")) {
-      TerminalInlineCompletion.getInstance(project).install(editor)
     }
 
     editor.contextMenuGroupId = "Terminal.PromptContextMenu"

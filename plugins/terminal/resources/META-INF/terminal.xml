@@ -58,8 +58,6 @@
                  description="Enable new terminal for PowerShell on Unix"/>
     <registryKey key="terminal.new.ui.show.promotion" defaultValue="false"
                  description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
-    <registryKey key="terminal.new.ui.inline.completion" defaultValue="false"
-                 description="Whether to show the inline (grey text) completion in the New Terminal"/>
     <registryKey key="terminal.new.ui.autocompletion" defaultValue="true"
                  description="Whether to run autocompletion in the New Terminal"/>
     <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"
