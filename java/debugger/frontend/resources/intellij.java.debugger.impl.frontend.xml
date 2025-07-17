@@ -7,9 +7,5 @@
     <action id="Debugger.ViewText.Frontend" class="com.intellij.java.debugger.impl.frontend.actions.FrontendViewTextAction">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
     </action>
-    <action class="com.intellij.java.debugger.impl.frontend.actions.FrontendShowInstancesByClassAction"
-            id="MemoryView.ShowInstancesFromDebuggerTree.Frontend">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="last"/>
-    </action>
   </actions>
 </idea-plugin>

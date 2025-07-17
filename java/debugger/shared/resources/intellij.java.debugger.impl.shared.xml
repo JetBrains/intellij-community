@@ -20,5 +20,11 @@
       <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
+    <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
+            id="MemoryView.ShowInstancesFromDebuggerTree">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Debugger.ShowReferring"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="last"/>
+    </action>
   </actions>
 </idea-plugin>
