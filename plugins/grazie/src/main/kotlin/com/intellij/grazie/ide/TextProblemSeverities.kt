@@ -9,14 +9,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider
-import java.util.function.Supplier
 import javax.swing.Icon
 
-class TextProblemSeverities: SeveritiesProvider() {
+class TextProblemSeverities : SeveritiesProvider() {
   override fun getSeveritiesHighlightInfoTypes(): List<HighlightInfoType> {
     return listOf(
-      TextHighlightInfoType(STYLE_ERROR, STYLE_ERROR_ATTRIBUTES, GrazieIcons.StyleError),
-      TextHighlightInfoType(STYLE_WARNING, STYLE_WARNING_ATTRIBUTES, GrazieIcons.StyleWarning),
       TextHighlightInfoType(STYLE_SUGGESTION, STYLE_SUGGESTION_ATTRIBUTES, GrazieIcons.StyleSuggestion),
       TextHighlightInfoType(GRAMMAR_ERROR, GRAMMAR_ERROR_ATTRIBUTES, AllIcons.General.InspectionsGrammar, applicableToInspections = true)
     )
@@ -26,51 +23,32 @@ class TextProblemSeverities: SeveritiesProvider() {
     severity: HighlightSeverity,
     attributesKey: TextAttributesKey,
     private val icon: Icon,
-    private val applicableToInspections: Boolean = false
-  ): HighlightInfoTypeImpl(severity, attributesKey), HighlightInfoType.Iconable {
+    private val applicableToInspections: Boolean = false,
+  ) : HighlightInfoTypeImpl(severity, attributesKey), HighlightInfoType.Iconable {
     override fun getIcon(): Icon = icon
     override fun isApplicableToInspections() = applicableToInspections
   }
 
   @Suppress("CompanionObjectInExtension")
   companion object {
-    private fun createStyleSeverity(name: String,
-                                    displayName: Supplier<String>,
-                                    displayNameCapitalized: Supplier<String>,
-                                    value: Int): HighlightSeverity {
-      return HighlightSeverity(
-        name,
-        SpellCheckerSeveritiesProvider.TYPO.myVal - value,
-        displayName,
-        displayNameCapitalized,
-        @Suppress("InvalidBundleOrProperty")
-        GrazieBundle.messagePointer("style.problem.severity.count")
-      )
-    }
 
     @JvmField
-    val STYLE_ERROR: HighlightSeverity = createStyleSeverity(
-      "STYLE_ERROR",
-      GrazieBundle.messagePointer("style.error.severity.name"),
-      GrazieBundle.messagePointer("style.error.severity.name.capitalized"),
-      1
-    )
-
-    @JvmField
-    val STYLE_WARNING: HighlightSeverity = createStyleSeverity(
-      "STYLE_WARNING",
-      GrazieBundle.messagePointer("style.warning.severity.name"),
-      GrazieBundle.messagePointer("style.warning.severity.name.capitalized"),
-      2
-    )
-
-    @JvmField
-    val STYLE_SUGGESTION: HighlightSeverity = createStyleSeverity(
+    val STYLE_SUGGESTION: HighlightSeverity = HighlightSeverity(
       "STYLE_SUGGESTION",
+      SpellCheckerSeveritiesProvider.TYPO.myVal - 1,
       GrazieBundle.messagePointer("style.suggestion.severity.name"),
       GrazieBundle.messagePointer("style.suggestion.severity.name.capitalized"),
-      3
+      @Suppress("InvalidBundleOrProperty")
+      GrazieBundle.messagePointer("style.problem.severity.count")
     )
+
+    @JvmField
+    @Deprecated("Use STYLE_SUGGESTION instead", ReplaceWith("STYLE_SUGGESTION"))
+    val STYLE_ERROR: HighlightSeverity = STYLE_SUGGESTION
+
+    @JvmField
+    @Deprecated("Use STYLE_SUGGESTION instead", ReplaceWith("STYLE_SUGGESTION"))
+    val STYLE_WARNING: HighlightSeverity = STYLE_SUGGESTION
 
     @JvmField
     val GRAMMAR_ERROR: HighlightSeverity = HighlightSeverity(
@@ -81,12 +59,6 @@ class TextProblemSeverities: SeveritiesProvider() {
       @Suppress("InvalidBundleOrProperty")
       GrazieBundle.messagePointer("grammar.error.severity.count")
     )
-
-    @JvmField
-    val STYLE_ERROR_ATTRIBUTES: TextAttributesKey = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_ERROR")
-
-    @JvmField
-    val STYLE_WARNING_ATTRIBUTES: TextAttributesKey = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_WARNING")
 
     @JvmField
     val STYLE_SUGGESTION_ATTRIBUTES: TextAttributesKey = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_SUGGESTION")
