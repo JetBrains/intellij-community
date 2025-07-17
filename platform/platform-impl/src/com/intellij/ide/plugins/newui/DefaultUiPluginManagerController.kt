@@ -250,6 +250,18 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return plugins.mapNotNull { getPlugin(it) }.associateBy { it.pluginId }
   }
 
+  override fun isDisableAllowed(pluginId: PluginId): Boolean {
+    val plugin = PluginManagerCore.findPlugin(pluginId)
+                 ?: return true
+    return PluginManagerCore.isDisableAllowed(plugin)
+  }
+
+  override suspend fun getDisableDisallowedList(): List<PluginId> {
+    return PluginManagerCore.getPluginSet().allPlugins.filter {
+      !PluginManagerCore.isDisableAllowed(it)
+    }.map { it.pluginId }.toList()
+  }
+
   override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
     val session = PluginManagerSessionService.getInstance().getSession(sessionId)
     val service = PluginUpdatesService.connectWithCounter(callback)

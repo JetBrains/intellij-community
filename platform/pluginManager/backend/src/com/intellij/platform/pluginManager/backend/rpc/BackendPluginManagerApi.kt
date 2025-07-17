@@ -216,4 +216,12 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
     return DefaultUiPluginManagerController.isPluginEnabled(pluginId)
   }
+
+  override suspend fun isDisableAllowed(pluginId: PluginId): Boolean {
+    return DefaultUiPluginManagerController.isDisableAllowed(pluginId)
+  }
+
+  override suspend fun getDisableDisallowedList(): List<PluginId> {
+    return DefaultUiPluginManagerController.getDisableDisallowedList()
+  }
 }

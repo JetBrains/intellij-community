@@ -106,6 +106,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().isPluginEnabled(pluginId)
   }
 
+  override fun isDisableAllowed(pluginId: PluginId): Boolean {
+    return awaitForResult { PluginManagerApi.getInstance().isDisableAllowed(pluginId) }
+  }
+
+  override suspend fun getDisableDisallowedList(): List<PluginId> {
+    return PluginManagerApi.getInstance().getDisableDisallowedList()
+  }
+
   override fun isPluginInstalled(pluginId: PluginId): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().isPluginInstalled(pluginId) }
   }

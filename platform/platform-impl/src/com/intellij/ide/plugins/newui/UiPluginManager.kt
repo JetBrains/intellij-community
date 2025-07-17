@@ -204,6 +204,10 @@ class UiPluginManager {
     return getController().getPluginInstallationState(pluginId)
   }
 
+  fun isDisableAllowed(pluginId: PluginId): Boolean {
+    return getController().isDisableAllowed(pluginId)
+  }
+
   fun getController(): UiPluginManagerController {
     if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
       return UiPluginManagerController.EP_NAME.extensionList.firstOrNull { it.isEnabled() } ?: DefaultUiPluginManagerController

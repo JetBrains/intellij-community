@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
 import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -942,6 +943,20 @@ object PluginManagerCore {
     }
     return false
   }
+
+  @ApiStatus.Internal
+  fun isDisableAllowed(descriptor: IdeaPluginDescriptor): Boolean {
+    if (descriptor !is PluginMainDescriptor) {
+      return true // TODO does not really make sense ?
+    }
+    if (descriptor.isImplementationDetail() ||
+        ApplicationInfo.getInstance().isEssentialPlugin(descriptor.pluginId) ||
+        isRequiredForEssentialPlugin(descriptor)) {
+      return false
+    }
+    return true
+  }
+
 
   //<editor-fold desc="Deprecated stuff.">
   @ApiStatus.ScheduledForRemoval

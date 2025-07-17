@@ -8,7 +8,6 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.api.PluginDto;
 import com.intellij.ide.plugins.marketplace.*;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -877,19 +876,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   @Override
   public boolean disable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     return setEnabledState(descriptors, PluginEnableDisableAction.DISABLE_GLOBALLY);
-  }
-
-  @ApiStatus.Internal
-  public boolean isDisableAllowed(IdeaPluginDescriptor descriptor) {
-    if (!(descriptor instanceof PluginMainDescriptor)) {
-      return true; // TODO does not really make sense ?
-    }
-    if (descriptor.isImplementationDetail() ||
-        ApplicationInfo.getInstance().isEssentialPlugin(descriptor.getPluginId().getIdString()) ||
-        PluginManagerCore.INSTANCE.isRequiredForEssentialPlugin((PluginMainDescriptor)descriptor)) {
-      return false;
-    }
-    return true;
   }
 
   void enableRequiredPlugins(@NotNull IdeaPluginDescriptor descriptor) {
