@@ -12,6 +12,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -525,7 +526,9 @@ public final class PyInterpreterInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PyUiUtil.clearFileLevelInspectionResults(descriptor.getPsiElement().getContainingFile());
-      PyProjectSdkConfiguration.INSTANCE.setReadyToUseSdkSync(project, myModule, mySdk);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        PyProjectSdkConfiguration.INSTANCE.setReadyToUseSdkSync(project, myModule, mySdk);
+      });
     }
   }
 
