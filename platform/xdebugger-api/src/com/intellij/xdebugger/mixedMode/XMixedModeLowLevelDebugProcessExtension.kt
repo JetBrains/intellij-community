@@ -34,4 +34,6 @@ interface XMixedModeLowLevelDebugProcessExtension : XMixedModeDebugProcessExtens
   suspend fun beforeStep(mixedSuspendContext: XMixedModeSuspendContextBase)
 
   fun belongsToMe(context: XSuspendContext) : Boolean
+
+  suspend fun beforeHighLevelSetNextStatement()
 }

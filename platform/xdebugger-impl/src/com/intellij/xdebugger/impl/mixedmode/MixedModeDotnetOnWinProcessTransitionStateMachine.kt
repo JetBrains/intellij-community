@@ -47,8 +47,16 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   class LowLevelRunToAddressStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
   class HighLevelRunToAddressStarted(val sourcePosition: XSourcePosition, val high: XSuspendContext) : State
   class HighLevelRunToAddressStartedLowRun : State
-  class HighLevelSetStatementStarted(val low : XSuspendContext) : State
-  class HighLevelSetStatementHighRunning(val low : XSuspendContext) : State
+
+  // Set of states for SetNextStatement feature
+  // (we need so many states and transactions because low-level process has to refresh its state after high level set next statement completed):
+  // BothStopped ---HighLevelSetNextStatementRequested---> HighLevelSetStatementPreparingLowLevelProcess ---LowRunning---> HighLevelSetStatementLowRunningHighRunRequested ---HighRunning--->  HighLevelSetStatementLowRunningHighRunning
+  //             ---HighLevelPositionReached---> OnlyHighStopped ---LowLevelPositionReached---> BothStopped
+  class HighLevelSetStatementPreparingLowLevelProcess(val high: XSuspendContext, val position: XSourcePosition) : State
+  object HighLevelSetStatementLowRunningHighRunning : State
+  object HighLevelSetStatementLowRunningHighRunRequested : State
+  //
+
   object WaitingForBothDebuggersRunning : State
   object WaitingForLowDebuggerRunning : State
   object WaitingForHighDebuggerRunning : State
@@ -66,6 +74,8 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   class HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent(val highLevelSuspendContext: XSuspendContext) : State
   //
 
+  // We need ExitingInProgress state to not skip to HighRun/LowRun events on detaching
+  object ExitingInProgress : State
   object Exited : State
 
   interface Event
@@ -83,6 +93,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   class MixedStepRequested(val highSuspendContext: XSuspendContext, val stepType: MixedStepType) : Event
   class LowLevelStepRequested(val mixedSuspendContext: XMixedModeSuspendContext, val stepType: StepType) : Event
   class HighLevelSetNextStatementRequested(val position: XSourcePosition) : Event
+  object ExitingStarted : Event
   enum class StepType {
     Over, Into, Out
   }
@@ -153,8 +164,9 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
             changeState(HighStoppedWaitingForLowProcessToStop(event.suspendContext))
             //changeState(BothStopped(event.suspendContext, event.suspendContext))
           }
-          is HighLevelSetStatementHighRunning -> {
-            changeState(BothStopped(currentState.low, event.suspendContext))
+          is HighLevelSetStatementLowRunningHighRunning -> {
+            changeState(OnlyHighStopped(event.suspendContext))
+            lowExtension.pauseMixedModeSession(null)
           }
           is WaitingForLowDebuggerRunning -> {
             changeState(HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent(event.suspendContext))
@@ -207,7 +219,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is ResumeRequested -> {
         when (currentState) {
           is BothStopped -> {
-            changeState(ResumeStarted(currentState.high))
+            changeState(WaitingForBothDebuggersRunning)
             low.resume(currentState.low)
           }
           else -> throwTransitionIsNotImplemented(event)
@@ -239,6 +251,13 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
               high.runToPosition(currentState.sourcePosition, currentState.high)
             }
             changeState(HighLevelRunToAddressStartedLowRun())
+          }
+          is HighLevelSetStatementPreparingLowLevelProcess -> {
+            highExtension.setNextStatement(currentState.high, currentState.position)
+            changeState(HighLevelSetStatementLowRunningHighRunRequested)
+          }
+          is ExitingInProgress -> {
+            logger.info("LowRun while exiting. Ignore")
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -329,10 +348,13 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
             }
             changeState(MixedStepIntoStartedHighDebuggerResumed())
           }
-          is HighLevelSetStatementStarted -> {
+          is HighLevelSetStatementLowRunningHighRunRequested -> {
             // Technically thread may not run (it's not necessary for this operation),
             // but the state machine will be notified as if it became running
-            changeState(HighLevelSetStatementHighRunning(currentState.low))
+            changeState(HighLevelSetStatementLowRunningHighRunning)
+          }
+          is ExitingInProgress -> {
+            logger.info("HighRun while exiting. Ignore")
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -358,14 +380,22 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is HighLevelSetNextStatementRequested -> {
         when(currentState) {
           is BothStopped -> {
-            changeState(HighLevelSetStatementStarted(currentState.low))
-            highExtension.setNextStatement(currentState.high, event.position)
+            lowExtension.beforeHighLevelSetNextStatement()
+            changeState(HighLevelSetStatementPreparingLowLevelProcess(currentState.high, event.position))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
       }
+      is ExitingStarted -> {
+        changeState(ExitingInProgress)
+      }
       is Stop -> {
-        changeState(Exited)
+        when (currentState) {
+          is ExitingInProgress -> {
+            changeState(Exited)
+          }
+          else -> throwTransitionIsNotImplemented(event)
+        }
       }
     }
   }

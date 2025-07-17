@@ -199,7 +199,7 @@ class XMixedModeCombinedDebugProcess(
   override fun checkCanInitBreakpoints(): Boolean = processes.all { it.checkCanInitBreakpoints() }
 
   override fun doGetProcessHandler(): ProcessHandler? {
-    return myProcessHandler ?: XMixedModeProcessHandler(high.processHandler, low.processHandler, config).also { myProcessHandler = it }
+    return myProcessHandler ?: XMixedModeProcessHandler(high.processHandler, low.processHandler, config, {stateMachine.set(MixedModeDotnetOnWinProcessTransitionStateMachine.ExitingStarted)}).also { myProcessHandler = it }
   }
 
   override fun createConsole(): ExecutionConsole {
