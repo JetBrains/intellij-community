@@ -429,6 +429,10 @@ class ToolWindowPane private constructor(
     pair.first.setSize(max(minValue, min(maxValue, actualSize)))
   }
 
+  @Internal fun getComponentSize(window: ToolWindow): Dimension? {
+    return findResizerAndComponent(window)?.second?.size
+  }
+
   private fun findResizerAndComponent(window: ToolWindow): Pair<Resizer, Component>? {
     if (!window.isVisible) {
       return null

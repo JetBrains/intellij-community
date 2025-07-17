@@ -189,6 +189,10 @@
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="mouseWheelEventProcessor"
+                    interface="com.intellij.openapi.MouseWheelEventInterceptor"
+                    dynamic="true"/>
+
     <extensionPoint name="toolWindowAllowlist" beanClass="com.intellij.openapi.wm.ToolWindowAllowlistEP" dynamic="true"/>
     <extensionPoint name="statistics.gotItTooltipAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ui.GotItTooltipAllowlistEP" dynamic="true"/>
     <extensionPoint name="dialogInvocationPlace" beanClass="com.intellij.internal.statistic.collectors.fus.ui.DialogInvocationPlaceEP" dynamic="true"/>

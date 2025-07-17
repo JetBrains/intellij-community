@@ -127,6 +127,9 @@ open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : Ba
   val topBalloonComponent: Component?
     get() = (balloons.lastOrNull() as? BalloonImpl)?.component
 
+  val balloonComponents: List<Component?>
+    get() = balloons.map { (it as? BalloonImpl)?.component }
+
   override fun add(balloon: Balloon) {
     add(newBalloon = balloon, layoutData = null)
   }

@@ -407,9 +407,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   private fun getDefaultToolWindowPane() = toolWindowPanes.get(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)!!
 
-  internal fun getToolWindowPane(paneId: String): ToolWindowPane = toolWindowPanes.get(paneId) ?: getDefaultToolWindowPane()
+  @ApiStatus.Internal fun getToolWindowPane(paneId: String): ToolWindowPane = toolWindowPanes.get(paneId) ?: getDefaultToolWindowPane()
 
-  internal fun getToolWindowPane(toolWindow: ToolWindow): ToolWindowPane {
+  fun getToolWindowPane(toolWindow: ToolWindow): ToolWindowPane {
     val paneId = if (toolWindow is ToolWindowImpl) {
       toolWindow.windowInfo.safeToolWindowPaneId
     }

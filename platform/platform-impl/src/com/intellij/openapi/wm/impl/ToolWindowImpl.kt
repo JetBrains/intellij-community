@@ -74,7 +74,7 @@ import java.util.function.Supplier
 import javax.swing.*
 import kotlin.math.abs
 
-internal class ToolWindowImpl(
+@ApiStatus.Internal class ToolWindowImpl(
   @JvmField val toolWindowManager: ToolWindowManagerImpl,
   private val id: String,
   private val canCloseContent: Boolean,

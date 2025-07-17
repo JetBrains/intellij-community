@@ -8,11 +8,13 @@ import com.intellij.ide.IdeTooltipManager
 import com.intellij.ide.dnd.DnDAware
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.MouseWheelEventInterceptor.Companion.MOUSE_WHEEL_EVENT_INTERCEPTORS
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.impl.ProjectLoadingCancelled
@@ -159,6 +161,16 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   override fun dispatch(e: AWTEvent): Boolean {
     if (e !is InputEvent) {
       return false
+    }
+
+    if (e is MouseWheelEvent) {
+      // Use extension point processors
+      MOUSE_WHEEL_EVENT_INTERCEPTORS.extensionList.forEach { processor ->
+        if (processor.process(e)) {
+          logger<IdeGlassPaneImpl>().debug("Mouse wheel event $e is processed by $processor. Propagation is stopped")
+          return true
+        }
+      }
     }
 
     loadingIndicator?.let {
