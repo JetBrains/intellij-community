@@ -73,6 +73,8 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
@@ -648,9 +650,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   // toOpen - no non-existent project paths and every info has a frame
   private suspend fun openMultiple(toOpen: List<Pair<Path, RecentProjectMetaInfo>>): Boolean {
     val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
-    val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
+
+    data class Setup(val path: Path, val elementToPass: CoroutineContext?, val task: OpenProjectTask)
+
+    val taskList = ArrayList<Setup>(toOpen.size)
     span("project frame initialization", Dispatchers.EDT) {
-      var activeTask: Pair<Path, OpenProjectTask>? = null
+      var activeTask: Setup? = null
       for ((path, info) in toOpen) {
         val isActive = info == activeInfo
         val ideFrame = createIdeFrame(info.frame ?: FrameInfo())
@@ -659,18 +664,25 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         }
 
         CustomWindowHeaderUtil.customizeRawFrame(ideFrame)
-        ideFrame.isVisible = true
-        val task = Pair(path, OpenProjectTask {
-          forceOpenInNewFrame = true
-          showWelcomeScreen = false
-          projectWorkspaceId = info.projectWorkspaceId
-          implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
-        })
-        if (isActive) {
-          activeTask = task
-        }
-        else {
-          taskList.add(task)
+        FUSProjectHotStartUpMeasurer.withProjectContextElement(path) {
+          ideFrame.isVisible = true
+
+          val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass()
+          val task = Setup(path,
+                           startUpContextElementToPass,
+                           OpenProjectTask {
+                             forceOpenInNewFrame = true
+                             showWelcomeScreen = false
+                             projectWorkspaceId = info.projectWorkspaceId
+                             implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
+                           })
+
+          if (isActive) {
+            activeTask = task
+          }
+          else {
+            taskList.add(task)
+          }
         }
       }
 
@@ -678,15 +690,15 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       // but once the windows are created, we start project loading from the latest active project (and put its window at front)
       taskList.add(activeTask!!)
       taskList.reverse()
-      activeTask.second.frame?.toFront()
+      activeTask.task.frame?.toFront()
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx()
     try {
       val iterator = taskList.iterator()
       while (iterator.hasNext()) {
-        val (path, options) = iterator.next()
-        FUSProjectHotStartUpMeasurer.withProjectContextElement(path) {
+        val (path, coroutineContext, options) = iterator.next()
+        withContext(coroutineContext ?: EmptyCoroutineContext) {
           projectManager.openProjectAsync(path, options)
         }
         iterator.remove()
@@ -695,7 +707,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     finally {
       // cleanup unused pre-allocated frames if the operation failed or was canceled
       for (task in taskList) {
-        task.second.frame?.dispose()
+        task.task.frame?.dispose()
       }
     }
     return true
