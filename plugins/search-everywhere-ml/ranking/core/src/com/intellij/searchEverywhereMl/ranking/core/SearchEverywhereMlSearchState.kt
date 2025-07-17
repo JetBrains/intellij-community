@@ -5,33 +5,44 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.SearchEverywhereState
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
+import com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCache
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.ML_SCORE_KEY
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereModelProvider
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereRankingModel
 import com.intellij.util.applyIf
 
 internal class SearchEverywhereMlSearchState(
-  val sessionStartTime: Long, val searchStartTime: Long,
-  val searchIndex: Int, val searchStartReason: SearchRestartReason,
-  val tab: SearchEverywhereTab, val experimentGroup: Int, val orderByMl: Boolean,
-  val keysTyped: Int, val backspacesTyped: Int, val searchQuery: String,
+  override val project: Project?,
+  override val index: Int,
+  override val tab: SearchEverywhereTab,
+  override val searchScope: ScopeDescriptor?,
+  override val isSearchEverywhere: Boolean,
+  override val sessionStartTime: Long,
+  override val searchRestartReason: SearchRestartReason,
+  override val keysTyped: Int,
+  override val backspacesTyped: Int,
+  override val query: String,
+  val orderByMl: Boolean,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
   private val mixedListInfo: SearchEverywhereMixedListInfo,
-  project: Project?,
-  searchScope: ScopeDescriptor?,
-  isSearchEverywhere: Boolean,
-) {
-  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(project, tab, searchQuery,
-                                                                                           searchScope, isSearchEverywhere)
+) : SearchEverywhereState {
+  override val stateStartTime: Long = System.currentTimeMillis()
+
+  override val experimentGroup: Int = SearchEverywhereMlExperiment.experimentGroup
+
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider.getFeatures(this)
+
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
   private val model: SearchEverywhereRankingModel by lazy { modelProvider.getModel(tab as SearchEverywhereTab.TabWithMlRanking) }
+
   fun getElementFeatures(element: Any,
                          contributor: SearchEverywhereContributor<*>,
                          contributorFeatures: List<EventPair<*>>,
@@ -40,7 +51,7 @@ internal class SearchEverywhereMlSearchState(
                          correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     return SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributor.searchProviderId)
       .flatMap { featuresProvider ->
-        featuresProvider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache, correction)
+        featuresProvider.getElementFeatures(element, sessionStartTime, query, priority, providersCache, correction)
       }
       .applyIf(tab == SearchEverywhereTab.All) {
         val mlScore = getElementMLScoreForAllTab(contributor.searchProviderId, context.features, this, contributorFeatures)

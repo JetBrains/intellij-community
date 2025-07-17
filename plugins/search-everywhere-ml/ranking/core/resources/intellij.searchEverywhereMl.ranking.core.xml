@@ -104,6 +104,9 @@
       implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereClassesRankingModelLoader"/>
     <rankingModelLoader
       implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereAllRankingModelLoader"/>
+
+    <searchEverywhereStateFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.CoreStateFeaturesProvider"/>
   </extensions>
 
   <applicationListeners>

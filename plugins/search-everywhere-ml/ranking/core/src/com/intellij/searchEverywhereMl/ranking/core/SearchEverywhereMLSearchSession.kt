@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.TextEmbeddingProvider
 import com.intellij.searchEverywhereMl.isLoggingEnabled
@@ -66,17 +65,13 @@ internal class SearchEverywhereMLSearchSession(
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
-      val startTime = System.currentTimeMillis()
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
-      val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
-      val experimentGroup = SearchEverywhereMlExperiment.experimentGroup
+      val nextSearchIndex = (prevState?.index ?: 0) + 1
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(
-        sessionStartTime, startTime, nextSearchIndex, searchReason,
-        tab, experimentGroup, orderByMl,
-        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache, mixedListInfo,
-        project, searchScope, isSearchEverywhere
+        project, nextSearchIndex, tab, searchScope, isSearchEverywhere, sessionStartTime, searchReason,
+        keysTyped, backspacesTyped, searchQuery, orderByMl, modelProviderWithCache, providersCache, mixedListInfo
       )
     }
 

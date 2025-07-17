@@ -81,7 +81,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
                                       searchState: SearchEverywhereMlSearchState,
                                       element: Any): Boolean {
     // If we're showing recently used actions (empty query) then we don't want to apply ML sorting either
-    if (searchState.tab == SearchEverywhereTab.Actions && searchState.searchQuery.isEmpty()) return false
+    if (searchState.tab == SearchEverywhereTab.Actions && searchState.query.isEmpty()) return false
 
     // The element may be an ItemWithPresentation pair - we will unwrap it
     val actualElement = when (element) {

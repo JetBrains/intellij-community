@@ -15,13 +15,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
-import com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
+import com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.id.SearchEverywhereMlItemIdProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -98,7 +97,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   ) {
     if (!isLoggingEnabled) return
     val additionalEvents = buildList {
-      if (searchState.searchStartReason == SearchRestartReason.SEARCH_STARTED) {
+      if (searchState.searchRestartReason == SearchRestartReason.SEARCH_STARTED) {
         addAll(
           getSessionLevelEvents(project, context)
         )
@@ -154,17 +153,17 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                  elementsSize = searchResults.size,
                                  searchStateFeatures = searchState.searchStateFeatures,
                                  timeToFirstResult = timeToFirstResult,
-                                 searchIndex = searchState.searchIndex,
-                                 searchStartTime = searchState.searchStartTime,
+                                 searchIndex = searchState.index,
+                                 searchStartTime = searchState.stateStartTime,
                                  keysTyped = searchState.keysTyped,
                                  backspacesTyped = searchState.backspacesTyped,
-                                 searchStartReason = searchState.searchStartReason,
+                                 searchStartReason = searchState.searchRestartReason,
                                  isMixedList = mixedListInfo.isMixedList,
                                  orderByMl = searchState.orderByMl,
                                  experimentGroup = searchState.experimentGroup)
       )
 
-      addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
+      addAll(SearchEverywhereStateFeaturesProvider.getFeatures(searchState))
 
       add(IS_PROJECT_DISPOSED_KEY.with(project != null && project.isDisposed))
     }
@@ -349,7 +348,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   // item fields
   private val SEARCH_STATE_FEATURES_DATA_KEY =
-    ObjectEventField("searchStateFeatures", *SearchEverywhereStateFeaturesProvider.getFeaturesDefinition().toTypedArray())
+    ObjectEventField("searchStateFeatures", *SearchEverywhereStateFeaturesProvider.getFields().toTypedArray())
 
   @VisibleForTesting
   val ID_KEY: IntEventField = EventFields.Int("id")
@@ -443,7 +442,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         CONTRIBUTOR_FEATURES_LIST,
       ))
 
-      addAll(SearchEverywhereSessionPropertyProvider.getAllDeclarations())
+      addAll(SearchEverywhereStateFeaturesProvider.getFields())
       addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
       addAll(additional)
     }
