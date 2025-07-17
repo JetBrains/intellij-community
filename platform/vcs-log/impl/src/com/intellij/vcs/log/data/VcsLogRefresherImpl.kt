@@ -21,7 +21,6 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.data.SingleTaskController.SingleTask
 import com.intellij.vcs.log.data.SingleTaskController.SingleTaskImpl
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
@@ -39,10 +38,8 @@ internal class VcsLogRefresherImpl(
   private val project: Project,
   private val storage: VcsLogStorage,
   private val providers: Map<VirtualFile, VcsLogProvider>,
-  private val userRegistry: VcsUserRegistryImpl,
-  private val index: VcsLogModifiableIndex,
   private val progress: VcsLogProgress,
-  private val topCommitsDetailsCache: TopCommitsCache,
+  private val commitDataConsumer: VcsLogCommitDataConsumer?,
   private val dataPackUpdateHandler: Consumer<DataPack>,
   private val recentCommitCount: Int,
 ) : VcsLogRefresher, Disposable {
@@ -211,19 +208,17 @@ internal class VcsLogRefresherImpl(
           logInfo.put(root, commits)
           logInfo.put(root, data.getRefs())
 
-          commits.forEach {
-            index.markForIndexing(it.id, root)
+          val users = buildSet {
+            for (metadata in data.getCommits()) {
+              add(metadata.author)
+              add(metadata.committer)
+            }
           }
-          val metadatas = data.getCommits()
-          for (detail in metadatas) {
-            userRegistry.addUser(detail.getAuthor())
-            userRegistry.addUser(detail.getCommitter())
-          }
-          topCommitsDetailsCache.storeDetails(metadatas)
+          commitDataConsumer?.storeData(root, commits, users)
+          commitDataConsumer?.storeRecentDetails(data.getCommits())
         }
       }
-      userRegistry.flush()
-      index.scheduleIndex(false)
+      commitDataConsumer?.flushData(onFullReload = false)
       logInfo
     }
   }
@@ -241,14 +236,10 @@ internal class VcsLogRefresherImpl(
           logInfo.put(root, graphCommits)
           logInfo.put(root, data.getRefs())
 
-          graphCommits.forEach {
-            index.markForIndexing(it.id, root)
-          }
-          userRegistry.addUsers(data.getUsers())
+          commitDataConsumer?.storeData(root, graphCommits, data.getUsers())
         }
       }
-      userRegistry.flush()
-      index.scheduleIndex(true)
+      commitDataConsumer?.flushData(onFullReload = true)
       logInfo
     }
 

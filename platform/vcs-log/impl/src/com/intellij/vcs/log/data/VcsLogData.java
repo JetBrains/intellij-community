@@ -111,7 +111,8 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
     myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, this);
 
-    myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, myProgress, myTopCommitsDetailsCache,
+    var commitDataConsumer = new VcsLogCommitDataConsumerImpl(myUserRegistry, myIndex, myTopCommitsDetailsCache);
+    myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myProgress, commitDataConsumer,
                                           this::fireDataPackChangeEvent, getRecentCommitsCount());
     Disposer.register(this, myRefresher);
 

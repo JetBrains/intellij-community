@@ -156,10 +156,8 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     private val project = logData.project
 
     val dataWaiter = DataWaiter()
-    internal val loader = VcsLogRefresherImpl(project, logData.storage, logData.logProviders, logData.userRegistry,
-                                              logData.modifiableIndex,
-                                              VcsLogProgress(logData),
-                                              logData.topCommitsCache, dataWaiter, recentCommitsCount
+    internal val loader = VcsLogRefresherImpl(project, logData.storage, logData.logProviders, VcsLogProgress(logData),
+                                              null, dataWaiter, recentCommitsCount
     ).apply {
       taskInterceptor = {
         startedTasks.add(it)
