@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.ui.components.JBList
@@ -179,11 +180,15 @@ internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList
   : FocusListener, AbstractAction() {
 
   override fun actionPerformed(event: ActionEvent) {
+    thisLogger().debug("SwitcherListFocusAction.actionPerformed: isShowing = ${toList.isShowing}, " +
+                       "target list = ${toList}, " +
+                       "some element from the list: ${if (toList.model.size > 0) toList.model.getElementAt(0) else null}")
     if (toList.isShowing) toList.requestFocusInWindow()
   }
 
   override fun focusLost(event: FocusEvent): Unit = Unit
   override fun focusGained(event: FocusEvent) {
+    thisLogger().debug("SwitcherListFocusAction.focusGained: isShowing = ${toList.isShowing}, target list = ${toList}, target list size = ${toList.model.size}")
     val size = toList.model.size
     if (size > 0) {
       val fromIndex = fromList.selectedIndex
