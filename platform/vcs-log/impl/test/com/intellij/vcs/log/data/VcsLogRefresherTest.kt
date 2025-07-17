@@ -162,7 +162,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     private val project = logData.project
 
     val dataWaiter = DataWaiter()
-    val loader = createLoader(logData, recentCommitsCount, dataWaiter)
+    internal val loader = createLoader(logData, recentCommitsCount, dataWaiter)
 
     private val startedTasks = Collections.synchronizedList(ArrayList<Future<*>>())
 
@@ -189,7 +189,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     }
 
     val dataPack: DataPack
-      get() = loader.getCurrentDataPack()
+      get() = loader.currentDataPack
 
     @Throws(InterruptedException::class)
     fun assertTimeout(message: String) {
