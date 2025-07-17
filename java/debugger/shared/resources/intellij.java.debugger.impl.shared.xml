@@ -26,6 +26,13 @@
                     relative-to-action="Debugger.ShowReferring"/>
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="last"/>
     </action>
+    <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
+            id="Memory.CalculateRetainedSize">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
+                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
+    </action>
   </actions>
   <actions resource-bundle="messages.ActionsBundle">
     <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">

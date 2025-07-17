@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
+import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.memory.action.CalculateRetainedSizeActionUtil
 import com.intellij.debugger.memory.action.DebuggerTreeAction
 import com.intellij.debugger.memory.filtering.ClassInstancesProvider
 import com.intellij.debugger.memory.ui.InstancesWindow
@@ -21,6 +23,16 @@ internal class BackendJavaDebuggerLuxActionsApi : JavaDebuggerLuxActionsApi {
     val referenceType: ReferenceType = objectRef.referenceType()
     withContext(Dispatchers.EDT) {
       InstancesWindow(session, ClassInstancesProvider(referenceType), referenceType).show()
+    }
+  }
+
+  override suspend fun showCalculateRetainedSizeDialog(xValueId: XValueId, nodeName: String) {
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return
+    val xValue = xValueModel.xValue
+    val process = (xValueModel.session.debugProcess as JavaDebugProcess).debuggerSession.process
+
+    withContext(Dispatchers.EDT) {
+      CalculateRetainedSizeActionUtil.showDialog(xValue, nodeName, process)
     }
   }
 }

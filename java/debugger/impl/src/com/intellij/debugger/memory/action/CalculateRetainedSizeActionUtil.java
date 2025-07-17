@@ -3,7 +3,6 @@ package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -11,36 +10,35 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentActionResult;
 import com.intellij.debugger.memory.agent.ui.RetainedSizeDialog;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class CalculateRetainedSizeAction extends DebuggerTreeAction {
-  protected static final Logger LOG = Logger.getInstance(CalculateRetainedSizeAction.class);
+@ApiStatus.Internal
+public final class CalculateRetainedSizeActionUtil {
+  private static final Logger LOG = Logger.getInstance(CalculateRetainedSizeActionUtil.class);
 
-  @Override
-  protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(e);
-    ObjectReference reference = getObjectReference(node);
+  public static void showDialog(@NotNull XValue xValue, @NotNull String nodeName, DebugProcessImpl debugProcess) {
+    ObjectReference reference = DebuggerTreeAction.getObjectReference(xValue);
     if (debugProcess == null || reference == null) return;
 
-    XDebuggerTree tree = node.getTree();
-    RetainedSizeDialog dialog = new RetainedSizeDialog(tree.getProject(), tree.getEditorsProvider(), tree.getSourcePosition(),
-                                                       nodeName, node.getValueContainer(), tree.getValueMarkers(),
-                                                       DebuggerUIUtil.getSession(e),
+    XDebugSession session = debugProcess.getSession().getXDebugSession();
+    if (session == null) return;
+    RetainedSizeDialog dialog = new RetainedSizeDialog(session.getProject(), session.getDebugProcess().getEditorsProvider(),
+                                                       session.getCurrentPosition(),
+                                                       nodeName, xValue, ((XDebugSessionImpl)session).getValueMarkers(),
+                                                       session,
                                                        true);
     dialog.show();
 
@@ -98,24 +96,5 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
         LOG.info("command cancelled");
       }
     });
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
-  protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
-    if (!super.isEnabled(node, e)) return false;
-    DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(e);
-    if (debugProcess == null || !debugProcess.isEvaluationPossible() ||
-        !DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
-      e.getPresentation().setVisible(false);
-      return false;
-    }
-
-    ObjectReference reference = getObjectReference(node);
-    return reference != null;
   }
 }

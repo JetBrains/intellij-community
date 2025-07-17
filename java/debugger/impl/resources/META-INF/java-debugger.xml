@@ -311,12 +311,6 @@
       <action id="Debugger.ReloadFile" class="com.intellij.debugger.actions.ReloadFileAction"/>
     </group>
 
-    <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
-            id="Memory.CalculateRetainedSize">
-      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
-                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
-    </action>
-
     <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"
             id="MemoryView.ShowAllocationStackTrace">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after"

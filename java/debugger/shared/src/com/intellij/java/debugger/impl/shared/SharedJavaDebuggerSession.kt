@@ -10,10 +10,11 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SharedJavaDebuggerSession(dto: JavaDebuggerSessionDto, private val cs: CoroutineScope) {
-  private val isAttachedFlow = dto.isAttachedFlow.toFlow()
-    .stateIn(cs, SharingStarted.Eagerly, dto.isAttachedInitial)
+  private val stateFlow = dto.stateFlow.toFlow()
+    .stateIn(cs, SharingStarted.Eagerly, dto.initialState)
 
-  val isAttached: Boolean get() = isAttachedFlow.value
+  val isAttached: Boolean get() = stateFlow.value.isAttached
+  val isEvaluationPossible: Boolean get() = stateFlow.value.isEvaluationPossible
 
   internal var isAsyncStacksEnabled: Boolean = true
 
