@@ -28,6 +28,7 @@ object PluginManagerPanelFactory {
 
   fun createMarketplacePanel(cs: CoroutineScope, myPluginModel: MyPluginModel, project: Project?, callback: (CreateMarketplacePanelModel) -> Unit) {
     cs.launch {
+      myPluginModel.waitForSessionInitialization()
       val customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap()
       val suggestedPlugins = if (project != null) findSuggestedPlugins(project, customRepositoriesMap) else emptyList()
       val pluginManager = UiPluginManager.getInstance()
@@ -63,6 +64,7 @@ object PluginManagerPanelFactory {
   @ApiStatus.Internal
   fun createInstalledPanel(cs: CoroutineScope, myPluginModel: MyPluginModel, callback: (CreateInstalledPanelModel) -> Unit) {
     cs.launch {
+      myPluginModel.waitForSessionInitialization()
       val pluginManager = UiPluginManager.getInstance()
       val installedPlugins = pluginManager.getInstalledPlugins()
       val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))

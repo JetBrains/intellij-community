@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,18 +35,43 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   protected val view: MutableList<PluginUiModel> = mutableListOf()
   protected val enabledMap: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
   protected var coroutineScope: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope
+  private val sessionInitializedDeferred = CompletableDeferred<Unit>()
   private val modificationTracker = getModificationTracker()
 
   init {
-    val session = initSessionResult ?: UiPluginManager.getInstance().initSession(mySessionId)
-    view.addAll(session.getVisiblePluginsList())
-    session.pluginStates.forEach { (pluginId, pluginState) ->
-      enabledMap[pluginId] = when (pluginState) {
-        true -> PluginEnabledState.ENABLED
-        false -> PluginEnabledState.DISABLED
-        null -> null
+    if (initSessionResult != null) {
+      sessionInitializedDeferred.complete(Unit)
+    }
+    else {
+      if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+        coroutineScope.launch(Dispatchers.IO) {
+          initSessionPlugins()
+        }
+      }
+      else {
+        initSessionPlugins()
       }
     }
+  }
+
+  private fun initSessionPlugins() {
+    try {
+      val initSessionResult = UiPluginManager.getInstance().initSession(mySessionId)
+      view.addAll(initSessionResult.getVisiblePluginsList())
+      initSessionResult.pluginStates.forEach { (pluginId, pluginState) ->
+        enabledMap[pluginId] = when (pluginState) {
+          true -> PluginEnabledState.ENABLED
+          false -> PluginEnabledState.DISABLED
+          null -> null
+        }
+      }
+    } finally {
+      sessionInitializedDeferred.complete(Unit)
+    }
+  }
+
+  suspend fun waitForSessionInitialization() {
+    sessionInitializedDeferred.await()
   }
 
   fun isLoaded(pluginId: PluginId): Boolean {
@@ -100,7 +126,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
       enabledMap: MutableMap<PluginId, PluginEnabledState?>,
     ): Boolean {
       val state = enabledMap[pluginId]
-      return state?.isDisabled() ?: true
+      return state?.isDisabled ?: true
     }
 
     protected fun isLoaded(
