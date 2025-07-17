@@ -3,7 +3,6 @@ package git4idea.remoteApi
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
-import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
@@ -14,8 +13,9 @@ import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.repo.GitRepositoryColor
 import com.intellij.vcs.git.repo.GitRepositoryColorsState
 import com.intellij.vcs.git.rpc.GitRepositoryColorsApi
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 import git4idea.GitDisposable
-import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
@@ -69,9 +69,10 @@ internal class GitRepositoryColorsApiImpl : GitRepositoryColorsApi {
   }
 
   private fun calcColorsState(project: Project): GitRepositoryColorsState {
-    val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
+    val allRepos = VcsRepositoryManager.getInstance(project).getRepositories()
 
-    val gitRepositories = GitRepositoryManager.getInstance(project).repositories
+    val colorManager = VcsLogColorManagerFactory.create(allRepos.map { it.root }.toSet())
+    val gitRepositories = allRepos.filterIsInstance<GitRepository>()
     val repositoryColors: MutableMap<RepositoryId, GitRepositoryColor> = mutableMapOf()
 
     for (gitRepository in gitRepositories) {
