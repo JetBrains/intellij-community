@@ -244,9 +244,7 @@
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
       </action>
-      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
+
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
         <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="last"/>

@@ -1,27 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.debugger.impl.frontend.actions
+package com.intellij.debugger.actions
 
 import com.intellij.java.debugger.impl.shared.actions.ViewTextActionBase
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import org.jetbrains.annotations.ApiStatus
 
-/**
- * Frontend version of [ViewTextAction]
- */
-private class FrontendViewTextAction : ViewTextActionBase(), ActionRemoteBehaviorSpecification.Frontend {
-  override fun update(e: AnActionEvent) {
-    if (!areFrontendDebuggerActionsEnabled()) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
-    super.update(e)
-  }
-
+class ViewTextAction : ViewTextActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  @ApiStatus.Internal
   override fun getStringNode(e: AnActionEvent): XValueNodeImpl? {
     val node = XDebuggerTreeActionBase.getSelectedNodes(e.dataContext).singleOrNull() ?: return null
     val xValue = node.valueContainer

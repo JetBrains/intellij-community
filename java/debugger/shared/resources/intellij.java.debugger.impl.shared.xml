@@ -27,4 +27,10 @@
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="last"/>
     </action>
   </actions>
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>
