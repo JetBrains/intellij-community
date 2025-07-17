@@ -144,7 +144,7 @@ private val NPE_CATCHERS = setOf("Throwable", "Exception", "RuntimeException", "
                                  CommonClassNames.JAVA_LANG_THROWABLE, CommonClassNames.JAVA_LANG_EXCEPTION,
                                  CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
 
-fun canCatchNpe(tree: LighterAST, type: LighterASTNode?): Boolean {
+public fun canCatchNpe(tree: LighterAST, type: LighterASTNode?): Boolean {
   if (type == null) return false
   val codeRef = LightTreeUtil.firstChildOfType(tree, type, JAVA_CODE_REFERENCE)
   val name = JavaLightTreeUtil.getNameIdentifierText(tree, codeRef)

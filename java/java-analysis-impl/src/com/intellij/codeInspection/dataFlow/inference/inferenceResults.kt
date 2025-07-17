@@ -16,15 +16,15 @@ import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.ClassUtils
 import java.util.*
 
-data class ExpressionRange internal constructor (val startOffset: Int, val endOffset: Int) {
+public data class ExpressionRange internal constructor (val startOffset: Int, val endOffset: Int) {
 
-  companion object {
+  public companion object {
     @JvmStatic
-    fun create(expr: LighterASTNode, scopeStart: Int): ExpressionRange = ExpressionRange(
+    public fun create(expr: LighterASTNode, scopeStart: Int): ExpressionRange = ExpressionRange(
       expr.startOffset - scopeStart, expr.endOffset - scopeStart)
   }
 
-  inline fun <reified T : PsiExpression> restoreExpression(scope: PsiCodeBlock): T {
+  public inline fun <reified T : PsiExpression> restoreExpression(scope: PsiCodeBlock): T {
     val scopeStart = scope.textRange.startOffset
     val element = PsiTreeUtil.findElementOfClassAtRange(scope.containingFile, startOffset + scopeStart,
                                                                           endOffset + scopeStart,
@@ -37,11 +37,11 @@ data class ExpressionRange internal constructor (val startOffset: Int, val endOf
 
 }
 
-data class PurityInferenceResult(internal val mutatesThis: Boolean,
-                                 internal val mutatedRefs: List<ExpressionRange>, 
-                                 internal val singleCall: ExpressionRange?) {
+public data class PurityInferenceResult(internal val mutatesThis: Boolean,
+                                        internal val mutatedRefs: List<ExpressionRange>,
+                                        internal val singleCall: ExpressionRange?) {
 
-  fun getMutationSignature(method: PsiMethod, body: () -> PsiCodeBlock): MutationSignature =
+  public fun getMutationSignature(method: PsiMethod, body: () -> PsiCodeBlock): MutationSignature =
     when {
       mutatesNonLocals(method, body) -> MutationSignature.unknown()
       mutatesThis -> fromCalls(method, body).alsoMutatesThis()
@@ -101,17 +101,17 @@ data class PurityInferenceResult(internal val mutatesThis: Boolean,
 }
 
 
-interface MethodReturnInferenceResult {
-  fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability
-  fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability = Mutability.UNKNOWN
+public interface MethodReturnInferenceResult {
+  public fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability
+  public fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability = Mutability.UNKNOWN
 
   @Suppress("EqualsOrHashCode")
-  data class Predefined(internal val value: Nullability) : MethodReturnInferenceResult {
+  public data class Predefined(internal val value: Nullability) : MethodReturnInferenceResult {
     override fun hashCode(): Int = value.ordinal
     override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability = value
   }
 
-  data class FromDelegate(internal val value: Nullability, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
+  public data class FromDelegate(internal val value: Nullability, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
     override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability {
       return when {
         value == Nullability.NULLABLE -> Nullability.NULLABLE 
@@ -149,7 +149,7 @@ interface MethodReturnInferenceResult {
   }
 }
 
-data class MethodData(
+public data class MethodData(
   val methodReturn: MethodReturnInferenceResult?,
   val purity: PurityInferenceResult?,
   val contracts: List<PreContract>,
@@ -161,7 +161,7 @@ data class MethodData(
   @Volatile
   private var myDetachedBody: PsiCodeBlock? = null
 
-  fun methodBody(method: PsiMethodImpl): () -> PsiCodeBlock = {
+  public fun methodBody(method: PsiMethodImpl): () -> PsiCodeBlock = {
     if (method.stub != null) {
       var detached = myDetachedBody
       if (detached == null) {

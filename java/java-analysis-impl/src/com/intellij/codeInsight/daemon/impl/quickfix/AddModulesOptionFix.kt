@@ -6,7 +6,7 @@ import com.intellij.java.codeserver.core.JpmsModuleAccessInfo
 import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.Nls
 
-class AddModulesOptionFix(module: Module, private val moduleName: String) : CompilerOptionFix(module) {
+public class AddModulesOptionFix(module: Module, private val moduleName: String) : CompilerOptionFix(module) {
   override fun getText(): @Nls String = QuickFixBundle.message("add.compiler.option.fix.name", "${JpmsModuleAccessInfo.ADD_MODULES_OPTION} ${moduleName}")
 
   override fun update(options: MutableList<String>) {

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nls.Capitalization.Sentence
  *
  * @author Nicolay Mitropolsky
  */
-abstract class ImplicitSubclassProvider {
+public abstract class ImplicitSubclassProvider {
 
   /**
    * Checks if this provider could probably provide a subclass for passed psiClass.
@@ -26,7 +26,7 @@ abstract class ImplicitSubclassProvider {
    * `true` if a subclass for the psiClass will probably be created,
    * and then you should call [getSubclassingInfo] to get concrete information about created subclass.
    */
-  abstract fun isApplicableTo(psiClass: PsiClass): Boolean
+  public abstract fun isApplicableTo(psiClass: PsiClass): Boolean
 
 
   /**
@@ -37,16 +37,18 @@ abstract class ImplicitSubclassProvider {
    *
    * @return  an info about implicitly created subclass, or `null` if given class will not be subclassed.
    */
-  abstract fun getSubclassingInfo(psiClass: PsiClass): SubclassingInfo?
+  public abstract fun getSubclassingInfo(psiClass: PsiClass): SubclassingInfo?
 
   /**
    * Information about implicitly overridden methods.
    * @property description an explanation why this method was overridden.
    * @property acceptedModifiers modifiers that allowed to be overriden. by default: all not 'private' modifiers.
    */
-  class OverridingInfo @JvmOverloads constructor(@Nls(capitalization = Sentence)
-                                                 val description: String,
-                                                 val acceptedModifiers: Array<JvmModifier> = arrayOf(JvmModifier.PROTECTED, JvmModifier.PACKAGE_LOCAL, JvmModifier.PUBLIC))
+  public class OverridingInfo @JvmOverloads constructor(
+    @Nls(capitalization = Sentence)
+    public val description: String,
+    public val acceptedModifiers: Array<JvmModifier> = arrayOf(JvmModifier.PROTECTED, JvmModifier.PACKAGE_LOCAL, JvmModifier.PUBLIC),
+  )
 
   /**
    * Information about implicitly created subclass.
@@ -55,15 +57,16 @@ abstract class ImplicitSubclassProvider {
    * @property methodsInfo map of methods overridden in class and corresponding [OverridingInfo]s,
    * or `null` if no method-level info is provided
    */
-  class SubclassingInfo @JvmOverloads constructor(@Nls(capitalization = Sentence)
-                                                  val description: String,
-                                                  val methodsInfo: Map<PsiMethod, OverridingInfo>? = null,
-                                                  val isAbstract: Boolean = false)
+  public class SubclassingInfo @JvmOverloads constructor(
+    @Nls(capitalization = Sentence)
+    public val description: String,
+    public val methodsInfo: Map<PsiMethod, OverridingInfo>? = null,
+    public val isAbstract: Boolean = false,
+  )
 
-
-  companion object {
+  public companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<ImplicitSubclassProvider> = ExtensionPointName.create("com.intellij.codeInsight.implicitSubclassProvider")
+    public val EP_NAME: ExtensionPointName<ImplicitSubclassProvider> = ExtensionPointName.create("com.intellij.codeInsight.implicitSubclassProvider")
   }
 
 }

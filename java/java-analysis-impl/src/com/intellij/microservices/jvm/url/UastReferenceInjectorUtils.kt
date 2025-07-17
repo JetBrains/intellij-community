@@ -16,15 +16,15 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade
 
 @JvmOverloads
-fun uastUrlPathReferenceInjectorForScheme(schemes: List<String>,
-                                          parser: UrlPksParser = UrlPksParser()): UrlPathReferenceInjector<UExpression> =
+public fun uastUrlPathReferenceInjectorForScheme(schemes: List<String>,
+                                                 parser: UrlPksParser = UrlPksParser()): UrlPathReferenceInjector<UExpression> =
   UrlPathReferenceInjector.forPartialStringFrom<UExpression>(parser) { uElement ->
     val context = getContextExpression(uElement) ?: return@forPartialStringFrom null
     UStringConcatenationsFacade.createFromUExpression(context)?.asPartiallyKnownString()
   }.withSchemesSupport(schemes)
 
 @ApiStatus.Internal
-fun getContextExpression(uExpression: UExpression): UExpression? =
+public fun getContextExpression(uExpression: UExpression): UExpression? =
   uExpression.withContainingElements.take(2).firstOrNull { child ->
     child.uastParent.let {
       it is UCallExpression
@@ -35,12 +35,12 @@ fun getContextExpression(uExpression: UExpression): UExpression? =
     }
   } as? UExpression
 
-fun uastUrlReferenceProvider(schemes: List<String>): UastReferenceProvider {
+public fun uastUrlReferenceProvider(schemes: List<String>): UastReferenceProvider {
   return uastUrlReferenceProvider(
     uastUrlPathReferenceInjectorForScheme(schemes))
 }
 
-fun uastUrlReferenceProvider(injector: UrlPathReferenceInjector<UExpression>): UastReferenceProvider {
+public fun uastUrlReferenceProvider(injector: UrlPathReferenceInjector<UExpression>): UastReferenceProvider {
   return UastUrlPathReferenceProvider { uExpression, psiElement ->
     injector.buildReferences(uExpression).forPsiElement(psiElement)
   }
@@ -50,7 +50,7 @@ fun uastUrlReferenceProvider(injector: UrlPathReferenceInjector<UExpression>): U
  * This provider implements performance-optimisation in order to not contribute UrlPath references when the target element is known and
  * it is not UrlSegmentReferenceTarget.
  */
-class UastUrlPathReferenceProvider(val provider: (UExpression, PsiElement) -> Array<PsiReference>)
+public class UastUrlPathReferenceProvider(public val provider: (UExpression, PsiElement) -> Array<PsiReference>)
   : UastReferenceProvider(UExpression::class.java) {
 
   override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {

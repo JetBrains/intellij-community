@@ -9,7 +9,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.NonNls
 
-abstract class CompilerOptionFix(private val module: Module) : ModCommandAction {
+public abstract class CompilerOptionFix(private val module: Module) : ModCommandAction {
   @NonNls
   override fun getFamilyName(): String = "Fix compiler option" // not visible
 

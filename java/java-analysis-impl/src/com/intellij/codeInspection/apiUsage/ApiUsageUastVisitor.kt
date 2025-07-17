@@ -15,11 +15,11 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
  */
 
 @ApiStatus.Experimental
-open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : AbstractUastNonRecursiveVisitor() {
+public open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : AbstractUastNonRecursiveVisitor() {
 
-  companion object {
+  public companion object {
     @JvmStatic
-    fun createPsiElementVisitor(apiUsageProcessor: ApiUsageProcessor): PsiElementVisitor =
+    public fun createPsiElementVisitor(apiUsageProcessor: ApiUsageProcessor): PsiElementVisitor =
       UastVisitorAdapter(ApiUsageUastVisitor(apiUsageProcessor), true)
   }
 

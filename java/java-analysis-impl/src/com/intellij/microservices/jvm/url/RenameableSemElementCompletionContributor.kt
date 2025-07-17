@@ -13,7 +13,7 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class RenameableSemElementCompletionContributor : CompletionContributor() {
+public class RenameableSemElementCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(), object : CompletionProvider<CompletionParameters>() {
       override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
