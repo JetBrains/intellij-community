@@ -48,7 +48,11 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun isLogMessage(): Boolean
   fun isLogStack(): Boolean
   fun isLogExpressionEnabled(): Boolean
+
+  /** Returns the logging expression if it is enabled. */
   fun getLogExpressionObject(): XExpression?
+
+  /** Returns the logging expression even if it is disabled. */
   fun getLogExpressionObjectInt(): XExpression?
 
   fun setLogMessage(enabled: Boolean)
@@ -58,7 +62,11 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
 
   fun isConditionEnabled(): Boolean
+
+  /** Returns the condition expression if it is enabled. */
   fun getConditionExpression(): XExpression?
+
+  /** Returns the condition expression even if it is disabled. */
   fun getConditionExpressionInt(): XExpression?
 
   fun setConditionEnabled(enabled: Boolean)
