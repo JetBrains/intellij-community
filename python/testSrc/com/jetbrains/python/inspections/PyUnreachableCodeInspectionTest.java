@@ -39,6 +39,19 @@ print("Reachable")
                    """);
   }
 
+  // PY-81608
+  public void testWhileInsideTryExcept() {
+    doTestByText("""
+try:
+    x = True
+    while x and not condition():
+        print('a')
+        x = False
+finally:
+    print('b')
+print('Reachable')
+                   """);
+  }
 
   // PY-81482
   public void testTryAssertFinally() {
