@@ -2,12 +2,9 @@
 
 package com.intellij.mcpserver.toolsets.terminal
 
-import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.project
-import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
@@ -58,8 +55,7 @@ class TerminalToolset : McpToolset {
     val project = currentCoroutineContext().project
     checkUserConfirmationIfNeeded(McpServerBundle.message("label.do.you.want.to.execute.command.in.terminal"), command, project)
 
-    // TODO pass from http request later (MCP Client name or something else)
-    val id = "mcp_session"
+    val id = currentCoroutineContext().clientInfoOrNull?.name ?: "mcp_session"
     val window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
     return executeShellCommand(window = window,
                                project = project,
