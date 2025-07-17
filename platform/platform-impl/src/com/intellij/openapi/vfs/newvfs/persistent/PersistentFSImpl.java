@@ -1463,7 +1463,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static final int INNER_ARRAYS_THRESHOLD = 1024; // max initial size, to avoid OOM on million-events processing
+  /** Limit initial size, to avoid OOM on million-events processing */
+  private static final int INNER_ARRAYS_THRESHOLD = 4096;
 
   @ApiStatus.Internal
   public void processEventsImpl(@NotNull List<CompoundVFileEvent> events, boolean excludeAsyncListeners) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,21 +25,21 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
   }
 
   public void add(@NotNull K key, @NotNull V value) {
-    Object current = myMap.get(key);
-    if (current == null) {
-      myMap.put(key, value);
-    }
-    else if (current instanceof ValueList) {
-      //noinspection unchecked
-      ((List<V>)current).add(value);
-    }
-    else {
-      List<V> newList = new ValueList<>();
-      //noinspection unchecked
-      newList.add((V)current);
-      newList.add(value);
-      myMap.put(key, newList);
-    }
+    myMap.merge(key, value, (currentValue, newValue) -> {
+      if (currentValue instanceof ValueList) {
+        //noinspection unchecked
+        ((List<V>)currentValue).add((V)newValue);
+        return currentValue;
+      }
+      else {//currentValue is single value:
+        List<V> newList = new ValueList<>();
+        //noinspection unchecked
+        newList.add((V)currentValue);
+        //noinspection unchecked
+        newList.add((V)newValue);
+        return newList;
+      }
+    });
   }
 
   public boolean remove(@NotNull K key, @NotNull V value) {
@@ -240,7 +240,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
   }
 
   private static final class EmptyMap extends MostlySingularMultiMap<Object, Object> {
-    static final MostlySingularMultiMap<?,?> EMPTY = new EmptyMap();
+    static final MostlySingularMultiMap<?, ?> EMPTY = new EmptyMap();
 
     private EmptyMap() {
       super(Collections.emptyMap());
