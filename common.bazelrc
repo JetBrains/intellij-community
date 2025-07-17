@@ -34,6 +34,25 @@ common:windows --lockfile_mode=off  # todo: https://youtrack.jetbrains.com/issue
 common --noenable_workspace
 
 common --nolegacy_external_runfiles
+# rules_kotlin Compiling Kotlin on Windows appears to require --legacy_external_runfiles https://github.com/bazelbuild/rules_kotlin/issues/1309
+# Otherwise it fails with
+# LAUNCHER ERROR: Rlocation failed on _main/external/rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+common:windows --legacy_external_runfiles
+
+# Without it it fails in Windows Sandbox with:
+# ERROR: C:/users/wdagutilityaccount/desktop/bazel/BUILD.bazel:24:15: JdepsMerge //:jps_to_bazel-lib { jdeps: 1 } failed: Worker process did not return a WorkResponse:
+# ---8<---8<--- Start of log, file at C:/users/wdagutilityaccount/_bazel_wdagutilityaccount/ilgdy3ge/bazel-workers/worker-7-JdepsMerge.log ---8<---8<---
+# LAUNCHER ERROR: Rlocation failed on rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# ---8<---8<--- End of log ---8<---8<---
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1309
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+#
+# jdeps is used to check that there are no unused dependencies for target
+# which is we don't need for generator
+build:windows --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
 
 # https://bazel.build/docs/bazel-and-java#config-build-tools-java
 # A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.

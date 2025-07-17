@@ -18,6 +18,26 @@ common --experimental_ui_max_stdouterr_bytes=-1
 # disable deprecated WORKSPACE support
 common --noenable_workspace
 
+# rules_kotlin Compiling Kotlin on Windows appears to require --legacy_external_runfiles https://github.com/bazelbuild/rules_kotlin/issues/1309
+# Otherwise it fails with
+# LAUNCHER ERROR: Rlocation failed on _main/external/rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+common --legacy_external_runfiles
+
+# Without it it fails in Windows Sandbox with:
+# ERROR: C:/users/wdagutilityaccount/desktop/bazel/BUILD.bazel:24:15: JdepsMerge //:jps_to_bazel-lib { jdeps: 1 } failed: Worker process did not return a WorkResponse:
+# ---8<---8<--- Start of log, file at C:/users/wdagutilityaccount/_bazel_wdagutilityaccount/ilgdy3ge/bazel-workers/worker-7-JdepsMerge.log ---8<---8<---
+# LAUNCHER ERROR: Rlocation failed on rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# ---8<---8<--- End of log ---8<---8<---
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1309
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+#
+# jdeps is used to check that there are no unused dependencies for target
+# which is we don't need for generator
+build --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
+
 test --test_verbose_timeout_warnings --test_timeout=60 --test_output=all
 
 # https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
