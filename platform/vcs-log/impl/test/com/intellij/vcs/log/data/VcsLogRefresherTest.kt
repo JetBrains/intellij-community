@@ -1,295 +1,288 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.data
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.impl.*;
-import com.intellij.vcs.test.VcsPlatformTest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.ProgressManagerImpl
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.ExceptionUtil
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.TimedCommitParser
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.data.SingleTaskController.SingleTask
+import com.intellij.vcs.log.data.SingleTaskController.SingleTaskImpl
+import com.intellij.vcs.log.graph.GraphCommit
+import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.test.VcsPlatformTest
+import junit.framework.TestCase
+import java.util.*
+import java.util.concurrent.*
+import java.util.function.Consumer
+import kotlin.concurrent.Volatile
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.Consumer;
+private const val RECENT_COMMITS_COUNT = 2
 
-import static com.intellij.vcs.log.TimedCommitParser.log;
+class VcsLogRefresherTest : VcsPlatformTest() {
+  private lateinit var logProvider: TestVcsLogProvider
+  private lateinit var logData: VcsLogData
 
-public class VcsLogRefresherTest extends VcsPlatformTest {
-  private static final Logger LOG = Logger.getInstance(VcsLogRefresherTest.class);
+  private lateinit var refresherTestHelper: LogRefresherTestHelper
+  private lateinit var dataWaiter: DataWaiter
+  private lateinit var loader: VcsLogRefresher
 
-  private static final int RECENT_COMMITS_COUNT = 2;
-  private TestVcsLogProvider myLogProvider;
-  private VcsLogData myLogData;
+  private lateinit var commits: List<String>
 
-  private LogRefresherTestHelper myRefresherTestHelper;
-  private DataWaiter myDataWaiter;
-  private VcsLogRefresher myLoader;
+  @Throws(Exception::class)
+  public override fun setUp() {
+    super.setUp()
 
-  private List<String> myCommits;
+    logProvider = TestVcsLogProvider()
+    val logProviders = mapOf(projectRoot to logProvider)
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+    commits = listOf("3|-a2|-a1", "2|-a1|-a", "1|-a|-")
+    logProvider.appendHistory(TimedCommitParser.log(commits))
+    logProvider.addRef(createBranchRef("master", "a2"))
+    logData = VcsLogData(project, logProviders, LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(project), project)
+    refresherTestHelper = LogRefresherTestHelper(logData, RECENT_COMMITS_COUNT)
 
-    myLogProvider = new TestVcsLogProvider();
-    Map<VirtualFile, VcsLogProvider> logProviders = Collections.singletonMap(getProjectRoot(), myLogProvider);
-
-    myCommits = Arrays.asList("3|-a2|-a1", "2|-a1|-a", "1|-a|-");
-    myLogProvider.appendHistory(log(myCommits));
-    myLogProvider.addRef(createBranchRef("master", "a2"));
-    myLogData =
-      new VcsLogData(myProject, logProviders, new LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(getProject()),
-                     myProject);
-    myRefresherTestHelper = new LogRefresherTestHelper(myLogData, RECENT_COMMITS_COUNT);
-
-    myDataWaiter = myRefresherTestHelper.myDataWaiter;
-    myLoader = myRefresherTestHelper.myLoader;
+    dataWaiter = refresherTestHelper.dataWaiter
+    loader = refresherTestHelper.loader
   }
 
-  @Override
-  public void tearDown() {
+  public override fun tearDown() {
     try {
-      myRefresherTestHelper.tearDown();
+      refresherTestHelper.tearDown()
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
-  @Override
-  protected @NotNull Collection<String> getDebugLogCategories() {
-    return Arrays.asList("#" + SingleTaskController.class.getName(), "#" + VcsLogRefresherImpl.class.getName(),
-                         "#" + VcsLogRefresherTest.class.getName(), "#" + TestVcsLogProvider.class.getName());
+  override fun getDebugLogCategories(): Collection<String> {
+    return listOf("#" + SingleTaskController::class.java.getName(), "#" + VcsLogRefresherImpl::class.java.getName(),
+                  "#" + VcsLogRefresherTest::class.java.getName(), "#" + TestVcsLogProvider::class.java.getName())
   }
 
-  public void test_initialize_shows_short_history() throws InterruptedException, ExecutionException, TimeoutException {
-    myLogProvider.blockFullLog();
-    myLoader.initialize();
-    DataPack result = myDataWaiter.get();
-    myLogProvider.unblockFullLog();
-    assertNotNull(result);
-    assertDataPack(log(myCommits.subList(0, RECENT_COMMITS_COUNT)), result.getPermanentGraph().getAllCommits());
-    myRefresherTestHelper.waitForBackgroundTasksToComplete();
-    myDataWaiter.get();
+  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  fun test_initialize_shows_short_history() {
+    logProvider.blockFullLog()
+    loader.initialize()
+    val result = dataWaiter.get()
+    logProvider.unblockFullLog()
+    assertNotNull(result)
+    assertDataPack(TimedCommitParser.log(commits.subList(0, RECENT_COMMITS_COUNT)), result.permanentGraph.allCommits)
+    refresherTestHelper.waitForBackgroundTasksToComplete()
+    dataWaiter.get()
   }
 
-  public void test_first_refresh_reports_full_history() throws InterruptedException {
-    myLoader.initialize();
+  @Throws(InterruptedException::class)
+  fun test_first_refresh_reports_full_history() {
+    loader.initialize()
 
-    DataPack firstDataPack = myDataWaiter.get();
-    assertDataPack(log(myCommits.subList(0, RECENT_COMMITS_COUNT)), firstDataPack.getPermanentGraph().getAllCommits());
+    val firstDataPack = dataWaiter.get()
+    assertDataPack(TimedCommitParser.log(commits.subList(0, RECENT_COMMITS_COUNT)), firstDataPack.permanentGraph.allCommits)
 
-    DataPack fullDataPack = myDataWaiter.get();
-    assertDataPack(log(myCommits), fullDataPack.getPermanentGraph().getAllCommits());
+    val fullDataPack = dataWaiter.get()
+    assertDataPack(TimedCommitParser.log(commits), fullDataPack.permanentGraph.allCommits)
   }
 
-  public void test_first_refresh_waits_for_full_log() throws InterruptedException {
-    myLogProvider.blockFullLog();
-    myLoader.initialize();
-    myDataWaiter.get();
-    myRefresherTestHelper.assertTimeout("Refresh waiter should have failed on the timeout");
-    myLogProvider.unblockFullLog();
+  @Throws(InterruptedException::class)
+  fun test_first_refresh_waits_for_full_log() {
+    logProvider.blockFullLog()
+    loader.initialize()
+    dataWaiter.get()
+    refresherTestHelper.assertTimeout("Refresh waiter should have failed on the timeout")
+    logProvider.unblockFullLog()
 
-    DataPack result = myDataWaiter.get();
-    assertDataPack(log(myCommits), result.getPermanentGraph().getAllCommits());
+    val result = dataWaiter.get()
+    assertDataPack(TimedCommitParser.log(commits), result.permanentGraph.allCommits)
   }
 
-  public void test_refresh_captures_new_commits() throws InterruptedException, ExecutionException, TimeoutException {
-    myRefresherTestHelper.initAndWaitForFirstRefresh();
+  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  fun test_refresh_captures_new_commits() {
+    refresherTestHelper.initAndWaitForFirstRefresh()
 
-    String newCommit = "4|-a3|-a2";
-    myLogProvider.appendHistory(log(newCommit));
-    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
-    DataPack result = myDataWaiter.get();
+    val newCommit = "4|-a3|-a2"
+    logProvider.appendHistory(TimedCommitParser.log(newCommit))
+    loader.refresh(listOf(projectRoot), false)
+    val result = dataWaiter.get()
 
-    List<String> allCommits = new ArrayList<>();
-    allCommits.add(newCommit);
-    allCommits.addAll(myCommits);
-    assertDataPack(log(allCommits), result.getPermanentGraph().getAllCommits());
+    val allCommits: MutableList<String?> = ArrayList<String?>()
+    allCommits.add(newCommit)
+    allCommits.addAll(commits)
+    assertDataPack(TimedCommitParser.log(allCommits), result.permanentGraph.allCommits)
   }
 
-  public void test_single_refresh_causes_single_data_read() throws InterruptedException, ExecutionException, TimeoutException {
-    myRefresherTestHelper.initAndWaitForFirstRefresh();
+  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  fun test_single_refresh_causes_single_data_read() {
+    refresherTestHelper.initAndWaitForFirstRefresh()
 
-    myLogProvider.resetReadFirstBlockCounter();
-    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
-    myDataWaiter.get();
-    assertEquals("Unexpected first block read count", 1, myLogProvider.getReadFirstBlockCounter());
+    logProvider.resetReadFirstBlockCounter()
+    loader.refresh(listOf(projectRoot), false)
+    dataWaiter.get()
+    TestCase.assertEquals("Unexpected first block read count", 1, logProvider.getReadFirstBlockCounter())
   }
 
-  public void test_reinitialize_makes_refresh_cancelled() throws InterruptedException, ExecutionException, TimeoutException {
-    myRefresherTestHelper.initAndWaitForFirstRefresh();
+  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  fun test_reinitialize_makes_refresh_cancelled() {
+    refresherTestHelper.initAndWaitForFirstRefresh()
 
     // initiate the refresh and make it hang
-    myLogProvider.blockRefresh();
-    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
+    logProvider.blockRefresh()
+    loader.refresh(listOf(projectRoot), false)
 
     // initiate reinitialize; the full log will await because the Task is busy waiting for the refresh
-    myLoader.initialize();
+    loader.initialize()
 
     // the task queue now contains (1) blocked ongoing refresh request; (2) queued complete refresh request
     // we want to make sure only one data pack is reported
-    myLogProvider.unblockRefresh();
-    myDataWaiter.get();
-    myRefresherTestHelper.assertNoMoreResultsArrive();
+    logProvider.unblockRefresh()
+    dataWaiter.get()
+    refresherTestHelper.assertNoMoreResultsArrive()
   }
 
-  public void test_two_immediately_consecutive_refreshes_causes_only_one_data_pack_update()
-    throws InterruptedException, ExecutionException, TimeoutException {
-    myRefresherTestHelper.initAndWaitForFirstRefresh();
-    myLogProvider.blockRefresh();
-    myLoader.refresh(Collections.singletonList(getProjectRoot()), false); // this refresh hangs in VcsLogProvider.readFirstBlock()
-    myLoader.refresh(Collections.singletonList(getProjectRoot()), false); // this refresh is queued
-    myLogProvider.unblockRefresh(); // this will make the first one complete, and then perform the second as well
+  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  fun test_two_immediately_consecutive_refreshes_causes_only_one_data_pack_update() {
+    refresherTestHelper.initAndWaitForFirstRefresh()
+    logProvider.blockRefresh()
+    loader.refresh(listOf(projectRoot), false) // this refresh hangs in VcsLogProvider.readFirstBlock()
+    loader.refresh(listOf(projectRoot), false) // this refresh is queued
+    logProvider.unblockRefresh() // this will make the first one complete, and then perform the second as well
 
-    myDataWaiter.get();
-    myRefresherTestHelper.assertTimeout("Second refresh shouldn't cause the data pack update"); // it may also fail in beforehand in set().
+    dataWaiter.get()
+    refresherTestHelper.assertTimeout("Second refresh shouldn't cause the data pack update") // it may also fail in beforehand in set().
   }
 
-  public static class LogRefresherTestHelper {
+  class LogRefresherTestHelper(logData: VcsLogData, recentCommitsCount: Int) {
+    private val project = logData.project
 
-    private final @NotNull Project myProject;
+    val dataWaiter = DataWaiter()
+    val loader = createLoader(logData, recentCommitsCount, dataWaiter)
 
-    private final @NotNull DataWaiter myDataWaiter;
-    private final @NotNull VcsLogRefresher myLoader;
+    private val startedTasks = Collections.synchronizedList(ArrayList<Future<*>>())
 
-    private final List<Future<?>> myStartedTasks = Collections.synchronizedList(new ArrayList<>());
-
-    public LogRefresherTestHelper(@NotNull VcsLogData logData, int recentCommitsCount) {
-      myProject = logData.getProject();
-      myDataWaiter = new DataWaiter();
-      myLoader = createLoader(logData, recentCommitsCount, myDataWaiter);
-    }
-
-    public void initAndWaitForFirstRefresh() throws InterruptedException, ExecutionException, TimeoutException {
+    @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+    fun initAndWaitForFirstRefresh() {
       // wait for the first block and the whole log to complete
-      myLoader.initialize();
+      loader.initialize()
 
-      DataPack firstDataPack = myDataWaiter.get();
-      assertFalse(firstDataPack.isFull());
+      val firstDataPack = dataWaiter.get()
+      assertFalse(firstDataPack.isFull)
 
-      DataPack fullDataPack = myDataWaiter.get();
-      assertTrue(fullDataPack.isFull());
-      assertNoMoreResultsArrive();
+      val fullDataPack = dataWaiter.get()
+      assertTrue(fullDataPack.isFull)
+      assertNoMoreResultsArrive()
     }
 
-    public void tearDown() throws ExecutionException, InterruptedException, TimeoutException {
-      assertNoMoreResultsArrive();
-      myDataWaiter.tearDown();
-      if (myDataWaiter.failed()) {
-        fail("Only one refresh should have happened, an error happened instead: " + myDataWaiter.getExceptionText());
+    @Throws(ExecutionException::class, InterruptedException::class, TimeoutException::class)
+    fun tearDown() {
+      assertNoMoreResultsArrive()
+      dataWaiter.tearDown()
+      if (dataWaiter.failed()) {
+        fail("Only one refresh should have happened, an error happened instead: " + dataWaiter.exceptionText)
       }
     }
 
-    public @NotNull DataPack getDataPack() {
-      return myLoader.getCurrentDataPack();
+    val dataPack: DataPack
+      get() = loader.getCurrentDataPack()
+
+    @Throws(InterruptedException::class)
+    fun assertTimeout(message: String) {
+      assertNull(message, dataWaiter.queue.poll(500, TimeUnit.MILLISECONDS))
     }
 
-    private void assertTimeout(@NotNull String message) throws InterruptedException {
-      assertNull(message, myDataWaiter.myQueue.poll(500, TimeUnit.MILLISECONDS));
+    @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+    fun assertNoMoreResultsArrive() {
+      waitForBackgroundTasksToComplete()
+      assertTrue(dataWaiter.queue.isEmpty())
     }
 
-    private void assertNoMoreResultsArrive() throws InterruptedException, ExecutionException, TimeoutException {
-      waitForBackgroundTasksToComplete();
-      assertTrue(myDataWaiter.myQueue.isEmpty());
-    }
-
-    private void waitForBackgroundTasksToComplete() throws InterruptedException, ExecutionException, TimeoutException {
-      for (Future<?> task : new ArrayList<>(myStartedTasks)) {
-        task.get(1, TimeUnit.SECONDS);
+    @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+    fun waitForBackgroundTasksToComplete() {
+      for (task in ArrayList(startedTasks)) {
+        task.get(1, TimeUnit.SECONDS)
       }
     }
 
-    private VcsLogRefresherImpl createLoader(@NotNull VcsLogData logData, int recentCommitsCount,
-                                             @NotNull Consumer<? super DataPack> dataPackConsumer) {
-
-      VcsLogRefresherImpl refresher =
-        new VcsLogRefresherImpl(myProject, logData.getStorage(), logData.getLogProviders(), logData.getUserRegistry(),
-                                logData.getModifiableIndex(),
-                                new VcsLogProgress(logData),
-                                logData.getTopCommitsCache(), dataPackConsumer, recentCommitsCount
+    private fun createLoader(
+      logData: VcsLogData, recentCommitsCount: Int,
+      dataPackConsumer: Consumer<DataPack>,
+    ): VcsLogRefresherImpl {
+      val refresher: VcsLogRefresherImpl =
+        object : VcsLogRefresherImpl(project, logData.storage, logData.logProviders, logData.userRegistry,
+                                     logData.modifiableIndex,
+                                     VcsLogProgress(logData),
+                                     logData.topCommitsCache, dataPackConsumer, recentCommitsCount
         ) {
-          @Override
-          protected SingleTaskController.SingleTask startNewBackgroundTask(final @NotNull Task.Backgroundable refreshTask) {
-            LOG.debug("Starting a background task...");
-            Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask);
-            myStartedTasks.add(future);
-            LOG.debug(myStartedTasks.size() + " started tasks");
-            return new SingleTaskController.SingleTaskImpl(future, new EmptyProgressIndicator());
+          override fun startNewBackgroundTask(refreshTask: Task.Backgroundable): SingleTask {
+            LOG.debug("Starting a background task...")
+            val future = (ProgressManager.getInstance() as ProgressManagerImpl).runProcessWithProgressAsynchronously(refreshTask)
+            startedTasks.add(future)
+            LOG.debug(startedTasks.size.toString() + " started tasks")
+            return SingleTaskImpl(future, EmptyProgressIndicator())
           }
-        };
-      Disposer.register(logData, refresher);
-      return refresher;
+        }
+      Disposer.register(logData, refresher)
+      return refresher
     }
   }
 
-  private void assertDataPack(@NotNull List<TimedVcsCommit> expectedLog, @NotNull List<? extends GraphCommit<Integer>> actualLog) {
-    List<TimedVcsCommit> convertedActualLog = convert(actualLog);
-    assertOrderedEquals(convertedActualLog, expectedLog);
+  private fun assertDataPack(expectedLog: List<TimedVcsCommit>, actualLog: List<GraphCommit<Int>>) {
+    fun getHash(commitIndex: Int): Hash = logData.getCommitId(commitIndex)!!.hash
+
+    val convertedActualLog = actualLog.map { commit ->
+      TimedVcsCommitImpl(getHash(commit.getId()), commit.getParents().map(::getHash), commit.getTimestamp())
+    }
+    assertOrderedEquals(convertedActualLog, expectedLog)
   }
 
-  @Unmodifiable
-  private @NotNull List<TimedVcsCommit> convert(@NotNull List<? extends GraphCommit<Integer>> actualLog) {
-    return ContainerUtil.map(actualLog, commit -> {
-      Function<Integer, Hash> convertor = integer -> myLogData.getCommitId(integer).getHash();
-      return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),
-                                    commit.getTimestamp());
-    });
+  private fun createBranchRef(name: String, commit: String): VcsRefImpl {
+    return VcsRefImpl(HashImpl.build(commit), name, TestVcsLogProvider.BRANCH_TYPE, projectRoot)
   }
 
-  private @NotNull VcsRefImpl createBranchRef(@NotNull String name, @NotNull String commit) {
-    return new VcsRefImpl(HashImpl.build(commit), name, TestVcsLogProvider.BRANCH_TYPE, getProjectRoot());
-  }
+  class DataWaiter : Consumer<DataPack> {
+    @Volatile
+    private var _queue: BlockingQueue<DataPack>? = ArrayBlockingQueue(10)
+    val queue: BlockingQueue<DataPack>
+      get() = _queue!!
 
-  private static class DataWaiter implements Consumer<DataPack> {
-    private volatile BlockingQueue<DataPack> myQueue = new ArrayBlockingQueue<>(10);
-    private volatile Exception myException;
+    @Volatile
+    private var exception: Exception? = null
 
-    @Override
-    public void accept(DataPack t) {
+    override fun accept(t: DataPack) {
       try {
-        myQueue.add(t);
+        queue.add(t)
       }
-      catch (Exception e) {
-        myException = e;
-        throw new AssertionError(e);
+      catch (e: Exception) {
+        exception = e
+        throw AssertionError(e)
       }
     }
 
-    public @NotNull DataPack get(long timeout, @NotNull TimeUnit timeUnit) throws InterruptedException {
-      return Objects.requireNonNull(myQueue.poll(timeout, timeUnit));
+    @JvmOverloads
+    @Throws(InterruptedException::class)
+    fun get(timeout: Long = 1, timeUnit: TimeUnit = TimeUnit.SECONDS): DataPack {
+      return queue.poll(timeout, timeUnit)!!
     }
 
-    public boolean failed() {
-      return myException != null;
+    fun failed(): Boolean {
+      return exception != null
     }
 
-    String getExceptionText() {
-      return ExceptionUtil.getThrowableText(myException);
-    }
+    val exceptionText: String
+      get() = ExceptionUtil.getThrowableText(exception!!)
 
-    public @NotNull DataPack get() throws InterruptedException {
-      return get(1, TimeUnit.SECONDS);
+    fun tearDown() {
+      _queue = null
     }
+  }
 
-    public void tearDown() {
-      myQueue = null;
-    }
+  companion object {
+    private val LOG = Logger.getInstance(VcsLogRefresherTest::class.java)
   }
 }
