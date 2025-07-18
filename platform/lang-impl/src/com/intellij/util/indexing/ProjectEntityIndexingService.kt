@@ -370,23 +370,23 @@ class ProjectEntityIndexingService(
       entityStorage: EntityStorage,
     ) {
       for (dependency in contributor.dependenciesOnOtherEntities) {
-        if (dependency !is DependencyDescription.OnRelative<*, *> || entityClass != dependency.relativeClass) {
+        if (dependency !is DependencyDescription.OnEntity<*, *> || entityClass != dependency.entityClass) {
           continue
         }
         @Suppress("UNCHECKED_CAST")
-        dependency as DependencyDescription.OnRelative<C, E>
+        dependency as DependencyDescription.OnEntity<C, E>
 
         val removedEntities: MutableSet<C> = mutableSetOf()
         val addedEntities: MutableSet<C> = mutableSetOf()
         oldEntity?.let {
-          dependency.entityGetter(it).toCollection(removedEntities)
+          dependency.resultGetter(it).toCollection(removedEntities)
         }
         newEntity?.let {
-          dependency.entityGetter(it).toCollection(addedEntities)
+          dependency.resultGetter(it).toCollection(addedEntities)
         }
         val entitiesToKeep = mutableSetOf<C>()
         val entitiesToRemove = mutableSetOf<C>()
-        val entitiesInCurrentStorage = entityStorage.entities(dependency.entityClass).toSet()
+        val entitiesInCurrentStorage = entityStorage.entities(dependency.resultClass).toSet()
 
         if (removedEntities.isNotEmpty()) {
           entitiesToKeep.addAll(entitiesInCurrentStorage.intersect(removedEntities))

@@ -162,7 +162,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
     override val dependenciesOnOtherEntities: List<DependencyDescription<ChildTestEntity>>
       get() = listOf(
         DependencyDescription.OnParent(ParentTestEntity::class.java) { sequenceOfNotNull(it.child) },
-        DependencyDescription.OnRelative(SiblingEntity::class.java, ChildTestEntity::class.java) { sequenceOfNotNull(it.parent.child) }
+        DependencyDescription.OnEntity(SiblingEntity::class.java, ChildTestEntity::class.java) { sequenceOfNotNull(it.parent.child) }
       )
 
     override fun registerFileSets(entity: ChildTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {

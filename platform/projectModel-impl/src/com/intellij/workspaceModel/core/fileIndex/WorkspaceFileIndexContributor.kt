@@ -95,16 +95,16 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
   ) : DependencyDescription<E>
 
   /**
-   * Indicates that the contributor must be called for the entities [E] when any relative entity of type [R] is added, removed or replaced.
+   * Indicates that the contributor must be called for the entities [R] when any entity of type [E] is added, removed or replaced.
    */
-  data class OnRelative<E : WorkspaceEntity, R : WorkspaceEntity>(
-    /** Type of relative entity */
-    val relativeClass: Class<R>,
-    /** Type of entity [E] which has a dependency on relative [R] */
+  data class OnEntity<R : WorkspaceEntity, E : WorkspaceEntity>(
+    /** Type of entity */
     val entityClass: Class<E>,
-    /** Computes entities by the relative */
-    val entityGetter: (R) -> Sequence<E>
-  ) : DependencyDescription<E>
+    /** Type of entity [R] which has a dependency on entity [E] */
+    val resultClass: Class<R>,
+    /** Computes entities*/
+    val resultGetter: (E) -> Sequence<R>
+  ) : DependencyDescription<R>
 }
 
 /**

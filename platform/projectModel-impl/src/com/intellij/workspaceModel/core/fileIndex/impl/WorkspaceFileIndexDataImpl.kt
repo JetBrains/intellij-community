@@ -333,12 +333,12 @@ internal class WorkspaceFileIndexDataImpl(
                                                                                     event, removedEntities, addedEntities)
         is DependencyDescription.OnChild<*, *> -> collectEntitiesWithChangedChild(dependency as DependencyDescription.OnChild<E, *>,
                                                                                   event, removedEntities, addedEntities)
-        is DependencyDescription.OnRelative<*, *> -> collectEntitiesWithChangedRelative(dependency as DependencyDescription.OnRelative<E, *>,
-                                                                                        event,
-                                                                                        removedEntities,
-                                                                                        addedEntities,
-                                                                                        entitiesInStorage,
-                                                                                        entitiesNotInStorage)
+        is DependencyDescription.OnEntity<*, *> -> processOnEntityDependency(dependency as DependencyDescription.OnEntity<E, *>,
+                                                                             event,
+                                                                             removedEntities,
+                                                                             addedEntities,
+                                                                             entitiesInStorage,
+                                                                             entitiesNotInStorage)
       }
     }
 
@@ -363,48 +363,46 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   /**
-   * This method searches for entities [E] that were affected by the change of relative [R].
+   * This method searches for entities [R] that were affected by the change of entity [E].
    *
    * Example:
    *
-   * Suppose we have entities A, B, C in [affectedByRemovalEntities] and E, F, G in [affectedByAdditionEntities] and we have B and F actually in storage.
+   * Suppose we add entities A, B, C into [removedEntities] and E, F, G in [addedEntities] and we have B and F actually in storage.
    * We remove file sets for A, B, C, but we need to register a file set for B, so entity B will be in [entitiesToKeep].
    * By the same logic we register file sets for E, F, G, but we need to remove file sets for E and G, so they will in [entitiesToRemove].
    *
-   * [entitiesToRemove] = [affectedByAdditionEntities] - [entitiesInCurrentStorage]
+   * [entitiesToRemove] = [addedEntities] - [entitiesInCurrentStorage]
    *
-   * [entitiesToKeep] = [entitiesInCurrentStorage] intersect [affectedByRemovalEntities]
+   * [entitiesToKeep] = [removedEntities] intersect [affectedByRemovalEntities]
    *
-   * Note that this method is only responsible for collecting the affected entities [E] and does not work with file sets.
    */
-  private fun <E: WorkspaceEntity, R: WorkspaceEntity> collectEntitiesWithChangedRelative(dependency: DependencyDescription.OnRelative<E, R>,
-                                                                                          event: VersionedStorageChange,
-                                                                                          removedEntities: MutableSet<E>,
-                                                                                          addedEntities: MutableSet<E>,
-                                                                                          entitiesToKeep: MutableSet<E>,
-                                                                                          entitiesToRemove: MutableSet<E>) {
-    // file sets will be removed
-    val affectedBySiblingRemoval = mutableSetOf<E>()
-    // file sets will be added
-    val affectedBySiblingAddition = mutableSetOf<E>()
-    event.getChanges(dependency.relativeClass).asSequence().forEach { change ->
+  private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnEntityDependency(dependency: DependencyDescription.OnEntity<R, E>,
+                                                                                 event: VersionedStorageChange,
+                                                                                 removedEntities: MutableSet<R>,
+                                                                                 addedEntities: MutableSet<R>,
+                                                                                 entitiesToKeep: MutableSet<R>,
+                                                                                 entitiesToRemove: MutableSet<R>) {
+    var onEntityDependencyApplied = false
+    event.getChanges(dependency.entityClass).asSequence().forEach { change ->
+      onEntityDependencyApplied = true
       change.oldEntity?.let {
-        dependency.entityGetter(it).toCollection(affectedBySiblingRemoval)
+        dependency.resultGetter(it).toCollection(removedEntities)
       }
       change.newEntity?.let {
-        dependency.entityGetter(it).toCollection(affectedBySiblingAddition)
+        dependency.resultGetter(it).toCollection(addedEntities)
       }
     }
-    val entitiesInCurrentStorage = event.storageAfter.entities(dependency.entityClass).toSet()
 
-    if (affectedBySiblingRemoval.isNotEmpty()) {
-      entitiesToKeep.addAll(affectedBySiblingRemoval.intersect(entitiesInCurrentStorage))
+    if (onEntityDependencyApplied) {
+      val entitiesInCurrentStorage = event.storageAfter.entities(dependency.resultClass).toSet()
+
+      if (removedEntities.isNotEmpty()) {
+        entitiesToKeep.addAll(removedEntities.intersect(entitiesInCurrentStorage))
+      }
+      if (addedEntities.isNotEmpty()) {
+        entitiesToRemove.addAll(addedEntities - entitiesInCurrentStorage)
+      }
     }
-    if (affectedBySiblingAddition.isNotEmpty()) {
-      entitiesToRemove.addAll(affectedBySiblingAddition - entitiesInCurrentStorage)
-    }
-    removedEntities.addAll(affectedBySiblingRemoval)
-    addedEntities.addAll(affectedBySiblingAddition)
   }
 
   private fun <E : WorkspaceEntity, P : WorkspaceEntity> collectEntitiesWithChangedParent(dependency: DependencyDescription.OnParent<E, P>,
