@@ -10,7 +10,7 @@ fun IdeaFrameUI.addPythonInterpreterDialog(func: AddPythonInterpreterDialogUi.()
 class AddPythonInterpreterDialogUi(data: ComponentData): UiComponent(data) {
   val typeSelector = x("//div[@text='Type:']/following-sibling:: *[@class='ComboBox'][1]")
   val okButton = x { byAccessibleName("OK") }
-  val pathToPipenvField = x("//div[@text='Path to pipenv:']/following-sibling:: *[@class='TextFieldWithBrowseButton'][1]")
-  val pathToPoetryField = x("//div[@text='Path to poetry:']/following-sibling:: *[@class='TextFieldWithBrowseButton'][1]")
   val useVenv1Link = x { byAccessibleName("Use .venv1") }
+
+  fun clickPathToExecutable(type: String) = x("//div[@text='Path to $type:']/following-sibling:: *[@class='TextFieldWithBrowseButton'][1]").click()
 }
