@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/IntelliLang/java-support:java-langInjection",
     "//plugins/IntelliLang/xml-support:xml-langInjection",
     "//plugins/IntelliLang/intellilang-jps-plugin:java-langInjection-jps",
+    "//plugins/IntelliLang/backend",
   ]
 )
 ### auto-generated section `build intellij.platform.langInjection.plugin` end

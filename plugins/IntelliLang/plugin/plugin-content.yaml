@@ -4,6 +4,9 @@
 - name: lib/modules/intellij.java.langInjection.jps.jar
   contentModules:
   - name: intellij.java.langInjection.jps
+- name: lib/modules/intellij.platform.langInjection.backend.jar
+  contentModules:
+  - name: intellij.platform.langInjection.backend
 - name: lib/modules/intellij.platform.langInjection.jar
   contentModules:
   - name: intellij.platform.langInjection

@@ -19,6 +19,7 @@
 
   <content>
     <module name="intellij.platform.langInjection" loading="required"/>
+    <module name="intellij.platform.langInjection.backend"/>
     <module name="intellij.xml.langInjection"/>
     <module name="intellij.xml.langInjection.xpath"/>
     <module name="intellij.java.langInjection"/>
