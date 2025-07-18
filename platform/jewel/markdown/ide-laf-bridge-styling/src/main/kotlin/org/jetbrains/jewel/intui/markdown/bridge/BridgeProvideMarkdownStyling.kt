@@ -56,6 +56,7 @@ public fun ProvideMarkdownStyling(
  * use instead, you should provide it. If you have access to a [Project], you should be using the other
  * [ProvideMarkdownStyling] overload instead, as that will provide syntax highlighting by default.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun ProvideMarkdownStyling(
@@ -84,6 +85,7 @@ public fun ProvideMarkdownStyling(
  * The [project] is used to access the [CodeHighlighterFactory] and obtain a [CodeHighlighter] that supports code syntax
  * highlighting.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun ProvideMarkdownStyling(

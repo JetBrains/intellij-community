@@ -1,0 +1,5 @@
+*f:org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
+- org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
+- getParserExtension():org.commonmark.parser.Parser$ParserExtension

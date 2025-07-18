@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.layout.BasicTableLayout
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -21,6 +22,7 @@ import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class GitHubTableBlockRenderer(
     private val rootStyling: MarkdownStyling,

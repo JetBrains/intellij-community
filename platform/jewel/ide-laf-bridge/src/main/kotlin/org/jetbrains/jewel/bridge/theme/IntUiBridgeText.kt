@@ -13,6 +13,7 @@ import com.intellij.util.ui.JBFont
 import java.awt.Font
 import java.awt.image.BufferedImage.TYPE_INT_ARGB
 import javax.swing.UIManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.keyNotFound
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.bridge.retrieveTextStyle
@@ -34,6 +35,7 @@ public fun retrieveDefaultTextStyle(): TextStyle = retrieveDefaultTextStyle(1.0f
  *
  * This is the font set in _Settings | Appearance & Behavior | Appearance_, and defaults to 13px Inter.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun retrieveDefaultTextStyle(lineHeightMultiplier: Float): TextStyle {
     val lafFont = UIManager.getFont(KEY_LABEL_FONT) ?: keyNotFound(KEY_LABEL_FONT, "Font")

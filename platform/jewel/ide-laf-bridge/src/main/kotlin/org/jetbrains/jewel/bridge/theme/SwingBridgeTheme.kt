@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.BridgeMessageResourceResolver
 import org.jetbrains.jewel.bridge.BridgePainterHintsProvider
 import org.jetbrains.jewel.bridge.BridgeTypography
@@ -30,6 +31,7 @@ import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
 
 private val bridgeThemeReader by lazy { SwingBridgeReader() }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun SwingBridgeTheme(content: @Composable () -> Unit) {

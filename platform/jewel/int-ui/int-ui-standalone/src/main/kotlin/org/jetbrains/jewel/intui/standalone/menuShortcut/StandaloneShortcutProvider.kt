@@ -4,6 +4,7 @@ package org.jetbrains.jewel.intui.standalone.menuShortcut
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.ui.MenuItemShortcutProvider
 import org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction
@@ -12,6 +13,7 @@ import org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction.PasteMenuIte
 import org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction.SelectAllMenuItemOptionAction
 import org.jetbrains.skiko.hostOs
 
+@ApiStatus.Internal
 @InternalJewelApi
 public object StandaloneShortcutProvider : MenuItemShortcutProvider {
     override fun getShortcutKeyStroke(actionType: ContextMenuItemOptionAction): KeyStroke? =

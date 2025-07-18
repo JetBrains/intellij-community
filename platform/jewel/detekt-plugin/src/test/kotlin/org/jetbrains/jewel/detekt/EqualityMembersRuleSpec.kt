@@ -1,15 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.detekt
 
-import io.github.detekt.test.utils.compileContentForTest
 import io.github.detekt.test.utils.readResourceContent
 import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Finding
 import io.gitlab.arturbosch.detekt.test.TestConfig
 import io.gitlab.arturbosch.detekt.test.assertThat
 import io.gitlab.arturbosch.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
-import org.intellij.lang.annotations.Language
 import org.jetbrains.jewel.detekt.rules.EqualityMembersRule
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -32,6 +29,121 @@ class EqualityMembersRuleSpec {
                     .trimMargin()
             val findings = subject.lint(code)
             assertThat(findings).isEmpty()
+        }
+    }
+
+    @Nested
+    inner class `classes with no constructor properties` {
+        @Test
+        fun `should not report when no properties are present`() {
+            val code =
+                """
+                |annotation class GenerateDataFunctions
+                |
+                |@GenerateDataFunctions
+                |class DataFuncTest
+                """
+                    .trimMargin()
+            val findings = subject.lint(code)
+            assertThat(findings).isEmpty()
+        }
+    }
+
+    @Nested
+    inner class `classes with a single constructor property` {
+        @Test
+        fun `should generate correct hashCode for single property`() {
+            val code =
+                """
+                |annotation class GenerateDataFunctions
+                |
+                |@GenerateDataFunctions
+                |class DataFuncTest(val a: String)
+                """
+                    .trimMargin()
+
+            val (findings, result) = subject.lintAndFix(code)
+
+            assertThat(findings).hasSize(1)
+            assertThat(result)
+                .isEqualTo(
+                    $$"""
+                    |annotation class GenerateDataFunctions
+                    |
+                    |@GenerateDataFunctions
+                    |class DataFuncTest(val a: String){
+                    |
+                    |override fun equals(other: Any?): Boolean {
+                    |    if (this === other) return true
+                    |    if (javaClass != other?.javaClass) return false
+                    |
+                    |    other as DataFuncTest
+                    |
+                    |    if (a != other.a) return false
+                    |
+                    |    return true
+                    |}
+                    |
+                    |override fun hashCode(): Int {
+                    |    return a.hashCode()
+                    |}
+                    |
+                    |override fun toString(): String {
+                    |    return "DataFuncTest(a=$a)"
+                    |}
+                    |}
+                    """
+                        .trimMargin()
+                )
+        }
+    }
+
+    @Nested
+    inner class `classes with mixed constructor parameters` {
+        @Test
+        fun `should only use properties in generated functions`() {
+            val code =
+                """
+                |annotation class GenerateDataFunctions
+                |
+                |@GenerateDataFunctions
+                |class DataFuncTest(val a: String, b: String)
+                """
+                    .trimMargin()
+
+            val (findings, result) = subject.lintAndFix(code)
+
+            assertThat(findings).hasSize(1)
+            assertThat(result)
+                .isEqualTo(
+                    $$"""
+                    |annotation class GenerateDataFunctions
+                    |
+                    |@GenerateDataFunctions
+                    |class DataFuncTest(val a: String, b: String){
+                    |
+                    |override fun equals(other: Any?): Boolean {
+                    |    if (this === other) return true
+                    |    if (javaClass != other?.javaClass) return false
+                    |
+                    |    other as DataFuncTest
+                    |
+                    |    if (a != other.a) return false
+                    |
+                    |    return true
+                    |}
+                    |
+                    |override fun hashCode(): Int {
+                    |    return a.hashCode()
+                    |}
+                    |
+                    |override fun toString(): String {
+                    |    return "DataFuncTest(a=$a)"
+                    |}
+                    |}
+                    """
+                        .trimMargin()
+                )
         }
     }
 
@@ -426,11 +538,5 @@ class EqualityMembersRuleSpec {
             assertThat(findings).isEmpty()
             assertThat(result).isEqualTo(code)
         }
-    }
-
-    private fun EqualityMembersRule.lintAndFix(@Language("kotlin") code: String): Pair<List<Finding>, String> {
-        val ktFile = compileContentForTest(code)
-        visit(ktFile)
-        return findings to ktFile.text
     }
 }
