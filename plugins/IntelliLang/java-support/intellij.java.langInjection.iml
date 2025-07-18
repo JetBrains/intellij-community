@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="intellij.java.langInjection.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="PROVIDED" />
   </component>
   <component name="copyright">
     <Base>

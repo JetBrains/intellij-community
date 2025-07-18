@@ -1,10 +1,15 @@
 ### auto-generated section `build intellij.java.langInjection` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "java-langInjection_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "backend_provided",
+  lib = "//plugins/IntelliLang/backend"
 )
 
 jvm_library(
@@ -29,6 +34,7 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//platform/core-ui",
     "//platform/util/jdom",
+    ":backend_provided",
   ],
   runtime_deps = [
     ":java-langInjection_resources",

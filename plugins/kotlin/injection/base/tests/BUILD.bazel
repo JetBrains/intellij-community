@@ -36,6 +36,7 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//plugins/IntelliLang/plugin",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/IntelliLang/backend",
   ]
 )
 ### auto-generated section `build kotlin.base.injection.tests` end

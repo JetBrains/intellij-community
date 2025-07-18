@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="PROVIDED" />
   </component>
 </module>

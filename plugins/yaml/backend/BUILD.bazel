@@ -99,6 +99,7 @@ jvm_library(
     "//plugins/yaml:yaml_test_lib",
     "//platform/searchEverywhere/shared:searchEverywhere",
     "//platform/searchEverywhere/backend",
+    "//plugins/IntelliLang/backend",
   ],
   runtime_deps = [
     ":backend_resources",

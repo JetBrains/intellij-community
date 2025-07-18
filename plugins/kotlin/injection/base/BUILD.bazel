@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.base.injection` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom_kotlin-base-injection",
@@ -12,6 +12,11 @@ jvm_resources(
   name = "kotlin-base-injection_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "backend_provided",
+  lib = "//plugins/IntelliLang/backend"
 )
 
 jvm_library(
@@ -43,6 +48,7 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/base/analysis",
+    ":backend_provided",
   ],
   runtime_deps = [":kotlin-base-injection_resources"]
 )

@@ -184,6 +184,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting.k1",
     "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
     "//plugins/IntelliLang/plugin",
+    "//plugins/IntelliLang/backend",
   ],
   runtime_deps = [
     "//plugins/kotlin/gradle/gradle",

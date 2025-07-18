@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.yaml" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere.backend" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="TEST" />
   </component>
 </module>
