@@ -29,6 +29,8 @@
 
     <extensionPoint name="lookup.usageDetails" interface="com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor" dynamic="true"/>
 
+    <extensionPoint name="lookup.may.have.custom.preview.provider" interface="com.intellij.codeInsight.lookup.LookupMayHaveCustomPreviewProvider" dynamic="true"/>
+
     <extensionPoint name="createDirectoryCompletionContributor" interface="com.intellij.ide.actions.CreateDirectoryCompletionContributor" dynamic="true"/>
 
     <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

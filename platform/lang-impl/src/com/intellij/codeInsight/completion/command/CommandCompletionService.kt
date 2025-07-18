@@ -153,7 +153,7 @@ internal class CommandCompletionService(
     Disposer.register(lookup, inlineElement)
     Disposer.register(lookup) { lookup.removeUserData(INSTALLED_HINT) }
 
-    editor.inlayModel.addListener(object : InlayModel.Listener{
+    editor.inlayModel.addListener(object : InlayModel.Listener {
       override fun onAdded(inlay: Inlay<*>) {
         if (inlay.offset >= endOffset) {
           lookup.putUserData(INSTALLED_HINT_KEY, false)
@@ -177,6 +177,7 @@ internal class CommandCompletionService(
       return e != null && e.`as`(CommandCompletionLookupElement::class.java) != null
     }
   }
+
   private object NotPostfixCompletionLookupItemFilter : Condition<LookupElement> {
     override fun value(e: LookupElement?): Boolean {
       return e != null && e.`as`(PostfixTemplateLookupElement::class.java) == null
@@ -219,7 +220,6 @@ internal class CommandCompletionListener : LookupManagerListener {
     if (newLookup !is LookupImpl) return
     val completionService = editor.project?.getService(CommandCompletionService::class.java)
     completionService?.addFilters(newLookup, nonWrittenFiles, psiFile, editor)
-    installLookupIntentionPreviewListener(newLookup)
     val highlightingListener = CommandCompletionHighlightingListener(topLevelEditor, newLookup, psiFile, nonWrittenFiles, completionService)
     newLookup.addLookupListener(highlightingListener)
     Disposer.register(newLookup, highlightingListener)

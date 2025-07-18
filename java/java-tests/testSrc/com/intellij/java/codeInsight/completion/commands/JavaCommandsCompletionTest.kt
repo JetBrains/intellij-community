@@ -1022,8 +1022,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(lookupElement)
     val element = lookupElement.`as`(CommandCompletionLookupElement::class.java)
     assertNotNull(element)
-    assertTrue(element!!.hasPreview)
-    assertNotNull(element.preview)
+    assertNotNull(element?.preview)
     assertNotNull(lookup)
   }
 

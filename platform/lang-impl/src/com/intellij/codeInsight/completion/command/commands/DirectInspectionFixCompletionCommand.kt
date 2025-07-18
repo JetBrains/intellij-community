@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
@@ -40,7 +39,7 @@ internal class DirectInspectionFixCompletionCommand(
   override val highlightInfo: HighlightInfoLookup,
   private val targetOffset: Int,
   private val previewProvider: () -> IntentionPreviewInfo?,
-) : CompletionCommand(), CompletionCommandWithPreview {
+) : CompletionCommand() {
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
@@ -118,7 +117,7 @@ internal class DirectInspectionFixCompletionCommand(
     }
   }
 
-  override fun getPreview(): IntentionPreviewInfo? {
-    return previewProvider()
+  override fun getPreview(): IntentionPreviewInfo {
+    return previewProvider() ?: IntentionPreviewInfo.EMPTY
   }
 }

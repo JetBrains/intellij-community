@@ -185,7 +185,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommand
-- com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 - <init>():V
 - f:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - a:findTargetToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
@@ -281,7 +280,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - f:setActionId(java.lang.String):V
 *c:com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommand
-- com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 - com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,com.intellij.codeInsight.completion.command.HighlightInfoLookup,java.util.List):V
 - b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,com.intellij.codeInsight.completion.command.HighlightInfoLookup,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V

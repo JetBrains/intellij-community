@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.*;
@@ -688,8 +687,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     hostEditor.getCaretModel().runForEachCaret(__ -> {
       EditorModificationUtilEx.deleteSelectedText(hostEditor);
       final int caretOffset = hostEditor.getCaretModel().getOffset();
-      CommandCompletionLookupElement element = item.as(CommandCompletionLookupElement.class);
-      if (element == null || element.getUseLookupString()) {
+      LookupElementInsertStopper element = item.as(LookupElementInsertStopper.class);
+      if (element == null || !element.shouldStopLookupInsertion()) {
         int offset;
         try {
           offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);

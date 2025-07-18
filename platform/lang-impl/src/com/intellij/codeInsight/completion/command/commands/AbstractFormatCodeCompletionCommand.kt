@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -30,7 +33,7 @@ abstract class AbstractFormatCodeCompletionCommandProvider :
   abstract fun createCommand(context: CommandCompletionProviderContext): CompletionCommand?
 }
 
-abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), CompletionCommandWithPreview {
+abstract class AbstractFormatCodeCompletionCommand : CompletionCommand() {
   final override val synonyms: List<String>
     get() = listOf("Format")
 
@@ -50,7 +53,7 @@ abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), Comple
       .lowercase()
       .replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
 
-  override fun getPreview(): IntentionPreviewInfo? {
+  override fun getPreview(): IntentionPreviewInfo {
     return IntentionPreviewInfo.Html(ActionsBundle.message("action.ReformatCode.description"))
   }
 

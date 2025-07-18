@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
-import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.ForceOffsetData
+import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.KEY_FORCE_CARET_OFFSET
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -20,7 +23,7 @@ internal class IntentionCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
   private val myOffset: Int,
   private val previewProvider: () -> IntentionPreviewInfo?,
-) : CompletionCommand(), CompletionCommandWithPreview {
+) : CompletionCommand() {
 
   override val presentableName: @Nls String
     get() = intentionAction.text
@@ -54,7 +57,7 @@ internal class IntentionCompletionCommand(
     }
   }
 
-  override fun getPreview(): IntentionPreviewInfo? {
-    return previewProvider.invoke()
+  override fun getPreview(): IntentionPreviewInfo {
+    return previewProvider.invoke() ?: IntentionPreviewInfo.EMPTY
   }
 }

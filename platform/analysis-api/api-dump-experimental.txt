@@ -42,13 +42,12 @@
 - getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
 - getIcon():javax.swing.Icon
 - a:getPresentableName():java.lang.String
+- getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - getPriority():java.lang.Integer
 - getSynonyms():java.util.List
 *f:com.intellij.codeInsight.completion.command.CompletionCommandKt
 - sf:KEY_FORCE_CARET_OFFSET:com.intellij.openapi.util.Key
 - sf:getCommandContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
-*:com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-- a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 *f:com.intellij.codeInsight.completion.command.ForceOffsetData
 - <init>(I,I):V
 - f:component1():I

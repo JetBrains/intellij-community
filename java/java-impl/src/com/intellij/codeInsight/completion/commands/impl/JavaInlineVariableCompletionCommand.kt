@@ -47,7 +47,7 @@ internal class JavaInlineVariableCompletionCommandProvider : CommandProvider {
 
 private class JavaInlineVariableCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
-) : CompletionCommand(), DumbAware, CompletionCommandWithPreview {
+) : CompletionCommand(), DumbAware {
 
   override val additionalInfo: String?
     get() {

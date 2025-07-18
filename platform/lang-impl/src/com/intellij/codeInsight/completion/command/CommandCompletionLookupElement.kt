@@ -3,10 +3,8 @@ package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy
+import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy.NEVER_AUTOCOMPLETE
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -16,7 +14,6 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.Icon
 
 /**
@@ -31,21 +28,21 @@ class CommandCompletionLookupElement(
   val icon: Icon?,
   val highlighting: HighlightInfoLookup?,
   val useLookupString: Boolean = true,
-) : LookupElementDecorator<LookupElement>(lookupElement) {
+) : LookupElementDecorator<LookupElement>(lookupElement), LookupElementInsertStopper, LookupElementCustomPreviewHolder {
   override fun isWorthShowingInAutoPopup(): Boolean {
     return true
   }
 
-  override fun getAutoCompletionPolicy(): AutoCompletionPolicy? {
+  override fun getAutoCompletionPolicy(): AutoCompletionPolicy {
     return NEVER_AUTOCOMPLETE
   }
 
-  @VisibleForTesting
-  val hasPreview: Boolean = command is CompletionCommandWithPreview
+  override val preview: IntentionPreviewInfo by lazy {
+    command.getPreview()
+  }
 
-  @get:VisibleForTesting
-  val preview: IntentionPreviewInfo? by lazy {
-    (command as? CompletionCommandWithPreview)?.getPreview()
+  override fun shouldStopLookupInsertion(): Boolean {
+    return !useLookupString
   }
 }
 

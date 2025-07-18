@@ -60,7 +60,7 @@ private fun getTopWithTheSameOffset(psiElement: PsiElement, offset: Int): PsiEle
 private class JavaDeleteCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
   private val preview: IntentionPreviewInfo,
-) : CompletionCommand(), CompletionCommandWithPreview, DumbAware {
+) : CompletionCommand(), DumbAware {
   override val synonyms: List<String>
     get() = listOf("delete", "remove")
   override val presentableName: @Nls String
