@@ -1511,9 +1511,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     // for now, we release only the top-level WI lock.
     // There is no evidence that this method is called in deep parallelization stacks
     state.releaseWriteIntentPermit(permit.writeIntentPermit)
-    drainWriteActionFollowups()
-    myWriteIntentAcquired.set(false)
     try {
+      drainWriteActionFollowups()
+      myWriteIntentAcquired.set(false)
       return action()
     }
     finally {
