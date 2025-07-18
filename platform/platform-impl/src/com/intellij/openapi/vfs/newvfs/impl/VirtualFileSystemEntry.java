@@ -358,6 +358,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return pathBuilder;
   }
 
+  private static final ThreadLocal<ArrayList<String>> parentsNames = ThreadLocal.withInitial(ArrayList::new);
   /**
    * Iterative implementation of {@link #computePath(String, String)}: builds the path into a char[], allocates
    * temporary ArrayList as stack.
@@ -370,7 +371,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
                                                        @NotNull String protoSeparator) {
     VirtualFileSystemEntry v = file;
     int length = 0;
-    List<String> names = new ArrayList<>();
+    //TODO RC: maybe just cache the list in a thread-local, and go with iterative method?
+    List<String> names = parentsNames.get();//new ArrayList<>();
     for (; ; ) {
       VirtualFileSystemEntry parent = v.getParent();
       if (parent == null) { //<=> (v instanceof FsRoot)
@@ -404,6 +406,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       String name = names.get(0);
       pathBuilder.append(name);
     }
+    names.clear();
     return pathBuilder.toString();
   }
 

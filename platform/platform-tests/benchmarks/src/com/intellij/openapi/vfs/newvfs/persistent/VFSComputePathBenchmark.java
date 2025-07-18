@@ -30,21 +30,22 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @BenchmarkMode({Mode.AverageTime/*, Mode.SampleTime*/})
 @OutputTimeUnit(NANOSECONDS)
 @Warmup(iterations = 2, time = 1, timeUnit = SECONDS)
-@Measurement(iterations = 5, time = 5, timeUnit = SECONDS)
+@Measurement(iterations = 3, time = 5, timeUnit = SECONDS)
 @Fork(1)
 @Threads(4)
 public class VFSComputePathBenchmark {
 
   @State(Scope.Benchmark)
   public static class Context {
-    @Param("500000")//500k distinct file names
+    //@Param("500000")//500k distinct file names
     public int UNIQUE_FILE_NAMES_COUNT = 500_000;
 
-    public static final int MAX_TREE_DEPTH = 8;
-    @Param({"4", "8"})
+    @Param({"10", "14"})
+    public int MAX_TREE_DEPTH = 10;
+    @Param({"2", "3"})
     public int CHILDREN_PER_LEVEL_COUNT = 4;
-    //4^8  = 2^16 = 64K files (small project)
-    //8^8  = 2^24 = 16M files (big project)
+    //2^13         =  8K files (small project)
+    //4^13  = 2^25 = 32M files (big project)
 
 
     private int rootFolderId;
@@ -54,7 +55,6 @@ public class VFSComputePathBenchmark {
     @Setup
     public void setup(FSRecordsContext vfsContext) throws Exception {
       FSRecordsImpl vfs = vfsContext.vfs();
-      PersistentFSRecordsStorage records = vfs.connection().records();
 
       rootFolderId = vfs.createRecord();
       vfs.setFlags(rootFolderId, PersistentFS.Flags.IS_DIRECTORY);
@@ -75,20 +75,17 @@ public class VFSComputePathBenchmark {
 
         vfs.setParent(childId, parentId);
 
-        int nameId;
         if (!leafLevel) {
           vfs.setFlags(childId, PersistentFS.Flags.IS_DIRECTORY);
           createAndAttachChildren(vfs, childId, depth + 1, maxDepth);
-          //avg(fileName.length in monorepo) = 27 bytes:
-          String childName = "dir.%022d".formatted(childId % UNIQUE_FILE_NAMES_COUNT);
-          nameId = vfs.getNameId(childName);
         }
         else {
-          String childName = "file.%022d".formatted(childId % UNIQUE_FILE_NAMES_COUNT);
-          nameId = vfs.getNameId(childName);
           fileIds.add(childId);
         }
 
+        //avg(fileName.length in monorepo) = 27:
+        String childName = "name.%022d".formatted(childId % UNIQUE_FILE_NAMES_COUNT);
+        int nameId = vfs.getNameId(childName);
         records.updateNameId(childId, nameId);
 
         childrenInfos.add(new ChildInfoImpl(childId, nameId, null, null, null));
@@ -110,10 +107,9 @@ public class VFSComputePathBenchmark {
                                        FSRecordsContext vfsContext) {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     FSRecordsImpl vfs = vfsContext.vfs();
-
     int fileId = mainContext.randomFileId(rnd);
-    String path = computePathIteratively(vfs, fileId, mainContext.rootFolderId);
-    return path;
+
+    return computePathIteratively(vfs, fileId, mainContext.rootFolderId);
   }
 
   @Benchmark
@@ -121,10 +117,19 @@ public class VFSComputePathBenchmark {
                                                         FSRecordsContext vfsContext) {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     FSRecordsImpl vfs = vfsContext.vfs();
-
     int fileId = mainContext.randomFileId(rnd);
-    String path = computePathIterativelyWithStringBuilder(vfs, fileId, mainContext.rootFolderId);
-    return path;
+
+    return computePathIterativelyWithStringBuilder(vfs, fileId, mainContext.rootFolderId);
+  }
+
+  @Benchmark
+  public String computePathIterativelyWithStringBuilderAndThreadLocal(Context mainContext,
+                                                                      FSRecordsContext vfsContext) {
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    FSRecordsImpl vfs = vfsContext.vfs();
+    int fileId = mainContext.randomFileId(rnd);
+
+    return computePathIterativelyWithStringBuilderAndThreadLocalList(vfs, fileId, mainContext.rootFolderId);
   }
 
 
@@ -133,10 +138,9 @@ public class VFSComputePathBenchmark {
                                        FSRecordsContext vfsContext) {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     FSRecordsImpl vfs = vfsContext.vfs();
-
     int fileId = mainContext.randomFileId(rnd);
-    String path = computePathRecursively(vfs, fileId, mainContext.rootFolderId, 0).toString();
-    return path;
+
+    return computePathRecursively(vfs, fileId, mainContext.rootFolderId, 0).toString();
   }
 
 
@@ -150,7 +154,7 @@ public class VFSComputePathBenchmark {
 
     int fileId = mainContext.randomFileId(rnd);
     int hash = 0;
-    for (int i = 0; i < Context.MAX_TREE_DEPTH; i++) {
+    for (int i = 0; i < mainContext.MAX_TREE_DEPTH; i++) {
       hash += vfs.getName(fileId).hashCode();
     }
     return hash;
@@ -267,6 +271,48 @@ public class VFSComputePathBenchmark {
       path.append(name);
     }
     return path.toString();
+  }
+
+  private static final ThreadLocal<ArrayList<String>> parentsNames = ThreadLocal.withInitial(ArrayList::new);
+
+  private static String computePathIterativelyWithStringBuilderAndThreadLocalList(FSRecordsImpl vfs,
+                                                                                  int fileId,
+                                                                                  int rootFolderId) {
+    List<String> names = parentsNames.get();
+    try {
+      int length = 0;
+      for (; ; ) {
+        int parentId = vfs.getParent(fileId);
+        if (parentId == rootFolderId) {
+          break;
+        }
+
+        String name = vfs.getName(fileId);
+        if (length != 0) length++;
+        length += name.length();
+        names.add(name);
+
+        fileId = parentId;
+      }
+
+      String rootPath = "/root/";
+      length += rootPath.length();
+
+      StringBuilder path = new StringBuilder(length);
+      path.append(rootPath);
+      for (int i = names.size() - 1; i >= 1; i--) {
+        String name = names.get(i);
+        path.append(name).append('/');
+      }
+      if (!names.isEmpty()) {
+        String name = names.get(0);
+        path.append(name);
+      }
+      return path.toString();
+    }
+    finally {
+      names.clear();
+    }
   }
 
 
