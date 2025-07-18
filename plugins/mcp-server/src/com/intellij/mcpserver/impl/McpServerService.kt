@@ -203,7 +203,7 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
       val initialDocumentContents = ConcurrentHashMap<Document, String>()
       val clientVersion = server.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
 
-      val additionalData = McpCallAdditionalData(
+      val additionalData = McpCallInfo(
         callId = callId.getAndAdd(1),
         clientInfo = ClientInfo(clientVersion.name, clientVersion.version),
         project = project,
@@ -215,9 +215,9 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
       val callResult = coroutineScope {
 
         VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
-          val inHandlerData = currentThreadContext().mcpCallAdditionalDataOrNull
-          if (inHandlerData != null && inHandlerData.callId == additionalData.callId) {
-            logger.trace { "VFS changes detected for call: $inHandlerData" }
+          val inHandlerInfo = currentThreadContext().mcpCallInfoOrNull
+          if (inHandlerInfo != null && inHandlerInfo.callId == additionalData.callId) {
+            logger.trace { "VFS changes detected for call: $inHandlerInfo" }
             vfsEvent.addAll(events)
           }
           // probably we have to read initial contents here
@@ -228,9 +228,9 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
         val documentListener = object : DocumentListener {
           // record content before any change
           override fun beforeDocumentChange(event: DocumentEvent) {
-            val inHandlerData = currentThreadContext().mcpCallAdditionalDataOrNull
-            if (inHandlerData != null && inHandlerData.callId == additionalData.callId) {
-              logger.trace { "Document changes detected for call: $inHandlerData" }
+            val inHandlerInfo = currentThreadContext().mcpCallInfoOrNull
+            if (inHandlerInfo != null && inHandlerInfo.callId == additionalData.callId) {
+              logger.trace { "Document changes detected for call: $inHandlerInfo" }
               initialDocumentContents.computeIfAbsent(event.document) { event.document.text }
             }
           }
