@@ -14,7 +14,8 @@ internal class BuildFile {
   private val targets = mutableListOf<Target>()
   private val lines = mutableListOf<String>()
 
-  @JvmField val nameGuard = HashSet<String>()
+  val loadStatements: List<LoadStatement>
+    get() = loads.toList()
 
   fun load(bzlFile: String, vararg symbols: String) {
     val existing = loads.firstOrNull { it.bzlFile == bzlFile }
@@ -36,18 +37,25 @@ internal class BuildFile {
     addTarget(target)
   }
 
-  fun render(): String {
-    val loadStatements = loads.asSequence().map { it.render() }.sorted().joinToString("\n")
+  fun render(existingLoads: Map<String, Set<String>> = emptyMap()): String {
+    val filteredLoads = loads.mapNotNull { load ->
+      val filteredSymbols = load.symbols.filter { existingLoads[load.bzlFile]?.contains(it) != true }
+      if (filteredSymbols.isEmpty()) {
+        null
+      }
+      else {
+        LoadStatement(load.bzlFile, filteredSymbols)
+      }
+    }
+
+    val loadStatements = filteredLoads
+      .map { it.render() }
+      .sorted()
+      .joinToString("\n")
     val targetStatements = targets.joinToString("\n") { it.render() }
     return sequenceOf(loadStatements, targetStatements, lines.joinToString("\n"))
       .filter { it.isNotEmpty() }
       .joinToString("\n\n")
-  }
-
-  fun reset() {
-    loads.clear()
-    targets.clear()
-    lines.clear()
   }
 }
 
