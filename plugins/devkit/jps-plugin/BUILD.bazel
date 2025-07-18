@@ -20,7 +20,7 @@ jvm_library(
     "//java/compiler/instrumentation-util",
     "@lib//:asm",
     "//platform/util/jdom",
-    "@rules_jvm//jps-builders-6:build-javac-rt",
+    "@community//build:build-javac-rt",
     "//platform/util",
     "@lib//:jetbrains-annotations",
   ],

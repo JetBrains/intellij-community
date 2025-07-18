@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util/zip",
     "//platform/util/rt-java8",
-    "@rules_jvm//zip",
+    "@community//build:zip",
     "@lib//:hash4j",
   ]
 )

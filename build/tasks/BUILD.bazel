@@ -30,7 +30,7 @@ jvm_library(
     "@lib//:hash4j",
     "@lib//:tc_service_messages",
     "@lib//:opentelemetry-extension-kotlin",
-    "@rules_jvm//zip",
+    "@community//build:zip",
   ],
   runtime_deps = [
     "@lib//:slf4j-api",
@@ -76,7 +76,7 @@ jvm_library(
     "@lib//:hash4j",
     "@lib//:tc_service_messages",
     "@lib//:opentelemetry-extension-kotlin",
-    "@rules_jvm//zip",
+    "@community//build:zip",
   ]
 )
 ### auto-generated section `build intellij.idea.community.build.tasks` end

@@ -15,7 +15,7 @@ jvm_library(
   kotlinc_opts = "@community//:k11",
   deps = [
     "//jps/model-api:model",
-    "@rules_jvm//jps-builders-6:build-javac-rt",
+    "@community//build:build-javac-rt",
     "//platform/util",
     "//jps/jps-builders:build",
     "//plugins/groovy/rt-constants:constants-rt",

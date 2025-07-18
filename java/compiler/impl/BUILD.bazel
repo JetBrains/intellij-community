@@ -34,7 +34,7 @@ jvm_library(
     "//platform/lang-impl",
     "//java/jsp-openapi:jsp",
     "//java/java-impl:impl",
-    "@rules_jvm//jps-builders-6:build-javac-rt",
+    "@community//build:build-javac-rt",
     "//jps/jps-builders:build",
     "//platform/ide-core-impl",
     "//jps/jps-launcher:build-launcher",

@@ -39,7 +39,7 @@ jvm_library(
     "//platform/util/zip",
     "//platform/util/jdom",
     "//platform/util-ex",
-    "@rules_jvm//zip",
+    "@community//build:zip",
     "@lib//:netty-buffer",
     "@lib//:hash4j",
     "@lib//:fastutil-min",

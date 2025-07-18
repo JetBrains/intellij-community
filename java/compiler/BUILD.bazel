@@ -31,7 +31,7 @@ jvm_library(
     "//jps/model-impl",
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:assert_j",
-    "@rules_jvm//jps-builders-6:build-javac-rt",
+    "@community//build:build-javac-rt",
     "//platform/core-ui",
     "//platform/workspace/jps",
     "//platform/util/jdom",
