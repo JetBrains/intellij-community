@@ -66,11 +66,9 @@ class AnalysisToolset : McpToolset {
         McpServerBundle.message("progress.title.analyzing.file", resolvedPath.fileName),
         cancellable = true
       ) {
+        val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+                   ?: mcpFail("Cannot access file: $filePath")
         readAction {
-          val file = LocalFileSystem.getInstance()
-                       .refreshAndFindFileByNioFile(resolvedPath)
-                     ?: mcpFail("Cannot access file: $filePath")
-
           val document = FileDocumentManager.getInstance().getDocument(file)
                          ?: mcpFail("Cannot read file: $filePath")
 

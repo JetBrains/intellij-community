@@ -67,7 +67,7 @@ class RefactoringToolset : McpToolset {
       mcpFail("Element is not renamable: $symbolName")
     }
 
-    val renameProcessor = RenameProcessor(project, targetElement, newName, true, true)
+    val renameProcessor = readAction { RenameProcessor(project, targetElement, newName, true, true) }
 
     val usages = readAction { renameProcessor.findUsages() }
 

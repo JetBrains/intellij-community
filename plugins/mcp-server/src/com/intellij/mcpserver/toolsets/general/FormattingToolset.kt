@@ -31,9 +31,8 @@ class FormattingToolset : McpToolset {
     val project = currentCoroutineContext().project
     val resolvedFilePath = project.resolveInProject(path)
 
-    val file = readAction {
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedFilePath)
-    } ?: mcpFail("File $resolvedFilePath doesn't exist or can't be opened")
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedFilePath)
+               ?: mcpFail("File $resolvedFilePath doesn't exist or can't be opened")
 
     val psiFile = readAction {
       PsiManager.getInstance(project).findFile(file)

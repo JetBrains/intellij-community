@@ -263,13 +263,8 @@ class FileToolset : McpToolset {
     catch (io: IOException) {
       mcpFail("Can't create file: $path: ${io.message}")
     }
-    val refreshed = CompletableDeferred<Unit>()
-    LocalFileSystem.getInstance().refreshFiles(listOf(newFile), true, false) {
-      refreshed.complete(Unit)
-    }
-    refreshed.await()
     // newFile point to a fake file, so we need to refresh it to get a real one
-    val createdFile = LocalFileSystem.getInstance().findFileByNioFile(path) ?: mcpFail("File $path wasn't created")
+    val createdFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path) ?: mcpFail("File $path wasn't created")
     writeAction {
       val document = FileDocumentManager.getInstance().getDocument(createdFile) ?: mcpFail("Can't get document for created file: $newFile")
       if (text != null) {
