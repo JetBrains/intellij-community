@@ -19,7 +19,7 @@ import com.intellij.polySymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.polySymbols.inspections.PolySymbolProblemQuickFixProvider
 import com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolReferenceProviderListener
+import com.intellij.polySymbols.references.PsiPolySymbolReferenceProviderListener
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
@@ -59,14 +59,13 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
       CachedValueProvider.Result.create(ConcurrentHashMap<Any, Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>>>(),
                                         element.containingFile, PsiModificationTracker.MODIFICATION_COUNT)
     }.computeIfAbsent(cacheKeys) {
-      getSymbolOffsetsAndReferencesNoCache(element, target?.let { PolySymbolReferenceHints(symbol = it) }
-                                                    ?: PolySymbolReferenceHints.NO_HINTS)
+      getSymbolOffsetsAndReferencesNoCache(element, target)
     }
   }
 
-  private fun getSymbolOffsetsAndReferencesNoCache(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> {
-    val publisher = application.messageBus.syncPublisher(PolySymbolReferenceProviderListener.TOPIC)
-    publisher.beforeProvideReferences(element, hints)
+  private fun getSymbolOffsetsAndReferencesNoCache(element: PsiExternalReferenceHost, targetSymbol: Symbol?): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> {
+    val publisher = application.messageBus.syncPublisher(PsiPolySymbolReferenceProviderListener.TOPIC)
+    publisher.beforeProvideReferences(element, targetSymbol)
 
     try {
       val beans = PsiPolySymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
@@ -76,7 +75,7 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
         @Suppress("UNCHECKED_CAST")
         val provider = bean.instance as PsiPolySymbolReferenceProvider<PsiExternalReferenceHost>
         val showProblems = provider.shouldShowProblems(element)
-        val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element, hints)
+        val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element)
         result.addAll(offsetsFromProvider.flatMap { (offset, symbol) ->
           getReferences(element, offset, symbol, showProblems)
         })
@@ -85,7 +84,7 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
       return Pair(offsets, result)
     }
     finally {
-      publisher.afterProvideReferences(element, hints)
+      publisher.afterProvideReferences(element, targetSymbol)
     }
   }
 

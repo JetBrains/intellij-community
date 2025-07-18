@@ -4,6 +4,7 @@ package com.intellij.polySymbols.references
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 interface PsiPolySymbolReferenceCacheInfoProvider {
@@ -17,7 +18,8 @@ interface PsiPolySymbolReferenceCacheInfoProvider {
     val EP_NAME: ExtensionPointName<PsiPolySymbolReferenceCacheInfoProvider> =
       ExtensionPointName.create<PsiPolySymbolReferenceCacheInfoProvider>("com.intellij.polySymbols.psiReferenceCacheInfoProvider")
 
-    internal fun getCacheKeys(referenceHost: PsiExternalReferenceHost, targetSymbol: Symbol?): List<Any?> =
+    @ApiStatus.Internal
+    fun getCacheKeys(referenceHost: PsiExternalReferenceHost, targetSymbol: Symbol?): List<Any?> =
       EP_NAME.extensionList.map { it.getCacheKey(referenceHost, targetSymbol) }
 
   }

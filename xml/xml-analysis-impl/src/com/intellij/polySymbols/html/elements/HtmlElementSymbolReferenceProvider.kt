@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html.elements
 
-import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.psi.xml.XmlTag
@@ -15,7 +14,7 @@ class HtmlElementSymbolReferenceProvider : PsiPolySymbolReferenceProvider<XmlTag
       ?.asSafely<HtmlElementSymbolDescriptor>()
       ?.symbol
 
-  override fun getOffsetsToReferencedSymbols(psiElement: XmlTag, hints: PsiSymbolReferenceHints): Map<Int, PolySymbol> =
+  override fun getOffsetsToReferencedSymbols(psiElement: XmlTag): Map<Int, PolySymbol> =
     getReferencedSymbol(psiElement)
       ?.let { symbol ->
         listOfNotNull(
