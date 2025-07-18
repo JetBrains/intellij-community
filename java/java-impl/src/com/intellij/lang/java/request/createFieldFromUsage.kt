@@ -67,7 +67,7 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
       }
     }
     else {
-      val baseClass = resolveClassInClassTypeOnly(PsiImplUtil.getSwitchLabel(myRef)?.enclosingSwitchStatement?.expression?.type)
+      val baseClass = resolveClassInClassTypeOnly(PsiImplUtil.getSwitchLabel(myRef)?.enclosingSwitchBlock?.expression?.type)
       if (baseClass != null) {
         processHierarchy(baseClass)
       }
