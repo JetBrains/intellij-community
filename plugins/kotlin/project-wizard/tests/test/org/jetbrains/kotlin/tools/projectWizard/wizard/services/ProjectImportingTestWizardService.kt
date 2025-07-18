@@ -42,7 +42,7 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
 
         ExternalSystemUtil.refreshProjects(
             ImportSpecBuilder(project, buildSystem.externalSystemId() ?: error("Unsupported build system $buildSystem"))
-                .use(ProgressExecutionMode.MODAL_SYNC)
+                .withProgressExecutionMode(ProgressExecutionMode.MODAL_SYNC)
                 .callback(object : ExternalProjectRefreshCallback {
                     override fun onSuccess(externalProject: DataNode<ProjectData>?) {
                         if (externalProject == null) {

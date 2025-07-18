@@ -14,7 +14,7 @@ abstract class GradlePartialSyncTestCase : GradleProjectResolverTestCase() {
   fun importProject(importSpec: ImportSpecBuilder.() -> Unit) {
     val importSpecBuilder = ImportSpecBuilder(myProject, SYSTEM_ID)
     importSpecBuilder.importSpec()
-    importSpecBuilder.use(ProgressExecutionMode.MODAL_SYNC)
+    importSpecBuilder.withProgressExecutionMode(ProgressExecutionMode.MODAL_SYNC)
     ExternalSystemUtil.refreshProject(projectPath, importSpecBuilder)
   }
 
