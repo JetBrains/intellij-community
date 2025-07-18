@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findOrCreateDirectory
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -20,7 +21,8 @@ fun GradleImportingTestCase.createSettingsFile(
   configure: GradleSettingScriptBuilder<*>.() -> Unit,
 ): VirtualFile {
   return runWriteActionAndGet {
-    projectRoot.createSettingsFile(relativeModulePath, GradleDsl.GROOVY, settingsScript(configure))
+    projectRoot.findOrCreateDirectory(relativeModulePath)
+      .createSettingsFile(GradleDsl.GROOVY, settingsScript(configure))
   }
 }
 
@@ -29,6 +31,7 @@ fun GradleImportingTestCase.createBuildFile(
   configure: TestGradleBuildScriptBuilder.() -> Unit,
 ): VirtualFile {
   return runWriteActionAndGet {
-    projectRoot.createBuildFile(relativeModulePath, GradleDsl.GROOVY, script(configure))
+    projectRoot.findOrCreateDirectory(relativeModulePath)
+      .createBuildFile(GradleDsl.GROOVY, script(configure))
   }
 }

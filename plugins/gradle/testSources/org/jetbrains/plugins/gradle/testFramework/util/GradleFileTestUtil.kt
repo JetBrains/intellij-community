@@ -3,13 +3,10 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package org.jetbrains.plugins.gradle.testFramework.util
 
-import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.writeText
-import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.testFramework.utils.vfs.getFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -28,63 +25,55 @@ import kotlin.io.path.writeText
 @RequiresWriteLock
 fun VirtualFile.createSettingsFile(
   gradleVersion: GradleVersion,
-  relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
   configure: GradleSettingScriptBuilder<*>.() -> Unit,
 ): VirtualFile {
   val content = settingsScript(gradleVersion, gradleDsl, configure)
-  return createSettingsFile(relativeModulePath, gradleDsl, content)
+  return createSettingsFile(gradleDsl, content)
 }
 
 @RequiresWriteLock
 fun VirtualFile.createBuildFile(
   gradleVersion: GradleVersion,
-  relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
   configure: GradleBuildScriptBuilder<*>.() -> Unit,
 ): VirtualFile {
   val content = buildScript(gradleVersion, gradleDsl, configure)
-  return createBuildFile(relativeModulePath, gradleDsl, content)
+  return createBuildFile(gradleDsl, content)
 }
 
 @RequiresWriteLock
 fun VirtualFile.createSettingsFile(
-  relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
   content: String,
 ): VirtualFile {
-  return findOrCreateDirectory(relativeModulePath)
-    .findOrCreateFile(getSettingsScriptName(gradleDsl))
-    .also { it.writeText(content) }
+  return findOrCreateFile(getSettingsScriptName(gradleDsl)).apply {
+    writeText(content)
+  }
 }
 
 @RequiresWriteLock
 fun VirtualFile.createBuildFile(
-  relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
   content: String,
 ): VirtualFile {
-  return findOrCreateDirectory(relativeModulePath)
-    .findOrCreateFile(getBuildScriptName(gradleDsl))
-    .also { it.writeText(content) }
+  return findOrCreateFile(getBuildScriptName(gradleDsl)).apply {
+    writeText(content)
+  }
 }
 
 @RequiresReadLock
 fun VirtualFile.getSettingsFile(
-  relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
 ): VirtualFile {
-  return getDirectory(relativeModulePath)
-    .getFile(getSettingsScriptName(gradleDsl))
+  return getFile(getSettingsScriptName(gradleDsl))
 }
 
 @RequiresReadLock
 fun VirtualFile.getBuildFile(
-  relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.GROOVY,
 ): VirtualFile {
-  return getDirectory(relativeModulePath)
-    .getFile(getBuildScriptName(gradleDsl))
+  return getFile(getBuildScriptName(gradleDsl))
 }
 
 fun TestFilesConfiguration.withSettingsFile(
@@ -125,22 +114,20 @@ fun TestFilesConfiguration.withBuildFile(
 
 fun Path.createSettingsFile(
   gradleVersion: GradleVersion,
-  relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
   configure: GradleSettingScriptBuilder<*>.() -> Unit,
 ): Path {
-  return findOrCreateDirectory(relativeModulePath)
-    .findOrCreateFile(getSettingsScriptName(gradleDsl))
-    .also { it.writeText(settingsScript(gradleVersion, gradleDsl, configure)) }
+  return findOrCreateFile(getSettingsScriptName(gradleDsl)).apply {
+    writeText(settingsScript(gradleVersion, gradleDsl, configure))
+  }
 }
 
 fun Path.createBuildFile(
   gradleVersion: GradleVersion,
-  relativeModulePath: String = ".",
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
   configure: GradleBuildScriptBuilder<*>.() -> Unit,
 ): Path {
-  return findOrCreateDirectory(relativeModulePath)
-    .findOrCreateFile(getBuildScriptName(gradleDsl))
-    .also { it.writeText(buildScript(gradleVersion, gradleDsl, configure)) }
+  return findOrCreateFile(getBuildScriptName(gradleDsl)).apply {
+    writeText(buildScript(gradleVersion, gradleDsl, configure))
+  }
 }

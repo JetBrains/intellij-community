@@ -109,7 +109,8 @@ abstract class ExternalProjectsWorkspaceIntegrationTestCase {
 
   suspend fun createGradleBuildFile(relativePath: String, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     withContext(Dispatchers.IO) {
-      testRoot.createBuildFile(gradleVersion, relativePath, configure = configure)
+      testRoot.resolve(relativePath)
+        .createBuildFile(gradleVersion, configure = configure)
     }
   }
 
