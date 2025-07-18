@@ -5,7 +5,9 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -260,7 +262,20 @@ class InternalDecoratorImpl internal constructor(
       override fun contentRemoved(event: ContentManagerEvent) {
         val parentDecorator = findNearestDecorator(this@InternalDecoratorImpl) ?: return
         if (!parentDecorator.isSplitUnsplitInProgress() && !isSplitUnsplitInProgress() && contentManager.isEmpty) {
+          // Find some selected content in the child contents of the parent split to preserve focus in the tool window.
+          val toSelect = parentDecorator.contentManager.contentsRecursively.find { content ->
+            content.manager?.isSelected(content) == true
+          }
+
           parentDecorator.unsplit(null)
+
+          if (toSelect != null) {
+            // Focus the content later, because we are in the middle of removing the content.
+            // Current content remove logic will focus the editor, but then we will focus the chosen content.
+            invokeLater(ModalityState.any()) {
+              toSelect.manager?.setSelectedContent(toSelect, true)
+            }
+          }
         }
       }
     })
@@ -314,6 +329,7 @@ class InternalDecoratorImpl internal constructor(
                        dropIndex: Int) {
     if (dropSide == -1 || dropSide == SwingConstants.CENTER || dropIndex >= 0) {
       contentManager.addContent(content, dropIndex)
+      contentManager.setSelectedContent(content, true)
       return
     }
     firstDecorator = toolWindow.createCellDecorator().also {
@@ -326,6 +342,8 @@ class InternalDecoratorImpl internal constructor(
       it.setTitleActions(titleActions)
     }
     attach(secondDecorator)
+
+    val prevSelectedContent = contentManager.selectedContent
     val contents = contentManager.contents.toMutableList()
     if (!contents.contains(content)) {
       contents.add(content)
@@ -337,6 +355,10 @@ class InternalDecoratorImpl internal constructor(
     firstDecorator!!.updateMode(Mode.CELL)
     secondDecorator!!.updateMode(Mode.CELL)
     updateMode(if (dropSide == SwingConstants.TOP || dropSide == SwingConstants.BOTTOM) Mode.VERTICAL_SPLIT else Mode.HORIZONTAL_SPLIT)
+
+    // Update selected contents in both new split areas
+    prevSelectedContent?.manager?.setSelectedContent(prevSelectedContent)
+    content.manager?.setSelectedContent(content, true)
   }
 
   private fun raise(raiseFirst: Boolean) {
@@ -432,7 +454,7 @@ class InternalDecoratorImpl internal constructor(
             moveContent(c, secondDecorator!!, this)
           }
           updateMode(if (findNearestDecorator(this) != null) Mode.CELL else Mode.SINGLE)
-          toSelect?.manager?.setSelectedContent(toSelect)
+          toSelect?.manager?.setSelectedContent(toSelect, true)
           firstDecorator = null
           secondDecorator = null
           splitter = null

@@ -193,7 +193,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     }
 
     if (contentManager.isEmpty) {
-      sourceDecorator.unsplit(null)
+      sourceDecorator.unsplit(content)
     }
   }
 
