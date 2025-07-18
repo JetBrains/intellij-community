@@ -10,7 +10,10 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.joinToCode
 import java.io.File
+import java.time.LocalDate
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private val ContentItemClassName =
     ClassName.bestGuess("org.jetbrains.jewel.samples.ideplugin.releasessample.ContentItem.AndroidStudio")
@@ -114,34 +117,11 @@ internal object AndroidStudioReleasesReader {
         return "\"$splashPath\""
     }
 
-    // This is the laziest crap ever, I am sorry.
     private fun translateDate(rawDate: String): String {
-        val month = rawDate.substringBefore(" ").trimStart('0')
-        val year = rawDate.substringAfterLast(" ".trimStart('0'))
-        val day = rawDate.substring(month.length + 1, rawDate.length - year.length - 1).trimStart('0')
+        val formatter = DateTimeFormatter.ofPattern("MMMM d, uuuu")
+        val parsedDate = LocalDate.parse(rawDate, formatter)
 
-        if (day.isEmpty()) {
-            println("$rawDate\nMonth: '$month'\nYear: '$year'")
-        }
-
-        val monthNumber =
-            when (month.trim().lowercase()) {
-                "january" -> 1
-                "february" -> 2
-                "march" -> 3
-                "april" -> 4
-                "may" -> 5
-                "june" -> 6
-                "july" -> 7
-                "august" -> 8
-                "september" -> 9
-                "october" -> 10
-                "november" -> 11
-                "december" -> 12
-                else -> error("Unrecognized month: $month")
-            }
-
-        return "$year, $monthNumber, $day"
+        return "${parsedDate.year}, ${parsedDate.monthValue}, ${parsedDate.dayOfMonth}"
     }
 
     private fun readChannel(rawChannel: String) =
