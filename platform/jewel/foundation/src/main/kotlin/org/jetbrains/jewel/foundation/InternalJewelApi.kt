@@ -20,5 +20,7 @@ import kotlin.RequiresOptIn.Level
 /**
  * APIs annotated as internal Jewel API are not meant for usage in client code; there are no guarantees about the binary
  * nor source compatibility, and the behavior can change at any time. **Do not use** these APIs in client code!
+ *
+ * Must always be paired with [org.jetbrains.annotations.ApiStatus.Internal].
  */
 public annotation class InternalJewelApi

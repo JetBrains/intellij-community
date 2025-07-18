@@ -4,6 +4,7 @@ package org.jetbrains.jewel.detekt.rules
 
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
+import io.gitlab.arturbosch.detekt.api.CorrectableCodeSmell
 import io.gitlab.arturbosch.detekt.api.Debt
 import io.gitlab.arturbosch.detekt.api.Entity
 import io.gitlab.arturbosch.detekt.api.Issue
@@ -28,7 +29,8 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
  * missing or incorrect, this rule will report a [CodeSmell].
  *
  * This rule also supports auto-correction. It can generate the missing or incorrect functions, ensuring they are
- * correctly implemented based on the class's properties.
+ * correctly implemented based on the class's properties. Formatting of the auto-corrected code is left to the IDE's
+ * formatter/ktfmt.
  */
 class EqualityMembersRule(config: Config) : Rule(config) {
     override val issue: Issue =
@@ -90,10 +92,11 @@ class EqualityMembersRule(config: Config) : Rule(config) {
         if (missingFunctionNames.isNotEmpty()) {
             val functionNames = missingFunctionNames.joinToString(", ")
             report(
-                CodeSmell(
+                CorrectableCodeSmell(
                     issue = issue,
                     entity = Entity.from(klass),
                     message = "${klass.name} is missing required functions: $functionNames.",
+                    autoCorrectEnabled = autoCorrect,
                 )
             )
         }

@@ -8,7 +8,6 @@ f:org.jetbrains.jewel.foundation.BorderColors
 - hashCode():I
 f:org.jetbrains.jewel.foundation.BorderColors$Companion
 f:org.jetbrains.jewel.foundation.CompatibilityKt
-- sf:enableNewSwingCompositing():V
 @:org.jetbrains.jewel.foundation.ExperimentalJewelApi
 - java.lang.annotation.Annotation
 @:org.jetbrains.jewel.foundation.GenerateDataFunctions
@@ -375,7 +374,6 @@ c:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewPointerEventAction
 - sf:$stable:I
 - <init>(org.jetbrains.jewel.foundation.lazy.tree.TreeState):V
 - handlePointerEventPress(androidx.compose.ui.input.pointer.PointerEvent,org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode,java.util.List,java.lang.Object):V
-- f:notifyItemClicked(org.jetbrains.jewel.foundation.lazy.tree.Tree$Element,kotlinx.coroutines.CoroutineScope,J,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 org.jetbrains.jewel.foundation.lazy.tree.KeyActions
 - a:getActions():org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
 - a:getKeybindings():org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings

@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.markdown
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
@@ -7,8 +8,10 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
  * An inline Markdown node, usually found as content for [block-level elements][MarkdownBlock] or other inline nodes
  * annotated with the [WithInlineMarkdown] interface.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public sealed interface InlineMarkdown {
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Code(override val content: String) : InlineMarkdown, WithTextContent {
@@ -34,6 +37,7 @@ public sealed interface InlineMarkdown {
      * [org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension] and rendered by a
      * [org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension].
      */
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     public interface CustomDelimitedNode : InlineMarkdown, WithInlineMarkdown {
         /**
@@ -49,6 +53,7 @@ public sealed interface InlineMarkdown {
             get() = openingDelimiter
     }
 
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Emphasis(public val delimiter: String, override val inlineContent: List<InlineMarkdown>) :
@@ -81,6 +86,7 @@ public sealed interface InlineMarkdown {
 
     public data object HardLineBreak : InlineMarkdown
 
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
     public class HtmlInline(override val content: String) : InlineMarkdown, WithTextContent {
@@ -98,6 +104,7 @@ public sealed interface InlineMarkdown {
         override fun toString(): String = "HtmlInline(content='$content')"
     }
 
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Image(
@@ -145,6 +152,7 @@ public sealed interface InlineMarkdown {
         }
     }
 
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Link(
@@ -183,6 +191,7 @@ public sealed interface InlineMarkdown {
 
     public data object SoftLineBreak : InlineMarkdown
 
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
     public class StrongEmphasis(public val delimiter: String, override val inlineContent: List<InlineMarkdown>) :
@@ -213,6 +222,7 @@ public sealed interface InlineMarkdown {
         override fun toString(): String = "StrongEmphasis(delimiter='$delimiter', inlineContent=$inlineContent)"
     }
 
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Text(override val content: String) : InlineMarkdown, WithTextContent {

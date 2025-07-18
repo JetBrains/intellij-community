@@ -5,6 +5,7 @@ package org.jetbrains.jewel.intui.markdown.standalone
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
@@ -26,6 +27,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
  * By default, no code syntax highlighting will be available. If you do have a [codeHighlighter] instance to use
  * instead, you should provide it.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun ProvideMarkdownStyling(
@@ -62,6 +64,7 @@ public fun ProvideMarkdownStyling(
 }
 
 /** Provide Markdown styling based on the current theme. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun ProvideMarkdownStyling(

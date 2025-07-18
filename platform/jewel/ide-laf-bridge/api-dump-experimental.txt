@@ -1,0 +1,19 @@
+f:org.jetbrains.jewel.bridge.BridgeUtilsKt
+- *sf:retrieveArcAsNonNegativeCornerSizeOrDefault(java.lang.String,androidx.compose.foundation.shape.CornerSize):androidx.compose.foundation.shape.CornerSize
+- *sf:retrieveIntAsNonNegativeDpOrUnspecified(java.lang.String):F
+- *sf:toNonNegativeDpSize(com.intellij.util.ui.JBDimension):J
+- *sf:toNonNegativeDpSize(java.awt.Dimension):J
+f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
+- *sf:JewelComposeNoThemePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- *bs:JewelComposeNoThemePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- *sf:JewelToolWindowNoThemeComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- *bs:JewelToolWindowNoThemeComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- *sf:composeForToolWindowWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- *bs:composeForToolWindowWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- *sf:composeWithoutTheme(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- *bs:composeWithoutTheme$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- *sf:getLocalComponent():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt
+- *sf:retrieveDefaultTextStyle(F):androidx.compose.ui.text.TextStyle
+f:org.jetbrains.jewel.bridge.theme.SwingBridgeThemeKt
+- *sf:SwingBridgeTheme(kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V

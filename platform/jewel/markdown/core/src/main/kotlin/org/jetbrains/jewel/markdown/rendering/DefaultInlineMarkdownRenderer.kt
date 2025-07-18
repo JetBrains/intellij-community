@@ -14,11 +14,13 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import kotlin.math.max
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<MarkdownRendererExtension>) :
     InlineMarkdownRenderer {

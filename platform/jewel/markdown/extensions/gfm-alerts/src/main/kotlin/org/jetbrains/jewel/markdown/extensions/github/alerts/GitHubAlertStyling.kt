@@ -6,10 +6,12 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.icon.IconKey
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class AlertStyling(
@@ -56,6 +58,7 @@ public class AlertStyling(
     public companion object
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public sealed interface BaseAlertStyling {
     public val padding: PaddingValues
@@ -69,6 +72,7 @@ public sealed interface BaseAlertStyling {
     public val textColor: Color
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class NoteAlertStyling(
@@ -131,6 +135,7 @@ public class NoteAlertStyling(
     public companion object
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class TipAlertStyling(
@@ -193,6 +198,7 @@ public class TipAlertStyling(
     public companion object
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class ImportantAlertStyling(
@@ -255,6 +261,7 @@ public class ImportantAlertStyling(
     public companion object
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class WarningAlertStyling(
@@ -317,6 +324,7 @@ public class WarningAlertStyling(
     public companion object
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class CautionAlertStyling(

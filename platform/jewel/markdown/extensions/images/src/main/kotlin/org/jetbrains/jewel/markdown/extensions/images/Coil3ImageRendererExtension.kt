@@ -5,6 +5,7 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.LocalPlatformContext
 import coil3.memory.MemoryCache
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
@@ -21,6 +22,7 @@ private const val DEFAULT_MEMORY_CACHE_SIZE: Long = 20 * 1024 * 1024 // 20 MB
  * management (e.g., shared memory and disk caches), it is recommended to provide a single, app-wide [ImageLoader]
  * instance via the constructor.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class Coil3ImageRendererExtension(private val imageLoader: ImageLoader) : MarkdownRendererExtension {
     override val imageRendererExtension: ImageRendererExtension
@@ -37,6 +39,7 @@ public class Coil3ImageRendererExtension(private val imageLoader: ImageLoader) :
          * times in a process. Instead, create one top-level instance and share it throughout the process if at all
          * possible.
          */
+        @ApiStatus.Experimental
         @ExperimentalJewelApi
         @Composable
         public fun withDefaultLoader(): Coil3ImageRendererExtension = withDefaultLoader(LocalPlatformContext.current)
@@ -53,6 +56,7 @@ public class Coil3ImageRendererExtension(private val imageLoader: ImageLoader) :
          *
          * @param context The [PlatformContext] to use to create the [ImageLoader].
          */
+        @ApiStatus.Experimental
         @ExperimentalJewelApi
         public fun withDefaultLoader(context: PlatformContext): Coil3ImageRendererExtension =
             Coil3ImageRendererExtension(

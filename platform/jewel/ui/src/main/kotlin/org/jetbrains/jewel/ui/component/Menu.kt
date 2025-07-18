@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.Stroke
@@ -154,6 +155,7 @@ public fun PopupMenu(
     }
 }
 
+@ApiStatus.Internal
 @InternalJewelApi
 @Composable
 public fun MenuContent(

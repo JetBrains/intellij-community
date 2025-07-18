@@ -4,6 +4,7 @@ package org.jetbrains.jewel.markdown
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownMode
 import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
@@ -14,10 +15,11 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  * - [EditorPreview] mode is intended for cases when the raw file can be edited, and changes are expected to affect
  *   rendered contents immediately.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public sealed interface MarkdownMode {
     /** Default mode when only rendered contents of a file is shown to a user. */
-    @ExperimentalJewelApi public object Standalone : MarkdownMode
+    @ApiStatus.Experimental @ExperimentalJewelApi public object Standalone : MarkdownMode
 
     /**
      * Mode that is intended for cases when the raw file can be edited, and changes are expected to affect rendered
@@ -26,10 +28,12 @@ public sealed interface MarkdownMode {
      * @param scrollingSynchronizer [ScrollingSynchronizer] that enables auto-scrolling in the preview to match the
      *   scrolling position in the editor and therefore show the same blocks that are currently visible in the editor.
      */
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     public class EditorPreview(public val scrollingSynchronizer: ScrollingSynchronizer?) : MarkdownMode
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun WithMarkdownMode(mode: MarkdownMode, content: @Composable () -> Unit) {

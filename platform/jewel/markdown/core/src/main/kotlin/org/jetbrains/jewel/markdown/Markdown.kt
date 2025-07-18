@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.markdown.extensions.markdownBlockRenderer
@@ -31,6 +32,7 @@ import org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun Markdown(
@@ -63,6 +65,7 @@ public fun Markdown(
     )
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun Markdown(
@@ -96,6 +99,7 @@ public fun Markdown(
     }
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun LazyMarkdown(

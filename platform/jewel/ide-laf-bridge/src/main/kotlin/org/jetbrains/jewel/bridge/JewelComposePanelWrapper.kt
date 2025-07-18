@@ -13,6 +13,7 @@ import java.awt.Component
 import java.io.File
 import javax.swing.JComponent
 import javax.swing.JPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.component.JBPopupRenderer
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
@@ -41,6 +42,7 @@ public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Com
         }
     }
 
+@ApiStatus.Internal
 @InternalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelToolWindowComposePanel(
@@ -60,11 +62,13 @@ public fun JewelToolWindowComposePanel(
     }
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming") // Swing to Compose bridge API
 public fun composeWithoutTheme(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposeNoThemePanel(config, content)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
@@ -81,6 +85,7 @@ public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, conten
         }
     }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming") // Swing to Compose bridge API
 public fun composeForToolWindowWithoutTheme(
@@ -88,6 +93,7 @@ public fun composeForToolWindowWithoutTheme(
     content: @Composable () -> Unit,
 ): JComponent = JewelToolWindowNoThemeComposePanel(config, content)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelToolWindowNoThemeComposePanel(
@@ -149,6 +155,7 @@ internal class JewelComposePanelWrapper : JPanel(), UiDataProvider {
     }
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public val LocalComponent: ProvidableCompositionLocal<JComponent> = staticCompositionLocalOf {
     error("CompositionLocal LocalComponent not provided")

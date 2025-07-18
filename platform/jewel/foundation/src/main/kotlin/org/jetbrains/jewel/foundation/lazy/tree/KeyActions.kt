@@ -10,6 +10,7 @@ import androidx.compose.ui.input.pointer.isCtrlPressed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings
 import org.jetbrains.jewel.foundation.lazy.DefaultSelectableColumnKeybindings
@@ -182,6 +183,7 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
     // for item click that lose focus and fail to match if a operation is a double-click
     private var elementClickedTmpHolder: Any? = null
 
+    @ApiStatus.Internal
     @InternalJewelApi
     public fun <T> notifyItemClicked(
         item: Tree.Element<T>,

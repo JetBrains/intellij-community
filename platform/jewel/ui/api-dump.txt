@@ -73,21 +73,6 @@ f:org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction$SelectAllMenuItem
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction$SelectAllMenuItemOptionAction
 - equals(java.lang.Object):Z
 - hashCode():I
-f:org.jetbrains.jewel.ui.component.DefaultMenuController
-- org.jetbrains.jewel.ui.component.MenuController
-- sf:$stable:I
-- <init>(kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.DefaultMenuController):V
-- b:<init>(kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.DefaultMenuController,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- clearShortcutActions():V
-- close-iuPiT84(I):Z
-- closeAll-HMVJIwE(I,Z):V
-- findAndExecuteShortcut(javax.swing.KeyStroke):java.lang.Boolean
-- getOnDismissRequest():kotlin.jvm.functions.Function1
-- isRootMenu():Z
-- isSubmenu():Z
-- onHoveredChange(Z):V
-- registerShortcutAction(javax.swing.KeyStroke,kotlin.jvm.functions.Function0):V
-- submenuController(kotlin.jvm.functions.Function1):org.jetbrains.jewel.ui.component.DefaultMenuController
 f:org.jetbrains.jewel.ui.component.LinkKt
 - sf:ExternalLink-kye4rC8(java.lang.String,java.lang.String,androidx.compose.ui.Modifier,Z,androidx.compose.ui.text.TextStyle,I,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.LinkStyle,androidx.compose.runtime.Composer,I,I):V
 org.jetbrains.jewel.ui.component.MenuController
@@ -104,7 +89,6 @@ org.jetbrains.jewel.ui.component.MenuController
 f:org.jetbrains.jewel.ui.component.MenuControllerKt
 - sf:getLocalMenuController():androidx.compose.runtime.ProvidableCompositionLocal
 f:org.jetbrains.jewel.ui.component.MenuKt
-- sf:MenuContent(androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
 org.jetbrains.jewel.ui.component.MenuScope
 - a:passiveItem(kotlin.jvm.functions.Function2):V
 - a:selectableItem(Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
@@ -127,12 +111,6 @@ f:org.jetbrains.jewel.ui.component.MenuSelectableItem
 - f:isEnabled():Z
 - f:isSelected():Z
 f:org.jetbrains.jewel.ui.component.PopupKt
-- sf:Popup(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:getLocalPopupRenderer():androidx.compose.runtime.ProvidableCompositionLocal
-org.jetbrains.jewel.ui.component.PopupRenderer
-- sf:Companion:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
-- a:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
-f:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
 org.jetbrains.jewel.ui.component.TabContentScope
 - tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.ui.component.TabStripKt
@@ -145,9 +123,7 @@ f:org.jetbrains.jewel.ui.component.TextContextMenu
 f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:rememberPopupPositionProviderAtFixedPosition-7KAyTs4(J,J,androidx.compose.ui.Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.window.PopupPositionProvider
 f:org.jetbrains.jewel.ui.component.TypographyKt
-- sf:computeLineHeightPx(java.awt.Font):I
 org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - a:getExpandAnimationDuration-UwyO8pc():J
 - a:getLingerDuration-UwyO8pc():J
@@ -374,7 +350,5 @@ org.jetbrains.jewel.ui.painter.PainterProviderScope
 org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
 - org.jetbrains.jewel.ui.painter.PainterProviderScope
 - a:getClassLoaders():java.util.Set
-org.jetbrains.jewel.ui.util.MessageResourceResolver
-- a:resolveIdeBundleMessage(java.lang.String):java.lang.String
 f:org.jetbrains.jewel.ui.util.MessageResourceResolverKt
 - sf:getLocalMessageResourceResolverProvider():androidx.compose.runtime.ProvidableCompositionLocal
