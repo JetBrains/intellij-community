@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.formatter
 
 import com.intellij.formatting.*
+import com.intellij.formatting.Wrap
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.idea.util.requireNode
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.parser.KDocElementTypes
 import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.lexer.KtTokens.EOL_COMMENT
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
@@ -640,19 +642,21 @@ abstract class KotlinCommonBlock(
                         )
 
                     is KtNamedFunction, is KtSecondaryConstructor ->
-                        return getWrappingStrategyForItemList(
+                        return getWrappingStrategyForModifierList(
                             commonSettings.METHOD_ANNOTATION_WRAP,
-                            ANNOTATIONS,
+                            settings.kotlinCustomSettings.FUNCTION_CONTEXT_PARAMETERS_WRAP
                         )
 
-                    is KtProperty ->
-                        return getWrappingStrategyForItemList(
-                            if (parent.isLocal)
-                                commonSettings.VARIABLE_ANNOTATION_WRAP
-                            else
-                                commonSettings.FIELD_ANNOTATION_WRAP,
-                            ANNOTATIONS,
+                    is KtProperty -> {
+                        val annotationsWrapType = if (parent.isLocal)
+                            commonSettings.VARIABLE_ANNOTATION_WRAP
+                        else
+                            commonSettings.FIELD_ANNOTATION_WRAP
+                        return getWrappingStrategyForModifierList(
+                            annotationsWrapType,
+                            settings.kotlinCustomSettings.PROPERTY_CONTEXT_PARAMETERS_WRAP
                         )
+                    }
                 }
             }
 
@@ -1219,9 +1223,13 @@ private fun getWrappingStrategyForItemList(
     }
 }
 
-private fun getWrappingStrategyForItemList(wrapType: Int, itemTypes: TokenSet, wrapFirstElement: Boolean = false): WrappingStrategy {
+private fun getWrappingStrategyForItemList(wrapType: Int, itemTypes: TokenSet, wrapFirstElement: Boolean = false): WrappingStrategy =
+    getWrappingStrategyForItemList(wrapType, itemTypes, wrapFirstElement, null)
+
+private fun getWrappingStrategyForItemList(wrapType: Int, itemTypes: TokenSet, wrapFirstElement: Boolean = false, additionalWrap: WrappingStrategy? = null): WrappingStrategy {
     val itemWrap = Wrap.createWrap(wrapType, wrapFirstElement)
-    return { childElement ->
+    return str@{ childElement ->
+        additionalWrap?.invoke(childElement)?.let { wrap -> return@str wrap }
         val thisType = childElement.elementType
         val prevType = getPrevWithoutWhitespace(childElement)?.elementType
         if (thisType in itemTypes || prevType in itemTypes && thisType != EOL_COMMENT && prevType != EOL_COMMENT)
@@ -1230,6 +1238,23 @@ private fun getWrappingStrategyForItemList(wrapType: Int, itemTypes: TokenSet, w
             null
     }
 }
+
+private fun getWrappingStrategyForModifierList(annotationsWrapType: Int, contextParametersWrapType: Int): WrappingStrategy {
+    val annotationWrap = Wrap.createWrap(annotationsWrapType, false)
+    val contextParametersWrap = Wrap.createWrap(contextParametersWrapType, false)
+    return { childElement: ASTNode ->
+        val thisType = childElement.elementType
+        val prevType = getPrevWithoutWhitespace(childElement)?.elementType
+        if (thisType in ANNOTATIONS || prevType in ANNOTATIONS && thisType != EOL_COMMENT && prevType != EOL_COMMENT)
+            annotationWrap
+        else if (thisType == CONTEXT_RECEIVER_LIST || prevType == CONTEXT_RECEIVER_LIST && thisType != EOL_COMMENT && prevType != EOL_COMMENT)
+            contextParametersWrap
+        else
+            null
+    }
+}
+
+
 
 private fun ASTNode.prev(): ASTNode? {
     var prev = treePrev

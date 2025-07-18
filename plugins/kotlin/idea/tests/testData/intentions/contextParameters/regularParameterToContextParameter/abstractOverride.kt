@@ -1,5 +1,4 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// IGNORE_K2
 
 abstract class Base {
     abstract fun foo(c1: Int)

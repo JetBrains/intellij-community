@@ -15,7 +15,8 @@ fun m() {
 
 }
 
-context(i: Int, a: String) private fun __dummyTestFun__() {
+context(i: Int, a: String)
+private fun __dummyTestFun__() {
     val i = prop
     bar(i)
     bar1(i)

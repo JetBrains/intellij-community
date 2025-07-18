@@ -6,9 +6,11 @@ interface IFace {
 }
 
 open class OpenClass : IFace {
-    context(s: String) override fun foo() {}
+    context(s: String)
+    override fun foo() {}
 }
 
 class FinalClass : OpenClass(), IFace {
-    context(s: String) override fun foo() {}
+    context(s: String)
+    override fun foo() {}
 }

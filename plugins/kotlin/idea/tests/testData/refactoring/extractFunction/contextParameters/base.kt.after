@@ -12,7 +12,8 @@ fun m() {
     __dummyTestFun__(i)
 }
 
-context(a: String) private fun __dummyTestFun__(i: Int) {
+context(a: String)
+private fun __dummyTestFun__(i: Int) {
     bar(i)
 }
 

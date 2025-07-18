@@ -1,4 +1,3 @@
-// IGNORE_K1
 // FIR_COMPARISON
 
 object Context

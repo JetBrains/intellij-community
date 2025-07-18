@@ -21,7 +21,8 @@ class MyClass {
     }
 }
 
-context(klass: MyClass) private fun doSomething(param1: String) {
+context(klass: MyClass)
+private fun doSomething(param1: String) {
     println("Value: ${klass.value}, Param: $param1")
 }
 

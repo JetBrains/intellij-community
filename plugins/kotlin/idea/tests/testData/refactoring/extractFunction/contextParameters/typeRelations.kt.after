@@ -13,7 +13,8 @@ fun baz() {
     __dummyTestFun__()
 }
 
-context(b: B) private fun __dummyTestFun__() {
+context(b: B)
+private fun __dummyTestFun__() {
     if (b != null) {
         foo()
         bar()

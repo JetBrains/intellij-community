@@ -6,7 +6,8 @@ interface IFace {
 }
 
 open class OpenClass : IFace {
-    context(s: String) override fun foo() {
+    context(s: String)
+    override fun foo() {
         s.length
         with(s) {
             withContext()
@@ -16,7 +17,8 @@ open class OpenClass : IFace {
 }
 
 class FinalClass : OpenClass(), IFace {
-    context(s: String) override fun foo() {}
+    context(s: String)
+    override fun foo() {}
 }
 
 context(c: String)

@@ -21,7 +21,8 @@ interface IFace {
 }
 
 open class OpenClass : IFace {
-    context(string: String) override fun foo() {}
+    context(string: String)
+    override fun foo() {}
 
     private fun usage1(s: String) {
         with(s) {
@@ -40,7 +41,8 @@ open class OpenClass : IFace {
 }
 
 class FinalClass : OpenClass(), IFace {
-    context(string: String) override fun foo() {}
+    context(string: String)
+    override fun foo() {}
 
     private fun usage1(s: String) {
         with(s) {
