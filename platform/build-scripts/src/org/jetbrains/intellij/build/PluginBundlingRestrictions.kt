@@ -25,10 +25,7 @@ class PluginBundlingRestrictions(
   val supportedArch: List<JvmArchitecture>,
 
   /**
-   * Set to required [PluginDistribution] value depending on the distribution zone
-   *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (not EAP or Release).
-   *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (not Release).
-   *  - Use [PluginDistribution.ALL] if the plugin should be included all distribution for EAP, Nightly and Release.
+   * See [PluginDistribution]
    */
   @JvmField
   var includeInDistribution: PluginDistribution = PluginDistribution.ALL
@@ -60,10 +57,7 @@ class PluginBundlingRestrictions(
     var supportedArch: List<JvmArchitecture> = JvmArchitecture.ALL
 
     /**
-     * Set to required [PluginDistribution] value depending on the distribution zone
-     *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (not EAP or Release).
-     *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (not Release).
-     *  - Use [PluginDistribution.ALL] if the plugin should be included all distribution for EAP, Nightly and Release.
+     * See [PluginDistribution]
      */
     var includeInDistribution: PluginDistribution = PluginDistribution.ALL
 
