@@ -22,11 +22,14 @@ import org.jetbrains.annotations.NotNull;
 public interface Annotator extends PossiblyDumbAware {
   /**
    * Annotates the specified PSI element.
-   * It is guaranteed to be executed in non-reentrant fashion.
-   * I.e, there will be no call of this method for this instance before previous call get completed.
+   * <p>
+   * It is guaranteed to be executed in a non-reentrant fashion, i.e.,
+   * there will be no call of this method for this instance before the previous call is completed.
    * Multiple instances of the annotator might exist simultaneously, though.
+   * <p>
    * Please make sure the implementation of this method is creating annotations with the text range lying within the current PSI {@code element}
    * to minimize annoying flickering and inconsistencies.
+   *
    * @param element to annotate.
    * @param holder  the container which receives annotations created by the plugin.
    */
