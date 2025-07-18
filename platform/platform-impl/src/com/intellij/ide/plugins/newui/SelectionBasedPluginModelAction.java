@@ -150,7 +150,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
                     @NotNull Function<? super C, PluginUiModel> pluginModelGetter,
                     @NotNull Runnable onFinishAction) {
       //noinspection unchecked
-      super(IdeBundle.message(isBundledUpdate(selection, (Function<Object, PluginUiModel>)pluginModelGetter, pluginModelFacade)
+      super(IdeBundle.message(isBundledUpdate(selection, (Function<Object, PluginUiModel>)pluginModelGetter)
                               ? "plugins.configurable.uninstall.bundled.update"
                               : "plugins.configurable.uninstall"),
             pluginModelFacade,
@@ -163,14 +163,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       myDynamicTitle = selection.size() == 1 && pluginModelGetter.apply(selection.iterator().next()) == null;
     }
 
-    private static boolean isBundledUpdate(@NotNull List<?> selection, Function<Object, @Nullable PluginUiModel> pluginDescriptor,
-                                           @NotNull PluginModelFacade pluginModelFacade) {
-      List<PluginId> pluginIds = StreamEx.of(selection)
+    private static boolean isBundledUpdate(@NotNull List<?> selection, Function<Object, @Nullable PluginUiModel> pluginDescriptor) {
+      return StreamEx.of(selection)
         .map(pluginDescriptor)
         .filter(Objects::nonNull)
-        .map(PluginUiModel::getPluginId)
-        .toList();
-      return UiPluginManager.getInstance().isBundledUpdate(pluginIds);
+        .allMatch(PluginUiModel::isBundledUpdate);
     }
 
     @Override
@@ -178,9 +175,9 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       Collection<PluginUiModel> descriptors = getAllDescriptors();
 
       if (myDynamicTitle) {
-        PluginId id = descriptors.iterator().next().getPluginId();
+        PluginUiModel uiModel = descriptors.iterator().next();
         e.getPresentation().setText(IdeBundle.message(
-          descriptors.size() == 1 && UiPluginManager.getInstance().isBundledUpdate(Collections.singletonList(id))
+          descriptors.size() == 1 && uiModel.isBundledUpdate()
           ? "plugins.configurable.uninstall.bundled.update"
           : "plugins.configurable.uninstall"));
       }
