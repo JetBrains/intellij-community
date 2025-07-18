@@ -177,7 +177,7 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
     boolean isScientificMode = editor != null && editor.getFile().getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null;
     JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     if (!isEmbedded) {
-      topPanel.add(toolbarPanel, BorderLayout.WEST);
+      topPanel.add(toolbarPanel, BorderLayout.CENTER);
       if (!isScientificMode) {
         infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
         infoLabel.setBorder(JBUI.Borders.emptyRight(2));
