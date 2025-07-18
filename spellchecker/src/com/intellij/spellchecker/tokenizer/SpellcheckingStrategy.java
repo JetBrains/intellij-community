@@ -20,11 +20,14 @@ import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFixFactory;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
+import com.intellij.spellchecker.statistics.SpellcheckerRateTracker;
 import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -141,21 +144,23 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
                                                        @NotNull PsiElement element,
                                                        @NotNull TextRange range) {
     ArrayList<LocalQuickFix> result = new ArrayList<>();
+    SpellcheckerRateTracker tracker = new SpellcheckerRateTracker(element);
 
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
-      result.add(SpellCheckerQuickFixFactory.rename(element));
+      result.add(SpellCheckerQuickFixFactory.rename(element, tracker));
     } else {
-      result.addAll(SpellCheckerQuickFixFactory.changeToVariants(element, range, typo));
+      List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker);
+      result.addAll(fixes);
     }
 
     final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());
     if (settings.isUseSingleDictionaryToSave()) {
       DictionaryLayer layer = DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave());
-      result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, layer));
+      result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, layer, tracker));
       return result.toArray(LocalQuickFix.EMPTY_ARRAY);
     }
 
-    result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo));
+    result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, tracker));
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
@@ -164,8 +169,10 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
     @NotNull TextRange textRange,
     @NotNull String word
   ) {
-    return DictionaryLayersProvider.getAllLayers(element.getProject())
-      .stream().map(it -> SpellCheckerQuickFixFactory.saveTo(element, textRange, word, it))
+    Collection<DictionaryLayer> layers = DictionaryLayersProvider.getAllLayers(element.getProject());
+    SpellcheckerRateTracker tracker = new SpellcheckerRateTracker(element);
+    return layers.stream()
+      .map(it -> SpellCheckerQuickFixFactory.saveTo(element, textRange, word, it, tracker))
       .toArray(LocalQuickFix[]::new);
   }
 

@@ -470,6 +470,7 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - mouseMoved(java.awt.event.MouseEvent,java.awt.Point):V
 *:com.intellij.codeInsight.intention.EventTrackingIntentionAction
 - a:suggestionShown(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+- s:unwrap(com.intellij.codeInsight.intention.IntentionAction):com.intellij.codeInsight.intention.EventTrackingIntentionAction
 *e:com.intellij.codeInsight.intention.IntentionSource
 - java.lang.Enum
 - sf:CONTEXT_ACTIONS:com.intellij.codeInsight.intention.IntentionSource

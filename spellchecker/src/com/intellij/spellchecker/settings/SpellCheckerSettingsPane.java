@@ -215,14 +215,14 @@ public final class SpellCheckerSettingsPane implements Disposable {
     @Override
     protected void customizeDecorator(ToolbarDecorator decorator) {
       decorator.setRemoveAction((button) -> {
-        SpellcheckerActionStatistics.REMOVE_FROM_ACCEPTED_WORDS.log(manager.getProject());
+        SpellcheckerActionStatistics.removeWordFromAcceptedWords(manager.getProject());
         ListUtil.removeSelectedItems(myList);
       });
     }
 
     @Override
     protected String findItemToAdd() {
-      SpellcheckerActionStatistics.ADD_TO_ACCEPTED_WORDS.log(manager.getProject());
+      SpellcheckerActionStatistics.addWordToAcceptedWords(manager.getProject());
       String word = Messages.showInputDialog(SpellCheckerBundle.message("enter.simple.word"),
                                              SpellCheckerBundle.message("add.new.word"), null);
       if (word == null) {
