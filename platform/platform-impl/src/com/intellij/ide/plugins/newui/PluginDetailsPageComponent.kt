@@ -430,7 +430,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     enableDisableController = SelectionBasedPluginModelAction.createOptionButton(
       { action -> this.createEnableDisableAction(action) },
-      { this.createUninstallAction() })
+      createUninstallAction())
     nameAndButtons.addButtonComponent(enableDisableController!!.button.also { gearButton = it })
     nameAndButtons.addButtonComponent(enableDisableController!!.bundledButton.also { myEnableDisableButton = it })
     nameAndButtons.addButtonComponent(enableDisableController!!.uninstallButton.also { myUninstallButton = it })

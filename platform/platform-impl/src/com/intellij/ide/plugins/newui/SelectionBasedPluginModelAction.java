@@ -297,10 +297,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   }
 
   static <C extends JComponent> @NotNull OptionButtonController<C> createOptionButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                                                      @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+                                                                                      @NotNull UninstallAction<C> uninstallAction) {
     return new OptionButtonController<>(createEnableDisableAction.apply(PluginEnableDisableAction.ENABLE_GLOBALLY),
                                         createEnableDisableAction.apply(PluginEnableDisableAction.DISABLE_GLOBALLY),
-                                        createUninstallAction.produce());
+                                        uninstallAction);
   }
 
   static final class OptionButtonController<C extends JComponent> implements ActionListener {
