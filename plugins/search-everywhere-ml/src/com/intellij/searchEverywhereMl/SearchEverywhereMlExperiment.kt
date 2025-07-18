@@ -61,6 +61,17 @@ object SearchEverywhereMlExperiment {
       else -1
     }
 
+  /**
+   * Indicates whether the experiment group is forced by the registry configuration.
+   *
+   * The value is determined based on the `SearchEverywhereMlRegistry`'s experiment group number.
+   * If the group number is not `-1`, it is considered that the experiment group is forcibly assigned.
+   *
+   * @return true if the experiment group is forced, false otherwise.
+   */
+  val isForcedExperimentGroupByRegistry: Boolean
+    get() = SearchEverywhereMlRegistry.experimentGroupNumber != -1
+
   private val computedGroup: Int by lazy {
     val mlseLogConfiguration = EventLogConfiguration.getInstance().getOrCreate(MLSE_RECORDER_ID)
     // experiment groups get updated on the VERSION property change:
