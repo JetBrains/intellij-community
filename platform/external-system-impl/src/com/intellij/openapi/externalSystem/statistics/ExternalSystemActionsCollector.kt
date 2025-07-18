@@ -22,7 +22,7 @@ object ExternalSystemActionsCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("build.tools.actions", 12)
+  private val GROUP = EventLogGroup("build.tools.actions", 13)
   val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("system_id", "build_tools")
   private val ACTION_EXECUTOR_FIELD =
     EventFields.StringValidatedByCustomRule("executor", RunConfigurationExecutorUtilValidator::class.java)
