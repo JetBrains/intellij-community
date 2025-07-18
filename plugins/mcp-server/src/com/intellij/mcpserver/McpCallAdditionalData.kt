@@ -7,12 +7,17 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 class McpCallAdditionalData(
+  val callId: Int,
   val clientInfo: ClientInfo,
   val project: Project?,
   val mcpToolDescriptor: McpToolDescriptor,
   val rawArguments: JsonObject,
   val meta: JsonObject
-)
+) {
+  override fun toString(): String {
+    return "McpCallAdditionalData(id=$callId, clientInfo=$clientInfo, toolName=${mcpToolDescriptor.name}"
+  }
+}
 
 class ClientInfo(val name: String, val version: String)
 
@@ -20,7 +25,8 @@ class McpCallAdditionalDataElement(val additionalData: McpCallAdditionalData) : 
   companion object Key : CoroutineContext.Key<McpCallAdditionalDataElement>
 }
 
-val CoroutineContext.mcpCallAdditionalData: McpCallAdditionalData get() = get(McpCallAdditionalDataElement)?.additionalData ?: error("mcpCallAdditionalData called outside of a MCP call")
+val CoroutineContext.mcpCallAdditionalDataOrNull: McpCallAdditionalData? get() = get(McpCallAdditionalDataElement)?.additionalData
+val CoroutineContext.mcpCallAdditionalData: McpCallAdditionalData get() = mcpCallAdditionalDataOrNull ?: error("mcpCallAdditionalData called outside of a MCP call")
 
 /**
  * Returns information about the MCP client that is calling a tool.

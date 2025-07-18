@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.mcpserver.*
 import com.intellij.mcpserver.impl.util.network.*
 import com.intellij.mcpserver.settings.McpServerSettings
@@ -45,6 +46,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.cancellation.CancellationException
 
 
@@ -58,6 +61,8 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private val server = MutableStateFlow(startServerIfEnabled())
+  @OptIn(ExperimentalAtomicApi::class)
+  private val callId = AtomicInteger(0)
 
   val isRunning: Boolean
     get() = server.value != null
@@ -196,11 +201,25 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
 
       val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
       val initialDocumentContents = ConcurrentHashMap<Document, String>()
+      val clientVersion = server.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
+
+      val additionalData = McpCallAdditionalData(
+        callId = callId.getAndAdd(1),
+        clientInfo = ClientInfo(clientVersion.name, clientVersion.version),
+        project = project,
+        mcpToolDescriptor = descriptor,
+        rawArguments = request.arguments,
+        meta = request._meta
+      )
 
       val callResult = coroutineScope {
 
         VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
-          vfsEvent.addAll(events)
+          val inHandlerData = currentThreadContext().mcpCallAdditionalDataOrNull
+          if (inHandlerData != null && inHandlerData.callId == additionalData.callId) {
+            logger.trace { "VFS changes detected for call: $inHandlerData" }
+            vfsEvent.addAll(events)
+          }
           // probably we have to read initial contents here
           // see comment below near `is VFileContentChangeEvent`
           return@AsyncFileListener object : AsyncFileListener.ChangeApplier {}
@@ -209,20 +228,16 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
         val documentListener = object : DocumentListener {
           // record content before any change
           override fun beforeDocumentChange(event: DocumentEvent) {
-            initialDocumentContents.computeIfAbsent(event.document) { event.document.text }
+            val inHandlerData = currentThreadContext().mcpCallAdditionalDataOrNull
+            if (inHandlerData != null && inHandlerData.callId == additionalData.callId) {
+              logger.trace { "Document changes detected for call: $inHandlerData" }
+              initialDocumentContents.computeIfAbsent(event.document) { event.document.text }
+            }
           }
         }
 
         EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener, this.asDisposable())
-        val clientVersion = server.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
 
-        val additionalData = McpCallAdditionalData(
-          clientInfo = ClientInfo(clientVersion.name, clientVersion.version),
-          project = project,
-          mcpToolDescriptor = descriptor,
-          rawArguments = request.arguments,
-          meta = request._meta
-        )
         withContext(
           McpCallAdditionalDataElement(additionalData)
         ) {
