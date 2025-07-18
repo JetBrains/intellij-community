@@ -25,7 +25,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
   override fun isEnabled(): Boolean {
-    return SearchEverywhereTab.allTabs.any { it.isTabWithMlRanking() && it.isMlRankingEnabled }
+    return SearchEverywhereTab.tabsWithLogging.any { it.isTabWithMlRanking() && it.isMlRankingEnabled }
            || SearchEverywhereMlExperiment.isAllowed
   }
 

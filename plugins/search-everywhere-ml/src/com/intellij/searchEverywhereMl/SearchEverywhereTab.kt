@@ -15,6 +15,13 @@ import kotlin.contracts.contract
 
 
 sealed interface SearchEverywhereTab {
+  val tabId: String
+
+  /**
+   * Indicates a tab for which we do not provide any logging
+   */
+  data class TabWithoutLogging(override val tabId: String) : SearchEverywhereTab
+
   /**
    * Indicates a tab for which MLSE logs will be collected.
    * Tabs that do not implement this interface will not have any data recorded
@@ -139,9 +146,7 @@ sealed interface SearchEverywhereTab {
       }
   }
 
-  val tabId: String
-
-  object All :TabWithMlRanking {
+  object All : TabWithMlRanking {
     override val tabId: String = ALL_CONTRIBUTORS_GROUP_ID
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.all"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.all.model.path"
@@ -223,17 +228,24 @@ sealed interface SearchEverywhereTab {
     )
   }
 
-  object Git : SearchEverywhereTab {
-    override val tabId: String
-      get() = "Git"
-  }
-
   companion object {
-    val allTabs: List<SearchEverywhereTab> = listOf(
+    val tabsWithLogging: List<SearchEverywhereTab> = listOf(
       All, Actions, Classes, Files, Symbols
     )
 
-    fun findById(id: String): SearchEverywhereTab? = allTabs.find { it.tabId == id }
+    /**
+     * Retrieves a tab from the list by its tabId.
+     *
+     * If a tabId matches one of the tabs with logging, a specific instance will be returned,
+     * otherwise a default instance of `TabWithoutLogging` is returned.
+     *
+     * @param id Tab ID from [com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab.getID]
+     * @return Specific tab instance if tabId matches a tab with logging, `TabWithoutLogging` instance if no match is found
+     */
+    fun getById(id: String): SearchEverywhereTab = tabsWithLogging.find { it.tabId == id } ?: TabWithoutLogging(id)
+
+    @Deprecated(message = "Use getById instead", replaceWith = ReplaceWith("getById(id)"))
+    fun findById(id: String): SearchEverywhereTab? = getById(id)
   }
 }
 
@@ -328,5 +340,5 @@ val SearchEverywhereTab.TabWithExperiments.isSemanticSearchExperiment: Boolean
  * by prioritizing essential contributors during retrieval.
  */
 val SearchEverywhereTab.All.isEssentialContributorPredictionExperiment: Boolean
-  get() = this.currentExperimentType == ExperimentType.EssentialContributorPrediction || 
+  get() = this.currentExperimentType == ExperimentType.EssentialContributorPrediction ||
           this.currentExperimentType == ExperimentType.CombinedExperiment

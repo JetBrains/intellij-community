@@ -329,7 +329,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   // context fields
   private val PROJECT_OPENED_KEY = EventFields.Boolean("projectOpened")
   private val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("projectDisposed")
-  private val SE_TAB_ID_KEY = EventFields.String("seTabId", SearchEverywhereTab.allTabs.map { it.tabId })
+  private val SE_TAB_ID_KEY = EventFields.String("seTabId", SearchEverywhereTab.tabsWithLogging.map { it.tabId })
   private val CLOSE_POPUP_KEY = EventFields.Boolean("closePopup")
   private val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
   internal val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")

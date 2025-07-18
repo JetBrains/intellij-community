@@ -60,7 +60,7 @@ internal class SearchEverywhereMLSearchSession(
     searchScope: ScopeDescriptor?,
     isSearchEverywhere: Boolean,
   ) {
-    val tab = SearchEverywhereTab.findById(tabId) ?: return
+    val tab = SearchEverywhereTab.getById(tabId) as? SearchEverywhereTab.TabWithLogging ?: return
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
