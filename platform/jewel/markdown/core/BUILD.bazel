@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.platform.jewel.markdown.core` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_core",
   context_receivers = True,
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
@@ -25,7 +24,7 @@ jvm_library(
   module_name = "intellij.platform.jewel.markdown.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -44,7 +43,7 @@ jvm_library(
   name = "core_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_core",
   associates = [":core"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -61,9 +60,13 @@ jvm_library(
   runtime_deps = [":core_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
+### auto-generated section `build intellij.platform.jewel.markdown.core` end
+
+### auto-generated section `test intellij.platform.jewel.markdown.core` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "core_test",
   runtime_deps = [":core_test_lib"]
 )
-### auto-generated section `build intellij.platform.jewel.markdown.core` end
+### auto-generated section `test intellij.platform.jewel.markdown.core` end

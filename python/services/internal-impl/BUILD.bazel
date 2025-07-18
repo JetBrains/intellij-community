@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.python.community.services.internal.impl` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "python-community-services-internal-impl_resources",
@@ -54,9 +53,13 @@ jvm_library(
   ],
   runtime_deps = [":python-community-services-internal-impl_resources"]
 )
+### auto-generated section `build intellij.python.community.services.internal.impl` end
+
+### auto-generated section `test intellij.python.community.services.internal.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "python-community-services-internal-impl_test",
   runtime_deps = [":python-community-services-internal-impl_test_lib"]
 )
-### auto-generated section `build intellij.python.community.services.internal.impl` end
+### auto-generated section `test intellij.python.community.services.internal.impl` end

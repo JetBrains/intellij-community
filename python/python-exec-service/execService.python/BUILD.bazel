@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.python.community.execService.python` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "execService.python_resources",
@@ -59,9 +58,13 @@ jvm_library(
   ],
   runtime_deps = [":execService.python_resources"]
 )
+### auto-generated section `build intellij.python.community.execService.python` end
+
+### auto-generated section `test intellij.python.community.execService.python` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "execService.python_test",
   runtime_deps = [":execService.python_test_lib"]
 )
-### auto-generated section `build intellij.python.community.execService.python` end
+### auto-generated section `test intellij.python.community.execService.python` end

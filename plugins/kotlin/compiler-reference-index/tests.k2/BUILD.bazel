@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.compiler-reference-index.tests.k2` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests.k2",
@@ -33,9 +32,13 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
   ]
 )
+### auto-generated section `build kotlin.compiler-reference-index.tests.k2` end
+
+### auto-generated section `test kotlin.compiler-reference-index.tests.k2` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests.k2_test",
   runtime_deps = [":tests.k2_test_lib"]
 )
-### auto-generated section `build kotlin.compiler-reference-index.tests.k2` end
+### auto-generated section `test kotlin.compiler-reference-index.tests.k2` end

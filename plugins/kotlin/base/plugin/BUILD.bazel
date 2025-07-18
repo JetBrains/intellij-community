@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.base.plugin` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "plugin_resources",
@@ -102,9 +101,13 @@ jvm_library(
     ":plugin_test_resources",
   ]
 )
+### auto-generated section `build kotlin.base.plugin` end
+
+### auto-generated section `test kotlin.base.plugin` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "plugin_test",
   runtime_deps = [":plugin_test_lib"]
 )
-### auto-generated section `build kotlin.base.plugin` end
+### auto-generated section `test kotlin.base.plugin` end

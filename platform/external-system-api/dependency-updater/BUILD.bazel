@@ -27,9 +27,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater` end
 
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "externalSystem-dependencyUpdater-tests_test_resources",
   files = glob(["testData/**/*"]),
@@ -58,9 +55,13 @@ jvm_library(
   ],
   runtime_deps = [":externalSystem-dependencyUpdater-tests_test_resources"]
 )
+### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` end
+
+### auto-generated section `test intellij.platform.externalSystem.dependencyUpdater.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "externalSystem-dependencyUpdater-tests_test",
   runtime_deps = [":externalSystem-dependencyUpdater-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` end
+### auto-generated section `test intellij.platform.externalSystem.dependencyUpdater.tests` end

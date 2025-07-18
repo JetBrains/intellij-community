@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.jvm-debugger.test.compose.k2` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-jvm-debugger-test-compose-k2",
@@ -35,6 +34,10 @@ jvm_library(
     "//plugins/kotlin/tests-compose:tests-compose_test_lib",
   ]
 )
+### auto-generated section `build kotlin.jvm-debugger.test.compose.k2` end
+
+### auto-generated section `test kotlin.jvm-debugger.test.compose.k2` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "kotlin-jvm-debugger-test-compose-k2_test",
@@ -43,4 +46,4 @@ jps_test(
     "//:main_test_lib",
   ]
 )
-### auto-generated section `build kotlin.jvm-debugger.test.compose.k2` end
+### auto-generated section `test kotlin.jvm-debugger.test.compose.k2` end

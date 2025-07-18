@@ -1,10 +1,9 @@
 ### auto-generated section `build kotlin.injection.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_tests",
   context_receivers = True
 )
 
@@ -18,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_tests",
   deps = [
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
@@ -29,9 +28,13 @@ jvm_library(
     "//plugins/kotlin/injection/base/tests:tests_test_lib",
   ]
 )
+### auto-generated section `build kotlin.injection.tests` end
+
+### auto-generated section `test kotlin.injection.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.injection.tests` end
+### auto-generated section `test kotlin.injection.tests` end

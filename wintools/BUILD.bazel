@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.community.wintools` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "wintools_resources",
@@ -35,9 +34,13 @@ jvm_library(
   ],
   runtime_deps = [":wintools_resources"]
 )
+### auto-generated section `build intellij.community.wintools` end
+
+### auto-generated section `test intellij.community.wintools` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "wintools_test",
   runtime_deps = [":wintools_test_lib"]
 )
-### auto-generated section `build intellij.community.wintools` end
+### auto-generated section `test intellij.community.wintools` end

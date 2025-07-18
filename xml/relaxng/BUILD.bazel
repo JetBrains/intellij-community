@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.relaxng` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "relaxng_resources",
@@ -78,9 +77,13 @@ jvm_library(
   ],
   runtime_deps = [":relaxng_resources"]
 )
+### auto-generated section `build intellij.relaxng` end
+
+### auto-generated section `test intellij.relaxng` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "relaxng_test",
   runtime_deps = [":relaxng_test_lib"]
 )
-### auto-generated section `build intellij.relaxng` end
+### auto-generated section `test intellij.relaxng` end

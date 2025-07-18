@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.execution.process.mediator.client` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "client_resources",
@@ -60,9 +59,13 @@ jvm_library(
   ],
   runtime_deps = [":client_resources"]
 )
+### auto-generated section `build intellij.execution.process.mediator.client` end
+
+### auto-generated section `test intellij.execution.process.mediator.client` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "client_test",
   runtime_deps = [":client_test_lib"]
 )
-### auto-generated section `build intellij.execution.process.mediator.client` end
+### auto-generated section `test intellij.execution.process.mediator.client` end

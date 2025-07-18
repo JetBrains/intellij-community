@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.junit.v5.rt.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "junit-v5-rt-tests",
@@ -44,9 +43,13 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
   ]
 )
+### auto-generated section `build intellij.junit.v5.rt.tests` end
+
+### auto-generated section `test intellij.junit.v5.rt.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "junit-v5-rt-tests_test",
   runtime_deps = [":junit-v5-rt-tests_test_lib"]
 )
-### auto-generated section `build intellij.junit.v5.rt.tests` end
+### auto-generated section `test intellij.junit.v5.rt.tests` end

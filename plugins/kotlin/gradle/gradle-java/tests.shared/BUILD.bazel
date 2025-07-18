@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests.shared",
@@ -101,9 +100,13 @@ jvm_library(
     "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
   ]
 )
+### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end
+
+### auto-generated section `test kotlin.gradle.gradle-java.tests.shared` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests.shared_test",
   runtime_deps = [":tests.shared_test_lib"]
 )
-### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end
+### auto-generated section `test kotlin.gradle.gradle-java.tests.shared` end

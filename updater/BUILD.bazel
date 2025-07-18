@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.tools.updater` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "updater_resources",
@@ -35,9 +34,13 @@ jvm_library(
   ],
   runtime_deps = [":updater_resources"]
 )
+### auto-generated section `build intellij.tools.updater` end
+
+### auto-generated section `test intellij.tools.updater` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "updater_test",
   runtime_deps = [":updater_test_lib"]
 )
-### auto-generated section `build intellij.tools.updater` end
+### auto-generated section `test intellij.tools.updater` end

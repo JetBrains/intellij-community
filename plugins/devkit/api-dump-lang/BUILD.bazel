@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.devkit.apiDump.lang` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "apiDump-lang_resources",
@@ -63,9 +62,13 @@ jvm_library(
   ],
   runtime_deps = [":apiDump-lang_resources"]
 )
+### auto-generated section `build intellij.devkit.apiDump.lang` end
+
+### auto-generated section `test intellij.devkit.apiDump.lang` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "apiDump-lang_test",
   runtime_deps = [":apiDump-lang_test_lib"]
 )
-### auto-generated section `build intellij.devkit.apiDump.lang` end
+### auto-generated section `test intellij.devkit.apiDump.lang` end

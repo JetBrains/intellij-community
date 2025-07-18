@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_kernel",
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
@@ -16,7 +16,7 @@ jvm_library(
   module_name = "fleet.kernel",
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_kernel",
   deps = [
     "@lib//:kotlin-stdlib",
     "//fleet/rhizomedb",

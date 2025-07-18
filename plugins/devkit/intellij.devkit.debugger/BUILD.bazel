@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.devkit.debugger` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "debugger_resources",
@@ -57,9 +56,13 @@ jvm_library(
   ],
   runtime_deps = [":debugger_resources"]
 )
+### auto-generated section `build intellij.devkit.debugger` end
+
+### auto-generated section `test intellij.devkit.debugger` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "debugger_test",
   runtime_deps = [":debugger_test_lib"]
 )
-### auto-generated section `build intellij.devkit.debugger` end
+### auto-generated section `test intellij.devkit.debugger` end

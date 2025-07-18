@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.tests-common` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests-common",
@@ -47,9 +46,13 @@ jvm_library(
     "//jps/model-api:model",
   ]
 )
+### auto-generated section `build kotlin.tests-common` end
+
+### auto-generated section `test kotlin.tests-common` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests-common_test",
   runtime_deps = [":tests-common_test_lib"]
 )
-### auto-generated section `build kotlin.tests-common` end
+### auto-generated section `test kotlin.tests-common` end

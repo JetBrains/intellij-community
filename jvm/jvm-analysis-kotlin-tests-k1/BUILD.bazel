@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k1` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "analysis-kotlin-tests-k1",
@@ -25,9 +24,13 @@ jvm_library(
   ],
   runtime_deps = ["//plugins/kotlin/plugin/k1"]
 )
+### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k1` end
+
+### auto-generated section `test intellij.jvm.analysis.kotlin.tests.k1` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "analysis-kotlin-tests-k1_test",
   runtime_deps = [":analysis-kotlin-tests-k1_test_lib"]
 )
-### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k1` end
+### auto-generated section `test intellij.jvm.analysis.kotlin.tests.k1` end

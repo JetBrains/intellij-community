@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.performance-tests.performance-test-utils` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "performance-test-utils",
@@ -64,9 +63,13 @@ jvm_library(
   ],
   runtime_deps = ["//plugins/kotlin/compiler-plugins/lombok/gradle"]
 )
+### auto-generated section `build kotlin.performance-tests.performance-test-utils` end
+
+### auto-generated section `test kotlin.performance-tests.performance-test-utils` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "performance-test-utils_test",
   runtime_deps = [":performance-test-utils_test_lib"]
 )
-### auto-generated section `build kotlin.performance-tests.performance-test-utils` end
+### auto-generated section `test kotlin.performance-tests.performance-test-utils` end

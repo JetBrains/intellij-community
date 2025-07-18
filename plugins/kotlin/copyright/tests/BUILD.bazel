@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.copyright.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
@@ -37,9 +36,13 @@ jvm_library(
     "//java/java-analysis-api:analysis",
   ]
 )
+### auto-generated section `build kotlin.copyright.tests` end
+
+### auto-generated section `test kotlin.copyright.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.copyright.tests` end
+### auto-generated section `test kotlin.copyright.tests` end

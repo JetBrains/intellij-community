@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.gradle.gradle-java.k2` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "k2_resources",
@@ -69,9 +68,13 @@ jvm_library(
   ],
   runtime_deps = [":k2_resources"]
 )
+### auto-generated section `build kotlin.gradle.gradle-java.k2` end
+
+### auto-generated section `test kotlin.gradle.gradle-java.k2` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "k2_test",
   runtime_deps = [":k2_test_lib"]
 )
-### auto-generated section `build kotlin.gradle.gradle-java.k2` end
+### auto-generated section `test kotlin.gradle.gradle-java.k2` end

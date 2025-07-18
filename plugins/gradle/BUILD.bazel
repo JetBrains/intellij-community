@@ -87,8 +87,6 @@ jvm_library(
 ### auto-generated section `build intellij.gradle` end
 
 ### auto-generated section `build intellij.gradle.common` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "gradle-common",
   visibility = ["//visibility:public"],
@@ -99,9 +97,6 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.common` end
 
 ### auto-generated section `build intellij.gradle.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "gradle-tests_test_resources",
   files = glob(["testData/**/*"]),
@@ -180,9 +175,13 @@ jvm_library(
     "//platform/execution.dashboard",
   ]
 )
+### auto-generated section `build intellij.gradle.tests` end
+
+### auto-generated section `test intellij.gradle.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "gradle-tests_test",
   runtime_deps = [":gradle-tests_test_lib"]
 )
-### auto-generated section `build intellij.gradle.tests` end
+### auto-generated section `test intellij.gradle.tests` end

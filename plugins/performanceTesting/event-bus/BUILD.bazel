@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.tools.ide.starter.bus` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "tools-ide-starter-bus_resources",
@@ -40,9 +39,13 @@ jvm_library(
   ],
   runtime_deps = [":tools-ide-starter-bus_resources"]
 )
+### auto-generated section `build intellij.tools.ide.starter.bus` end
+
+### auto-generated section `test intellij.tools.ide.starter.bus` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tools-ide-starter-bus_test",
   runtime_deps = [":tools-ide-starter-bus_test_lib"]
 )
-### auto-generated section `build intellij.tools.ide.starter.bus` end
+### auto-generated section `test intellij.tools.ide.starter.bus` end

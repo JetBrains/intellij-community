@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.devkit.workspaceModel.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_k2",
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
@@ -24,7 +23,7 @@ jvm_library(
   module_name = "intellij.devkit.workspaceModel.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_k2",
   deps = [
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
     "//platform/core-api:core",
@@ -48,7 +47,7 @@ jvm_library(
   name = "k2_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_k2",
   associates = [":k2"],
   deps = [
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
@@ -78,9 +77,13 @@ jvm_library(
   ],
   runtime_deps = [":k2_resources"]
 )
+### auto-generated section `build intellij.devkit.workspaceModel.k2` end
+
+### auto-generated section `test intellij.devkit.workspaceModel.k2` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "k2_test",
   runtime_deps = [":k2_test_lib"]
 )
-### auto-generated section `build intellij.devkit.workspaceModel.k2` end
+### auto-generated section `test intellij.devkit.workspaceModel.k2` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.base.test` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "test",
@@ -34,9 +33,13 @@ jvm_library(
     "@lib//:slf4j-api",
   ]
 )
+### auto-generated section `build kotlin.base.test` end
+
+### auto-generated section `test kotlin.base.test` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "test_test",
   runtime_deps = [":test_test_lib"]
 )
-### auto-generated section `build kotlin.base.test` end
+### auto-generated section `test kotlin.base.test` end

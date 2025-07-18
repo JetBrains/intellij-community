@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.pycharm.community.build` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "build",
@@ -57,9 +56,13 @@ jvm_library(
     "@lib//:jsoup",
   ]
 )
+### auto-generated section `build intellij.pycharm.community.build` end
+
+### auto-generated section `test intellij.pycharm.community.build` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "build_test",
   runtime_deps = [":build_test_lib"]
 )
-### auto-generated section `build intellij.pycharm.community.build` end
+### auto-generated section `test intellij.pycharm.community.build` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.images` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "images_resources",
@@ -73,9 +72,13 @@ jvm_library(
   ],
   runtime_deps = [":images_resources"]
 )
+### auto-generated section `build intellij.platform.images` end
+
+### auto-generated section `test intellij.platform.images` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "images_test",
   runtime_deps = [":images_test_lib"]
 )
-### auto-generated section `build intellij.platform.images` end
+### auto-generated section `test intellij.platform.images` end

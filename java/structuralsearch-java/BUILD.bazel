@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.structuralSearch` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "structuralSearch_resources",
@@ -54,9 +53,13 @@ jvm_library(
   ],
   runtime_deps = [":structuralSearch_resources"]
 )
+### auto-generated section `build intellij.java.structuralSearch` end
+
+### auto-generated section `test intellij.java.structuralSearch` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "structuralSearch_test",
   runtime_deps = [":structuralSearch_test_lib"]
 )
-### auto-generated section `build intellij.java.structuralSearch` end
+### auto-generated section `test intellij.java.structuralSearch` end

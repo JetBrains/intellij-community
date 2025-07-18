@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_fir",
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -16,7 +16,7 @@ jvm_library(
   module_name = "kotlin.fir",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_fir",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",

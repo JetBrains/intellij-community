@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.textmate.core` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_core",
   opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"]
 )
 
@@ -13,7 +12,7 @@ jvm_library(
   module_name = "intellij.textmate.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcMultiplatform/**/*.kt", "srcMultiplatform/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-serialization-core",
@@ -31,7 +30,7 @@ jvm_library(
   name = "core_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "testsMultiplatform/**/*.kt", "testsMultiplatform/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_core",
   associates = [":core"],
   deps = [
     "@lib//:jetbrains-annotations",
@@ -48,9 +47,13 @@ jvm_library(
     "//platform/util/xmlDom",
   ]
 )
+### auto-generated section `build intellij.textmate.core` end
+
+### auto-generated section `test intellij.textmate.core` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "core_test",
   runtime_deps = [":core_test_lib"]
 )
-### auto-generated section `build intellij.textmate.core` end
+### auto-generated section `test intellij.textmate.core` end

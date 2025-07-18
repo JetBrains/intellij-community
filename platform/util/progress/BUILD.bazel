@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_progress",
   jvm_target = 8,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
@@ -13,7 +13,7 @@ jvm_library(
   module_name = "intellij.platform.util.progress",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_progress",
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -30,9 +30,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util.progress` end
 
 ### auto-generated section `build intellij.platform.util.progress.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "progress-tests",
   visibility = ["//visibility:public"],
@@ -55,9 +52,13 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
   ]
 )
+### auto-generated section `build intellij.platform.util.progress.tests` end
+
+### auto-generated section `test intellij.platform.util.progress.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "progress-tests_test",
   runtime_deps = [":progress-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.util.progress.tests` end
+### auto-generated section `test intellij.platform.util.progress.tests` end

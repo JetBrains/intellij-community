@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_kotlin-refactorings-common",
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -16,7 +16,7 @@ jvm_library(
   module_name = "kotlin.refactorings.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_kotlin-refactorings-common",
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",

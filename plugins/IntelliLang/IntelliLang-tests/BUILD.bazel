@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.langInjection.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "langInjection-tests",
@@ -37,9 +36,13 @@ jvm_library(
     "//platform/util/jdom",
   ]
 )
+### auto-generated section `build intellij.platform.langInjection.tests` end
+
+### auto-generated section `test intellij.platform.langInjection.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "langInjection-tests_test",
   runtime_deps = [":langInjection-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.langInjection.tests` end
+### auto-generated section `test intellij.platform.langInjection.tests` end

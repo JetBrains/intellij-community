@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.aetherDependencyResolver` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "aether-dependency-resolver",
@@ -49,9 +48,13 @@ jvm_library(
     "//platform/util",
   ]
 )
+### auto-generated section `build intellij.java.aetherDependencyResolver` end
+
+### auto-generated section `test intellij.java.aetherDependencyResolver` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "aether-dependency-resolver_test",
   runtime_deps = [":aether-dependency-resolver_test_lib"]
 )
-### auto-generated section `build intellij.java.aetherDependencyResolver` end
+### auto-generated section `test intellij.java.aetherDependencyResolver` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.jvm-debugger.test` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "test",
@@ -94,6 +93,10 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle",
   ]
 )
+### auto-generated section `build kotlin.jvm-debugger.test` end
+
+### auto-generated section `test kotlin.jvm-debugger.test` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "test_test",
@@ -102,4 +105,4 @@ jps_test(
     "//:main_test_lib",
   ]
 )
-### auto-generated section `build kotlin.jvm-debugger.test` end
+### auto-generated section `test kotlin.jvm-debugger.test` end

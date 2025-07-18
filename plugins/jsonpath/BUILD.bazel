@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.jsonpath` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "jsonpath_resources",
@@ -62,9 +61,13 @@ jvm_library(
   ],
   runtime_deps = [":jsonpath_resources"]
 )
+### auto-generated section `build intellij.jsonpath` end
+
+### auto-generated section `test intellij.jsonpath` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "jsonpath_test",
   runtime_deps = [":jsonpath_test_lib"]
 )
-### auto-generated section `build intellij.jsonpath` end
+### auto-generated section `test intellij.jsonpath` end

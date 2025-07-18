@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.remoteControl` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "remote-control_resources",
@@ -60,9 +59,13 @@ jvm_library(
   ],
   runtime_deps = [":remote-control_resources"]
 )
+### auto-generated section `build intellij.remoteControl` end
+
+### auto-generated section `test intellij.remoteControl` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "remote-control_test",
   runtime_deps = [":remote-control_test_lib"]
 )
-### auto-generated section `build intellij.remoteControl` end
+### auto-generated section `test intellij.remoteControl` end

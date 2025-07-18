@@ -1,10 +1,9 @@
 ### auto-generated section `build kotlin.code-insight.live-templates.shared` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_kotlin-code-insight-live-templates-shared",
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -23,7 +22,7 @@ jvm_library(
   module_name = "kotlin.code-insight.live-templates.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_kotlin-code-insight-live-templates-shared",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -49,7 +48,7 @@ jvm_library(
   name = "kotlin-code-insight-live-templates-shared_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_kotlin-code-insight-live-templates-shared",
   associates = [":kotlin-code-insight-live-templates-shared"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -81,9 +80,13 @@ jvm_library(
   ],
   runtime_deps = [":kotlin-code-insight-live-templates-shared_resources"]
 )
+### auto-generated section `build kotlin.code-insight.live-templates.shared` end
+
+### auto-generated section `test kotlin.code-insight.live-templates.shared` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "kotlin-code-insight-live-templates-shared_test",
   runtime_deps = [":kotlin-code-insight-live-templates-shared_test_lib"]
 )
-### auto-generated section `build kotlin.code-insight.live-templates.shared` end
+### auto-generated section `test kotlin.code-insight.live-templates.shared` end

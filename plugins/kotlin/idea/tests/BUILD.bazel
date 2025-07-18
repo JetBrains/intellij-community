@@ -1,10 +1,9 @@
 ### auto-generated section `build kotlin.idea.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_tests",
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -21,7 +20,7 @@ jvm_library(
   name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_tests",
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
@@ -207,9 +206,13 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/parcelize/gradle",
   ]
 )
+### auto-generated section `build kotlin.idea.tests` end
+
+### auto-generated section `test kotlin.idea.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.idea.tests` end
+### auto-generated section `test kotlin.idea.tests` end

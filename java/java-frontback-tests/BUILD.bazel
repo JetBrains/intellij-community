@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.frontback.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "frontback-tests",
@@ -39,9 +38,13 @@ jvm_library(
     "//java/java-syntax:syntax",
   ]
 )
+### auto-generated section `build intellij.java.frontback.tests` end
+
+### auto-generated section `test intellij.java.frontback.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "frontback-tests_test",
   runtime_deps = [":frontback-tests_test_lib"]
 )
-### auto-generated section `build intellij.java.frontback.tests` end
+### auto-generated section `test intellij.java.frontback.tests` end

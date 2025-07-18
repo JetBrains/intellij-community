@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.gradle.gradle-tooling.impl` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "impl_resources",
@@ -59,9 +58,13 @@ jvm_library(
   ],
   runtime_deps = [":impl_resources"]
 )
+### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end
+
+### auto-generated section `test kotlin.gradle.gradle-tooling.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "impl_test",
   runtime_deps = [":impl_test_lib"]
 )
-### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end
+### auto-generated section `test kotlin.gradle.gradle-tooling.impl` end

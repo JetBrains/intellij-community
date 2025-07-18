@@ -25,9 +25,6 @@ jvm_library(
 ### auto-generated section `build intellij.sh.copyright` end
 
 ### auto-generated section `build intellij.sh.copyright.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "copyright-tests_test_lib",
   visibility = ["//visibility:public"],
@@ -43,9 +40,13 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
   ]
 )
+### auto-generated section `build intellij.sh.copyright.tests` end
+
+### auto-generated section `test intellij.sh.copyright.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "copyright-tests_test",
   runtime_deps = [":copyright-tests_test_lib"]
 )
-### auto-generated section `build intellij.sh.copyright.tests` end
+### auto-generated section `test intellij.sh.copyright.tests` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "diagnostic-telemetry-agent-extension_resources",
@@ -43,9 +42,13 @@ jvm_library(
   ],
   runtime_deps = [":diagnostic-telemetry-agent-extension_resources"]
 )
+### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` end
+
+### auto-generated section `test intellij.platform.diagnostic.telemetry.agent.extension` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "diagnostic-telemetry-agent-extension_test",
   runtime_deps = [":diagnostic-telemetry-agent-extension_test_lib"]
 )
-### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` end
+### auto-generated section `test intellij.platform.diagnostic.telemetry.agent.extension` end

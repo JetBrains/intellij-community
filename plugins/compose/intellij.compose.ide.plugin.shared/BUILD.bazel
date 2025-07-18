@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_ide-plugin-shared",
   context_receivers = True
 )
 
@@ -18,7 +18,7 @@ jvm_library(
   module_name = "intellij.compose.ide.plugin.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_ide-plugin-shared",
   deps = [
     "//plugins/compose:compose-ide-plugin",
     "//platform/analysis-api:analysis",
@@ -47,9 +47,6 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.shared` end
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "ide-plugin-shared-tests",
   visibility = ["//visibility:public"],
@@ -92,9 +89,13 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
   ]
 )
+### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
+
+### auto-generated section `test intellij.compose.ide.plugin.shared.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "ide-plugin-shared-tests_test",
   runtime_deps = [":ide-plugin-shared-tests_test_lib"]
 )
-### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
+### auto-generated section `test intellij.compose.ide.plugin.shared.tests` end

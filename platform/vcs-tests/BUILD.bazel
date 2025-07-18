@@ -27,9 +27,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.vcs.testFramework` end
 
 ### auto-generated section `build intellij.platform.vcs.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "vcs-tests",
   visibility = ["//visibility:public"],
@@ -79,9 +76,13 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ]
 )
+### auto-generated section `build intellij.platform.vcs.tests` end
+
+### auto-generated section `test intellij.platform.vcs.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "vcs-tests_test",
   runtime_deps = [":vcs-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.vcs.tests` end
+### auto-generated section `test intellij.platform.vcs.tests` end

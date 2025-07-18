@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.platform.whatsNew` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_whatsNew",
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
@@ -19,7 +18,7 @@ jvm_library(
   module_name = "intellij.platform.whatsNew",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_whatsNew",
   deps = [
     "//platform/core-api:core",
     "//platform/util/concurrency",
@@ -46,7 +45,7 @@ jvm_library(
   name = "whatsNew_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_whatsNew",
   associates = [":whatsNew"],
   deps = [
     "//platform/core-api:core",
@@ -75,9 +74,13 @@ jvm_library(
   ],
   runtime_deps = [":whatsNew_resources"]
 )
+### auto-generated section `build intellij.platform.whatsNew` end
+
+### auto-generated section `test intellij.platform.whatsNew` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "whatsNew_test",
   runtime_deps = [":whatsNew_test_lib"]
 )
-### auto-generated section `build intellij.platform.whatsNew` end
+### auto-generated section `test intellij.platform.whatsNew` end

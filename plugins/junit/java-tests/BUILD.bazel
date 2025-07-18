@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.junit.java.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "java-tests",
@@ -44,9 +43,13 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
   ]
 )
+### auto-generated section `build intellij.junit.java.tests` end
+
+### auto-generated section `test intellij.junit.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "java-tests_test",
   runtime_deps = [":java-tests_test_lib"]
 )
-### auto-generated section `build intellij.junit.java.tests` end
+### auto-generated section `test intellij.junit.java.tests` end

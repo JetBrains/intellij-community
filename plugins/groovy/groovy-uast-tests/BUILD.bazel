@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.groovy.uast.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "uast-tests",
@@ -23,9 +22,13 @@ jvm_library(
     "//java/testFramework",
   ]
 )
+### auto-generated section `build intellij.groovy.uast.tests` end
+
+### auto-generated section `test intellij.groovy.uast.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "uast-tests_test",
   runtime_deps = [":uast-tests_test_lib"]
 )
-### auto-generated section `build intellij.groovy.uast.tests` end
+### auto-generated section `test intellij.groovy.uast.tests` end

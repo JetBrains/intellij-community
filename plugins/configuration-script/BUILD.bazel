@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.configurationScript` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "configuration-script_resources",
@@ -73,17 +72,18 @@ jvm_library(
   ],
   runtime_deps = [":configuration-script_resources"]
 )
+### auto-generated section `build intellij.configurationScript` end
+
+### auto-generated section `test intellij.configurationScript` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "configuration-script_test",
   runtime_deps = [":configuration-script_test_lib"]
 )
-### auto-generated section `build intellij.configurationScript` end
+### auto-generated section `test intellij.configurationScript` end
 
 ### auto-generated section `build intellij.configurationScript.test.java` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "configurationScript-test-java",
   visibility = ["//visibility:public"],
@@ -107,9 +107,13 @@ jvm_library(
     "//platform/lang-impl",
   ]
 )
+### auto-generated section `build intellij.configurationScript.test.java` end
+
+### auto-generated section `test intellij.configurationScript.test.java` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "configurationScript-test-java_test",
   runtime_deps = [":configurationScript-test-java_test_lib"]
 )
-### auto-generated section `build intellij.configurationScript.test.java` end
+### auto-generated section `test intellij.configurationScript.test.java` end

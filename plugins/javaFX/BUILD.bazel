@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.javaFX` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "javaFX_resources",
@@ -106,16 +105,18 @@ jvm_library(
   ],
   runtime_deps = [":javaFX_resources"]
 )
+### auto-generated section `build intellij.javaFX` end
+
+### auto-generated section `test intellij.javaFX` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "javaFX_test",
   runtime_deps = [":javaFX_test_lib"]
 )
-### auto-generated section `build intellij.javaFX` end
+### auto-generated section `test intellij.javaFX` end
 
 ### auto-generated section `build intellij.javaFX.properties` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
 jvm_resources(
   name = "javaFX-properties_resources",
   files = glob(["properties/resources/**/*"]),

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "frontend_resources",
@@ -82,9 +81,13 @@ jvm_library(
   ],
   runtime_deps = [":frontend_resources"]
 )
+### auto-generated section `build intellij.platform.debugger.impl.frontend` end
+
+### auto-generated section `test intellij.platform.debugger.impl.frontend` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "frontend_test",
   runtime_deps = [":frontend_test_lib"]
 )
-### auto-generated section `build intellij.platform.debugger.impl.frontend` end
+### auto-generated section `test intellij.platform.debugger.impl.frontend` end

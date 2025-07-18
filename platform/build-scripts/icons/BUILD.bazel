@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.images.build` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
   name = "xmlDom_provided",
@@ -71,9 +70,13 @@ jvm_library(
     "@lib//:hash4j",
   ]
 )
+### auto-generated section `build intellij.platform.images.build` end
+
+### auto-generated section `test intellij.platform.images.build` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "images-build_test",
   runtime_deps = [":images-build_test_lib"]
 )
-### auto-generated section `build intellij.platform.images.build` end
+### auto-generated section `test intellij.platform.images.build` end

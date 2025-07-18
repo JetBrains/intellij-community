@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.decompiler` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "java-decompiler_resources",
@@ -65,9 +64,13 @@ jvm_library(
   ],
   runtime_deps = [":java-decompiler_resources"]
 )
+### auto-generated section `build intellij.java.decompiler` end
+
+### auto-generated section `test intellij.java.decompiler` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "java-decompiler_test",
   runtime_deps = [":java-decompiler_test_lib"]
 )
-### auto-generated section `build intellij.java.decompiler` end
+### auto-generated section `test intellij.java.decompiler` end

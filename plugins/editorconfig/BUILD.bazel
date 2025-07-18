@@ -16,8 +16,6 @@ jvm_library(
 ### auto-generated section `build intellij.editorconfig.plugin` end
 
 ### auto-generated section `build intellij.editorconfig.plugin.main` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "editorconfig-plugin-main",
   visibility = ["//visibility:public"],

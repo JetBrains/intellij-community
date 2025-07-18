@@ -36,8 +36,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.polySymbols` end
 
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "polySymbols-testFramework",
   module_name = "intellij.platform.polySymbols.testFramework",
@@ -72,9 +70,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` end
 
 ### auto-generated section `build intellij.platform.polySymbols.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "polySymbols-tests_test_resources",
   files = glob(["testData/**/*"]),
@@ -113,9 +108,13 @@ jvm_library(
   ],
   runtime_deps = [":polySymbols-tests_test_resources"]
 )
+### auto-generated section `build intellij.platform.polySymbols.tests` end
+
+### auto-generated section `test intellij.platform.polySymbols.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "polySymbols-tests_test",
   runtime_deps = [":polySymbols-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.polySymbols.tests` end
+### auto-generated section `test intellij.platform.polySymbols.tests` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.lombok` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "lombok_resources",
@@ -100,9 +99,13 @@ jvm_library(
     ":lombok_test_resources_1",
   ]
 )
+### auto-generated section `build intellij.lombok` end
+
+### auto-generated section `test intellij.lombok` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "lombok_test",
   runtime_deps = [":lombok_test_lib"]
 )
-### auto-generated section `build intellij.lombok` end
+### auto-generated section `test intellij.lombok` end

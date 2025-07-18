@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.python.community.junit5Tests.framework.conda` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "conda_test_resources",
@@ -30,9 +29,13 @@ jvm_library(
   ],
   runtime_deps = [":conda_test_resources"]
 )
+### auto-generated section `build intellij.python.community.junit5Tests.framework.conda` end
+
+### auto-generated section `test intellij.python.community.junit5Tests.framework.conda` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "conda_test",
   runtime_deps = [":conda_test_lib"]
 )
-### auto-generated section `build intellij.python.community.junit5Tests.framework.conda` end
+### auto-generated section `test intellij.python.community.junit5Tests.framework.conda` end

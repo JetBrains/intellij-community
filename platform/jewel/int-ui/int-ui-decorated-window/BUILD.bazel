@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_jewel-intUi-decoratedWindow",
   context_receivers = True,
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
@@ -24,7 +24,7 @@ jvm_library(
   module_name = "intellij.platform.jewel.intUi.decoratedWindow",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_jewel-intUi-decoratedWindow",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",

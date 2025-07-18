@@ -56,9 +56,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util` end
 
 ### auto-generated section `build intellij.platform.util.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "util-tests_test_resources",
   files = glob(["testData/**/*"]),
@@ -131,15 +128,18 @@ jvm_library(
     ":util-tests_test_resources_1",
   ]
 )
+### auto-generated section `build intellij.platform.util.tests` end
+
+### auto-generated section `test intellij.platform.util.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "util-tests_test",
   runtime_deps = [":util-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.util.tests` end
+### auto-generated section `test intellij.platform.util.tests` end
 
 ### auto-generated section `build intellij.platform.util.ui` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(

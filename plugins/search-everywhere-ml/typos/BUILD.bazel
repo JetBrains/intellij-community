@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.searchEverywhereMl.typos` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "typos_resources",
@@ -63,9 +62,13 @@ jvm_library(
   ],
   runtime_deps = [":typos_resources"]
 )
+### auto-generated section `build intellij.searchEverywhereMl.typos` end
+
+### auto-generated section `test intellij.searchEverywhereMl.typos` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "typos_test",
   runtime_deps = [":typos_test_lib"]
 )
-### auto-generated section `build intellij.searchEverywhereMl.typos` end
+### auto-generated section `test intellij.searchEverywhereMl.typos` end

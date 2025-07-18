@@ -1,10 +1,9 @@
 ### auto-generated section `build kotlin.j2k.shared.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_tests",
   context_receivers = True
 )
 
@@ -18,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_tests",
   deps = [
     "//java/testFramework",
     "@lib//:kotlin-stdlib",
@@ -49,9 +48,13 @@ jvm_library(
     "//plugins/kotlin/base/code-insight/minimal",
   ]
 )
+### auto-generated section `build kotlin.j2k.shared.tests` end
+
+### auto-generated section `test kotlin.j2k.shared.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.j2k.shared.tests` end
+### auto-generated section `test kotlin.j2k.shared.tests` end

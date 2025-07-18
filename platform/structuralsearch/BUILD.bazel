@@ -43,9 +43,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.structuralSearch` end
 
 ### auto-generated section `build intellij.platform.structuralSearch.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "structuralSearch-tests",
   visibility = ["//visibility:public"],
@@ -74,9 +71,13 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
   ]
 )
+### auto-generated section `build intellij.platform.structuralSearch.tests` end
+
+### auto-generated section `test intellij.platform.structuralSearch.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "structuralSearch-tests_test",
   runtime_deps = [":structuralSearch-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.structuralSearch.tests` end
+### auto-generated section `test intellij.platform.structuralSearch.tests` end

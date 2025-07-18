@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.idea.tools.launch` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "launch_resources",
@@ -46,9 +45,13 @@ jvm_library(
   ],
   runtime_deps = [":launch_resources"]
 )
+### auto-generated section `build intellij.idea.tools.launch` end
+
+### auto-generated section `test intellij.idea.tools.launch` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "launch_test",
   runtime_deps = [":launch_test_lib"]
 )
-### auto-generated section `build intellij.idea.tools.launch` end
+### auto-generated section `test intellij.idea.tools.launch` end

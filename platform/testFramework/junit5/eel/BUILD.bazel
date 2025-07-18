@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "eel_test_resources",
@@ -62,9 +61,13 @@ jvm_library(
   ],
   runtime_deps = [":eel_test_resources"]
 )
+### auto-generated section `build intellij.platform.testFramework.junit5.eel` end
+
+### auto-generated section `test intellij.platform.testFramework.junit5.eel` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "eel_test",
   runtime_deps = [":eel_test_lib"]
 )
-### auto-generated section `build intellij.platform.testFramework.junit5.eel` end
+### auto-generated section `test intellij.platform.testFramework.junit5.eel` end

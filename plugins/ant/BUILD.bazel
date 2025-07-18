@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.ant` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "ant_resources",
@@ -117,9 +116,13 @@ jvm_library(
   ],
   runtime_deps = [":ant_resources"]
 )
+### auto-generated section `build intellij.ant` end
+
+### auto-generated section `test intellij.ant` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "ant_test",
   runtime_deps = [":ant_test_lib"]
 )
-### auto-generated section `build intellij.ant` end
+### auto-generated section `test intellij.ant` end

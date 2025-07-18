@@ -34,9 +34,6 @@ jvm_library(
 ### auto-generated section `build intellij.statsCollector` end
 
 ### auto-generated section `build intellij.statsCollector.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "statsCollector-tests",
   visibility = ["//visibility:public"],
@@ -62,9 +59,13 @@ jvm_library(
     "//platform/core-ui",
   ]
 )
+### auto-generated section `build intellij.statsCollector.tests` end
+
+### auto-generated section `test intellij.statsCollector.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "statsCollector-tests_test",
   runtime_deps = [":statsCollector-tests_test_lib"]
 )
-### auto-generated section `build intellij.statsCollector.tests` end
+### auto-generated section `test intellij.statsCollector.tests` end

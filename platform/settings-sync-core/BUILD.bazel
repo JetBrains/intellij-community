@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.settingsSync.core` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "settingsSync-core_resources",
@@ -119,9 +118,13 @@ jvm_library(
   ],
   runtime_deps = [":settingsSync-core_resources"]
 )
+### auto-generated section `build intellij.settingsSync.core` end
+
+### auto-generated section `test intellij.settingsSync.core` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "settingsSync-core_test",
   runtime_deps = [":settingsSync-core_test_lib"]
 )
-### auto-generated section `build intellij.settingsSync.core` end
+### auto-generated section `test intellij.settingsSync.core` end

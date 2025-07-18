@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.compose.ide.plugin.resources` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "ide-plugin-resources_resources",
@@ -102,9 +101,13 @@ jvm_library(
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )
+### auto-generated section `build intellij.compose.ide.plugin.resources` end
+
+### auto-generated section `test intellij.compose.ide.plugin.resources` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "ide-plugin-resources_test",
   runtime_deps = [":ide-plugin-resources_test_lib"]
 )
-### auto-generated section `build intellij.compose.ide.plugin.resources` end
+### auto-generated section `test intellij.compose.ide.plugin.resources` end

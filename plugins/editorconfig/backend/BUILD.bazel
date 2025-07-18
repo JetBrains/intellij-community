@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.editorconfig.backend` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "backend_resources",
@@ -106,9 +105,13 @@ jvm_library(
     ":backend_resources_1",
   ]
 )
+### auto-generated section `build intellij.editorconfig.backend` end
+
+### auto-generated section `test intellij.editorconfig.backend` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "backend_test",
   runtime_deps = [":backend_test_lib"]
 )
-### auto-generated section `build intellij.editorconfig.backend` end
+### auto-generated section `test intellij.editorconfig.backend` end

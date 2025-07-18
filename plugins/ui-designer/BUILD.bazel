@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.guiForms.designer` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "java-guiForms-designer_resources",
@@ -153,9 +152,13 @@ jvm_library(
     ":java-guiForms-designer_test_resources_1",
   ]
 )
+### auto-generated section `build intellij.java.guiForms.designer` end
+
+### auto-generated section `test intellij.java.guiForms.designer` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "java-guiForms-designer_test",
   runtime_deps = [":java-guiForms-designer_test_lib"]
 )
-### auto-generated section `build intellij.java.guiForms.designer` end
+### auto-generated section `test intellij.java.guiForms.designer` end

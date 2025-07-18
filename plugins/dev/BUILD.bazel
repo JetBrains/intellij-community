@@ -27,8 +27,6 @@ jvm_library(
 ### auto-generated section `build intellij.dev.noJava.plugin.main` end
 
 ### auto-generated section `build intellij.dev.plugin.main` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "dev-plugin-main",
   visibility = ["//visibility:public"],

@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.notebooks.visualization` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_visualization",
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
@@ -22,7 +21,7 @@ jvm_library(
   module_name = "intellij.notebooks.visualization",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_visualization",
   deps = [
     "@lib//:gson",
     "//platform/analysis-api:analysis",
@@ -50,7 +49,7 @@ jvm_library(
   name = "visualization_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_visualization",
   associates = [":visualization"],
   deps = [
     "@lib//:gson",
@@ -77,9 +76,13 @@ jvm_library(
   ],
   runtime_deps = [":visualization_resources"]
 )
+### auto-generated section `build intellij.notebooks.visualization` end
+
+### auto-generated section `test intellij.notebooks.visualization` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "visualization_test",
   runtime_deps = [":visualization_test_lib"]
 )
-### auto-generated section `build intellij.notebooks.visualization` end
+### auto-generated section `test intellij.notebooks.visualization` end

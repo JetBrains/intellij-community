@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.markdown.utils` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "markdown-utils",
@@ -33,9 +32,13 @@ jvm_library(
     "//platform/lang-impl",
   ]
 )
+### auto-generated section `build intellij.platform.markdown.utils` end
+
+### auto-generated section `test intellij.platform.markdown.utils` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "markdown-utils_test",
   runtime_deps = [":markdown-utils_test_lib"]
 )
-### auto-generated section `build intellij.platform.markdown.utils` end
+### auto-generated section `test intellij.platform.markdown.utils` end

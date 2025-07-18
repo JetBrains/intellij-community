@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.kotlin.gradle.multiplatformTests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "multiplatform-tests_test_lib",
@@ -46,9 +45,13 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
   ]
 )
+### auto-generated section `build intellij.kotlin.gradle.multiplatformTests` end
+
+### auto-generated section `test intellij.kotlin.gradle.multiplatformTests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "multiplatform-tests_test",
   runtime_deps = [":multiplatform-tests_test_lib"]
 )
-### auto-generated section `build intellij.kotlin.gradle.multiplatformTests` end
+### auto-generated section `test intellij.kotlin.gradle.multiplatformTests` end

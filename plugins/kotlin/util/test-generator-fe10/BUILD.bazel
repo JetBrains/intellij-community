@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.util.test-generator-fe10` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "test-generator-fe10",
@@ -56,9 +55,13 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
   ]
 )
+### auto-generated section `build kotlin.util.test-generator-fe10` end
+
+### auto-generated section `test kotlin.util.test-generator-fe10` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "test-generator-fe10_test",
   runtime_deps = [":test-generator-fe10_test_lib"]
 )
-### auto-generated section `build kotlin.util.test-generator-fe10` end
+### auto-generated section `test kotlin.util.test-generator-fe10` end

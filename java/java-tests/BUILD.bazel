@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "tests_test_resources",
@@ -162,9 +161,13 @@ jvm_library(
     "//plugins/IntelliLang/xml-support:xml-langInjection",
   ]
 )
+### auto-generated section `build intellij.java.tests` end
+
+### auto-generated section `test intellij.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.java.tests` end
+### auto-generated section `test intellij.java.tests` end

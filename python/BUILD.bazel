@@ -34,8 +34,6 @@ jvm_library(
 ### auto-generated section `build intellij.pycharm.community` end
 
 ### auto-generated section `build intellij.pycharm.community.customization` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
 jvm_resources(
   name = "pycharm-community-customization_resources",
   files = glob(["ide/resources/**/*"]),
@@ -58,8 +56,6 @@ jvm_library(
 ### auto-generated section `build intellij.pycharm.community.customization` end
 
 ### auto-generated section `build intellij.pycharm.community.main` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "pycharm-community-main",
   visibility = ["//visibility:public"],
@@ -176,9 +172,6 @@ jvm_library(
 ### auto-generated section `build intellij.pycharm.community.main` end
 
 ### auto-generated section `build intellij.python.commonTests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "python-commonTests",
   visibility = ["//visibility:public"],
@@ -209,16 +202,18 @@ jvm_library(
     "//python/impl.helperLocator:community-helpersLocator",
   ]
 )
+### auto-generated section `build intellij.python.commonTests` end
+
+### auto-generated section `test intellij.python.commonTests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "python-commonTests_test",
   runtime_deps = [":python-commonTests_test_lib"]
 )
-### auto-generated section `build intellij.python.commonTests` end
+### auto-generated section `test intellij.python.commonTests` end
 
 ### auto-generated section `build intellij.python.community.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
 jvm_resources(
   name = "python-community-impl_resources",
   files = glob(["pluginResources/**/*"]),
@@ -369,8 +364,6 @@ jvm_library(
 ### auto-generated section `build intellij.python.community.impl` end
 
 ### auto-generated section `build intellij.python.community.plugin.main` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "python-community-plugin-main",
   visibility = ["//visibility:public"],
@@ -403,8 +396,6 @@ jvm_library(
 ### auto-generated section `build intellij.python.community.plugin.main` end
 
 ### auto-generated section `build intellij.python.community.plugin.modules` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "python-community-plugin-modules",
   visibility = ["//visibility:public"],
@@ -421,9 +412,6 @@ jvm_library(
 ### auto-generated section `build intellij.python.community.plugin.modules` end
 
 ### auto-generated section `build intellij.python.community.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "python-community-tests_test_resources",
   files = glob(["testResources/**/*"]),
@@ -543,16 +531,18 @@ jvm_library(
     "//jupyter:notebooks-jupyter-core",
   ]
 )
+### auto-generated section `build intellij.python.community.tests` end
+
+### auto-generated section `test intellij.python.community.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "python-community-tests_test",
   runtime_deps = [":python-community-tests_test_lib"]
 )
-### auto-generated section `build intellij.python.community.tests` end
+### auto-generated section `test intellij.python.community.tests` end
 
 ### auto-generated section `build intellij.python.helpers` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
 jvm_resources(
   name = "python-helpers_resources",
   files = glob(["helpers/**/*"]),
@@ -577,9 +567,6 @@ jvm_library(
 ### auto-generated section `build intellij.python.helpers` end
 
 ### auto-generated section `build intellij.python.helpers.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "python-helpers-tests_test_resources",
   files = glob(["helpers/testResources/**/*"]),
@@ -600,16 +587,18 @@ jvm_library(
   ],
   runtime_deps = [":python-helpers-tests_test_resources"]
 )
+### auto-generated section `build intellij.python.helpers.tests` end
+
+### auto-generated section `test intellij.python.helpers.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "python-helpers-tests_test",
   runtime_deps = [":python-helpers-tests_test_lib"]
 )
-### auto-generated section `build intellij.python.helpers.tests` end
+### auto-generated section `test intellij.python.helpers.tests` end
 
 ### auto-generated section `build intellij.python.pydev` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
 jvm_resources(
   name = "python-pydev_resources",
   files = glob(["pydevSrc/resources/**/*"]),

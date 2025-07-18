@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.objectSerializer` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "object-serializer",
@@ -50,16 +49,18 @@ jvm_library(
     "//platform/settings",
   ]
 )
+### auto-generated section `build intellij.platform.objectSerializer` end
+
+### auto-generated section `test intellij.platform.objectSerializer` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "object-serializer_test",
   runtime_deps = [":object-serializer_test_lib"]
 )
-### auto-generated section `build intellij.platform.objectSerializer` end
+### auto-generated section `test intellij.platform.objectSerializer` end
 
 ### auto-generated section `build intellij.platform.objectSerializer.annotations` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "objectSerializer-annotations",
   module_name = "intellij.platform.objectSerializer.annotations",
@@ -70,9 +71,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.objectSerializer.annotations` end
 
 ### auto-generated section `build intellij.platform.objectSerializer.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "objectSerializer-tests",
   visibility = ["//visibility:public"],
@@ -98,9 +96,13 @@ jvm_library(
     "@lib//:fastutil-min",
   ]
 )
+### auto-generated section `build intellij.platform.objectSerializer.tests` end
+
+### auto-generated section `test intellij.platform.objectSerializer.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "objectSerializer-tests_test",
   runtime_deps = [":objectSerializer-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.objectSerializer.tests` end
+### auto-generated section `test intellij.platform.objectSerializer.tests` end

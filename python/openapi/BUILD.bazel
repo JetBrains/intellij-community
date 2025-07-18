@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.python.community` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "community_resources",
@@ -56,9 +55,13 @@ jvm_library(
   ],
   runtime_deps = [":community_resources"]
 )
+### auto-generated section `build intellij.python.community` end
+
+### auto-generated section `test intellij.python.community` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "community_test",
   runtime_deps = [":community_test_lib"]
 )
-### auto-generated section `build intellij.python.community` end
+### auto-generated section `test intellij.python.community` end

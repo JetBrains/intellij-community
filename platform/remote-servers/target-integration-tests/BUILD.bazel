@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.remoteServers.targetsIntegrationTests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "remoteServers-targetsIntegrationTests",
@@ -39,9 +38,13 @@ jvm_library(
     "//platform/util/jdom",
   ]
 )
+### auto-generated section `build intellij.platform.remoteServers.targetsIntegrationTests` end
+
+### auto-generated section `test intellij.platform.remoteServers.targetsIntegrationTests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "remoteServers-targetsIntegrationTests_test",
   runtime_deps = [":remoteServers-targetsIntegrationTests_test_lib"]
 )
-### auto-generated section `build intellij.platform.remoteServers.targetsIntegrationTests` end
+### auto-generated section `test intellij.platform.remoteServers.targetsIntegrationTests` end

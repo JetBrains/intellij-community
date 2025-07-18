@@ -26,9 +26,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.model.serialization` end
 
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "model-serialization-tests_test_resources",
   files = glob(["testResources/**/*"]),
@@ -64,9 +61,13 @@ jvm_library(
     "//platform/workspace/jps",
   ]
 )
+### auto-generated section `build intellij.platform.jps.model.serialization.tests` end
+
+### auto-generated section `test intellij.platform.jps.model.serialization.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "model-serialization-tests_test",
   runtime_deps = [":model-serialization-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.jps.model.serialization.tests` end
+### auto-generated section `test intellij.platform.jps.model.serialization.tests` end

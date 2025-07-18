@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.devkit.kotlin.fir.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-fir-tests_test_lib",
@@ -40,9 +39,13 @@ jvm_library(
     "//plugins/devkit/intellij.kotlin.devkit/k2",
   ]
 )
+### auto-generated section `build intellij.devkit.kotlin.fir.tests` end
+
+### auto-generated section `test intellij.devkit.kotlin.fir.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "kotlin-fir-tests_test",
   runtime_deps = [":kotlin-fir-tests_test_lib"]
 )
-### auto-generated section `build intellij.devkit.kotlin.fir.tests` end
+### auto-generated section `test intellij.devkit.kotlin.fir.tests` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.devkit.gradle` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "gradle_resources",
@@ -77,9 +76,13 @@ jvm_library(
   ],
   runtime_deps = [":gradle_resources"]
 )
+### auto-generated section `build intellij.devkit.gradle` end
+
+### auto-generated section `test intellij.devkit.gradle` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "gradle_test",
   runtime_deps = [":gradle_test_lib"]
 )
-### auto-generated section `build intellij.devkit.gradle` end
+### auto-generated section `test intellij.devkit.gradle` end

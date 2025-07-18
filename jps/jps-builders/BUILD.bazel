@@ -60,9 +60,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.build` end
 
 ### auto-generated section `build intellij.platform.jps.build.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "build-tests_test_resources",
   files = glob(["testResources/**/*"]),
@@ -108,9 +105,13 @@ jvm_library(
   ],
   runtime_deps = [":build-tests_test_resources"]
 )
+### auto-generated section `build intellij.platform.jps.build.tests` end
+
+### auto-generated section `test intellij.platform.jps.build.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "build-tests_test",
   runtime_deps = [":build-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.jps.build.tests` end
+### auto-generated section `test intellij.platform.jps.build.tests` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "codeOptimizer_test_resources",
@@ -18,9 +17,13 @@ jvm_library(
   ],
   runtime_deps = [":codeOptimizer_test_resources"]
 )
+### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` end
+
+### auto-generated section `test intellij.platform.buildScripts.codeOptimizer` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "codeOptimizer_test",
   runtime_deps = [":codeOptimizer_test_lib"]
 )
-### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` end
+### auto-generated section `test intellij.platform.buildScripts.codeOptimizer` end

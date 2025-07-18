@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_shared",
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
@@ -22,7 +22,7 @@ jvm_library(
   module_name = "kotlin.jvm.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_shared",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",

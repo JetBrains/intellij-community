@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.syntax` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_provided_library(
   name = "multiplatformSupport_provided",
@@ -36,9 +35,13 @@ jvm_library(
     "@lib//:kotlin-test",
   ]
 )
+### auto-generated section `build intellij.platform.syntax` end
+
+### auto-generated section `test intellij.platform.syntax` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "syntax_test",
   runtime_deps = [":syntax_test_lib"]
 )
-### auto-generated section `build intellij.platform.syntax` end
+### auto-generated section `test intellij.platform.syntax` end

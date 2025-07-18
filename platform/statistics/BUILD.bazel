@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.statistics` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "statistics_resources",
@@ -96,9 +95,13 @@ jvm_library(
   ],
   runtime_deps = [":statistics_resources"]
 )
+### auto-generated section `build intellij.platform.statistics` end
+
+### auto-generated section `test intellij.platform.statistics` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "statistics_test",
   runtime_deps = [":statistics_test_lib"]
 )
-### auto-generated section `build intellij.platform.statistics` end
+### auto-generated section `test intellij.platform.statistics` end

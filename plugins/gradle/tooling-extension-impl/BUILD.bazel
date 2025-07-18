@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_toolingExtension-impl",
   jvm_target = 8,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
@@ -19,7 +19,7 @@ jvm_library(
   module_name = "intellij.gradle.toolingExtension.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_toolingExtension-impl",
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/external-system-rt:externalSystem-rt",
@@ -48,9 +48,6 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
 
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "toolingExtension-tests_test_resources",
   files = glob(["testResources/**/*"]),
@@ -91,9 +88,13 @@ jvm_library(
   ],
   runtime_deps = [":toolingExtension-tests_test_resources"]
 )
+### auto-generated section `build intellij.gradle.toolingExtension.tests` end
+
+### auto-generated section `test intellij.gradle.toolingExtension.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "toolingExtension-tests_test",
   runtime_deps = [":toolingExtension-tests_test_lib"]
 )
-### auto-generated section `build intellij.gradle.toolingExtension.tests` end
+### auto-generated section `test intellij.gradle.toolingExtension.tests` end

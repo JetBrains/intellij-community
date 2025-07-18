@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.ide.startup.importSettings` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "importSettings_resources",
@@ -99,9 +98,13 @@ jvm_library(
   ],
   runtime_deps = [":importSettings_resources"]
 )
+### auto-generated section `build intellij.ide.startup.importSettings` end
+
+### auto-generated section `test intellij.ide.startup.importSettings` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "importSettings_test",
   runtime_deps = [":importSettings_test_lib"]
 )
-### auto-generated section `build intellij.ide.startup.importSettings` end
+### auto-generated section `test intellij.ide.startup.importSettings` end

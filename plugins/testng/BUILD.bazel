@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.testng` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "testng_resources",
@@ -117,9 +116,13 @@ jvm_library(
     ":testng_test_resources",
   ]
 )
+### auto-generated section `build intellij.testng` end
+
+### auto-generated section `test intellij.testng` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "testng_test",
   runtime_deps = [":testng_test_lib"]
 )
-### auto-generated section `build intellij.testng` end
+### auto-generated section `test intellij.testng` end

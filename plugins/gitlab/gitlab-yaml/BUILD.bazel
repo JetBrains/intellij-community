@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.vcs.gitlab.yaml` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "vcs-gitlab-yaml_resources",
@@ -47,9 +46,13 @@ jvm_library(
   ],
   runtime_deps = [":vcs-gitlab-yaml_resources"]
 )
+### auto-generated section `build intellij.vcs.gitlab.yaml` end
+
+### auto-generated section `test intellij.vcs.gitlab.yaml` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "vcs-gitlab-yaml_test",
   runtime_deps = [":vcs-gitlab-yaml_test_lib"]
 )
-### auto-generated section `build intellij.vcs.gitlab.yaml` end
+### auto-generated section `test intellij.vcs.gitlab.yaml` end

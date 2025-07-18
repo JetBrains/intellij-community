@@ -85,9 +85,6 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.java` end
 
 ### auto-generated section `build intellij.gradle.java.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
 jvm_resources(
   name = "java-tests_test_resources",
   files = glob(["testData/**/*"]),
@@ -168,9 +165,13 @@ jvm_library(
   ],
   runtime_deps = [":java-tests_test_resources"]
 )
+### auto-generated section `build intellij.gradle.java.tests` end
+
+### auto-generated section `test intellij.gradle.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "java-tests_test",
   runtime_deps = [":java-tests_test_lib"]
 )
-### auto-generated section `build intellij.gradle.java.tests` end
+### auto-generated section `test intellij.gradle.java.tests` end

@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_lsp.protocol",
   context_parameters = True,
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
@@ -16,7 +16,7 @@ jvm_library(
   module_name = "fleet.lsp.protocol",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/**/*.kt", "src/main/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_lsp.protocol",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",

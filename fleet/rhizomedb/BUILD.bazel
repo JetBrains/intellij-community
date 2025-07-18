@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_rhizomedb",
   allow_kotlin_package = True,
   opt_in = [
     "kotlin.ExperimentalStdlibApi",
@@ -16,7 +16,7 @@ jvm_library(
   module_name = "fleet.rhizomedb",
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_rhizomedb",
   deps = [
     "//fleet/util/core",
     "//fleet/multiplatform.shims",

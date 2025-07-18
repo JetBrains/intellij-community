@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.jvm-debugger.eval4j` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "eval4j",
@@ -33,6 +32,10 @@ jvm_library(
     "//java/debugger/impl",
   ]
 )
+### auto-generated section `build kotlin.jvm-debugger.eval4j` end
+
+### auto-generated section `test kotlin.jvm-debugger.eval4j` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "eval4j_test",
@@ -41,4 +44,4 @@ jps_test(
     "//:main_test_lib",
   ]
 )
-### auto-generated section `build kotlin.jvm-debugger.eval4j` end
+### auto-generated section `test kotlin.jvm-debugger.eval4j` end

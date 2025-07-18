@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_kotlin-completion-impl-k2",
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -22,7 +22,7 @@ jvm_library(
   module_name = "kotlin.completion.impl.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_kotlin-completion-impl-k2",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

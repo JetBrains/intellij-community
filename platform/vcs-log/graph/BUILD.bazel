@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "vcs-log-graph-impl",
@@ -38,9 +37,13 @@ jvm_library(
     "@lib//:kotlin-test",
   ]
 )
+### auto-generated section `build intellij.platform.vcs.log.graph.impl` end
+
+### auto-generated section `test intellij.platform.vcs.log.graph.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "vcs-log-graph-impl_test",
   runtime_deps = [":vcs-log-graph-impl_test_lib"]
 )
-### auto-generated section `build intellij.platform.vcs.log.graph.impl` end
+### auto-generated section `test intellij.platform.vcs.log.graph.impl` end

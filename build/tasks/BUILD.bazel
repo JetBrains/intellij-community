@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.idea.community.build.tasks` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tasks",
@@ -80,9 +79,13 @@ jvm_library(
     "@rules_jvm//zip",
   ]
 )
+### auto-generated section `build intellij.idea.community.build.tasks` end
+
+### auto-generated section `test intellij.idea.community.build.tasks` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tasks_test",
   runtime_deps = [":tasks_test_lib"]
 )
-### auto-generated section `build intellij.idea.community.build.tasks` end
+### auto-generated section `test intellij.idea.community.build.tasks` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.ijent` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "ijent_resources",
@@ -42,9 +41,13 @@ jvm_library(
   ],
   runtime_deps = [":ijent_resources"]
 )
+### auto-generated section `build intellij.platform.ijent` end
+
+### auto-generated section `test intellij.platform.ijent` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "ijent_test",
   runtime_deps = [":ijent_test_lib"]
 )
-### auto-generated section `build intellij.platform.ijent` end
+### auto-generated section `test intellij.platform.ijent` end

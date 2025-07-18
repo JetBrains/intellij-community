@@ -33,9 +33,6 @@ jvm_library(
 ### auto-generated section `build intellij.turboComplete` end
 
 ### auto-generated section `build intellij.turboComplete.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "turboComplete-tests_test_lib",
   visibility = ["//visibility:public"],
@@ -49,9 +46,13 @@ jvm_library(
     "//platform/ml-impl:ml-impl_test_lib",
   ]
 )
+### auto-generated section `build intellij.turboComplete.tests` end
+
+### auto-generated section `test intellij.turboComplete.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "turboComplete-tests_test",
   runtime_deps = [":turboComplete-tests_test_lib"]
 )
-### auto-generated section `build intellij.turboComplete.tests` end
+### auto-generated section `test intellij.turboComplete.tests` end

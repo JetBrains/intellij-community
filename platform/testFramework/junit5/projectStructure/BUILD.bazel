@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "projectStructure",
@@ -43,9 +42,13 @@ jvm_library(
     "//platform/workspace/jps",
   ]
 )
+### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` end
+
+### auto-generated section `test intellij.platform.testFramework.junit5.projectStructure` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "projectStructure_test",
   runtime_deps = [":projectStructure_test_lib"]
 )
-### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure` end
+### auto-generated section `test intellij.platform.testFramework.junit5.projectStructure` end

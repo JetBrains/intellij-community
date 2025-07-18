@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.code-insight.fixes.k2.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
@@ -34,9 +33,13 @@ jvm_library(
     "//plugins/kotlin/fir/tests:tests_test_lib",
   ]
 )
+### auto-generated section `build kotlin.code-insight.fixes.k2.tests` end
+
+### auto-generated section `test kotlin.code-insight.fixes.k2.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.code-insight.fixes.k2.tests` end
+### auto-generated section `test kotlin.code-insight.fixes.k2.tests` end

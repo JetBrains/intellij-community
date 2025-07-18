@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.test-framework` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "test-framework",
@@ -69,9 +68,13 @@ jvm_library(
     "//platform/statistics/testFramework",
   ]
 )
+### auto-generated section `build kotlin.test-framework` end
+
+### auto-generated section `test kotlin.test-framework` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "test-framework_test",
   runtime_deps = [":test-framework_test_lib"]
 )
-### auto-generated section `build kotlin.test-framework` end
+### auto-generated section `test kotlin.test-framework` end

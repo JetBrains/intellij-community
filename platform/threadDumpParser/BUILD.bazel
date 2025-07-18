@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.threadDumpParser` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "threadDumpParser",
@@ -34,9 +33,13 @@ jvm_library(
     "@lib//:junit4",
   ]
 )
+### auto-generated section `build intellij.platform.threadDumpParser` end
+
+### auto-generated section `test intellij.platform.threadDumpParser` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "threadDumpParser_test",
   runtime_deps = [":threadDumpParser_test_lib"]
 )
-### auto-generated section `build intellij.platform.threadDumpParser` end
+### auto-generated section `test intellij.platform.threadDumpParser` end

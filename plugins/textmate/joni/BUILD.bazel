@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.textmate.joni` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "joni",
@@ -29,9 +28,13 @@ jvm_library(
     "@lib//:junit5",
   ]
 )
+### auto-generated section `build intellij.textmate.joni` end
+
+### auto-generated section `test intellij.textmate.joni` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "joni_test",
   runtime_deps = [":joni_test_lib"]
 )
-### auto-generated section `build intellij.textmate.joni` end
+### auto-generated section `test intellij.textmate.joni` end

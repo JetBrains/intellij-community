@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "community-junit5Tests-framework_test_resources",
@@ -59,9 +58,13 @@ jvm_library(
     "//python/pluginCore:community-plugin",
   ]
 )
+### auto-generated section `build intellij.python.community.junit5Tests.framework` end
+
+### auto-generated section `test intellij.python.community.junit5Tests.framework` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "community-junit5Tests-framework_test",
   runtime_deps = [":community-junit5Tests-framework_test_lib"]
 )
-### auto-generated section `build intellij.python.community.junit5Tests.framework` end
+### auto-generated section `test intellij.python.community.junit5Tests.framework` end

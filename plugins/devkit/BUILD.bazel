@@ -16,8 +16,6 @@ jvm_library(
 ### auto-generated section `build intellij.devkit` end
 
 ### auto-generated section `build intellij.devkit.plugin.main` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "devkit-plugin-main",
   visibility = ["//visibility:public"],
@@ -50,8 +48,6 @@ jvm_library(
 ### auto-generated section `build intellij.devkit.plugin.main` end
 
 ### auto-generated section `build intellij.devkit.plugin.main.noKotlin` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
 jvm_library(
   name = "devkit-plugin-main-noKotlin",
   visibility = ["//visibility:public"],

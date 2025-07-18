@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.python.community.interpreters` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "interpreters_resources",
@@ -73,9 +72,13 @@ jvm_library(
   ],
   runtime_deps = [":interpreters_resources"]
 )
+### auto-generated section `build intellij.python.community.interpreters` end
+
+### auto-generated section `test intellij.python.community.interpreters` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "interpreters_test",
   runtime_deps = [":interpreters_test_lib"]
 )
-### auto-generated section `build intellij.python.community.interpreters` end
+### auto-generated section `test intellij.python.community.interpreters` end

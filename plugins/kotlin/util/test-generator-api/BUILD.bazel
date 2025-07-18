@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.util.test-generator-api` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "test-generator-api",
@@ -30,9 +29,13 @@ jvm_library(
     "//java/java-runtime:rt",
   ]
 )
+### auto-generated section `build kotlin.util.test-generator-api` end
+
+### auto-generated section `test kotlin.util.test-generator-api` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "test-generator-api_test",
   runtime_deps = [":test-generator-api_test_lib"]
 )
-### auto-generated section `build kotlin.util.test-generator-api` end
+### auto-generated section `test kotlin.util.test-generator-api` end

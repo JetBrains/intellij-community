@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_autolink",
   context_receivers = True,
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
@@ -25,7 +24,7 @@ jvm_library(
   module_name = "intellij.platform.jewel.markdown.extensions.autolink",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_autolink",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -44,7 +43,7 @@ jvm_library(
   name = "autolink_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_autolink",
   associates = [":autolink"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -63,9 +62,13 @@ jvm_library(
   runtime_deps = [":autolink_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink` end
+
+### auto-generated section `test intellij.platform.jewel.markdown.extensions.autolink` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "autolink_test",
   runtime_deps = [":autolink_test_lib"]
 )
-### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink` end
+### auto-generated section `test intellij.platform.jewel.markdown.extensions.autolink` end

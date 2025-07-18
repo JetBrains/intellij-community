@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.tests-compose` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests-compose",
@@ -14,9 +13,13 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = ["@lib//:kotlin-stdlib"]
 )
+### auto-generated section `build kotlin.tests-compose` end
+
+### auto-generated section `test kotlin.tests-compose` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests-compose_test",
   runtime_deps = [":tests-compose_test_lib"]
 )
-### auto-generated section `build kotlin.tests-compose` end
+### auto-generated section `test kotlin.tests-compose` end

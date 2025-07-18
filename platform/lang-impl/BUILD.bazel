@@ -138,9 +138,6 @@ jvm_library(
 ### auto-generated section `build intellij.platform.lang.impl` end
 
 ### auto-generated section `build intellij.platform.lang.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "lang-tests",
   visibility = ["//visibility:public"],
@@ -229,9 +226,13 @@ jvm_library(
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
   ]
 )
+### auto-generated section `build intellij.platform.lang.tests` end
+
+### auto-generated section `test intellij.platform.lang.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "lang-tests_test",
   runtime_deps = [":lang-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.lang.tests` end
+### auto-generated section `test intellij.platform.lang.tests` end

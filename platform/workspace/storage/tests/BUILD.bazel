@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.platform.workspace.storage.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_tests",
   opt_in = [
     "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
     "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
@@ -27,7 +26,7 @@ jvm_library(
   name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_tests",
   associates = ["//platform/workspace/storage"],
   deps = [
     "//platform/core-api:core",
@@ -46,9 +45,13 @@ jvm_library(
   ],
   runtime_deps = [":tests_test_resources"]
 )
+### auto-generated section `build intellij.platform.workspace.storage.tests` end
+
+### auto-generated section `test intellij.platform.workspace.storage.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.workspace.storage.tests` end
+### auto-generated section `test intellij.platform.workspace.storage.tests` end

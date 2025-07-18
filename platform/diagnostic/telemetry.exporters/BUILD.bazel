@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_telemetry.exporters",
   opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
 )
 
@@ -18,7 +18,7 @@ jvm_library(
   module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_telemetry.exporters",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

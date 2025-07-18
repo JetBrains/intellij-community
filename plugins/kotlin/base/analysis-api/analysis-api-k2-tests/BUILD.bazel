@@ -1,10 +1,9 @@
 ### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_kotlin-base-analysis-analysis-api-k2-tests",
   context_receivers = True
 )
 
@@ -18,7 +17,7 @@ jvm_library(
   name = "kotlin-base-analysis-analysis-api-k2-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  kotlinc_opts = ":custom_kotlin-base-analysis-analysis-api-k2-tests",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -42,9 +41,13 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
+### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` end
+
+### auto-generated section `test kotlin.base.analysis.analysis-api.k2.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "kotlin-base-analysis-analysis-api-k2-tests_test",
   runtime_deps = [":kotlin-base-analysis-analysis-api-k2-tests_test_lib"]
 )
-### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` end
+### auto-generated section `test kotlin.base.analysis.analysis-api.k2.tests` end

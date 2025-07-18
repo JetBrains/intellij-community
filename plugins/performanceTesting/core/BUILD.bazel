@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.performanceTesting` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "performanceTesting_resources",
@@ -131,9 +130,13 @@ jvm_library(
   ],
   runtime_deps = [":performanceTesting_resources"]
 )
+### auto-generated section `build intellij.performanceTesting` end
+
+### auto-generated section `test intellij.performanceTesting` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "performanceTesting_test",
   runtime_deps = [":performanceTesting_test_lib"]
 )
-### auto-generated section `build intellij.performanceTesting` end
+### auto-generated section `test intellij.performanceTesting` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.onboarding.gradle` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "onboarding-gradle_resources",
@@ -81,9 +80,13 @@ jvm_library(
   ],
   runtime_deps = [":onboarding-gradle_resources"]
 )
+### auto-generated section `build kotlin.onboarding.gradle` end
+
+### auto-generated section `test kotlin.onboarding.gradle` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "onboarding-gradle_test",
   runtime_deps = [":onboarding-gradle_test_lib"]
 )
-### auto-generated section `build kotlin.onboarding.gradle` end
+### auto-generated section `test kotlin.onboarding.gradle` end

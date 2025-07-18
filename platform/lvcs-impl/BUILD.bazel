@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.lvcs.impl` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "lvcs-impl_resources",
@@ -83,9 +82,13 @@ jvm_library(
   ],
   runtime_deps = [":lvcs-impl_resources"]
 )
+### auto-generated section `build intellij.platform.lvcs.impl` end
+
+### auto-generated section `test intellij.platform.lvcs.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "lvcs-impl_test",
   runtime_deps = [":lvcs-impl_test_lib"]
 )
-### auto-generated section `build intellij.platform.lvcs.impl` end
+### auto-generated section `test intellij.platform.lvcs.impl` end

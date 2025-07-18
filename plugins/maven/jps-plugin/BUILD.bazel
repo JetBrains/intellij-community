@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.maven.jps` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "jps_resources",
@@ -50,9 +49,13 @@ jvm_library(
   ],
   runtime_deps = [":jps_resources"]
 )
+### auto-generated section `build intellij.maven.jps` end
+
+### auto-generated section `test intellij.maven.jps` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "jps_test",
   runtime_deps = [":jps_test_lib"]
 )
-### auto-generated section `build intellij.maven.jps` end
+### auto-generated section `test intellij.maven.jps` end

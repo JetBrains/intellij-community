@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.maven.server.eventListener` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "server-eventListener_resources",
@@ -34,9 +33,13 @@ jvm_library(
   ],
   runtime_deps = [":server-eventListener_resources"]
 )
+### auto-generated section `build intellij.maven.server.eventListener` end
+
+### auto-generated section `test intellij.maven.server.eventListener` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "server-eventListener_test",
   runtime_deps = [":server-eventListener_test_lib"]
 )
-### auto-generated section `build intellij.maven.server.eventListener` end
+### auto-generated section `test intellij.maven.server.eventListener` end

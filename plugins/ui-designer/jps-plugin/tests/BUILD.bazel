@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.guiForms.jps.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests",
@@ -24,9 +23,13 @@ jvm_library(
     "//jps/model-serialization:model-serialization-tests_test_lib",
   ]
 )
+### auto-generated section `build intellij.java.guiForms.jps.tests` end
+
+### auto-generated section `test intellij.java.guiForms.jps.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.java.guiForms.jps.tests` end
+### auto-generated section `test intellij.java.guiForms.jps.tests` end
