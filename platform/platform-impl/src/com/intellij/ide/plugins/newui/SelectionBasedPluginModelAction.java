@@ -281,18 +281,6 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     group.add(createUninstallAction.produce());
   }
 
-  static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                                     @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
-    DefaultActionGroup result = new DefaultActionGroup();
-    addActionsTo(result,
-                 createEnableDisableAction,
-                 createUninstallAction);
-
-    return TabbedPaneHeaderComponent.createToolbar(result,
-                                                   IdeBundle.message("plugin.settings.link.title"),
-                                                   AllIcons.General.GearHover);
-  }
-
   static <C extends JComponent> @NotNull OptionButtonController<C> createOptionButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
                                                                                       @NotNull UninstallAction<C> uninstallAction) {
     return new OptionButtonController<>(createEnableDisableAction.apply(PluginEnableDisableAction.ENABLE_GLOBALLY),

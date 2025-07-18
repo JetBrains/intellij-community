@@ -31,10 +31,10 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   initSessionResult: InitSessionResult? = null,
   @JvmField val mySessionId: UUID = UUID.randomUUID(),
 ) {
+  var coroutineScope: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope
   @JvmField
   protected val view: MutableList<PluginUiModel> = mutableListOf()
   protected val enabledMap: MutableMap<PluginId, PluginEnabledState?> = mutableMapOf()
-  protected var coroutineScope: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope
   private val sessionInitializedDeferred = CompletableDeferred<Unit>()
   private val modificationTracker = getModificationTracker()
 

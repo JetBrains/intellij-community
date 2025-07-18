@@ -783,7 +783,7 @@ public final class ListPluginComponent extends JPanel {
         if (myInstallButton != null) {
           myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
           if (myInstallButton.isVisible()) {
-            PluginUiModel foundPlugin = UiPluginManager.getInstance().findPlugin(myPlugin.getPluginId());
+            PluginUiModel foundPlugin = UiPluginManager.getInstance().findPluginSync(myPlugin.getPluginId());
             myInstalledDescriptorForMarketplace = foundPlugin;
             if (myInstalledDescriptorForMarketplace != null) {
               if (myMarketplace) {

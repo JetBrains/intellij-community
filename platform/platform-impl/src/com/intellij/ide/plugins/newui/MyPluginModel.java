@@ -146,10 +146,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     });
   }
 
-  public boolean isDisabledInDiff(@NotNull PluginId pluginId) {
-    return UiPluginManager.getInstance().isDisabledInDiff(mySessionId.toString(), pluginId);
-  }
-
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {
     IdeaPluginDescriptor descriptor = callbackData.getPluginDescriptor();
     CheckErrorsResult errors = UiPluginManager.getInstance().getErrors(mySessionId.toString(), descriptor.getPluginId());

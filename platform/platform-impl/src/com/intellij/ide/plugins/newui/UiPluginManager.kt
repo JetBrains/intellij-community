@@ -15,6 +15,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -159,7 +160,7 @@ class UiPluginManager {
     return getController().getCustomRepositoryPluginMap()
   }
 
-  fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
+  suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
     return getController().isDisabledInDiff(sessionId, pluginId)
   }
 
@@ -175,7 +176,7 @@ class UiPluginManager {
     return getController().findPluginNames(pluginIds)
   }
 
-  fun findPlugin(pluginId: PluginId): PluginUiModel? {
+  suspend fun findPlugin(pluginId: PluginId): PluginUiModel? {
     return getController().findPlugin(pluginId)
   }
 

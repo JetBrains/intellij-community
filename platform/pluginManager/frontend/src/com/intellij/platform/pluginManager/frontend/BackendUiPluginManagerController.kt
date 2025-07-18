@@ -71,8 +71,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getPluginById(id)?.withSource() }
   }
 
-  override fun findPlugin(pluginId: PluginId): PluginUiModel? {
-    return awaitForResult { PluginManagerApi.getInstance().findPlugin(pluginId)?.withSource() }
+  override suspend fun findPlugin(pluginId: PluginId): PluginUiModel? {
+    return PluginManagerApi.getInstance().findPlugin(pluginId)?.withSource()
   }
 
   override fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {
@@ -109,8 +109,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().isPluginRequiresUltimateButItIsDisabled(sessionId, pluginId) }
   }
 
-  override fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
-    return awaitForResult { PluginManagerApi.getInstance().isDisabledInDiff(sessionId, pluginId) }
+  override suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
+    return PluginManagerApi.getInstance().isDisabledInDiff(sessionId, pluginId)
   }
 
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
@@ -182,8 +182,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().hasPluginRequiresUltimateButItsDisabled(pluginIds) }
   }
 
-  override fun isBundledUpdate(pluginIds: List<PluginId>): Boolean {
-    return awaitForResult { PluginManagerApi.getInstance().isBundledUpdate(pluginIds) }
+  override suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean {
+    return PluginManagerApi.getInstance().isBundledUpdate(pluginIds)
   }
 
   override fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {

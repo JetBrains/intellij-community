@@ -87,7 +87,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginManagerCore.getPlugin(id)?.let { PluginUiModelAdapter(it) }?.withSource()
   }
 
-  override fun findPlugin(pluginId: PluginId): PluginUiModel? {
+  override suspend fun findPlugin(pluginId: PluginId): PluginUiModel? {
     return buildPluginIdMap()[pluginId]?.let { PluginUiModelAdapter(it) }?.withSource()
   }
 
@@ -104,7 +104,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PluginUpdatesService.isNeedUpdate(descriptor)
   }
 
-  override fun isBundledUpdate(pluginIds: List<PluginId>): Boolean {
+  override suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean {
     val pluginIdMap = buildPluginIdMap()
     return pluginIds.map { pluginIdMap[it] }.all { isBundledUpdate(it) }
   }
@@ -465,7 +465,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
                               buildPluginIdMap(), getPluginSet().buildContentModuleIdMap()).pluginsIdsToSwitch
   }
 
-  override fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
+  override suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
     val session = findSession(sessionId) ?: return false
     val descriptor = buildPluginIdMap()[pluginId] ?: return false
     val diffStatePair: Pair<PluginEnableDisableAction, PluginEnabledState>? = session.statesDiff[descriptor]

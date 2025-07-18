@@ -66,7 +66,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.isEnabled(model.getDescriptor())
   }
 
-  fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, success: Boolean, showErrors: Boolean, restartRequired: Boolean,  errors: Map<PluginId, List<HtmlChunk>>) {
+  fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, success: Boolean, showErrors: Boolean, restartRequired: Boolean, errors: Map<PluginId, List<HtmlChunk>>) {
     pluginModel.finishInstall(model, installedModel, errors, success, showErrors, restartRequired)
   }
 
@@ -91,8 +91,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     pluginModel.uninstallAndUpdateUi(descriptor, controller)
   }
 
-  fun isDisabledInDiff(model: PluginUiModel): Boolean {
-    return pluginModel.isDisabledInDiff(model.pluginId)
+  suspend fun isDisabledInDiff(model: PluginUiModel): Boolean {
+    return UiPluginManager.getInstance().isDisabledInDiff(pluginModel.sessionId.toString(), model.pluginId)
   }
 
   fun isLoaded(model: PluginUiModel): Boolean {

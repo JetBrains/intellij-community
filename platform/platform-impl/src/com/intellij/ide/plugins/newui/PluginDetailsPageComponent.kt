@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.border.CustomLineBorder
@@ -54,6 +55,7 @@ import com.intellij.util.ui.StartupUiUtil.labelFont
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -161,6 +163,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var enableDisableController: OptionButtonController<PluginDetailsPageComponent>? = null
 
   private val pluginManagerCustomizer: PluginManagerCustomizer?
+  private val notificationsUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
+  private val coroutineScope = pluginModel.getModel().coroutineScope
 
   init {
     nameAndButtons = BaselinePanel(12, false)
@@ -355,7 +359,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         val isSent = feedbackDialog.showAndGet()
         if (isSent) {
           sentFeedbackPlugins.add(plugin.pluginId)
-          updateNotifications()
+          scheduleNotificationsUpdate()
         }
       }
     }
@@ -371,7 +375,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     return panel
   }
 
-  private fun updateNotifications() {
+  private fun scheduleNotificationsUpdate() {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      notificationsUpdateSemaphore.withPermit {
+        updateNotifications()
+      }
+    }
+  }
+
+  private suspend fun updateNotifications() {
     val rootPanel = rootPanel!!
     rootPanel.remove(controlledByOrgNotification)
     rootPanel.remove(platformIncompatibleNotification)
@@ -389,12 +401,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val plugin = plugin
     if (plugin != null && !sentFeedbackPlugins.contains(plugin.pluginId)) {
-      val foundPlugin = DefaultUiPluginManagerController.findPlugin(plugin.pluginId)
+      val foundPlugin = withContext(Dispatchers.IO) { UiPluginManager.getInstance().findPlugin(plugin.pluginId) }
       if (foundPlugin != null && pluginModel.isUninstalled(foundPlugin.pluginId)) {
         rootPanel.add(uninstallFeedbackNotification!!, BorderLayout.NORTH)
       }
-      else if (pluginModel.isDisabledInDiff(plugin)) {
-        rootPanel.add(disableFeedbackNotification!!, BorderLayout.NORTH)
+      else {
+        val disabledInDiff = withContext(Dispatchers.IO) { pluginModel.isDisabledInDiff(plugin) }
+        if (disabledInDiff) {
+          rootPanel.add(disableFeedbackNotification!!, BorderLayout.NORTH)
+        }
       }
     }
   }
@@ -413,7 +428,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       false,
       java.util.List.of(this),
       { it.descriptorForActions },
-      { updateNotifications() },
+      { scheduleNotificationsUpdate() },
     )
   }
 
@@ -839,7 +854,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentOs
     isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
-      installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
+      installedDescriptorForMarketplace = UiPluginManager.getInstance().findPluginSync(plugin!!.pluginId)
       nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton?.getComponent() else updateButton)!!)
     }
     showPlugin()
@@ -889,7 +904,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val text: @NlsSafe String = "<html><span>" + plugin.name + "</span></html>"
     nameComponent.text = text
     nameComponent.foreground = null
-    updateNotifications()
+    scheduleNotificationsUpdate()
     updateIcon()
 
     errorComponent?.isVisible = false
@@ -1113,7 +1128,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       pluginModel, false, this, java.util.List.of(this),
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
       {
-        updateNotifications()
+        scheduleNotificationsUpdate()
       })
   }
 
@@ -1344,10 +1359,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updateErrors() {
+    val descriptor = descriptorForActions ?: return
     if (showComponent?.isNotFreeInFreeMode != true) {
-      val errors = pluginModel.getErrors(descriptorForActions!!)
-      updateIcon(errors)
-      errorComponent!!.setErrors(errors) { this.handleErrors() }
+      PluginModelAsyncOperationsExecutor.updateErrors(coroutineScope, pluginModel.getModel().sessionId, descriptor.pluginId) {
+        val errors = MyPluginModel.getErrors(it)
+        updateIcon(errors)
+        errorComponent!!.setErrors(errors) { this.handleErrors() }
+      }
     }
   }
 
@@ -1438,7 +1456,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           if (installButton != null) {
             installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
             if (installButton.isVisible()) {
-              installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
+              installedDescriptorForMarketplace = UiPluginManager.getInstance().findPluginSync(plugin!!.pluginId)
               installedDescriptorForMarketplace?.let {
                 installButton.setVisible(false)
                 myVersion1!!.text = it.version
@@ -1509,7 +1527,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myEnableDisableButton!!.isVisible = bundled
     }
 
-    updateNotifications()
+    scheduleNotificationsUpdate()
     updateEnableForNameAndIcon()
     updateErrors()
     updateEnabledForProject()
@@ -1539,7 +1557,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     if (!showRestart) {
-      updateNotifications()
+      scheduleNotificationsUpdate()
     }
   }
 

@@ -51,20 +51,20 @@ interface UiPluginManagerController {
   fun updatePluginDependencies(sessionId: String): Set<PluginId>
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
   fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
-  fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
+  suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
   fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
   fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean
   fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   fun getCustomRepoPlugins(): List<PluginUiModel>
   fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>>
-  fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
+  suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   fun isPluginInstalled(pluginId: PluginId): Boolean
   fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean
   fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   fun findPluginNames(pluginIds: List<PluginId>): List<String>
-  fun findPlugin(pluginId: PluginId): PluginUiModel?
+  suspend fun findPlugin(pluginId: PluginId): PluginUiModel?
 
   fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel?
   fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate>
