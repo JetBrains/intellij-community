@@ -13,6 +13,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -56,11 +58,26 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   @Override
   public final @Nullable Presentation getPresentation(@NotNull ActionContext context) {
     E element = getElement(context);
-    return element == null ? null : getPresentation(context, element);
+    if (element == null) return null;
+    Presentation presentation = getPresentation(context, element);
+    return addApplicableRange(presentation, context, element);
   }
 
-  @ApiStatus.Internal
-  public @Nullable E getElement(@NotNull ActionContext context) {
+  private @Nullable Presentation addApplicableRange(@Nullable Presentation presentation,
+                                                    @NotNull ActionContext context,
+                                                    @NotNull E element) {
+    if (presentation == null) return null;
+    //applicable range is used only inside the file where the action is called,
+    //otherwise it can cause ast loading
+    if (context.file() != element.getContainingFile()) {
+      return presentation;
+    }
+    List<Presentation.HighlightRange> ranges = new ArrayList<>(presentation.rangesToHighlight());
+    ranges.add(new Presentation.HighlightRange(element.getTextRange(), Presentation.HighlightingKind.APPLICABLE_TO_RANGE));
+    return presentation.withHighlighting(ranges.toArray(Presentation.HighlightRange[]::new));
+  }
+
+  private @Nullable E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
       E element = myPointer.getElement();
       if (element == null) return null;

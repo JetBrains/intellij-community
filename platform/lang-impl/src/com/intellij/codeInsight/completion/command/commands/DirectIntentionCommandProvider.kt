@@ -30,6 +30,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.INFORMATION
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
@@ -469,10 +470,13 @@ internal class DirectIntentionCommandProvider : CommandProvider {
     }
     val modCommandAction = intentionAction.asModCommandAction() ?: return null
     if (modCommandAction is PsiBasedModCommandAction<*>) {
-      modCommandAction.getElement(ActionContext.from(editor, psiFile))?.let {
-        return HighlightInfoLookup(it.textRange.intersection(TextRange(it.textRange.startOffset, currentOffset)),
-          EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
-      }
+      modCommandAction.getPresentation(ActionContext.from(editor, psiFile))
+        ?.rangesToHighlight()
+        ?.firstOrNull { highlightRange -> highlightRange.highlightingKind() == Presentation.HighlightingKind.APPLICABLE_TO_RANGE }
+        ?.let {
+          return HighlightInfoLookup(it.range().intersection(TextRange(it.range().startOffset, currentOffset)),
+                                     EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
+        }
     }
     return null
   }

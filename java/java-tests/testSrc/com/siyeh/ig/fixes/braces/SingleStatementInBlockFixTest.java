@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.braces;
 
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGQuickFixesTestCase;
@@ -49,11 +51,23 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
     IntentionAction action = myFixture.findSingleIntention(getMessage("if"));
     ModCommandAction mcAction = action.asModCommandAction();
     assertNotNull(mcAction);
+    PsiFile psiFile = myFixture.getFile();
     Presentation presentation =
-      mcAction.getPresentation(ActionContext.from(myFixture.getEditor(), myFixture.getFile()));
+      mcAction.getPresentation(ActionContext.from(myFixture.getEditor(), psiFile));
     assertNotNull(presentation);
-    assertEquals(List.of(new Presentation.HighlightRange(TextRange.from(44, 1), EditorColors.DELETED_TEXT_ATTRIBUTES),
-      new Presentation.HighlightRange(TextRange.from(87, 1), EditorColors.DELETED_TEXT_ATTRIBUTES)), presentation.rangesToHighlight());
+    assertEquals(List.of(new Presentation.HighlightRange(TextRange.from(44, 1), Presentation.HighlightingKind.DELETED_RANGE),
+                         new Presentation.HighlightRange(TextRange.from(87, 1), Presentation.HighlightingKind.DELETED_RANGE)),
+                 presentation.rangesToHighlight());
+    assertInstanceOf(action, CustomizableIntentionAction.class);
+    List<CustomizableIntentionAction.RangeToHighlight> ranges =
+      ((CustomizableIntentionAction)action).getRangesToHighlight(myFixture.getEditor(), psiFile);
+    assertSize(2,  ranges);
+    assertEquals(
+      List.of(TextRange.from(44, 1), TextRange.from(87, 1)),
+      List.of(ranges.get(0).getRangeInFile(), ranges.get(1).getRangeInFile()));
+    assertEquals(
+      List.of(EditorColors.DELETED_TEXT_ATTRIBUTES, EditorColors.DELETED_TEXT_ATTRIBUTES),
+      List.of(ranges.get(0).getHighlightKey(), ranges.get(1).getHighlightKey()));
   }
 
   @Override

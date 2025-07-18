@@ -632,6 +632,16 @@ com.intellij.modcommand.ModTemplateBuilder
 - a:field(com.intellij.psi.PsiElement,java.lang.String,java.lang.String,Z):com.intellij.modcommand.ModTemplateBuilder
 - a:finishAt(I):com.intellij.modcommand.ModTemplateBuilder
 - a:onTemplateFinished(java.util.function.Function):com.intellij.modcommand.ModTemplateBuilder
+f:com.intellij.modcommand.Presentation$HighlightRange
+- <init>(com.intellij.openapi.util.TextRange,com.intellij.modcommand.Presentation$HighlightingKind):V
+- highlightingKind():com.intellij.modcommand.Presentation$HighlightingKind
+e:com.intellij.modcommand.Presentation$HighlightingKind
+- java.lang.Enum
+- sf:AFFECTED_RANGE:com.intellij.modcommand.Presentation$HighlightingKind
+- sf:APPLICABLE_TO_RANGE:com.intellij.modcommand.Presentation$HighlightingKind
+- sf:DELETED_RANGE:com.intellij.modcommand.Presentation$HighlightingKind
+- s:valueOf(java.lang.String):com.intellij.modcommand.Presentation$HighlightingKind
+- s:values():com.intellij.modcommand.Presentation$HighlightingKind[]
 com.intellij.openapi.actionSystem.ShortcutProvider
 - a:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 com.intellij.openapi.application.WriteActionAware

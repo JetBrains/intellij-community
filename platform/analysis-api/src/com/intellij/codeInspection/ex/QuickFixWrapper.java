@@ -15,6 +15,8 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -282,7 +284,10 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
       List<RangeToHighlight> highlight = myFix.getRangesToHighlight(context.project(), myDescriptor);
       if (!highlight.isEmpty()) {
         Presentation.HighlightRange[] ranges = ContainerUtil.map2Array(highlight, Presentation.HighlightRange.class,
-                                                          r -> new Presentation.HighlightRange(r.getRangeInFile(), r.getHighlightKey()));
+                                                          r -> {
+                                                            return new Presentation.HighlightRange(r.getRangeInFile(),
+                                                                                                   convertToHighlightingType(r.getHighlightKey()));
+                                                          });
         presentation = presentation.withHighlighting(ranges);
       }
       if (myFix instanceof Iconable iconable) {
@@ -292,6 +297,17 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
         presentation = presentation.withPriority(priorityAction.getPriority());
       }
       return presentation;
+    }
+
+    private static @NotNull Presentation.HighlightingKind convertToHighlightingType(@NotNull TextAttributesKey key) {
+      if (key == EditorColors.SEARCH_RESULT_ATTRIBUTES) {
+        return Presentation.HighlightingKind.AFFECTED_RANGE;
+      }
+      else if (key == EditorColors.DELETED_TEXT_ATTRIBUTES) {
+        return Presentation.HighlightingKind.DELETED_RANGE;
+      }
+      //just fallback to the default highlighting type
+      return Presentation.HighlightingKind.AFFECTED_RANGE;
     }
 
     @Override

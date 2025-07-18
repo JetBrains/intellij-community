@@ -2281,10 +2281,8 @@ f:com.intellij.modcommand.Presentation$FixAllOption
 - name():java.lang.String
 f:com.intellij.modcommand.Presentation$HighlightRange
 - java.lang.Record
-- <init>(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey):V
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
-- highlightKey():com.intellij.openapi.editor.colors.TextAttributesKey
 - range():com.intellij.openapi.util.TextRange
 a:com.intellij.modcommand.PsiBasedModCommandAction
 - com.intellij.modcommand.ModCommandAction

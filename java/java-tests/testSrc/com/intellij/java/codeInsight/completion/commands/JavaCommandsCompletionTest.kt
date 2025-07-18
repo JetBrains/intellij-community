@@ -726,7 +726,9 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.doHighlighting()
     myFixture.type(".")
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("flip '=='", ignoreCase = true) })
+    val item = elements.first { element -> element.lookupString.contains("flip '=='", ignoreCase = true) }
+    assertEquals(TextRange(33, 37), (item.`as`(CommandCompletionLookupElement::class.java))?.highlighting?.range)
+    selectItem(item)
     myFixture.checkResult("""
       class A { 
         void foo() {

@@ -115,6 +115,7 @@ public interface CustomizableIntentionAction extends IntentionAction {
       return psi.getContainingFile();
     }
 
+    @NotNull
     public TextAttributesKey getHighlightKey() {
       return highlightKey;
     }
