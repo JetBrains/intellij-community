@@ -6,7 +6,7 @@ import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
-class McpCallAdditionalData(
+class McpCallInfo(
   val callId: Int,
   val clientInfo: ClientInfo,
   val project: Project?,
@@ -21,23 +21,23 @@ class McpCallAdditionalData(
 
 class ClientInfo(val name: String, val version: String)
 
-class McpCallAdditionalDataElement(val additionalData: McpCallAdditionalData) : AbstractCoroutineContextElement(Key) {
+class McpCallAdditionalDataElement(val additionalData: McpCallInfo) : AbstractCoroutineContextElement(Key) {
   companion object Key : CoroutineContext.Key<McpCallAdditionalDataElement>
 }
 
-val CoroutineContext.mcpCallAdditionalDataOrNull: McpCallAdditionalData? get() = get(McpCallAdditionalDataElement)?.additionalData
-val CoroutineContext.mcpCallAdditionalData: McpCallAdditionalData get() = mcpCallAdditionalDataOrNull ?: error("mcpCallAdditionalData called outside of a MCP call")
+val CoroutineContext.mcpCallInfoOrNull: McpCallInfo? get() = get(McpCallAdditionalDataElement)?.additionalData
+val CoroutineContext.mcpCallInfo: McpCallInfo get() = mcpCallInfoOrNull ?: error("mcpCallAdditionalData called outside of a MCP call")
 
 /**
  * Returns information about the MCP client that is calling a tool.
  */
-val CoroutineContext.clientInfo: ClientInfo get() = mcpCallAdditionalData.clientInfo
+val CoroutineContext.clientInfo: ClientInfo get() = mcpCallInfo.clientInfo
 
 
 /**
  * Returns information about the MCP tool that is called.
  */
-val CoroutineContext.currentToolDescriptor: McpToolDescriptor get() = mcpCallAdditionalData.mcpToolDescriptor
+val CoroutineContext.currentToolDescriptor: McpToolDescriptor get() = mcpCallInfo.mcpToolDescriptor
 
 /**
  * MCP tool can resolve a project with this extension property. In the case of running some MCP clients (like Claude) by IJ infrastructure
@@ -58,7 +58,7 @@ val CoroutineContext.project: Project
  * The same as [projectOrNull], but allows to specify whether to look for any/last focused project or take only the one from the context element
  */
 fun CoroutineContext.getProjectOrNull(lookForAnyProject: Boolean): Project? {
-  val projectFromContext = mcpCallAdditionalData.project
+  val projectFromContext = mcpCallInfo.project
   if (projectFromContext != null) return projectFromContext
   if (!lookForAnyProject) return null
   return getLastFocusedOrOpenedProject()
