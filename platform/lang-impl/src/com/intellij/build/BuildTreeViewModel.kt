@@ -31,7 +31,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   private val nodeStates = mutableMapOf<Int, BuildTreeNode>() // accessed only via sequentialDispatcher
   private val id2Node = ConcurrentHashMap<Int, ExecutionNode>()
 
-  private val navigationFlow = MutableSharedFlow<BuildTreeNavigationRequest>()
+  private val navigationFlow = MutableSharedFlow<BuildTreeNavigationRequest>(extraBufferCapacity = Int.MAX_VALUE)
   private val filteringStateFlow = MutableStateFlow(BuildTreeFilteringState(false, true))
   private val isDisposed = MutableStateFlow(false)
 
@@ -217,10 +217,8 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   }
 
   fun navigate(forward: Boolean) {
-    scope.launch {
-      LOG.debug { "Navigate (forward=$forward)" }
-      navigationFlow.emit(BuildTreeNavigationRequest(forward))
-    }
+    LOG.debug { "Navigate (forward=$forward)" }
+    navigationFlow.tryEmit(BuildTreeNavigationRequest(forward))
   }
 
   var showingSuccessful: Boolean

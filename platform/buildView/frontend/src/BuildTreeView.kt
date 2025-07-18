@@ -15,6 +15,9 @@ import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.ui.ComponentContainer
@@ -52,7 +55,7 @@ private val LOG = fileLogger()
 
 internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewId: SplitComponentId)
   : JPanel(), UiDataProvider, ComponentContainer {
-  private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.EDT)
+  private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.UI + ModalityState.any().asContextElement())
 
   private val rootNode = MyNode(
     BuildTreeNode(BuildTreeNode.ROOT_ID, BuildTreeNode.NO_ID,
@@ -86,7 +89,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
         handleFilteringStateChange(it)
       }
     }
-    uiScope.launch {
+    uiScope.launch(Dispatchers.EDT /* Navigatable-s might expect WIL to be taken */) {
       BuildTreeApi.getInstance().getNavigationFlow(buildViewId).collect {
         handleNavigation(it.forward)
       }
@@ -216,7 +219,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
             }
             else {
               LOG.debug { "Make visible (id=$nodeId)" }
-              TreeUtil.promiseMakeVisible(tree, TreePathUtil.toTreePath(node))
+              tree.makeVisible(TreePathUtil.toTreePath(node))
             }
           }
         }
