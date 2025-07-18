@@ -2,6 +2,9 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
+import com.intellij.xdebugger.impl.findValue
+import com.intellij.xdebugger.impl.rpc.XDebugSessionAdditionalTabComponentManagerId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionTabApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabDto
@@ -29,5 +32,10 @@ internal class BackendXDebugSessionTabApi : XDebugSessionTabApi {
     withContext(Dispatchers.EDT) {
       session.tabInitialized(tab)
     }
+  }
+
+  override suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent> {
+    val manager = tabComponentsManagerId.findValue() ?: return emptyFlow()
+    return manager.tabComponentEvents
   }
 }

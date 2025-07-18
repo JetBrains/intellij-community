@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.diagnostic.logging.LogConsoleManagerBase
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.ui.ConsoleView
@@ -20,6 +21,7 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContex
 import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.shared.XDebuggerSessionAdditionalTabId
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -271,7 +273,12 @@ class FrontendXDebuggerSession private constructor(
           sessionTabDeferred.complete(this)
           proxy.onTabInitialized(this)
           showTab()
-          runContentDescriptor?.coroutineScope?.awaitCancellationAndInvoke {
+          val descriptorScope = runContentDescriptor?.coroutineScope
+          // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
+          if (descriptorScope != null && tabInfo.executionEnvironmentProxyDto?.executionEnvironment == null) {
+            subscribeOnAdditionalTabs(descriptorScope, project, this@apply, tabInfo.additionalTabsComponentManagerId)
+          }
+          descriptorScope?.awaitCancellationAndInvoke {
             tabInfo.tabClosedCallback.send(Unit)
           }
           pausedFlow.toFlow().collectLatest { paused ->

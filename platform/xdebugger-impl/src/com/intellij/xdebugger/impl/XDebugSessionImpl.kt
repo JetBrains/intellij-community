@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
@@ -467,9 +468,12 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (useFeProxy()) {
       val environmentCoroutineScope = debuggerManager.coroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>(capacity = 1)
+      val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(project, environmentCoroutineScope)
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
-                                            contentToReuse, executionEnvironment?.toDto(environmentCoroutineScope), tabClosedChannel)
+                                            contentToReuse, executionEnvironment?.toDto(environmentCoroutineScope),
+                                            additionalTabComponentManager.id, tabClosedChannel)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
+        addAdditionalTabsToManager(additionalTabComponentManager)
         // TODO: take contentToReuse into account
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
@@ -501,6 +505,13 @@ class XDebugSessionImpl @JvmOverloads constructor(
           tab.showTab()
         }
       }
+    }
+  }
+
+  private fun addAdditionalTabsToManager(additionalTabComponentManager: XDebugSessionAdditionalTabComponentManager) {
+    val runConfiguration = executionEnvironment?.runProfile
+    if (runConfiguration is RunConfigurationBase<*>) {
+      runConfiguration.createAdditionalTabComponents(additionalTabComponentManager, debugProcess.processHandler)
     }
   }
 
