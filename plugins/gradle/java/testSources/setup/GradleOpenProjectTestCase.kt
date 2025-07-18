@@ -11,10 +11,11 @@ import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.utils.vfs.getDirectory
+import com.intellij.testFramework.utils.vfs.getFile
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.util.getSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.idea.maven.utils.MavenUtil as IntellijMavenUtil
 
@@ -26,7 +27,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
         action = ImportProjectAction(),
         systemId = GradleConstants.SYSTEM_ID,
         selectedFile = testRoot.getDirectory(projectInfo.relativePath)
-          .getSettingsFile(projectInfo.gradleDsl)
+          .getFile(getSettingsScriptName(projectInfo.gradleDsl))
       )
     }
   }

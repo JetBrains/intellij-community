@@ -73,7 +73,7 @@ class GradleDslPropertiesFileTest : GradleCodeInsightTestCase() {
       withSettingsFile(gradleVersion) {
         setProjectName("GradlePropertiesFileTest")
       }
-      withBuildFile(content = "")
+      withBuildFile(gradleVersion)
       withFile("gradle.properties",  /* language=properties */  """
         foo=1
         foobar=2
