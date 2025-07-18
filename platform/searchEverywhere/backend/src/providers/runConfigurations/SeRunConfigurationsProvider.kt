@@ -23,9 +23,9 @@ import org.jetbrains.annotations.Nls
 import kotlin.Any
 
 @ApiStatus.Internal
-class SeRunConfigurationsItem(val item: ChooseRunConfigurationPopup.ItemWrapper<*>, private val weight: Int, val extendedDescription: String?) : SeItem {
+class SeRunConfigurationsItem(val item: ChooseRunConfigurationPopup.ItemWrapper<*>, private val weight: Int, val extendedDescription: String?, val isMultiSelectionSupported: Boolean) : SeItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeRunConfigurationsPresentationProvider.getPresentation(item, extendedDescription)
+  override suspend fun presentation(): SeItemPresentation = SeRunConfigurationsPresentationProvider.getPresentation(item, extendedDescription, isMultiSelectionSupported)
 }
 
 @ApiStatus.Internal
@@ -39,7 +39,7 @@ class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContrib
       contributorWrapper.contributor.fetchElements(params.inputQuery, indicator) { item ->
         (item as? ChooseRunConfigurationPopup.ItemWrapper<*>)?.let {
           val weight = contributorWrapper.contributor.getElementPriority(item, params.inputQuery)
-          runBlockingCancellable { collector.put(SeRunConfigurationsItem(it, weight, getExtendedDescription(it))) }
+          runBlockingCancellable { collector.put(SeRunConfigurationsItem(it, weight, getExtendedDescription(it), contributorWrapper.contributor.isMultiSelectionSupported)) }
         } ?: true
       }
     }

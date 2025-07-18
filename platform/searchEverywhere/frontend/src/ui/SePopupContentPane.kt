@@ -53,6 +53,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.*
+import java.util.*
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
@@ -420,9 +421,22 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
     ScrollingUtil.installMoveDownAction(resultList, textField)
 
+    resultList.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
     resultList.addListSelectionListener { _: ListSelectionEvent ->
-      val index = resultList.selectedIndex
-      if (index != -1) {
+      val selectedIndices = resultList.selectedIndices
+      if (selectedIndices.size > 1) {
+        val multiSelection = selectedIndices.all { i ->
+          val element = resultListModel.get(i)
+          element is SeResultListItemRow && element.item.presentation.isMultiSelectionSupported
+        }
+        if (!multiSelection) {
+          val leadSelectionIndex = resultList.leadSelectionIndex
+          resultList.setSelectedIndex(leadSelectionIndex)
+        }
+      }
+
+      val firstSelectedIndex = resultList.selectedIndex
+      if (firstSelectedIndex != -1) {
         extendedInfoComponent?.updateElement(resultList.selectedValue, this@SePopupContentPane)
       }
     }

@@ -27,6 +27,7 @@ import javax.swing.Icon
 sealed interface SeItemPresentation {
   val text: String
   val extendedDescription: String? get() = null
+  val isMultiSelectionSupported: Boolean
 }
 
 @ApiStatus.Internal
@@ -38,6 +39,7 @@ class SeSimpleItemPresentation(
   val description: @NlsSafe String? = null,
   val accessibleAdditionToText: @NlsSafe String? = null,
   override val extendedDescription: String? = null,
+  override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
   override val text: @Nls String get() = textChunk?.text ?: ""
 
@@ -47,13 +49,15 @@ class SeSimpleItemPresentation(
     description: @NlsSafe String? = null,
     accessibleAdditionToText: @NlsSafe String? = null,
     extendedDescription: String? = null,
+    isMultiSelectionSupported: Boolean,
   ) : this(
     iconId,
     text?.let { SerializableTextChunk(it) },
     null,
     description,
     accessibleAdditionToText,
-    extendedDescription)
+    extendedDescription,
+    isMultiSelectionSupported)
 }
 
 @ApiStatus.Internal
@@ -86,6 +90,7 @@ data class SeRunnableActionItemPresentation(
   val promo: Promo? = null,
   val iconId: IconId? = null,
   val selectedIconId: IconId? = null,
+  override val isMultiSelectionSupported: Boolean,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
   override val extendedDescription: String? get() = commonData.extendedDescription
@@ -104,6 +109,7 @@ data class SeOptionActionItemPresentation(
   override val commonData: SeActionItemPresentation.Common,
   val value: @NlsSafe String? = null,
   val isBooleanOption: Boolean = false,
+  override val isMultiSelectionSupported: Boolean
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
   override val extendedDescription: String? get() = commonData.extendedDescription
@@ -124,6 +130,7 @@ class SeTargetItemPresentation(
   val locationText: @NlsSafe String? = null,
   private val locationIconId: IconId? = null,
   override val extendedDescription: @NlsSafe String? = null,
+  override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
   override val text: String get() = presentableText
 
@@ -140,7 +147,7 @@ class SeTargetItemPresentation(
   }
 
   companion object {
-    fun create(tp: TargetPresentation, matchers: ItemMatchers?, extendedDescription: String?): SeTargetItemPresentation =
+    fun create(tp: TargetPresentation, matchers: ItemMatchers?, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeTargetItemPresentation =
       SeTargetItemPresentation(backgroundColorId = tp.backgroundColor?.rpcId(),
                                iconId = tp.icon?.rpcId(),
                                presentableText = tp.presentableText,
@@ -158,7 +165,8 @@ class SeTargetItemPresentation(
                                containerTextMatchedRanges = (matchers?.locationMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
                                locationIconId = tp.locationIcon?.rpcId(),
-                               extendedDescription = extendedDescription)
+                               extendedDescription = extendedDescription,
+                               isMultiSelectionSupported = isMultiSelectionSupported)
 
     private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<SerializableRange>? {
       text ?: return null
@@ -175,6 +183,7 @@ class SeTextSearchItemPresentation(
   val textChunks: List<SerializableTextChunk>,
   private val backgroundColorId: ColorId?,
   val fileString: @NlsSafe String,
+  override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
 }

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, val extendedDescription: String?) : SeItem {
+class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, val extendedDescription: String?, val isMultiSelectionSupported: Boolean) : SeItem {
   override fun weight(): Int = weight
 
   override suspend fun presentation(): SeItemPresentation =
@@ -32,7 +32,8 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, 
                                    chunk.toSerializableTextChunk()
                                  },
                                  item.presentation.backgroundColor?.rpcId(),
-                                 item.presentation.fileString)
+                                 item.presentation.fileString,
+                                 isMultiSelectionSupported)
 }
 
 @ApiStatus.Internal
@@ -69,7 +70,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
           val weight = t.weight
           val legacyItem = t.item as? SearchEverywhereItem ?: return true
 
-          return collector.put(SeTextSearchItem(legacyItem, weight, getExtendedDescription(legacyItem)))
+          return collector.put(SeTextSearchItem(legacyItem, weight, getExtendedDescription(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
         }
       })
     }

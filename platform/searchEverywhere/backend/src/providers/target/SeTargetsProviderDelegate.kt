@@ -28,9 +28,10 @@ class SeTargetItem(val legacyItem: ItemWithPresentation<*>,
                    private val matchers: ItemMatchers?,
                    private val weight: Int,
                    override val contributor: SearchEverywhereContributor<*>,
-                   val extendedDescription: String?) : SeLegacyItem {
+                   val extendedDescription: String?,
+                   val isMultiSelectionSupported: Boolean) : SeLegacyItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers, extendedDescription)
+  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers, extendedDescription, isMultiSelectionSupported)
   override val rawObject: Any get() = legacyItem
 }
 
@@ -67,7 +68,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
           val matchers = (contributorWrapper.contributor as? PSIPresentationBgRendererWrapper)
             ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, legacyItem.getItem())
 
-          return collector.put(SeTargetItem(legacyItem, matchers, weight, contributorWrapper.contributor, getExtendedDescription(legacyItem)))
+          return collector.put(SeTargetItem(legacyItem, matchers, weight, contributorWrapper.contributor, getExtendedDescription(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
         }
       })
     }

@@ -17,10 +17,10 @@ import org.jetbrains.annotations.Nls
 
 
 @Internal
-class SeActionItem(val matchedValue: MatchedValue, override val contributor: SearchEverywhereContributor<*>, val extendedDescription: String?): SeItem, SeLegacyItem {
+class SeActionItem(val matchedValue: MatchedValue, override val contributor: SearchEverywhereContributor<*>, val extendedDescription: String?, val isMultiSelectionSupported: Boolean) : SeItem, SeLegacyItem {
   override fun weight(): Int = matchedValue.matchingDegree
   override suspend fun presentation(): SeItemPresentation {
-    return SeActionPresentationProvider.get(matchedValue, extendedDescription)
+    return SeActionPresentationProvider.get(matchedValue, extendedDescription, isMultiSelectionSupported)
   }
 
   override val rawObject: Any get() = matchedValue
@@ -41,7 +41,7 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
 
     coroutineScope {
       legacyContributor.fetchWeightedElements(this, inputQuery) {
-        collector.put(SeActionItem(it.item, legacyContributor, getExtendedDescription(it.item)))
+        collector.put(SeActionItem(it.item, legacyContributor, getExtendedDescription(it.item), legacyContributor.isMultiSelectionSupported))
       }
     }
   }

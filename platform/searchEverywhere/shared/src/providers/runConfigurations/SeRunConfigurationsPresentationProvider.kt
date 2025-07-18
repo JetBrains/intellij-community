@@ -16,7 +16,7 @@ import javax.swing.KeyStroke
 
 @ApiStatus.Internal
 object SeRunConfigurationsPresentationProvider {
-  fun getPresentation(item: ChooseRunConfigurationPopup.ItemWrapper<*>, extendedDescription: String?): SeItemPresentation {
+  fun getPresentation(item: ChooseRunConfigurationPopup.ItemWrapper<*>, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation {
     val debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG)
     val runExecutor = DefaultRunExecutor.getRunExecutorInstance()
     val enterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
@@ -41,6 +41,7 @@ object SeRunConfigurationsPresentationProvider {
     return SeSimpleItemPresentation(iconId = item.icon?.rpcId(),
                                     text = item.text,
                                     description = descriptionText.toString(),
-                                    extendedDescription = extendedDescription)
+                                    extendedDescription = extendedDescription,
+                                    isMultiSelectionSupported = isMultiSelectionSupported)
   }
 }

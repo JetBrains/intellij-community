@@ -65,5 +65,5 @@ class SeItemsProviderMock(
 @ApiStatus.Internal
 class SeItemMock(val text: @NlsSafe String) : SeItem {
   override fun weight(): Int = 0
-  override suspend fun presentation(): SeItemPresentation = SeSimpleItemPresentation(text = text)
+  override suspend fun presentation(): SeItemPresentation = SeSimpleItemPresentation(text = text, isMultiSelectionSupported = false)
 }

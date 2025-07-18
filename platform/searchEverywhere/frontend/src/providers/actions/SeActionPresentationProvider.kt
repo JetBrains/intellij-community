@@ -34,10 +34,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object SeActionPresentationProvider {
-  suspend fun get(matchedValue: GotoActionModel.MatchedValue, extendedDescription: String?): SeItemPresentation {
+  suspend fun get(matchedValue: GotoActionModel.MatchedValue, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation {
     val value = matchedValue.value
     if (value is GotoActionModel.ActionWrapper) {
-      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = "", extendedDescription = extendedDescription))
+      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = "", extendedDescription = extendedDescription), isMultiSelectionSupported = isMultiSelectionSupported)
 
       val anAction = value.action
       val actionPresentation = value.presentation
@@ -95,7 +95,7 @@ object SeActionPresentationProvider {
       val hit = GotoActionModel.GotoActionListCellRenderer.calcHit(value)
       val displayText = if (hit.startsWith("<html>")) StringUtil.removeHtmlTags(hit) else hit
 
-      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = displayText, extendedDescription = extendedDescription))
+      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = displayText, extendedDescription = extendedDescription), isMultiSelectionSupported = isMultiSelectionSupported)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {
@@ -112,6 +112,6 @@ object SeActionPresentationProvider {
 
     SeLog.log(ITEM_EMIT) { "Couldn't generate an action presentation. Unknown item: $matchedValue" }
     @Suppress("HardCodedStringLiteral")
-    return SeRunnableActionItemPresentation(SeActionItemPresentation.Common(text = "Unknown item"))
+    return SeRunnableActionItemPresentation(SeActionItemPresentation.Common(text = "Unknown item"), isMultiSelectionSupported = isMultiSelectionSupported)
   }
 }

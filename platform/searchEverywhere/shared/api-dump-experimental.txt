@@ -5,5 +5,6 @@
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeItemPresentation$Companion
 - getExtendedDescription():java.lang.String
 - a:getText():java.lang.String
+- a:isMultiSelectionSupported():Z
 *f:com.intellij.platform.searchEverywhere.SeItemPresentation$Companion
 - f:serializer():kotlinx.serialization.KSerializer

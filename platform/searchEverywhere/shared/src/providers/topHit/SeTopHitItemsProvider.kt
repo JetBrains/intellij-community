@@ -18,9 +18,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project, val extendedDescription: String?) : SeItem {
+class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project, val extendedDescription: String?, val isMultiSelectionSupported: Boolean) : SeItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(item, project, extendedDescription)
+  override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(item, project, extendedDescription, isMultiSelectionSupported)
 }
 
 @ApiStatus.Internal
@@ -42,7 +42,7 @@ open class SeTopHitItemsProvider(
 
       contributorWrapper.fetchElements(inputQuery, indicator, object : AsyncProcessor<Any> {
         override suspend fun process(t: Any): Boolean {
-          return collector.put(SeTopHitItem(t, weight, project, getExtendedDescription(t)))
+          return collector.put(SeTopHitItem(t, weight, project, getExtendedDescription(t), contributorWrapper.contributor.isMultiSelectionSupported))
         }
       })
     }

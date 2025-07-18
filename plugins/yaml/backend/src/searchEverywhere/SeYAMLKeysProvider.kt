@@ -31,7 +31,7 @@ class SeYAMLKeysProvider(private val contributorWrapper: SeAsyncContributorWrapp
         override suspend fun process(t: Any): Boolean {
           if (t !is YAMLKeyNavigationItem) return true
           val weight = contributorWrapper.contributor.getElementPriority(t, inputQuery)
-          return collector.put(SeNavigationItem(t, weight, getExtendedDescription(t)))
+          return collector.put(SeNavigationItem(t, weight, getExtendedDescription(t), contributorWrapper.contributor.isMultiSelectionSupported))
         }
       })
     }

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus
 object SeTopHitItemPresentationProvider {
   private val iconSize get() = JBUIScale.scale(16)
 
-  suspend fun getPresentation(item: Any, project: Project, extendedDescription: String?): SeItemPresentation =
+  suspend fun getPresentation(item: Any, project: Project, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation =
     readAction {
       when (item) {
          is AnAction -> {
@@ -49,7 +49,8 @@ object SeTopHitItemPresentationProvider {
 
            SeSimpleItemPresentation(iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
                                     text = text,
-                                    extendedDescription = extendedDescription)
+                                    extendedDescription = extendedDescription,
+                                    isMultiSelectionSupported = isMultiSelectionSupported)
          }
         is OptionDescription -> {
           val text = TopHitSEContributor.getSettingText(item)
@@ -68,19 +69,21 @@ object SeTopHitItemPresentationProvider {
 
           if (item is BooleanOptionDescription) {
             SeOptionActionItemPresentation(SeActionItemPresentation.Common(text, _switcherState = item.isOptionEnabled),
-                                           isBooleanOption = true)
+                                           isBooleanOption = true, isMultiSelectionSupported = isMultiSelectionSupported)
           }
           else SeSimpleItemPresentation(iconId = EmptyIcon.ICON_16.rpcId(),
                                         textChunk = textChunk,
                                         selectedTextChunk = selectedTextChunk,
-                                        extendedDescription = extendedDescription)
+                                        extendedDescription = extendedDescription,
+                                        isMultiSelectionSupported = isMultiSelectionSupported)
         }
         else -> {
           val presentation: ItemPresentation? = item as? ItemPresentation ?: (item as? NavigationItem)?.presentation
 
           SeSimpleItemPresentation(iconId = (presentation?.getIcon(false) ?: EmptyIcon.ICON_16).rpcId(),
                                    text = presentation?.presentableText ?: item.toString(),
-                                   extendedDescription = extendedDescription)
+                                   extendedDescription = extendedDescription,
+                                   isMultiSelectionSupported = isMultiSelectionSupported)
         }
       }
     }

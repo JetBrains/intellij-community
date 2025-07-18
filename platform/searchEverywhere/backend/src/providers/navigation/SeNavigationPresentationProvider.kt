@@ -9,17 +9,18 @@ import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeNavigationItem(val item: NavigationItem, private val weight: Int, val extendedDescription: String?) : SeItem {
+class SeNavigationItem(val item: NavigationItem, private val weight: Int, val extendedDescription: String?, val isMultiSelectionSupported: Boolean) : SeItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeNavigationPresentationProvider().getPresentation(item, extendedDescription)
+  override suspend fun presentation(): SeItemPresentation = SeNavigationPresentationProvider().getPresentation(item, extendedDescription, isMultiSelectionSupported)
 }
 
 @Internal
 class SeNavigationPresentationProvider {
-  fun getPresentation(item: NavigationItem, extendedDescription: String?): SeItemPresentation {
+  fun getPresentation(item: NavigationItem, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation {
     return SeTargetItemPresentation(iconId = item.presentation?.getIcon(false)?.rpcId(),
                                     presentableText = item.presentation?.presentableText ?: "",
                                     containerText = item.presentation?.locationString,
-                                    extendedDescription = extendedDescription)
+                                    extendedDescription = extendedDescription,
+                                    isMultiSelectionSupported = isMultiSelectionSupported)
   }
 }
