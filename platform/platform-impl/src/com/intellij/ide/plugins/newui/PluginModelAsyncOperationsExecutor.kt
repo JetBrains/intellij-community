@@ -38,6 +38,17 @@ object PluginModelAsyncOperationsExecutor {
     }
   }
 
+  @JvmOverloads
+  @ApiStatus.Internal
+  fun updateErrors(cs: CoroutineScope = service<FrontendRpcCoroutineContext>().coroutineScope, sessionId: String, pluginId: PluginId, callback: (CheckErrorsResult) -> Unit) {
+    cs.launch(Dispatchers.IO) {
+      val errors = UiPluginManager.getInstance().getErrors(sessionId, pluginId)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        callback(errors)
+      }
+    }
+  }
+
   fun enablePlugins(
     cs: CoroutineScope,
     sessionId: String,

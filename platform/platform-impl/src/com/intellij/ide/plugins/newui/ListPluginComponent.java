@@ -716,8 +716,14 @@ public final class ListPluginComponent extends JPanel {
   @Deprecated(forRemoval = true)
   public void updateErrors() {
     PluginUiModel plugin = getDescriptorForActions();
-    List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myModelFacade.getErrors(plugin);
-    updateErrors(errors);
+    if(myOnlyUpdateMode) {
+      updateErrors(List.of());
+    } else {
+      PluginModelAsyncOperationsExecutor.INSTANCE.updateErrors(myModelFacade.getModel().getSessionId(), plugin.getPluginId(), res -> {
+        updateErrors(MyPluginModel.getErrors(res));
+        return null;
+      });
+    }
   }
 
   private void updatePlugin(PluginUiModel plugin) {

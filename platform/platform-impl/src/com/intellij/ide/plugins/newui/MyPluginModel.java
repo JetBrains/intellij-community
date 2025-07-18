@@ -1069,7 +1069,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return getErrors(response);
   }
 
-  private static @NotNull List<HtmlChunk> getErrors(@NotNull CheckErrorsResult checkErrorsResult) {
+  public static @NotNull List<HtmlChunk> getErrors(@NotNull CheckErrorsResult checkErrorsResult) {
     if (checkErrorsResult.isDisabledDependencyError()) {
       String loadingError = checkErrorsResult.getLoadingError();
       return loadingError != null ? List.of(createTextChunk(loadingError)) : List.of();
