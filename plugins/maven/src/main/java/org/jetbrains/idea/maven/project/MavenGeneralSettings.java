@@ -141,10 +141,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setWorkOffline(boolean value) {
-    if (!Comparing.equal(this.workOffline, value)) {
-      this.workOffline = value;
-      changed();
-    }
+    this.workOffline = value;
+    changed(false);
   }
 
   /**
