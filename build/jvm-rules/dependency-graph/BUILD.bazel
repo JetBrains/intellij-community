@@ -5,10 +5,11 @@ jvm_resources(
     name = "dependency-graph_resources",
     files = glob(["resources/**/*"]),
     strip_prefix = "resources",
+    visibility = ["//visibility:public"],  # used by @community//build:dependency-graph_resources
 )
 
-kt_jvm_library(
-  name = "dependency-graph",
+filegroup(
+  name = "dependency-graph_sources",
   srcs = glob(
       [
           "src/**/*.kt",
@@ -16,9 +17,17 @@ kt_jvm_library(
       ],
       allow_empty = True,
   ),
+  visibility = ["//visibility:public"],  # used by @community//build:dependency-graph
+)
+
+kt_jvm_library(
+  name = "dependency-graph",
+  srcs = [":dependency-graph_sources"],
   kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
   #module_name = "intellij.platform.jps.build.dependencyGraph",
-  visibility = ["//visibility:public"],
+  visibility = [
+    "//jvm-inc-builder:__pkg__",
+  ],
   runtime_deps = [":dependency-graph_resources"],
   # buildifier: leave-alone
   deps = [

@@ -5,10 +5,11 @@ jvm_resources(
     name = "build-javac-rt_resources",
     files = glob(["resources/**/*"]),
     strip_prefix = "resources",
+    visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
 )
 
-kt_jvm_library(
-  name = "build-javac-rt",
+filegroup(
+  name = "build-javac-rt_sources",
   srcs = glob(
       [
           "gen/**/*.kt",
@@ -17,10 +18,19 @@ kt_jvm_library(
           "src/**/*.java",
       ],
       allow_empty = True,
-    ),
+  ),
+  visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
+)
+
+kt_jvm_library(
+  name = "build-javac-rt",
+  srcs = [":build-javac-rt_sources"],
   kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
   #module_name = "intellij.platform.jps.build.javac.rt",
-  visibility = ["//visibility:public"],
+  visibility = [
+    "//dependency-graph:__pkg__",
+    "//jvm-inc-builder:__pkg__",
+  ],
   runtime_deps = [":build-javac-rt_resources"],
   # buildifier: leave-alone
   deps = [
@@ -34,4 +44,5 @@ kt_jvm_library(
     "//:netty-codec-jps",
   ],
 )
+
 ### skip generation section `build intellij.platform.jps.build.javac.rt`

@@ -1,10 +1,23 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+# used by @community//build:zip
+filegroup(
+  name = "zip_sources",
+  srcs = glob(["src/*.kt"]),
+  visibility = ["//visibility:public"],
+)
+
 kt_jvm_library(
   name = "zip",
   kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/*.kt"]),
+  visibility = [
+    "//src/builder-state:__pkg__",
+    "//src/jvm-builder-core:__pkg__",
+    "//src/jvm-builder:__pkg__",
+    "//src/kotlin/kotlin-builder:__pkg__",
+    "//src/misc:__pkg__",
+  ],
+  srcs = [":zip_sources"],
   deps = [
     "//:kotlin-stdlib",
     "//:netty-buffer",

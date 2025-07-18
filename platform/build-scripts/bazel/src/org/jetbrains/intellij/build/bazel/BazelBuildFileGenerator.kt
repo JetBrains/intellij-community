@@ -46,6 +46,8 @@ internal data class CustomModuleDescription(
   val bazelPackage: String,
   val bazelTargetName: String,
   val outputDirectory: String,
+  val additionalProductionTargets: List<String> = emptyList(),
+  val additionalProductionJars: List<String> = emptyList(),
 ) {
   val dependencyLabel = if (bazelPackage.substringAfterLast("/") == bazelTargetName) {
     bazelPackage
@@ -56,12 +58,14 @@ internal data class CustomModuleDescription(
 }
 
 internal val customModules: Map<String, CustomModuleDescription> = listOf(
-  CustomModuleDescription(moduleName = "intellij.idea.community.build.zip", bazelPackage = "@rules_jvm//zip", bazelTargetName = "zip",
-                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/rules_jvm+/zip"),
-  CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@rules_jvm//dependency-graph", bazelTargetName = "dependency-graph",
-                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/rules_jvm+/dependency-graph"),
-  CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt", bazelPackage = "@rules_jvm//jps-builders-6", bazelTargetName = "build-javac-rt",
-                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/rules_jvm+/jps-builders-6"),
+  CustomModuleDescription(moduleName = "intellij.idea.community.build.zip", bazelPackage = "@community//build", bazelTargetName = "zip",
+                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
+  CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@community//build", bazelTargetName = "dependency-graph",
+                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build",
+                          additionalProductionTargets = listOf("@rules_jvm//dependency-graph:dependency-graph_resources"), additionalProductionJars = listOf("out/bazel-out/jvm-fastbuild/bin/external/rules_jvm+/dependency-graph/dependency-graph_resources.jar")),
+  CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt", bazelPackage = "@community//build", bazelTargetName = "build-javac-rt",
+                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build",
+                          additionalProductionTargets = listOf("@rules_jvm//jps-builders-6:build-javac-rt_resources"), additionalProductionJars = listOf("out/bazel-out/jvm-fastbuild/bin/external/rules_jvm+/jps-builders-6/build-javac-rt_resources.jar")),
 ).associateBy { it.moduleName }
 
 @Suppress("ReplaceGetOrSet")
@@ -642,8 +646,8 @@ internal class BazelBuildFileGenerator(
 
     return ModuleTargets(
       moduleDescriptor = moduleDescriptor,
-      productionTargets = productionCompileTargets.map { addPackagePrefix(it) },
-      productionJars = productionCompileJars.map { getJarLocation(it) },
+      productionTargets = productionCompileTargets.map { addPackagePrefix(it) } + customModule?.additionalProductionTargets.orEmpty(),
+      productionJars = productionCompileJars.map { getJarLocation(it) } + customModule?.additionalProductionJars.orEmpty(),
       testTargets = testCompileTargets.map { addPackagePrefix(it) },
       testJars = testCompileTargets.map { getJarLocation(it) },
     )
