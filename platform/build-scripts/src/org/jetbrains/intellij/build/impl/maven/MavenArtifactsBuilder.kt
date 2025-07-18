@@ -341,8 +341,11 @@ data class MavenCoordinates(
   val directoryPath: String
     get() = "${groupId.replace('.', '/')}/$artifactId/$version"
 
+  val filesPrefix: String
+    get() = "$artifactId-$version"
+
   fun getFileName(classifier: String = "", packaging: String): String {
-    return "$artifactId-$version${if (classifier.isEmpty()) "" else "-$classifier"}.$packaging"
+    return "$filesPrefix${if (classifier.isEmpty()) "" else "-$classifier"}.$packaging"
   }
 }
 

@@ -58,6 +58,7 @@ import kotlin.time.Duration.Companion.minutes
  * See https://youtrack.jetbrains.com/articles/IJPL-A-611 internal article for more details
  */
 @ApiStatus.Internal
+@Suppress("IO_FILE_USAGE")
 @OptIn(ExperimentalPathApi::class)
 class MavenCentralPublication(
   private val context: BuildContext,
@@ -117,14 +118,9 @@ class MavenCentralPublication(
   }
 
   private inner class MavenArtifacts(
-    val pom: Path,
     val coordinates: MavenCoordinates,
-    val jar: Path,
-    val sources: Path,
-    val javadoc: Path,
+    val distributionFiles: List<Path>,
   ) {
-    val distributionFiles: List<Path> = listOf(jar, pom, javadoc, sources)
-
     val signatures: List<Path>
       get() = distributionFiles.asSequence()
         .map { it.resolveSibling("${it.fileName}.asc") }
@@ -151,41 +147,32 @@ class MavenCentralPublication(
       }.toList()
   }
 
-  private fun Path.listDirectoryEntriesRecursively(glob: String): List<Path> {
-    val matchingFiles = walk(PathWalkOption.INCLUDE_DIRECTORIES)
+  private fun files(glob: String): List<Path> {
+    val matchingFiles = workDir.walk(PathWalkOption.INCLUDE_DIRECTORIES)
       .filter { it.isDirectory() }
       .flatMap { it.listDirectoryEntries(glob = glob) }
       .toList()
-    check(matchingFiles.size == matchingFiles.distinctBy { it.name }.size) {
-      matchingFiles.joinToString(prefix = "Duplicate files found in $this:\n", separator = "\n") {
-        it.relativeTo(this).toString()
+    require(matchingFiles.any()) {
+      "No $glob files in $workDir"
+    }
+    require(matchingFiles.size == matchingFiles.distinctBy { it.name }.size) {
+      matchingFiles.joinToString(prefix = "Duplicate files found in $workDir:\n", separator = "\n") {
+        it.relativeTo(workDir).toString()
       }
     }
     return matchingFiles
   }
 
-  private fun file(name: String): Path {
-    val matchingFiles = workDir.listDirectoryEntriesRecursively(glob = name)
-    return requireNotNull(matchingFiles.singleOrNull()) {
-      "A single $name file is expected to be present in $workDir but found: $matchingFiles"
-    }
-  }
-
-  private fun files(extension: String): List<Path> {
-    val matchingFiles = workDir.listDirectoryEntriesRecursively(glob = "*.$extension")
-    require(matchingFiles.any()) {
-      "No *.$extension files in $workDir"
-    }
-    return matchingFiles
-  }
-
   private val artifacts: List<MavenArtifacts> by lazy {
-    files(extension = "pom").map { pom ->
+    files(glob = "*.pom").map { pom ->
       val coordinates = loadAndValidatePomXml(pom)
-      val jar = file(coordinates.getFileName(packaging = "jar"))
-      val sources = file(coordinates.getFileName(classifier = "sources", packaging = "jar"))
-      val javadoc = file(coordinates.getFileName(classifier = "javadoc", packaging = "jar"))
-      MavenArtifacts(pom = pom, coordinates = coordinates, jar = jar, sources = sources, javadoc = javadoc)
+      val distributionFiles = files(glob = "${coordinates.filesPrefix}*")
+      check(distributionFiles.any { it.name == pom.name }) {
+        "$pom is expected to be present in the list:\n" + distributionFiles.joinToString(separator = "\n")
+      }
+      context.messages.info("Maven artifacts found:")
+      distributionFiles.forEach { context.messages.info("$it") }
+      MavenArtifacts(coordinates, distributionFiles)
     }
   }
 
@@ -256,6 +243,7 @@ class MavenCentralPublication(
           artifact.distributionFiles.asSequence()
             .plus(artifact.signatures)
             .plus(artifact.checksums)
+            .distinct()
             .forEach {
               zip.addFile("${artifact.coordinates.directoryPath}/${it.name}", it)
             }
