@@ -50,7 +50,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     )
 
     private val EXCLUDED_PLUGINS = listOf(
-      "intellij.settingsSync", // Not supported yet in Studio (b/267070185).
       "intellij.android.gradle.dsl",
       "intellij.android.gradle.declarative.lang.ide",
       "intellij.eclipse",
@@ -59,7 +58,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.java.byteCodeViewer",
       "intellij.marketplaceMl", // Currently experimental and disabled by default anyway (in IJ 2024.2).
       "intellij.maven",
-      "intellij.searchEverywhereMl",
     )
   }
 
