@@ -524,15 +524,17 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void onPreviousTabSelected() {
-        if (toolWindow.getContentManager().getContentCount() > 1) {
-          toolWindow.getContentManager().selectPreviousContent();
+        var contentManager = content.getManager();
+        if (contentManager != null && contentManager.getContentCount() > 1) {
+          contentManager.selectPreviousContent();
         }
       }
 
       @Override
       public void onNextTabSelected() {
-        if (toolWindow.getContentManager().getContentCount() > 1) {
-          toolWindow.getContentManager().selectNextContent();
+        var contentManager = content.getManager();
+        if (contentManager != null && contentManager.getContentCount() > 1) {
+          contentManager.selectNextContent();
         }
       }
 
