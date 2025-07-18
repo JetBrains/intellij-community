@@ -53,6 +53,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
+import kotlin.String
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT, Service.Level.APP)
@@ -75,6 +76,8 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
   private val historyList = SearchHistoryList(true)
   private var visibleTabsState: List<SePopupHeaderPane.Tab>? = null
+
+  private var selectionState: SeSelectionState? = null
 
   val removeSessionRef: AtomicBoolean = AtomicBoolean(true)
 
@@ -242,9 +245,13 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                          initialTabs,
                                          selectedTabId,
                                          searchText,
-                                         getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY))
+                                         getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY),
+                                         selectionState)
 
-    popup = createPopup(contentPane, project) { onCancel(contentPane) }
+    popup = createPopup(contentPane, project) {
+      onCancel(contentPane)
+      selectionState = contentPane.getSelectionState()
+    }
     calcPopupPositionAndShow(popup, contentPane)
 
     return popup to contentPane
