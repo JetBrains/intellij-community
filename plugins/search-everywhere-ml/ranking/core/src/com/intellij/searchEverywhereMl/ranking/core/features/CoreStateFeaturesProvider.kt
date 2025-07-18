@@ -79,8 +79,12 @@ internal class CoreStateFeaturesProvider : SearchEverywhereStateFeaturesProvider
       features.add(IS_DUMB_MODE.with(isDumb))
     }
 
-    if (hasSuitableContributor(tab, SearchEverywhereTab.Files)) features.addAll(getFileQueryFeatures(query))
-    if (hasSuitableContributor(tab, SearchEverywhereTab.All)) features.addAll(getAllTabQueryFeatures(query))
+    if (hasSuitableContributor(tab, SearchEverywhereTab.Files)) {
+      features.addAll(getFileQueryFeatures(query))
+    }
+    if (hasSuitableContributor(tab, SearchEverywhereTab.All)) {
+      features.addAll(getAllTabQueryFeatures(query))
+    }
 
     searchScope?.displayName?.let { searchScopeDisplayName ->
       val scopeId = ScopeIdMapper.instance.getScopeSerializationId(searchScopeDisplayName)
