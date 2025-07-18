@@ -52,6 +52,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
+import kotlin.String
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT, Service.Level.APP)
@@ -73,6 +74,8 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     private set
 
   private val historyList = SearchHistoryList(true)
+
+  private var selectionState: SeSelectionState? = null
 
   val removeSessionRef: AtomicBoolean = AtomicBoolean(true)
 
@@ -180,7 +183,8 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                              }
                                            },
                                            searchStatePublisher,
-                                           getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY)) {
+                                           getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY),
+                                           selectionState) {
         popupScope.launch(NonCancellable) {
           removeSessionRef.set(false)
           try {
@@ -198,6 +202,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
       popup = createPopup(contentPane, popupVm, project) {
         completable.complete(Unit)
+        selectionState = contentPane.getSelectionState()
       }
 
       popup?.let { popup ->
