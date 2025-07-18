@@ -69,7 +69,7 @@ final class RefreshWorker {
    * Temporary flag, to investigate performance issues linked to the transition to {@link BatchingFileSystem},
    * remove afterward.
    */
-  private static final boolean USE_LEGACY_LOCAL_FS_METHOD = getBooleanProperty("vfs.RefreshWorker.USE_LEGACY_LOCAL_FS_METHOD", true);
+  private static final boolean USE_LEGACY_LOCAL_FS_METHOD = getBooleanProperty("vfs.RefreshWorker.USE_LEGACY_LOCAL_FS_METHOD", false);
 
   private final boolean myIsRecursive;
   private final boolean myParallel;
