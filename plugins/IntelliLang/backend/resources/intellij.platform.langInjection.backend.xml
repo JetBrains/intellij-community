@@ -12,7 +12,6 @@
                                  hostLanguage=""
                                  hostElementClass="com.intellij.psi.PsiComment"
                                  targetClass="org.intellij.plugins.intelliLang.references.LanguageSymbol"/>
-    <lang.foldingBuilder language="UAST" implementationClass="org.intellij.plugins.intelliLang.references.LanguageCommentFolding"/>
     <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
     <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
                      enabledByDefault="true" level="ERROR"

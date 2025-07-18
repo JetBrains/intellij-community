@@ -1,0 +1,3 @@
+f:org.intellij.plugins.intelliLang.references.LanguageInjectionUtil
+- *f:commentBody(com.intellij.psi.PsiComment):java.lang.String
+- *f:languageRange(com.intellij.psi.PsiComment):com.intellij.openapi.util.TextRange

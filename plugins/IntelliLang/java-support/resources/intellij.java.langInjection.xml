@@ -37,6 +37,7 @@
     <compileServer.plugin classpath="modules/intellij.java.langInjection.jps.jar"/>
     <languageInjectionPerformer language="JAVA"
                                 implementationClass="org.intellij.plugins.intelliLang.inject.java.JavaInjectionPerformer"/>
+    <lang.foldingBuilder language="UAST" implementationClass="org.intellij.plugins.intelliLang.references.LanguageCommentFoldingBuilder"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">
