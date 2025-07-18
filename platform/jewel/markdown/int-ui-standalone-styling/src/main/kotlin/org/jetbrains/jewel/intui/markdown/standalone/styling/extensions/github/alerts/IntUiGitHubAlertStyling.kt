@@ -8,6 +8,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling
@@ -18,6 +19,7 @@ import org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling
 import org.jetbrains.jewel.ui.icon.IconKey
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun AlertStyling.Companion.light(
     note: NoteAlertStyling = NoteAlertStyling.light(),
@@ -27,6 +29,7 @@ public fun AlertStyling.Companion.light(
     caution: CautionAlertStyling = CautionAlertStyling.light(),
 ): AlertStyling = AlertStyling(note, tip, important, warning, caution)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun AlertStyling.Companion.dark(
     note: NoteAlertStyling = NoteAlertStyling.dark(),
@@ -36,6 +39,7 @@ public fun AlertStyling.Companion.dark(
     caution: CautionAlertStyling = CautionAlertStyling.dark(),
 ): AlertStyling = AlertStyling(note, tip, important, warning, caution)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun NoteAlertStyling.Companion.light(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -60,6 +64,7 @@ public fun NoteAlertStyling.Companion.light(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun NoteAlertStyling.Companion.dark(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -84,6 +89,7 @@ public fun NoteAlertStyling.Companion.dark(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun TipAlertStyling.Companion.light(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -108,6 +114,7 @@ public fun TipAlertStyling.Companion.light(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun TipAlertStyling.Companion.dark(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -132,6 +139,7 @@ public fun TipAlertStyling.Companion.dark(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ImportantAlertStyling.Companion.light(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -156,6 +164,7 @@ public fun ImportantAlertStyling.Companion.light(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ImportantAlertStyling.Companion.dark(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -180,6 +189,7 @@ public fun ImportantAlertStyling.Companion.dark(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun WarningAlertStyling.Companion.light(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -204,6 +214,7 @@ public fun WarningAlertStyling.Companion.light(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun WarningAlertStyling.Companion.dark(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -228,6 +239,7 @@ public fun WarningAlertStyling.Companion.dark(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun CautionAlertStyling.Companion.light(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -252,6 +264,7 @@ public fun CautionAlertStyling.Companion.light(
         textColor,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun CautionAlertStyling.Companion.dark(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),

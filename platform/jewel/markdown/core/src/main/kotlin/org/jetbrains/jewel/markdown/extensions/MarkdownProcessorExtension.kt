@@ -2,9 +2,11 @@ package org.jetbrains.jewel.markdown.extensions
 
 import org.commonmark.parser.Parser.ParserExtension
 import org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 /** An extension for the Jewel Markdown processing engine. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface MarkdownProcessorExtension {
     /**

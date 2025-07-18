@@ -1,0 +1,38 @@
+f:org.jetbrains.jewel.ui.component.ComboBoxKt
+- *sf:ComboBox-05tvjtU(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
+*f:org.jetbrains.jewel.ui.component.FixedCursorPoint
+- androidx.compose.foundation.TooltipPlacement
+- sf:$stable:I
+- b:<init>(J,androidx.compose.ui.Alignment,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- positionProvider-9KIMszo(J,androidx.compose.runtime.Composer,I):androidx.compose.ui.window.PopupPositionProvider
+f:org.jetbrains.jewel.ui.component.LazyTreeKt
+- *sf:LazyTree(org.jetbrains.jewel.foundation.lazy.tree.Tree,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.TreeState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.ui.component.ListComboBoxKt
+- *sf:ListComboBox-xKBSf-U(java.util.List,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.PopupKt
+- *sf:Popup(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- *sf:getLocalPopupRenderer():androidx.compose.runtime.ProvidableCompositionLocal
+*f:org.jetbrains.jewel.ui.component.PopupManager
+- sf:$stable:I
+- <init>():V
+- <init>(kotlin.jvm.functions.Function1,java.lang.String):V
+- b:<init>(kotlin.jvm.functions.Function1,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- f:getOnPopupVisibleChange():kotlin.jvm.functions.Function1
+- hashCode():I
+- f:isPopupVisible():androidx.compose.runtime.State
+- f:setPopupVisible(Z):V
+- f:togglePopupVisibility():V
+*:org.jetbrains.jewel.ui.component.PopupRenderer
+- *sf:Companion:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
+- a:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+*f:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
+f:org.jetbrains.jewel.ui.component.TextAreaKt
+- *sf:TextArea(androidx.compose.ui.text.input.TextFieldValue,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,Z,kotlin.jvm.functions.Function2,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.ui.text.input.VisualTransformation,androidx.compose.foundation.text.KeyboardOptions,androidx.compose.foundation.text.KeyboardActions,I,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.TextFieldKt
+- *sf:TextField(androidx.compose.ui.text.input.TextFieldValue,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.Outline,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,Z,androidx.compose.ui.text.input.VisualTransformation,androidx.compose.foundation.text.KeyboardOptions,androidx.compose.foundation.text.KeyboardActions,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.TooltipKt
+- *sf:rememberPopupPositionProviderAtFixedPosition-7KAyTs4(J,J,androidx.compose.ui.Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.window.PopupPositionProvider
+f:org.jetbrains.jewel.ui.component.TypographyKt
+- *sf:computeLineHeightPx(java.awt.Font):I

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Popup as ComposePopup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 
@@ -47,8 +48,9 @@ import org.jetbrains.jewel.foundation.JewelFlags
  *   event.
  * @param content The composable content to be displayed inside the popup.
  */
-@Composable
+@ApiStatus.Experimental
 @ExperimentalJewelApi
+@Composable
 public fun Popup(
     popupPositionProvider: PopupPositionProvider,
     onDismissRequest: (() -> Unit)? = null,
@@ -75,6 +77,7 @@ public fun Popup(
  * This interface implementation must then be provided via the [LocalPopupRenderer] composition local, and enable the
  * [JewelFlags.useCustomPopupRenderer] flag to use it.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface PopupRenderer {
     @Composable
@@ -95,6 +98,7 @@ public interface PopupRenderer {
  *
  * Note that the value will only be used if the [JewelFlags.useCustomPopupRenderer] flag is set to `true`.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public val LocalPopupRenderer: ProvidableCompositionLocal<PopupRenderer> = staticCompositionLocalOf {
     DefaultPopupRenderer

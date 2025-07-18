@@ -1,14 +1,16 @@
 [versions]
+assertJ = "3.26.3"
 coil = "3.2.0"
 commonmark = "0.24.0"
 composeDesktop = "1.8.2"
 detekt = "1.23.8"
 dokka = "2.0.0"
 filepicker = "3.1.0"
-idea = "252.16512.17"
-intelliJPlatformBuild = "252.16512.17-EAP-SNAPSHOT"
+idea = "252.23892.248"
+intelliJPlatformBuild = "252.23892.248-EAP-SNAPSHOT"
 ideaPlugin = "2.6.0"
 jna = "5.17.0"
+jupiter = "5.10.0"
 kotlin = "2.1.20"
 kotlinSarif = "0.6.0"
 kotlinpoet = "2.1.0"
@@ -17,25 +19,24 @@ kotlinxSerialization = "1.8.0"
 ktfmtGradlePlugin = "0.23.0"
 
 [libraries]
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertJ"}
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
-# network is only needed in a standalone non-ide version
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
-
 commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 commonmark-ext-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
 commonmark-ext-gfm-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
 commonmark-ext-gfm-tables = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
-
+detekt-api = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt" }
+detekt-core = { module = "io.gitlab.arturbosch.detekt:detekt-core", version.ref = "detekt" }
+detekt-test = { module = "io.gitlab.arturbosch.detekt:detekt-test", version.ref = "detekt" }
 filePicker = { module = "com.darkrockstudios:mpfilepicker", version.ref = "filepicker" }
-
 kotlinSarif = { module = "io.github.detekt.sarif4k:sarif4k", version.ref = "kotlinSarif" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 ktor-client-java = { module = "io.ktor:ktor-client-java", version = "3.0.3" }
-
 jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
-
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jupiter" }
 intellijPlatform-util-ui = { module = "com.jetbrains.intellij.platform:util-ui", version.ref = "intelliJPlatformBuild" }
 intellijPlatform-icons = { module = "com.jetbrains.intellij.platform:icons", version.ref = "intelliJPlatformBuild" }
 

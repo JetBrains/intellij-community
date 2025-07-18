@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
@@ -38,6 +39,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.ui.component.Text
 
 @Suppress("unused") // used in intellij
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public open class ScrollSyncMarkdownBlockRenderer(
     rootStyling: MarkdownStyling,

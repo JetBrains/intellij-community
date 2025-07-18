@@ -26,6 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
@@ -72,6 +73,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun <T : Any> ListComboBox(

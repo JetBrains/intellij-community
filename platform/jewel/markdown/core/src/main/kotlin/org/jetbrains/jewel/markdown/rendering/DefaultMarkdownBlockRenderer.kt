@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
@@ -71,6 +72,7 @@ import org.jetbrains.jewel.ui.component.Text
  * Default implementation of [MarkdownBlockRenderer] that uses the provided styling, extensions, and inline renderer to
  * render [MarkdownBlock]s into Compose UI elements.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public open class DefaultMarkdownBlockRenderer(
     override val rootStyling: MarkdownStyling,
@@ -568,6 +570,7 @@ public open class DefaultMarkdownBlockRenderer(
             inlineRenderer ?: this.inlineRenderer,
         )
 
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     override operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer =
         DefaultMarkdownBlockRenderer(rootStyling, rendererExtensions = rendererExtensions + extension, inlineRenderer)
