@@ -158,17 +158,11 @@ public class JavaExecutionStack extends XExecutionStack {
     }
 
     return StackFrameDescriptorImpl.createAsync(stackFrameProxy, myTracker)
-      .thenApply(this::createFrames);
+      .thenCompose(this::createFramesAsync);
   }
 
   private @NotNull List<XStackFrame> createFrames(StackFrameDescriptorImpl descriptor) {
-    XStackFrame topFrame = ContainerUtil.getFirstItem(myTopFrames);
-    if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame) {
-      Method method = descriptor.getMethod();
-      if (method != null) {
-        ((JavaStackFrame)topFrame).getDescriptor().putUserData(BreakpointIntentionAction.CALLER_KEY, DebuggerUtilsEx.methodKey(method));
-      }
-    }
+    markCallerFrame(descriptor);
 
     List<XStackFrame> customFrames = myDebugProcess.getPositionManager().createStackFrames(descriptor);
     if (customFrames != null) {
@@ -176,6 +170,28 @@ public class JavaExecutionStack extends XExecutionStack {
     }
 
     return Collections.singletonList(new JavaStackFrame(descriptor, true));
+  }
+
+  private @NotNull CompletableFuture<@NotNull List<XStackFrame>> createFramesAsync(StackFrameDescriptorImpl descriptor) {
+    markCallerFrame(descriptor);
+
+    return myDebugProcess.getPositionManager().createStackFramesAsync(descriptor)
+      .thenApply(customFrames -> {
+        if (customFrames != null) {
+          return customFrames;
+        }
+        return Collections.singletonList(new JavaStackFrame(descriptor, true));
+      });
+  }
+
+  private void markCallerFrame(StackFrameDescriptorImpl descriptor) {
+    XStackFrame topFrame = ContainerUtil.getFirstItem(myTopFrames);
+    if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame) {
+      Method method = descriptor.getMethod();
+      if (method != null) {
+        ((JavaStackFrame)topFrame).getDescriptor().putUserData(BreakpointIntentionAction.CALLER_KEY, DebuggerUtilsEx.methodKey(method));
+      }
+    }
   }
 
   @Override

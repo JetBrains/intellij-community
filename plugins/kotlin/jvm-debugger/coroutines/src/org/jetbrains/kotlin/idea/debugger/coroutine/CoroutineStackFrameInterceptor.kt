@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 
 
 private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
-    override fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
+    override suspend fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (debugProcess.xdebugProcess?.session !is XDebugSessionImpl
             || frame is SkipCoroutineStackFrameProxyImpl
@@ -75,7 +75,10 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             return listOf(stackFrame)
         }
         val frameItemLists = CoroutineFrameBuilder.build(stackFrame, withPreFrames = false)
-        return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
+        return listOf(stackFrame) + frameItemLists.frames.mapNotNull {
+            val sourcePosition = debugProcess.positionManager.getSourcePositionAsync(it.location)
+            it.createFrame(debugProcess, sourcePosition)
+        }
     }
 
     private fun anySuspendFramesBefore(frame: StackFrameProxyImpl): Boolean {

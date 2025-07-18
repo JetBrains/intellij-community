@@ -5,12 +5,16 @@ import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.*
 import com.sun.jdi.event.ClassPrepareEvent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.future.await
@@ -117,4 +121,13 @@ fun preloadAllClasses(vm: VirtualMachine) {
       }
     }
   }
+}
+
+internal fun <T> runBlockingAssertNotInReadAction(block: suspend CoroutineScope.() -> T): T {
+  if (ApplicationManager.getApplication().isInternal
+      && ApplicationManager.getApplication().isReadAccessAllowed
+      && !ProgressManager.getInstance().hasProgressIndicator()) {
+    fileLogger().error("Call runBlocking from read action without indicator")
+  }
+  return runBlockingMaybeCancellable(block)
 }

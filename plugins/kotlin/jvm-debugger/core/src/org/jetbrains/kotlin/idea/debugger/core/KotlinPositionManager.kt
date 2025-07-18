@@ -106,7 +106,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return ThreeState.UNSURE
     }
 
-    override fun createStackFrames(descriptor: StackFrameDescriptorImpl): List<XStackFrame>? {
+    override suspend fun createStackFramesAsync(descriptor: StackFrameDescriptorImpl): List<XStackFrame>? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (descriptor.location?.isInKotlinSources() != true) {
             return null
