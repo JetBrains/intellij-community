@@ -644,6 +644,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
   
+  public void testInlineNullInForEach() {
+    doTest();
+  }
+  
   public void testAutomaticGetterSetterUse() {
     TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());

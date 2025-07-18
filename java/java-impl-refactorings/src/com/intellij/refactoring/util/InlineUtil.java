@@ -22,10 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiPrecedenceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.refactoring.inline.InlineTransformer;
 import com.intellij.util.ArrayUtil;
@@ -91,35 +88,39 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     }
 
     expr = (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
-    PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expr);
-    if (exprType != null && !exprType.equals(varType)) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
-      PsiMethod method = qualifyWithExplicitTypeArguments(initializer, expr, varType);
-      if (method != null) {
-        if (expr instanceof PsiMethodCallExpression) {
-          final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
-          final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-          if (qualifierExpression == null) {
-            final PsiClass containingClass = method.getContainingClass();
-            LOG.assertTrue(containingClass != null);
-            if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
-              methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(containingClass));
-            }
-            else {
-              methodExpression.setQualifierExpression(createThisExpression(method.getManager(), thisClass, refParent));
+    PsiType exprType = GenericsUtil.getVariableTypeByExpressionType(expr.getType());
+    if (exprType != null) {
+      exprType = PsiTypesUtil.removeExternalAnnotations(exprType);
+      if (!exprType.equals(varType)) {
+        PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
+        PsiMethod method = qualifyWithExplicitTypeArguments(initializer, expr, varType);
+        if (method != null) {
+          if (expr instanceof PsiMethodCallExpression) {
+            final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
+            final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+            if (qualifierExpression == null) {
+              final PsiClass containingClass = method.getContainingClass();
+              LOG.assertTrue(containingClass != null);
+              if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+                methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(containingClass));
+              }
+              else {
+                methodExpression.setQualifierExpression(createThisExpression(method.getManager(), thisClass, refParent));
+              }
             }
           }
         }
-      }
-      else if (varType instanceof PsiEllipsisType &&
-               ((PsiEllipsisType)varType).getComponentType().equals(exprType)) { //convert vararg to array
-        String varargsWrapper = "new " + exprType.getCanonicalText() + "[]{" + expr.getText() + '}';
-        expr.replace(elementFactory.createExpressionFromText(varargsWrapper, expr));
-      }
-      else {
-        boolean insertCastWhenUnchecked = !(exprType instanceof PsiClassType && ((PsiClassType)exprType).isRaw() && parent instanceof PsiExpressionList);
-        if (expr instanceof PsiFunctionalExpression || !PsiPolyExpressionUtil.isPolyExpression(expr) && insertCastWhenUnchecked) {
-          expr = surroundWithCast(variable, expr);
+        else if (varType instanceof PsiEllipsisType &&
+                 ((PsiEllipsisType)varType).getComponentType().equals(exprType)) { //convert vararg to array
+          String varargsWrapper = "new " + exprType.getCanonicalText() + "[]{" + expr.getText() + '}';
+          expr.replace(elementFactory.createExpressionFromText(varargsWrapper, expr));
+        }
+        else {
+          boolean insertCastWhenUnchecked =
+            !(exprType instanceof PsiClassType && ((PsiClassType)exprType).isRaw() && parent instanceof PsiExpressionList);
+          if (expr instanceof PsiFunctionalExpression || !PsiPolyExpressionUtil.isPolyExpression(expr) && insertCastWhenUnchecked) {
+            expr = surroundWithCast(variable, expr);
+          }
         }
       }
     }
