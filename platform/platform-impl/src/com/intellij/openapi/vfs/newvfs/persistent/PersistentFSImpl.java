@@ -617,7 +617,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     Ref<ChildInfo> foundChildRef = new Ref<>();
 
     Function<ListResult, ListResult> convertor = children -> {
-      ChildInfo child = findExistingChildInfo(parent, childName, children.children);
+      ChildInfo child = findExistingChildInfo(children.children, childName, parent.isCaseSensitive());
       if (child != null) {
         foundChildRef.set(child);
         return children;
@@ -631,7 +631,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       //          children lookup, under the VFS lock.
       //          I really want to remove it entirely, and just rely on automatic/explicit refresh, but seems like
       //          there is a lot to do to implement this: i.e. an attempt to skip this 'local refresh' fails tests
-      Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null); // todo: use BatchingFileSystem
+      Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
       if (childData == null) {
         return children;
       }
@@ -651,7 +651,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
 
         if (!childName.equals(canonicalName)) {
-          child = findExistingChildInfo(parent, canonicalName, children.children);
+          child = findExistingChildInfo(children.children, canonicalName, /*caseSensitive: */ false );
         }
       }
 
@@ -671,12 +671,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   /**
-   * @param parent only used as a source of file names case-sensitivity
+   * @param caseSensitive is containing folder case-sensitive?
    * @return child from children list, with a given childName, with case sensitivity given by parent
    */
-  private ChildInfo findExistingChildInfo(@NotNull VirtualFile parent,
+  private ChildInfo findExistingChildInfo(@NotNull List<? extends ChildInfo> children,
                                           @NotNull String childName,
-                                          @NotNull List<? extends ChildInfo> children) {
+                                          boolean caseSensitive) {
     if (children.isEmpty()) {
       return null;
     }
@@ -691,7 +691,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     //if parent is !case-sensitive -- repeat lookup, now by actual name, with case-insensitive comparison:
-    if (!parent.isCaseSensitive()) {
+    if (!caseSensitive) {
       for (ChildInfo info : children) {
         if (Comparing.equal(childName, vfs.getNameByNameId(info.getNameId()),  /* caseSensitive: */ false)) {
           return info;
@@ -2290,7 +2290,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       @Override
       public @NotNull ListResult apply(@NotNull ListResult children) {
         // check that names are not duplicated:
-        ChildInfo duplicate = findExistingChildInfo(parent, name, children.children);
+        ChildInfo duplicate = findExistingChildInfo(children.children, name, parent.isCaseSensitive());
         if (duplicate != null) return children;
 
         childInfo = makeChildRecord(parent, parentId, name, childData, fs, null);
