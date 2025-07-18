@@ -56,7 +56,7 @@ import javax.swing.text.JTextComponent
 @ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
   @JvmField internal val toolWindow: ToolWindowImpl,
-  private val contentUi: ToolWindowContentUi,
+  val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
 ) : InternalDecorator(), Queryable, UiDataProvider, ComponentWithMnemonics {
   companion object {

@@ -6,14 +6,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,10 +23,14 @@ public final class ShowContentAction extends AnAction implements DumbAware {
 
   private ToolWindow myWindow;
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public ShowContentAction() {
   }
 
+  /**
+   * @deprecated please get this action using {@link ActionManager#getAction(String)} or create your own action.
+   */
+  @Deprecated(forRemoval = true)
   public ShowContentAction(@NotNull ToolWindow window, JComponent c, @NotNull Disposable parentDisposable) {
     myWindow = window;
     new ShadowAction(this, ACTION_ID, c, parentDisposable);
@@ -35,11 +39,13 @@ public final class ShowContentAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final ToolWindow window = getWindow(e);
-    e.getPresentation().setEnabledAndVisible(window != null && window.getContentManager().getContentCount() > 1);
+    ToolWindow window = myWindow != null ? myWindow : e.getData(PlatformDataKeys.TOOL_WINDOW);
     e.getPresentation().setText(window == null || window.getContentUiType() == ToolWindowContentUiType.TABBED
                                 ? ActionsBundle.message("action.ShowContent.text")
                                 : ActionsBundle.message("action.ShowContent.views.text"));
+
+    ContentManager contentManager = e.getData(ToolWindowContentUi.CONTENT_MANAGER_DATA_KEY);
+    e.getPresentation().setEnabledAndVisible(contentManager != null && contentManager.getContentCount() > 1);
   }
 
   @Override
@@ -49,34 +55,11 @@ public final class ShowContentAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ToolWindow toolWindow = getWindow(e);
-    if (toolWindow != null) {
-      toolWindow.showContentPopup(e.getInputEvent());
-    }
-  }
+    Component context = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    InternalDecoratorImpl nearestDecorator = InternalDecoratorImpl.findNearestDecorator(context);
+    if (nearestDecorator == null) return;
 
-  private @Nullable ToolWindow getWindow(@NotNull AnActionEvent event) {
-    if (myWindow != null) {
-      return myWindow;
-    }
-
-    Project project = event.getProject();
-    if (project == null) {
-      return null;
-    }
-
-    Component context = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    if (context == null) {
-      return null;
-    }
-
-    ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    String toolWindowId = manager.getActiveToolWindowId();
-    ToolWindow window = toolWindowId == null ? event.getData(PlatformDataKeys.TOOL_WINDOW) : manager.getToolWindow(toolWindowId);
-    if (window == null) {
-      return null;
-    }
-
-    return SwingUtilities.isDescendingFrom(context, window.getComponent()) ? window : null;
+    ToolWindowContentUi contentUi = nearestDecorator.getContentUi();
+    ToolWindowContentUi.toggleContentPopup(contentUi, contentUi.getContentManager());
   }
 }

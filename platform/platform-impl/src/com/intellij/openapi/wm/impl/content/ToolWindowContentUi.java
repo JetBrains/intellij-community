@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
-import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -88,8 +87,6 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
 
   private final JPanel contentComponent;
   final ToolWindowImpl window;
-
-  private final ShowContentAction showContent;
 
   private final TabContentLayout tabsLayout;
   private ContentLayout comboLayout;
@@ -214,8 +211,6 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
 
     initMouseListeners(tabComponent, this, true);
     MouseDragHelper.setComponentDraggable(tabComponent, true);
-
-    showContent = new ShowContentAction(window, contentComponent, contentManager);
   }
 
   public @NotNull String getToolWindowId() {
@@ -611,7 +606,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
 
     group.add(actionManager.getAction("NextTab"));
     group.add(actionManager.getAction("PreviousTab"));
-    group.add(showContent);
+    group.add(actionManager.getAction("ShowContent"));
 
     if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
       group.addAction(createSplitTabsAction((TabbedContent)content));
