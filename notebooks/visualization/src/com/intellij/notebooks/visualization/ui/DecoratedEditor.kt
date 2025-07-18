@@ -60,7 +60,7 @@ class DecoratedEditor private constructor(
       }
 
       private fun updateSelection(event: MouseEvent) {
-        val point = NotebookUiUtils.getEditorPoint(editorImpl, event)?.second ?: return
+        val point = NotebookUiUtils.getEditorPoint(editorImpl, event) ?: return
 
         val hoveredCell = manager.getCellByPoint(point) ?: return
 
