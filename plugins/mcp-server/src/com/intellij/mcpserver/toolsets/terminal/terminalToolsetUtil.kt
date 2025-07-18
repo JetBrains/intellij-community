@@ -6,8 +6,7 @@ import com.intellij.execution.process.ColoredProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.clientInfoOrNull
+import com.intellij.mcpserver.clientInfo
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.toolsets.terminal.TerminalToolset.CommandExecutionResult
 import com.intellij.mcpserver.util.TruncateMode
@@ -87,7 +86,7 @@ suspend fun executeShellCommand(
       else {
         val executionConsole = TerminalExecutionConsole(project, processHandler).withConvertLfToCrlfForNonPtyProcess(true)
         @Suppress("HardCodedStringLiteral")
-        val displayName = currentCoroutineContext().clientInfoOrNull?.name ?: McpServerBundle.message ("mcp.general.terminal.tab.name")
+        val displayName = currentCoroutineContext().clientInfo.name
         val content = ContentFactory.getInstance().createContent(executionConsole.component, displayName, false)
         window.contentManager.addContent(content)
         Disposer.register(content) {
