@@ -72,5 +72,6 @@
     <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
   </component>
 </module>
