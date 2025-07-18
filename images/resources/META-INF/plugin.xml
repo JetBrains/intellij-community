@@ -8,11 +8,11 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.xml.psi.impl"/>
   </dependencies>
 
   <content>
     <module name="intellij.platform.images.copyright"/>
-    <module name="intellij.platform.images.backend.svg"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -29,6 +29,7 @@
               extensions="bigtiff;bmp;dcx;gif;icns;ico;jbig2;jpeg;jpg;pam;pbm;pcx;pgm;png;pnm;ppm;psd;rgbe;tga;tif;tiff;wbmp;xbm;xpm"/>
     <fileType name="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgFileType" fieldName="INSTANCE" extensions="svg"
               language="SVG"/>
+    <lang.parserDefinition language="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgParserDefinition"/>
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
     <ApplicationLoadListener implementation="org.intellij.images.util.imageio.ImageReaderSpiRegistrar"/>

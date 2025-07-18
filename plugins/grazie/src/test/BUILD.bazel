@@ -59,7 +59,6 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//images/backend.svg",
   ],
   runtime_deps = [":grazie-tests_test_resources"]
 )

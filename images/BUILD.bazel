@@ -34,6 +34,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/statistics",
     "//platform/util/coroutines",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-psi-api:psi",
   ],
   runtime_deps = [":images_resources"]
 )
@@ -69,6 +71,8 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/util/coroutines",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-psi-api:psi",
   ],
   runtime_deps = [":images_resources"]
 )

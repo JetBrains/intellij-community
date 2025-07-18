@@ -818,7 +818,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/ijent/impl/intellij.platform.ijent.community.impl.iml" filepath="$PROJECT_DIR$/platform/ijent/impl/intellij.platform.ijent.community.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ijent/testFramework/intellij.platform.ijent.community.testFramework.iml" filepath="$PROJECT_DIR$/platform/ijent/testFramework/intellij.platform.ijent.community.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/intellij.platform.images.iml" filepath="$PROJECT_DIR$/images/intellij.platform.images.iml" />
-      <module fileurl="file://$PROJECT_DIR$/images/backend.svg/intellij.platform.images.backend.svg.iml" filepath="$PROJECT_DIR$/images/backend.svg/intellij.platform.images.backend.svg.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.iml" filepath="$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/intellij.platform.images.copyright/intellij.platform.images.copyright.iml" filepath="$PROJECT_DIR$/images/intellij.platform.images.copyright/intellij.platform.images.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-api/intellij.platform.indexing.iml" filepath="$PROJECT_DIR$/platform/indexing-api/intellij.platform.indexing.iml" />

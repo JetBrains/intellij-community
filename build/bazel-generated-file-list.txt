@@ -243,7 +243,6 @@ grid/types
 idea/customization/backend
 idea/customization/base
 images
-images/backend.svg
 images/intellij.platform.images.copyright
 java/codeserver/core
 java/codeserver/highlighting

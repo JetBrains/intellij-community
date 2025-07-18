@@ -45,7 +45,6 @@
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.images.backend.svg" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.xerces" scope="TEST" />
   </component>

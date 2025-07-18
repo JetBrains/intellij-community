@@ -1,12 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.images.backend.svg
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.images.fileTypes.impl
 
 import com.intellij.lang.xml.XMLParserDefinition
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.xml.XmlFileImpl
 import com.intellij.psi.tree.IFileElementType
-import org.intellij.images.fileTypes.impl.SvgLanguage
 import org.jetbrains.annotations.NotNull
 
 internal class SvgParserDefinition : XMLParserDefinition() {
