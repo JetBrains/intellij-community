@@ -37,11 +37,11 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     return null
   }
 
-  override fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo) {
+  override fun onSessionStarted(project: Project?, tabId: String, mixedListInfo: SearchEverywhereMixedListInfo) {
     if (isEnabled()) {
       activeSession.updateAndGet {
         SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet())
-      }
+      }!!.onSessionStarted(tabId)
     }
   }
 
@@ -96,8 +96,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     return searchState.orderByMl
   }
 
-  override fun onSearchRestart(project: Project?,
-                               tabId: String,
+  override fun onSearchRestart(tabId: String,
                                reason: SearchRestartReason,
                                keysTyped: Int,
                                backspacesTyped: Int,
@@ -108,20 +107,19 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     if (!isEnabled()) return
 
     getCurrentSession()?.onSearchRestart(
-      project, reason, tabId, keysTyped, backspacesTyped, searchQuery, searchResults.toInternalType(),
+      reason, tabId, keysTyped, backspacesTyped, searchQuery, searchResults.toInternalType(),
       searchScope, isSearchEverywhere
     )
   }
 
-  override fun onItemSelected(project: Project?, tabId: String, indexes: IntArray, selectedItems: List<Any>,
+  override fun onItemSelected(tabId: String, indexes: IntArray, selectedItems: List<Any>,
                               searchResults: List<SearchEverywhereFoundElementInfo>,
-                              closePopup: Boolean,
                               query: String) {
-    getCurrentSession()?.onItemSelected(project, indexes, selectedItems, closePopup, searchResults.toInternalType())
+    getCurrentSession()?.onItemSelected(indexes, selectedItems, searchResults.toInternalType())
   }
 
-  override fun onSearchFinished(project: Project?, searchResults: List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchFinished(project, searchResults.toInternalType())
+  override fun onSearchFinished(searchResults: List<SearchEverywhereFoundElementInfo>) {
+    getCurrentSession()?.onSearchFinished(searchResults.toInternalType())
   }
 
   override fun notifySearchResultsUpdated() {

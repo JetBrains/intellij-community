@@ -6,127 +6,83 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.COLLECTED_RESULTS_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_FEATURES_LIST
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ELEMENT_CONTRIBUTOR
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.ITEM_SELECTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.REBUILD_REASON_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SEARCH_RESTARTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_DURATION
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_FINISHED
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_ID
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_STARTED
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCase() {
-  @Test
-  fun `SE open and instant close results in only session finished event`() {
-    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
-      sendStatisticsAndClose()
-    }
-
-    assertEquals(1, events.size)
-    assertTrue(events.first().event.id == SESSION_FINISHED.eventId)
-  }
-
-  @Test
-  fun `search start event is reported`() {
-    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
-      // we need to type at least one character, otherwise opening and closing SE
-      // will result in just a single session-finished event
-      type("r")
-      sendStatisticsAndClose()
-    }
-
-    assertNotNull(events.filter { it.event.id == SEARCH_RESTARTED.eventId }
-                    .find { it.event.data[REBUILD_REASON_KEY.name] == SearchRestartReason.SEARCH_STARTED.toString() })
-  }
-
-  @Test
-  fun `search finished event is reported`() {
-    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
+  val actionSelectionEvents by lazy {
+    MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       type("reg")
       selectFirstItem()
     }
+  }
 
-    assertNotNull(events.find { it.event.id == SESSION_FINISHED.eventId })
+  val immediatelyCancelledSessionEvents by lazy {
+    MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
+      closePopup()
+    }
   }
 
   @Test
-  fun `the number of events is correct`() {
-    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
-      type("reg")
-      selectFirstItem()
-    }
-
-    assertEquals(4, events.size)
+  fun `SE open and instant close results in one session started and one session finished event`() {
+    assertEquals(3, immediatelyCancelledSessionEvents.size)
+    assertEquals(SESSION_STARTED.eventId, immediatelyCancelledSessionEvents.first().event.id)
+    assertEquals(SEARCH_RESTARTED.eventId, immediatelyCancelledSessionEvents[1].event.id)
+    assertEquals(SESSION_FINISHED.eventId, immediatelyCancelledSessionEvents.last().event.id)
   }
 
   @Test
-  fun `session duration is reported on item selection that closes the popup`() {
-    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
-      type("reg")
-      selectFirstItem()
-    }
+  fun `first search restarted event has search started restart reason`() {
+    val searchRestartedEvent = immediatelyCancelledSessionEvents.first { it.event.id == SEARCH_RESTARTED.eventId }
 
-    val sessionFinishedEvents = events.filter { it.event.id == SESSION_FINISHED.eventId }
-    val lastSessionFinishedEvent = sessionFinishedEvents.last()
+    assertTrue("${SEARCH_RESTARTED.eventId} event should contain ${REBUILD_REASON_KEY.name} in its data",
+               REBUILD_REASON_KEY.name in searchRestartedEvent.event.data)
+
+    val reportedRestartRestored = searchRestartedEvent.event.data[REBUILD_REASON_KEY.name]
+
+    assertTrue("First ${SEARCH_RESTARTED.eventId} event's ${REBUILD_REASON_KEY.name} should be ${SearchRestartReason.SEARCH_STARTED}",
+               reportedRestartRestored == SearchRestartReason.SEARCH_STARTED.toString())
+  }
+
+  @Test
+  fun `all events are reported`() {
+    assertEquals("Expected 1 SESSION_STARTED event",
+                 1, actionSelectionEvents.count { it.event.id == SESSION_STARTED.eventId })
+
+    assertEquals("Expected 3 SEARCH_RESTARTED events",
+                 4, actionSelectionEvents.count { it.event.id == SEARCH_RESTARTED.eventId })
+
+    assertEquals("Expected 1 ITEM_SELECTED event",
+                 1, actionSelectionEvents.count { it.event.id == ITEM_SELECTED.eventId })
+
+    assertEquals("Expected 1 SESSION_FINISHED event",
+                 1, actionSelectionEvents.count { it.event.id == SESSION_FINISHED.eventId })
+  }
+
+  @Test
+  fun `session duration is reported in session finished event`() {
+    val sessionFinishedEvent = actionSelectionEvents.first { it.event.id == SESSION_FINISHED.eventId }
+
     assertTrue("SESSION_FINISHED event that closes a popup should have Search Everywhere session duration",
-               SESSION_DURATION.name in lastSessionFinishedEvent.event.data)
-  }
-
-  @Test
-  fun `session duration is reported only when popup closes`() {
-    // We will create a provider with a contributor that does not close the popup on item selection
-    val provider = MockSearchEverywhereProvider { project ->
-      SearchEverywhereUI(project, listOf(
-        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, false) { _, _, consumer ->
-          consumer.process("registry")
-        }
-      ))
-    }
-
-    val events = provider.runSearchAndCollectLogEvents {
-      type("reg")
-      selectFirstItem()  // This will not close the popup
-
-      sendStatisticsAndClose()
-    }
-
-    assertEquals("Expected 5 events (3 SEARCH_RESTARTED, 1 SESSION_FINISHED on selection, 1 SESSION_FINISH on popup close)",
-                 5, events.size)
-
-    val sessionFinishedEvents = events.filter { it.event.id == SESSION_FINISHED.eventId }
-    assertEquals("Expected 2 SESSION_FINISHED events (1 selection + 1 popup close)",
-                 2, sessionFinishedEvents.size)
-
-    // Check that the 2nd last SESSION_FINISHED event does NOT have the session duration reported
-    val secondLastSessionFinishedEvent = sessionFinishedEvents.first()
-    assertFalse("SESSION_FINISHED event that does not close a popup should NOT have Search Everywhere session duration",
-                SESSION_DURATION.name in secondLastSessionFinishedEvent.event.data)
-
-    // Check that the last SESSION_FINISHED event has the session duration reported
-    val lastSessionFinishedEvent = sessionFinishedEvents.last()
-    assertTrue("SESSION_FINISHED event that closes a popup should have Search Everywhere session duration",
-               SESSION_DURATION.name in lastSessionFinishedEvent.event.data)
+               SESSION_DURATION.name in sessionFinishedEvent.event.data)
   }
 
   @Test
   fun `item has a contributor info`() {
-    val provider = MockSearchEverywhereProvider { project ->
-      SearchEverywhereUI(project, listOf(
-        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, true) { _, _, consumer ->
-          consumer.process("registry")
-        }
-      ))
-    }
-
-    val events = provider.runSearchAndCollectLogEvents {
-      type("reg")
-      selectFirstItem()
-    }
-
-    val lastEventData = events.last().event.data
+    val lastEventData = actionSelectionEvents.last { it.event.id == SEARCH_RESTARTED.eventId }.event.data
     val collectedItems = assertInstanceOf(lastEventData[COLLECTED_RESULTS_DATA_KEY.name], List::class.java)
     val firstItem = assertInstanceOf(collectedItems.first(), Map::class.java)
     assertTrue(ELEMENT_CONTRIBUTOR.name in firstItem)
@@ -135,24 +91,100 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Test
   fun `contributor features are in a separate list`() {
-    val provider = MockSearchEverywhereProvider { project ->
-      SearchEverywhereUI(project, listOf(
-        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, true) { _, _, consumer ->
-          consumer.process("registry")
-        }
-      ))
-    }
-
-    val events = provider.runSearchAndCollectLogEvents {
-      type("reg")
-      selectFirstItem()
-    }
-
-    val lastEventData = events.last().event.data
+    val lastEventData = actionSelectionEvents.last { it.event.id == SEARCH_RESTARTED.eventId }.event.data
 
     assertTrue(CONTRIBUTOR_FEATURES_LIST.name in lastEventData)
 
     val contributorFeatures = assertInstanceOf(lastEventData[CONTRIBUTOR_FEATURES_LIST.name], List::class.java)
     assertInstanceOf(contributorFeatures.first(), Map::class.java)
+  }
+
+  @Test
+  fun `every event has search session id`() {
+    val eventsMissingSessionId = actionSelectionEvents.filterNot { event -> SESSION_ID.name in event.event.data }
+
+    if (eventsMissingSessionId.isNotEmpty()) {
+      fail("The following events did not report ${SESSION_ID.name}: ${eventsMissingSessionId.joinToString(", ") { it.event.id }}")
+    }
+  }
+
+  @Test
+  fun `search with no results is properly reported`() {
+    val provider = MockSearchEverywhereProvider { project ->
+      SearchEverywhereUI(project, listOf(
+        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, true) { pattern, _, _ ->
+        }
+      ))
+    }
+
+    val events = provider.runSearchAndCollectLogEvents {
+      type("nonexistent")
+      closePopup()
+    }
+
+    val searchRestartedEvents = events.filter { it.event.id == SEARCH_RESTARTED.eventId }
+    assertNotEmpty(searchRestartedEvents)
+
+    val lastSearchRestartedEvent = searchRestartedEvents.last()
+    val collectedItems = assertInstanceOf(lastSearchRestartedEvent.event.data[COLLECTED_RESULTS_DATA_KEY.name], List::class.java)
+    assertTrue("Expected empty list of collected items for non-existent search", collectedItems.isEmpty())
+
+    assertEquals("Total number of items should be 0 for no results",
+                 0, collectedItems.size)
+  }
+
+  @Test
+  fun `session started event contains required fields`() {
+    val sessionStartedEvent = immediatelyCancelledSessionEvents.first { it.event.id == SESSION_STARTED.eventId }
+    val data = sessionStartedEvent.event.data
+
+    val requiredEvents = SESSION_STARTED.getFields() - SearchEverywhereStateFeaturesProvider.getFields().toSet()
+
+    requiredEvents.forEach { field ->
+      assertTrue("${SESSION_STARTED.eventId} event should contain ${field.name}", field.name in data)
+    }
+  }
+
+  @Test
+  fun `search restarted events contain required fields`() {
+    actionSelectionEvents.filter { it.event.id == SEARCH_RESTARTED.eventId }
+      .forEach { event ->
+        val data = event.event.data
+
+        SEARCH_RESTARTED.getFields().forEach { field ->
+          assertTrue("${SEARCH_RESTARTED.eventId} event should contain ${field.name}", field.name in data)
+        }
+      }
+  }
+
+  @Test
+  fun `item selection event contains required fields`() {
+    val selectionEvent = actionSelectionEvents.first { it.event.id == ITEM_SELECTED.eventId }
+    val data = selectionEvent.event.data
+
+    ITEM_SELECTED.getFields().forEach { field ->
+      assertTrue("${ITEM_SELECTED.eventId} event should contain ${field.name}", field.name in data)
+    }
+  }
+
+  @Test
+  fun `search index is properly incremented in search restarted events`() {
+    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
+      type("a")
+      type("b")
+      type("c")
+      closePopup()
+    }
+
+    val searchRestartedEvents = events.filter { it.event.id == SEARCH_RESTARTED.eventId }
+    assertNotEmpty(searchRestartedEvents)
+
+    // Check that search index is incremented for each search restart
+    var previousIndex = -1
+    for (event in searchRestartedEvents) {
+      val currentIndex = event.event.data["searchIndex"] as Int
+      assertTrue("Search index should be incremented", currentIndex > previousIndex)
+      previousIndex = currentIndex
+    }
   }
 }

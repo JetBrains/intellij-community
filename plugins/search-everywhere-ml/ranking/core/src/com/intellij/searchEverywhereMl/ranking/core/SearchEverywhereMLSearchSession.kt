@@ -28,7 +28,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(
-  project: Project?,
+  private val project: Project?,
   val mixedListInfo: SearchEverywhereMixedListInfo,
   private val sessionId: Int,
 ) {
@@ -49,8 +49,12 @@ internal class SearchEverywhereMLSearchSession(
 
   private val performanceTracker = PerformanceTracker()
 
+  fun onSessionStarted(tabId: String) {
+    val tab = SearchEverywhereTab.getById(tabId)
+    logger.onSessionStarted(project, sessionId, tab, sessionStartTime,cachedContextInfo.features, mixedListInfo)
+  }
+
   fun onSearchRestart(
-    project: Project?,
     reason: SearchRestartReason,
     tabId: String,
     keysTyped: Int,
@@ -60,7 +64,13 @@ internal class SearchEverywhereMLSearchSession(
     searchScope: ScopeDescriptor?,
     isSearchEverywhere: Boolean,
   ) {
-    val tab = SearchEverywhereTab.getById(tabId) as? SearchEverywhereTab.TabWithLogging ?: return
+    // Note - the searchResults are associated with the previous search state.
+    // For the first search the searchResults list will always be empty.
+    // This does not "reflect the actual state". For instance, in the "All" tab, the actual list may be prepopulated.
+    // For this reason it is important NOT to associate the searchResults with the current search state,
+    // but with the previous one.
+
+    val tab = SearchEverywhereTab.getById(tabId)
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
@@ -69,70 +79,49 @@ internal class SearchEverywhereMLSearchSession(
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(
-        project, nextSearchIndex, tab, searchScope, isSearchEverywhere, sessionStartTime, searchReason,
-        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache, mixedListInfo
+        project, nextSearchIndex, tab, searchScope, isSearchEverywhere, sessionStartTime, searchReason, keysTyped, backspacesTyped,
+        searchQuery, modelProviderWithCache, providersCache, mixedListInfo
       )
     }
 
     if (prevState != null && prevState.tab.isLoggingEnabled()) {
-      logger.onSearchRestarted(
-        project, sessionId,
-        cachedContextInfo, prevState,
-        prevTimeToResult, mixedListInfo, searchResults
-      )
+      logger.onSearchRestarted(project, sessionId, prevState, mixedListInfo, searchResults, prevTimeToResult)
     }
   }
 
   fun onItemSelected(
-    project: Project?,
-    indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
+    indexes: IntArray, selectedItems: List<Any>,
     searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
   ) {
-    val state = getCurrentSearchState()
-    if (state != null && state.tab.isLoggingEnabled()) {
-      if (project != null) {
-        val statisticianService = service<SearchEverywhereStatisticianService>()
-        selectedItems.forEach { statisticianService.increaseUseCount(it) }
+    val state = getCurrentSearchState() ?: return
+    if (!state.tab.isLoggingEnabled()) return
 
-        if (state.tab == SearchEverywhereTab.All) {
-          searchResults
-            .slice(indexes.asIterable())
-            .forEach { increaseContributorUseCount(it.contributor.searchProviderId) }
-        }
-      }
+    val statisticianService = service<SearchEverywhereStatisticianService>()
+    selectedItems.forEach { statisticianService.increaseUseCount(it) }
 
-      val sessionEndTime = System.currentTimeMillis()
-      val sessionDuration = (sessionEndTime - sessionStartTime).toInt()
-
-      logger.onItemSelected(
-        project, sessionId, itemIdProvider,
-        state, indexes, selectedItems, closePopup,
-        performanceTracker.timeElapsed, mixedListInfo,
-        searchResults, sessionDuration
-      )
+    if (state.tab == SearchEverywhereTab.All) {
+      searchResults
+        .slice(indexes.asIterable())
+        .forEach { increaseContributorUseCount(it.contributor.searchProviderId) }
     }
 
-    if (closePopup) {
-      MissingKeyProviderCollector.report(sessionId)
+    indexes.forEach { selectedIndex ->
+      logger.onItemSelected(project, sessionId, state.index, selectedIndex)
     }
   }
 
-  fun onSearchFinished(
-    project: Project?,
-    searchResults: List<SearchEverywhereFoundElementInfoWithMl>,
-  ) {
-    val state = getCurrentSearchState()
+  fun onSearchFinished(searchResults: List<SearchEverywhereFoundElementInfoWithMl>) {
+    val state = getCurrentSearchState() ?: return
 
     val sessionEndTime = System.currentTimeMillis()
     val sessionDuration = (sessionEndTime - sessionStartTime).toInt()
 
-    if (state != null && state.tab.isLoggingEnabled()) {
-      logger.onSearchFinished(
-        project, sessionId,
-        state, performanceTracker.timeElapsed, mixedListInfo,
-        searchResults, sessionDuration
-      )
+    if (state.tab.isLoggingEnabled()) {
+      // "flush" the previous search restarted event
+      logger.onSearchRestarted(project, sessionId, state, mixedListInfo, searchResults, performanceTracker.timeElapsed)
     }
+
+    logger.onSessionFinished(project, sessionId, state.tab, sessionDuration)
 
     MissingKeyProviderCollector.report(sessionId)
   }
