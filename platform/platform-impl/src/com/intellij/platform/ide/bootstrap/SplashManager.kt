@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("UndesirableClassUsage", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.platform.ide.bootstrap
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -52,12 +52,18 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
 @Internal
-fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
-  launch(CoroutineName("showSplashIfNeeded")) {
+fun scheduleShowSplashIfNeeded(
+  scope: CoroutineScope,
+  lockSystemDirsJob: Job,
+  initUiScale: Job,
+  appInfoDeferred: Deferred<ApplicationInfo>,
+  args: List<String>,
+) {
+  scope.launch(CoroutineName("showSplashIfNeeded")) {
     if (!AppMode.isLightEdit() && !isRealRemoteDevHost(args) && CommandLineArgs.isSplashNeeded(args)) {
       lockSystemDirsJob.join()
       try {
-        showSplashIfNeeded(initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
+        showSplashIfNeeded(scope, initUiScale, appInfoDeferred)
       }
       catch (e: CancellationException) {
         throw e
@@ -71,13 +77,13 @@ fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScal
 
 private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != AppMode.SPLIT_MODE_COMMAND
 
-private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
+private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()
   if (oldJob.isCancelled) {
     return
   }
 
-  val newJob = launch(start = CoroutineStart.LAZY) {
+  val newJob = scope.launch(start = CoroutineStart.LAZY) {
     if (isTooLateToShowSplash()) {
       return@launch
     }
@@ -168,7 +174,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
           showJob.join()
         }
       }
-      catch (_: CancellationException) {
+      catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
         SPLASH_WINDOW = null
         Toolkit.getDefaultToolkit().removeAWTEventListener(deactivationListener)
         splash.isVisible = false
@@ -264,6 +270,7 @@ private fun doLoadImage(path: String, scale: Float, isJreHiDPIEnabled: Boolean):
   val originalImage = loadImageForStartUp(requestedPath = path, scale = scale, classLoader = Splash::class.java.classLoader) ?: return null
   val w = originalImage.width
   val h = originalImage.height
+  @Suppress("UndesirableClassUsage")
   val resultImage = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
   val g2 = resultImage.createGraphics()
   g2.composite = AlphaComposite.Src

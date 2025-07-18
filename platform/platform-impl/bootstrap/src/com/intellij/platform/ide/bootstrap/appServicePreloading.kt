@@ -1,6 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
-
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PerformanceWatcher
@@ -24,13 +23,14 @@ import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 
-fun CoroutineScope.preloadCriticalServices(
+fun preloadCriticalServices(
   app: ApplicationImpl,
+  preloadScope: CoroutineScope,
   asyncScope: CoroutineScope,
   appRegistered: Job,
   initAwtToolkitAndEventQueueJob: Job?,
 ): Job {
-  val pathMacroJob = launch(CoroutineName("PathMacros preloading")) {
+  val pathMacroJob = preloadScope.launch(CoroutineName("PathMacros preloading")) {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
     app.serviceAsync<PathMacros>()
   }
@@ -51,7 +51,7 @@ fun CoroutineScope.preloadCriticalServices(
     asyncScope.launch(CoroutineName("LocalHistory preloading")) { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
   }
 
-  launch {
+  preloadScope.launch {
     // required for indexing tasks (see JavaSourceModuleNameIndex, for example)
     // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
     app.serviceAsync<PropertiesComponent>()
@@ -65,26 +65,25 @@ fun CoroutineScope.preloadCriticalServices(
     // FileTypeManager requires appStarter execution
     launch {
       appRegistered.join()
-      postAppRegistered(app = app,
-                        asyncScope = asyncScope,
-                        managingFsJob = managingFsJob,
-                        registryManagerJob = registryManagerJob,
-                        initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob)
+      postAppRegistered(app, preloadScope, asyncScope, managingFsJob, registryManagerJob, initAwtToolkitAndEventQueueJob)
     }
   }
 
-  launch(CoroutineName("Eel MultiRoutingFileSystem backend")) {
+  preloadScope.launch(CoroutineName("Eel MultiRoutingFileSystem backend")) {
     serviceAsync<MultiRoutingFileSystemBackend.InitializationService>()
   }
 
   return pathMacroJob
 }
 
-private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
-                                             asyncScope: CoroutineScope,
-                                             managingFsJob: Job,
-                                             registryManagerJob: Job,
-                                             initAwtToolkitAndEventQueueJob: Job?) {
+private fun postAppRegistered(
+  app: ApplicationImpl,
+  preloadScope: CoroutineScope,
+  asyncScope: CoroutineScope,
+  managingFsJob: Job,
+  registryManagerJob: Job,
+  initAwtToolkitAndEventQueueJob: Job?
+) {
   asyncScope.launch {
     val fileTypeManagerJob = launch(CoroutineName("FileTypeManager preloading")) {
       app.serviceAsync<FileTypeManager>()
@@ -117,7 +116,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
     }
   }
 
-  launch {
+  preloadScope.launch {
     if (initAwtToolkitAndEventQueueJob != null) {
       span("waiting for rw lock for app instantiation") {
         initAwtToolkitAndEventQueueJob.join()
@@ -141,7 +140,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
     }
   }
 
-  launch {
+  preloadScope.launch {
     val loadComponentInEdtTask = span("old component init task creating") {
       app.createInitOldComponentsTask()
     }

@@ -82,7 +82,8 @@ internal var isInitialStart: CompletableDeferred<Boolean>? = null
 
 // the main thread's dispatcher is sequential - use it with care
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.startApplication(
+fun startApplication(
+  scope: CoroutineScope,
   args: List<String>,
   configImportNeededDeferred: Deferred<Boolean>,
   customTargetDirectoryToImportConfig: Path?,
@@ -91,11 +92,11 @@ fun CoroutineScope.startApplication(
   mainScope: CoroutineScope,
   busyThread: Thread,
 ) {
-  launch {
+  scope.launch {
     Java11Shim.INSTANCE = Java11ShimImpl()
   }
 
-  val appInfoDeferred = async {
+  val appInfoDeferred = scope.async {
     mainClassLoaderDeferred?.await()
     coroutineScope {
       // required for log essential info about IDE, Wayland app id
@@ -112,7 +113,7 @@ fun CoroutineScope.startApplication(
 
   val isHeadless = AppMode.isHeadless()
 
-  val lockSystemDirsJob = launch {
+  val lockSystemDirsJob = scope.launch {
     // the "import-needed" check must be performed strictly before IDE directories are locked
     configImportNeededDeferred.join()
     span("system dirs locking") {
@@ -120,23 +121,23 @@ fun CoroutineScope.startApplication(
     }
   }
 
-  val consoleLoggerJob = configureJavaUtilLogging(scope = this)
+  val consoleLoggerJob = configureJavaUtilLogging(scope)
 
-  launch {
+  scope.launch {
     LoadingState.setStrictMode()
     LoadingState.errorHandler = BiConsumer { message, throwable ->
       logger<LoadingState>().error(message, throwable)
     }
   }
 
-  val initAwtToolkitJob = scheduleInitAwtToolkit(lockSystemDirsJob, busyThread)
-  val initBaseLafJob = launch {
-    initUi(initAwtToolkitJob, isHeadless, asyncScope = this@startApplication)
+  val initAwtToolkitJob = scheduleInitAwtToolkit(scope, lockSystemDirsJob, busyThread)
+  val initBaseLafJob = scope.launch {
+    initUi(initAwtToolkitJob, isHeadless, scope)
   }
 
   var initUiScale: Job? = null
   if (!isHeadless) {
-    initUiScale = launch {
+    initUiScale = scope.launch {
       if (OS.CURRENT == OS.macOS) {
         initAwtToolkitJob.join()
         JBUIScale.preloadOnMac()
@@ -149,12 +150,12 @@ fun CoroutineScope.startApplication(
       }
     }
 
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob, initUiScale, appInfoDeferred)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope, initAwtToolkitJob, initUiScale, appInfoDeferred)
 
-    scheduleShowSplashIfNeeded(lockSystemDirsJob, initUiScale, appInfoDeferred, args)
+    scheduleShowSplashIfNeeded(scope, lockSystemDirsJob, initUiScale, appInfoDeferred, args)
   }
 
-  val initLafJob = launch {
+  val initLafJob = scope.launch {
     initUiScale?.join()
     initBaseLafJob.join()
     if (!isHeadless) {
@@ -162,13 +163,13 @@ fun CoroutineScope.startApplication(
     }
   }
 
-  val zipPoolDeferred = async {
+  val zipPoolDeferred = scope.async {
     val result = ZipFilePoolImpl()
     ZipFilePool.PATH_CLASSLOADER_POOL = result
     result
   }
 
-  launch {
+  scope.launch {
     initLafJob.join()
 
     if (!isHeadless) {
@@ -181,12 +182,12 @@ fun CoroutineScope.startApplication(
   }
 
   // system dirs checking must happen after locking system dirs
-  val checkSystemDirJob = checkDirectories(scope = this, lockSystemDirsJob)
+  val checkSystemDirJob = checkDirectories(scope, lockSystemDirsJob)
 
   // log initialization must happen only after locking the system directory
-  val logDeferred = setupLogger(scope = this, consoleLoggerJob, checkSystemDirJob)
+  val logDeferred = setupLogger(scope, consoleLoggerJob, checkSystemDirJob)
   if (!isHeadless) {
-    launch {
+    scope.launch {
       lockSystemDirsJob.join()
 
       span("SvgCache creation") {
@@ -195,7 +196,7 @@ fun CoroutineScope.startApplication(
     }
   }
 
-  shellEnvDeferred = async {
+  shellEnvDeferred = scope.async {
     // EnvironmentUtil wants logger
     logDeferred.join()
     span("environment loading", Dispatchers.IO) {
@@ -204,20 +205,20 @@ fun CoroutineScope.startApplication(
     }
   }
 
-  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(scope = this, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
+  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
 
-  val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
+  val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
-  val configImportDeferred: Deferred<Job?> = async {
+  val configImportDeferred: Deferred<Job?> = scope.async {
     importConfigIfNeeded(
-      isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig, appStarterDeferred,
+      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig, appStarterDeferred,
       euaDocumentDeferred, initLafJob
     )
   }
 
   val appStartPreparedJob = CompletableDeferred<Unit>()
 
-  val pluginSetDeferred = async {
+  val pluginSetDeferred = scope.async {
     // plugins cannot be loaded when a config import is necessary, because plugins may be added after importing
     configImportDeferred.join()
     // AppStarter.prepareStart might need to prevent some plugins from loading
@@ -234,17 +235,17 @@ fun CoroutineScope.startApplication(
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
   if (isInternal) {
-    launch(CoroutineName("assert on missed keys enabling")) {
+    scope.launch(CoroutineName("assert on missed keys enabling")) {
       BundleBase.assertOnMissedKeys(true)
     }
   }
-  launch(CoroutineName("disposer debug mode enabling if needed")) {
+  scope.launch(CoroutineName("disposer debug mode enabling if needed")) {
     if (isInternal || Disposer.isDebugDisposerOn()) {
       Disposer.setDebugMode(true)
     }
   }
 
-  val kernelStarted = async {
+  val kernelStarted = scope.async {
     span("Starting Kernel") {
       if (PlatformUtils.isJetBrainsClient()) {
         startClientKernel(mainScope)
@@ -257,8 +258,8 @@ fun CoroutineScope.startApplication(
 
   val appRegisteredJob = CompletableDeferred<Unit>()
 
-  val appLoaded = async {
-    val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
+  val appLoaded = scope.async {
+    val initEventQueueJob = scheduleInitIdeEventQueue(scope, initAwtToolkitJob, isHeadless)
 
     checkSystemDirJob.join()
 
@@ -275,12 +276,12 @@ fun CoroutineScope.startApplication(
     }
 
     loadApp(
-      app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, asyncScope = this@startApplication, initLafJob, logDeferred, appRegisteredJob,
+      app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, scope, initLafJob, logDeferred, appRegisteredJob,
       args = args.filterNot { CommandLineArgs.isKnownArgument(it) }, initEventQueueJob
     )
   }
 
-  launch {
+  scope.launch {
     // required for appStarter.prepareStart
     appInfoDeferred.join()
 
@@ -306,7 +307,7 @@ fun CoroutineScope.startApplication(
   }
 
   // out of appLoaded scope
-  launch {
+  scope.launch {
     // wait for the kernel to start
     withContext(kernelStarted.await().coroutineContext) {
       // starter is used later, but we need to wait for appLoaded completion

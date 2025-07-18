@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
@@ -20,7 +20,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 
-internal suspend fun CoroutineScope.importConfigIfNeeded(
+internal suspend fun importConfigIfNeeded(
+  scope: CoroutineScope,
   isHeadless: Boolean,
   configImportNeededDeferred: Deferred<Boolean>,
   lockSystemDirsJob: Job,
@@ -35,7 +36,7 @@ internal suspend fun CoroutineScope.importConfigIfNeeded(
     val configDir = PathManager.getConfigDir()
     val configDirExists = Files.exists(configDir)
     val entries: Array<File>? = PathManager.getConfigDir().toFile().listFiles()
-    launch {
+    scope.launch {
       logDeferred.await().info("Will skip the config import to directory \"$configDir\" (exists = $configDirExists). Current entries: ${entries?.joinToString(", ") { "\"${it.name}\"" }}.")
     }
     return null

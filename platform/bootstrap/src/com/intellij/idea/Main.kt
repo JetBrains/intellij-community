@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 @file:JvmName("Main")
 package com.intellij.idea
@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.impl.P3SupportInstaller
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -23,6 +22,7 @@ import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
+import com.intellij.util.system.OS
 import com.intellij.util.ui.TextLayoutUtil
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
@@ -39,17 +39,12 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
 fun main(rawArgs: Array<String>) {
-  val startupTimings = ArrayList<Any>(12)
   val startTimeNano = System.nanoTime()
   val startTimeUnixNano = System.currentTimeMillis() * 1000000
+  val startupTimings = ArrayList<Any>(12)
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(
-    rawArgs = rawArgs,
-    startupTimings = startupTimings,
-    startTimeUnixNano = startTimeUnixNano,
-    changeClassPath = null,
-  )
+  mainImpl(rawArgs, startupTimings, startTimeUnixNano, changeClassPath = null)
 }
 
 internal fun mainImpl(
@@ -166,13 +161,8 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     }
 
     startApplication(
-      args = args,
-      configImportNeededDeferred = configImportNeededDeferred,
-      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-      mainClassLoaderDeferred = mainClassLoaderDeferred,
-      appStarterDeferred = appStarterDeferred,
-      mainScope = mainScope,
-      busyThread = busyThread,
+      scope = this, args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred,
+      appStarterDeferred, mainScope, busyThread
     )
   }
 }
@@ -203,7 +193,7 @@ private fun initRemoteDev(args: List<String>) {
   }
 
   // avoid an icon jumping in dock for the backend process
-  if (SystemInfoRt.isMac) {
+  if (OS.CURRENT == OS.macOS) {
     val shouldInitDefaultToolkit = isSplitMode || isInAquaSession()
     if (System.getProperty("REMOTE_DEV_INIT_MAC_DEFAULT_TOOLKIT", shouldInitDefaultToolkit.toString()).toBoolean()) {
       // this makes sure that the following call doesn't create an icon in Dock
@@ -230,7 +220,7 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 }
 
 private fun isInAquaSession(): Boolean {
-  if (!SystemInfoRt.isMac) return false
+  if (OS.CURRENT != OS.macOS) return false
 
   if ("true" == System.getenv("AWT_FORCE_HEADFUL")) {
     return false // the value is forcefully set, assume the worst case
@@ -287,7 +277,6 @@ private fun preprocessArgs(args: Array<String>): List<String> {
     return Collections.emptyList()
   }
 
-  @Suppress("SuspiciousPackagePrivateAccess")
   if (AppMode.HELP_OPTION in args) {
     println("""
         Some of the common commands and options (sorry, the full list is not yet supported):
@@ -306,7 +295,6 @@ private fun preprocessArgs(args: Array<String>): List<String> {
     exitProcess(0)
   }
 
-  @Suppress("SuspiciousPackagePrivateAccess")
   if (AppMode.VERSION_OPTION in args) {
     val appInfo = ApplicationInfoImpl.getShadowInstance()
     val edition = ApplicationNamesInfo.getInstance().editionName?.let { " (${it})" } ?: ""

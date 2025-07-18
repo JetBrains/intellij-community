@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -74,8 +72,8 @@ internal suspend fun configureCssUiDefaults() {
     span("html style patching") {
       // create a separate copy for each case
       val globalStyleSheet = createGlobalStyleSheet()
-      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+      uiDefaults["javax.swing.JLabel.userStyleSheet"] = globalStyleSheet
+      uiDefaults["HTMLEditorKit.jbStyleSheet"] = globalStyleSheet
     }
   }
 }
@@ -111,8 +109,8 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?) {
   }
 }
 
-internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread): Job {
-  val task = launch {
+internal fun scheduleInitAwtToolkit(scope: CoroutineScope, lockSystemDirsJob: Job, busyThread: Thread): Job {
+  val task = scope.launch {
     // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit to avoid unnecessary focus stealing and space switching on macOS.
     if (SystemInfoRt.isMac) {
@@ -161,12 +159,10 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
   }
 }
 
-internal fun CoroutineScope.scheduleInitIdeEventQueue(initAwtToolkit: Job, isHeadless: Boolean): Job {
-  return launch {
-    initAwtToolkit.join()
-    withContext(RawSwingDispatcher) {
-      replaceIdeEventQueue(isHeadless)
-    }
+internal fun scheduleInitIdeEventQueue(scope: CoroutineScope, initAwtToolkit: Job, isHeadless: Boolean): Job = scope.launch {
+  initAwtToolkit.join()
+  withContext(RawSwingDispatcher) {
+    replaceIdeEventQueue(isHeadless)
   }
 }
 
@@ -220,12 +216,13 @@ fun checkHiDPISettings() {
 }
 
 // must happen after initUi
-internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
+internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
+  scope: CoroutineScope,
   initAwtToolkitJob: Job,
   initUiScale: Job,
   appInfoDeferred: Deferred<ApplicationInfoEx>,
 ) {
-  launch {
+  scope.launch {
     initAwtToolkitJob.join()
 
     if (StartupUiUtil.isXToolkit()) {

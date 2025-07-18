@@ -219,8 +219,8 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
     val timeout = System.getProperty("intellij.testFramework.services.timeout.seconds", "40").toLong()
     withTimeout(Duration.ofSeconds(timeout).toMillis()) {
       val pathMacroJob = preloadCriticalServices(
-        app = app,
-        asyncScope = app.getCoroutineScope(),
+        app,
+        preloadScope = this, asyncScope = app.getCoroutineScope(),
         appRegistered = CompletableDeferred(value = null),
         initAwtToolkitAndEventQueueJob = null,
       )
@@ -231,7 +231,7 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
     }
 
     @Suppress("TestOnlyProblems")
-    callAppInitialized(getAppInitializedListeners(app))
+    callAppInitialized(scope = this, getAppInitializedListeners(app))
 
     LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }

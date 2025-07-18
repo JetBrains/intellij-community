@@ -9,11 +9,11 @@ import com.intellij.idea.AppExitCodes;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.ui.User32Ex;
 import com.intellij.util.Suppressions;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.system.OS;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.*;
@@ -78,7 +78,7 @@ public final class DirectoryLock {
   private static final long TIMEOUT_MS = Integer.getInteger("ij.dir.lock.timeout", 5_000);
   private static final List<String> ACK_PACKET = List.of("<<ACK>>");
 
-  private final String myPid = Long.toString(ProcessHandle.current().pid());
+  private final long myPid = ProcessHandle.current().pid();
   private final Path myPortFile;
   private final Path myLockFile;
   private final boolean myFallbackMode;
@@ -96,7 +96,7 @@ public final class DirectoryLock {
     LOG.debug("portFile=" + myPortFile + " lockFile=" + myLockFile + " fallback=" + myFallbackMode + " PID=" + myPid);
 
     if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
-      var baseDir = SystemInfoRt.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
+      var baseDir = OS.CURRENT == OS.Windows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
       myRedirectedPortFile = baseDir.resolve(".ij_redirected_port_" + myPid + "_" + COUNT.incrementAndGet());
       LOG.debug("redirectedPortFile=" + myRedirectedPortFile);
     }
@@ -121,7 +121,7 @@ public final class DirectoryLock {
       }
     }
 
-    if (!SystemInfoRt.isUnix) {
+    if (OS.CURRENT == OS.Windows) {
       try {
         SocketChannel.open(StandardProtocolFamily.UNIX).close();
       }
@@ -184,10 +184,10 @@ public final class DirectoryLock {
         TimeoutUtil.sleep(200);
       }
 
-    if (!Path.of(command).endsWith(SystemInfoRt.isWindows ? "java.exe" : "java")) {
+    if (!Path.of(command).endsWith(OS.CURRENT == OS.Windows ? "java.exe" : "java")) {
       var user = ProcessHandle.current().info().user().orElse("");
       var other = ProcessHandle.allProcesses()
-        .filter(ph -> command.equals(ph.info().command().orElse("")) && user.equals(ph.info().user().orElse("")) && ph.pid() != ProcessHandle.current().pid())
+        .filter(ph -> command.equals(ph.info().command().orElse("")) && user.equals(ph.info().user().orElse("")) && ph.pid() != myPid)
         .findFirst().orElse(null);
       if (other != null) {
         cannotActivate(command, other.pid(), suppressed);
@@ -276,7 +276,7 @@ public final class DirectoryLock {
         Files.writeString(myPortFile, String.valueOf(port), StandardOpenOption.TRUNCATE_EXISTING);
       }
 
-      Files.writeString(myLockFile, myPid, StandardOpenOption.CREATE_NEW);
+      Files.writeString(myLockFile, Long.toString(myPid), StandardOpenOption.CREATE_NEW);
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -342,7 +342,7 @@ public final class DirectoryLock {
   }
 
   private void allowActivation() {
-    if (SystemInfoRt.isWindows && JnaLoader.isLoaded()) {
+    if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) {
       try {
         User32Ex.INSTANCE.AllowSetForegroundWindow(new WinDef.DWORD(remotePID()));
       }

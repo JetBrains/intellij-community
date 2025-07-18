@@ -114,7 +114,7 @@ open class IdeStarter : ModernApplicationStarter() {
       }.getOrLogException(thisLogger())
 
       if (!app.isHeadlessEnvironment) {
-        postOpenUiTasks()
+        postOpenUiTasks(scope = this)
       }
     }
   }
@@ -281,39 +281,39 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
   return result.project
 }
 
-private fun CoroutineScope.postOpenUiTasks() {
+private fun postOpenUiTasks(scope: CoroutineScope) {
   if (PluginManagerCore.isRunningFromSources()) {
     updateAppWindowIcon(JOptionPane.getRootFrame())
   }
 
   if (SystemInfoRt.isMac) {
-    launch(CoroutineName("mac touchbar on app init")) {
+    scope.launch(CoroutineName("mac touchbar on app init")) {
       TouchbarSupport.onApplicationLoaded()
     }
   }
   else if (SystemInfoRt.isUnix && SystemInfo.isJetBrainsJvm) {
-    launch(CoroutineName("input method disabling on Linux")) {
+    scope.launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }
   }
 
-  launch {
+  scope.launch {
     migrateRegistryToAdvSettings()
   }
 
-  launch {
+  scope.launch {
     SystemHealthMonitor.start()
   }
 
-  launch {
+  scope.launch {
     FUSProjectHotStartUpMeasurer.startWritingStatistics()
   }
 
-  launch {
+  scope.launch {
     serviceAsync<IconDbMaintainer>()
   }
 
-  launch {
+  scope.launch {
     enableScreenReaderSupportIfNeeded()
   }
 }
