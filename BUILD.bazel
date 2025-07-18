@@ -272,7 +272,7 @@ jvm_library(
     "//plugins/svn4idea:vcs-svn-tests_test_lib",
     "//plugins/tasks/tasks-tests:tests_test_lib",
     "//xml/dom-tests:dom-tests_test_lib",
-    "//plugins/IntelliLang/IntelliLang-tests:langInjection-tests_test_lib",
+    "//plugins/IntelliLang/tests:tests_test_lib",
     "//xml/tests:tests_test_lib",
     "//jps/model-serialization:model-serialization-tests_test_lib",
     "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
