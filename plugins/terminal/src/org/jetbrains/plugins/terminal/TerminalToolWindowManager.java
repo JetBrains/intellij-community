@@ -507,7 +507,7 @@ public final class TerminalToolWindowManager implements Disposable {
     terminalWidget.setListener(new JBTerminalWidgetListener() {
       @Override
       public void onNewSession() {
-        createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), null, null, null);
+        createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), null, null, content.getManager());
       }
 
       @Override
