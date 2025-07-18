@@ -43,6 +43,7 @@ class SeTabVm(
   val searchResults: StateFlow<SeSearchContext?> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
+  val queryFilterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getQueryFilterEditor() }
   val tabId: String get() = tab.id
   val reportableTabId: String =
     if (SearchEverywhereUsageTriggerCollector.isReportable(tab)) tabId
@@ -100,10 +101,11 @@ class SeTabVm(
 
         val shouldThrottle = AtomicBoolean(false)
 
-        combine(searchPatternWithAutoToggle, filterEditor.getValue()?.resultFlow ?: flowOf(null)) { searchPattern, filterData ->
-          Pair(searchPattern, filterData ?: SeFilterState.Empty)
-        }.mapLatest { (searchPattern, filterData) ->
-          val params = SeParams(searchPattern, filterData)
+        combine(searchPatternWithAutoToggle, filterEditor.getValue()?.resultFlow ?: flowOf(null),
+                queryFilterEditor.getValue()?.resultFlow ?: flowOf(null)) { searchPattern, filterData, queryFilterData ->
+          Triple(searchPattern, filterData ?: SeFilterState.Empty, queryFilterData ?: SeFilterState.Empty)
+        }.mapLatest { (searchPattern, filterData, queryFilterData) ->
+          val params = SeParams(searchPattern, filterData, queryFilterData)
           val searchId = UUID.randomUUID().toString()
 
           val resultsFlow = tab.getItems(params).let {
@@ -178,7 +180,9 @@ class SeTabVm(
   }
 
   suspend fun openInFindWindow(sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): Boolean {
-    val params = SeParams(searchPattern.value, (filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty))
+    val params = SeParams(searchPattern.value,
+                          (filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty),
+                          (queryFilterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty))
     return tab.openInFindToolWindow(sessionRef, params, initEvent)
   }
 

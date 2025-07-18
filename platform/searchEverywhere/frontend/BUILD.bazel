@@ -34,6 +34,7 @@ jvm_library(
     "//platform/usageView",
     "//platform/refactoring",
     "//platform/scopes",
+    "//platform/observable",
   ],
   exports = ["//platform/searchEverywhere/shared:searchEverywhere"],
   runtime_deps = [":frontend_resources"]

@@ -139,6 +139,11 @@ class SeTabDelegate(
                                                           isAllTab)
   }
 
+  suspend fun getTextTabQueryOptions(): List<Boolean> {
+    if (project == null) return emptyList()
+    return SeRemoteApi.getInstance().getTextTabQueryOptions(project.projectId())
+  }
+
   override fun dispose() {}
 
   private class Providers(

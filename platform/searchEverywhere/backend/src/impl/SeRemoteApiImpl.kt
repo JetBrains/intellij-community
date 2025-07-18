@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.impl
 
+import com.intellij.find.FindManager
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -110,5 +111,12 @@ class SeRemoteApiImpl: SeRemoteApi {
   ): Map<SeProviderId, @Nls String> {
     val project = projectId.findProjectOrNull() ?: return emptyMap()
     return SeBackendService.getInstance(project).getDisplayNameForProvider(sessionRef, dataContextId, providerIds)
+  }
+
+  override suspend fun getTextTabQueryOptions(projectId: ProjectId): List<Boolean> {
+    val project = projectId.findProjectOrNull() ?: return emptyList()
+    return listOf(FindManager.getInstance(project).findInProjectModel.isCaseSensitive,
+                  FindManager.getInstance(project).findInProjectModel.isWholeWordsOnly,
+                  FindManager.getInstance(project).findInProjectModel.isRegularExpressions)
   }
 }

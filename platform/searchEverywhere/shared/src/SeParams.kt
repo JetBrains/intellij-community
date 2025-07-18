@@ -9,5 +9,6 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 data class SeParams(
   val inputQuery: String,
-  val filter: SeFilterState
+  val filter: SeFilterState,
+  val queryFilter: SeFilterState
 )

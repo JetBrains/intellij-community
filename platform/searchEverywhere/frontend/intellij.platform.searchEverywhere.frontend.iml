@@ -55,5 +55,6 @@
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.scopes" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
   </component>
 </module>

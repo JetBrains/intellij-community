@@ -28,17 +28,22 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
   private val filterEditor: SuspendLazyProperty<SeTextFilterEditor> = initAsync(delegate.scope) {
     SeTextFilterEditor(delegate.project, delegate.getSearchScopesInfos().firstOrNull(), filterEditorDisposable)
   }
+  private val queryFilterEditor: SuspendLazyProperty<SeTextQueryFilterEditor> = initAsync(delegate.scope) {
+    SeTextQueryFilterEditor(delegate.getTextTabQueryOptions())
+  }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
 
   override suspend fun getFilterEditor(): SeFilterEditor = filterEditor.getValue()
+
+  override suspend fun getQueryFilterEditor(): SeFilterEditor = queryFilterEditor.getValue()
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
   override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo {
-    return SeTextTabEmptyResultInfoProvider(filterEditor.getValue(), delegate.project).getEmptyResultInfo()
+    return SeTextTabEmptyResultInfoProvider(filterEditor.getValue(), queryFilterEditor.getValue(), delegate.project).getEmptyResultInfo()
   }
 
   override suspend fun canBeShownInFindResults(): Boolean {
