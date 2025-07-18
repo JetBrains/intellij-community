@@ -124,8 +124,6 @@ class Q {
   class B extends A {
     class X extends B {
       Class c = X.class;
-      //           ^ IntelliJ: Reference to 'X' is ambiguous, both 'Q.B.X' and 'Q.A.X' match
-      //           ^ javac   : no problem!
     }
   }
 }
