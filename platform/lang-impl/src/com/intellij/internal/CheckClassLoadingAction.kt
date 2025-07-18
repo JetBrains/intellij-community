@@ -26,7 +26,7 @@ internal class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"),
     
     val classLoadingMap = buildClassLoadingMap(className)
 
-    val columns = arrayOf("Module", "Class Loader", "Loading")
+    val columns = arrayOf("Module", "Class Loader", "Loading Result")
     val data = classLoadingMap.map { (module, clazz) -> // keep topological order
       val classLoaderDesc = when (clazz) {
         null -> "null"
