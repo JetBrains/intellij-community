@@ -676,7 +676,10 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   public void closeTab(@NotNull Content content) {
-    myToolWindow.getContentManager().removeContent(content, true, true, true);
+    var manager = content.getManager();
+    if (manager != null) {
+      manager.removeContent(content, true, true, true);
+    }
   }
 
   private static @NotNull FocusListener createFocusListener(@NotNull ToolWindow toolWindow) {
