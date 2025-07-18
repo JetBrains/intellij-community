@@ -26,12 +26,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.LogRecord;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
 
@@ -48,12 +48,11 @@ public final class DirectoryLock {
     private final @Nls String myMessage;
     private final Attachment[] myAttachments;
 
-    private CannotActivateException(@Nls String message, String diagnostic, String threadDump) {
+    private CannotActivateException(@Nls String message, String threadDump) {
       myMessage = message;
       myAttachments = new Attachment[]{
-        new Attachment("diagnostic.txt", diagnostic),
+        new Attachment("debug.txt", LOG.messages()),
         new Attachment("threadDump.txt", threadDump),
-        new Attachment("messages.txt", LOG.messages()),
       };
     }
 
@@ -150,6 +149,7 @@ public final class DirectoryLock {
 
       var suppressed = new ArrayList<Exception>();
       var command = ProcessHandle.current().info().command().orElse("???");
+      LOG.debug("current command: " + command);
 
       for (int attempt = 0; attempt < 1; attempt++) {
         try {
@@ -170,8 +170,9 @@ public final class DirectoryLock {
 
         try {
           var otherPid = remotePID();
-          var handle = ProcessHandle.of(otherPid).orElse(null);
-          if (handle != null && command.equals(handle.info().command().orElse(""))) {
+          var otherCommand = ProcessHandle.of(otherPid).map(ProcessHandle::info).flatMap(ProcessHandle.Info::command).orElse("-"); // not "???"
+          LOG.debug("competing process (by PID): PID=" + otherPid + ' ' + otherCommand);
+          if (command.equals(otherCommand)) {
             cannotActivate(command, otherPid, suppressed);
           }
         }
@@ -184,15 +185,20 @@ public final class DirectoryLock {
         TimeoutUtil.sleep(200);
       }
 
-    if (!Path.of(command).endsWith(OS.CURRENT == OS.Windows ? "java.exe" : "java")) {
-      var user = ProcessHandle.current().info().user().orElse("");
-      var other = ProcessHandle.allProcesses()
-        .filter(ph -> command.equals(ph.info().command().orElse("")) && user.equals(ph.info().user().orElse("")) && ph.pid() != myPid)
-        .findFirst().orElse(null);
-      if (other != null) {
-        cannotActivate(command, other.pid(), suppressed);
+      if (!Path.of(command).endsWith(OS.CURRENT == OS.Windows ? "java.exe" : "java")) {
+        var user = ProcessHandle.current().info().user().orElse("");
+        LOG.debug("current user: " + user);
+        var competition = ProcessHandle.allProcesses()
+          .filter(ph -> command.equals(ph.info().command().orElse("")) && user.equals(ph.info().user().orElse("")) && ph.pid() != myPid)
+          .toList();
+        if (!competition.isEmpty()) {
+          LOG.debug(
+            "competing processes:\n" +
+            competition.stream().map(ph -> "  PID=" + ph.pid() + " (" + ph.info().user() + ") " + ph.info().command()).collect(Collectors.joining())
+          );
+          cannotActivate(command, competition.get(0).pid(), suppressed);
+        }
       }
-    }
 
       try {
         LOG.debug("deleting " + myPortFile);
@@ -216,10 +222,9 @@ public final class DirectoryLock {
     }
   }
 
-  private void cannotActivate(String command, long pid, List<Exception> suppressed) throws CannotActivateException {
-    var diagnostic = diagnostic();
+  private static void cannotActivate(String command, long pid, List<Exception> suppressed) throws CannotActivateException {
     var threadDump = remoteThreadDump(pid);
-    var cae = new CannotActivateException(BootstrapBundle.message("bootstrap.error.still.running", command, pid), diagnostic, threadDump);
+    var cae = new CannotActivateException(BootstrapBundle.message("bootstrap.error.still.running", command, pid), threadDump);
     suppressed.forEach(cae::addSuppressed);
     throw cae;
   }
@@ -460,17 +465,6 @@ public final class DirectoryLock {
 
   private long remotePID() throws IOException {
     return Long.parseLong(Files.readString(myLockFile));
-  }
-
-  @SuppressWarnings("StringBufferReplaceableByString")
-  private String diagnostic() {
-    var sb = new StringBuilder();
-    sb.append("Timestamp: ").append(LocalDateTime.now()).append('\n');
-    sb.append("Port file: ").append(myPortFile).append('\n');
-    sb.append("Redirected: ").append(myRedirectedPortFile).append('\n');
-    sb.append("Fallback: ").append(myFallbackMode).append('\n');
-    sb.append("Lock file: ").append(myLockFile).append('\n');
-    return sb.toString();
   }
 
   private static String remoteThreadDump(long pid) {
