@@ -16,6 +16,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -368,7 +369,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (possiblyParameterizedQualifier && PyTypeChecker.hasGenerics(type, context)) {
           if (qualifierType instanceof PyCollectionType collectionType && collectionType.isDefinition()) {
             if (type != null) {
-              PyType typeWithSubstitutions = PyTypeChecker.parameterizeType(type, List.of(), context);
+              var substitutions = PyTypeChecker.unifyReceiver(qualifierType, context);
+              PyType typeWithSubstitutions = PyTypeChecker.substitute(type, substitutions, context);
               if (typeWithSubstitutions != null) {
                 return typeWithSubstitutions;
               }
@@ -459,8 +461,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static @Nullable PyType dropSelfForQualifiedMethod(@Nullable PyType type,
                                                              @NotNull TypeEvalContext context,
                                                              @NotNull PyReferenceExpression anchor) {
-    if (type instanceof PyFunctionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
-      return ((PyFunctionType)type).dropSelf(context);
+    if (type instanceof PyFunctionType functionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
+      PyType qualifierType = context.getType(anchor.getQualifier());
+      if (qualifierType instanceof PyClassLikeType classLikeType && classLikeType.isDefinition() &&
+          functionType.getModifier() != PyAstFunction.Modifier.CLASSMETHOD) {
+        return type;
+      }
+      return functionType.dropSelf(context);
     }
 
     return type;

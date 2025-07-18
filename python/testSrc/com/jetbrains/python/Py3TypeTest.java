@@ -3891,6 +3891,48 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-76855
+  public void testCallableWithSelfSubstitutedWithQualifierTypeWithDefault() {
+    doTest("(self: Foo7[int], /) -> Foo7[int]", """
+      from typing import Self, Generic, TypeVar
+      
+      DefaultIntT = TypeVar('DefaultIntT', default=int)
+      class Foo7(Generic[DefaultIntT]):
+          def meth(self, /) -> Self:
+              return self
+      
+      expr = Foo7.meth
+      """);
+  }
+
+  // PY-76855
+  public void testCallableWithSelfSubstitutedWithQualifierTypeDefaultOverriden() {
+    doTest("(self: Foo7[str], /) -> Foo7[str]", """
+      from typing import Self, Generic, TypeVar
+      
+      DefaultIntT = TypeVar('DefaultIntT', default=int)
+      class Foo7(Generic[DefaultIntT]):
+          def meth(self, /) -> Self:
+              return self
+      
+      expr = Foo7[str].meth
+      """);
+  }
+
+  // PY-76855
+  public void testCallableWithSelfSubstitutedWithQualifierTypeSelfDropped() {
+    doTest("(/) -> Foo7[str]", """
+      from typing import Self, Generic, TypeVar
+      
+      DefaultIntT = TypeVar('DefaultIntT', default=int)
+      class Foo7(Generic[DefaultIntT]):
+          def meth(self, /) -> Self:
+              return self
+      
+      expr = Foo7[str]().meth
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
