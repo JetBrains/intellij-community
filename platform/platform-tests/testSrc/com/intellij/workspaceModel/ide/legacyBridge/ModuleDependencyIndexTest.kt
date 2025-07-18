@@ -5,6 +5,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
@@ -93,8 +94,8 @@ class ModuleDependencyIndexTest {
   fun `test dependency on global library`() = runBlocking {
     try {
       edtWriteAction {
-        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
-          val manager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+        GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test") {
+          val manager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
           val globalEntitySource = JpsGlobalFileEntitySource(manager.getOrCreateFromUrl("/url"))
           it addEntity LibraryEntity("GlobalLib", LibraryTableId.GlobalLibraryTableId("application"), emptyList(), globalEntitySource)
         }
@@ -156,8 +157,8 @@ class ModuleDependencyIndexTest {
   fun `test dependency on global library after rename`() = runBlocking {
     try {
       edtWriteAction {
-        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
-          val manager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+        GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test") {
+          val manager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
           val globalEntitySource = JpsGlobalFileEntitySource(manager.getOrCreateFromUrl("/url"))
           it addEntity LibraryEntity("GlobalLib", LibraryTableId.GlobalLibraryTableId("application"), emptyList(), globalEntitySource)
         }
@@ -168,7 +169,7 @@ class ModuleDependencyIndexTest {
       }
 
       edtWriteAction {
-        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
+        GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test") {
           val resolved = it.resolve(LibraryId("GlobalLib", LibraryTableId.GlobalLibraryTableId("application")))!!
           it.modifyLibraryEntity(resolved) {
             this.name = "NewGlobalName"

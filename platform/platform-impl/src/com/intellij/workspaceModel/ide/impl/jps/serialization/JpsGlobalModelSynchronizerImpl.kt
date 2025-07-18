@@ -12,6 +12,7 @@ import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
@@ -289,12 +290,12 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     initialEntityStorage: VersionedEntityStorage,
     notifyListeners: Boolean,
   ): () -> Unit {
-    val descriptor =
+    val eelMachine =
       EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
-        eelProvider.getEelDescriptorByInternalName(environmentName.name)
+        eelProvider.getEelMachineByInternalName(environmentName.name)
       }
-      ?: LocalEelDescriptor
-    val callbacks = GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(descriptor)
+      ?: LocalEelMachine
+    val callbacks = GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(eelMachine)
       .map { it.initializeBridgesAfterLoading(mutableStorage, initialEntityStorage) }
     return {
       callbacks.forEach { it.invoke() }

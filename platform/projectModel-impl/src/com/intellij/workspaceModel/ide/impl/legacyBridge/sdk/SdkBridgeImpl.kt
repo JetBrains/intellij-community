@@ -16,7 +16,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
@@ -276,6 +276,6 @@ fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity) {
 }
 
 private fun getVirtualFileUrlManager(): VirtualFileUrlManager {
-  // here we can use LocalEelDescriptor, as we simply need to get the virtual file url manager
-  return GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+  // here we can use LocalEelMachine, as we simply need to get the virtual file url manager
+  return GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
 }

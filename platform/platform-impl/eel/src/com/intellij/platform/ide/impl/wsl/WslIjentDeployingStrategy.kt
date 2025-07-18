@@ -7,6 +7,7 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.ijent.spi.IjentConnectionStrategy
 import com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy
@@ -22,7 +23,7 @@ class WslIjentDeployingStrategy(
   override val ijentLabel: String,
   private val distribution: WSLDistribution,
   private val project: Project?,
-  private val wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {}
+  private val wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
 ) : IjentDeployingOverShellProcessStrategy(scope) {
   override suspend fun mapPath(path: Path): String? =
     distribution.getWslPath(path)
@@ -46,7 +47,10 @@ class WslIjentDeployingStrategy(
   }
 
   override suspend fun getTargetDescriptor(): EelDescriptor {
-    return WslEelDescriptor(distribution)
+    val root = project?.basePath?.let {
+      MultiRoutingFileSystem.sanitizeRoot(it)
+    }?.let(WslEelProvider::parsePath)?.first ?: distribution.getUNCRootPath().toString()
+    return WslEelDescriptor(distribution, root)
   }
 
   override suspend fun getConnectionStrategy(): IjentConnectionStrategy {

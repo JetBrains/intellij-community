@@ -62,7 +62,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   override fun addNewSdk(sdk: Sdk) {
     val delegateSdk = (sdk as ProjectJdkImpl).delegate as SdkBridgeImpl
     val descriptor = delegateSdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor.machine)
     val existingSdkEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(sdk)
 
     if (existingSdkEntity != null) {
@@ -93,7 +93,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun removeSdk(sdk: Sdk) {
     val descriptor = sdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor.machine)
 
     // It's absolutely OK if we try to remove what does not yet exist in `ProjectJdkTable` SDK
     // E.g. org.jetbrains.idea.maven.actions.AddMavenDependencyQuickFixTest
@@ -107,7 +107,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     modifiedSdk as ProjectJdkImpl
     originalSdk as ProjectJdkImpl
     val descriptor = modifiedSdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor.machine)
     val sdkEntity = (globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java)
                            .firstOrNull { it.name == originalSdk.name && it.type == originalSdk.sdkType.name }
                      ?: error("SDK entity for bridge `${originalSdk.name}` `${originalSdk.sdkType.name}` doesn't exist"))

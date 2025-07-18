@@ -347,7 +347,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     if (type is MavenWrapper) {
       val path = getPathToWrapperScript()
       val file = workingDir.resolve(path)
-      if (file.asNioPath(myConfiguration.project).exists()) {
+      if (file.asNioPath().exists()) {
         return path
       }
       return getMavenExecutablePath(BundledMaven3, eel)

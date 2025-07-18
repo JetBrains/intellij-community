@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
   @Override
   public @NotNull LibraryTable getLibraryTable() {
     // todo: IJPL-175225 add possibility to select non-local global library tables
-    return GlobalLibraryTableBridge.Companion.getInstance(LocalEelDescriptor.INSTANCE);
+    return GlobalLibraryTableBridge.Companion.getInstance(LocalEelMachine.INSTANCE);
   }
 
   @Override

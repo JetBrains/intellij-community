@@ -130,7 +130,7 @@ public class ProjectSdksModel implements SdkModel {
     if (sdkHomePath != null) {
       try {
         Path path = Path.of(sdkHomePath);
-        if (getEelDescriptor(path).equals(eelDescriptor)) {
+        if (getEelDescriptor(path).getMachine().equals(eelDescriptor.getMachine())) {
           return true;
         }
       }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.path.EelPath.Companion.parse
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.asNioPath
@@ -87,14 +88,14 @@ internal class ShDocumentationProvider(private val scope: CoroutineScope) : Docu
     return contextElement
   }
 
-  private val myManExecutableCache = ConcurrentHashMap<EelDescriptor, SuspendingLazy<String?>>()
-  private val myManCache = ConcurrentHashMap<Pair<EelDescriptor, String>, SuspendingLazy<String>>()
+  private val myManExecutableCache = ConcurrentHashMap<EelMachine, SuspendingLazy<String?>>()
+  private val myManCache = ConcurrentHashMap<Pair<EelMachine, String>, SuspendingLazy<String>>()
 
   private fun fetchInfo(commandName: String?, project: Project): @NlsSafe String? {
     val eelDescriptor = project.getEelDescriptor()
 
     if (commandName == null) return null
-    val manExecutablePromise = myManExecutableCache.computeIfAbsent(eelDescriptor) {
+    val manExecutablePromise = myManExecutableCache.computeIfAbsent(eelDescriptor.machine) {
       scope.suspendingLazy {
         val eel = eelDescriptor.toEelApi()
         val path = eel.exec.fetchLoginShellEnvVariables()["PATH"]
@@ -115,7 +116,7 @@ internal class ShDocumentationProvider(private val scope: CoroutineScope) : Docu
     }
 
     return runBlockingMaybeCancellable { // fixme: is this good idea call blocking code here?
-      myManCache.computeIfAbsent(eelDescriptor to commandName) {
+      myManCache.computeIfAbsent(eelDescriptor.machine to commandName) {
         scope.suspendingLazy {
           val manExecutable = manExecutablePromise.getValue()
 

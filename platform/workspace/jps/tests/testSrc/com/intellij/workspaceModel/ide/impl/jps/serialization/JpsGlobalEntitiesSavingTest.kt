@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -44,7 +45,7 @@ class JpsGlobalEntitiesSavingTest {
       libraryTable as GlobalLibraryTableBridgeImpl
       Assert.assertEquals(0, libraryTable.libraries.size)
 
-      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
+      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
       Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList().size)
 
       val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
@@ -80,7 +81,7 @@ class JpsGlobalEntitiesSavingTest {
       val sdks = ProjectJdkTable.getInstance().allJdks
       Assert.assertEquals(0, sdks.size)
 
-      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
+      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
       Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList().size)
 
       val virtualFileManager = workspaceModel.getVirtualFileUrlManager()

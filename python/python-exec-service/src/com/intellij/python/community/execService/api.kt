@@ -58,7 +58,7 @@ suspend fun ExecService.execGetStdout(
   procListener: PyProcessListener? = null,
 ): PyResult<String> {
   val binary = eelApi.exec.findExeFilesInPath(binaryName).firstOrNull()?.asNioPath()
-               ?: return PyResult.localizedError(PyExecBundle.message("py.exec.fileNotFound", binaryName, eelApi.descriptor.userReadableDescription))
+               ?: return PyResult.localizedError(PyExecBundle.message("py.exec.fileNotFound", binaryName, eelApi.descriptor.machine.name))
   return execGetStdout(binary, args, options, procListener)
 }
 

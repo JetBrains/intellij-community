@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
@@ -49,13 +50,13 @@ internal suspend fun getCacheTimeout(): Duration? =
 @Internal
 internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
   private val findPythonsMutex = Mutex()
-  private val _cacheImpl: CompletableDeferred<Cache<EelDescriptor, SystemPython>?> = CompletableDeferred()
+  private val _cacheImpl: CompletableDeferred<Cache<EelMachine, SystemPython>?> = CompletableDeferred()
   private suspend fun cache() = _cacheImpl.await()
 
   init {
     scope.launch {
       _cacheImpl.complete(getCacheTimeout()?.let { interval ->
-        Cache<EelDescriptor, SystemPython>(scope, interval) { eelDescriptor ->
+        Cache<EelMachine, SystemPython>(scope, interval) { eelDescriptor ->
           searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
         }
       })
@@ -67,7 +68,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
       .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken", pythonPath)) { return it }
     val systemPython = SystemPython(pythonWithLangLevel, null)
     state.userProvidedPythons.add(pythonPath.pathString)
-    cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)
+    cache()?.get(pythonPath.getEelDescriptor().machine)?.add(systemPython)
     return Result.success(systemPython)
   }
 
@@ -80,10 +81,10 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
       cache.startUpdate()
       if (forceRefresh) {
         logger.info("pythons refresh requested")
-        cache.updateCache(eelApi.descriptor) // Update cache and suspend till update finished
+        cache.updateCache(eelApi.descriptor.machine) // Update cache and suspend till update finished
       }
       else {
-        cache.get(eelApi.descriptor)
+        cache.get(eelApi.descriptor.machine)
       }.sorted()
     } ?: searchPythonsPhysicallyNoCache(eelApi).sorted()
 

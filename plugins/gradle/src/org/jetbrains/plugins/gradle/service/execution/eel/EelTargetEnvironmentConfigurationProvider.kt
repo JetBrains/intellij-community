@@ -12,7 +12,7 @@ import com.intellij.platform.eel.EelTunnelsApi.HostAddress
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asNioPathOrNull
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.util.PathMapper
@@ -43,7 +43,7 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi, val project: Pr
     override fun convertToLocal(remotePath: String): String {
       val nio = Path.of(remotePath)
       val eelPath = eel.fs.getPath(nio.toCanonicalPath())
-      return eelPath.asNioPathOrNull(project)!!.toCanonicalPath()
+      return eelPath.asNioPath().toCanonicalPath()
     }
 
     override fun canReplaceRemote(remotePath: String): Boolean {

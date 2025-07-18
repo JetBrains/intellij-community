@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.fs.createTemporaryDirectory
@@ -25,14 +26,16 @@ import com.intellij.util.io.delete
 import org.junit.jupiter.api.Assumptions
 import java.nio.file.*
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.Path
 import kotlin.io.path.name
 
 internal const val FAKE_WINDOWS_ROOT = "\\\\dummy-ij-root\\test-eel\\"
 
-private val EelPlatform.name: String get() = when (this) {
-  is EelPlatform.Posix -> "posix"
-  is EelPlatform.Windows -> "windows"
-}
+private val EelPlatform.name: String
+  get() = when (this) {
+    is EelPlatform.Posix -> "posix"
+    is EelPlatform.Windows -> "windows"
+  }
 
 internal val currentOs: EelPlatform
   get() = if (SystemInfo.isWindows) {
@@ -67,7 +70,7 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
 
   val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val apiRef = AtomicReference<EelApi>(null)
-  val descriptor = EelTestDescriptor(Ksuid.generate().toString(), os.osFamily, apiRef::get)
+  val descriptor = EelTestDescriptor(Path(fakeRoot), Ksuid.generate().toString(), os.osFamily, apiRef::get)
 
   val disposable = Disposer.newDisposable()
 
@@ -102,12 +105,12 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
         if (eelDescriptor == descriptor) listOf(fakeRoot)
         else null
 
-      override fun getInternalName(eelDescriptor: EelDescriptor): String? =
-        if (eelDescriptor == descriptor) meaningfulDirName
+      override fun getInternalName(eelMachine: EelMachine): String? =
+        if (eelMachine == descriptor.machine) meaningfulDirName
         else null
 
-      override fun getEelDescriptorByInternalName(internalName: String): EelDescriptor? =
-        if (internalName == meaningfulDirName) descriptor
+      override fun getEelMachineByInternalName(internalName: String): EelMachine? =
+        if (internalName == meaningfulDirName) descriptor.machine
         else null
     },
     disposable,

@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.EelMachine;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
@@ -676,7 +676,7 @@ public final class JarRepositoryManager {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     String repositoryPath = getJPSLocalMavenRepositoryForIdeaProject(project).toString();
-    EelDescriptor targetRepositoryDescriptor = EelProviderUtil.getEelDescriptor(Path.of(repositoryPath));
+    final EelMachine targetRepositoryMachine = EelProviderUtil.getEelDescriptor(Path.of(repositoryPath)).getMachine();
     for (Artifact each : artifacts) {
       long ms = System.currentTimeMillis();
       try {
@@ -688,7 +688,7 @@ public final class JarRepositoryManager {
             FileUtil.copy(repoFile, toFile);
           }
         }
-        else if (!targetRepositoryDescriptor.equals(EelProviderUtil.getEelDescriptor(Path.of(each.getFile().getPath())))) {
+        else if (!targetRepositoryMachine.equals(EelProviderUtil.getEelDescriptor(Path.of(each.getFile().getPath())).getMachine())) {
           // if .m2 is located remotely, then we need to copy the files to the remote location
           String suffix = repoFile.getAbsolutePath().substring(repositoryPath.length());
           String actualPath = repositoryPath + suffix;

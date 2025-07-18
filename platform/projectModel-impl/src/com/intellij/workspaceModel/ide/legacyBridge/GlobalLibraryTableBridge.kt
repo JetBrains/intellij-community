@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -16,16 +16,16 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 interface GlobalLibraryTableBridge : GlobalEntityBridgeAndEventHandler, LibraryTable {
   companion object {
-    fun getInstance(descriptor: EelDescriptor): GlobalLibraryTableBridge = ApplicationManager.getApplication().service<GlobalLibraryTableBridgeRegistry>().getTableBridge(descriptor)
+    fun getInstance(eelMachine: EelMachine): GlobalLibraryTableBridge = ApplicationManager.getApplication().service<GlobalLibraryTableBridgeRegistry>().getTableBridge(eelMachine)
   }
 }
 
 
 @Service(Service.Level.APP)
 private class GlobalLibraryTableBridgeRegistry {
-  private val registry: MutableMap<EelDescriptor, GlobalLibraryTableBridge> = ConcurrentHashMap()
+  private val registry: MutableMap<EelMachine, GlobalLibraryTableBridge> = ConcurrentHashMap()
 
-  fun getTableBridge(eelDescriptor: EelDescriptor): GlobalLibraryTableBridge {
-    return registry.computeIfAbsent(eelDescriptor) { GlobalLibraryTableBridgeImpl(it) }
+  fun getTableBridge(eelMachine: EelMachine): GlobalLibraryTableBridge {
+    return registry.computeIfAbsent(eelMachine) { GlobalLibraryTableBridgeImpl(it) }
   }
 }

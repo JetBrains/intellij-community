@@ -9,8 +9,8 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
@@ -55,7 +55,7 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
 
   override fun setHomePath(path: String?) {
     modifiedSdkEntity.homePath = if (path != null) {
-      val descriptor = getDescriptor(path)
+      val descriptor = getMachine(path)
       val globalInstance = GlobalWorkspaceModel.getInstance(descriptor).getVirtualFileUrlManager()
       globalInstance.getOrCreateFromUrl(path)
     } else {
@@ -86,7 +86,7 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
   }
 
   override fun addRoot(root: VirtualFile, rootType: OrderRootType) {
-    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
     modifiedSdkEntity.roots.add(
       SdkRoot(virtualFileUrlManager.getOrCreateFromUrl(root.url), rootTypes[rootType.customName]!!)
     )
@@ -111,7 +111,7 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
     ThreadingAssertions.assertWriteAccess()
     if (isCommitted) error("Modification already completed")
 
-    val descriptor = getDescriptor(modifiedSdkEntity.homePath?.toString())
+    val descriptor = getMachine(modifiedSdkEntity.homePath?.toString())
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
 
@@ -169,14 +169,14 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
     return "$name Version:$versionString Path:($homePath)"
   }
 
-  private fun getDescriptor(path: String?): EelDescriptor {
-    path ?: return LocalEelDescriptor
+  private fun getMachine(path: String?): EelMachine {
+    path ?: return LocalEelMachine
     return try {
-      Path.of(path).getEelDescriptor()
+      Path.of(path).getEelDescriptor().machine
     }
     catch (_: InvalidPathException) {
       // sometimes (in Ruby) the SDK home is set to 'temp:///root/nostubs'
-      LocalEelDescriptor
+      LocalEelMachine
     }
   }
 }

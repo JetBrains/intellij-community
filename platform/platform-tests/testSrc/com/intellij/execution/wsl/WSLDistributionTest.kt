@@ -522,11 +522,13 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override val descriptor: EelDescriptor
     get() = object : EelDescriptor {
-      override val userReadableDescription: @NonNls String = "mock"
-      override val osFamily: EelOsFamily = this@MockIjentApi.platform.osFamily
+      override val machine: EelMachine = object : EelMachine {
+        override val name: @NonNls String = "mock"
+        override val osFamily: EelOsFamily = this@MockIjentApi.platform.osFamily
 
-      override suspend fun toEelApi(): EelApi {
-        throw UnsupportedOperationException()
+        override suspend fun toEelApi(): EelApi {
+          throw UnsupportedOperationException()
+        }
       }
     }
 

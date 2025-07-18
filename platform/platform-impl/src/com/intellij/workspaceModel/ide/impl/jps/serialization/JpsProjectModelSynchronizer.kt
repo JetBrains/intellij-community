@@ -389,7 +389,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       workspaceModel.entityTracer.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying entities from global storage")
       val mutableStorage = MutableEntityStorage.create()
-      GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor()).applyStateToProjectBuilder(mutableStorage, workspaceModel)
+      GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine).applyStateToProjectBuilder(mutableStorage, workspaceModel)
       builder.applyChangesFrom(mutableStorage)
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)

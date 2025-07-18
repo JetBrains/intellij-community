@@ -50,7 +50,7 @@ suspend fun detectPipEnvExecutable(): PyResult<Path> {
   }
   val executablePath = localEel.exec.where(name)?.asNioPath()
   if (executablePath == null) {
-    return PyResult.localizedError(PyBundle.message("cannot.find.executable", name, localEel.descriptor.userReadableDescription))
+    return PyResult.localizedError(PyBundle.message("cannot.find.executable", name, localEel.descriptor.machine.name))
   }
 
   return PyResult.success(executablePath)

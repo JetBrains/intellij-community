@@ -15,11 +15,8 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.JarUtil;
-import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.EelOsFamily;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -137,7 +134,7 @@ public final class JdkUtil {
    * @return if the JDK can be run on this machine.
    */
   public static boolean isCompatible(@NotNull Path jdkHomePath, @NotNull Project project) {
-    return EelProviderUtil.getEelDescriptor(jdkHomePath).equals(EelProviderUtil.getEelDescriptor(project));
+    return EelProviderUtil.getEelDescriptor(jdkHomePath).getMachine().equals(EelProviderUtil.getEelDescriptor(project).getMachine());
   }
 
   public static boolean checkForJre(@NotNull String homePath) {

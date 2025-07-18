@@ -3,6 +3,7 @@ package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelOsFamily
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Assertions
@@ -70,10 +71,12 @@ class EelAbsolutePathTest {
   }
 
   class DummyEelDescriptor(override val osFamily: EelOsFamily) : EelDescriptor {
-    override val userReadableDescription: String = "mock"
-
-    override suspend fun toEelApi(): EelApi {
-      return Assertions.fail<Nothing>()
+    override val machine: EelMachine = object : EelMachine {
+      override val name: String = "mock"
+      override val osFamily: EelOsFamily = this@DummyEelDescriptor.osFamily
+      override suspend fun toEelApi(): EelApi {
+        return Assertions.fail<Nothing>()
+      }
     }
   }
 }

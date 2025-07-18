@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -50,7 +51,7 @@ class JpsGlobalEntitiesSyncTest {
                               parentDisposable = disposableRule.disposable, ) { _, entitySource ->
       val sdkInfos = mutableListOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),
                             SdkTestInfo("jbr-17", "java version \"17.0.7\"", "JavaSDK"))
-      val sdkEntities = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).currentSnapshot.entities(SdkEntity::class.java).toList()
+      val sdkEntities = GlobalWorkspaceModel.getInstance(LocalEelMachine).currentSnapshot.entities(SdkEntity::class.java).toList()
       UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
 
       val loadedProjects = listOf(loadProject(), loadProject())
@@ -59,7 +60,7 @@ class JpsGlobalEntitiesSyncTest {
 
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
-          GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test update") { builder ->
+          GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test update") { builder ->
             val sdkEntity = builder.entities(SdkEntity::class.java).first { it.name == "corretto-20" }
             val sdkNameToRemove = sdkEntity.name
             builder.removeEntity(sdkEntity)
@@ -111,7 +112,7 @@ class JpsGlobalEntitiesSyncTest {
     val sdkBridges = ProjectJdkTable.getInstance().allJdks
     UsefulTestCase.assertSameElements(sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name) }, sdkInfos)
 
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
     val globalVirtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
 
     val sdkEntities = globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
@@ -144,7 +145,7 @@ class JpsGlobalEntitiesSyncTest {
       val projectLibrariesNames = mutableListOf("spring", "junit", "kotlin")
       val globalLibrariesNames = mutableListOf("aws.s3", "org.maven.common", "com.google.plugin", "org.microsoft")
 
-      val globalLibraryEntities = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).currentSnapshot.entities(LibraryEntity::class.java).toList()
+      val globalLibraryEntities = GlobalWorkspaceModel.getInstance(LocalEelMachine).currentSnapshot.entities(LibraryEntity::class.java).toList()
       UsefulTestCase.assertSameElements(globalLibrariesNames, globalLibraryEntities.map { it.name })
 
       val loadedProjects = listOf(loadProject(), loadProject())
@@ -153,7 +154,7 @@ class JpsGlobalEntitiesSyncTest {
 
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
-          GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test update") { builder ->
+          GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test update") { builder ->
             val libraryEntity = builder.entities(LibraryEntity::class.java).first{ it.name == "aws.s3" }
             val libraryNameToRemove = libraryEntity.name
             builder.removeEntity(libraryEntity)
@@ -201,7 +202,7 @@ class JpsGlobalEntitiesSyncTest {
     val libraryBridges = libraryTable.libraries
     UsefulTestCase.assertSameElements(globalLibrariesNames, libraryBridges.map { it.name })
 
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
     val globalVirtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
 
     val globalLibraryEntities = globalWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).associateBy { it.name }

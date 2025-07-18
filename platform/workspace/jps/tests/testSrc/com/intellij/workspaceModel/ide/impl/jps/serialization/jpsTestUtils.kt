@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
@@ -460,7 +461,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
       ApplicationManager.getApplication().replaceService(GlobalWorkspaceModelRegistry::class.java, GlobalWorkspaceModelRegistry(), parentDisposable)
 
       // Entity source for global entities
-      val virtualFileManager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+      val virtualFileManager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
       val globalLibrariesFile = virtualFileManager.getOrCreateFromUrl("$testDir/options/applicationLibraries.xml")
       val libraryEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 
@@ -473,7 +474,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
         application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
         val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
                                         "platform/workspace/jps/tests/testData/serialization/global/$expectedFile")
-        val entityStorage = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).entityStorage.current
+        val entityStorage = GlobalWorkspaceModel.getInstance(LocalEelMachine).entityStorage.current
         if (entityStorage.entities(LibraryEntity::class.java).toList().isEmpty()) {
           optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
                                       filePathFilter = { it.contains("jdk.table.xml") })

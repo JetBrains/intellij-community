@@ -20,8 +20,8 @@ internal class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer 
   override fun initializeBridges(project: Project,
                                  changes: Map<Class<*>, List<EntityChange<*>>>,
                                  builder: MutableEntityStorage) = GlobalLibraryTableBridgeImpl.initializeLibraryBridgesTimeMs.addMeasuredTime {
-    val descriptor = project.getEelDescriptor()
-    val entityStorage = GlobalWorkspaceModel.getInstance(descriptor).entityStorage
+    val machine = project.getEelDescriptor().machine
+    val entityStorage = GlobalWorkspaceModel.getInstance(machine).entityStorage
 
     @Suppress("UNCHECKED_CAST")
     val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
@@ -32,7 +32,7 @@ internal class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer 
       builder.mutableLibraryMap.getOrPutDataByEntity(addChange.newEntity) {
         LibraryBridgeImpl(
           libraryTable = getGlobalOrCustomLibraryTable(addChange.newEntity.symbolicId.tableId.level),
-          origin = LibraryOrigin.OfDescriptor(descriptor),
+          origin = LibraryOrigin.OfMachine(machine),
           initialId = addChange.newEntity.symbolicId,
           initialEntityStorage = entityStorage,
           targetBuilder = builder

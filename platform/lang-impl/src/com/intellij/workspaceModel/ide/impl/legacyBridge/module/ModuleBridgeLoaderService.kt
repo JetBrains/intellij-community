@@ -80,7 +80,7 @@ private class ModuleBridgeLoaderService : InitProjectActivity {
             workspaceModel = workspaceModel,
           )
         }
-        val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor())
+        val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
         backgroundWriteAction {
           globalWorkspaceModel.applyStateToProject(project)
         }
@@ -108,7 +108,7 @@ private class ModuleBridgeLoaderService : InitProjectActivity {
         }
         
         // Set the project synchronization job on the global synchronizer to prevent race conditions
-        val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor())
+        val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
         JpsGlobalModelSynchronizer.getInstance().setProjectSynchronizationJob(projectSyncJob)
       }
 
