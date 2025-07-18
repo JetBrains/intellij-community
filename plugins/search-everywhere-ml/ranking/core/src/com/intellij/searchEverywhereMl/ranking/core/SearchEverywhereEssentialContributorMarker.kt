@@ -21,7 +21,7 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
   companion object {
     private const val MODEL_DIR = "ec_model_exp"
     private const val RESOURCE_DIR = "ec_features_exp"
-    private const val TRUE_THRESHOLD = 0.4
+    const val TRUE_THRESHOLD = 0.4
   }
 
   private val model: SearchEverywhereCatBoostBinaryClassifierModel = CatBoostModelFactory()
@@ -72,9 +72,8 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     return proba >= TRUE_THRESHOLD
   }
 
-  internal fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>): Float {
-    val searchState = getSearchState()
-
+  internal fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>,
+                                                 searchState: SearchEverywhereMlSearchState = getSearchState()): Float {
     val cache = contributorPredictionCache.getOrPut(searchState) { hashMapOf() }
     return cache.getOrPut(contributor) {
       computeProbability(contributor).also { probability ->

@@ -133,7 +133,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         contributors.map { contributor ->
           val contributorFeatures = buildList {
             addAll(SearchEverywhereContributorFeaturesProvider.getFeatures(contributor, mixedListInfo, searchState.sessionStartTime))
-            addAll(SearchEverywhereContributorFeaturesProvider.getEssentialContributorFeatures(contributor))
+            addAll(SearchEverywhereContributorFeaturesProvider.getEssentialContributorFeatures(searchState, contributor))
           }
 
           ObjectEventData(contributorFeatures)

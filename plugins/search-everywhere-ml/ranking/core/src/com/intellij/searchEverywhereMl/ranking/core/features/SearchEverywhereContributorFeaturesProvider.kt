@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ContributorsGlobalSummaryManager
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlSearchState
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.ContributorsLocalStatisticsFields
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.getContributorStatistics
 
@@ -52,24 +53,23 @@ internal object SearchEverywhereContributorFeaturesProvider {
   fun getFeatures(contributor: SearchEverywhereContributor<*>, mixedListInfo: SearchEverywhereMixedListInfo,
                 sessionStartTime: Long): List<EventPair<*>> {
     val contributor_id = contributor.searchProviderId
+    val info = arrayListOf<EventPair<*>>(
+      CONTRIBUTOR_INFO_ID.with(contributor_id),
+      CONTRIBUTOR_WEIGHT.with(contributor.sortWeight),
+    )
 
-    return buildList {
-      add(CONTRIBUTOR_INFO_ID.with(contributor_id))
-      add(CONTRIBUTOR_WEIGHT.with(contributor.sortWeight))
-
-      mixedListInfo.contributorPriorities[contributor.searchProviderId]?.let { priority ->
-        add(CONTRIBUTOR_PRIORITY.with(priority))
-      }
-
-      addAll(LOCAL_STATISTICS.getLocalStatistics(contributor_id, sessionStartTime))
-
-      val globalSummary = ContributorsGlobalSummaryManager.getInstance()
-      val contributorsStats = globalSummary.getStatistics(contributor_id)
-      val maxEventCount = globalSummary.eventCountRange.maxEventCount
-      addAll(GLOBAL_STATISTICS.getEventGlobalStatistics(contributorsStats, maxEventCount))
-
-      addAll(getStatisticianFeatures(contributor))
+    mixedListInfo.contributorPriorities[contributor.searchProviderId]?.let { priority ->
+      info.add(CONTRIBUTOR_PRIORITY.with(priority))
     }
+
+    info.addAll(LOCAL_STATISTICS.getLocalStatistics(contributor_id, sessionStartTime))
+
+    val globalSummary = ContributorsGlobalSummaryManager.getInstance()
+    val contributorsStats = globalSummary.getStatistics(contributor_id)
+    val maxEventCount = globalSummary.eventCountRange.maxEventCount
+    info.addAll(GLOBAL_STATISTICS.getEventGlobalStatistics(contributorsStats, maxEventCount))
+
+    return info + getStatisticianFeatures(contributor)
   }
 
   /**
@@ -77,17 +77,28 @@ internal object SearchEverywhereContributorFeaturesProvider {
    *
    * EC features are the predictions of the EC model, which itself needs contributor features to make predictions.
    */
-  fun getEssentialContributorFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
+  fun getEssentialContributorFeatures(searchState: SearchEverywhereMlSearchState,
+                                      contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
     val marker = SearchEverywhereEssentialContributorMarker.getInstanceOrNull()
-    val isEssentialContributor = EssentialContributor.checkEssential(contributor)
-
-    return buildList {
-      add(IS_ESSENTIAL_CONTRIBUTOR.with(isEssentialContributor))
-
-      (marker as? SearchEverywhereEssentialContributorMlMarker)?.getContributorEssentialPrediction(contributor)?.let { prediction ->
-        add(ESSENTIAL_CONTRIBUTOR_PREDICTION.with(prediction))
-      }
+    if (marker == null) {
+      // In the case where we do not have a marker available, we will log the default essential behavior,
+      // so we can simply rely on EssentialContributor.checkEssential
+      return listOf(
+        IS_ESSENTIAL_CONTRIBUTOR.with(EssentialContributor.checkEssential(contributor))
+      )
     }
+
+    // Here - we do not want to call EssentialContributor.checkEssential, because that would get
+    // the current state, which, at the point where we are calculating features to report,
+    // is the one ahead (we are calculating features for the previous state)
+
+    marker as SearchEverywhereEssentialContributorMlMarker
+    val cachedPrediction = marker.getContributorEssentialPrediction(contributor, searchState)
+
+    return listOf(
+      IS_ESSENTIAL_CONTRIBUTOR.with(cachedPrediction >= SearchEverywhereEssentialContributorMlMarker.TRUE_THRESHOLD),
+      ESSENTIAL_CONTRIBUTOR_PREDICTION.with(cachedPrediction)
+    )
   }
 
   private fun getStatisticianFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
