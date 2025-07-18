@@ -53,10 +53,9 @@ class TextToolset : McpToolset {
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
 
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+               ?: mcpFail("File $resolvedPath doesn't exist or can't be opened")
     val originalText = readAction {
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
-                 ?: mcpFail("File $resolvedPath doesn't exist or can't be opened")
-
       if (file.fileType.isBinary) mcpFail("File $resolvedPath is binary")
       file.readText()
     }
@@ -104,9 +103,9 @@ class TextToolset : McpToolset {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.replacing.text.in.file", pathInProject, oldText, newText))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
+    val file: VirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+                            ?: mcpFail("file not found: $pathInProject")
     val (document, text) = readAction {
-      val file: VirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
-                              ?: mcpFail("file not found: $pathInProject")
       val document = FileDocumentManager.getInstance().getDocument(file) ?: mcpFail("Could not get document for $file")
       document to document.text
     }
