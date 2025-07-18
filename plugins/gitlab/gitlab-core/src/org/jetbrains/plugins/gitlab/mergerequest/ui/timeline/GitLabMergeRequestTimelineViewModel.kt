@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -26,6 +27,7 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
   val currentUser: GitLabUserDTO
   val showEvents: StateFlow<Boolean>
   val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>>
+  val isLoading: SharedFlow<Boolean>
 
   val newNoteVm: NewGitLabNoteViewModel?
 
@@ -66,6 +68,13 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
         mapDataToModel({ it.id }, { createItemVm(it) }, {})
       }
       .modelFlow(cs, LOG)
+
+  override val isLoading: SharedFlow<Boolean> = combine(
+    mergeRequest.isLoading,
+    timelineItems.withInitial(null)
+  ) { mrLoading, timelineItemsResult ->
+    mrLoading || timelineItemsResult == null
+  }.modelFlow(cs, LOG)
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
