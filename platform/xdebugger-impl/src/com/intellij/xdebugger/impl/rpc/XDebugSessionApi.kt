@@ -10,6 +10,7 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
@@ -65,6 +66,7 @@ interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun updateExecutionPosition(sessionId: XDebugSessionId)
 
   suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback)
+  suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent>
 
   suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean)
 
@@ -179,6 +181,7 @@ data class XDebuggerSessionTabInfo(
   // TODO pass to frontend
   @Transient val contentToReuse: RunContentDescriptor? = null,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
+  val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
   @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
 ) : XDebuggerSessionTabAbstractInfo
 
@@ -195,6 +198,10 @@ data class XDebugSessionPausedInfo(
   val pausedByUser: Boolean,
   val topFrameIsAbsent: Boolean,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class XDebugSessionAdditionalTabComponentManagerId(override val uid: UID) : Id
 
 /**
  * @see com.intellij.xdebugger.impl.rpc.models.XSuspendContextModel

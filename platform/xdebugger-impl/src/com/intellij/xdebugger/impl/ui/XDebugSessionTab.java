@@ -338,6 +338,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
+  @ApiStatus.Internal
+  public GlobalSearchScope getSearchScope() {
+    return mySearchScope;
+  }
+
   protected @NotNull Content createWatchesContent(@NotNull XDebugSessionProxy proxy, @Nullable XWatchesViewImpl watchesView) {
     myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(proxy, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);

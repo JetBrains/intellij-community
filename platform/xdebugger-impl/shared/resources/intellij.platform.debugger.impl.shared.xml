@@ -2,5 +2,8 @@
   <extensionPoints>
     <extensionPoint name="xdebugger.consoleViewDataConverter" interface="com.intellij.xdebugger.impl.rpc.XDebuggerConsoleViewConverter"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.additionalTabComponentConverter"
+                    interface="com.intellij.platform.debugger.impl.shared.XDebugSessionAdditionalTabComponentConverter"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

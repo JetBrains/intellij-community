@@ -24,6 +24,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
+import com.intellij.xdebugger.impl.findValue
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.*
@@ -207,6 +208,11 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     withContext(Dispatchers.EDT) {
       session.tabInitialized(tab)
     }
+  }
+
+  override suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent> {
+    val manager = tabComponentsManagerId.findValue() ?: return emptyFlow()
+    return manager.tabComponentEvents
   }
 
   override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean) {
