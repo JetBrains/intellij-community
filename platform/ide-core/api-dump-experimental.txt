@@ -31,6 +31,9 @@ com.intellij.ide.dnd.DnDEvent$DropTargetHighlightingType
 - showErrorHint(com.intellij.openapi.editor.Editor,java.lang.String):V
 - showRefactoringMessageDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.openapi.project.Project):V
 - systemNotify(java.lang.String,java.lang.String):V
+c:com.intellij.notification.Notification
+- *s:isDoNotAskFor(com.intellij.openapi.project.Project,java.lang.String):Z
+- *:setDoNotAskFor(com.intellij.openapi.project.Project):com.intellij.notification.Notification
 f:com.intellij.notification.Notifications$Bus
 - *s:notifyAndHide(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
 *:com.intellij.openapi.options.Configurable$InnerWithModifiableParent
