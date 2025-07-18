@@ -182,7 +182,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
     override fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean {
       if (other is Monolith) {
-        return XBreakpointManagerImpl.statesAreDifferent(breakpoint.state, other.breakpoint.state, ignoreTimestamp)
+        return !XBreakpointManagerImpl.statesAreDifferent(breakpoint.state, other.breakpoint.state, ignoreTimestamp)
       }
       return false
     }
